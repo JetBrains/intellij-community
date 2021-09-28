@@ -26,8 +26,8 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
+import java.awt.event.ActionListener
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 /**
@@ -38,8 +38,11 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  *
  * @author vlan
  */
-class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: VirtualFile? = null) :
-  ComponentWithBrowseButton<ComboBoxWithWidePopup<Sdk>>(ComboBoxWithWidePopup(sdks.toTypedArray()), null) {
+class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
+                                                          suggestedFile: VirtualFile? = null,
+                                                          private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null) :
+  ComponentWithBrowseButton<ComboBoxWithWidePopup<PySdkComboBoxItem>>(ComboBoxWithWidePopup(buildSdkArray(sdks, newPySdkComboBoxItem)),
+                                                                      null) {
 
   private val busyIconExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
   private val editor: BasicComboBoxEditor = object : BasicComboBoxEditor() {
@@ -50,10 +53,11 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: Vi
 
   init {
     childComponent.apply {
-      renderer = PySdkListCellRenderer()
+      renderer = PySdkListCellRendererExt()
       ComboboxSpeedSearch(this)
     }
-    addActionListener {
+    // prepare action listener
+    addActionListener(ActionListener {
       val pythonSdkType = PythonSdkType.getInstance()
       val descriptor = pythonSdkType.homeChooserDescriptor
       FileChooser.chooseFiles(descriptor, null, suggestedFile) {
@@ -61,22 +65,38 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: Vi
         val path = PathUtil.toSystemDependentName(virtualFile.path)
         childComponent.selectedItem =
           items.find { it.homePath == path } ?: PyDetectedSdk(path).apply {
-            childComponent.insertItemAt(this, 0)
+            addSdkItemOnTop(this)
           }
       }
-    }
+    })
   }
 
+  val selectedItem: PySdkComboBoxItem?
+    get() = childComponent.selectedItem as? PySdkComboBoxItem
+
   var selectedSdk: Sdk?
-    get() = childComponent.selectedItem as? Sdk?
+    get() = (childComponent.selectedItem as? ExistingPySdkComboBoxItem)?.sdk
+    /**
+     * Does nothing if [selectedSdk] is absent in the items in the combobox.
+     */
     set(value) {
-      if (value in items) {
-        childComponent.selectedItem = value
-      }
+      (0 until childComponent.itemCount)
+        .map { childComponent.getItemAt(it) }
+        .firstOrNull { (it as? ExistingPySdkComboBoxItem)?.sdk == value }
+        ?.let { childComponent.selectedItem = it }
     }
 
   val items: List<Sdk>
-    get() = (0 until childComponent.itemCount).map { childComponent.getItemAt(it) }
+    get() = (0 until childComponent.itemCount).mapNotNull { (childComponent.getItemAt(it) as? ExistingPySdkComboBoxItem)?.sdk }
+
+  fun addSdkItemOnTop(sdk: Sdk) {
+    val position = if (newPySdkComboBoxItem == null) 0 else 1
+    childComponent.insertItemAt(sdk.asComboBoxItem(), position)
+  }
+
+  fun addSdkItem(sdk: Sdk) {
+    childComponent.addItem(sdk.asComboBoxItem())
+  }
 
   fun setBusy(busy: Boolean) {
     if (busy) {
@@ -89,5 +109,15 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk> = emptyList(), suggestedFile: Vi
       childComponent.isEditable = false
     }
     repaint()
+  }
+
+  companion object {
+    private fun buildSdkArray(sdks: List<Sdk>, newPySdkComboBoxItem: NewPySdkComboBoxItem?): Array<PySdkComboBoxItem> =
+      (listOfNotNull(newPySdkComboBoxItem) + sdks.map { it.asComboBoxItem() }).toTypedArray()
+
+    private fun PySdkComboBoxItem.getText(): String = when (this) {
+      is NewPySdkComboBoxItem -> title
+      is ExistingPySdkComboBoxItem -> sdk.homePath.orEmpty()
+    }
   }
 }
