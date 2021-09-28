@@ -19,12 +19,15 @@ abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
       }
   }
 
-  override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
-    if (LightEdit.owns(project)) return false
+  override fun isHidden(project: Project, event: AnActionEvent): Boolean {
+    if (LightEdit.owns(project)) return true
     return getSession(event)?.let { session ->
-      !event.isProcessTerminating() && isEnabled(session, event.dataContext)
-    } ?: false
+     isHidden(session, event.dataContext)
+    } ?: true
+  }
 
+  override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
+    return !event.isProcessTerminating()
   }
 
   private fun getSession(e: AnActionEvent): XDebugSessionImpl? {
@@ -38,15 +41,14 @@ abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
     }
   }
 
-
-  protected abstract fun isEnabled(session: XDebugSessionImpl, dataContext: DataContext?): Boolean
+  protected abstract fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean
 
   protected abstract fun perform(session: XDebugSessionImpl, dataContext: DataContext?)
 }
 
 class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
-  override fun isEnabled(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
-    return session.isPaused && !session.isReadOnly
+  override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
+    return !session.isPaused || session.isReadOnly
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
@@ -55,8 +57,8 @@ class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
 }
 
 class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
-  override fun isEnabled(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
-    return session.isPauseActionSupported && !session.isPaused
+  override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
+    return !session.isPauseActionSupported || session.isPaused
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
