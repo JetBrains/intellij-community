@@ -210,6 +210,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
       if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
         iterator.remove();
         Disposer.dispose(eachFolder);
+        isJpsSourceFoldersChanged = true;
       }
     }
   }
