@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS_KEY
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -31,14 +34,6 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   }
 
   private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
-
-  init {
-    project.messageBus.connect().subscribe(LookupManagerListener.TOPIC, LookupManagerListener { _, current ->
-      if (current is LookupEx) {
-        showDocOnItemChange(current)
-      }
-    })
-  }
 
   override fun dispose() {
     cs.cancel()
@@ -131,7 +126,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     setPopup(popup)
   }
 
-  private fun showDocOnItemChange(lookup: LookupEx) {
+  internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
     val autoShowRequests = autoShowRequestFlow(lookup) ?: return
     val showDocJob = cs.launch(Dispatchers.EDT) {
       autoShowRequests.collectLatest { request: DocumentationRequest ->
