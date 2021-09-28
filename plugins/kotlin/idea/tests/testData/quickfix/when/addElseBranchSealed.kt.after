@@ -11,3 +11,4 @@ fun test(base: Base) {
         else -> {<caret>}
     }
 }
+/* IGNORE_FIR */
