@@ -117,4 +117,6 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       focusOwner is EditorComponentImpl
     }
   }
+
+  override val suitableTips = listOf("ContextActions")
 }

@@ -131,4 +131,6 @@ class JavaInheritanceHierarchyLesson
 
   private fun TaskContext.findToolWindow() = strong(UIBundle.message("tool.window.name.find"))
   private fun TaskContext.hierarchyToolWindow() = strong(UIBundle.message("tool.window.name.hierarchy"))
+
+  override val suitableTips = listOf("HierarchyBrowser")
 }

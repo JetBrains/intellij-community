@@ -86,4 +86,6 @@ class JavaStatementCompletionLesson
 
     return trimmedText == "{if(){}}"
   }
+
+  override val suitableTips = listOf("CompleteStatement", "FinishBySmartEnter")
 }

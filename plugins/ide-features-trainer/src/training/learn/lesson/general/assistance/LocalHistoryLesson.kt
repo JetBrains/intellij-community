@@ -361,4 +361,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       Thread.sleep(10)
     }
   }
+
+  override val suitableTips = listOf("local_history")
 }

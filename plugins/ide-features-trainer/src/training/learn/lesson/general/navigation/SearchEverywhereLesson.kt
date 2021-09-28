@@ -148,4 +148,6 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
   }
+
+  override val suitableTips = listOf("SearchEverywhere", "GoToClass", "search_everywhere_general")
 }

@@ -290,4 +290,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
     backupSearchEverywhereLocation = null
   }
+
+  override val suitableTips = listOf("VCS_general")
 }

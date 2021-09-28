@@ -269,4 +269,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val document = FileDocumentManager.getInstance().getDocument(file)!! // it's not directory or binary file and it isn't large
     document.insertString(document.textLength, text)
   }
+
+  override val suitableTips = listOf("partial_git_commit")
 }

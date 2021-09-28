@@ -75,4 +75,6 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
   }
 
   private fun TaskRuntimeContext.hasInplaceRename() = editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null
+
+  override val suitableTips = listOf("RefactorThis")
 }

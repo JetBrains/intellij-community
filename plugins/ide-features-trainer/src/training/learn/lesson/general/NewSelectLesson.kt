@@ -96,4 +96,6 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     val selection = editor.document.charsSequence.subSequence(selectionModel.selectionStart, selectionModel.selectionEnd)
     return selection.toString().trim() == needSelection.trim()
   }
+
+  override val suitableTips = listOf("smart_selection", "CtrlW")
 }

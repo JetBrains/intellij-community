@@ -213,6 +213,8 @@ class FindInFilesLesson(override val existedFile: String)
   }
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
+
+  override val suitableTips = listOf("FindReplaceToggle", "FindInPath")
 }
 
 private fun resetFindSettings(project: Project) {

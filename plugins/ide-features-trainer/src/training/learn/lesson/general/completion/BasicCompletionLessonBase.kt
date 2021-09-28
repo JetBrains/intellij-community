@@ -96,4 +96,6 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
 
   private fun isTheFirstVariant(it: JList<*>) =
     it.model.size >= 1 && it.model.getElementAt(0).toString().contains(item1Completion)
+
+  override val suitableTips = listOf("CodeCompletion")
 }

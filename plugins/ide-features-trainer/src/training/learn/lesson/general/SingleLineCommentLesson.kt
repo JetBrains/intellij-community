@@ -49,4 +49,6 @@ class SingleLineCommentLesson(private val sample: LessonSample)
       }
     }
   }
+
+  override val suitableTips = listOf("CommentCode")
 }

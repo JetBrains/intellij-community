@@ -54,4 +54,6 @@ class QuickPopupsLesson(private val sample: LessonSample) :
     val activeDocComponent = QuickDocUtil.getActiveDocComponent(project)
     return activeDocComponent == null || !activeDocComponent.isShowing
   }
+
+  override val suitableTips = listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc")
 }

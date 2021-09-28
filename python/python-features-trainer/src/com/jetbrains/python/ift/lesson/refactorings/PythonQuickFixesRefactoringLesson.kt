@@ -165,4 +165,6 @@ class PythonQuickFixesRefactoringLesson
       checkExpectedStateOfEditor(sample) { ", y".startsWith(it) || ",y".startsWith(it) }
     }
   }
+
+  override val suitableTips = listOf("QuickFixRightArrow")
 }

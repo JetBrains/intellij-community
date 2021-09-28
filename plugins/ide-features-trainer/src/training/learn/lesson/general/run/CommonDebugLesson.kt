@@ -462,6 +462,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     checkExpectedStateOfEditor(LessonSample(restoreText, offset), false) ?: checkForBreakpoints()
   }
+
+  override val suitableTips = listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor")
 }
 
 

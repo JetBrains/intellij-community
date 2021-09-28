@@ -47,4 +47,6 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
       }
     }
   }
+
+  override val suitableTips = listOf("PostfixCompletion")
 }

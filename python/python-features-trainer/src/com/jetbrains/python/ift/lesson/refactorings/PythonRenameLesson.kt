@@ -170,4 +170,6 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       previous.ui?.isShowing != true
     }
   }
+
+  override val suitableTips = listOf("Rename")
 }

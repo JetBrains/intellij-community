@@ -28,4 +28,6 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
         LessonsBundle.message("completion.with.tab.finish.with.tab", code(proposal), action("EditorTab"))
       }
     }
+
+  override val suitableTips = listOf("TabInLookups")
 }

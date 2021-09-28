@@ -320,4 +320,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   private fun isAnnotateShortcutSet(): Boolean {
     return KeymapManager.getInstance().activeKeymap.getShortcuts("Annotate").isNotEmpty()
   }
+
+  override val suitableTips = listOf("AnnotationsAndDiffs")
 }

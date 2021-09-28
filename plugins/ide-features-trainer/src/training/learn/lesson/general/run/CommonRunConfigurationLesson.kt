@@ -118,4 +118,6 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
+
+  override val suitableTips = listOf("SelectRunDebugConfiguration")
 }

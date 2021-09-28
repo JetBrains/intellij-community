@@ -63,6 +63,8 @@ class JavaExtractMethodCocktailSortLesson
         }
       }
     }
+
+  override val suitableTips = listOf("ExtractMethod")
 }
 
 private val javaSortSample = parseLessonSample("""

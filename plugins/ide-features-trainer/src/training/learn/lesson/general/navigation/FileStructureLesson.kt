@@ -67,4 +67,6 @@ abstract class FileStructureLesson
     }
     return false
   }
+
+  override val suitableTips = listOf("FileStructurePopup")
 }

@@ -126,4 +126,6 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
   }
 
   private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
+
+  override val suitableTips = listOf("find_action", "GoToAction")
 }

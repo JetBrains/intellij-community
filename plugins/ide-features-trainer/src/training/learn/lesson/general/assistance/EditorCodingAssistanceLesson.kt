@@ -117,4 +117,6 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     val sequence = editor.document.charsSequence
     return caretOffset != sequence.length && sequence[caretOffset].isLetter()
   }
+
+  override val suitableTips = listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors")
 }
