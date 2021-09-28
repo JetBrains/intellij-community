@@ -31,7 +31,7 @@ import kotlin.io.path.pathString
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
-private const val DISABLE_MAVEN_AUTO_IMPORT = "external.system.auto.import.disabled"
+private const val DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "maven.command.line.configurator.exit.on.unresolved.plugins"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
@@ -41,7 +41,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
-    Registry.get(DISABLE_MAVEN_AUTO_IMPORT).setValue(true)
+    Registry.get(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT).setValue(true)
     Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
   }
 

@@ -560,7 +560,9 @@ public abstract class DialogWrapper {
     }
 
     JComponent result = createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
-    Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
+    if (ApplicationManager.getApplication() != null) {
+      Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
+    }
     return result;
   }
 

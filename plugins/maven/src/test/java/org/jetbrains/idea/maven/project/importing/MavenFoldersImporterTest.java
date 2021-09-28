@@ -567,6 +567,82 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                  CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
+  @Test
+  public void testCompilerPluginExecutionBlockProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>target-jdk8</id>" +
+                     "    <activation><jdk>[1.8,)</jdk></activation>" +
+                     "    <build>" +
+                     "      <plugins>" +
+                     "        <plugin>" +
+                     "          <groupId>org.apache.maven.plugins</groupId>" +
+                     "          <artifactId>maven-compiler-plugin</artifactId>" +
+                     "          <executions>" +
+                     "            <execution>" +
+                     "              <id>compile-jdk8</id>" +
+                     "              <goals>" +
+                     "                <goal>compile</goal>" +
+                     "              </goals>" +
+                     "              <configuration>" +
+                     "                <source>1.8</source>" +
+                     "                <target>1.8</target>" +
+                     "              </configuration>" +
+                     "            </execution>" +
+                     "          </executions>" +
+                     "        </plugin>" +
+                     "      </plugins>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>target-jdk11</id>" +
+                     "    <activation><jdk>[11,)</jdk></activation>" +
+                     "    <build>" +
+                     "      <plugins>" +
+                     "        <plugin>" +
+                     "          <groupId>org.apache.maven.plugins</groupId>" +
+                     "          <artifactId>maven-compiler-plugin</artifactId>" +
+                     "          <executions>" +
+                     "            <execution>" +
+                     "              <id>compile-jdk11</id>" +
+                     "              <goals>" +
+                     "                <goal>compile</goal>" +
+                     "              </goals>" +
+                     "              <configuration>" +
+                     "                <source>11</source>" +
+                     "                <target>11</target>" +
+                     "              </configuration>" +
+                     "            </execution>" +
+                     "          </executions>" +
+                     "        </plugin>" +
+                     "      </plugins>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.8.1</version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
+  }
+
   private void updateProjectFolders() {
     MavenFoldersImporter.updateProjectFolders(myProject, false);
   }

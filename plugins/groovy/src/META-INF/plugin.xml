@@ -213,6 +213,9 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultRangeTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultUnaryExpressionTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSwitchExpressionTypeCalculator"/>
+
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
@@ -1072,6 +1075,11 @@
                      level="ERROR"
                      groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrPermitsClauseInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.switch.exhaustiveness.check"
+                     level="WEAK WARNING"
+                     groupKey="inspection.bugs" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrSwitchExhaustivenessCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
                      groupKey="inspection.annotations" enabledByDefault="true"

@@ -134,8 +134,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return Kind.PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
-      boolean isOnDemand = SourceTreeToPsiMap.<PsiImportStatement>treeToPsiNotNull(treeParent).isOnDemand();
-      return isOnDemand ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.CLASS_FQ_NAME_KIND;
+      PsiElement parent = treeParent.getPsi();
+      if (parent instanceof PsiImportStatement) {
+        boolean isOnDemand = ((PsiImportStatement)parent).isOnDemand();
+        return isOnDemand ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.CLASS_FQ_NAME_KIND;
+      }
+      // otherwise, fallthrough to diagnoseUnknownParent()
     }
     if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND;

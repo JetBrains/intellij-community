@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -24,12 +25,16 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testInsideRuleInSwitchExpression() { doTest() }
   void testBreakDeepInsideSwitchExpression() { doTest() }
 
+  @NeedsIndex.Full
   void testCompletePatternVariableInSwitchExpr() { doTest() }
+  @NeedsIndex.Full
   void testCompletePatternVariableInSwitchStmt() { doTest() }
 
   void testCompleteReturnInSwitch() { doTest() }
 
+  @NeedsIndex.Full
   void testCompleteConstantInSwitchExpr() { doTest() }
+  @NeedsIndex.Full
   void testCompleteConstantInSwitchStmt() { doTest() }
 
   void testCompleteNullInSwitchStmt() { doTest() }
@@ -41,13 +46,15 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testCompletePatternVariableSwitchStmt() { doTest() }
   void testCompletePatternVariableSwitchExpr() { doTest() }
 
+  void testCompleteSealedLabelSwitch() { doTest() }
+
   void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion() }
   void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion() }
 
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
-    configure();
+    configure()
     myFixture.type('\t' as char)
-    checkResult();
+    checkResult()
   }
 }

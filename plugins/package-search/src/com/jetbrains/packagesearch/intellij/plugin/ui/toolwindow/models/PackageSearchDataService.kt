@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -556,6 +557,8 @@ internal class PackageSearchDataService(
                         ?.hasSupportFor(project, file)
                         ?: false
                 } catch (ignored: Throwable) {
+                    if (ignored is ControlFlowException) throw ignored
+
                     logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", ignored) {
                         "Error while filtering open files to trigger highlight rerun for"
                     }

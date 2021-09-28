@@ -25,7 +25,7 @@ public interface NonBlockingContextChecker {
    *                      to check if it is placed in code fragment where thread block is not allowed
    * @return true if code fragment for {@code element} is considered "non-blocking", false otherwise
    */
-  default ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+  default ContextType computeContextType(@NotNull ElementContext elementContext) {
     if (isContextNonBlockingFor(elementContext.getElement())) {
       return ContextType.NONBLOCKING.INSTANCE;
     }
@@ -35,7 +35,7 @@ public interface NonBlockingContextChecker {
   }
 
   /**
-   * @deprecated Override {@link #isContextNonBlockingFor(ElementContext)} instead.
+   * @deprecated Override {@link #computeContextType(ElementContext)} instead.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")

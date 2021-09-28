@@ -47,15 +47,18 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
 
   override fun update(e: AnActionEvent) {
     val session = getSession(e)
-    e.presentation.isEnabledAndVisible =
+    e.presentation.isVisible =
       session != null
-      && !e.isProcessTerminating()
       && HotSwapUIImpl.canHotSwap(session)
       && Registry.`is`("ide.new.navbar.hotswap", false)
 
+    if(e.presentation.isVisible) {
+      e.presentation.isEnabled = !e.isProcessTerminating()
+    }
+
     if (!RunToolbarProcess.experimentalUpdating()) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -894,8 +895,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+  private void visitSwitchElement() {
     if (myType1 == GroovyTokenTypes.kSWITCH && myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
     }
@@ -909,6 +909,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (isWithinBraces()) {
       createLF(true);
     }
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement();
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement();
   }
 
   @Override
@@ -1098,7 +1108,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private static boolean isOpenBlock(IElementType type) {
-    return type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY;
+    return type instanceof GrBlockElementType || type == GroovyElementTypes.CONSTRUCTOR_BODY;
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
@@ -141,6 +141,20 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testSwitch7() throws Throwable { doTest() }
 
   void testSwitch8() throws Throwable { doTest() }
+
+  void testSwitchexpr1() throws Throwable { doTest() }
+
+  void testSwitchexpr2() throws Throwable { doTest() }
+
+  void testSwitchexpr3() throws Throwable { doTest() }
+
+  void testSwitchexpr4() throws Throwable { doTest() }
+
+  void testSwitchexpr5() throws Throwable { doTest() }
+
+  void testSwitchexpr6() throws Throwable { doTest() }
+
+  void testSwitchexpr7() throws Throwable { doTest() }
 
   void testType1() throws Throwable { doTest() }
 

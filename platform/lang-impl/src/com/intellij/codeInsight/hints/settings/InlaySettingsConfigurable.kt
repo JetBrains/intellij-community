@@ -9,15 +9,23 @@ import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
 class InlaySettingsConfigurable(val project: Project) : Configurable {
-  override fun createComponent(): JComponent? {
-    return InlaySettingsPanel(project)
+
+  private val panel: InlaySettingsPanel = InlaySettingsPanel(project)
+
+  override fun createComponent(): JComponent {
+    return panel
   }
 
   override fun isModified(): Boolean {
-    return false
+    return panel.isModified()
   }
 
   override fun apply() {
+    panel.apply()
+  }
+
+  override fun reset() {
+    panel.reset()
   }
 
   override fun getDisplayName(): String = CodeInsightBundle.message("settings.inlay.hints.panel.name")

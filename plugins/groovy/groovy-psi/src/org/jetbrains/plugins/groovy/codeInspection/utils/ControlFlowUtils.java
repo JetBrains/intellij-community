@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
-@SuppressWarnings({"OverlyComplexClass"})
+@SuppressWarnings("OverlyComplexClass")
 public final class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
@@ -72,6 +72,7 @@ public final class ControlFlowUtils {
     if (statement instanceof GrBreakStatement ||
         statement instanceof GrContinueStatement ||
         statement instanceof GrReturnStatement ||
+        statement instanceof GrYieldStatement ||
         statement instanceof GrThrowStatement) {
       return false;
     }
@@ -441,21 +442,55 @@ public final class ControlFlowUtils {
     return collectReturns(flow, allExitPoints);
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, final boolean allExitPoints) {
-    boolean[] visited = new boolean[flow.length];
-    final List<GrStatement> res = new ArrayList<>();
-    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {
-      @Override
-      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        final PsiElement element = instruction.getElement();
-        if (element instanceof GrReturnStatement || (allExitPoints && instruction instanceof MaybeReturnInstruction)) {
-          res.add((GrStatement)element);
-        }
-        return true;
+  // stateful class
+  private static final class ExitPointCollector implements ExitPointVisitor {
+    @Nullable private final Class<? extends Instruction> instructionFilter;
+    @Nullable private final Class<? extends GrStatement> statementFilter;
+    @NotNull private final List<GrStatement> collector;
+
+    private ExitPointCollector(@Nullable Class<? extends Instruction> instructionFilter,
+                               @Nullable Class<? extends GrStatement> statementFilter) {
+      this.instructionFilter = instructionFilter;
+      this.statementFilter = statementFilter;
+      this.collector = new ArrayList<>();
+    }
+
+    @Override
+    public boolean visitExitPoint(Instruction instruction,
+                                  @Nullable GrExpression returnValue) {
+      final PsiElement element = instruction.getElement();
+      if ((statementFilter != null && statementFilter.isInstance(element)) || (instructionFilter != null && instructionFilter.isInstance(instruction))) {
+        collector.add((GrStatement)element);
       }
+      return true;
+    }
+
+    private @NotNull List<GrStatement> getCollectedStatements() {
+      return collector;
+    }
+  }
+
+  @NotNull
+  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow,
+                                                 final boolean allExitPoints) {
+    boolean[] visited = new boolean[flow.length];
+    var collector = new ExitPointCollector(allExitPoints ? MaybeReturnInstruction.class : null, GrReturnStatement.class);
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
+    return collector.getCollectedStatements();
+  }
+
+  @NotNull
+  public static List<GrStatement> collectYields(Instruction @NotNull [] flow) {
+    boolean[] visited = new boolean[flow.length];
+    var collector = new ExitPointCollector(MaybeYieldInstruction.class, GrYieldStatement.class);
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
+    return collector.getCollectedStatements();
+  }
+
+  public static Instruction @NotNull [] getCaseSectionInstructions(GrCaseSection caseSection) {
+    return CachedValuesManager.getCachedValue(caseSection, () -> {
+      return CachedValueProvider.Result.create(new ControlFlowBuilder().buildControlFlow(caseSection), caseSection);
     });
-    return res;
   }
 
   @Nullable
@@ -650,7 +685,7 @@ public final class ControlFlowUtils {
       return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);
     }
 
-    if (last instanceof MaybeReturnInstruction) {
+    if (last instanceof MaybeInterruptInstruction) {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }
     else if (last instanceof IfEndInstruction) {

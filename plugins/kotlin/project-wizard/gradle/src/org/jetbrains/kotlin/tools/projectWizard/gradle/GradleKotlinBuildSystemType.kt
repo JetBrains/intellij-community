@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.builder.buttonGroup
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleBuildSystemStep
 
@@ -21,9 +22,9 @@ internal class GradleKotlinBuildSystemType : KotlinBuildSystemType {
             super.setupUI(builder)
             with(builder) {
                 buttonGroup(::buildSystemType) {
-                    row {
-                        radioButton(BuildSystemType.GradleKotlinDsl.text, BuildSystemType.GradleKotlinDsl)
-                        radioButton(BuildSystemType.GradleGroovyDsl.text, BuildSystemType.GradleGroovyDsl)
+                    row(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl")) {
+                        radioButton(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl.kotlin"), BuildSystemType.GradleKotlinDsl)
+                        radioButton(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl.groovy"), BuildSystemType.GradleGroovyDsl)
                     }
                 }
             }

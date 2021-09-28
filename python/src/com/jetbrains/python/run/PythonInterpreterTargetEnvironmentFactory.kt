@@ -51,6 +51,13 @@ interface PythonInterpreterTargetEnvironmentFactory {
     private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
       "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"
 
+    /**
+     * Note: let the target be immutable by default though this case seems to be invalid.
+     */
+    @JvmStatic
+    fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean =
+      EP_NAME.extensionList.mapNotNull { it.isMutable(configuration) }.firstOrNull() ?: false
+
     fun TargetEnvironmentConfiguration.isOfType(targetEnvironmentType: TargetEnvironmentType<*>): Boolean =
       typeId == targetEnvironmentType.id
   }

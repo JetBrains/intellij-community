@@ -5,6 +5,7 @@ import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
+import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.psi.util.PsiUtilBase
@@ -19,6 +20,13 @@ class DocumentationTargetsDataRule : GetDataRule {
       val targets = EditorDocumentationTargetProvider.getInstance().documentationTargets(editor, file, editor.caretModel.offset)
       if (targets.isNotEmpty()) {
         return targets
+      }
+    }
+    val symbols = CommonDataKeys.SYMBOLS.getData(dataProvider)
+    if (!symbols.isNullOrEmpty()) {
+      val symbolTargets = symbolDocumentationTargets(project, symbols)
+      if (symbolTargets.isNotEmpty()) {
+        return symbolTargets
       }
     }
     val target = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)

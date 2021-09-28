@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -80,6 +81,14 @@ interface InlayHintsProvider<T : Any> {
    * Used for persisting settings.
    */
   val key: SettingsKey<T>
+
+  @JvmDefault
+  val description: String?
+    get() {
+      val path = "inlayProviders/" + key.id + "/description.html"
+      val stream = javaClass.classLoader.getResourceAsStream(path)
+      return if (stream != null) ResourceUtil.loadText(stream) else null
+    }
 
   /**
    * Text, that will be used in the settings as a preview.

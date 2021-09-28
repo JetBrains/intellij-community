@@ -126,6 +126,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
         super.visitCodeBlock(block);
         Set<PsiVariable> declared = getDeclaredVariables(block);
+        if (declared.isEmpty()) return;
         PsiElement anchor = block;
         if (block.getParent() instanceof PsiSwitchBlock) {
           anchor = block.getParent();

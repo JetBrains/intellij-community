@@ -249,6 +249,8 @@
 
     <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
 
+    <extensionPoint name="baseDirectorySuggester" interface="com.intellij.openapi.project.BaseDirectorySuggester" dynamic="true"/>
+
     <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
 
@@ -445,8 +447,6 @@
 
     <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
     <extensionPoint name="commandLineCustomHandler" interface="com.intellij.ide.CommandLineCustomHandler" dynamic="true"/>
-
-    <extensionPoint name="pluginHostAuthContributor" interface="com.intellij.ide.plugins.auth.PluginHostAuthContributor" dynamic="true"/>
 
     <extensionPoint name="recoveryAction"
                     interface="com.intellij.ide.actions.cache.RecoveryAction"

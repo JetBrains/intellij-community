@@ -712,6 +712,8 @@
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
         <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
+        <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
+        <add-to-group group-id="EditorPopupMenu3"/>
       </group>
     </group>
 

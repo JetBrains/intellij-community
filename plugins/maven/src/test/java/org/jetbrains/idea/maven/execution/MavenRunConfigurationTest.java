@@ -17,13 +17,19 @@ package org.jetbrains.idea.maven.execution;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.testFramework.JavaProjectTestCase;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MavenRunConfigurationTest extends JavaProjectTestCase {
   @Override
@@ -97,5 +103,30 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     cfg.apply();
 
     assertEquals(profilesMap, cfg.getParameters().getProfilesMap());
+  }
+
+  public void testDefaultMavenRunConfigurationParameters() throws ExecutionException {
+    MavenRunnerSettings mavenRunnerSettings = new MavenRunnerSettings();
+    mavenRunnerSettings.setJreName(MavenRunnerSettings.USE_PROJECT_JDK);
+
+    MavenRunnerParameters mavenRunnerParameters = new MavenRunnerParameters();
+    mavenRunnerParameters.setGoals(List.of("clean"));
+    mavenRunnerParameters.setWorkingDirPath("workingDirPath");
+
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(myProject)
+      .createConfiguration("name", MavenRunConfigurationType.class);
+
+    MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
+    runConfiguration.getSettings().setRunnerSettings(mavenRunnerSettings);
+    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
+    JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
+
+    Assert.assertFalse(parameters.getProgramParametersList().hasParameter("--non-recursive"));
+    Assert.assertFalse(parameters.getProgramParametersList().hasParameter("-N"));
+    Assert.assertTrue(parameters.getProgramParametersList().hasParameter(mavenRunnerParameters.getGoals().get(0)));
+    String pathValue = parameters.getVMParametersList().getPropertyValue("maven.multiModuleProjectDirectory");
+    Assert.assertNotNull(pathValue);
+    Assert.assertTrue(pathValue.endsWith(mavenRunnerParameters.getWorkingDirPath()));
+    Assert.assertTrue(parameters.getVMParametersList().hasProperty("maven.home"));
   }
 }

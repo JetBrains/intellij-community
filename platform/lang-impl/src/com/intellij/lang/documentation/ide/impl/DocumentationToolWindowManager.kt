@@ -67,6 +67,13 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   /**
    * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
    */
+  fun hasVisiblePreview(): Boolean {
+    return getVisiblePreviewContent() != null
+  }
+
+  /**
+   * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
+   */
   fun focusVisiblePreview(): Boolean {
     val content = getVisiblePreviewContent()?.content ?: return false
     contentManager.requestFocus(content, false)

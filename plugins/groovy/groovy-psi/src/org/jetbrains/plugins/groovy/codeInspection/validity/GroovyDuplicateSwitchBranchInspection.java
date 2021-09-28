@@ -15,20 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.validity;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
 
@@ -45,20 +44,21 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    @Override
-    public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
-      super.visitSwitchStatement(grSwitchStatement);
+    private void visitSwitchElement(@NotNull GrSwitchElement switchElement) {
       final Set<GrExpression> duplicateExpressions = new HashSet<>();
-      final GrCaseLabel[] labels = collectCaseLabels(grSwitchStatement);
-      for (int i = 0; i < labels.length; i++) {
-        final GrCaseLabel label1 = labels[i];
-        final GrExpression expression1 = getExpressionForCaseLabel(label1);
-        for (int j = i + 1; j < labels.length; j++) {
-          final GrCaseLabel label2 = labels[j];
-          final GrExpression expression2 = getExpressionForCaseLabel(label2);
-          if (EquivalenceChecker.expressionsAreEquivalent(expression1, expression2)) {
-            duplicateExpressions.add(expression1);
-            duplicateExpressions.add(expression2);
+      final GrCaseSection[] sections = switchElement.getCaseSections();
+      final List<GrExpression> allMatchingExpressions = new ArrayList<>(sections.length);
+      for (final GrCaseSection label : sections) {
+        final GrExpression[] expressions = label.getExpressions();
+        allMatchingExpressions.addAll(Arrays.asList(expressions));
+      }
+      for (int i = 0; i < allMatchingExpressions.size(); ++i) {
+        for (int j = i + 1; j < allMatchingExpressions.size(); ++j) {
+          // this has complexity O(n^2). I assume there are not so many matching expressions,
+          // so we may be happy with this straightforward algorithm
+          if (EquivalenceChecker.expressionsAreEquivalent(allMatchingExpressions.get(i), allMatchingExpressions.get(j))) {
+            duplicateExpressions.add(allMatchingExpressions.get(i));
+            duplicateExpressions.add(allMatchingExpressions.get(j));
           }
         }
       }
@@ -66,35 +66,18 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
         registerError(duplicateExpression);
       }
     }
-  }
 
-  private static GrCaseLabel[] collectCaseLabels(final GrSwitchStatement containingStatelent) {
-    final Set<GrCaseLabel> labels = new HashSet<>();
-    final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitCaseLabel(@NotNull GrCaseLabel grCaseLabel) {
-        super.visitCaseLabel(grCaseLabel);
-        labels.add(grCaseLabel);
-      }
 
-      @Override
-      public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
-        if (containingStatelent.equals(grSwitchStatement)) {
-          super.visitSwitchStatement(grSwitchStatement);
-        }
-      }
-    };
-    containingStatelent.accept(visitor);
-    return labels.toArray(new GrCaseLabel[0]);
-  }
-
-  @Nullable
-  private static GrExpression getExpressionForCaseLabel(GrCaseLabel label) {
-    for (PsiElement child : label.getChildren()) {
-      if (child instanceof GrExpression) {
-        return (GrExpression) child;
-      }
+    @Override
+    public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+      super.visitSwitchExpression(switchExpression);
+      visitSwitchElement(switchExpression);
     }
-    return null;
+
+    @Override
+    public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
+      super.visitSwitchStatement(grSwitchStatement);
+      visitSwitchElement(grSwitchStatement);
+    }
   }
 }

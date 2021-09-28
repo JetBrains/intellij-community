@@ -7,12 +7,18 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.yield
 
 internal class ProjectPopupContext(val project: Project, val editor: Editor?) : PopupContext {
+
+  override fun preparePopup(builder: ComponentPopupBuilder) {
+    builder.setRequestFocus(true)
+    builder.setCancelOnClickOutside(true)
+  }
 
   private fun dataContext(): DataContext {
     EDT.assertIsEdt()

@@ -21,10 +21,12 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 /**
- * This process handler supports the "soft-kill" feature (see {@link KillableProcessHandler}).
- * At first "stop" button send SIGINT signal to process, if it still hangs user can terminate it recursively with SIGKILL signal.
+ * This process handler supports the "soft-kill" / "graceful termination" feature.
+ * For example, a process is terminated gracefully ({@link #destroyProcessGracefully()}) when "Stop" button is clicked for the first time,
+ * and the process is terminated forcibly ({@link #killProcess()}) on subsequent clicks.
  * <p>
- * Soft kill works on Unix, and also on Windows if a mediator process was used.
+ * On Unix, graceful termination corresponds to sending SIGINT signal.
+ * On Windows, graceful termination executes GenerateConsoleCtrlEvent under the hood.
  */
 public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
@@ -235,7 +237,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       }
     }
     else if (SystemInfo.isUnix) {
-      return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+      if (shouldDestroyProcessRecursively()) {
+        return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+      }
+      return UnixProcessManager.sendSignal(UnixProcessManager.getProcessId(myProcess), UnixProcessManager.SIGINT) == 0;
     }
     return false;
   }

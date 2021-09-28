@@ -3,12 +3,10 @@ package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
-import com.intellij.ide.bookmark.Bookmark
-import com.intellij.ide.bookmark.BookmarkBundle
-import com.intellij.ide.bookmark.BookmarkGroup
-import com.intellij.ide.bookmark.BookmarksListener
+import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
@@ -22,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.preview.DescriptorPreview
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
@@ -55,13 +54,19 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
 
   val selectedNodes
-    get() = tree.selectionPaths?.map { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
+    get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
 
   private val leadSelectionNode
     get() = TreeUtil.getAbstractTreeNode(tree.leadSelectionPath)
 
-  private val selectedSnapshot
-    get() = (selectedNode as? BookmarkNode)?.run { bookmarkGroup?.let { GroupBookmarkSnapshot(it, value) } }
+  private val selectedOccurrence
+    get() = (selectedNode as? BookmarkNode)?.bookmarkOccurrence
+
+  private val previousOccurrence
+    get() = selectedOccurrence?.previous { it.bookmark is LineBookmark }
+
+  private val nextOccurrence
+    get() = selectedOccurrence?.next { it.bookmark is LineBookmark }
 
 
   override fun dispose() = preview.close()
@@ -69,7 +74,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun getData(dataId: String): Any? {
     return when {
       PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable?>())
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable>())
       else -> null
     }
   }
@@ -77,13 +82,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.action.text")
   override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.action.text")
 
-  override fun hasNextOccurence() = selectedSnapshot?.next != null
-  override fun hasPreviousOccurence() = selectedSnapshot?.previous != null
+  override fun hasNextOccurence() = nextOccurrence != null
+  override fun hasPreviousOccurence() = previousOccurrence != null
 
-  override fun goNextOccurence() = selectedSnapshot?.next?.let { go(it) }
-  override fun goPreviousOccurence() = selectedSnapshot?.previous?.let { go(it) }
-  private fun go(pair: Pair<BookmarkGroup, Bookmark>): OccurenceNavigator.OccurenceInfo? {
-    TreeUtil.promiseSelect(tree, GroupBookmarkVisitor(pair.first, pair.second))
+  override fun goNextOccurence() = nextOccurrence?.let { go(it) }
+  override fun goPreviousOccurence() = previousOccurrence?.let { go(it) }
+  private fun go(occurrence: BookmarkOccurrence): OccurenceNavigator.OccurenceInfo? {
+    TreeUtil.promiseSelect(tree, GroupBookmarkVisitor(occurrence.group, occurrence.bookmark))
     return null
   }
 
@@ -164,12 +169,22 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     firstComponent = panel
 
     tree.isRootVisible = false
-    tree.showsRootHandles = !isPopup
+    tree.showsRootHandles = true // TODO: fix auto-expand
+    if (!isPopup) {
+      val handler = DragAndDropHandler(this)
+      DnDSupport.createBuilder(tree)
+        .setDisposableParent(this)
+        .setBeanProvider(handler::createBean)
+        .setDropHandlerWithResult(handler)
+        .setTargetChecker(handler)
+        .install()
+    }
 
     tree.emptyText.initialize(tree)
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { selectionAlarm.cancelAndRequest() }
 
+    TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)

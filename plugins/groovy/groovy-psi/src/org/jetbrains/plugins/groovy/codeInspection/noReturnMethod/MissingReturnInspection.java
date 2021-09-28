@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -20,11 +20,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeYieldInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -164,8 +166,9 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
           sometimesHaveReturn.set(true);
           return true;
         }
-
-        alwaysHaveReturn.set(false);
+        if (!(instruction instanceof MaybeYieldInstruction) && !(instruction.getElement() instanceof GrYieldStatement)) {
+          alwaysHaveReturn.set(false);
+        }
         return true;
       }
     });

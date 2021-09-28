@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceArgumentAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
@@ -737,6 +738,9 @@ public class CFGBuilder {
       JavaResolveResult resolveResult = methodRef.advancedResolve(false);
       PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
       if (method != null && !method.isVarArgs()) {
+        if (argCount == 1) {
+          add(new ResultOfInstruction(new JavaMethodReferenceArgumentAnchor(methodRef)));
+        }
         if (processKnownMethodReference(argCount, methodRef, method)) return this;
         int expectedArgCount = method.getParameterList().getParametersCount();
         boolean pushQualifier = true;

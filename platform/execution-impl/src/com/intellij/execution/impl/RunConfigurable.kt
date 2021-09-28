@@ -534,7 +534,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
   }
 
-  fun updateActiveConfigurationFromSelected() {
+  open fun updateActiveConfigurationFromSelected() {
     val selectedConfigurable = selectedConfigurable
     if (selectedConfigurable is SingleConfigurationConfigurable<*>) {
       runManager.selectedConfiguration = selectedConfigurable.settings

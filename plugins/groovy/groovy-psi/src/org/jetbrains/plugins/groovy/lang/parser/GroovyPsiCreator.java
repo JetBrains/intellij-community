@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumen
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrSpreadArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
@@ -106,7 +105,6 @@ public final class GroovyPsiCreator {
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
     if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
     if (elem == SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
-    if (elem == CASE_LABEL) return new GrCaseLabelImpl(node);
     if (elem == CASE_SECTION) return new GrCaseSectionImpl(node);
     if (elem == VARIABLE_DECLARATION) return new GrVariableDeclarationImpl(node);
     if (elem == TUPLE) return new GrTupleImpl(node);
@@ -164,6 +162,7 @@ public final class GroovyPsiCreator {
 
     //Branch statements
     if (elem == RETURN_STATEMENT) return new GrReturnStatementImpl(node);
+    if (elem == YIELD_STATEMENT) return new GrYieldStatementImpl(node);
     if (elem == THROW_STATEMENT) return new GrThrowStatementImpl(node);
     if (elem == ASSERT_STATEMENT) return new GrAssertStatementImpl(node);
     if (elem == BREAK_STATEMENT) return new GrBreakStatementImpl(node);
@@ -207,6 +206,7 @@ public final class GroovyPsiCreator {
     if (elem == ARRAY_INITIALIZER) return new GrArrayInitializerImpl(node);
     if (elem == LAMBDA_EXPRESSION) return new GrLambdaExpressionImpl(node);
     if (elem == EXPRESSION_LAMBDA_BODY) return new GrExpressionLambdaBodyImpl(node);
+    if (elem == SWITCH_EXPRESSION) return new GrSwitchExpressionImpl(node);
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);

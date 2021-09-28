@@ -32,8 +32,8 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
    }
  }
 
-  override fun addEditRunConfigurationItem(): Boolean {
-    return true
+  override fun getEditRunConfigurationAction(): AnAction? {
+    return ActionManager.getInstance().getAction(RunToolbarEditConfigurationAction.ACTION_ID)
   }
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {

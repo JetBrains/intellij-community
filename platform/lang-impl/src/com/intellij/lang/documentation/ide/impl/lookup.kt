@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.EmptyDocumentationTarget
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.openapi.application.readAction
@@ -19,16 +18,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 internal fun CoroutineScope.updateFromLookup(browser: DocumentationBrowser, lookup: Lookup) {
   val documentationRequests = lookup.elementFlow().asRequestFlow(lookup)
-  launch(Dispatchers.Default) {
-    documentationRequests.collectLatest {
-      val request = it ?: DocumentationRequest(EmptyDocumentationTarget, EmptyDocumentationTarget.presentation)
-      browser.resetBrowser(request)
-    }
-  }
+  updateFromRequests(documentationRequests, browser)
 }
 
 internal fun autoShowRequestFlow(lookup: Lookup): Flow<DocumentationRequest>? {
