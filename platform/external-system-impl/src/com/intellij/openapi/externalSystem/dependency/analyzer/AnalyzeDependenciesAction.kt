@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
 class AnalyzeDependenciesAction : AnAction(), DumbAware {
@@ -29,5 +30,6 @@ class AnalyzeDependenciesAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.icon = AllIcons.Actions.Find
     e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
+    e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
   }
 }
