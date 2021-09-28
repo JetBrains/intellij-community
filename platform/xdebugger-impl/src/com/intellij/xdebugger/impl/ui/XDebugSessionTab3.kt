@@ -145,7 +145,10 @@ class XDebugSessionTab3(
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    mySingleContentSupplier = RunTabSupplier(toolbar)
+    mySingleContentSupplier = object: RunTabSupplier(toolbar) {
+      override fun getMainToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
+      override fun getContentToolbarPlace() = ActionPlaces.DEBUGGER_TOOLBAR
+    }
   }
 
   override fun initFocusingVariablesFromFramesView() {

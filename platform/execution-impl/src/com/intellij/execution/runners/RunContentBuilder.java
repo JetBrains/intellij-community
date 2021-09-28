@@ -103,6 +103,18 @@ public final class RunContentBuilder extends RunTab {
         public @NotNull List<AnAction> getContentActions() {
           return List.of(myUi.getOptions().getLayoutActions());
         }
+
+        @NotNull
+        @Override
+        public String getMainToolbarPlace() {
+          return ActionPlaces.RUNNER_TOOLBAR;
+        }
+
+        @NotNull
+        @Override
+        public String getContentToolbarPlace() {
+          return ActionPlaces.RUNNER_TOOLBAR;
+        }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);

@@ -126,7 +126,7 @@ internal class SingleContentLayout(
     assert(toolbars.isEmpty())
     supplier.getToolbarActions()?.let { mainActionGroup ->
       toolbars[ToolbarType.MAIN] = createToolbar(
-        "MainSingleContentToolbar",
+        supplier.getMainToolbarPlace(),
         mainActionGroup,
         content.component
       )
@@ -140,7 +140,7 @@ internal class SingleContentLayout(
       contentActions.add(MyInvisibleAction())
 
       toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
-        "CloseSingleContentGroup",
+        supplier.getContentToolbarPlace(),
         contentActions,
         content.component
       ).apply {
@@ -334,7 +334,7 @@ internal class SingleContentLayout(
 
       val tabList = ActionManager.getInstance().getAction("TabList")
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
-      popupToolbar = createToolbar("TabAdapterGroup", tabListGroup, this).apply {
+      popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
         layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       }.component
