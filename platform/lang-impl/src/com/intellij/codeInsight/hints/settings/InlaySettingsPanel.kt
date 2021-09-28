@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.hints.settings.language.CaseListPanel
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.createEditor
@@ -76,6 +75,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is String -> textRenderer.append(item)
           is Language -> textRenderer.append(item.displayName)
           is InlayProviderSettingsModel -> textRenderer.append(item.name)
+          is ImmediateConfigurable.Case -> textRenderer.append(item.name)
         }
       }
     }, root)
@@ -103,6 +103,16 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     val node = CheckedTreeNode(model)
     node.isChecked = model.isEnabled
     langNode.add(node)
+    model.cases.forEach {
+      val caseNode = object: CheckedTreeNode(it) {
+        override fun setChecked(checked: Boolean) {
+          super.setChecked(checked)
+          it.value = checked
+        }
+      }
+      caseNode.isChecked = it.value
+      node.add(caseNode)
+    }
     return node
   }
 
@@ -114,7 +124,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
         val htmlBody = UIUtil.toHtml(StringUtil.notNullize(item.description))
         rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
-        rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
         if (item.previewText != null) {
@@ -138,43 +147,59 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   fun reset() {
-    reset(tree.model.root as DefaultMutableTreeNode)
+    reset(tree.model.root as CheckedTreeNode)
   }
 
-  private fun reset(node: DefaultMutableTreeNode) {
-    if (node.userObject is InlayProviderSettingsModel) {
-      val model = node.userObject as InlayProviderSettingsModel
-      if (model.isEnabled != (node as CheckedTreeNode).isChecked) {
-        node.isChecked = model.isEnabled
-        (tree.model as DefaultTreeModel).nodeChanged(node)
+  private fun reset(node: CheckedTreeNode) {
+    when (node.userObject) {
+      is InlayProviderSettingsModel -> {
+        val model = node.userObject as InlayProviderSettingsModel
+        if (model.isEnabled != node.isChecked) {
+          node.isChecked = model.isEnabled
+          (tree.model as DefaultTreeModel).nodeChanged(node)
+        }
+        model.reset()
       }
-      model.reset()
+      is ImmediateConfigurable.Case -> {
+        val case = node.userObject as ImmediateConfigurable.Case
+        if (case.value != node.isChecked) {
+          node.isChecked = case.value
+          (tree.model as DefaultTreeModel).nodeChanged(node)
+        }
+      }
     }
-    node.children().toList().forEach { reset(it as DefaultMutableTreeNode) }
+    node.children().toList().forEach { reset(it as CheckedTreeNode) }
   }
 
   fun apply() {
-    apply(tree.model.root as DefaultMutableTreeNode)
+    apply(tree.model.root as CheckedTreeNode)
   }
 
-  private fun apply(node: DefaultMutableTreeNode) {
-    if (node.userObject is InlayProviderSettingsModel) {
-      val model = node.userObject as InlayProviderSettingsModel
-      model.isEnabled = (node as CheckedTreeNode).isChecked
-      model.apply()
+  private fun apply(node: CheckedTreeNode) {
+    when (node.userObject) {
+      is InlayProviderSettingsModel -> {
+        val model = node.userObject as InlayProviderSettingsModel
+        model.isEnabled = node.isChecked
+        model.apply()
+      }
+      is ImmediateConfigurable.Case -> {
+        (node.userObject as ImmediateConfigurable.Case).value = node.isChecked
+      }
     }
-    node.children().toList().forEach { apply(it as DefaultMutableTreeNode) }
+    node.children().toList().forEach { apply(it as CheckedTreeNode) }
   }
 
   fun isModified(): Boolean {
-    return isModified(tree.model.root as DefaultMutableTreeNode)
+    return isModified(tree.model.root as CheckedTreeNode)
   }
 
-  private fun isModified(node: DefaultMutableTreeNode): Boolean {
-    if (node.userObject is InlayProviderSettingsModel) {
-      val model = node.userObject as InlayProviderSettingsModel
-      if (((node as CheckedTreeNode).isChecked != model.isEnabled) || model.isModified()) return true
+  private fun isModified(node: CheckedTreeNode): Boolean {
+    when (node.userObject) {
+      is InlayProviderSettingsModel -> {
+        val model = node.userObject as InlayProviderSettingsModel
+        if ((node.isChecked != model.isEnabled) || model.isModified()) return true
+      }
     }
-    return node.children().toList().any { isModified(it as DefaultMutableTreeNode) }
+    return node.children().toList().any { isModified(it as CheckedTreeNode) }
   }
 }
