@@ -334,12 +334,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   private @Nullable Resource doFindResource(@NotNull String name) {
     String canonicalPath = toCanonicalPath(name);
     Resource resource = classPath.findResource(canonicalPath);
-    if (resource == null && canonicalPath.startsWith("/")) {
-      //noinspection SpellCheckingInspection
-      if (!canonicalPath.startsWith("/org/bridj/")) {
-        logError("Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
-      }
-      resource = classPath.findResource(canonicalPath.substring(1));
+    if (resource == null && canonicalPath.startsWith("/") && classPath.findResource(canonicalPath.substring(1)) != null) {
+      logError("Calling `ClassLoader#getResource` with leading slash doesn't work; strip", new IllegalArgumentException(name));
     }
     return resource;
   }
