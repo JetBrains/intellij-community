@@ -254,7 +254,9 @@ abstract class ProductProperties {
   /**
    * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
-  boolean addRemoteDevelopmentLibraries = true
+  boolean addRemoteDevelopmentLibraries = {
+    return productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  }
 
   /**
    * Build steps which are always skipped for this product. Can be extended via {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} but not overridden.
