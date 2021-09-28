@@ -985,6 +985,23 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/constantChanged")
+            public abstract static class ConstantChanged extends AbstractIncrementalJvmJpsTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/constantChanged/org")
+                public static class Org extends AbstractIncrementalJvmJpsTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                    }
+
+                    @TestMetadata("jetbrains")
+                    public void testJetbrains() throws Exception {
+                        runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/org/jetbrains/");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/samConversions")
             public static class SamConversions extends AbstractIncrementalJvmJpsTest {
                 private void runTest(String testDataFilePath) throws Exception {
