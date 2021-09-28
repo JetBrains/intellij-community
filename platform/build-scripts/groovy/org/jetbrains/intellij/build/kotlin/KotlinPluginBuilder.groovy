@@ -256,7 +256,7 @@ class KotlinPluginBuilder {
       withCustomVersion(new PluginLayout.VersionEvaluator() {
         @Override
         String evaluate(Path pluginXml, String buildNumber, BuildContext context) {
-          Matcher ijBuildNumber = Pattern.compile("^(\\d+)\\.(\\d+(?:\\.\\d+)?)\$").matcher(buildNumber)
+          Matcher ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|SNAPSHOT.*)\$").matcher(buildNumber)
           if (ijBuildNumber.matches()) {
             String major = ijBuildNumber.group(1)
             String minor = ijBuildNumber.group(2)
