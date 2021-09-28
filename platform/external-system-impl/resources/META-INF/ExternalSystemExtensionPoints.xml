@@ -81,5 +81,8 @@
     <extensionPoint qualifiedName="com.intellij.externalSystemCrcCalculator"
                     interface="com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator"
                     dynamic="true" />
+    <extensionPoint name="externalSystemDependencyAnalyzer"
+                    interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

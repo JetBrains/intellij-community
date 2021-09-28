@@ -49,6 +49,10 @@
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
 
+    <!--Dependency Analyzer-->
+    <externalSystemDependencyAnalyzer
+      implementation="com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependencyAnalyzerExtension"/>
+
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>

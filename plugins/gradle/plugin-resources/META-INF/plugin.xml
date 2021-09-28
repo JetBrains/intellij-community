@@ -194,6 +194,14 @@
       <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="last"/>
     </group>
 
+    <reference id="ExternalSystem.AnalyzeDependencies">
+      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="after"
+                    relative-to-action="Gradle.RefreshDependencies"/>
+      <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="after"
+                    relative-to-action="ExternalSystem.SelectProjectDataToImport"/>
+    </reference>
+
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 
     <action id="Gradle.ImportExternalProject" class="org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction" icon="GradleIcons.Gradle">
