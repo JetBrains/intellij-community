@@ -37,7 +37,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
 
     if (systemId.id in disabledNotifications) return
     if (projectId in notifiedNotifications) {
-      LOG.debug("Unlinked ${projectId.readableName} project notification is already notified")
+      LOG.debug("Unlinked ${projectId.debugName} project notification is already notified")
       return
     }
 
@@ -73,7 +73,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
 
     notification.notify(project)
 
-    LOG.debug("Notified unlinked ${projectId.readableName} project notification")
+    LOG.debug("Notified unlinked ${projectId.debugName} project notification")
   }
 
   @TestOnly
