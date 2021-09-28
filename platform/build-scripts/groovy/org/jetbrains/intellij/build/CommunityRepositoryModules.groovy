@@ -197,7 +197,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.grazie.yaml")
     },
     plugin("intellij.java.rareRefactorings"),
-    plugin("intellij.toml")
+    plugin("intellij.toml") {
+      withModule("intellij.toml.core")
+    }
   ]
 
   static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
