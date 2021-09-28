@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 class ReplaceArrayEqualityOpWithArraysEqualsInspection : AbstractApplicabilityBasedInspection<KtBinaryExpression>(
     KtBinaryExpression::class.java

@@ -87,7 +87,7 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
                     try {
                         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
                         val facetSettings = facet.configuration.settings
-                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm18)
+                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm8)
                         (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = "1.8"
                     } finally {
                         modelsProvider.dispose()
