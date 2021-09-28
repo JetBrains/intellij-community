@@ -49,6 +49,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
     return factory.createFileFromText("dummy", fileType, document.text)
   }
 
+  abstract val description: String?
+
   /**
    * Text of hints preview. If null, won't be shown.
    */

@@ -9,13 +9,16 @@ import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
-import javax.swing.BoxLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -26,11 +29,9 @@ import javax.swing.tree.DefaultTreeModel
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private val tree: CheckboxTree
-  private val rightPanel: JPanel = JPanel()
+  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0"))
 
   init {
-    rightPanel.layout = BoxLayout(rightPanel, BoxLayout.Y_AXIS)
-
     val settings = InlayHintsSettings.instance()
     val root = CheckedTreeNode()
     var nodeToSelect: CheckedTreeNode? = null
@@ -111,13 +112,15 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       is InlayProviderSettingsModel -> {
         InlayHintsSettings.instance().saveLastViewedProviderId(getProviderId(treeNode))
 
-        rightPanel.add(JLabel(item.name))
+        val htmlBody = UIUtil.toHtml(StringUtil.notNullize(item.description))
+        rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
         rightPanel.add(CaseListPanel(item.cases, item.onChangeListener!!))
+        item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
         if (item.previewText != null) {
           val editor = createEditor(getModelLanguage(treeNode), project) {}
           editor.text = item.previewText!!
-          rightPanel.add(editor)
+          rightPanel.add(editor, "gaptop 10")
         }
       }
     }

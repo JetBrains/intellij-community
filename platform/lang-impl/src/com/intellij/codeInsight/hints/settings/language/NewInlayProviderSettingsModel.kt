@@ -27,6 +27,9 @@ class NewInlayProviderSettingsModel<T : Any>(
   override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
     providerWithSettings.provider.createFile(project, fileType, document)
 
+  override val description: String?
+    get() = providerWithSettings.provider.description
+
   override val component by lazy {
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }

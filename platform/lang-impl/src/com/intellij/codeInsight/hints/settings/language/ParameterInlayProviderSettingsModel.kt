@@ -45,6 +45,9 @@ class ParameterInlayProviderSettingsModel(
 
   override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
 
+  override val description: String?
+    get() = null
+
   override fun toString(): String = name
 
   override fun apply() {
