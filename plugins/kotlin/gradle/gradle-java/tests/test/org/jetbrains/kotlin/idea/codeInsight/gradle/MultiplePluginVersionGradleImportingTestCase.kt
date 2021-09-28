@@ -56,7 +56,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     override fun setUp() {
         if (kotlinPluginVersionString == masterKotlinPluginVersion) {
-            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+            assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
         setupSystemProperties()
