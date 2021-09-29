@@ -854,7 +854,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (myEditConfigOnly || myRangeHighlighters.isEmpty()) {
       return;
     }
-    // retrieval of editor needs to be outside of invokeLater(), otherwise the editor might have already changed.
+    // retrieval of editor needs to be outside invokeLater(), otherwise the editor might have already changed.
     final Editor editor = myEditor;
     if (editor == null) {
       return;
@@ -884,7 +884,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return;
     }
     final Document document = editor.getDocument();
-    final PsiFile file = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
+    final PsiFile file = ReadAction.nonBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(document)).executeSynchronously();
     if (file == null) {
       return;
     }
@@ -1206,11 +1206,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     if (profile != null) {
       final Document document = textField.getDocument();
-      final String pattern = ReadAction.compute(() -> {
+      final String pattern = ReadAction.nonBlocking(() -> {
         final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         assert file != null;
         return profile.getCodeFragmentText(file);
-      });
+      }).executeSynchronously();
       return pattern.isEmpty() ? textField.getText() : pattern;
     }
     return textField.getText();
