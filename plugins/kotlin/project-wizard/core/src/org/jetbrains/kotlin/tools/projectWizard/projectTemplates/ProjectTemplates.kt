@@ -71,7 +71,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     companion object {
         val ALL = listOf(
             ConsoleApplicationProjectTemplate,
-            MultiplatformMobileApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
@@ -271,28 +270,6 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
                 )
             )
         )
-}
-
-object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplicationProjectTemplateBase() {
-    override val id = "multiplatformMobileApplication"
-
-    override fun androidAppModule(shared: Module) = Module(
-        "androidApp",
-        AndroidSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
-
-    override fun iosAppModule(shared: Module) = Module(
-        "iosApp",
-        IOSSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
 }
 
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
