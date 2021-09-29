@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.HTML_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
@@ -65,10 +67,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     }
 
     val action = intentionAction as IntentionAction
-    if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
-      select(NO_PREVIEW)
-      return
-    }
 
     component.startLoading()
 
@@ -80,15 +78,25 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  private fun renderPreview(result: IntentionPreviewResult?) {
-    val editors = IntentionPreviewModel.createEditors(project, result)
-    if (editors.isEmpty()) {
-      select(NO_PREVIEW)
-      return
-    }
+  private fun renderPreview(result: IntentionPreviewContent) {
+    when (result) {
+      is IntentionPreviewDiffResult -> {
+        val editors = IntentionPreviewModel.createEditors(project, result)
+        if (editors.isEmpty()) {
+          select(NO_PREVIEW)
+          return
+        }
 
-    editorsToRelease.addAll(editors)
-    select(index, editors)
+        editorsToRelease.addAll(editors)
+        select(index, editors)
+      }
+      is IntentionPreviewHtmlResult -> {
+        select(HTML_PREVIEW, html = result.html)
+      }
+      else -> {
+        select(NO_PREVIEW)
+      }
+    }
   }
 
   fun setup(updateAdvertiser: (String) -> Unit, parentIndex: Int) {
@@ -109,9 +117,10 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     show = !show
   }
 
-  private fun select(index: Int, editors: List<EditorEx> = emptyList()) {
+  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: String = "") {
     component.stopLoading()
     component.editors = editors
+    component.htmlContent.text = html
     component.multiPanel.select(index, true)
 
     val size = component.preferredSize
