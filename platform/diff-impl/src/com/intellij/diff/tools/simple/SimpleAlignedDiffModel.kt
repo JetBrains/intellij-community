@@ -33,9 +33,11 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private val inlayHighlighters = mutableMapOf<Side, MutableList<RangeHighlighter>>()
 
   init {
-    val inlayListener = MyInlayModelListener()
-    viewer.getEditor(Side.LEFT).inlayModel.addListener(inlayListener, viewer)
-    viewer.getEditor(Side.RIGHT).inlayModel.addListener(inlayListener, viewer)
+    if (viewer.needAlignChanges()) {
+      val inlayListener = MyInlayModelListener()
+      viewer.getEditor(Side.LEFT).inlayModel.addListener(inlayListener, viewer)
+      viewer.getEditor(Side.RIGHT).inlayModel.addListener(inlayListener, viewer)
+    }
   }
 
   fun alignChange(change: SimpleDiffChange) {
