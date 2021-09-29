@@ -8,15 +8,26 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
 interface ReadWriteAccessChecker {
-    fun readWriteAccessWithFullExpressionByResolve(assignment: KtBinaryExpression): Pair<ReferenceAccess, KtExpression>? = null
+    fun readWriteAccessWithFullExpressionByResolve(assignment: KtBinaryExpression): Pair<ReferenceAccess, KtExpression>?
 
+    @Suppress("DEPRECATION")
     fun readWriteAccessWithFullExpression(
         targetExpression: KtExpression,
         useResolveForReadWrite: Boolean
     ): Pair<ReferenceAccess, KtExpression> =
-        targetExpression.readWriteAccessWithFullExpression(useResolveForReadWrite, ::readWriteAccessWithFullExpressionByResolve)
+        if (useResolveForReadWrite)
+            targetExpression.readWriteAccessWithFullExpressionWithPossibleResolve(::readWriteAccessWithFullExpressionByResolve)
+        else
+            targetExpression.readWriteAccessWithFullExpressionWithPossibleResolve(readWriteAccessWithFullExpressionByResolve = { null })
 
     companion object {
         fun getInstance(): ReadWriteAccessChecker = service()
     }
 }
+
+fun KtExpression.readWriteAccessWithFullExpression(useResolveForReadWrite: Boolean): Pair<ReferenceAccess, KtExpression> =
+    ReadWriteAccessChecker.getInstance().readWriteAccessWithFullExpression(this, useResolveForReadWrite)
+
+fun KtExpression.readWriteAccess(useResolveForReadWrite: Boolean): ReferenceAccess =
+    ReadWriteAccessChecker.getInstance().readWriteAccessWithFullExpression(this, useResolveForReadWrite).first
+
