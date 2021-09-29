@@ -3,14 +3,19 @@ package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
-import com.intellij.collaboration.auth.services.OAuthPKCERequestBase
+import com.intellij.collaboration.auth.services.OAuthRequest
+import com.intellij.collaboration.auth.services.PkceUtils
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
 
-internal class GHOAuthRequest : OAuthPKCERequestBase<Credentials>() {
+internal class GHOAuthRequest : OAuthRequest<Credentials> {
   private val port: Int get() = BuiltInServerManager.getInstance().port
+
+  private val codeVerifier = PkceUtils.generateCodeVerifier()
+
+  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, false)
 
   override val authorizationCodeUrl: Url
     get() = Urls.newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/${GHOAuthService.instance.name}/authorization_code")
@@ -18,7 +23,7 @@ internal class GHOAuthRequest : OAuthPKCERequestBase<Credentials>() {
   override val credentialsAcquirer: OAuthCredentialsAcquirer<Credentials> = GHOAuthCredentialsAcquirer(codeVerifier)
 
   override val authUrlWithParameters: Url = AUTHORIZE_URL.addParameters(mapOf(
-    "code_challenge" to generateCodeChallenge(false),
+    "code_challenge" to codeChallenge,
     "callback_url" to authorizationCodeUrl.toExternalForm()
   ))
 

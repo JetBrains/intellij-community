@@ -3,22 +3,22 @@ package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.collaboration.auth.credentials.SimpleCredentials
-import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerBase
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 import com.intellij.util.Url
-import java.net.http.HttpHeaders
 
 internal class GHOAuthCredentialsAcquirer(
   private val codeVerifier: String
-) : OAuthCredentialsAcquirerBase<Credentials>() {
-  override fun getTokenUrlWithParameters(code: String): Url {
-    return ACCESS_TOKEN_URL.addParameters(mapOf(
+) : OAuthCredentialsAcquirer<Credentials> {
+  override fun acquireCredentials(code: String): OAuthCredentialsAcquirer.AcquireCredentialsResult<Credentials> {
+    val tokenUrl = ACCESS_TOKEN_URL.addParameters(mapOf(
       "code" to code,
       "code_verifier" to codeVerifier
     ))
-  }
 
-  override fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): Credentials {
-    return SimpleCredentials(responseHeaders.firstValue("X-OAuth-Token").get())
+    return OAuthCredentialsAcquirerHttp.requestToken(tokenUrl) { _, headers ->
+      SimpleCredentials(headers.firstValue("X-OAuth-Token").get())
+    }
   }
 
   companion object {

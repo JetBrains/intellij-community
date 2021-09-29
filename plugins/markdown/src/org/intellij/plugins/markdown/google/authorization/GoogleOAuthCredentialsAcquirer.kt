@@ -2,7 +2,8 @@
 package org.intellij.plugins.markdown.google.authorization
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerBase
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.apache.commons.lang.time.DateUtils
@@ -15,8 +16,15 @@ internal class GoogleOAuthCredentialsAcquirer(
   private val googleAppCred: GoogleCredentialUtils.GoogleAppCredentials,
   private val authorizationCodeUrl: Url,
   private val codeVerifier: String
-) : OAuthCredentialsAcquirerBase<GoogleCredentials>() {
-  override fun getTokenUrlWithParameters(code: String): Url = TOKEN_URI.addParameters(mapOf(
+) : OAuthCredentialsAcquirer<GoogleCredentials> {
+
+  override fun acquireCredentials(code: String): OAuthCredentialsAcquirer.AcquireCredentialsResult<GoogleCredentials> {
+    return OAuthCredentialsAcquirerHttp.requestToken(getTokenUrlWithParameters(code)) { body, headers ->
+      getCredentials(body, headers)
+    }
+  }
+
+  private fun getTokenUrlWithParameters(code: String): Url = TOKEN_URI.addParameters(mapOf(
     "client_id" to googleAppCred.clientId,
     "client_secret" to googleAppCred.clientSecret,
     "code" to code,
@@ -25,7 +33,7 @@ internal class GoogleOAuthCredentialsAcquirer(
     "redirect_uri" to authorizationCodeUrl.toExternalForm()
   ))
 
-  override fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): GoogleCredentials {
+  private fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): GoogleCredentials {
     val responseDateTime = getLocalDateTime(responseHeaders.firstValue("date").get())
     val responseData = with(jacksonMapper) {
       propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()

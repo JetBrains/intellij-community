@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.google.authorization
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerBase.Companion.postHttpResponse
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.openapi.components.Service
@@ -19,7 +19,7 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
   companion object {
     val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
 
-    fun getLocalDateTime(responseDate: String) =
+    fun getLocalDateTime(responseDate: String): Date =
       SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply { timeZone = TimeZone.getTimeZone("GMT") }.parse(responseDate)
   }
 
@@ -33,8 +33,7 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
     result.whenComplete { _, _ -> currentRequest.set(null) }
 
     try {
-      val refreshTokenUrl = refreshTokenRequest.refreshTokenUrlWithParameters.toExternalForm()
-      val response = postHttpResponse(refreshTokenUrl)
+      val response = OAuthCredentialsAcquirerHttp.requestToken(refreshTokenRequest.refreshTokenUrlWithParameters)
       val responseDateTime = getLocalDateTime(response.headers().firstValue("date").get())
 
       if (response.statusCode() == 200) {

@@ -2,7 +2,8 @@
 package org.intellij.plugins.markdown.google.authorization
 
 import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
-import com.intellij.collaboration.auth.services.OAuthPKCERequestBase
+import com.intellij.collaboration.auth.services.OAuthRequest
+import com.intellij.collaboration.auth.services.PkceUtils
 import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -11,8 +12,12 @@ import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
 
-internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleAppCredentials) : OAuthPKCERequestBase<GoogleCredentials>() {
+internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
   private val port: Int get() = BuiltInServerManager.getInstance().port
+
+  private val codeVerifier = PkceUtils.generateCodeVerifier()
+
+  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, true)
 
   override val authorizationCodeUrl: Url
     get() = Urls.newFromEncoded("http://localhost:${port}/${RestService.PREFIX}/${service<GoogleOAuthService>().name}/authorization_code")
@@ -23,7 +28,7 @@ internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleApp
   override val authUrlWithParameters: Url = AUTHORIZE_URI.addParameters(mapOf(
     "scope" to scope,
     "response_type" to responseType,
-    "code_challenge" to generateCodeChallenge(true),
+    "code_challenge" to codeChallenge,
     "code_challenge_method" to codeChallengeMethod,
     "state" to state,
     "client_id" to googleAppCred.clientId,
