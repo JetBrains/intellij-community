@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.services
 
+import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.util.io.DigestUtil
 import java.util.*
 
-abstract class OAuthPKCERequestBase : OAuthRequest {
+abstract class OAuthPKCERequestBase<T : Credentials> : OAuthRequest<T> {
   protected open val codeVerifier: String = DigestUtil.randomToken()
 
   protected open fun generateCodeChallenge(withoutPadding: Boolean): String {

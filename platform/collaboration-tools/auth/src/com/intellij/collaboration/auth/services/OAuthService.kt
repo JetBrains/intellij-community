@@ -2,7 +2,6 @@
 package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.Credentials
-import com.intellij.util.Url
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -18,7 +17,7 @@ interface OAuthService<T : Credentials> {
   /**
    * Starting the authorization flow
    */
-  fun authorize(request: OAuthRequest): CompletableFuture<T>
+  fun authorize(request: OAuthRequest<T>): CompletableFuture<T>
 
   /**
    * Revoking the access token

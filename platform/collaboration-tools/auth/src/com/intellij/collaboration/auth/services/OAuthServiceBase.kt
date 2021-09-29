@@ -4,11 +4,6 @@ package com.intellij.collaboration.auth.services
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.ide.BrowserUtil
 import java.io.IOException
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpHeaders
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -20,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
   protected val currentRequest = AtomicReference<OAuthRequestWithResult<T>?>()
 
-  override fun authorize(request: OAuthRequest): CompletableFuture<T> {
+  override fun authorize(request: OAuthRequest<T>): CompletableFuture<T> {
     if (!currentRequest.compareAndSet(null, OAuthRequestWithResult(request, CompletableFuture<T>()))) {
       return currentRequest.get()!!.result
     }
@@ -47,22 +42,20 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     return result.isDone && !result.isCancelled && !result.isCompletedExceptionally
   }
 
-  private fun startAuthorization(request: OAuthRequest) {
-    val authUrl = request.getAuthUrlWithParameters().toExternalForm()
+  private fun startAuthorization(request: OAuthRequest<T>) {
+    val authUrl = request.authUrlWithParameters.toExternalForm()
     BrowserUtil.browse(authUrl)
   }
 
   private fun OAuthRequestWithResult<T>.processCode(code: String) {
     try {
-      val tokenUrl = request.getTokenUrlWithParameters(code).toExternalForm()
-      val response = postHttpResponse(buildHttpRequest(tokenUrl, code))
-
-      if (response.statusCode() == 200) {
-        val creds = getCredentials(response.body(), response.headers())
-        result.complete(creds)
-      }
-      else {
-        result.completeExceptionally(RuntimeException(response.body().ifEmpty { "No token provided" }))
+      when (val acquireResult = request.credentialsAcquirer.acquireCredentials(code)) {
+        is OAuthCredentialsAcquirer.AcquireCredentialsResult.Success -> {
+          result.complete(acquireResult.credentials)
+        }
+        is OAuthCredentialsAcquirer.AcquireCredentialsResult.Error -> {
+          result.completeExceptionally(RuntimeException(acquireResult.description))
+        }
       }
     }
     catch (e: IOException) {
@@ -70,24 +63,8 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     }
   }
 
-  protected open fun buildHttpRequest(url: String, code: String? = null): HttpRequest {
-    return HttpRequest.newBuilder()
-      .uri(URI.create(url))
-      .header("Content-Type", "application/json")
-      .POST(HttpRequest.BodyPublishers.noBody())
-      .build()
-  }
-
-  protected fun postHttpResponse(request: HttpRequest): HttpResponse<String> {
-    val client = HttpClient.newHttpClient()
-
-    return client.send(request, HttpResponse.BodyHandlers.ofString())
-  }
-
-  protected abstract fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): T
-
   protected data class OAuthRequestWithResult<T : Credentials>(
-    val request: OAuthRequest,
+    val request: OAuthRequest<T>,
     val result: CompletableFuture<T>
   )
 }

@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.auth.credentials.Credentials
-import com.intellij.collaboration.auth.credentials.SimpleCredentials
 import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
-import java.net.http.HttpHeaders
 
 @Service
 internal class GHOAuthService : OAuthServiceBase<Credentials>() {
@@ -17,9 +15,6 @@ internal class GHOAuthService : OAuthServiceBase<Credentials>() {
   override fun revokeToken(token: String) {
     TODO("Not yet implemented")
   }
-
-  override fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): Credentials =
-    SimpleCredentials(responseHeaders.firstValue("X-OAuth-Token").get())
 
   companion object {
     val instance: GHOAuthService

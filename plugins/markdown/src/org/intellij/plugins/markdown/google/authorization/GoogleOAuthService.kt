@@ -4,12 +4,12 @@ package org.intellij.plugins.markdown.google.authorization
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerBase.Companion.postHttpResponse
 import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.openapi.components.Service
 import org.apache.commons.lang.time.DateUtils
 import java.io.IOException
-import java.net.http.HttpHeaders
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -17,7 +17,10 @@ import java.util.concurrent.CompletableFuture
 @Service
 class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWithRefresh<GoogleCredentials> {
   companion object {
-    private val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
+    val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
+
+    fun getLocalDateTime(responseDate: String) =
+      SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply { timeZone = TimeZone.getTimeZone("GMT") }.parse(responseDate)
   }
 
   override val name: String get() = "google/oauth"
@@ -31,7 +34,7 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
 
     try {
       val refreshTokenUrl = refreshTokenRequest.refreshTokenUrlWithParameters.toExternalForm()
-      val response = postHttpResponse(buildHttpRequest(refreshTokenUrl))
+      val response = postHttpResponse(refreshTokenUrl)
       val responseDateTime = getLocalDateTime(response.headers().firstValue("date").get())
 
       if (response.statusCode() == 200) {
@@ -64,33 +67,6 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
   override fun revokeToken(token: String) {
     TODO("Not yet implemented")
   }
-
-  override fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): GoogleCredentials {
-    val responseDateTime = getLocalDateTime(responseHeaders.firstValue("date").get())
-    val responseData = with(jacksonMapper) {
-      propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()
-      readValue(responseBody, AuthorizationResponseData::class.java)
-    }
-
-    return GoogleCredentials(
-      responseData.accessToken,
-      responseData.refreshToken,
-      responseData.expiresIn,
-      responseData.tokenType,
-      responseData.scope,
-      DateUtils.addSeconds(responseDateTime, responseData.expiresIn.toInt())
-    )
-  }
-
-  private fun getLocalDateTime(responseDate: String) =
-    SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply { timeZone = TimeZone.getTimeZone("GMT") }.parse(responseDate)
-
-  private data class AuthorizationResponseData(val accessToken: String,
-                                               val refreshToken: String,
-                                               val expiresIn: Long,
-                                               val tokenType: String,
-                                               val scope: String,
-                                               val idToken: String)
 
   private data class RefreshResponseData(val accessToken: String,
                                          val expiresIn: Long,
