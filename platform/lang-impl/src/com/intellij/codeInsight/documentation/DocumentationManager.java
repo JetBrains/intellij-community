@@ -940,16 +940,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     element = assertSameProject(customElement(editor, file, offset, contextElement));
 
     if (element == null) {
-      TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-      element = assertSameProject(util.findTargetElement(editor, targetElementUtil.getAllAccepted(), offset));
-
-      // Allow context doc over xml tag content
-      if (element != null || contextElement != null) {
-        PsiElement adjusted = assertSameProject(util.adjustElement(editor, targetElementUtil.getAllAccepted(), element, contextElement));
-        if (adjusted != null) {
-          element = adjusted;
-        }
-      }
+      element = assertSameProject(fromTargetUtil(editor, offset, contextElement));
     }
 
     if (element == null) {
@@ -977,6 +968,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return null;
     }
     return getProviderFromElement(file).getCustomDocumentationElement(editor, file, contextElement, offset);
+  }
+
+  private static @Nullable PsiElement fromTargetUtil(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiElement contextElement
+  ) {
+    TargetElementUtil util = TargetElementUtil.getInstance();
+    PsiElement element = util.findTargetElement(editor, util.getAllAccepted(), offset);
+    if (element == null && contextElement == null) {
+      return null;
+    }
+    // Allow context doc over xml tag content
+    PsiElement adjusted = util.adjustElement(editor, util.getAllAccepted(), element, contextElement);
+    return adjusted != null ? adjusted : element;
   }
 
   private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {
