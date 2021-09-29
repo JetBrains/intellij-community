@@ -256,6 +256,14 @@ public final class DefUseUtil {
     return getDefs(body, def, ref, false);
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
       final PsiElement containingClass = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
@@ -295,16 +303,14 @@ public final class DefUseUtil {
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (PsiUtil.isAccessedForWriting(ref)) {
-                    if (ref.resolve() == def) {
-                      res.add(ref);
-                    }
+                  if (PsiUtil.isAccessedForWriting(ref) && psiManager.areElementsEquivalent(ref.resolve(), def)) {
+                    res.add(ref);
                   }
                 }
 
                 @Override
                 public void visitVariable(PsiVariable var) {
-                  if (psiManager.areElementsEquivalent(var, def) && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if ((var instanceof PsiParameter || var.hasInitializer()) && psiManager.areElementsEquivalent(var, def)) {
                     res.add(var);
                   }
                 }
