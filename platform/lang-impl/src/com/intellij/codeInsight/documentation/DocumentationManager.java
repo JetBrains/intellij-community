@@ -32,12 +32,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -55,8 +52,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -941,11 +936,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     TargetElementUtil util = TargetElementUtil.getInstance();
-    PsiElement element = null;
-    if (file != null) {
-      DocumentationProvider documentationProvider = getProviderFromElement(file);
-      element = assertSameProject(documentationProvider.getCustomDocumentationElement(editor, file, contextElement, offset));
-    }
+    PsiElement element;
+    element = assertSameProject(customElement(editor, file, offset, contextElement));
 
     if (element == null) {
       TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
@@ -973,6 +965,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     storeOriginalElement(myProject, contextElement, element);
     storeIsFromLookup(element, false);
     return element;
+  }
+
+  private static @Nullable PsiElement customElement(
+    @NotNull Editor editor,
+    @Nullable PsiFile file,
+    int offset,
+    @Nullable PsiElement contextElement
+  ) {
+    if (file == null) {
+      return null;
+    }
+    return getProviderFromElement(file).getCustomDocumentationElement(editor, file, contextElement, offset);
   }
 
   private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {
