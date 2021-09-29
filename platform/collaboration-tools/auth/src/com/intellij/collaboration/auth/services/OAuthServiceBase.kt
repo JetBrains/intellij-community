@@ -3,7 +3,6 @@ package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.ide.BrowserUtil
-import java.io.IOException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -58,7 +57,7 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
         }
       }
     }
-    catch (e: IOException) {
+    catch (e: Exception) {
       result.completeExceptionally(e)
     }
   }

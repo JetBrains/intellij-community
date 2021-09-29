@@ -3,6 +3,7 @@ package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.util.Url
+import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpHeaders
@@ -14,7 +15,12 @@ object OAuthCredentialsAcquirerHttp {
     url: Url,
     credentialsProvider: (body: String, headers: HttpHeaders) -> T
   ): OAuthCredentialsAcquirer.AcquireCredentialsResult<T> {
-    val response = requestToken(url)
+    val response = try {
+      requestToken(url)
+    }
+    catch (e: IOException) {
+      return OAuthCredentialsAcquirer.AcquireCredentialsResult.Error("Cannot exchange token: ${e.message}")
+    }
     return convertToAcquireCredentialsResult(response) { body, headers ->
       credentialsProvider(body, headers)
     }
