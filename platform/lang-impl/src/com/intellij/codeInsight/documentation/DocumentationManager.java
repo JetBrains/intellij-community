@@ -935,20 +935,41 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return assertSameProject(getElementFromLookup(editor, file));
     }
 
-    PsiElement element;
-    element = assertSameProject(customElement(editor, file, offset, contextElement));
+    return findTargetElementAtOffset(editor, offset, file, contextElement);
+  }
 
-    if (element == null) {
-      element = assertSameProject(fromTargetUtil(editor, offset, contextElement));
-    }
-
-    if (element == null) {
-      element = assertSameProject(fromReference(editor, offset));
-    }
-
+  @Internal
+  public @Nullable PsiElement findTargetElementAtOffset(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiFile file,
+    @Nullable PsiElement contextElement
+  ) {
+    PsiElement element = assertSameProject(doFindTargetElementAtOffset(editor, offset, file, contextElement));
     storeOriginalElement(myProject, contextElement, element);
     storeIsFromLookup(element, false);
     return element;
+  }
+
+  private static @Nullable PsiElement doFindTargetElementAtOffset(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiFile file,
+    @Nullable PsiElement contextElement
+  ) {
+    PsiElement element;
+
+    element = customElement(editor, file, offset, contextElement);
+    if (element != null) {
+      return element;
+    }
+
+    element = fromTargetUtil(editor, offset, contextElement);
+    if (element != null) {
+      return element;
+    }
+
+    return fromReference(editor, offset);
   }
 
   private static @Nullable PsiElement customElement(
