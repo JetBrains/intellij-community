@@ -331,7 +331,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     if (!validateSdk(sdkProperty, sdkModel)) {
       return false
     }
-    if (!validateJavaVersion(sdkProperty, languageLevel?.javaVersion)) {
+    val passTechnologyName = if (starterSettings.languageLevels.size > 1) null else moduleBuilder.presentableName
+    if (!validateJavaVersion(sdkProperty, languageLevel?.javaVersion, passTechnologyName)) {
       return false
     }
 

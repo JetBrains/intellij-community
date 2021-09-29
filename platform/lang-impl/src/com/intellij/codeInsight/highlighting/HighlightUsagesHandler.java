@@ -383,7 +383,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributesKey, clearHighlights, textRanges);
   }
 
-  @SuppressWarnings("unused") // NB don't deprecate this method while PsiSymbolReference is @Experimental
+  // NB don't deprecate this method while PsiSymbolReference is @Experimental
   @NotNull
   public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
     collectHighlightRanges(ref, result);

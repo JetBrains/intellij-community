@@ -48,6 +48,8 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.target.PyInterpreterVersionUtil;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -299,7 +301,10 @@ public final class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
-    if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
+    if (homePath != null && homePath.startsWith("target://")) {
+      return PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
+    }
+    else if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
@@ -465,8 +470,20 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   @Override
   public String getVersionString(@NotNull Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
+      // TODO [targets] Cache version as for `PyRemoteSdkAdditionalDataBase`
+      String versionString;
+      try {
+        versionString = PyInterpreterVersionUtil.getInterpreterVersion((PyTargetAwareAdditionalData)sdkAdditionalData, null, true);
+      }
+      catch (Exception e) {
+        versionString = "undefined";
+      }
+      return versionString;
+    }
+    else if (PythonSdkUtil.isRemote(sdk)) {
+      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
       assert data != null;
       String versionString = data.getVersionString();
       if (StringUtil.isEmpty(versionString)) {
@@ -517,7 +534,11 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isIncompleteRemote(Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
+    if (PySdkExtKt.isTargetBased(sdk)) {
+      // TODO [targets] We might want to check if the target configuration data is incomplete
+      return false;
+    }
+    else if (PythonSdkUtil.isRemote(sdk)) {
       //noinspection ConstantConditions
       if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
@@ -532,7 +553,11 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
+    if (PySdkExtKt.isTargetBased(sdk)) {
+      // TODO [targets] We might want to check if the target configuration data is invalid
+      return false;
+    }
+    else if (PythonSdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
       //noinspection ConstantConditions
       ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(

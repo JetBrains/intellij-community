@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-
+// AFTER-WARNING: Variable 'ref' is never used
 interface B {
 }
 

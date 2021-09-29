@@ -2978,7 +2978,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class ScrollingTimer {
     private Timer myTimer;
-    private static final int TIMER_PERIOD = 100;
     private static final int CYCLE_SIZE = 20;
     private int myXCycles;
     private int myYCycles;
@@ -3017,7 +3016,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", Registry.intValue("editor.scrolling.animation.interval.ms"), e -> {
         if (isDisposed()) {
           stop();
           return;
@@ -3690,7 +3689,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return text == null ? null : new AttributedString(text).getIterator();
     }
 
-    private void createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
+    private String createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
       StringBuilder strBuf = new StringBuilder();
 
       // create attributed string with no attributes
@@ -3698,8 +3697,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         strBuf.append(c);
       }
 
-      composedText = strBuf.toString();
-      composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
+      return strBuf.toString();
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
@@ -3792,9 +3790,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (!isViewer() && doc.isWritable()) {
           int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
-            createComposedString(composedTextIndex, text);
+            String composedString = createComposedString(composedTextIndex, text);
 
-            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedText, false, false));
+            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
+
+            composedText = composedString;
+            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedString.length());
           }
         }
       }

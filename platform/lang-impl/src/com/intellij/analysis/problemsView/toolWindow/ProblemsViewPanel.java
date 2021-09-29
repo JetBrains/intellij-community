@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
@@ -48,6 +49,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
+import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
@@ -56,8 +58,6 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
-  static final DataKey<ProblemsViewPanel> SELECTED = DataKey.create("ProblemsView/SelectedPanel");
-
   protected final ClientId myClientId = ClientId.getCurrent();
 
   private final Project myProject;
@@ -100,6 +100,18 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     @Override
     public void setSelected(boolean selected) {
       myState.setAutoscrollToSource(selected);
+      if (selected) updateAutoscroll();
+    }
+  };
+  private final Option myOpenInPreviewTab = new Option() {
+    @Override
+    public boolean isSelected() {
+      return UISettings.getInstance().getOpenInPreviewTabIfPossible();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      UISettings.getInstance().setOpenInPreviewTabIfPossible(selected);
       if (selected) updateAutoscroll();
     }
   };
@@ -206,6 +218,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(BorderLayout.CENTER, createScrollPane(myTree, true));
     myPanel.add(BorderLayout.WEST, myToolbar.getComponent());
+    myPanel.putClientProperty(OPEN_IN_PREVIEW_TAB, true);
     setFirstComponent(myPanel);
   }
 
@@ -232,7 +245,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      // this code allows to perform Editor's Undo action from the Problems View
+      // this code allows performing Editor's Undo action from the Problems View
       Editor editor = getPreview();
       if (editor != null) return TextEditorProvider.getInstance().getTextEditor(editor);
       Node node = getSelectedNode();
@@ -264,7 +277,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return null;
   }
 
-  @NotNull @NlsContexts.TabTitle public String getName(int count) {
+  @Override
+  public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
     if (count <= 0) return name;
     return new HtmlBuilder().append(name).append(" ").append(
@@ -371,7 +385,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   private void updateAutoscroll() {
-    if (isActiveTab() && isNotNullAndSelected(getAutoscrollToSource())) {
+    if (isActiveTab() && (isNotNullAndSelected(getAutoscrollToSource()) || isNotNullAndSelected(getOpenInPreviewTab()))) {
       invokeLater(() -> {
         Node node = getSelectedNode();
         Navigatable navigatable = node == null ? null : node.getNavigatable();
@@ -416,6 +430,11 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   @Nullable
   public Option getAutoscrollToSource() {
     return isNotNullAndSelected(getShowPreview()) ? null : myAutoscrollToSource;
+  }
+
+  @Nullable
+  public Option getOpenInPreviewTab() {
+    return isNotNullAndSelected(getShowPreview()) ? null : myOpenInPreviewTab;
   }
 
   @Nullable

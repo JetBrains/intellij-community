@@ -15,8 +15,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,8 @@ public final class HardcodedContracts {
       instanceCall(JAVA_UTIL_COLLECTION, "addAll", "removeAll", "retainAll").parameterTypes(JAVA_UTIL_COLLECTION),
       instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes("int", JAVA_UTIL_COLLECTION),
       instanceCall(JAVA_UTIL_MAP, "putAll").parameterTypes(JAVA_UTIL_MAP));
+  private static final StandardMethodContract NULL_FAIL = new StandardMethodContract(new ValueConstraint[]{NULL_VALUE}, fail());
+  private static final StandardMethodContract NOT_NULL_FAIL = new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE}, fail());
 
   /**
    * @param method method to test
@@ -450,48 +454,48 @@ public final class HardcodedContracts {
       }
       if (args.length == 1) {
         PsiType type = args[0].getType();
-        return SyntaxTraverser.psiApi().parents(call)
+        return StreamEx.iterate(call, Objects::nonNull, ExpressionUtils::getCallForQualifier)
           .skip(1)
-          .takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember))
-          .filter(PsiMethodCallExpression.class)
           .takeWhile(c -> {
             String name = c.getMethodExpression().getReferenceName();
             return name != null && (name.startsWith("is") || name.equals("describedAs") || name.equals("as"));
           })
-          .filterMap(c -> constraintFromAssertJMatcher(type, c))
+          .flatMap(c -> constraintFromAssertJMatcher(type, c))
+          .nonNull()
           .toList();
       }
     }
     return Collections.emptyList();
   }
 
-  private static @Nullable MethodContract constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
-    if (!call.getArgumentList().isEmpty()) return null;
+  private static @NotNull StreamEx<MethodContract> constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
+    if (!call.getArgumentList().isEmpty()) return StreamEx.empty();
     String name = call.getMethodExpression().getReferenceName();
-    if (name == null) return null;
+    if (name == null) return StreamEx.empty();
     switch (name) {
       case "isNotNull":
-        return new StandardMethodContract(new ValueConstraint[]{NULL_VALUE}, fail());
+        return StreamEx.of(NULL_FAIL);
       case "isNull":
-        return new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE}, fail());
+        return StreamEx.of(NOT_NULL_FAIL);
       case "isPresent":
       case "isNotEmpty":
-        return emptyCheck(type, false);
+      case "isNotBlank":
+        return StreamEx.of(NULL_FAIL, emptyCheck(type, false));
       case "isNotPresent":
       case "isEmpty":
-        return emptyCheck(type, true);
+        return StreamEx.of(NULL_FAIL, emptyCheck(type, true));
       case "isTrue":
         if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+          return StreamEx.of(new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail()));
         }
-        return null;
+        return StreamEx.empty();
       case "isFalse":
         if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
-          return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+          return StreamEx.of(new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail()));
         }
-        return null;
+        return StreamEx.empty();
     }
-    return null;
+    return StreamEx.empty();
   }
 
   private static @Nullable MethodContract emptyCheck(PsiType type, boolean isEmpty) {

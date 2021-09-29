@@ -15,7 +15,6 @@ import java.util.List;
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
-@SuppressWarnings("unused")
 public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;

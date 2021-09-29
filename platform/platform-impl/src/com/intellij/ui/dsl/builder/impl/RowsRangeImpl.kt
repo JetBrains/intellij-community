@@ -15,6 +15,12 @@ internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRa
     return this
   }
 
+  override fun visibleIf(predicate: ComponentPredicate): RowsRange {
+    visible(predicate())
+    predicate.addListener { visible(it) }
+    return this
+  }
+
   override fun enabled(isEnabled: Boolean): RowsRange {
     panel.enabledFromParent(isEnabled, startIndex..endIndex)
     return this

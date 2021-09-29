@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'f' is never used
 fun foo(f: () -> Unit) {}
 
 fun bar(a: Int = 42) {}

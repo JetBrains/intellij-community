@@ -9,13 +9,13 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +64,8 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonScriptExecution pythonScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), targetEnvironmentRequest);
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
+    PythonScriptExecution pythonScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), helpersAwareRequest);
     final String key = getKey();
     if (key != null) pythonScriptExecution.addParameter(key);
     pythonScriptExecution.addParameter(getTask());

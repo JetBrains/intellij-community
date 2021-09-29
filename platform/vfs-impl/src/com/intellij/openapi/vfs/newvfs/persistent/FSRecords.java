@@ -385,7 +385,7 @@ public final class FSRecords {
 
 
   static int getLocalModCount() {
-    return ourConnection.getLocalModificationCount(); // This is volatile, only modified under Application.runWriteAction() lock.
+    return ourConnection.getLocalModificationCount() + ourAttributeAccessor.getLocalModificationCount();
   }
 
   static int getPersistentModCount() {
@@ -606,7 +606,7 @@ public final class FSRecords {
 
   @Nullable
   public static DataInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
-    return readAndHandleErrors(() -> {
+    try {
       try (DataInputStream stream = readAttribute(fileId, att)) {
         if (stream != null && att.isVersioned()) {
           try {
@@ -621,7 +621,11 @@ public final class FSRecords {
         }
         return stream;
       }
-    });
+    }
+    catch (Throwable e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   // must be called under r or w lock
@@ -674,13 +678,7 @@ public final class FSRecords {
 
   @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att);
-    return new DataOutputStream(dataOutputStream) {
-      @Override
-      public void close() {
-        writeAndHandleErrors(() -> super.close());
-      }
-    };
+    return ourAttributeAccessor.writeAttribute(fileId, att);
   }
 
   public static @NotNull PersistentFSPaths getPersistentFSPaths() {

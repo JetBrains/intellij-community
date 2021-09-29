@@ -39,7 +39,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,6 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Cach
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -1220,13 +1218,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public List<Module> importProjects() {
-    if (MavenUtil.newModelEnabled(myProject)) {
-      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.create();
-      return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
-    }
-    else {
       return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
-    }
   }
 
 

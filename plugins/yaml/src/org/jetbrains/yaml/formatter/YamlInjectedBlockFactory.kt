@@ -33,6 +33,11 @@ internal fun substituteInjectedBlocks(settings: CodeStyleSettings,
     YamlInjectedLanguageBlockBuilder(settings, outerBLocks).addInjectedBlocks(this, injectionHost, wrap, alignment, fixedIndent)
   }
   if (injectedBlocks.isEmpty()) return rawSubBlocks
+
+  injectedBlocks.addAll(0,
+    rawSubBlocks.filter(injectedBlocks.first().textRange.startOffset.let { start -> { it.textRange.endOffset <= start } }))
+  injectedBlocks.addAll(rawSubBlocks.filter(injectedBlocks.last().textRange.endOffset.let { end -> { it.textRange.startOffset >= end } }))
+
   return injectedBlocks
 }
 

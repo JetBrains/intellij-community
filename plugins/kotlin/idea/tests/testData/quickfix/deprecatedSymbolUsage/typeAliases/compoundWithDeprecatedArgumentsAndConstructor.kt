@@ -1,4 +1,5 @@
 // "Replace with 'New<T, U>'" "false"
+// ACTION: Compiler warning 'TYPEALIAS_EXPANSION_DEPRECATION' options
 // ACTION: Convert to block body
 // ACTION: Introduce import alias
 // ACTION: Remove explicit type specification

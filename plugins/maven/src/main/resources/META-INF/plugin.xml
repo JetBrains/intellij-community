@@ -271,7 +271,7 @@
 
     <registryKey key="maven.always.remove.bad.entries" defaultValue="true" description="Delete invalid maven Entries"/>
 
-    <registryKey key="maven.new.project.model" defaultValue="false" description="Maven new project model"
+    <registryKey key="maven.new.project.model" defaultValue="false" description="Use workspace project model to import maven project"
                  restartRequired="true"/>
 
     <registryKey key="maven.spy.events.debug" defaultValue="false"

@@ -382,7 +382,7 @@ public final class NavigationUtil {
         String current = null;
         boolean hasTitle = false;
         for (Object element : elements) {
-          final GotoRelatedItem item = itemsMap.get(element);
+          final GotoRelatedItem item = element instanceof GotoRelatedItem ? (GotoRelatedItem)element : itemsMap.get(element);
           if (item != null && !Objects.equals(current, item.getGroup())) {
             current = item.getGroup();
             separators.put(element, new ListSeparator(

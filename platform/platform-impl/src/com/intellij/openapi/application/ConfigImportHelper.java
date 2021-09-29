@@ -37,6 +37,7 @@ import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -976,7 +977,8 @@ public final class ConfigImportHelper {
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
             i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
           }
-          else if ("-Xverify:none".equals(line) || "-noverify".equals(line) ||
+          else if ("-XX:+UseConcMarkSweepGC".equals(line) && JavaVersion.current().isAtLeast(17) ||
+                   "-Xverify:none".equals(line) || "-noverify".equals(line) ||
                    line.startsWith("-agentlib:yjpagent") ||
                    line.startsWith("-agentpath:") && line.contains("yjpagent")) {
             i.remove(); updated = true;

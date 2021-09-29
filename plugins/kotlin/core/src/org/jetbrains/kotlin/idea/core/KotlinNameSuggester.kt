@@ -100,7 +100,8 @@ object KotlinNameSuggester {
         val result = LinkedHashSet<String>()
 
         suggestNamesByExpressionOnly(collection, bindingContext, { true })
-            .mapNotNull { StringUtil.unpluralize(it) }
+            .mapNotNull { name -> StringUtil.unpluralize(name)}
+            .filter { name -> !name.isKeyword() }
             .mapTo(result) { suggestNameByName(it, validator) }
 
         result.addNamesByType(elementType, validator)
@@ -111,6 +112,8 @@ object KotlinNameSuggester {
 
         return result
     }
+
+    private fun String?.isKeyword() = this in KtTokens.KEYWORDS.types.map { it.toString() }
 
     fun suggestNamesByFqName(
         fqName: FqName,

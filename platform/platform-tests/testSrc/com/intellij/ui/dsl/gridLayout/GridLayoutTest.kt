@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout
 
-import com.intellij.ui.dsl.doLayout
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.junit.Assert
 import org.junit.Test
@@ -12,10 +12,6 @@ import javax.swing.border.EmptyBorder
 import kotlin.math.max
 import kotlin.random.Random
 import kotlin.test.assertEquals
-
-const val PREFERRED_WIDTH = 60
-const val PREFERRED_HEIGHT = 40
-val PREFERRED_SIZE = Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT)
 
 class GridLayoutTest {
 
@@ -246,82 +242,5 @@ class GridLayoutTest {
 
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
-  }
-
-  @Test
-  fun testBaseline() {
-    for (verticalAlign in VerticalAlign.values()) {
-      if (verticalAlign == VerticalAlign.FILL) {
-        continue
-      }
-
-      val panel = JPanel(GridLayout())
-      val builder = RowsGridBuilder(panel)
-        .defaultBaselineAlign(true)
-
-      for (i in 10..16) {
-        builder.label(verticalAlign, i)
-      }
-
-      doLayout(panel, 1600, 800)
-      var baseline: Int? = null
-      for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
-        if (baseline == null) {
-          baseline = component.y + componentBaseline
-        }
-        else {
-          assertEquals(baseline, component.y + componentBaseline)
-        }
-      }
-    }
-  }
-
-  @Test
-  fun testBaselineWithSubPanels() {
-    for (verticalAlign in VerticalAlign.values()) {
-      if (verticalAlign == VerticalAlign.FILL) {
-        continue
-      }
-
-      val panel = JPanel(GridLayout())
-      val builder = RowsGridBuilder(panel)
-        .defaultBaselineAlign(true)
-
-      builder
-        .label(verticalAlign, 14)
-        .subGridBuilder(verticalAlign = verticalAlign)
-        .label(verticalAlign, 12)
-        .subGridBuilder(verticalAlign = verticalAlign)
-        .label(verticalAlign, 16)
-        .label(verticalAlign, 10)
-
-      doLayout(panel, 1600, 800)
-      var baseline: Int? = null
-      for (component in panel.components) {
-        val size = component.size
-        val componentBaseline = component.getBaseline(size.width, size.height)
-        if (baseline == null) {
-          baseline = component.y + componentBaseline
-        }
-        else {
-          assertEquals(baseline, component.y + componentBaseline)
-        }
-      }
-    }
-  }
-
-  private fun label(preferredWidth: Int = PREFERRED_WIDTH, preferredHeight: Int = PREFERRED_HEIGHT): JLabel {
-    val result = JLabel("Label")
-    result.preferredSize = Dimension(preferredWidth, preferredHeight)
-    return result
-  }
-
-  fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
-    val label = JLabel("${verticalAlign.name} $size")
-    label.font = label.font.deriveFont(size.toFloat())
-    cell(label, verticalAlign = verticalAlign)
-    return this
   }
 }

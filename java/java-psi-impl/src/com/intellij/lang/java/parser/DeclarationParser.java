@@ -156,7 +156,6 @@ public class DeclarationParser {
 
   private void parseEnumConstants(final PsiBuilder builder) {
     boolean first = true;
-    boolean seenCommaBefore = false;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -1036,7 +1035,7 @@ public class DeclarationParser {
         builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder);
+      result = myParser.getExpressionParser().parseConditional(builder, 0);
     }
 
     return result;

@@ -73,13 +73,13 @@
       }
     },
 
-    "AssignedMnemonic": {
+    "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
       "foreground": "#000000"
     },
 
-    "AvailableMnemonic": {
+    "BookmarkMnemonicAvailable": {
       "background": "#FFFFFF",
       "borderColor": "#C4C4C4",
       "foreground": "#000000"
@@ -182,7 +182,7 @@
       "foreground": "#FFFFFF"
     },
 
-    "CurrentMnemonic": {
+    "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
       "foreground": "#FFFFFF"
@@ -873,6 +873,8 @@
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "#d1d1d1",
       "SidePanel.background": "#f2f2f2"
-    }
+    },
+
+    "textInactiveText" : "#808080"
   }
 }

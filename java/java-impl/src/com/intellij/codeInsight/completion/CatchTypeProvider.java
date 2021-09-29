@@ -54,15 +54,19 @@ final class CatchTypeProvider {
       if (!session.alreadyProcessed(psiClass)) {
         LookupElement element = createCatchTypeVariant(tryBlock, (PsiClassType)type);
         final int maxNumberOfHopsToConsider = 25;
+        // Tune priorities for classes in catch:
+        // 100 = class that exactly matches the thrown type
+        // 26..50 = superclasses of the thrown type (higher priority = less inheritance hops)
+        // 1..25 = subclasses of the thrown type (higher priority = less inheritance hops)
         int priority = StreamEx.of(preferred)
           .mapToInt(aClass -> {
             int hops = Math.min(maxNumberOfHopsToConsider, getNumberOfHops(psiClass, aClass));
             if (hops >= 0) {
-              return 25 + maxNumberOfHopsToConsider * 2 - hops;
+              return 1 + maxNumberOfHopsToConsider * 2 - hops;
             }
             hops = Math.min(maxNumberOfHopsToConsider, getNumberOfHops(aClass, psiClass));
             if (hops >= 0) {
-              return 25 + maxNumberOfHopsToConsider - hops;
+              return 1 + maxNumberOfHopsToConsider - hops;
             }
             return 0;
           })

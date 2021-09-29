@@ -819,7 +819,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkBaseLayout(BaseLayout layout, String description) {
-    checkModules(layout.moduleJars.values(), "moduleJars in $description")
+    checkModules(layout.includedModuleNames, "moduleJars in $description")
     checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
     checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
     checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")
@@ -1005,25 +1005,26 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildUpdaterJar() {
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater.jar") {
-        module("intellij.platform.updater")
-      }
-    }
+    doBuildUpdaterJar("updater.jar")
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @CompileStatic
   void buildFullUpdaterJar() {
+    doBuildUpdaterJar("updater-full.jar")
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void doBuildUpdaterJar(String artifactName) {
     String updaterModule = "intellij.platform.updater"
     List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))
       .productionOnly()
       .runtimeOnly()
-      .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
-    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar", true) {
+      .libraries.collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
+    new LayoutBuilder(buildContext, true).layout(buildContext.paths.artifacts) {
+      jar(artifactName, true) {
         module(updaterModule)
         for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
@@ -81,12 +82,16 @@ final class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
+
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
+
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
+
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+
       withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
@@ -108,7 +113,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
-      withProjectLibrary("Gradle", "", true)
+      withProjectLibrary("Gradle", ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
     },
     plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),

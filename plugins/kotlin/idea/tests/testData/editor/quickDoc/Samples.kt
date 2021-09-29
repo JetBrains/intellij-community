@@ -19,11 +19,6 @@ fun <caret>castTextSpell(spell: String) {
     throw SecurityException("Magic prohibited outside Hogwarts")
 }
 
-//INFO: <div class='definition'><pre><a href="psi_element://magic"><code style='font-size:96%;'>magic</code></a> <font color="808080"><i>Samples.kt</i></font><br>public fun <b>castTextSpell</b>(
-//INFO:     spell: String
-//INFO: ): Unit</pre></div><div class='content'></div><table class='sections'><tr><td valign='top' class='section'><p>Samples:</td><td valign='top'><p><a href="psi_element://Samples.sampleMagic"><code style='font-size:96%;'>Samples.sampleMagic</code></a><pre><code>
-//INFO: castTextSpell("[asd] [dse] [asz]")
-//INFO: </code></pre><p><a href="psi_element://sampleScroll"><code style='font-size:96%;'>sampleScroll</code></a><pre><code>
-//INFO: val reader = Scroll("[asd] [dse] [asz]").reader()
-//INFO: castTextSpell(reader.readAll())
-//INFO: </code></pre></td></table>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">castTextSpell</span>(
+//INFO:     <span style="color:#000000;">spell</span><span style="">: </span><span style="color:#000000;">String</span>
+//INFO: )<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='content'></div><table class='sections'><tr><td valign='top' class='section'><p>Samples:</td><td valign='top'><p><a href="psi_element://Samples.sampleMagic"><code style='font-size:96%;'><span style="color:#000000;">Samples</span><span style="">.</span><span style="color:#000000;">sampleMagic</span></code></a><pre><code><br><span style="">castTextSpell(</span><span style="color:#008000;font-weight:bold;">"[asd]&#32;[dse]&#32;[asz]"</span><span style="">)<br></span></code></pre><p><a href="psi_element://sampleScroll"><code style='font-size:96%;'><span style="color:#000000;">sampleScroll</span></code></a><pre><code><br><span style="color:#000080;font-weight:bold;">val&#32;</span><span style="">reader&#32;=&#32;Scroll(</span><span style="color:#008000;font-weight:bold;">"[asd]&#32;[dse]&#32;[asz]"</span><span style="">).reader()<br></span><span style="">castTextSpell(reader.readAll())<br></span></code></pre></td></table>

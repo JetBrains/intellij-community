@@ -26,7 +26,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
-  @SuppressWarnings("unused") //used for extension point instantiation
+  //used for extension point instantiation
   public PsiElementFinderImpl(Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(project);

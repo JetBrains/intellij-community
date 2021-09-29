@@ -2,7 +2,7 @@
     <actions>
         <!-- Kotlin Console REPL-->
         <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
-                icon="KotlinIdeaIcons.Kotlin_launch_configuration">
+                icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
             <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
         </action>
 
@@ -32,7 +32,7 @@
 <!--            TODO(design)-->
             <action id="Kotlin.XDebugger.CoroutinesDump"
                 class="org.jetbrains.kotlin.idea.debugger.coroutine.command.CoroutineDumpAction"
-                    icon="KotlinIdeaIcons.Kotlin"/>
+                    icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"/>
         </group>
 
         <action id="Kotlin.XDebugger.ToggleKotlinVariableView"

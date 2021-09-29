@@ -39,6 +39,10 @@ public final class HtmlSyntaxInfoUtil {
     return appendStyledSpan(new StringBuilder(), attributesKey, value).toString();
   }
 
+  public static @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value) {
+    return appendStyledSpan(new StringBuilder(), attributes, value).toString();
+  }
+
   public static @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     @NotNull Project project,
     @NotNull Language language,
@@ -87,8 +91,19 @@ public final class HtmlSyntaxInfoUtil {
     @NotNull Language language,
     @Nullable String codeSnippet
   ) {
+    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, true);
+  }
+
+  public static @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+    @NotNull StringBuilder buffer,
+    @NotNull Project project,
+    @NotNull Language language,
+    @Nullable String codeSnippet,
+    boolean doTrimIndent
+  ) {
     codeSnippet = StringUtil.notNullize(codeSnippet);
-    String zeroIndentCode = StringsKt.trimIndent(codeSnippet).replace("\t", "    ");
+    String trimmed = doTrimIndent ? StringsKt.trimIndent(codeSnippet) : codeSnippet;
+    String zeroIndentCode = trimmed.replace("\t", "    ");
     PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, codeSnippet);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     if (!zeroIndentCode.isEmpty()) {

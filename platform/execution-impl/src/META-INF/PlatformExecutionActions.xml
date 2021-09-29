@@ -44,6 +44,7 @@
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
+    <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
   </extensions>
   <project-components>
     <component>

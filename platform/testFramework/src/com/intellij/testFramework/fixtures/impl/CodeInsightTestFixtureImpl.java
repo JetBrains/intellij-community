@@ -337,12 +337,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
           if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
             result.add(actionInGroup.getAction());
-            List<IntentionAction> options = actionInGroup.getOptions(file, editor);
-            if (options != null) {
-              for (IntentionAction subAction : options) {
-                if (subAction.isAvailable(file.getProject(), editor, file)) {
-                  result.add(subAction);
-                }
+            for (IntentionAction subAction : actionInGroup.getOptions(file, editor)) {
+              if (subAction.isAvailable(file.getProject(), editor, file)) {
+                result.add(subAction);
               }
             }
           }

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
     ConvertToStringTemplateIntention::class,
-    { it -> ConvertToStringTemplateIntention.shouldSuggestToConvert(it) },
+    ConvertToStringTemplateIntention::shouldSuggestToConvert,
     problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
 )
 
@@ -37,9 +37,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val replacement = buildReplacement(element)
-        runWriteAction {
-            element.replaced(replacement)
-        }
+        element.replaced(replacement)
     }
 
     companion object {

@@ -403,7 +403,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static void appendParameterText(PsiParameter param, PsiSubstitutor substitutor, StringBuilder buffer) {
     if (param instanceof GrParameter) {
       GrParameter grParam = (GrParameter)param;
-      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer);
+      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer, false);
 
       final GrExpression initializer = grParam.getInitializerGroovy();
       if (initializer != null) {

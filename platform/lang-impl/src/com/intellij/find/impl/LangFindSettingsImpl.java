@@ -18,9 +18,7 @@ import java.util.stream.Stream;
 final class LangFindSettingsImpl extends FindSettingsImpl {
 
   @Override
-  public void loadState(@NotNull FindSettingsImpl state) {
-    super.loadState(state);
-
+  public void noStateLoaded() {
     Collection<String> extensions = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages()
       .stream()
       .map(Language::getAssociatedFileType)
@@ -30,7 +28,6 @@ final class LangFindSettingsImpl extends FindSettingsImpl {
                  getAssociatedExtensions(fileType)
                )
       ).collect(Collectors.toCollection(LinkedHashSet::new));
-    
     if (extensions.contains("java")) {
       extensions.add("properties");
       extensions.add("jsp");
@@ -41,8 +38,9 @@ final class LangFindSettingsImpl extends FindSettingsImpl {
       extensions.add("css");
     }
 
-    for (String ext : ArrayUtil.reverseArray(ArrayUtil.toStringArray(extensions))) {
-      FindInProjectSettingsBase.addRecentStringToList("*." + ext, recentFileMasks);
+    String[] extensionsArray = ArrayUtil.toStringArray(extensions);
+    for (int i = extensionsArray.length - 1; i >= 0; i--) {
+      FindInProjectSettingsBase.addRecentStringToList("*." + extensionsArray[i], recentFileMasks);
     }
   }
 

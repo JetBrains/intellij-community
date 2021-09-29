@@ -26,16 +26,6 @@ import java.util.Collection;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
-  @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      Maven3ServerGlobals.set(logger, downloadListener);
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-  }
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
@@ -101,6 +91,32 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
+      throw rethrowException(e);
+    }
+  }
+
+  @Override
+  public MavenPullServerLogger createPullLogger(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
+      throw rethrowException(e);
+    }
+  }
+
+  @Override
+  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
       throw rethrowException(e);
     }
   }

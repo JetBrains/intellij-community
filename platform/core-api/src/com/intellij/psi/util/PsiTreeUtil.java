@@ -272,8 +272,8 @@ public class PsiTreeUtil {
     };
 
     processElements(element, processor);
-    @SuppressWarnings("unchecked") T t = (T)processor.getFoundElement();
-    return t;
+    //noinspection unchecked
+    return (T)processor.getFoundElement();
   }
 
   /** See {@link #findChildrenOfAnyType(PsiElement, boolean, Class[])}. */
@@ -314,8 +314,8 @@ public class PsiTreeUtil {
       }
     };
     processElements(element, processor);
-    @SuppressWarnings("unchecked") Collection<T> result = (Collection<T>)processor.getCollection();
-    return result;
+    //noinspection unchecked
+    return (Collection<T>)processor.getCollection();
   }
 
   /**
@@ -398,8 +398,8 @@ public class PsiTreeUtil {
       for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (instanceOf(child, classes)) {
           if (result == null) result = new SmartList<>();
-          @SuppressWarnings("unchecked") T t = (T)child;
-          result.add(t);
+          //noinspection unchecked
+          result.add((T)child);
         }
       }
     }
@@ -596,8 +596,8 @@ public class PsiTreeUtil {
     while (element != null && !instanceOf(element, classes)) {
       element = element.getContext();
     }
-    @SuppressWarnings("unchecked") T t = (T)element;
-    return t;
+    //noinspection unchecked
+    return (T)element;
   }
 
   @Contract("null, _, _ -> null")
@@ -850,8 +850,8 @@ public class PsiTreeUtil {
     PsiElement run = element;
     while (run != null) {
       if (instanceOf(run, classes)) {
-        @SuppressWarnings("unchecked") T t = (T)run;
-        return t;
+        //noinspection unchecked
+        return (T)run;
       }
       if (run instanceof PsiFile) break;
       run = run.getParent();
@@ -1196,7 +1196,8 @@ public class PsiTreeUtil {
                                    @NotNull PsiElement entrance,
                                    @Nullable PsiElement maxScope,
                                    @NotNull ResolveState state) {
-    PsiElement prevParent = entrance, scope = entrance;
+    PsiElement prevParent = entrance;
+    PsiElement scope = entrance;
 
     while (scope != null) {
       if (!scope.processDeclarations(processor, state, prevParent, entrance)) return false;
@@ -1212,7 +1213,8 @@ public class PsiTreeUtil {
   public static boolean treeWalkUp(@NotNull PsiElement entrance,
                                    @Nullable PsiElement maxScope,
                                    @NotNull PairProcessor<? super PsiElement, ? super PsiElement> eachScopeAndLastParent) {
-    PsiElement prevParent = null, scope = entrance;
+    PsiElement prevParent = null;
+    PsiElement scope = entrance;
 
     while (scope != null) {
       if (!eachScopeAndLastParent.process(scope, prevParent)) return false;
@@ -1281,7 +1283,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
 
-    @SuppressWarnings("deprecation") IntArrayList offsets = new IntArrayList();
+    IntArrayList offsets = new IntArrayList();
     PsiElement cur = element;
     while (!cur.getClass().equals(copy.getClass())) {
       int pos = 0;
@@ -1312,7 +1314,7 @@ public class PsiTreeUtil {
     if (!cur.getClass().equals(element.getClass())) {
       throw new IllegalStateException("File structure differs: " + cur.getClass() + " != " + element.getClass());
     }
-    @SuppressWarnings("unchecked") T t = (T)cur;
-    return t;
+    //noinspection unchecked
+    return (T)cur;
   }
 }

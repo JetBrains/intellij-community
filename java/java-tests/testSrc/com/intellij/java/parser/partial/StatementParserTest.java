@@ -136,6 +136,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRules12() { doParserTest("case 1, -> { }"); }
   public void testSwitchRules13() { doParserTest("case null, default -> { }"); }
   public void testSwitchRules14() { doParserTest("case default -> { }"); }
+  public void testSwitchRules15() { doParserTest("case A a && x.foo(() -> true) -> {}"); }
+  public void testSwitchRules16() { doParserTest("case A a && b -> {}"); }
 
   public void testSwitchRulesWithPattern0() { doParserTest("case Integer i -> { }"); }
   public void testSwitchRulesWithPattern1() { doParserTest("case int[] ia -> { }"); }

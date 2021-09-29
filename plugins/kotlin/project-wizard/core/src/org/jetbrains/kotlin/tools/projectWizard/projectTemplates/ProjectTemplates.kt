@@ -106,6 +106,28 @@ private fun createDefaultSourceSets() =
 private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTemplateIds: Set<String>? = null) =
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
+
+object EmptySingleModuleProjectTemplate : ProjectTemplate() {
+    override val title = ""
+    override val description = ""
+    override val id = "emptyProject"
+
+    @NonNls
+    override val suggestedProjectName = "myEmptyProject"
+    override val projectKind = ProjectKind.Singleplatform
+
+    override val setsPluginSettings: List<SettingWithValue<*, *>>
+        get() = listOf(
+            KotlinPlugin.modules.reference withValue listOf(
+                SinglePlatformModule(
+                    "moduleName",
+                    createDefaultSourceSets(),
+                    permittedTemplateIds = setOf()
+                )
+            )
+        )
+}
+
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")

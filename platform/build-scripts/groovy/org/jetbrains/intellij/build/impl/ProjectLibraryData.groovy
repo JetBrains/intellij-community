@@ -2,15 +2,46 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
-import groovy.transform.Immutable
 
 @CompileStatic
-@Immutable
 final class ProjectLibraryData {
-  String libraryName
-  String relativeOutputPath
-  /**
-   * Do not merge library JAR file into uber JAR.
-   */
-  boolean standalone
+  final String libraryName
+  final String relativeOutputPath
+  final PackMode packMode
+
+  enum PackMode {
+    // merged into some uber jar
+    MERGED,
+    // all JARs of the library is merged into JAR named after the library
+    STANDALONE_MERGED,
+    // all JARs of the library is included into dist separate
+    STANDALONE_SEPARATE,
+    // all JARs of the library is included into dist separate with transformed file names (version suffix is removed)
+    STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+  }
+
+  ProjectLibraryData(String libraryName, String relativeOutputPath, PackMode packMode) {
+    this.libraryName = libraryName
+    this.relativeOutputPath = relativeOutputPath
+    this.packMode = packMode
+  }
+
+  boolean equals(o) {
+    if (this.is(o)) return true
+    if (!(o instanceof ProjectLibraryData)) return false
+
+    ProjectLibraryData data = (ProjectLibraryData)o
+    if (libraryName != data.libraryName) return false
+
+    return true
+  }
+
+  int hashCode() {
+    return libraryName.hashCode()
+  }
+
+  @Override
+  String toString() {
+    return "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$relativeOutputPath)"
+  }
 }

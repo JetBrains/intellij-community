@@ -13,7 +13,7 @@ class BaseLayoutSpec {
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {
-    layout.moduleJars.putValue("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar".toString(), moduleName)
+    layout.withModule(moduleName)
   }
 
   /**
@@ -25,8 +25,7 @@ class BaseLayoutSpec {
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
    */
   void withModule(String moduleName, String relativeJarPath) {
-    layout.moduleJars.putValue(relativeJarPath, moduleName)
-    layout.explicitlySetJarPaths.add(relativeJarPath)
+    layout.withModule(moduleName, relativeJarPath)
   }
 
   /**
@@ -40,10 +39,13 @@ class BaseLayoutSpec {
   /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
-   * @standalone do not merge library JAR file into uber JAR.
    */
-  void withProjectLibrary(String libraryName, String relativeOutputPath = "", boolean standalone = false) {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, standalone))
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.MERGED))
+  }
+
+  void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
   }
 
   /**
@@ -88,6 +90,6 @@ class BaseLayoutSpec {
    * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
    */
   void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
-    layout.projectLibrariesToUnpack.putValue(jarName, libraryName)
+    layout.withProjectLibraryUnpackedIntoJar(libraryName, jarName)
   }
 }

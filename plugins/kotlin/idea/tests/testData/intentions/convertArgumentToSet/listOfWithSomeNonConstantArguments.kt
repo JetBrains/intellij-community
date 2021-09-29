@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Variable 'c' is never used
 
 fun bar(): Int = TODO()
 

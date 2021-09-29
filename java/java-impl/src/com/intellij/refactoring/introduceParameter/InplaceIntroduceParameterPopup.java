@@ -4,6 +4,8 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.hint.EditorCodePreview;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -29,13 +31,17 @@ import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,7 +100,21 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         return parameters;
       }
     };
-    myPanel.appendOccurrencesDelegate(myWholePanel);
+    final GridBagConstraints gc =
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insetsLeft(6), 0, 0);
+    myPanel.createDelegateCb(gc, myWholePanel);
+    gc.insets.top = JBUI.scale(6);
+    myWholePanel.add(new LinkLabel<>(LangBundle.message("inlay.rename.link.label.more.options"), null){
+      @Override
+      public void doClick() {
+        new IntroduceParameterHandler().invoke(myProject, myEditor, myMethod.getContainingFile(), DataManager.getInstance().getDataContext(myEditor.getComponent()));
+      }
+    }, gc);
+  }
+
+  @Override
+  protected void showDialogAdvertisement(@NonNls String actionId) {
+    initPopupOptionsAdvertisement();
   }
 
   @Override

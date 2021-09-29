@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
@@ -34,16 +35,16 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString(), commandLine.getCharset());
-    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   /**
-   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
@@ -75,7 +76,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
-      RunnerMediator.injectRunnerCommand(commandLine, showConsole);
+      WinRunnerMediator.injectRunnerCommand(commandLine, showConsole);
     }
     return commandLine;
   }
@@ -196,7 +197,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     }
     if (SystemInfo.isWindows) {
       if (myMediatedProcess) {
-        return RunnerMediator.destroyProcess(myProcess, true);
+        return WinRunnerMediator.destroyProcess(myProcess, true);
       }
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
@@ -204,7 +205,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
+          return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+            return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
+          });
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {

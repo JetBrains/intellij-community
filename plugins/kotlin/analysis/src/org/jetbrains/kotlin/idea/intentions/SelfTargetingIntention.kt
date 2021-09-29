@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -28,7 +29,9 @@ import org.jetbrains.kotlin.utils.checkWithAttachment
 @Suppress("EqualsOrHashCode")
 abstract class SelfTargetingIntention<TElement : PsiElement>(
     val elementType: Class<TElement>,
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     private var textGetter: () -> @IntentionName String,
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     private val familyNameGetter: () -> @IntentionFamilyName String = textGetter,
 ) : IntentionAction {
     @Deprecated("Replace with primary constructor", ReplaceWith("SelfTargetingIntention<TElement>(elementType, { text }, { familyName })"))
@@ -39,6 +42,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     ) : this(elementType, { text }, { familyName })
 
     protected val defaultText: @IntentionName String get() = defaultTextGetter()
+    @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     protected val defaultTextGetter: () -> @IntentionName String = textGetter
 
     @Deprecated("Replace with `setTextGetter`", ReplaceWith("setTextGetter { text }"))
@@ -114,6 +118,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         }
     }
 
+    @FileModifier.SafeFieldForPreview // inspection should not depend on the file where the fix is applied
     var inspection: IntentionBasedInspection<TElement>? = null
         internal set
 

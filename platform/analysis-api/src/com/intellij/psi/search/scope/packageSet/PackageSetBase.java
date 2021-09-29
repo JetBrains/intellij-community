@@ -14,7 +14,7 @@ public abstract class PackageSetBase implements PackageSet {
   /** @deprecated use {@link PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean contains(@SuppressWarnings("unused") @NotNull VirtualFile file, @SuppressWarnings("unused") NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
     return false;
   }
 

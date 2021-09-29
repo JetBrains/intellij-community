@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 'x' is never used
 fun interface I<T> {
     fun method(x: T): T
 }

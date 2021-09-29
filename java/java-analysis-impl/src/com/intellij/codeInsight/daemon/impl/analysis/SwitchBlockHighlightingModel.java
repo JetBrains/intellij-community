@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -719,7 +720,7 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED) && selectorClass.hasModifierProperty(ABSTRACT)) {
+      else if (selectorClass != null) {
         checkSealedClassCompleteness(selectorClass, elements, results);
       }
       else {
@@ -738,10 +739,10 @@ public class SwitchBlockHighlightingModel {
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
                                               @NotNull List<PsiCaseLabelElement> elements,
                                               @NotNull List<HighlightInfo> results) {
-      Set<PsiClass> directInheritedClasses;
-      List<String> allNames = new SmartList<>();
+      Set<PsiClass> missingClasses;
+      List<String> patternClassNames = new SmartList<>();
       if (elements.isEmpty()) {
-        directInheritedClasses = Collections.emptySet();
+        missingClasses = Collections.emptySet();
       }
       else {
         Map<PsiClass, PsiPattern> patternClasses = new HashMap<>();
@@ -751,45 +752,51 @@ public class SwitchBlockHighlightingModel {
           PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
           if (patternClass != null) {
             patternClasses.put(patternClass, patternLabelElement);
-            allNames.add(patternClass.getName());
+            patternClassNames.add(patternClass.getName());
           }
         }
-        directInheritedClasses = new SmartHashSet<>(
-          DirectClassInheritorsSearch.search(selectorClass, selectorClass.getUseScope(), false).findAll());
-        while (!patternClasses.isEmpty() && !directInheritedClasses.isEmpty()) {
-          Iterator<PsiClass> inheritedClassesIterator = directInheritedClasses.iterator();
-          Set<PsiClass> newDirectInheritedClasses = new SmartHashSet<>();
-          while (inheritedClassesIterator.hasNext()) {
-            PsiClass nextInheritedClass = inheritedClassesIterator.next();
-            PsiPattern removedPattern = patternClasses.remove(nextInheritedClass);
-            if (removedPattern != null && JavaPsiPatternUtil.isTotalForType(removedPattern, TypeUtils.getType(nextInheritedClass))) {
-              inheritedClassesIterator.remove();
-              continue;
-            }
-            if (!nextInheritedClass.hasModifierProperty(SEALED) || !nextInheritedClass.hasModifierProperty(ABSTRACT)) {
-              continue;
-            }
-            Collection<PsiClass> newInheritedClasses =
-              DirectClassInheritorsSearch.search(nextInheritedClass, selectorClass.getUseScope(), false).findAll();
-            if (!newInheritedClasses.isEmpty()) {
-              inheritedClassesIterator.remove();
-              newDirectInheritedClasses.addAll(newInheritedClasses);
+        Queue<PsiClass> nonVisited = new ArrayDeque<>();
+        nonVisited.add(selectorClass);
+        Set<PsiClass> visited = new SmartHashSet<>();
+        missingClasses = new SmartHashSet<>();
+        while (!nonVisited.isEmpty()) {
+          PsiClass psiClass = nonVisited.peek();
+          if (psiClass.hasModifierProperty(SEALED) && psiClass.hasModifierProperty(ABSTRACT)) {
+            for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
+              if (!visited.add(permittedClass)) continue;
+              PsiPattern pattern = patternClasses.get(permittedClass);
+              if (pattern == null || !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
+                nonVisited.add(permittedClass);
+              }
             }
           }
-          if (newDirectInheritedClasses.isEmpty()) break;
-          directInheritedClasses.addAll(newDirectInheritedClasses);
+          else {
+            visited.add(psiClass);
+            missingClasses.add(psiClass);
+          }
+          nonVisited.poll();
         }
-        if (directInheritedClasses.isEmpty()) return;
+        if (missingClasses.isEmpty()) return;
       }
       HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
-      if (!directInheritedClasses.isEmpty()) {
-        directInheritedClasses.forEach(aClass -> allNames.add(aClass.getName()));
+      if (!missingClasses.isEmpty()) {
+        missingClasses.forEach(aClass -> patternClassNames.add(aClass.getName()));
         Set<String> missingCases = new SmartHashSet<>();
-        directInheritedClasses.forEach(aClass -> missingCases.add(aClass.getName()));
-        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
+        missingClasses.forEach(aClass -> missingCases.add(aClass.getName()));
+        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, patternClassNames);
         QuickFixAction.registerQuickFixAction(info, fix);
       }
       results.add(info);
+    }
+
+    @NotNull
+    private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
+      PsiReferenceList permitsList = psiClass.getPermitsList();
+      if (permitsList == null) {
+        GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
+        return new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
+      }
+      return ContainerUtil.map(permitsList.getReferencedTypes(), type -> type.resolve());
     }
 
     @Nullable
@@ -873,4 +880,3 @@ public class SwitchBlockHighlightingModel {
     }
   }
 }
-

@@ -6,11 +6,12 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
+@Internal
 public final class Cancellation {
 
   private static final ThreadLocal<Job> ourJob = new ThreadLocal<>();
@@ -22,7 +23,6 @@ public final class Cancellation {
     return ourJob.get();
   }
 
-  @TestOnly
   public static boolean isCancelled() {
     Job job = ourJob.get();
     return job != null && job.isCancelled();
@@ -57,11 +57,17 @@ public final class Cancellation {
     try (AccessToken ignored = withJob(job)) {
       action.run();
     }
+    catch (JobCanceledException e) {
+      throw job.getCancellationException();
+    }
   }
 
   public static <T, E extends Throwable> T withJob(@NotNull Job job, @NotNull ThrowableComputable<T, E> action) throws E {
     try (AccessToken ignored = withJob(job)) {
       return action.compute();
+    }
+    catch (JobCanceledException e) {
+      throw job.getCancellationException();
     }
   }
 }

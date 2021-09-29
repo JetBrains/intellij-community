@@ -1,3 +1,5 @@
+// AFTER-WARNING: Variable 'foo1' is never used
+// AFTER-WARNING: Variable 'foo2' is never used
 import Outer.Middle.Inner.Companion.foo
 
 class Outer {

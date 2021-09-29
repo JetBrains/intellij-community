@@ -14,4 +14,4 @@ fun test() {
     D().f<caret>oo()
 }
 
-//INFO: <div class='definition'><pre><a href="psi_element://D"><code style='font-size:96%;'>D</code></a><br>public open fun <b>foo</b>(): Int</pre></div><div class='content'><p>This method returns zero.</p></div><table class='sections'></table>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">open</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">foo</span>()<span style="">: </span><span style="color:#000000;">Int</span></pre></div><div class='content'><p>This method returns zero.</p></div><table class='sections'></table>

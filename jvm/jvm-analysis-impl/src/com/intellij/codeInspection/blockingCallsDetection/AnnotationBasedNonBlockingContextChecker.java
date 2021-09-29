@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UMethod;
@@ -10,6 +13,9 @@ import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
+
+import static com.intellij.codeInspection.blockingCallsDetection.ContextType.BLOCKING;
+import static com.intellij.codeInspection.blockingCallsDetection.ContextType.NONBLOCKING;
 
 public final class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
 
@@ -32,25 +38,26 @@ public final class AnnotationBasedNonBlockingContextChecker implements NonBlocki
   }
 
   @Override
-  public boolean isContextNonBlockingFor(@NotNull PsiElement element) {
-    UCallExpression callExpression = UastContextKt.toUElement(element, UCallExpression.class);
-    if (callExpression == null) return false;
+  public ContextType isContextNonBlockingFor(@NotNull ElementContext elementContext) {
+    UCallExpression callExpression = UastContextKt.toUElement(elementContext.getElement(), UCallExpression.class);
+    if (callExpression == null) return BLOCKING.INSTANCE;
 
     UMethod callingMethod = UastUtils.getParentOfType(callExpression, UMethod.class);
-    if (callingMethod == null) return false;
+    if (callingMethod == null) return BLOCKING.INSTANCE;
     PsiMethod psiCallingMethod = callingMethod.getJavaPsi();
 
     if (AnnotationUtil.findAnnotation(psiCallingMethod, myNonBlockingAnnotations, false) != null) {
-      return true;
+      return NONBLOCKING.INSTANCE;
     }
 
     if (AnnotationUtil.findAnnotation(psiCallingMethod, myBlockingAnnotations, false) != null) {
       // @Blocking on method overrides @NonBlocking on class
-      return false;
+      return BLOCKING.INSTANCE;
     }
 
     PsiClass containingClass = psiCallingMethod.getContainingClass();
-    return containingClass != null
-           && AnnotationUtil.findAnnotation(containingClass, myNonBlockingAnnotations, false) != null;
+    boolean isClassAnnotated = containingClass != null
+                && AnnotationUtil.findAnnotation(containingClass, myNonBlockingAnnotations, false) != null;
+    return isClassAnnotated ? NONBLOCKING.INSTANCE : BLOCKING.INSTANCE;
   }
 }

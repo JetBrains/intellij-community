@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -26,12 +27,12 @@ import javax.swing.border.Border
 class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslDemoDialog(e.project).show()
+    UiDslTestDialog(e.project).show()
   }
 }
 
 @Suppress("DialogTitleCapitalization")
-private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
+private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
   init {
     title = "UI DSL Tests"
@@ -46,12 +47,68 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     val result = JBTabbedPane()
     result.minimumSize = Dimension(300, 200)
     result.preferredSize = Dimension(800, 600)
+    result.addTab("Labels", createLabelsPanel())
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Groups", JScrollPane(createGroupsPanel()))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
+    result.addTab("Resizable Rows", createResizableRows())
+
+    return result
+  }
+
+  fun createLabelsPanel(): JPanel {
+    val result = panel {
+      row("Label for row") {
+        textField()
+          .columns(10)
+      }
+      row {
+        for (i in 1..2) {
+          intTextField()
+            .columns(10)
+            .label("Labeled Cell $i")
+        }
+      }
+
+      row {
+        checkBox("checkBox")
+          .label("Long label occupies two columns", position = LabelPosition.TOP)
+        intTextField()
+          .applyToComponent { text = "No labeled text field" }
+        intTextField()
+          .columns(10)
+          .label("Third column", position = LabelPosition.TOP)
+      }
+
+      for (rowLayout in RowLayout.values()) {
+        group("Labeled Cell, position = Top, layout = ${rowLayout.name}") {
+          if (rowLayout == RowLayout.LABEL_ALIGNED) {
+            row {
+              label("LABEL_ALIGNED: in the next row only two first labels are shown")
+            }
+          }
+
+          row {
+            for (i in 1..3) {
+              var text = "Labeled $i"
+              if (i == 2) {
+                text = "<html>$text<br>second line"
+              }
+              intTextField()
+                .columns(10)
+                .label(text, position = LabelPosition.TOP)
+            }
+          }.layout(rowLayout)
+        }
+      }
+    }
+
+    val disposable = Disposer.newDisposable()
+    result.registerValidators(disposable)
+    Disposer.register(myDisposable, disposable)
 
     return result
   }
@@ -279,6 +336,25 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
           }
         }.horizontalAlign(HorizontalAlign.RIGHT)
       }
+
+      group("Control visibility by visibleIf") {
+        lateinit var checkBoxText: Cell<JBCheckBox>
+        lateinit var checkBoxRow: Cell<JBCheckBox>
+
+        row {
+          checkBoxRow = checkBox("Row")
+            .applyToComponent { isSelected = true }
+          checkBoxText = checkBox("textField")
+            .applyToComponent { isSelected = true }
+        }
+
+        row("visibleIf test row") {
+          textField()
+            .applyToComponent { text = "textField" }
+            .visibleIf(checkBoxText.selected)
+          label("some label")
+        }.visibleIf(checkBoxRow.selected)
+      }
     }
   }
 
@@ -312,6 +388,19 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
         }
         cell(subPanel)
           .horizontalAlign(HorizontalAlign.FILL)
+      }
+    }
+  }
+
+  fun createResizableRows(): JPanel {
+    return panel {
+      for (rowLayout in RowLayout.values()) {
+        row(rowLayout.name) {
+          textArea()
+            .horizontalAlign(HorizontalAlign.FILL)
+            .verticalAlign(VerticalAlign.FILL)
+        }.layout(rowLayout)
+          .resizableRow()
       }
     }
   }
@@ -355,40 +444,46 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
   fun build(): DialogPanel {
     return panel {
       for (rowLayout in RowLayout.values()) {
-        row("${rowLayout.name}:") {
-          customComponent("Long Component1")
-            .comment("Component1 comment is aligned with Component1")
-          customComponent("Component2")
-          button("button") { }
-        }.layout(rowLayout)
-        row("${rowLayout.name} long:") {
-          customComponent("Component1")
-          customComponent("Long Component2")
-            .comment("<html>LABEL_ALIGNED: Component2 comment is aligned with Component1 (cell[1]), hard to fix, rare use case<br>" +
-                     "OTHERWISE: Component2 comment is aligned with Component2")
-          button("button") { }
-        }.layout(rowLayout)
-        row(rowLayout.name) {
-          customComponent("Component1")
-          customComponent("Long Component2")
-          button("button") { }
-            .comment("<html>LABEL_ALIGNED: Button comment is aligned with Component1 (cell[1]), hard to fix, rare use case<br>" +
-                     "OTHERWISE: Button comment is aligned with button")
-        }.layout(rowLayout)
-        row {
-          customComponent("${rowLayout.name} Component:")
-            .comment("Component comment is aligned with Component")
-          customComponent("Component1")
-          customComponent("Long Component2")
-          button("button") { }
-        }.layout(rowLayout)
-        row {
-          customComponent("${rowLayout.name} Component:")
-          customComponent("Component1")
-            .comment("Component1 comment is aligned with Component1")
-          customComponent("Long Component2")
-          button("button") { }
-        }.layout(rowLayout)
+        val labelAligned = rowLayout == RowLayout.LABEL_ALIGNED
+
+        group("rowLayout = $rowLayout") {
+          row("With Label:") {
+            customComponent("Long Component1")
+              .comment("Component1 comment is aligned with Component1")
+            customComponent("Component2")
+            button("button") { }
+          }.layout(rowLayout)
+          row("With Long Label:") {
+            customComponent("Component1")
+            customComponent("Long Component2")
+              .comment(
+                if (labelAligned) "LABEL_ALIGNED: Component2 comment is aligned with Component1 (cell[1]), hard to fix, rare use case"
+                else "Component2 comment is aligned with Component2")
+            button("button") { }
+          }.layout(rowLayout)
+          row("With Very Long Label:") {
+            customComponent("Component1")
+            customComponent("Long Component2")
+            button("button") { }
+              .comment(if (labelAligned) "LABEL_ALIGNED: Button comment is aligned with Component1 (cell[1]), hard to fix, rare use case"
+              else "Button comment is aligned with button")
+          }.layout(rowLayout)
+          if (labelAligned) {
+            row {
+              label("LABEL_ALIGNED: in the next row only two first comments are shown")
+            }
+          }
+          row {
+            customComponent("Component1 extra width")
+              .comment("Component1 comment")
+            customComponent("Component2 extra width")
+              .comment("<html>Component2 comment<br>second line")
+            customComponent("One More Long Component3")
+              .comment("Component3 comment")
+            button("button") { }
+              .comment("Button comment")
+          }.layout(rowLayout)
+        }
       }
     }
   }

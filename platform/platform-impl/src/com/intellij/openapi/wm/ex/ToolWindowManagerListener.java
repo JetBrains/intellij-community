@@ -52,7 +52,6 @@ public interface ToolWindowManagerListener extends EventListener {
   /**
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
-  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {

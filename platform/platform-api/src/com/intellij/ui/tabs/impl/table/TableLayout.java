@@ -305,7 +305,9 @@ public class TableLayout extends TabLayout implements MorePopupAware {
     Set<TabInfo> lastInRow = new HashSet<>();
     for (int i = 0; i < myLastTableLayout.table.size(); i++) {
       List<TabInfo> columns = myLastTableLayout.table.get(i).myColumns;
-      lastInRow.add(columns.get(columns.size() - 1));
+      if (!columns.isEmpty()) {
+        lastInRow.add(columns.get(columns.size() - 1));
+      }
     }
 
     if (c instanceof JBTabsImpl) {

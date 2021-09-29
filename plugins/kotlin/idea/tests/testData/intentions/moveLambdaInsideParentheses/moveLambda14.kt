@@ -1,4 +1,5 @@
 // IS_APPLICABLE: true
+// AFTER-WARNING: Parameter 'c' is never used
 fun foo() {
     bar(1) <caret>{
         it * 3

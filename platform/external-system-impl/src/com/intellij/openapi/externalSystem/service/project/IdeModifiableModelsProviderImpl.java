@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
@@ -222,5 +223,22 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
     module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
+  }
+
+  // temporarily open access to state for the proxy
+  public ClassMap<ModifiableModel> getModifiableModels() {
+    return myModifiableModels;
+  }
+
+  public Map<Library, Library.ModifiableModel> getModifiableLibraryModels() {
+    return myModifiableLibraryModels;
+  }
+
+  public Map<Module, ModifiableFacetModel> getModifiableFacetModels() {
+    return myModifiableFacetModels;
+  }
+
+  public void forceUpdateSubstitutions() {
+    updateSubstitutions();
   }
 }

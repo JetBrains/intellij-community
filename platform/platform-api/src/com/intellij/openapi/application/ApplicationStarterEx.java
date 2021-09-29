@@ -25,7 +25,6 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   /**
    * @deprecated use async version {@link #processExternalCommandLineAsync}
    */
-  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   public void processExternalCommandLine(String @NotNull [] args, @Nullable String currentDirectory) {

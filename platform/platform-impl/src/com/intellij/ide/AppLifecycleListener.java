@@ -34,7 +34,7 @@ public interface AppLifecycleListener {
   @SuppressWarnings("DeprecatedIsStillUsed")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
-  default void appStarting(@SuppressWarnings("unused") @Nullable Project projectFromCommandLine) { }
+  default void appStarting(@Nullable Project projectFromCommandLine) { }
 
   /**
    * Called after all application startup tasks, including opening projects, are processed (i.e. either completed or running in background).

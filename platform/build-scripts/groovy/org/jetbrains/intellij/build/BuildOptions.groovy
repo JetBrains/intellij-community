@@ -244,6 +244,22 @@ class BuildOptions {
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
+  /**
+   * Max attempts of dependencies resolution on fault. Default is 1 (no retries).
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
+   */
+  public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
+  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "1").toInteger()
+
+  /**
+   * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
+   */
+  public static final String RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
+  long resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
+
   static final String TARGET_OS = "intellij.build.target.os"
 
   BuildOptions() {

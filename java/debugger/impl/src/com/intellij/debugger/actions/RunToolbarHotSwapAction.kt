@@ -49,6 +49,7 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     val session = getSession(e)
     e.presentation.isEnabledAndVisible =
       session != null
+      && !e.isProcessTerminating()
       && HotSwapUIImpl.canHotSwap(session)
       && Registry.`is`("ide.new.navbar.hotswap", false)
 

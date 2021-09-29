@@ -703,7 +703,7 @@ class Main {
     }
   }
 
-  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc) {
+  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc, J1 j) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -829,6 +829,13 @@ class Main {
       case BorC bc -> "4";
     };
 
+    switch (j) {
+      case R1 r1:
+        break;
+      case R2 r2:
+        break;
+    }
+
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
     switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
       case Sub7 s1:
@@ -917,3 +924,7 @@ sealed interface AorC extends AorBorC {}
 final class A implements AorB, AorC {}
 final class B implements AorB, BorC {}
 final class C implements AorC, BorC {}
+sealed interface J1 {}
+sealed interface J2 extends J1 permits R1 {}
+record R1() implements J1, J2 {}
+record R2() implements J1 {}

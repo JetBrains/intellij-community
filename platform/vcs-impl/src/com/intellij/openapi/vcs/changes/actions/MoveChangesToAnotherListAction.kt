@@ -109,7 +109,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
                             selectedRanges: List<LocalRange>,
                             tracker: PartialLocalLineStatusTracker): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val allChangelists = changeListManager.changeListsCopy
+      val allChangelists = changeListManager.changeLists
 
       val affectedListIds = selectedRanges.map { range -> range.changelistId }.toSet()
       val affectedLists = allChangelists.filter { list -> affectedListIds.contains(list.id) }.toSet()
@@ -126,7 +126,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
                                     sameFileChangeLists: Set<LocalChangeList>,
                                     title: @Nls String): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val allChangelists = changeListManager.changeListsCopy
+      val allChangelists = changeListManager.changeLists
 
       val nonAffectedLists = if (affectedLists.size == 1) allChangelists - affectedLists else allChangelists
 

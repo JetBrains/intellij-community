@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutinesInfoFromJsonAndReferencesProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 
 class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
-    private val log by logger
-
     /**
      * Invokes DebugProbes from debugged process's classpath and returns states of coroutines
      * Should be invoked on debugger manager thread
@@ -33,12 +33,20 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
     }
 
     private fun findProvider(executionContext: DefaultExecutionContext): CoroutineInfoProvider? {
-        val agentProxy = CoroutineLibraryAgent2Proxy.instance(executionContext)
-        if (agentProxy != null)
-            return agentProxy
-        if (standaloneCoroutineDebuggerEnabled())
-            return CoroutineNoLibraryProxy(executionContext)
-        return null
+        val debugProbesImpl = DebugProbesImpl.instance(executionContext)
+        return when {
+            debugProbesImpl != null && debugProbesImpl.isInstalled ->
+                CoroutinesInfoFromJsonAndReferencesProvider.instance(executionContext, debugProbesImpl) ?:
+                CoroutineLibraryAgent2Proxy(executionContext, debugProbesImpl)
+            standaloneCoroutineDebuggerEnabled() ->
+                CoroutineNoLibraryProxy(executionContext)
+            else ->
+                null
+        }
+    }
+
+    companion object {
+        private val log by logger
     }
 }
 

@@ -425,7 +425,7 @@ internal interface PyTestConfigurationWithCustomSymbol {
  */
 abstract class PyAbstractTestConfiguration(project: Project,
                                            private val testFactory: PyAbstractTestFactory<*>)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory), PyRerunAwareConfiguration,
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired), PyRerunAwareConfiguration,
     RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
@@ -495,21 +495,9 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (!isFrameworkInstalled()) {
-      throw RuntimeConfigurationWarning(
-        PyBundle.message("runcfg.testing.no.test.framework", testFrameworkName))
-    }
     target.checkValid()
   }
 
-  /**
-   * Check if framework is available on SDK
-   */
-  open fun isFrameworkInstalled(): Boolean {
-    val sdk = sdk ?: return false // No SDK -- no tests
-    val requiredPackage = testFactory.packageRequired ?: return true // No package required
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
-  }
 
   override fun isIdTestBased(): Boolean = true
 

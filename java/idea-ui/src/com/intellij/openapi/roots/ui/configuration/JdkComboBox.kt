@@ -137,18 +137,29 @@ private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>,
   return null
 }
 
-fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?): Boolean {
+fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?, technologyName: String? = null): Boolean {
   val sdk = sdkProperty.get()
   if (sdk != null) {
     val wizardVersion = JavaSdk.getInstance().getVersion(sdk)
     if (wizardVersion != null && javaVersion != null) {
       val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
       if (selectedVersion != null && !wizardVersion.isAtLeast(selectedVersion)) {
-        Messages.showErrorDialog(JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
-                                                            selectedVersion.description,
-                                                            sdk.name,
-                                                            wizardVersion.description),
-                                 JavaStartersBundle.message("message.title.error"))
+        val message = if (technologyName == null) {
+          JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
+            selectedVersion.description,
+            sdk.name)
+        }
+        else {
+          JavaStartersBundle.message("message.java.version.not.supported.by.sdk.for.technology",
+            selectedVersion.description,
+            sdk.name,
+            technologyName)
+        }
+
+        val currentSdkMessage = JavaStartersBundle.message("message.java.version.current.download", wizardVersion.description)
+        Messages.showErrorDialog("$message $currentSdkMessage",
+          JavaStartersBundle.message("message.title.error"))
+
         return false
       }
     }

@@ -35,7 +35,6 @@ public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
 
   private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
-  private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
 
   private final List<AnAction> mySortedChildren = new ArrayList<>();
   private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
@@ -101,18 +100,23 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private synchronized void addActions(@NotNull List<? extends AnAction> actions) {
-    Set<Object> actionSet = new HashSet<>();
+    Set<AnAction> actionSet = new HashSet<>(actions.size());
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
       if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
-      if (!(action instanceof Separator) && !actionSet.add(action)) {
-        LOG.error(CANT_ADD_ACTION_TWICE + action);
-        continue;
+      if (action instanceof Separator || actionSet.add(action)) {
+        uniqueActions.add(action);
       }
-      uniqueActions.add(action);
+      else {
+        errorDuplicateActionAdded(action);
+      }
     }
     mySortedChildren.addAll(uniqueActions);
     incrementModificationStamp();
+  }
+
+  private static void errorDuplicateActionAdded(@NotNull AnAction action) {
+    LOG.error("Cannot add an action twice: " + action + "(" + action.getClass() + ")");
   }
 
   /**
@@ -169,7 +173,7 @@ public class DefaultActionGroup extends ActionGroup {
 
     // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
-      LOG.error(CANT_ADD_ACTION_TWICE + action);
+      errorDuplicateActionAdded(action);
       remove(action, actionManager.getId(action));
     }
 

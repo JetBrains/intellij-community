@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +113,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       MavenRootModelAdapter adapter =
         new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                       getModule("project"),
-                                                                      ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
+                                                                      new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
       adapter.addExcludedFolder(dir2.getPath());
       adapter.getRootModel().commit();

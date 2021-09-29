@@ -164,10 +164,10 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String scriptName = "${baseName}.bat"
     String vmOptionsFileName = "${baseName}%BITS%.exe"
 
-    String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
-    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
+    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\"\n"
+    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it\"" }.join("\n")
     if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
+      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar\""
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {

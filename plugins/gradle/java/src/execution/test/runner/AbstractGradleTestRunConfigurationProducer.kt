@@ -126,7 +126,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
       val size = tile.size
       val index = indexOfSubList(reducer, tile)
       if (index >= 0) {
-        val subReducer = reducer.subList(index, size)
+        val subReducer = reducer.subList(index, index + size)
         subReducer.clear()
         subReducer.add(null)
       }

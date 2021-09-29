@@ -40,7 +40,7 @@ public class SvnDeleteTest extends SvnTestCase {
     assertEquals(2, changesManually.size());
 
     refreshChanges();
-    final List<LocalChangeList> lists = changeListManager.getChangeListsCopy();
+    final List<LocalChangeList> lists = changeListManager.getChangeLists();
     assertEquals(1, lists.size());
     final Collection<Change> changes = lists.get(0).getChanges();
     assertEquals(2, changes.size());

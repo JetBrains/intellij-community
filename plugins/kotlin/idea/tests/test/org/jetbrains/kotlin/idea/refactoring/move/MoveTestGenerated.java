@@ -318,6 +318,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveFile/typeRefWithArguments/typeRefWithArguments.test");
     }
 
+    @TestMetadata("kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test")
+    public void testKotlin_moveMethod_moveToClass_companionHasReference_CompanionHasReference() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveMethod/moveToClass/companionHasReference/companionHasReference.test");
+    }
+
     @TestMetadata("kotlin/moveMethod/moveToClass/parameterAsReference/parameterAsReference.test")
     public void testKotlin_moveMethod_moveToClass_parameterAsReference_ParameterAsReference() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveMethod/moveToClass/parameterAsReference/parameterAsReference.test");

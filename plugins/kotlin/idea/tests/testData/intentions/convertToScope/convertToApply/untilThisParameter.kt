@@ -1,5 +1,7 @@
 // WITH_RUNTIME
-
+// AFTER-WARNING: Name shadowed: a
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'a' is never used
 class MyClass {
     fun foo1() = Unit
     fun foo2(a: MyClass) = Unit

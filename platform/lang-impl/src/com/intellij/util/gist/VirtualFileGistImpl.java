@@ -65,7 +65,8 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     return getOrCalculateAndCache(project, file, myCalculator).get();
   }
 
-  @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
+  @Override
+  public @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
     return getOrCalculateAndCache(project, file, null);
   }
 

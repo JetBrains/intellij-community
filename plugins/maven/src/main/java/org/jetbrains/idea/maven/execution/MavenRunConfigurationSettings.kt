@@ -119,6 +119,7 @@ class MavenRunConfigurationSettings : Cloneable {
     environment.let { settings.environmentProperties = it }
     isPassParentEnvs.let { settings.isPassParentEnv = it }
     isSkipTests.let { settings.isSkipTests = it }
+    mavenProperties.let { settings.mavenProperties = it }
     return if (settings == originalSettings) null else settings
   }
 

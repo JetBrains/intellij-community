@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
-import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInspection.ProblemHighlightType
@@ -36,7 +35,8 @@ class AnnotationPresentationInfo(
 ) {
 
     companion object {
-        private const val KOTLIN_COMPILER_WARNING_ID = "KotlinSuppressOptions"
+        private const val KOTLIN_COMPILER_WARNING_ID = "KotlinCompilerWarningOptions"
+        private const val KOTLIN_COMPILER_ERROR_ID = "KotlinCompilerErrorOptions"
     }
 
     fun processDiagnostics(
@@ -69,14 +69,23 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
+        val warning = diagnostic.severity == Severity.WARNING
+        val error = diagnostic.severity == Severity.ERROR
         val fixes = run {
-            fixesMap[diagnostic].takeIf { it.isNotEmpty() } ?: if (diagnostic.severity == Severity.WARNING) {
-                listOf(EmptyIntentionAction(diagnostic.factory.name))
+            fixesMap[diagnostic].takeIf { it.isNotEmpty() } ?: if (warning) {
+                listOf(CompilerWarningIntentionAction(diagnostic.factory.name))
             } else emptyList()
         }
-        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
-            KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
-        )
+        val keyForSuppressOptions =
+            if (error) {
+                HighlightDisplayKey.findOrRegister(
+                    KOTLIN_COMPILER_ERROR_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.error")
+                )
+            } else {
+                HighlightDisplayKey.findOrRegister(
+                    KOTLIN_COMPILER_WARNING_ID, KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning")
+                )
+            }
 
         fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach { action ->
             val options = mutableListOf<IntentionAction>()
@@ -87,7 +96,7 @@ class AnnotationPresentationInfo(
             info.registerFix(
                 action,
                 options,
-                KotlinIdeaAnalysisBundle.message("kotlin.compiler.warning"),
+                KotlinIdeaAnalysisBundle.message(if (error) "kotlin.compiler.error" else "kotlin.compiler.warning"),
                 null,
                 keyForSuppressOptions
             )

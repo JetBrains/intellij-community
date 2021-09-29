@@ -40,7 +40,7 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   private String @Nullable [] myRunOnlyEnvs;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
-    super(project, factory);
+    super(project, factory, "tox");
     myProject = project;
     // Module will be stored with XmlSerializer
     //noinspection AssignmentToSuperclassField

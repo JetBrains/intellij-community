@@ -187,10 +187,10 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "enum E { A, B }",
-      "sealed interface I {}",
-      "final class C1 implements I {}",
-      "final class C2 implements I {}",
+      "enum E { A, B }\n" +
+      "sealed interface I {}\n" +
+      "final class C1 implements I {}\n" +
+      "final class C2 implements I {}\n"
     };
   }
 

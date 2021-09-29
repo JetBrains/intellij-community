@@ -376,10 +376,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
-        if (!settings.getArguments().contains("--debug")) {
-          settings.withArgument("--info");
-        }
+      var arguments = settings.getArguments();
+      var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+      var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
       }
     }
 
@@ -482,7 +483,6 @@ public class GradleExecutionHelper {
     if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
       if (settings.isPassParentEnvs()) {
         LOG.warn("Host system environment variables will not be passed for the target run.");
-        listener.onTaskOutput(taskId, GradleBundle.message("gradle.target.execution.pass.parent.envs.warning") + "\n", false);
       }
       operation.setEnvironmentVariables(settings.getEnv());
       return;

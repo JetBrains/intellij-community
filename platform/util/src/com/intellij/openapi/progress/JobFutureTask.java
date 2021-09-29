@@ -3,8 +3,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.AccessToken;
 import kotlinx.coroutines.CompletableDeferred;
-import kotlinx.coroutines.CompletableJob;
-import kotlinx.coroutines.JobKt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
@@ -15,55 +14,50 @@ import static com.intellij.openapi.progress.Cancellation.currentJob;
 import static com.intellij.openapi.progress.Cancellation.withJob;
 import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 
+@Internal
 public final class JobFutureTask<V> extends FutureTask<V> {
 
-  private JobFutureTask(@NotNull Callable<V> callable) {
-    super(callable);
+  private final @NotNull CompletableDeferred<V> myJob;
+
+  private JobFutureTask(@NotNull CompletableDeferred<V> job, @NotNull Callable<V> callable) {
+    super(jobCallable(job, callable));
+    myJob = job;
   }
 
-  public static <V> @NotNull RunnableFuture<V> jobRunnableFuture(@NotNull Callable<? extends V> callable) {
-    return new JobFutureTask<>(jobCallable(callable));
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    myJob.cancel(null);
+    return super.cancel(mayInterruptIfRunning);
   }
 
   /**
-   * Creates a Callable instance, which, when called, associates the calling thread with a job.
-   * This job becomes a child of the job, which is currently associated with this thread, or root if there is no current Job.
+   * Creates a RunnableFuture instance with a job.
+   * <ul>
+   * <li>The job becomes a child of the current thread job, or a root job if there is no current job.</li>
+   * <li>The job becomes the current job inside the callable.</li>
+   * <li>The returned Future cancels its job when it's cancelled.</li>
+   * </ul>
    */
-  private static <V> @NotNull Callable<V> jobCallable(@NotNull Callable<? extends V> callable) {
-    CompletableDeferred<V> deferred = CompletableDeferred(currentJob());
+  public static <V> @NotNull RunnableFuture<V> jobRunnableFuture(@NotNull Callable<V> callable) {
+    return new JobFutureTask<>(CompletableDeferred(currentJob()), callable);
+  }
+
+  /**
+   * Creates a Callable instance, which, when called, associates the calling thread with a job,
+   * invokes original callable, and completes the job its result.
+   */
+  private static @NotNull <V> Callable<V> jobCallable(@NotNull CompletableDeferred<V> deferred, @NotNull Callable<? extends V> callable) {
     return () -> {
-      try {
-        V result;
-        try (AccessToken ignored = withJob(deferred)) {
-          result = callable.call();
-        }
+      try (AccessToken ignored = withJob(deferred)) {
+        V result = callable.call();
         deferred.complete(result);
         return result;
       }
+      catch (JobCanceledException e) {
+        throw deferred.getCancellationException();
+      }
       catch (Throwable e) {
         deferred.completeExceptionally(e);
-        throw e;
-      }
-    };
-  }
-
-  /**
-   * @see #jobCallable(Callable)
-   */
-  public static @NotNull Runnable jobRunnable(@NotNull Runnable runnable) {
-    if (runnable instanceof JobFutureTask) {
-      return runnable;
-    }
-    CompletableJob job = JobKt.Job(currentJob());
-    return () -> {
-      try {
-        try (AccessToken ignored = withJob(job)) {
-          runnable.run();
-        }
-        job.complete();
-      }
-      catch (Throwable e) {
-        job.completeExceptionally(e);
         throw e;
       }
     };

@@ -198,8 +198,13 @@ final class UsageRepr {
 
     private MethodUsage(final DependencyContext context, final int name, final int owner, final String descriptor) {
       super(name, owner);
-      myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
-      myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
+      try {
+        myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
+        myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
+      }
+      catch (IllegalArgumentException e) {
+        throw (BuildDataCorruptedException)new BuildDataCorruptedException("Unexpected method descriptor '" + descriptor + "'").initCause(e);
+      }
     }
 
     private MethodUsage(final DependencyContext context, final DataInput in) {

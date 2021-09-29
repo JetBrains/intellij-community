@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config
 
+import com.intellij.CommonBundle
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
@@ -9,11 +10,12 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpda
 import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
 import com.intellij.ide.wizard.NewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -25,9 +27,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.distribution.*
-import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.NoDistributionInfo
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -42,7 +47,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
 
   class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
     val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
-    val distributionsProperty = propertyGraph.graphProperty<DistributionInfo> { NoDistributionInfo }
+    val distributionsProperty = propertyGraph.graphProperty<DistributionInfo?> { null }
 
     var javaSdk by sdkProperty
     var distribution by distributionsProperty
@@ -64,28 +69,47 @@ class GroovyNewProjectWizard : NewProjectWizard {
             override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
             override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
           })
-          comboBox.comboBoxActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
-          comboBox.noDistributionName = GroovyBundle.message("combo.box.null.value.placeholder")
+          comboBox.specifyLocationActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
+          comboBox.addLoadingItem()
           val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
           if (pathToGroovyHome != null) {
-            comboBox.addItemIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+            comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
           }
           downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
             override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-              versions.sortedWith(::moveUnstablesToTheEnd)
+              versions.sortedWith(::moveUnstableVersionToTheEnd)
                 .map(::FrameworkLibraryDistributionInfo)
-                .forEach(comboBox::addItemIfNotExists)
-              comboBox.noDistributionName = ProjectBundle.message("sdk.missing.item")
+                .forEach(comboBox::addDistributionIfNotExists)
+              comboBox.removeLoadingItem()
+            }
+
+            override fun onError(errorMessage: String) {
+              comboBox.removeLoadingItem()
             }
           })
           cell(comboBox)
-            .bindItem(distributionsProperty)
-            .columns(COLUMNS_MEDIUM)
+            .validationOnApply { validateGroovySdk() }
+            .bindItem(distributionsProperty.transform(
+              { it?.let(Item::Distribution) ?: Item.NoDistribution },
+              { (it as? Item.Distribution)?.info }
+            )).columns(COLUMNS_MEDIUM)
         }.bottomGap(BottomGap.SMALL)
       }
     }
 
-    private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
+    private fun ValidationInfoBuilder.validateGroovySdk(): ValidationInfo? {
+      if (distribution == null) {
+        if (Messages.showDialog(GroovyBundle.message("dialog.title.no.jdk.specified.prompt"),
+            GroovyBundle.message("dialog.title.no.jdk.specified.title"),
+            arrayOf(CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()), 1,
+            Messages.getWarningIcon()) != Messages.YES) {
+          return error(GroovyBundle.message("dialog.title.no.jdk.specified.error"))
+        }
+      }
+      return null
+    }
+
+    private fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
       val leftVersion = left.versionString
       val rightVersion = right.versionString
       val leftUnstable = GroovyConfigUtils.isUnstable(leftVersion)
@@ -108,14 +132,14 @@ class GroovyNewProjectWizard : NewProjectWizard {
         override fun update(module: Module, rootModel: ModifiableRootModel) {
           val librariesContainer = LibrariesContainerFactory.createContainer(project)
           val compositionSettings = createCompositionSettings(project, librariesContainer)
-          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+          compositionSettings?.addLibraries(rootModel, mutableListOf(), librariesContainer)
         }
       })
 
       groovyModuleBuilder.commit(project)
     }
 
-    private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings {
+    private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings? {
       val libraryDescription = GroovyLibraryDescription()
       val versionFilter = FrameworkLibraryVersionFilter.ALL
       val pathProvider = { project.basePath ?: "./" }
@@ -124,11 +148,13 @@ class GroovyNewProjectWizard : NewProjectWizard {
           val allVersions = listOf(distribution.version)
           return LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, allVersions).apply {
             setDownloadLibraries(true)
-            downloadFiles(null)
+            ApplicationManager.getApplication().executeOnPooledThread {
+              downloadFiles(null)
+            }
           }
         }
         is LocalDistributionInfo -> {
-          val settings = LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, listOf(null))
+          val settings = LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, emptyList())
           val virtualFile = VfsUtil.findFile(Path.of(distribution.path), false) ?: return settings
           val keyboardFocusManager = getCurrentKeyboardFocusManager()
           val activeWindow = keyboardFocusManager.activeWindow
@@ -139,7 +165,7 @@ class GroovyNewProjectWizard : NewProjectWizard {
           settings.setNewLibraryEditor(libraryEditor)
           return settings
         }
-        else -> throw NoWhenBranchMatchedException(distribution.javaClass.toString())
+        else -> return null
       }
     }
 

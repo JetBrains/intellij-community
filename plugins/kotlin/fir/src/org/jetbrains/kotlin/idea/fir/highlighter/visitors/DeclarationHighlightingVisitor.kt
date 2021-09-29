@@ -8,9 +8,9 @@ package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.util.PsiUtilCore
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesForClass
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesForKtParameterDeclaration
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesForKtPropertyDeclaration
+import org.jetbrains.kotlin.idea.highlighter.textAttributesForClass
+import org.jetbrains.kotlin.idea.highlighter.textAttributesForKtParameterDeclaration
+import org.jetbrains.kotlin.idea.highlighter.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.highlighter.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

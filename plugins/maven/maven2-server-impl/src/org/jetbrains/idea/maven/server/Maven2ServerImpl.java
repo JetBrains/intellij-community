@@ -28,16 +28,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
-  @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      Maven2ServerGlobals.set(logger, downloadListener);
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-  }
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
@@ -100,6 +90,16 @@ public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  @Override
+  public MavenPullServerLogger createPullLogger(MavenToken token) {
+    return null;
+  }
+
+  @Override
+  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
+   return null;
   }
 
   @Override

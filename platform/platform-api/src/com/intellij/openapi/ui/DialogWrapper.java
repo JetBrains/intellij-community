@@ -27,10 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -563,7 +560,9 @@ public abstract class DialogWrapper {
     }
 
     JComponent result = createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
-    Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
+    if (ApplicationManager.getApplication() != null) {
+      Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
+    }
     return result;
   }
 
@@ -1659,6 +1658,8 @@ public abstract class DialogWrapper {
   }
 
   private void doShow() {
+    if (UiInterceptors.tryIntercept(this)) return;
+
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
@@ -2022,7 +2023,6 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  @SuppressWarnings("unused")
   public static @Nullable DialogWrapper findInstanceFromFocus() {
     return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }

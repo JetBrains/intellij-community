@@ -687,7 +687,7 @@ public class WSLDistribution {
   }
 
   private @Nullable String getWsl1LoopbackAddress() {
-    return WSLUtil.isWsl1(this) == ThreeState.YES ? InetAddress.getLoopbackAddress().getHostAddress() : null;
+    return getVersion() == 1 ? InetAddress.getLoopbackAddress().getHostAddress() : null;
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {

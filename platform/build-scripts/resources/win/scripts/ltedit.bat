@@ -4,5 +4,5 @@
 :: @@product_full@@ LightEdit mode script.
 ::----------------------------------------------------------------------
 
-SET IDE_BIN_DIR=%~dp0
+SET "IDE_BIN_DIR=%~dp0"
 CALL "%IDE_BIN_DIR%\@@script_name@@" -e %*

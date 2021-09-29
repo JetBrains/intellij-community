@@ -14,7 +14,6 @@ interface SpacingConfiguration {
       override val horizontalIndent = 0
       override val horizontalToggleButtonIndent = 0
       override val verticalComponentGap = 0
-      override val commentBottomGap = 0
       override val groupTopGap = 0
       override val verticalSmallGap = 0
       override val verticalMediumGap = 0
@@ -53,11 +52,6 @@ interface SpacingConfiguration {
    * Top and bottom gaps for components like CheckBox, JTextField etc
    */
   val verticalComponentGap: Int
-
-  /**
-   * Vertical gap after comment
-   */
-  val commentBottomGap: Int
 
   /**
    * Vertical gap before group

@@ -1,26 +1,57 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PythonInterpreterTargetEnvironmentFactory {
-  fun getTargetEnvironmentRequest(sdk: Sdk): TargetEnvironmentRequest?
+  fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
+
+  fun getTargetType(): TargetEnvironmentType<*>
+
+  /**
+   * Mutable targets are SSH, WSL. Immutable targets are Docker images and Docker Compose services.
+   */
+  fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean?
+
+  /**
+   * Comply with the credentials-based Python SDKs.
+   *
+   * @param project is might be required for specific targets to retrieve the project-specific data
+   */
+  fun getDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String?
 
   companion object {
+    const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
+
     @JvmStatic
     val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
 
     @JvmStatic
-    fun findTargetEnvironmentRequest(sdk: Sdk): TargetEnvironmentRequest? {
-      if (sdk.sdkAdditionalData !is PyRemoteSdkAdditionalDataBase) return LocalTargetEnvironmentRequest()
+    fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest? =
+      when (sdk.sdkAdditionalData) {
+        is PyTargetAwareAdditionalData, is PyRemoteSdkAdditionalDataBase ->
+          EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
+        else -> HelpersAwareLocalTargetEnvironmentRequest
+      }
 
-      return EP_NAME.extensionList.mapNotNull { it.getTargetEnvironmentRequest(sdk) }.firstOrNull()
-    }
+    @JvmStatic
+    fun findDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultSdkName(project, data, version) } ?: getFallbackSdkName(data, version)
+
+    private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
+      "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"
+
+    fun TargetEnvironmentConfiguration.isOfType(targetEnvironmentType: TargetEnvironmentType<*>): Boolean =
+      typeId == targetEnvironmentType.id
   }
 }

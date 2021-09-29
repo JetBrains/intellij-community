@@ -17,10 +17,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.JBTabsEx;
-import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -360,24 +357,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       if (currentDropSide == -1) {
         return;
       }
-      switch (currentDropSide) {
-        case TOP:
-          r.height /= 2;
-          break;
-        case LEFT:
-          r.width /= 2;
-          break;
-        case BOTTOM:
-          int h = r.height / 2;
-          r.height -= h;
-          r.y += h;
-          break;
-        case RIGHT:
-          int w = r.width / 2;
-          r.width -= w;
-          r.x += w;
-          break;
-      }
+      TabsUtil.updateBoundsWithDropSide(r, currentDropSide);
       myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }

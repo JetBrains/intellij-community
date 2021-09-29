@@ -43,8 +43,9 @@ class GrazieInspection : LocalInspectionTool() {
         if (extracted.length > 50_000) return // too large text
 
         val runner = CheckerRunner(extracted)
-        val warnings = runner.toProblemDescriptors(runner.run(checkers), isOnTheFly)
-        warnings.forEach(holder::registerProblem)
+        runner.run(checkers) { problem ->
+          runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
+        }
       }
     }
   }

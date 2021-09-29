@@ -32,23 +32,72 @@ class GradleCommandLine(val tasksAndArguments: TasksAndArguments, val scriptPara
 
     @JvmStatic
     fun parse(commandLine: List<String>): GradleCommandLine {
-      val tasksAndArguments = ArrayList<Task>()
-      val options = ArrayList<String>()
-
-      val allOptions = GradleCommandLineOptionsProvider.getSupportedOptions()
-        .options.asSequence()
-        .filterIsInstance<Option>()
-        .flatMap { opt -> listOfNotNull(opt.opt?.let { "-$it" }, opt.longOpt?.let { "--$it" }) }
-      for (token in commandLine) {
-        when {
-          token in allOptions -> options.add(token)
-          token.startsWith("-P") -> options.add(token)
-          token.startsWith("-D") -> options.add(token)
-          else -> tasksAndArguments.add(Task(token, emptyList()))
+      val state = ParserState(commandLine).apply {
+        while (iterator.hasNext()) {
+          val token = iterator.next()
+          if (!tryParseOption(token)) {
+            parseTask(token)
+          }
         }
       }
+      return state.getParsedCommandLine()
+    }
 
-      return GradleCommandLine(TasksAndArguments(tasksAndArguments), ScriptParameters(options))
+    private fun ParserState.parseTask(token: String) {
+      tasks.add(Task(token, emptyList()))
+    }
+
+    private fun ParserState.tryParseOption(token: String): Boolean {
+      return tryParseOptionWithArguments(token) || tryParsePrefixOption(token)
+    }
+
+    private fun ParserState.tryParseOptionWithArguments(token: String): Boolean {
+      val option = allOptions[token] ?: return false
+      options.add(token)
+      if (option.args > 0) {
+        var unprocessedArguments = option.args
+        while (iterator.hasNext() && unprocessedArguments != 0) {
+          options.add(iterator.next())
+          unprocessedArguments--
+        }
+      }
+      else if (option.args == Option.UNLIMITED_VALUES) {
+        while (iterator.hasNext()) {
+          options.add(iterator.next())
+        }
+      }
+      return true
+    }
+
+    private fun ParserState.tryParsePrefixOption(token: String): Boolean {
+      if (shortOptions.any { it.value.args == 1 && token.startsWith(it.key) }) {
+        options.add(token)
+        return true
+      }
+      if (longOptions.any { it.value.args == 1 && token.startsWith(it.key + "=") }) {
+        options.add(token)
+        return true
+      }
+      return false
+    }
+
+    private class ParserState(commandLine: List<String>) {
+      val iterator = commandLine.iterator()
+
+      val tasks = ArrayList<Task>()
+      val options = ArrayList<String>()
+
+      val shortOptions = GradleCommandLineOptionsProvider.OPTIONS.options.asSequence()
+        .filter { it.opt != null }
+        .associateBy { "-${it.opt}" }
+      val longOptions = GradleCommandLineOptionsProvider.OPTIONS.options.asSequence()
+        .filter { it.longOpt != null }
+        .associateBy { "--${it.longOpt}" }
+      val allOptions = shortOptions + longOptions
+
+      fun getParsedCommandLine(): GradleCommandLine {
+        return GradleCommandLine(TasksAndArguments(tasks), ScriptParameters(options))
+      }
     }
   }
 }

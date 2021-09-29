@@ -97,10 +97,11 @@ public final class DialogAppender extends AppenderSkeleton {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
     Throwable rootCause = ExceptionUtil.getRootCause(throwable);
+    //noinspection deprecation
     if (rootCause instanceof LogEventException) {
+      //noinspection deprecation
       return ((LogEventException)rootCause).getLogMessage();
     }
 

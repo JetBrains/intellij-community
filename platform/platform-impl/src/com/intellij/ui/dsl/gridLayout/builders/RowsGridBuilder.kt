@@ -43,8 +43,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   /**
    * Starts new row. Can be omitted for the first and last rows
-   *
-   * @param resizable true if new row is resizable
    */
   fun row(rowGaps: VerticalGaps = VerticalGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
@@ -53,7 +51,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     setRowGaps(rowGaps)
 
     if (resizable) {
-      addResizableRow()
+      resizableRow()
     }
 
     return this
@@ -146,12 +144,17 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  private fun addResizableColumn() {
-    grid.resizableColumns += x
+  /**
+   * Marks current row as a resizable one
+   */
+  fun resizableRow(): RowsGridBuilder {
+    startFirstRow()
+    grid.resizableRows += y
+    return this
   }
 
-  private fun addResizableRow() {
-    grid.resizableRows += y
+  private fun addResizableColumn() {
+    grid.resizableColumns += x
   }
 
   private fun startFirstRow() {

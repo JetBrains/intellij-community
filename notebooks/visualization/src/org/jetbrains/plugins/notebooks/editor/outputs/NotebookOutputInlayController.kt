@@ -156,6 +156,7 @@ class NotebookOutputInlayController private constructor(
           NotebookOutputComponentFactory.Match.COMPATIBLE -> {
             @Suppress("UNCHECKED_CAST") (oldFactory as NotebookOutputComponentFactory<JComponent, NotebookOutputDataKey>)
             oldFactory.updateComponent(editor, oldComponent, newDataKey)
+            oldComponent.parent.castSafelyTo<CollapsingComponent>()?.updateStubIfCollapsed()
             true
           }
           NotebookOutputComponentFactory.Match.SAME -> true

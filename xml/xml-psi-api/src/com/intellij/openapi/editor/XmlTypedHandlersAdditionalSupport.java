@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
 public interface XmlTypedHandlersAdditionalSupport {
   ExtensionPointName<XmlTypedHandlersAdditionalSupport> EP_NAME = new ExtensionPointName<>("com.intellij.xml.xmlTypedHandlersAdditionalSupport");
 

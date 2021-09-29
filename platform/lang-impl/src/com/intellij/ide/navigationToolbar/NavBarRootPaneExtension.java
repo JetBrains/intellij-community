@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,12 +27,11 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
-  private static final Logger LOG = Logger.getInstance(NavBarRootPaneExtension.class);
-
-  private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
+  private static final Logger LOG = Logger.getInstance(NavBarRootPaneExtension.class);
   @SuppressWarnings("StatefulEp")
   private final Project myProject;
+  private JComponent myWrapperPanel;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
   private Boolean myNavToolbarGroupExist;
@@ -45,16 +45,11 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     });
   }
 
-  private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
-    return uiSettings.getShowToolbarInNavigationBar() && !uiSettings.getPresentationMode();
-  }
-
   @Override
   public void revalidate() {
     final UISettings settings = UISettings.getInstance();
     LOG.debug("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
     if (isShowToolPanel(settings)) {
-      toggleRunPanel(false);
       toggleRunPanel(true);
     }
   }
@@ -64,18 +59,12 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return new NavBarRootPaneExtension(myProject);
   }
 
-  public boolean isMainToolbarVisible() {
-    var b = !UISettings.getInstance().getPresentationMode() &&
-           (UISettings.getInstance().getShowMainToolbar() || !runToolbarExists());
-    LOG.debug("Toolbar visibility: " + b);
-    return  b;
-  }
-
   private boolean runToolbarExists() {
     if (myNavToolbarGroupExist == null) {
       final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
-      myNavToolbarGroupExist = correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
-             correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
+      myNavToolbarGroupExist =
+        correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
+        correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
     }
     return myNavToolbarGroupExist;
   }
@@ -88,7 +77,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
-          NavBarUIManager.getUI().doPaintWrapperPanel((Graphics2D)g, getBounds(), isMainToolbarVisible());
         }
 
         @Override
@@ -103,6 +91,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       };
 
       addNavigationBarPanel(myWrapperPanel);
+      revalidate();
     }
     return myWrapperPanel;
   }
@@ -111,86 +100,42 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     wrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
   }
 
-  public static class NavBarWrapperPanel extends JPanel {
-    public NavBarWrapperPanel(LayoutManager layout) {
-      super(layout);
-      setName("navbar");
-    }
-
-    @Override
-    protected Graphics getComponentGraphics(Graphics graphics) {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-    }
-  }
-
-  private static void alignVertically(Container container) {
-    if (container.getComponentCount() == 1) {
-      Component c = container.getComponent(0);
-      Insets insets = container.getInsets();
-      Dimension d = c.getPreferredSize();
-      Rectangle r = container.getBounds();
-      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right,
-                  d.height);
-    }
-  }
-
   private void toggleRunPanel(final boolean show) {
-    if (show && myRunPanel == null && runToolbarExists()) {
-      final ActionManager manager = ActionManager.getInstance();
-      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
-
-      if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
-        ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
-        actionToolbar.setTargetComponent(null);
-        myRunPanel = new JPanel(new BorderLayout()) {
-          @Override
-          public void doLayout() {
-            alignVertically(this);
+    var promise = new AsyncPromise<AnAction>();
+    promise.onSuccess(action -> {
+      SwingUtilities.invokeLater(() -> {
+        if (show && myRunPanel == null && runToolbarExists()) {
+          if(myWrapperPanel != null && myRunPanel != null) {
+            myWrapperPanel.remove(myRunPanel);
+            myRunPanel = null;
           }
-        };
-        myRunPanel.setOpaque(false);
-        myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
-        final boolean needGap = isNeedGap(toolbarRunGroup);
-        myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
-        myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
-      }
-    }
-    else if (!show && myRunPanel != null) {
-      myWrapperPanel.remove(myRunPanel);
-      myRunPanel = null;
-    }
-  }
-
-  private static boolean isNeedGap(final AnAction group) {
-    final AnAction firstAction = getFirstAction(group);
-    return firstAction instanceof ComboBoxAction;
-  }
-
-  @Nullable
-  private static AnAction getFirstAction(final AnAction group) {
-    if (group instanceof DefaultActionGroup) {
-      AnAction firstAction = null;
-      for (final AnAction action : ((DefaultActionGroup)group).getChildActionsOrStubs()) {
-        if (action instanceof DefaultActionGroup) {
-          firstAction = getFirstAction(action);
+          final ActionManager manager = ActionManager.getInstance();
+          if (action instanceof ActionGroup && myWrapperPanel != null) {
+            ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)action, true);
+            actionToolbar.setTargetComponent(null);
+            myRunPanel = new JPanel(new BorderLayout()) {
+              @Override
+              public void doLayout() {
+                alignVertically(this);
+              }
+            };
+            myRunPanel.setOpaque(false);
+            myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
+            final boolean needGap = isNeedGap(action);
+            myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
+            myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
+          }
         }
-        else if (action instanceof Separator || action instanceof ActionGroup) {
-          continue;
+        else if (!show && myRunPanel != null) {
+          myWrapperPanel.remove(myRunPanel);
+          myRunPanel = null;
         }
-        else {
-          firstAction = action;
-          break;
-        }
-
-        if (firstAction != null) break;
-      }
-
-      return firstAction;
-    }
-    if (group instanceof CustomisedActionGroup) {
-      return ((CustomisedActionGroup)group).getFirstAction();
-    }
-    return null;
+      });
+    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
+      promise.setResult(toolbarRunGroup);
+    });
   }
 
   private JComponent buildNavBarPanel() {
@@ -274,5 +219,64 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @NotNull
   public String getKey() {
     return NAV_BAR;
+  }
+
+  private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
+    return uiSettings.getShowToolbarInNavigationBar() && !uiSettings.getPresentationMode();
+  }
+
+  private static void alignVertically(Container container) {
+    if (container.getComponentCount() == 1) {
+      Component c = container.getComponent(0);
+      Insets insets = container.getInsets();
+      Dimension d = c.getPreferredSize();
+      Rectangle r = container.getBounds();
+      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right,
+                  d.height);
+    }
+  }
+
+  private static boolean isNeedGap(final AnAction group) {
+    final AnAction firstAction = getFirstAction(group);
+    return firstAction instanceof ComboBoxAction;
+  }
+
+  @Nullable
+  private static AnAction getFirstAction(final AnAction group) {
+    if (group instanceof DefaultActionGroup) {
+      AnAction firstAction = null;
+      for (final AnAction action : ((DefaultActionGroup)group).getChildActionsOrStubs()) {
+        if (action instanceof DefaultActionGroup) {
+          firstAction = getFirstAction(action);
+        }
+        else if (action instanceof Separator || action instanceof ActionGroup) {
+          continue;
+        }
+        else {
+          firstAction = action;
+          break;
+        }
+
+        if (firstAction != null) break;
+      }
+
+      return firstAction;
+    }
+    if (group instanceof CustomisedActionGroup) {
+      return ((CustomisedActionGroup)group).getFirstAction();
+    }
+    return null;
+  }
+
+  public static class NavBarWrapperPanel extends JPanel {
+    public NavBarWrapperPanel(LayoutManager layout) {
+      super(layout);
+      setName("navbar");
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
   }
 }

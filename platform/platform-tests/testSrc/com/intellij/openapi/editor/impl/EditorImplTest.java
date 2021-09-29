@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
@@ -31,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputMethodEvent;
+import java.awt.event.KeyEvent;
 import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
@@ -825,5 +827,49 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("abc<selection>\n<caret>d</selection>ef");
     mouse().dragToXY(1, line1Y);
     checkResultByText("<selection><caret>abc\n</selection>def");
+  }
+
+  public void testPressAndHoldInputMethodOnMac() {
+    if (!SystemInfo.isMac) return; // macOS-specific test
+    initText("<caret>b");
+    JComponent component = getEditor().getContentComponent();
+    // 'A' key pressed
+    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
+    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a', KeyEvent.KEY_LOCATION_UNKNOWN));
+    checkResultByText("a<caret>b");
+    // popup with diacritic appears while key is held pressed
+    requestSelectedTextFromEditorViaImeApi();
+    checkResultByText("a<caret>b");
+    // 'A' key released
+    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 1, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
+    checkResultByText("a<caret>b");
+    // 'Right arrow' key pressed to select first variant from the popup
+    requestSelectedTextFromEditorViaImeApi();
+    dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 2,
+                                                 new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 0,
+                                                 null, TextHitInfo.beforeOffset(0)));
+    checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
+    // 'Right arrow' key released
+    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 3, 0, KeyEvent.VK_RIGHT, KeyEvent.CHAR_UNDEFINED,
+                                         KeyEvent.KEY_LOCATION_STANDARD));
+    checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
+    // 'Enter' key pressed to confirm selected variant
+    requestSelectedTextFromEditorViaImeApi();
+    dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 4,
+                                                 new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 1,
+                                                 TextHitInfo.afterOffset(0), TextHitInfo.afterOffset(0)));
+    checkResultByText("\u00e0<caret>b");
+    // 'Enter' key released
+    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 5, 0, KeyEvent.VK_ENTER, '\n', KeyEvent.KEY_LOCATION_STANDARD));
+    checkResultByText("\u00e0<caret>b");
+  }
+
+  private void dispatchEventToEditor(AWTEvent event) {
+    // this method ensures key events are dispatched to editor component, even if it's not focused
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(getEditor().getContentComponent(), event);
+  }
+
+  private void requestSelectedTextFromEditorViaImeApi() {
+    getEditor().getContentComponent().getInputMethodRequests().getSelectedText(null);
   }
 }

@@ -147,16 +147,15 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
             val resolvedCall = binaryExpression.operationReference.resolveToCall()
             val operation = resolvedCall?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
             val (leftText, rightText) = when (operation) {
-                "kotlin.Int.rangeTo" -> {
-                    KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right")
-                }
                 "kotlin.ranges.downTo" -> {
                     KotlinBundle.message("hints.ranges.downTo.left") to KotlinBundle.message("hints.ranges.downTo.right")
                 }
                 "kotlin.ranges.until" -> {
                     KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
                 }
-                else -> return emptyList()
+                else -> {
+                    if (operation in rangeToTypes) KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right") else return emptyList()
+                }
             }
             val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
             val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset)
@@ -193,3 +192,13 @@ sealed class InlayInfoDetail(val text: String)
 class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
 class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
 class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)
+
+private val rangeToTypes = setOf(
+    "kotlin.Byte.rangeTo",
+    "kotlin.Short.rangeTo",
+    "kotlin.Char.rangeTo",
+    "kotlin.Int.rangeTo",
+    "kotlin.Long.rangeTo",
+    "kotlin.UInt.rangeTo",
+    "kotlin.ULong.rangeTo"
+)

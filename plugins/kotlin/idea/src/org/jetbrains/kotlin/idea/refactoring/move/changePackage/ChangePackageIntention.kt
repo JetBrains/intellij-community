@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtPackageDirective
@@ -30,10 +29,6 @@ class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackage
     override fun isApplicableTo(element: KtPackageDirective) = element.packageNameExpression != null
 
     override fun applyTo(element: KtPackageDirective, editor: Editor?) {
-        if (isUnitTestMode()) {
-            throw UnsupportedOperationException("Do not call applyTo() in the test mode")
-        }
-
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
 
         val file = element.containingKtFile

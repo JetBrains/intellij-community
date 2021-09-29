@@ -61,7 +61,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   private fun openInEditor(file: Path, project: Project) {
     if (!Files.exists(file)) {
       try {
-        Files.write(file, template().split('\n'), charset())
+        Files.write(file, template().lines(), charset())
       }
       catch (e: IOException) {
         Logger.getInstance(javaClass).warn(file.toString(), e)
@@ -82,9 +82,10 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   }
 
   private fun openInDialog(file: Path, frame: JFrame) {
-    val text = if (!Files.exists(file)) template() else {
+    val lines = if (!Files.exists(file)) template().lines()
+    else {
       try {
-        Files.readAllLines(file, charset()).joinToString("\n")
+        Files.readAllLines(file, charset())
       }
       catch (e: IOException) {
         Logger.getInstance(javaClass).warn(file.toString(), e)
@@ -93,6 +94,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
         return
       }
     }
+    val text = lines.joinToString("\n")
 
     object : DialogWrapper(frame, true) {
       private val editor: EditorTextField

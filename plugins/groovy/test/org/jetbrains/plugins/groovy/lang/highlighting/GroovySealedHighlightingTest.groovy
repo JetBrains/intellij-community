@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.idea.Bombed
+
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
@@ -65,7 +65,6 @@ class D implements <error>A</error> {}'''
 '''
   }
 
-  @Bombed(year = 2021, month = 10, day = 1, user = "knisht", description = "Waiting for Groovy 4.0.0-beta-1 release")
   void 'test sealed annotation'() {
     highlightingTest '''
 import groovy.transform.Sealed
@@ -75,8 +74,6 @@ import groovy.transform.Sealed
 '''
   }
 
-
-  @Bombed(year = 2021, month = 10, day = 1, user = "knisht", description = "Waiting for Groovy 4.0.0-beta-1 release")
   void 'test mention class in annotation'() {
     highlightingTest '''
 import groovy.transform.Sealed
@@ -89,7 +86,6 @@ class B extends A {}
 class C extends <error>A</error> {}'''
   }
 
-  @Bombed(year = 2021, month = 10, day = 1, user = "knisht", description = "Waiting for Groovy 4.0.0-beta-1 release")
   void 'test non-extending class in annotation'() {
     highlightingTest '''
 import groovy.transform.Sealed
@@ -99,6 +95,6 @@ import groovy.transform.Sealed
 class A {}
 
 class B {}
-'''
+''', GrPermitsClauseInspection
   }
 }

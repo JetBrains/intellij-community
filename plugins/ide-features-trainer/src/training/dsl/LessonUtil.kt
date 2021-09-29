@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
 import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
@@ -322,6 +323,14 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
+}
+
+fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
+  proposeRestore {
+    checkExpectedStateOfEditor(previous.sample) {
+      needToType.contains(it.replace(" ", ""))
+    }
+  }
 }
 
 fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {

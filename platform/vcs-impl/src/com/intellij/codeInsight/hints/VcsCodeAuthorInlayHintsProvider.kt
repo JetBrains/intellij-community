@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider.Companion.KEY
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -57,8 +58,6 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
   if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
 }
 
-private val KEY = SettingsKey<NoSettings>("vcs.code.author")
-
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
@@ -83,6 +82,10 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     object : ImmediateConfigurable {
       override fun createComponent(listener: ChangeListener): JComponent = panel {}
     }
+
+  companion object {
+    internal val KEY: SettingsKey<NoSettings> = SettingsKey("vcs.code.author")
+  }
 }
 
 private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAuthor.Annotation")

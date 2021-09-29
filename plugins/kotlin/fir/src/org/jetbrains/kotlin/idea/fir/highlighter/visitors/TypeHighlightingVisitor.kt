@@ -9,8 +9,8 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.fir.highlighter.isAnnotationClass
-import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesKeyForTypeDeclaration
+import org.jetbrains.kotlin.idea.highlighter.isAnnotationClass
+import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForTypeDeclaration
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
 import org.jetbrains.kotlin.idea.references.mainReference

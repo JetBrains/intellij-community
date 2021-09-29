@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// AFTER-WARNING: Parameter 'value' is never used
 
 class FooException : Exception()
 

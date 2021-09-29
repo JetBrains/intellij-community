@@ -411,10 +411,12 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
-    Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
+    if (!Registry.is("debugger.new.tool.window.layout")) {
+      Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+      leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+    }
 
     Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
     settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);

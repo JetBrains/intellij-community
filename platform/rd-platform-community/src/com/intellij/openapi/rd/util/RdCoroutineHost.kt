@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.rd.util
 
-import com.intellij.application.ApplicationThreadPool
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
@@ -25,7 +24,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
     fun init() { instance }
     fun initAsync() = AppExecutorUtil.getAppExecutorService().execute { init() }
 
-    val applicationThreadPool get() = Dispatchers.ApplicationThreadPool
+    val applicationThreadPool get() = Dispatchers.IO
     val processIODispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
     val nonUrgentDispatcher = NonUrgentExecutor.getInstance().asCoroutineDispatcher()
   }

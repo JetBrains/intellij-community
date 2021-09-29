@@ -21,6 +21,7 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
@@ -99,6 +100,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
     val node = CheckedTreeNode(model)
+    node.isChecked = model.isEnabled
     langNode.add(node)
     return node
   }
@@ -130,5 +132,46 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun getModelLanguage(treeNode: CheckedTreeNode): Language {
     return (treeNode.parent as DefaultMutableTreeNode).userObject as Language
+  }
+
+  fun reset() {
+    reset(tree.model.root as DefaultMutableTreeNode)
+  }
+
+  private fun reset(node: DefaultMutableTreeNode) {
+    if (node.userObject is InlayProviderSettingsModel) {
+      val model = node.userObject as InlayProviderSettingsModel
+      if (model.isEnabled != (node as CheckedTreeNode).isChecked) {
+        node.isChecked = model.isEnabled
+        (tree.model as DefaultTreeModel).nodeChanged(node)
+      }
+      model.reset()
+    }
+    node.children().toList().forEach { reset(it as DefaultMutableTreeNode) }
+  }
+
+  fun apply() {
+    apply(tree.model.root as DefaultMutableTreeNode)
+  }
+
+  private fun apply(node: DefaultMutableTreeNode) {
+    if (node.userObject is InlayProviderSettingsModel) {
+      val model = node.userObject as InlayProviderSettingsModel
+      model.isEnabled = (node as CheckedTreeNode).isChecked
+      model.apply()
+    }
+    node.children().toList().forEach { apply(it as DefaultMutableTreeNode) }
+  }
+
+  fun isModified(): Boolean {
+    return isModified(tree.model.root as DefaultMutableTreeNode)
+  }
+
+  private fun isModified(node: DefaultMutableTreeNode): Boolean {
+    if (node.userObject is InlayProviderSettingsModel) {
+      val model = node.userObject as InlayProviderSettingsModel
+      if (((node as CheckedTreeNode).isChecked != model.isEnabled) || model.isModified()) return true
+    }
+    return node.children().toList().any { isModified(it as DefaultMutableTreeNode) }
   }
 }

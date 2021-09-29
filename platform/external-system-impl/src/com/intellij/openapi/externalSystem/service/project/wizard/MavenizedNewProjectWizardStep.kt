@@ -21,10 +21,9 @@ import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
 
-abstract class MavenizedNewProjectWizardStep<Data : Any, P>(
-  parent: P
-) : AbstractNewProjectWizardChildStep<P>(parent)
-  where P : NewProjectWizardBaseData, P : NewProjectWizardStep {
+abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: ParentStep)
+  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
+  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
 
   abstract fun createView(data: Data): DataView<Data>
 
