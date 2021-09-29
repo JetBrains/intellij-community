@@ -11,7 +11,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 
-class EditorDocumentationTargetProviderImpl : IdeDocumentationTargetProvider {
+class IdeDocumentationTargetProviderImpl : IdeDocumentationTargetProvider {
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
     val symbolTargets = symbolDocumentationTargets(file, offset)

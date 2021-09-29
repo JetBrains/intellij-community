@@ -1460,7 +1460,7 @@
     <getDataRule key="documentation.targets"
                  implementationClass="com.intellij.lang.documentation.ide.impl.DocumentationTargetsDataRule"/>
     <applicationService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
-                        serviceImplementation="com.intellij.lang.documentation.ide.impl.EditorDocumentationTargetProviderImpl"/>
+                        serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
