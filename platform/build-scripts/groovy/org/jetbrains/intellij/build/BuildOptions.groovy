@@ -261,12 +261,12 @@ class BuildOptions {
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
   /**
-   * Max attempts of dependencies resolution on fault. Default is 1 (no retries).
+   * Max attempts of dependencies resolution on fault. "1" means no retries.
    *
    * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
    */
   public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
-  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "1").toInteger()
+  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInteger()
 
   /**
    * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
