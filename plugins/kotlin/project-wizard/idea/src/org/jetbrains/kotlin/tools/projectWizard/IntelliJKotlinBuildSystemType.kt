@@ -18,7 +18,7 @@ internal class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
-                collapsibleGroup(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime"), topGroupGap = true) {
+                collapsibleGroup(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.advanced"), topGroupGap = true) {
                     row("${KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")}:") {
                         cell(wizardBuilder.wizard.jpsData.libraryOptionsPanel.simplePanel)
                     }
