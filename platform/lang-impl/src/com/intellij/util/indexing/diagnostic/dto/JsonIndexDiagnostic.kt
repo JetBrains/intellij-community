@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonIndexDiagnostic(
@@ -11,7 +11,7 @@ data class JsonIndexDiagnostic(
   val projectIndexingHistory: JsonProjectIndexingHistory = JsonProjectIndexingHistory()
 ) {
   companion object {
-    fun generateForHistory(projectIndexingHistory: ProjectIndexingHistory): JsonIndexDiagnostic =
+    fun generateForHistory(projectIndexingHistory: ProjectIndexingHistoryImpl): JsonIndexDiagnostic =
       JsonIndexDiagnostic(
         JsonIndexDiagnosticAppInfo.create(),
         JsonRuntimeInfo.create(),
