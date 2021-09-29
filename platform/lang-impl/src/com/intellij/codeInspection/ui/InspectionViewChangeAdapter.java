@@ -119,7 +119,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
               if (pointer != null) {
                 VirtualFile vFile = pointer.getVirtualFile();
                 if (vFile == null || !vFile.isValid()) {
-                  ((SuppressableInspectionTreeNode)node).dropCache();
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }
@@ -152,7 +152,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
                 VirtualFile vFile = ReadAction.compute(() -> pointer.getVirtualFile());
                 if (filesToCheck.contains(vFile)) {
                   unPresentFiles.remove(vFile);
-                  ((SuppressableInspectionTreeNode)node).dropCache();
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }

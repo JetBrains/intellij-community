@@ -75,9 +75,6 @@ public abstract class InspectionTreeNode implements TreeNode {
   }
 
   LevelAndCount @NotNull [] getProblemLevels() {
-    if (!isProblemCountCacheValid()) {
-      dropProblemCountCaches();
-    }
     return myProblemLevels.getValue();
   }
 
@@ -87,10 +84,6 @@ public abstract class InspectionTreeNode implements TreeNode {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
-  }
-
-  protected boolean isProblemCountCacheValid() {
-    return true;
   }
 
   protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
@@ -197,10 +190,6 @@ public abstract class InspectionTreeNode implements TreeNode {
   @Override
   public String toString() {
     return getPresentableText();
-  }
-
-  void uiRequested() {
-
   }
 
   static class Children {

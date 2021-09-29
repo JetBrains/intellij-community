@@ -410,6 +410,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
     editorPanel.add(previewPanel, BorderLayout.CENTER);
     if (problemCount > 0) {
+      var paths = myTree.getSelectionPaths();
+      if (paths != null) for (TreePath path: paths) {
+        var node = (InspectionTreeNode)path.getLastPathComponent();
+        if (node instanceof SuppressableInspectionTreeNode) ((SuppressableInspectionTreeNode)node).updateAvailableSuppressActions();
+      }
       final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
       if (fixToolbar != null) {
         if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
