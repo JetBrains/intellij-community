@@ -3,11 +3,11 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
 import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.FQN_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PATH_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PROJECT_NAME_KEY
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.REFERENCE_TARGET
-import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.SELECTION
+import com.intellij.navigation.FQN_KEY
+import com.intellij.navigation.PATH_KEY
+import com.intellij.navigation.PROJECT_NAME_KEY
+import com.intellij.navigation.REFERENCE_TARGET
+import com.intellij.navigation.SELECTION
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.diagnostic.Logger
