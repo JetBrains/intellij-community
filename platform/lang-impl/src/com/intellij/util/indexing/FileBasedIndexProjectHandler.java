@@ -15,7 +15,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +115,7 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull FileBasedIndexImpl index,
                                           @NotNull Project project,
                                           long refreshedFilesCalcDuration) {
-      ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project, "On refresh of " + files.size() + " files");
+      ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files");
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
       ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 

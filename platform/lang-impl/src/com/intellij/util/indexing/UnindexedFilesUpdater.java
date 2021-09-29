@@ -31,7 +31,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
@@ -141,7 +141,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     this(project, false, predefinedIndexableFilesIterators, indexingReason);
   }
 
-  private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
+  private void updateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
     LOG.info("Started indexing of " + myProject.getName() + (myIndexingReason == null ? "" : ". Reason: " + myIndexingReason));
 
@@ -230,7 +230,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private void indexFiles(@NotNull List<IndexableFilesIterator> orderedProviders,
                           @NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
-                          @NotNull ProjectIndexingHistory projectIndexingHistory,
+                          @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                           @NotNull ProgressIndicator progressIndicator) {
     int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(progressIndicator, totalFiles);
@@ -294,7 +294,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
   }
 
-  private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistory projectIndexingHistory) {
+  private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
     List<JsonScanningStatistics> statistics = projectIndexingHistory.getScanningStatistics();
     int numberOfScannedFiles = statistics.stream().mapToInt(s -> s.getNumberOfScannedFiles()).sum();
     int numberOfFilesForIndexing = statistics.stream().mapToInt(s -> s.getNumberOfFilesForIndexing()).sum();
@@ -303,7 +303,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void listenToProgressSuspenderForSuspendedTimeDiagnostic(@NotNull ProgressSuspender suspender,
-                                                                   @NotNull ProjectIndexingHistory projectIndexingHistory) {
+                                                                   @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
 
@@ -366,7 +366,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
     @NotNull List<IndexableFilesIterator> providers,
-    @NotNull ProjectIndexingHistory projectIndexingHistory
+    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory
   ) {
     if (providers.isEmpty()) {
       return Collections.emptyMap();
@@ -510,8 +510,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     performScanningAndIndexing(indicator);
   }
 
-  protected @NotNull ProjectIndexingHistory performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
-    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject, myIndexingReason);
+  protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
+    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, myIndexingReason);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, myPredefinedIndexableFilesIterators == null);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
