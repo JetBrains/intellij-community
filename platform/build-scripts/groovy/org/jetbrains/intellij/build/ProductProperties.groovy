@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
@@ -254,7 +255,8 @@ abstract class ProductProperties {
   /**
    * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
-  boolean addRemoteDevelopmentLibraries = {
+  @ApiStatus.Internal
+  boolean addRemoteDevelopmentLibraries() {
     return productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
   }
 
