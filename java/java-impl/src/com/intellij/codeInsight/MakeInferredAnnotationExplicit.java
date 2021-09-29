@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -37,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Collections;
 
@@ -95,7 +84,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
-    doMakeAnnotationExplicit(project, file, owner);
+    doMakeAnnotationExplicit(project, owner);
   }
 
   /**
@@ -107,27 +96,39 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
    */
   public void makeAnnotationsExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(owner)) return;
-    WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null,
-                                             () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-                                               () -> doMakeAnnotationExplicit(project, file, owner)), file);
-  }
-
-  private void doMakeAnnotationExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    String qualifiedName = NotNull.class.getCanonicalName();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    if (facade.findClass(qualifiedName, file.getResolveScope()) == null) {
+      Promise<Void> promise =
+        InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), qualifiedName, getFamilyName());
+      if (promise != null) {
+        SmartPsiElementPointer<PsiModifierListOwner> ownerPointer = SmartPointerManager.createPointer(owner);
+        promise.onSuccess(__ -> ApplicationManager.getApplication().invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement()),
+                                                                                ModalityState.NON_MODAL,
+                                                                                module.getDisposed()));
+      }
+      return;
+    }
 
+    doStartWriteAction(project, file, owner);
+  }
+
+  private void doStartWriteAction(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
+    WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null,
+                                             () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+                                               () -> doMakeAnnotationExplicit(project, owner)), file);
+  }
+
+  private static void doMakeAnnotationExplicit(@NotNull Project project, PsiModifierListOwner owner) {
     for (PsiAnnotation inferred : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner)) {
       if (DefaultInferredAnnotationProvider.isExperimentalInferredAnnotation(inferred)) continue;
       final PsiAnnotation toInsert = correctAnnotation(inferred);
       final String qname = toInsert.getQualifiedName();
       assert qname != null;
-      if (facade.findClass(qname, file.getResolveScope()) == null &&
-          !InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), qname, getFamilyName())) {
-        return;
-      }
-
+      
       PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(owner, qname);
       assert target != null;
       PsiElement element = target.addAnnotation(qname).replace(toInsert);
