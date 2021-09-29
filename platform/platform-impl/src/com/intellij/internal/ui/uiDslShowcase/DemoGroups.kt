@@ -56,8 +56,11 @@ fun demoGroups(): DialogPanel {
                    "with some title")
     }
 
+    separator()
+      .rowComment("Use separator() for horizontal separator")
+
     row {
-      label("Use Row.panel for creating panel in a cell")
+      label("Use Row.panel for creating panel in a cell:")
       panel {
         row("Sub panel row 1:") {
           textField()

@@ -121,6 +121,14 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     }.layout(RowLayout.PARENT_GRID)
   }
 
+  override fun separator(@NlsContexts.Separator title: String?): Row {
+    val separator = createSeparator(title)
+    return row {
+      cell(separator)
+        .horizontalAlign(HorizontalAlign.FILL)
+    }
+  }
+
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
@@ -204,7 +212,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, init: Panel.() -> Unit) {
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?, init: Panel.() -> Unit) {
     dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
     try {
       if (title == null) {

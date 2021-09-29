@@ -47,6 +47,8 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
+  fun separator(@NlsContexts.Separator title: String? = null): Row
+
   /**
    * Creates sub-panel that occupies whole width and uses own grid inside
    */
