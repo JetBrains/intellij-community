@@ -3,7 +3,6 @@ package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.Credentials
 import com.intellij.ide.BrowserUtil
-import com.intellij.util.Url
 import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
@@ -19,64 +18,76 @@ import java.util.concurrent.atomic.AtomicReference
  * @param T Service credentials, must implement the Credentials interface
  */
 abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
-  protected val currentRequest = AtomicReference<CompletableFuture<T>?>()
+  protected val currentRequest = AtomicReference<OAuthRequestWithResult<T>?>()
 
-  override fun authorize(): CompletableFuture<T> {
-    if (!currentRequest.compareAndSet(null, CompletableFuture<T>())) {
-      return currentRequest.get()!!
+  override fun authorize(request: OAuthRequest): CompletableFuture<T> {
+    if (!currentRequest.compareAndSet(null, OAuthRequestWithResult(request, CompletableFuture<T>()))) {
+      return currentRequest.get()!!.result
     }
 
-    val request = currentRequest.get()!!
-    request.whenComplete { _, _ -> currentRequest.set(null)  }
-    startAuthorization()
+    val result = currentRequest.get()!!.result
+    result.whenComplete { _, _ -> currentRequest.set(null) }
+    startAuthorization(request)
 
-    return request
+    return result
   }
 
-  override fun acceptCode(code: String): Boolean {
+  private fun Map<String, List<String>>.getAuthorizationCode(): String? = this["code"]?.firstOrNull()
+
+  override fun handleServerCallback(path: String, parameters: Map<String, List<String>>): Boolean {
     val request = currentRequest.get() ?: return false
 
+    if (path != request.request.authorizationCodeUrl.path) {
+      return false
+    }
+    val code = parameters.getAuthorizationCode() ?: return false
+
     request.processCode(code)
-    return request.isDone && !request.isCancelled && !request.isCompletedExceptionally
+    val result = request.result
+    return result.isDone && !result.isCancelled && !result.isCompletedExceptionally
   }
 
-  private fun startAuthorization() {
-    val authUrl = getAuthUrlWithParameters().toExternalForm()
+  private fun startAuthorization(request: OAuthRequest) {
+    val authUrl = request.getAuthUrlWithParameters().toExternalForm()
     BrowserUtil.browse(authUrl)
   }
 
-  private fun CompletableFuture<T>.processCode(code: String) {
+  private fun OAuthRequestWithResult<T>.processCode(code: String) {
     try {
-      val tokenUrl = getTokenUrlWithParameters(code).toExternalForm()
-      val response = postHttpResponse(tokenUrl)
+      val tokenUrl = request.getTokenUrlWithParameters(code).toExternalForm()
+      val response = postHttpResponse(buildHttpRequest(tokenUrl, code))
 
       if (response.statusCode() == 200) {
-        val result = getCredentials(response.body(), response.headers())
-        complete(result)
+        val creds = getCredentials(response.body(), response.headers())
+        result.complete(creds)
       }
       else {
-        completeExceptionally(RuntimeException(response.body().ifEmpty { "No token provided" }))
+        result.completeExceptionally(RuntimeException(response.body().ifEmpty { "No token provided" }))
       }
     }
     catch (e: IOException) {
-      completeExceptionally(e)
+      result.completeExceptionally(e)
     }
   }
 
-  protected fun postHttpResponse(url: String): HttpResponse<String> {
-    val client = HttpClient.newHttpClient()
-    val request: HttpRequest = HttpRequest.newBuilder()
+  protected open fun buildHttpRequest(url: String, code: String? = null): HttpRequest {
+    return HttpRequest.newBuilder()
       .uri(URI.create(url))
       .header("Content-Type", "application/json")
       .POST(HttpRequest.BodyPublishers.noBody())
       .build()
+  }
+
+  protected fun postHttpResponse(request: HttpRequest): HttpResponse<String> {
+    val client = HttpClient.newHttpClient()
 
     return client.send(request, HttpResponse.BodyHandlers.ofString())
   }
 
-  protected abstract fun getAuthUrlWithParameters(): Url
-
-  protected abstract fun getTokenUrlWithParameters(code: String): Url
-
   protected abstract fun getCredentials(responseBody: String, responseHeaders: HttpHeaders): T
+
+  protected data class OAuthRequestWithResult<T : Credentials>(
+    val request: OAuthRequest,
+    val result: CompletableFuture<T>
+  )
 }

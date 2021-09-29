@@ -11,16 +11,14 @@ import java.util.concurrent.CompletableFuture
  * @param T Service credentials, must implement the Credentials interface
  *
  * @property name name of the service
- * @property authorizationCodeUrl URL for getting the exchange code
  */
 interface OAuthService<T : Credentials> {
   val name: String
-  val authorizationCodeUrl: Url
 
   /**
    * Starting the authorization flow
    */
-  fun authorize(): CompletableFuture<T>
+  fun authorize(request: OAuthRequest): CompletableFuture<T>
 
   /**
    * Revoking the access token
@@ -30,5 +28,5 @@ interface OAuthService<T : Credentials> {
   /**
    * Exchanging code for credentials
    */
-  fun acceptCode(code: String): Boolean
+  fun handleServerCallback(path: String, parameters: Map<String, List<String>>): Boolean
 }

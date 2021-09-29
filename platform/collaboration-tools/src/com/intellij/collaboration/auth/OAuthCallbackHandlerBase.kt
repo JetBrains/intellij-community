@@ -14,24 +14,14 @@ import org.jetbrains.io.send
  * The base class of the callback handler for authorization services
  */
 abstract class OAuthCallbackHandlerBase : RestService() {
-  companion object {
-    private const val INVALID_REQUEST_ERROR = "Invalid Request"
-  }
-
   protected val service: OAuthService<*> get() = oauthService()
 
   abstract fun oauthService(): OAuthService<*>
 
-  private val QueryStringDecoder.isAuthorizationCodeUrl: Boolean get() = path() == service.authorizationCodeUrl.path
-  private val QueryStringDecoder.authorizationCode: String? get() = parameters()["code"]?.firstOrNull()
-
   override fun getServiceName(): String = service.name
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    if (!urlDecoder.isAuthorizationCodeUrl) return INVALID_REQUEST_ERROR
-    val code = urlDecoder.authorizationCode ?: return INVALID_REQUEST_ERROR
-
-    val isCodeAccepted = service.acceptCode(code)
+    val isCodeAccepted = service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
 
     when (val handleResult = handleAcceptCode(isCodeAccepted)) {
       is AcceptCodeHandleResult.Page -> {

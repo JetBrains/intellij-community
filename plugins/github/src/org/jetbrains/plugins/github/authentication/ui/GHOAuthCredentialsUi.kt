@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -11,6 +11,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHOAuthRequest
 import org.jetbrains.plugins.github.authentication.GHOAuthService
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.Validator
@@ -56,7 +57,7 @@ internal class GHOAuthCredentialsUi(
   }
 
   private fun acquireToken(indicator: ProgressIndicator): String {
-    val credentialsFuture = GHOAuthService.instance.authorize()
+    val credentialsFuture = GHOAuthService.instance.authorize(GHOAuthRequest())
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
     }

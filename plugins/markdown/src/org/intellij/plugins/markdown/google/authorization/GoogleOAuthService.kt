@@ -7,14 +7,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.auth.services.OAuthServiceBase
 import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.openapi.components.Service
-import com.intellij.util.Url
-import com.intellij.util.Urls.newFromEncoded
-import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.DigestUtil.randomToken
 import org.apache.commons.lang.time.DateUtils
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
-import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.ide.RestService
 import java.io.IOException
 import java.net.http.HttpHeaders
 import java.text.SimpleDateFormat
@@ -24,45 +17,21 @@ import java.util.concurrent.CompletableFuture
 @Service
 class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWithRefresh<GoogleCredentials> {
   companion object {
-    private val scope
-      get() = listOf(
-        "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/userinfo.profile"
-      ).joinToString(" ")
-
-    private const val authGrantType = "authorization_code"
-    private const val refreshGrantType = "refresh_token"
-    private const val responseType = "code" // For installed applications the parameter value is code
-    private const val codeChallengeMethod = "S256"
-
-    private val port: Int get() = BuiltInServerManager.getInstance().port
-    private val state: String get() = randomToken() // state token to prevent request forgery
-    private val codeVerifier: String = randomToken()
-    private val codeChallenge: String
-      get() = Base64.getUrlEncoder().withoutPadding().encodeToString(DigestUtil.sha256().digest(codeVerifier.toByteArray()))
-
-    private val AUTHORIZE_URI: Url get() = newFromEncoded("https://accounts.google.com/o/oauth2/v2/auth")
-    private val TOKEN_URI: Url get() = newFromEncoded("https://oauth2.googleapis.com/token")
-
     private val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
   }
 
-  var googleAppCred: GoogleCredentialUtils.GoogleAppCredentials? = null
-
   override val name: String get() = "google/oauth"
-  override val authorizationCodeUrl: Url get() = newFromEncoded("http://localhost:$port/${RestService.PREFIX}/$name/authorization_code")
 
-  override fun updateAccessToken(refreshToken: String): CompletableFuture<GoogleCredentials> {
-    if (!currentRequest.compareAndSet(null, CompletableFuture())) {
-      return currentRequest.get()!!
-    }
+  override fun updateAccessToken(refreshTokenRequest: OAuthServiceWithRefresh.RefreshTokenRequest): CompletableFuture<GoogleCredentials> {
+    // TODO: fix case when some updateAccessToken are started or auth flow is started before
 
-    val request = currentRequest.get()!!
-    request.whenComplete { _, _ -> currentRequest.set(null) }
+    val result = CompletableFuture<GoogleCredentials>()
+
+    result.whenComplete { _, _ -> currentRequest.set(null) }
 
     try {
-      val refreshTokenUrl = getRefreshTokenUrlWithParameters(refreshToken).toExternalForm()
-      val response = postHttpResponse(refreshTokenUrl)
+      val refreshTokenUrl = refreshTokenRequest.refreshTokenUrlWithParameters.toExternalForm()
+      val response = postHttpResponse(buildHttpRequest(refreshTokenUrl))
       val responseDateTime = getLocalDateTime(response.headers().firstValue("date").get())
 
       if (response.statusCode() == 200) {
@@ -70,26 +39,26 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
           propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()
           readValue(response.body(), RefreshResponseData::class.java)
         }
-        val result = GoogleCredentials(
+        val creds = GoogleCredentials(
           responseData.accessToken,
-          refreshToken,
+          refreshTokenRequest.refreshToken,
           responseData.expiresIn,
           responseData.tokenType,
           responseData.scope,
           DateUtils.addSeconds(responseDateTime, responseData.expiresIn.toInt())
         )
 
-        request.complete(result)
+        result.complete(creds)
       }
       else {
-        request.completeExceptionally(Exception(response.body().ifEmpty { "No token provided" }))
+        result.completeExceptionally(Exception(response.body().ifEmpty { "No token provided" }))
       }
     }
     catch (e: IOException) {
-      request.completeExceptionally(e)
+      result.completeExceptionally(e)
     }
 
-    return request
+    return result
   }
 
   override fun revokeToken(token: String) {
@@ -112,32 +81,6 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
       DateUtils.addSeconds(responseDateTime, responseData.expiresIn.toInt())
     )
   }
-
-  override fun getAuthUrlWithParameters(): Url = AUTHORIZE_URI.addParameters(mapOf(
-    "scope" to scope,
-    "response_type" to responseType,
-    "code_challenge" to codeChallenge,
-    "code_challenge_method" to codeChallengeMethod,
-    "state" to state,
-    "client_id" to googleAppCred?.clientId,
-    "redirect_uri" to authorizationCodeUrl.toExternalForm()
-  ))
-
-  override fun getTokenUrlWithParameters(code: String): Url = TOKEN_URI.addParameters(mapOf(
-    "client_id" to googleAppCred?.clientId,
-    "client_secret" to googleAppCred?.clientSecret,
-    "redirect_uri" to authorizationCodeUrl.toExternalForm(),
-    "code" to code,
-    "code_verifier" to codeVerifier,
-    "grant_type" to authGrantType
-  ))
-
-  private fun getRefreshTokenUrlWithParameters(refreshToken: String): Url = TOKEN_URI.addParameters(mapOf(
-    "client_id" to  googleAppCred?.clientId,
-    "client_secret" to googleAppCred?.clientSecret,
-    "refresh_token" to refreshToken,
-    "grant_type" to refreshGrantType
-  ))
 
   private fun getLocalDateTime(responseDate: String) =
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply { timeZone = TimeZone.getTimeZone("GMT") }.parse(responseDate)

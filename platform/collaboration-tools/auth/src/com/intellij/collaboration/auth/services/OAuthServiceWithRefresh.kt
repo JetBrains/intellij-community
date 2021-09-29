@@ -2,6 +2,7 @@
 package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.CredentialsWithRefresh
+import com.intellij.util.Url
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -10,5 +11,10 @@ import java.util.concurrent.CompletableFuture
  * @param T Service credentials, must implement the CredentialsWithRefresh interface
  */
 interface OAuthServiceWithRefresh<T: CredentialsWithRefresh>: OAuthService<T> {
-  fun updateAccessToken(refreshToken: String): CompletableFuture<T>
+  fun updateAccessToken(refreshTokenRequest: RefreshTokenRequest): CompletableFuture<T>
+
+  interface RefreshTokenRequest {
+    val refreshToken: String
+    val refreshTokenUrlWithParameters: Url
+  }
 }
