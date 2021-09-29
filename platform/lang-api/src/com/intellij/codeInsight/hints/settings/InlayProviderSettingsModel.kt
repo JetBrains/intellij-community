@@ -58,6 +58,9 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   abstract fun getCasePreview(case: ImmediateConfigurable.Case): String?
 
+  @Nls
+  abstract fun getCaseDescription(case: ImmediateConfigurable.Case): String?
+
   /**
    * Saves changed settings
    */

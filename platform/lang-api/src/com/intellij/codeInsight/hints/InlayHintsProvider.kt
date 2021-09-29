@@ -111,6 +111,10 @@ interface InlayHintsProvider<T : Any> {
     return factory.createFileFromText("dummy", fileType, document.text)
   }
 
+  @Nls
+  @JvmDefault
+  fun getProperty(key: String): String? = null
+
   val isVisibleInSettings: Boolean
     get() = true
 }

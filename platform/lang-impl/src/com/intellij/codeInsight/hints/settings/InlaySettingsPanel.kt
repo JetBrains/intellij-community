@@ -129,9 +129,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         addPreview(treeNode, item.previewText)
       }
       is ImmediateConfigurable.Case -> {
-        addDescription(item.extendedDescription)
         val parent = treeNode.parent as CheckedTreeNode
-        val preview = (parent.userObject as InlayProviderSettingsModel).getCasePreview(item)
+        val model = parent.userObject as InlayProviderSettingsModel
+        addDescription(model.getCaseDescription(item))
+        val preview = model.getCasePreview(item)
         addPreview(parent, preview)
       }
     }
