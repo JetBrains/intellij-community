@@ -105,7 +105,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (SystemInfo.isMac && CpuArch.isIntel64()) {
       NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
         IdeBundle.message("bundled.jre.m1.arch.message.download"),
-        () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));
+        () -> BrowserUtil.browse("https://developer.android.com/studio"));  // Android Studio: b/191780967
       showNotification("bundled.jre.m1.arch.message", true, downloadAction, ApplicationNamesInfo.getInstance().getFullProductName());
     }
 
