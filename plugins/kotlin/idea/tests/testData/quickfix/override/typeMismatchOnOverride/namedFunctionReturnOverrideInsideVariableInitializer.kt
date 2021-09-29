@@ -9,5 +9,3 @@ fun foo() {
         override fun foo(): Boolean?<caret> = true
     }
 }
-
-/* IGNORE_FIR */
