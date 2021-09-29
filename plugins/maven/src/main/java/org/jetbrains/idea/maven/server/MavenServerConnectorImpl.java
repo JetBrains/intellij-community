@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenServerConnectorImpl extends MavenServerConnector {
   public static final Logger LOG = Logger.getInstance(MavenServerConnectorImpl.class);
@@ -35,6 +36,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   private ScheduledFuture<?> myLoggerFuture;
   private ScheduledFuture<?> myDownloadListenerFuture;
+  private final AtomicInteger myLoggerConnectFailedCount = new AtomicInteger(0);
+  private final AtomicInteger myDownloadConnectFailedCount = new AtomicInteger(0);
   private final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
@@ -125,9 +128,13 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   private void cleanUp() {
     if (myLoggerFuture != null) {
+      int count = myLoggerConnectFailedCount.get();
+      if (count != 0) MavenLog.LOG.warn("Maven pulling logger was failed: " + count + " times");
       myLoggerFuture.cancel(true);
     }
     if (myDownloadListenerFuture != null) {
+      int count = myDownloadConnectFailedCount.get();
+      if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
       myDownloadListenerFuture.cancel(true);
     }
   }
@@ -152,7 +159,6 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       support.stopAll(wait);
       mySupport = null;
     }
-
   }
 
   @Override
@@ -246,10 +252,11 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
           for (DownloadArtifactEvent e : artifactEvents) {
             myDownloadListener.artifactDownloaded(new File(e.getFile()), e.getPath());
           }
+          myDownloadConnectFailedCount.set(0);
         }
         catch (RemoteException e) {
           if (!Thread.currentThread().isInterrupted()) {
-            MavenLog.LOG.error(e);
+            myDownloadConnectFailedCount.incrementAndGet();
           }
         }
       },
@@ -281,10 +288,11 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
                 break;
             }
           }
+          myLoggerConnectFailedCount.set(0);
         }
         catch (RemoteException e) {
           if (!Thread.currentThread().isInterrupted()) {
-            MavenLog.LOG.error(e);
+            myLoggerConnectFailedCount.incrementAndGet();
           }
         }
       },
