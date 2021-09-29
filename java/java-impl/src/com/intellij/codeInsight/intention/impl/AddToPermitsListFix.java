@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -19,7 +20,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class AddToPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddToPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
 
   private final String myParentQualifiedName;
   private final String myParentName;
@@ -65,6 +66,6 @@ public class AddToPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return getText();
+    return JavaBundle.message("add.to.permits.list.family.name");
   }
 }
