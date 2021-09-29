@@ -17,7 +17,7 @@ class DocumentationTargetsDataRule : GetDataRule {
     val editor = CommonDataKeys.EDITOR.getData(dataProvider)
     if (editor != null) {
       val file = PsiUtilBase.getPsiFileInEditor(editor, project) ?: return null
-      val targets = IdeDocumentationTargetProvider.getInstance().documentationTargets(editor, file, editor.caretModel.offset)
+      val targets = IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, editor.caretModel.offset)
       if (targets.isNotEmpty()) {
         return targets
       }

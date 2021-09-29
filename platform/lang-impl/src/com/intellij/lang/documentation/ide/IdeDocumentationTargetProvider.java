@@ -2,8 +2,8 @@
 package com.intellij.lang.documentation.ide;
 
 import com.intellij.lang.documentation.DocumentationTarget;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -16,8 +16,8 @@ import java.util.List;
 @Internal
 public interface IdeDocumentationTargetProvider {
 
-  static @NotNull IdeDocumentationTargetProvider getInstance() {
-    return ApplicationManager.getApplication().getService(IdeDocumentationTargetProvider.class);
+  static @NotNull IdeDocumentationTargetProvider getInstance(@NotNull Project project) {
+    return project.getService(IdeDocumentationTargetProvider.class);
   }
 
   @RequiresReadLock

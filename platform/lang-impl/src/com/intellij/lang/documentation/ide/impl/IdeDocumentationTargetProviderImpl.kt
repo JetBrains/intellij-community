@@ -7,18 +7,18 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 
-class IdeDocumentationTargetProviderImpl : IdeDocumentationTargetProvider {
+class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
     val symbolTargets = symbolDocumentationTargets(file, offset)
     if (symbolTargets.isNotEmpty()) {
       return symbolTargets
     }
-    val project = file.project
     val documentationManager = DocumentationManager.getInstance(project)
     val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file) ?: return emptyList()
     return listOf(PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null))

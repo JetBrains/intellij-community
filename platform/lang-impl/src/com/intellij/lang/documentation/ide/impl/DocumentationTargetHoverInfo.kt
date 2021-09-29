@@ -34,7 +34,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     val request = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
-        IdeDocumentationTargetProvider.getInstance()::documentationTargets
+        IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
       targets?.singleOrNull()?.documentationRequest()
     }
