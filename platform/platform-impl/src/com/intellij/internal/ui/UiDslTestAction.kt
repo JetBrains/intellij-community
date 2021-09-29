@@ -152,7 +152,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       lateinit var group1: Panel
       lateinit var group1Row: Row
       lateinit var group2: RowsRange
-      group(title = "Group at top") {
+      group(title = "Group at top, no gap before") {
         row {
           checkBox("Group1 visibility")
             .applyToComponent {
@@ -167,7 +167,6 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 isSelected = true
                 addItemListener { group1Row.visible(this.isSelected) }
               }
-
           }
         }
         row {
@@ -183,7 +182,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
         textField()
       }
 
-      group1 = group(title = "Group1 title") {
+      group1 = group(title = "Group1, gaps around") {
         group1Row = row("label1") {
           textField()
         }
@@ -191,6 +190,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           textField()
         }
       }
+
       group2 = groupRowsRange(title = "Group RowsRange title") {
         row("label1") {
           textField()
@@ -215,17 +215,35 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
           textField()
         }
       }
-      group("Group, indent = false", indent = false) {
+
+      row("separator") {}
+
+      collapsibleGroup("CollapsibleGroup") {
         row("Row with label") {}
       }
-      group("Group, topGroupGap = false", topGroupGap = false) {
-        row("Row with label2") {}
-      }
-      groupRowsRange("GroupRowsRange, indent = false", indent = false) {
+
+      row("separator") {}
+
+      group("Group, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
         row("Row with label") {}
       }
-      groupRowsRange("GroupRowsRange, topGroupGap = false", topGroupGap = false) {
-        row("Row with label2") {}
+
+      row("separator") {}
+
+      groupRowsRange("GroupRowsRange, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
+        row("Row with label") {}
+      }
+
+      row("separator") {}
+
+      collapsibleGroup("CollapsibleGroup, indent = false, no gaps", indent = false, topGroupGap = false, bottomGroupGap = false) {
+        row("Row with label") {}
+      }
+
+      row("separator") {}
+
+      group("Group at bottom, no gap after") {
+        row("Row with label") {}
       }
     }
   }
@@ -314,7 +332,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 .applyToComponent {
                   isSelected = true
                   addItemListener {
-                    when(entity) {
+                    when (entity) {
                       is Cell<*> -> entity.visible(this.isSelected)
                       is Row -> entity.visible(this.isSelected)
                       is Panel -> entity.visible(this.isSelected)
@@ -325,7 +343,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 .applyToComponent {
                   isSelected = true
                   addItemListener {
-                    when(entity) {
+                    when (entity) {
                       is Cell<*> -> entity.enabled(this.isSelected)
                       is Row -> entity.enabled(this.isSelected)
                       is Panel -> entity.enabled(this.isSelected)

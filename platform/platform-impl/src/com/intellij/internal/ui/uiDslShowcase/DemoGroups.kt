@@ -35,7 +35,7 @@ fun demoGroups(): DialogPanel {
       row("Panel.groupRowsRange row:") {
         textField()
       }.rowComment("Panel.groupRowsRange is similar to Panel.group but uses the same grid as parent. " +
-                   "Useful when grouped content should be managed together with RowsRange.enabledIf for example")
+                   "See how aligned Panel.rowsRange row")
     }
 
     collapsibleGroup("Panel.collapsibleGroup") {

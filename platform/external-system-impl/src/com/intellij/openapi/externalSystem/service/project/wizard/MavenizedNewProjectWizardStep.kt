@@ -69,7 +69,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: Par
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
+      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title"), topGroupGap = true) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
           textField()
             .bindText(groupIdProperty)

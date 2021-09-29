@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
@@ -75,7 +74,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
 
   override fun setupUI(builder: Panel) {
     with(builder) {
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
+      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
             textField()

@@ -14,7 +14,6 @@ interface SpacingConfiguration {
       override val horizontalIndent = 0
       override val horizontalToggleButtonIndent = 0
       override val verticalComponentGap = 0
-      override val groupTopGap = 0
       override val verticalSmallGap = 0
       override val verticalMediumGap = 0
       override val buttonGroupHeaderBottomGap = 0
@@ -54,17 +53,12 @@ interface SpacingConfiguration {
   val verticalComponentGap: Int
 
   /**
-   * Vertical gap before group
-   */
-  val groupTopGap: Int
-
-  /**
    * Vertical small gap between unrelated settings
    */
   val verticalSmallGap: Int
 
   /**
-   * Vertical medium gap between unrelated settings
+   * Vertical medium gap between unrelated settings, before and after groups
    */
   val verticalMediumGap: Int
 

@@ -54,15 +54,18 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var topGap: TopGap? = null
     private set
 
-  var internalTopGap: Int = 0
+  /**
+   * Used if topGap is not set, skipped for first row
+   */
+  var internalTopGap = 0
 
   var bottomGap: BottomGap? = null
     private set
 
-  var internalBottomGap: Int = 0
-
-  var customRowGaps: VerticalGaps? = null
-    private set
+  /**
+   * Used if bottomGap is not set, skipped for last row
+   */
+  var internalBottomGap = 0
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
@@ -362,7 +365,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {
-    this.customRowGaps = customRowGaps
+    internalTopGap = customRowGaps.top
+    internalBottomGap = customRowGaps.bottom
+    topGap = null
+    bottomGap = null
+
     return this
   }
 

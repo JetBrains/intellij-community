@@ -58,15 +58,17 @@ interface Panel : CellBase<Panel> {
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with independent grid, title and some vertical space before the group.
+   * Adds panel with independent grid, title and some vertical space before and after the group.
    * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
    *
    * @param indent true if left indent is needed
-   * @param topGroupGap true if standard gap before the group is needed
+   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap before the group
+   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap after the group
    */
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
-            topGroupGap: Boolean = true,
+            topGroupGap: Boolean? = null,
+            bottomGroupGap: Boolean? = null,
             init: Panel.() -> Unit): Panel
 
   /**
@@ -75,15 +77,22 @@ interface Panel : CellBase<Panel> {
    */
   fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null,
                      indent: Boolean = true,
-                     topGroupGap: Boolean = true,
+                     topGroupGap: Boolean? = null,
+                     bottomGroupGap: Boolean? = null,
                      init: Panel.() -> Unit): RowsRange
 
   /**
    * Adds collapsible panel with independent grid, title and some vertical space before the group.
    *
    * @param indent true if left indent is needed
+   * @param topGroupGap if specified forces enabling (useful for first group in panel) or disabling standard gap before the group
+   * @param bottomGroupGap if specified forces enabling (useful for last group in panel) or disabling standard gap after the group
    */
-  fun collapsibleGroup(@NlsContexts.BorderTitle title: String, indent: Boolean = true, init: Panel.() -> Unit): CollapsiblePanel
+  fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
+                       indent: Boolean = true,
+                       topGroupGap: Boolean? = null,
+                       bottomGroupGap: Boolean? = null,
+                       init: Panel.() -> Unit): CollapsiblePanel
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
