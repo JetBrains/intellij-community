@@ -3,16 +3,15 @@
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.CompoundPositionManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +28,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -52,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class GroovyPositionManager implements PositionManager {
+public class GroovyPositionManager extends PositionManagerEx {
   private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
   private final DebugProcess myDebugProcess;
@@ -84,6 +85,19 @@ public class GroovyPositionManager implements PositionManager {
     catch (AbsentInformationException e) {
       throw NoDataException.INSTANCE;
     }
+  }
+
+  @Override
+  public ThreeState evaluateCondition(@NotNull EvaluationContext context,
+                                      @NotNull StackFrameProxyImpl frame,
+                                      @NotNull Location location,
+                                      @NotNull String expression) {
+    return ThreeState.UNSURE;
+  }
+
+  @Override
+  public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
+    return new GroovyStackFrame(descriptor, true);
   }
 
   @Nullable
