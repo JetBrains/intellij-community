@@ -5,11 +5,14 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.SerializationFilter
 
 class NewInlayProviderSettingsModel<T : Any>(
@@ -47,6 +50,9 @@ class NewInlayProviderSettingsModel<T : Any>(
   override val previewText: String?
     get() = providerWithSettings.provider.previewText
 
+  override fun getCasePreview(case: ImmediateConfigurable.Case): String? {
+    return getCasePreview(providerWithSettings.language, providerWithSettings.provider, case)
+  }
 
   override fun apply() {
     val copy = providerWithSettings.withSettingsCopy()
@@ -71,4 +77,12 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.configurable.reset()
     isEnabled = config.hintsEnabled(providerWithSettings.provider.key, providerWithSettings.language)
   }
+}
+
+fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case): String? {
+  val key = (provider as? InlayHintsProvider<*>)?.key?.id ?: "Parameters"
+  val fileType = language.associatedFileType ?: PlainTextFileType.INSTANCE
+  val path = "inlayProviders/" + key + "/" + case.id + "." + fileType.defaultExtension
+  val stream = provider.javaClass.classLoader.getResourceAsStream(path)
+  return if (stream != null) ResourceUtil.loadText(stream) else null
 }

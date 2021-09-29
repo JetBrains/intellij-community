@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -122,19 +123,33 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       is InlayProviderSettingsModel -> {
         InlayHintsSettings.instance().saveLastViewedProviderId(getProviderId(treeNode))
 
-        val htmlBody = UIUtil.toHtml(StringUtil.notNullize(item.description))
-        rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
+        addDescription(item.description)
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
-        if (item.previewText != null) {
-          val editor = createEditor(getModelLanguage(treeNode), project) {}
-          editor.text = item.previewText!!
-          rightPanel.add(editor, "gaptop 10")
-        }
+        addPreview(treeNode, item.previewText)
+      }
+      is ImmediateConfigurable.Case -> {
+        addDescription(item.extendedDescription)
+        val parent = treeNode.parent as CheckedTreeNode
+        val preview = (parent.userObject as InlayProviderSettingsModel).getCasePreview(item)
+        addPreview(parent, preview)
       }
     }
     rightPanel.revalidate()
     rightPanel.repaint()
+  }
+
+  private fun addPreview(treeNode: CheckedTreeNode, previewText: String?) {
+    if (previewText != null) {
+      val editor = createEditor(getModelLanguage(treeNode), project) {}
+      editor.text = previewText
+      rightPanel.add(editor, "gaptop 10")
+    }
+  }
+
+  private fun addDescription(@Nls s: String?) {
+    val htmlBody = UIUtil.toHtml(StringUtil.notNullize(s))
+    rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {

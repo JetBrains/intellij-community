@@ -21,6 +21,11 @@ class ParameterInlayProviderSettingsModel(
 
   override val previewText: String?
     get() = null
+
+  override fun getCasePreview(case: ImmediateConfigurable.Case): String? {
+    return getCasePreview(language, provider, case)
+  }
+
   override val component by lazy {
     ParameterHintsSettingsPanel(
       language = language,
