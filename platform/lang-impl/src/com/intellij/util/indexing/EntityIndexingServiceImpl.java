@@ -6,11 +6,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeIndexingInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.ModuleIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
@@ -21,10 +22,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class EntityIndexingServiceImpl implements EntityIndexingService {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
@@ -60,20 +60,19 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     if (!builders.isEmpty()) {
       List<IndexableFilesIterator> mergedIterators =
         IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
-      StringBuilder sb = new StringBuilder("Accumulated iterators:");
 
-      for (IndexableFilesIterator iterator : mergedIterators) {
-        sb.append('\n');
-        if (iterator instanceof ModuleIndexableFilesIteratorImpl) {
-          sb.append(((ModuleIndexableFilesIteratorImpl)iterator).getDebugDescription());
-        }
-        else {
-          sb.append(iterator);
-        }
+      List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
+      LOG.debug("Accumulated iterators: " + debugNames);
+      int maxNamesToLog = 10;
+      String reasonMessage = "changes in: " + debugNames
+        .stream()
+        .limit(maxNamesToLog)
+        .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
+      if (debugNames.size() > maxNamesToLog) {
+        reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
       }
-      LOG.debug(sb.toString());
       DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, mergedIterators, "Reindex on accumulated partial changes"));
+        .queueTask(new UnindexedFilesUpdater(project, mergedIterators, reasonMessage));
     }
   }
 

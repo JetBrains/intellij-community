@@ -59,20 +59,6 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       "Module '${module.name}'"
     }
 
-  fun getDebugDescription(): @NonNls String {
-    val sb = StringBuilder("ModuleIndexableFilesIteratorImpl ")
-    if (roots.isEmpty()) {
-      sb.append("with no roots")
-    }
-    else {
-      sb.append("with roots:")
-      for (root in roots) {
-        sb.append("\n   ").append(root)
-      }
-    }
-    return sb.toString()
-  }
-
   override fun getIndexingProgressText(): String =
     if (ModuleType.isInternal(module)) {
       IndexingBundle.message("indexable.files.provider.indexing.internal.module.name")
