@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist
@@ -111,8 +111,8 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("file_path"))
     Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("ABC").anonymize(path))
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("FUS").anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(path))
   }
 
   @Test
@@ -122,8 +122,8 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("file_path"))
     Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("FUS").anonymize(path))
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(path))
   }
 
   @Test
@@ -141,8 +141,8 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("anonymous_id"))
     Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("ABC").anonymize(id))
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("FUS").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(id))
   }
 
   @Test
@@ -152,8 +152,8 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("anonymous_id"))
     Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("FUS").anonymize(id))
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(id))
   }
 
   @Test

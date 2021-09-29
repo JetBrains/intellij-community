@@ -72,6 +72,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {
     if (keywords.isNotEmpty()) add("-k $keywords")
     if (AdvancedSettings.getBoolean("python.pytest.swapdiff")) add("--jb-swapdiff")
+    if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
   override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
@@ -124,11 +125,6 @@ class PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override val onlyClassesSupported: Boolean = false
 
   override val packageRequired: String = "pytest"
-
-  /**
-   * py.test renamed to pytest long ago. See parent doc for more info
-   */
-  override val idForSettings: String = "pytest"
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"

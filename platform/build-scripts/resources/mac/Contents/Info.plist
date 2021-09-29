@@ -44,66 +44,53 @@
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
     <string>@@build@@</string>
+    @@url_schemes@@
+
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-
-    <key>NSHighResolutionCapable</key>
-    <true/>
-
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
-
-    @@archs@@
+    @@architectures@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     <key>LSMinimumSystemVersion</key>
     <string>@@min_osx@@</string>
 
-    @@url_schemes@@
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
 
     <key>JVMOptions</key>
     <dict>
       <key>ClassPath</key>
       <string>@@class_path@@</string>
-
       <key>JVMVersion</key>
       <string>1.8*,1.8+</string>
-
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
       <key>Properties</key>
       <dict>
         @@idea_properties@@
-
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
       </dict>
-
     </dict>
+
     <key>NSCameraUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's camera.</string>
-
     <key>NSMicrophoneUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's microphone.</string>
-
     <key>NSLocationUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the user's location information.</string>
-
     <key>NSDesktopFolderUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the user's Desktop folder.</string>
-
     <key>NSDocumentsFolderUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the user's Documents folder.</string>
-
     <key>NSDownloadsFolderUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the user's Downloads folder.</string>
-
     <key>NSNetworkVolumesUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to files on a network volume.</string>
-
     <key>NSRemovableVolumesUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to files on a removable volume.</string>
-
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
   </dict>

@@ -1,6 +1,12 @@
 <html>
 <body>
-Reports recursive Java element visitors which process <code>PsiReturnStatement</code>s
-even if they belong to another <code>PsiClass</code> or <code>PsiLambdaExpression</code>. In most cases it's a bug.
+Reports unsafe use of <code>JavaRecursiveElementVisitor.visitReturnStatement()</code>.
+<p>
+  Processing <code>PsiReturnStatement</code>s
+  even if they belong to another <code>PsiClass</code> or <code>PsiLambdaExpression</code> is a bug in most cases.
+</p>
+<p>
+  Quick-fix inserts necessary explicit <code>visitClass()/visitLambdaExpression()</code> method(s).
+</p>
 </body>
 </html>

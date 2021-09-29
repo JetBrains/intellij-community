@@ -6,15 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
 import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +64,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     @Override
-    @Nullable
-    public IntSet findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
+    public @Nullable Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
       CompilerRef.NamedCompilerRef[] hierarchy;
       if (ref instanceof CompilerRef.CompilerClassHierarchyElementDef) {
         hierarchy = new CompilerRef.NamedCompilerRef[]{(CompilerRef.NamedCompilerRef)ref};
@@ -76,7 +74,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
         hierarchy = getHierarchy(hierarchyElement, checkBaseClassAmbiguity, false, -1);
       }
       if (hierarchy == null) return null;
-      IntSet set = new IntOpenHashSet();
+      Set<VirtualFile> set = new CompactVirtualFileSet();
       for (CompilerRef.NamedCompilerRef aClass : hierarchy) {
         final CompilerRef overriderUsage = ref.override(aClass.getName());
         addUsages(overriderUsage, set);
@@ -85,14 +83,13 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     @Override
-    @Nullable
-    public IntSet findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException {
-      IntSet result = new IntOpenHashSet();
+    public @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException {
+      Set<VirtualFile> result = new CompactVirtualFileSet();
       myIndex.get(JavaCompilerIndices.IMPLICIT_TO_STRING).getData(ref).forEach(
         (id, value) -> {
           final VirtualFile file = findFile(id);
           if (file != null) {
-            result.add(((VirtualFileWithId)file).getId());
+            result.add(file);
           }
           return true;
         });
@@ -183,7 +180,12 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     @NotNull
     IntSet getAllContainingFileIds(@NotNull CompilerRef ref) throws StorageException {
       return InvertedIndexUtil
-        .collectInputIdsContainingAllKeys(myIndex.get(JavaCompilerIndices.BACK_USAGES), Collections.singletonList(ref), null, null, null);
+        .collectInputIdsContainingAllKeys(myIndex.get(JavaCompilerIndices.BACK_USAGES),
+                                          Collections.singletonList(ref),
+                                          null,
+                                          null,
+                                          null,
+                                          ProgressManager::checkCanceled);
     }
 
     @NotNull
@@ -200,12 +202,12 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
       return result;
     }
 
-    private void addUsages(CompilerRef usage, IntCollection sink) throws StorageException {
+    private void addUsages(CompilerRef usage, Set<VirtualFile> sink) throws StorageException {
       myIndex.get(JavaCompilerIndices.BACK_USAGES).getData(usage).forEach(
         (id, value) -> {
           final VirtualFile file = findFile(id);
           if (file != null) {
-            sink.add(((VirtualFileWithId)file).getId());
+            sink.add(file);
           }
           return true;
         });

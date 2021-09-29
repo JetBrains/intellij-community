@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -24,6 +24,8 @@ import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -127,8 +129,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-      coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
+      Project project = configuration.getProject();
+      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
+      }, ModalityState.NON_MODAL, project.getDisposed());
       appendCoverageArgument(configuration, params, coverageConfig);
 
       final Sdk jdk = params.getJdk();

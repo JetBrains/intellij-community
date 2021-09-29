@@ -106,6 +106,10 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     return value != null ? value : false;
   }
 
+  public void enableExtension(String extensionId) {
+    myState.myEnabledExtensions.put(extensionId, true);
+  }
+
   @NotNull
   public Map<String, Boolean> getExtensionsEnabledState() {
     return myState.myEnabledExtensions;

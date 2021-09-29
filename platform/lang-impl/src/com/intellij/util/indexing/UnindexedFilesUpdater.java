@@ -44,10 +44,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -84,14 +81,14 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
   private final boolean myStartSuspended;
-  private final String myIndexingReason;
+  private final @NonNls String myIndexingReason;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                boolean startSuspended,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable String indexingReason) {
+                               @Nullable @NonNls String indexingReason) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
@@ -134,11 +131,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     this(project, false, null, null);
   }
 
-  public UnindexedFilesUpdater(@NotNull Project project, @Nullable String indexingReason) {
+  public UnindexedFilesUpdater(@NotNull Project project, @Nullable @NonNls String indexingReason) {
     this(project, false, null, indexingReason);
   }
 
-  public UnindexedFilesUpdater(@NotNull Project project, @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators, @Nullable String indexingReason) {
+  public UnindexedFilesUpdater(@NotNull Project project, @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators, @Nullable @NonNls String indexingReason) {
     this(project, false, predefinedIndexableFilesIterators, indexingReason);
   }
 

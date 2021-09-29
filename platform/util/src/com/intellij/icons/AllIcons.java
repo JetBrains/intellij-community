@@ -795,7 +795,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PluginRestart = load("nodes/pluginRestart.svg", -1019519930808067545L, 0);
     /** 16x16 */ public static final @NotNull Icon PpInvalid = load("nodes/ppInvalid.svg", 5920894463075712399L, 0);
     /** 16x16 */ public static final @NotNull Icon PpJar = load("nodes/ppJar.svg", -8465610184724256396L, 0);
-    /** 16x16 */ public static final @NotNull Icon PpJdk = load("nodes/ppJdk.svg", -223178507885405396L, 0);
+    /** 16x16 */ public static final @NotNull Icon PpJdk = load("nodes/ppJdk.svg", -4119692495772510326L, 0);
     /** 16x16 */ public static final @NotNull Icon PpLib = load("nodes/ppLib.svg", -1728524175674971973L, 0);
     /** 16x16 */ public static final @NotNull Icon PpLibFolder = load("nodes/ppLibFolder.svg", -2300975326609844330L, 0);
     /** 16x16 */ public static final @NotNull Icon PpWeb = load("nodes/ppWeb.svg", -5038013880588459190L, 0);

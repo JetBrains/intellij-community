@@ -129,12 +129,12 @@ internal class PluginModelValidator {
     val graphAsString = graphAsString()
     println(graphAsString)
     System.getProperty("plugin.graph.out")?.let {
-      val outFile = Path.of(it)
-      Files.writeString(outFile, "@startjson\n$graphAsString\n@endjson")
-    }
-    System.getProperty("plugin.graph.echarts")?.let {
       PluginGraphWriter(pluginIdToInfo).write(Path.of(it))
     }
+  }
+
+  fun writeGraph(outFile: Path) {
+    PluginGraphWriter(pluginIdToInfo).write(outFile)
   }
 
   private fun checkDependencies(element: XmlElement,
@@ -163,6 +163,10 @@ internal class PluginModelValidator {
           val id = child.getAttributeValue("id")
           if (id == null) {
             errors.add(PluginValidationError("Id is not specified for dependency on plugin", getErrorInfo()))
+            continue
+          }
+          if (id == "com.intellij.modules.java") {
+            errors.add(PluginValidationError("Use com.intellij.modules.java id instead of com.intellij.modules.java", getErrorInfo()))
             continue
           }
 
@@ -240,7 +244,7 @@ internal class PluginModelValidator {
   // for plugin two variants:
   // 1) depends + dependency on plugin in a referenced descriptor = optional descriptor. In old format: depends tag
   // 2) no depends + no dependency on plugin in a referenced descriptor = directly injected into plugin (separate classloader is not created
-  // during transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>.
+  // during transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>).
   private fun checkContent(content: XmlElement,
                            referencingModuleInfo: ModuleInfo,
                            sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
@@ -295,7 +299,7 @@ internal class PluginModelValidator {
       moduleNameToInfo.put(moduleName, moduleInfo)
       referencingModuleInfo.content.add(moduleInfo)
 
-      // check that not specified using depends tag
+      // check that not specified using `depends` tag
       for (dependsElement in referencingModuleInfo.descriptor.children) {
         if (dependsElement.name != "depends") {
           continue

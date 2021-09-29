@@ -45,7 +45,7 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Option option = optionSupplier.apply(event);
     boolean enabled = option != null && option.isEnabled();
     boolean visible = enabled || option != null && option.isAlwaysVisible();

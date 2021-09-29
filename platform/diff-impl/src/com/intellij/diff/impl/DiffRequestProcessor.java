@@ -388,13 +388,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       Separator.getInstance(),
       new MyPrevChangeAction(), new MyNextChangeAction());
 
-    AnAction goToChangeAction = createGoToChangeAction();
-    if (goToChangeAction != null) {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(goToChangeAction, "GotoClass", null);
-      }
-      ContainerUtil.addIfNotNull(actions, goToChangeAction);
-    }
+    ContainerUtil.addIfNotNull(actions, createGoToChangeAction());
 
     return actions;
   }

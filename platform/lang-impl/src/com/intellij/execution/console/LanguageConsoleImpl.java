@@ -174,6 +174,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     });
 
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
+    myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
   }
 
   @Override
@@ -387,6 +388,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     myConsoleExecutionEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     myHistoryViewer.getDocument().removeDocumentListener(myDocumentAdapter);
+    myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, null);
 
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myHistoryViewer);

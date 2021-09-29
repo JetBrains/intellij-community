@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class Breakpoint
@@ -259,7 +259,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     ThreadReferenceProxyImpl thread = context.getThread();
     if(thread != null) {
-      StackFrameProxyImpl stackFrameProxy = thread.frame(0);
+      StackFrameProxyImpl stackFrameProxy = context.getFrameProxy();
       if(stackFrameProxy != null) {
         return stackFrameProxy.thisObject();
       }
@@ -278,7 +278,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     String title = JavaDebuggerBundle.message("title.error.evaluating.breakpoint.condition");
 
     try {
-      StackFrameProxyImpl frameProxy = context.getThread().frame(0);
+      StackFrameProxyImpl frameProxy = context.getFrameProxy();
       if (frameProxy == null) {
         // might be if the thread has been collected
         return false;

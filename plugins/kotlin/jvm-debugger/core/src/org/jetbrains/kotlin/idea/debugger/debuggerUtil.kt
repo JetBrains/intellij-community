@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
@@ -27,7 +26,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.util.*
+import java.util.concurrent.CompletableFuture
 
 fun Location.isInKotlinSources(): Boolean {
     return declaringType().isInKotlinSources()
@@ -38,7 +37,19 @@ fun ReferenceType.isInKotlinSources(): Boolean {
     return fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS || containsKotlinStrata()
 }
 
+fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
+    return DebuggerUtilsAsync.sourceName(this)
+        .thenApply {
+            val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
+            fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
+        }
+        .thenCombine(containsKotlinStrataAsync()) { kotlinExt, kotlinStrata -> kotlinExt || kotlinStrata }
+}
+
 fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STRATA_NAME)
+
+fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
+    DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
 fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean {
     val visibleVariables = location.visibleVariables(debugProcess)

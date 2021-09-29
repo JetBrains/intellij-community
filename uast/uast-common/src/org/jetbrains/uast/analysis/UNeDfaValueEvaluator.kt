@@ -14,9 +14,9 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 @ApiStatus.Experimental
 class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrategy<T>) {
   interface UValueEvaluatorStrategy<T : Any> {
-    fun calculateLiteral(element: ULiteralExpression): T?
+    fun calculateLiteral(element: ULiteralExpression): T? = null
 
-    fun calculatePolyadicExpression(element: UPolyadicExpression): CalculateRequest<T>?
+    fun calculatePolyadicExpression(element: UPolyadicExpression): CalculateRequest<T>? = null
 
     fun constructValueFromList(element: UElement, values: List<T>?): T?
 
@@ -31,29 +31,50 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     return calculate(graph, element, configuration)
   }
 
+  fun canBeDependencyForBuilderOfThisEvaluator(element: UElement, configuration: UNeDfaConfiguration<T>): Boolean {
+    val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return false
+
+    graph.visitDependents(element) { currentElement ->
+      if (currentElement is UCallExpression) {
+        if (configuration.getBuilderEvaluatorForCall(currentElement) != null) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
   fun calculateContainingBuilderValue(
     element: UElement,
     configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()
   ): T? {
     val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return null
 
-    val deque = ArrayDeque<UElement>()
-    deque += element
-
-    while (deque.isNotEmpty()) {
-      val currentElement = deque.removeFirst()
+    graph.visitDependents(element, { it !is  Dependent.CallExpression}) { currentElement ->
       if (currentElement is UCallExpression) {
         configuration.getBuilderEvaluatorForCall(currentElement)?.let { builder ->
           // TODO: provide objects to analyze only necessary branches, e.g. if our element in one of if branches
           return BuilderEvaluator(graph, configuration, builder).calculateBuilder(currentElement, null, null)
         }
       }
-      for (dependent in graph.dependents[currentElement].orEmpty()) {
-        deque += dependent.element
-      }
     }
 
     return null
+  }
+
+  private inline fun UastLocalUsageDependencyGraph.visitDependents(element: UElement, dependentCondition: (Dependent) -> Boolean = { true }, visit: (UElement) -> Unit) {
+    val deque = ArrayDeque<UElement>()
+    deque += element
+
+    while (deque.isNotEmpty()) {
+      val currentElement = deque.removeFirst()
+      visit(currentElement)
+
+      for (dependent in dependents[currentElement].orEmpty()) {
+        if (dependentCondition(dependent)) deque += dependent.element
+      }
+    }
   }
 
   private fun calculate(graph: UastLocalUsageDependencyGraph,

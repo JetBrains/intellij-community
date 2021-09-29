@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -20,7 +21,10 @@ import java.util.Objects;
 
 public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoAction {
   @Override
-  protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+  protected void execute(@NotNull Project project,
+                         @NotNull Collection<HgRepository> repositories,
+                         @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
     if (selectedRepo != null) {
       showUnAppliedPatches(project, selectedRepo);
     }

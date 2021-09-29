@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PathChooserDialogHelper;
@@ -47,6 +48,9 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     myProject = project;
     myTitle = getChooserTitle(descriptor);
     myHelper = new PathChooserDialogHelper(descriptor);
+
+    String key = "awt.file.dialog.enable.filter";
+    System.setProperty(key, Boolean.toString(Registry.is(key, true)));
 
     Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
     Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);

@@ -35,6 +35,7 @@ public class MemberModel {
   }
 
   public static @Nullable MemberModel create(@NotNull PsiErrorElement errorElement) {
+    if (hasClassesWithUnclosedBraces(errorElement.getContainingFile())) return null;
     List<PsiElement> children = new ArrayList<>();
     PsiElement prevSibling = errorElement.getPrevSibling();
     while (isMemberPart(prevSibling)) {
@@ -43,12 +44,18 @@ public class MemberModel {
       }
       else {
         children.add(prevSibling);
+        if (prevSibling instanceof PsiField || prevSibling instanceof PsiMethod) break;
       }
       prevSibling = prevSibling.getPrevSibling();
     }
     Collections.reverse(children);
     Collections.addAll(children, errorElement.getChildren());
     return new MemberParser(ContainerUtil.filter(children, c -> !isWsOrComment(c))).parse();
+  }
+  
+  private static boolean hasClassesWithUnclosedBraces(@Nullable PsiFile psiFile) {
+    PsiJavaFile javaFile = tryCast(psiFile, PsiJavaFile.class);
+    return javaFile == null || ContainerUtil.exists(javaFile.getClasses(), c -> c.getRBrace() == null);
   }
 
   private static boolean isWsOrComment(@NotNull PsiElement psiElement) {

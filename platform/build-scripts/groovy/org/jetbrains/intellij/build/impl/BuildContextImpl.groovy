@@ -303,7 +303,9 @@ Android Studio: don't patch ApplicationInfo.xml */
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers)
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
-
+    /**
+     * FIXME compiled classes are assumed to be already fetched in the FIXME from {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#prepareForBuild}, please change them together
+     */
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
     def compilationContextCopy =
@@ -333,22 +335,28 @@ Android Studio: don't patch ApplicationInfo.xml */
 
   @Override
   @SuppressWarnings('SpellCheckingInspection')
-  @NotNull String getAdditionalJvmArguments() {
-    StringBuilder jvmArgs = new StringBuilder("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+  @NotNull List<String> getAdditionalJvmArguments() {
+    List<String> jvmArgs = new ArrayList<>()
+
+    def classLoader = productProperties.classLoader
+    if (classLoader != null) {
+      jvmArgs.add('-Djava.system.class.loader=' + classLoader)
+    }
+
+    jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)
+
+    jvmArgs.add('-Didea.paths.selector=' + systemSelector)
 
     if (productProperties.platformPrefix != null) {
-      jvmArgs.append(' ').append("-Didea.platform.prefix=").append(productProperties.platformPrefix)
+      jvmArgs.add('-Didea.platform.prefix=' + productProperties.platformPrefix)
     }
 
-    String additionalJvmArguments = productProperties.additionalIdeJvmArguments.trim()
-    if (!additionalJvmArguments.isEmpty()) {
-      jvmArgs.append(' ').append(additionalJvmArguments)
-    }
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
 
     if (productProperties.toolsJarRequired) {
-      jvmArgs.append(' ').append("-Didea.jre.check=true")
+      jvmArgs.add('-Didea.jre.check=true')
     }
 
-    return jvmArgs.toString().trim()
+    return jvmArgs
   }
 }

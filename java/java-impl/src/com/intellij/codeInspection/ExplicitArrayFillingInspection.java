@@ -170,10 +170,16 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       private boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
         PsiExpression arrInitExpr = PsiUtil.skipParenthesizedExprDown(expression);
         PsiNewExpression newExpression = tryCast(arrInitExpr, PsiNewExpression.class);
-        PsiArrayInitializerExpression initializer =
-          newExpression == null ? tryCast(arrInitExpr, PsiArrayInitializerExpression.class) : newExpression.getArrayInitializer();
+        PsiArrayInitializerExpression initializer;
+        if (newExpression == null) {
+          initializer = tryCast(arrInitExpr, PsiArrayInitializerExpression.class);
+          if (initializer == null) return false;
+        }
+        else {
+          initializer = newExpression.getArrayInitializer();
+        }
         if (initializer == null) return true;
-        return Arrays.stream(initializer.getInitializers()).allMatch(init -> isDefaultValue(init, defaultValue, init.getType()));
+        return ContainerUtil.and(initializer.getInitializers(), init -> isDefaultValue(init, defaultValue, init.getType()));
       }
 
       @Nullable

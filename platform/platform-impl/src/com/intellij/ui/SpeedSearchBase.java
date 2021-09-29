@@ -46,6 +46,9 @@ import java.util.NoSuchElementException;
 
 import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
 
+/**
+ * Use {@link com.intellij.ui.speedSearch.SpeedSearchUtil} in renderer to highlight matching results
+ */
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 

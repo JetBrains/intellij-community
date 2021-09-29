@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports ternary conditional operators of the form <code>x?true:false</code>
+Reports ternary conditional operators of the form <code>x ? true : false</code>
 or similar, which can be trivially simplified.
 
-<p>Example:</p>
-<pre>
-foo() ? true : false
-</pre>
+<p><b>Example:</b></p>
+<pre><code>
+  foo() ? true : false
+</code></pre>
 
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
 foo()
-</pre>
+</code></pre>
 
 </body>
 </html>

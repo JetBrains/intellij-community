@@ -39,7 +39,10 @@ import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -248,10 +251,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         if (virtualFile == null) {
           throw new MavenProcessCanceledException();
         }
-        getParameters().myFiles = FileFinder.findPomFiles(virtualFile.getChildren(),
-          LookForNestedToggleAction.isSelected(),
-          indicator,
-          new ArrayList<>());
+        getParameters().myFiles = FileFinder.findPomFiles(virtualFile.getChildren(), LookForNestedToggleAction.isSelected(), indicator);
 
         readMavenProjectTree(indicator);
 

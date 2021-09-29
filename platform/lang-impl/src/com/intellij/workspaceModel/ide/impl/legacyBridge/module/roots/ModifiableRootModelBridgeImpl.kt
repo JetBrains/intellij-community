@@ -28,10 +28,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -46,7 +46,6 @@ import java.util.concurrent.ConcurrentHashMap
 class ModifiableRootModelBridgeImpl(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
-  private val initialStorage: WorkspaceEntityStorage,
   override val accessor: RootConfigurationAccessor,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableRootModelBridge, ModuleRootModelBridge {
@@ -74,9 +73,8 @@ class ModifiableRootModelBridgeImpl(
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val extensionsDelegate = lazy {
-    RootModelBridgeImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
+    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
                                        parentDisposable = extensionsDisposable)
-      .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
   private val extensions by extensionsDelegate
 
@@ -429,6 +427,8 @@ class ModifiableRootModelBridgeImpl(
       val element = Element("component")
 
       for (extension in extensions) {
+        if (extension is ModuleExtensionBridge) continue
+
         extension.commit()
 
         if (extension is PersistentStateComponent<*>) {
@@ -602,7 +602,7 @@ class ModifiableRootModelBridgeImpl(
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
       moduleEntity = storage.findModuleEntity(moduleBridge),
-      storage = storage,
+      storage = entityStorageOnDiff,
       itemUpdater = null,
       rootModel = this,
       updater = { transformer -> transformer(diff) }
@@ -612,21 +612,11 @@ class ModifiableRootModelBridgeImpl(
   internal val currentModel
     get() = entityStorageOnDiff.cachedValue(modelValue)
 
-  private val compilerModuleExtension by lazy {
-    CompilerModuleExtensionBridge(moduleBridge, entityStorage = entityStorageOnDiff, diff = diff)
-  }
-  private val compilerModuleExtensionClass = CompilerModuleExtension::class.java
-
   override fun getExcludeRoots(): Array<VirtualFile> = currentModel.excludeRoots
 
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, null)
 
   override fun <T : Any?> getModuleExtension(klass: Class<T>): T? {
-    if (compilerModuleExtensionClass.isAssignableFrom(klass)) {
-      @Suppress("UNCHECKED_CAST")
-      return compilerModuleExtension as T
-    }
-
     return extensions.filterIsInstance(klass).firstOrNull()
   }
 

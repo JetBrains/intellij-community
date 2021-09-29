@@ -32,7 +32,7 @@ public enum RebuildStatus {
     return ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
   }
 
-  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<? extends StorageException> clearAction) throws StorageException {
+  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<StorageException> clearAction) throws StorageException {
     AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
     if (rebuildStatus == null) {
       throw new StorageException("Problem updating " + indexId);
@@ -56,6 +56,10 @@ public enum RebuildStatus {
       ProgressManager.checkCanceled();
       TimeoutUtil.sleep(50);
     }
+  }
+
+  static boolean isOk() {
+    return ourRebuildStatus.values().stream().map(ref -> ref.get()).noneMatch(status -> status != OK);
   }
 
   static void reset() {

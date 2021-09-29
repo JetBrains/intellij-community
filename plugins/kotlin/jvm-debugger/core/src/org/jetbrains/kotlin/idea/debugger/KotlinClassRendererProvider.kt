@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.ui.tree.render.CompoundRendererProvider
 import com.sun.jdi.Type
-import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
 class KotlinClassRendererProvider : CompoundRendererProvider() {
@@ -18,8 +17,7 @@ class KotlinClassRendererProvider : CompoundRendererProvider() {
 
     override fun getChildrenRenderer() = classRenderer
 
-    override fun getIsApplicableChecker() =
-        Function { type: Type? -> CompletableFuture.completedFuture(classRenderer.isApplicable(type)) }
+    override fun getIsApplicableChecker() = Function { type: Type? -> classRenderer.isApplicableAsync(type) }
 
     override fun isEnabled() = true
 }

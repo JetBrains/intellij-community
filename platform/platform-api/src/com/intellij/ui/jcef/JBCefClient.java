@@ -74,6 +74,7 @@ public final class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefDisplayHandler> myDisplayHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDownloadHandler> myDownloadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDragHandler> myDragHandler = new HandlerSupport<>();
+  private final HandlerSupport<CefMediaAccessHandler> myMediaAccessHandler = new HandlerSupport<>();
   private final HandlerSupport<CefFocusHandler> myFocusHandler = new HandlerSupport<>();
   private final HandlerSupport<CefJSDialogHandler> myJSDialogHandler = new HandlerSupport<>();
   private final HandlerSupport<CefKeyboardHandler> myKeyboardHandler = new HandlerSupport<>();
@@ -353,6 +354,24 @@ public final class JBCefClient implements JBCefDisposable {
 
   public void removeDragHandler(@NotNull CefDragHandler handler, @NotNull CefBrowser browser) {
     myDragHandler.remove(handler, browser, () -> myCefClient.removeDragHandler());
+  }
+
+  public JBCefClient addMediaAccessHandler(@NotNull CefMediaAccessHandler handler, @NotNull CefBrowser browser) {
+    return myMediaAccessHandler.add(handler, browser, () -> {
+      myCefClient.addMediaAccessHandler(new CefMediaAccessHandler() {
+
+        @Override
+        public boolean onRequestMediaAccessPermission(CefBrowser browser,
+                                                      CefFrame frame,
+                                                      String requesting_url,
+                                                      int requested_permissions,
+                                                      CefMediaAccessCallback callback) {
+          return myMediaAccessHandler.handle(browser, handler -> {
+            return handler.onRequestMediaAccessPermission(browser, frame, requesting_url, requested_permissions, callback);
+          });
+        }
+      });
+    });
   }
 
   public JBCefClient addFocusHandler(@NotNull CefFocusHandler handler, @NotNull CefBrowser browser) {

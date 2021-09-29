@@ -57,11 +57,11 @@ class SimpleJsClientTemplate : JsClientTemplate() {
                     +(FileTemplateDescriptor("jsClient/index.html.vm") asResourceOf SourcesetType.main)
                 }
                 if (useKotlinxHtml.reference.settingValue()) {
-                    +(FileTemplateDescriptor("$id/client.kt.vm") asSrcOf SourcesetType.main)
+                    +(FileTemplateDescriptor("$id/client.kt.vm", "Client.kt".asPath()) asSrcOf SourcesetType.main)
                     +(FileTemplateDescriptor("$id/TestClient.kt.vm", "TestClient.kt".asPath()) asSrcOf SourcesetType.test)
                 } else {
-                    +(FileTemplateDescriptor("$id/simple.kt.vm") asSrcOf SourcesetType.main)
-                    +(FileTemplateDescriptor("$id/SimpleTest.kt.vm", "TestClient.kt".asPath()) asSrcOf SourcesetType.test)
+                    +(FileTemplateDescriptor("$id/simple.kt.vm", "Simple.kt".asPath()) asSrcOf SourcesetType.main)
+                    +(FileTemplateDescriptor("$id/SimpleTest.kt.vm", "SimpleTest.kt".asPath()) asSrcOf SourcesetType.test)
                 }
             }
         }

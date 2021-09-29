@@ -776,6 +776,27 @@ public class StringUtil extends StringUtilRt {
     return Introspector.decapitalize(s);
   }
 
+  /**
+   * The same as {@link Introspector#decapitalize(String)}, but enables to ignore abbreveations in the beginning (e.g., URLMapping).
+   *
+   * @param s                  string to process
+   * @param ignoreAbbreviation whether abbreveation should be ignored
+   * @return decapitalized string
+   */
+  @Contract(pure = true)
+  public static @NotNull String decapitalize(@NotNull String s, boolean ignoreAbbreviation) {
+    if (s == null || s.length() == 0) {
+      return s;
+    }
+    if (!ignoreAbbreviation && s.length() > 1
+        && Character.isUpperCase(s.charAt(1)) && Character.isUpperCase(s.charAt(0))) {
+      return s;
+    }
+    char chars[] = s.toCharArray();
+    chars[0] = Character.toLowerCase(chars[0]);
+    return new String(chars);
+  }
+
   @Contract(pure = true)
   public static boolean isVowel(char c) {
     return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y';

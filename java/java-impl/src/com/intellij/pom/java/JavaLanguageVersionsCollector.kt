@@ -5,10 +5,10 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.lang.JavaVersion
@@ -42,7 +42,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
     if (projectExtension != null) {
       val projectLanguageLevel = projectExtension.languageLevel
       val languageLevels = ModuleManager.getInstance(project).modules.mapTo(EnumSet.noneOf(LanguageLevel::class.java)) {
-        LanguageLevelModuleExtensionImpl.getInstance(it)?.languageLevel ?: projectLanguageLevel
+        LanguageLevelUtil.getCustomLanguageLevel(it) ?: projectLanguageLevel
       }
       languageLevels.mapTo(metrics) {
         newMetric("MODULE_LANGUAGE_LEVEL", FeatureUsageData().apply {

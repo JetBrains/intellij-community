@@ -107,6 +107,10 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     myEnvironment.remove(name);
   }
 
+  public @Nullable TargetValue<String> getEnvironmentVariable(@NotNull String name) {
+    return myEnvironment.get(name);
+  }
+
   public void addFileToDeleteOnTermination(@NotNull File file) {
     myFilesToDeleteOnTermination.add(file);
   }

@@ -1,19 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 abstract public class TestRunnerService
   extends
@@ -22,26 +18,19 @@ abstract public class TestRunnerService
   private static final PyDefaultProjectAwareServiceClasses<ServiceState, TestRunnerService, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
   private static final TestRunnerDetector DETECTOR = new TestRunnerDetector();
-  private final List<String> myConfigurations;
 
   protected TestRunnerService() {
     super(new ServiceState());
-    myConfigurations = new ArrayList<>(ContainerUtil.map(PyTestsSharedKt.getPythonFactories(), o -> o.getIdForSettings()));
   }
 
-  @NotNull
-  public final List<String> getConfigurations() {
-    return myConfigurations;
-  }
-
-
-  public final void setProjectConfiguration(@NotNull String projectConfiguration) {
-    getState().PROJECT_TEST_RUNNER = projectConfiguration;
-  }
 
   @NotNull
   public final PyAbstractTestFactory<?> getSelectedFactory() {
     return PyTestsSharedKt.getFactoryByIdOrDefault(getProjectConfiguration());
+  }
+
+  public final void setSelectedFactory(@NotNull PyAbstractTestFactory<?> factory) {
+    setProjectConfiguration(factory.getId());
   }
 
   @NotNull
@@ -52,6 +41,13 @@ abstract public class TestRunnerService
   @NotNull
   public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
     return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES, DETECTOR);
+  }
+
+  /**
+   * Use {@link #setSelectedFactory(PyAbstractTestFactory)} (String)}
+   */
+  public final void setProjectConfiguration(@NotNull String projectConfiguration) {
+    getState().PROJECT_TEST_RUNNER = projectConfiguration;
   }
 
   /**
@@ -72,7 +68,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(PyTestsSharedKt.getDefaultFactory().getIdForSettings());
+      this(PyTestsSharedKt.getDefaultFactory().getId());
     }
   }
 

@@ -1,11 +1,15 @@
 <html>
 <body>
-Reports usages of IntelliJ API that were introduced in a version newer than "since-build" specified in the <code>plugin.xml</code>.
-It may lead to incompatibilities of the plugin with older IDE builds.
-
+Reports usages of IntelliJ Platform API introduced in a version <em>newer</em> than the one specified in <code>&lt;idea-version></code> <code>@since-build</code> in <code>plugin.xml</code>.
 <p>
-  To avoid possible issues when running the plugin in older IDEs, it may be necessary to increase "since-build" constraint of the plugin,
-  alternatively avoid using the APIs.
+  Using such API may lead to incompatibilities of the plugin with older IDE versions.
 </p>
+<p>
+  To avoid possible issues when running the plugin in older IDE versions, increase <code>since-build</code> accordingly,
+  or remove usages of this API.
+</p>
+<!-- tooltip end -->
+<p>Configure the inspection:</p>
+If <code>&lt;idea-version></code> <code>@since/until-build</code> attributes are not specified in <code>plugin.xml</code>, set <b>Since</b>/<b>Until</b> explicitly.
 </body>
 </html>

@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports the same HTML issues in the Javadoc comments which are reported by the DocLint since Java 8.
-<p>The inspection detects issues like:</p>
+Reports the same HTML issues in the Javadoc comments that have been reported by DocLint since Java 8.
+<p>The inspection detects the following issues:</p>
 <ul>
-  <li>self-closed, unclosed, unknown, misplaced or empty tag</li>
-  <li>unknown or wrong attribute</li>
-  <li>misplaced text</li>
+  <li>Self-closed, unclosed, unknown, misplaced, or empty tag</li>
+  <li>Unknown or wrong attribute</li>
+  <li>Misplaced text</li>
 </ul>
 <p>Example:</p>
-<pre>
+<pre><code>
 /**
  * Unknown tag: List&lt;String&gt;
  * Unclosed tag: error&lt;/b&gt;
@@ -18,6 +18,6 @@ Reports the same HTML issues in the Javadoc comments which are reported by the D
  * ...
  */
 void sample(){ }
-</pre>
+</code></pre>
 </body>
 </html>

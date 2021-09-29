@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -266,7 +266,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (parent instanceof PsiTypeElement) {
           final PsiClass containingClass = refClass.getContainingClass();
           if (containingClass != null && containingClass.hasTypeParameters()) {
-            if (parent.getParent() instanceof PsiTypeTestPattern) {
+            if (parent.getParent() instanceof PsiInstanceOfExpression) {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {

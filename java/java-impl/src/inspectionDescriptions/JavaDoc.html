@@ -1,33 +1,33 @@
 <html>
 <body>
-Reports the following javadoc comment flaws:
+Reports the following Javadoc comment flaws:
 <ul>
-  <li>no javadoc where it is required</li>
-  <li>required tag is missing</li>
-  <li>invalid or incomplete tag</li>
-  <li>javadoc description is missing or incomplete</li>
+  <li>No Javadoc where it is required</li>
+  <li>Required tag is missing</li>
+  <li>Invalid or incomplete tag</li>
+  <li>Javadoc description is missing or incomplete</li>
 </ul>
 <p>Example:</p>
-<pre>
+<pre><code>
   class Main {
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   /**
    *
    */
   class Main {
   }
-</pre>
+</code></pre>
 <p>Example:</p>
-<pre>
+<pre><code>
   String id(String value) {
     return value;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   /**
    * @param value
    * @return
@@ -35,9 +35,9 @@ Reports the following javadoc comment flaws:
   String id(String value) {
     return value;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-Use tabs and corresponding inspection options below, to define visibility scope where javadoc is required, as well as the
-required javadoc tags for classes, methods, fields and inner classes.
+Use the tabs and corresponding inspection options to define visibility scope in which Javadoc is required, as well as the
+required Javadoc tags for classes, methods, fields, and inner classes.
 </body>
 </html>

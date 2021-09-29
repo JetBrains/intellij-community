@@ -89,7 +89,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
         if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getTemplatePresentation().getText())) {
           taskTitle = presentationText;
         }
-        else if (!Strings.isEmptyOrSpaces(projectName = reopenProjectAction.getProjectName())) {
+        else if (!Strings.isEmptyOrSpaces(projectName = reopenProjectAction.getProjectNameToDisplay())) {
           taskTitle = projectName;
         }
         else {

@@ -32,12 +32,12 @@ class TestBase(unittest.TestCase):
 
 
     def setUp(self):
-        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
 
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
         # all the tests
-        self.front_end = get_pydev_frontend(None)
+        self.front_end = get_pydev_ipython_frontend(None)
 
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda:True)
@@ -208,7 +208,7 @@ class TestRunningCode(TestBase):
             # This test is too flaky on travis.
             return
 
-        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
         from _pydev_comm.pydev_rpc import start_rpc_server_and_make_client
 
         called_RequestInput = [False]
@@ -241,7 +241,7 @@ class TestRunningCode(TestBase):
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
         # all the tests
-        self.front_end = get_pydev_frontend(rpc_client)
+        self.front_end = get_pydev_ipython_frontend(rpc_client)
 
         orig_stdin = sys.stdin
         sys.stdin = StdIn(self, rpc_client)

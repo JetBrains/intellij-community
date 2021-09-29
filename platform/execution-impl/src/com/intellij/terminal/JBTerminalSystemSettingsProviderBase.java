@@ -271,8 +271,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   public @NotNull CursorShape getCursorShape() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    if (editorSettings.isBlockCursor()) {
+    TerminalUiSettingsManager.CursorShape shape = TerminalUiSettingsManager.getInstance().getCursorShape();
+    if (shape == TerminalUiSettingsManager.CursorShape.BLOCK) {
       return editorSettings.isBlinkCaret() ? CursorShape.BLINK_BLOCK : CursorShape.STEADY_BLOCK;
+    }
+    if (shape == TerminalUiSettingsManager.CursorShape.UNDERLINE) {
+      return editorSettings.isBlinkCaret() ? CursorShape.BLINK_UNDERLINE : CursorShape.STEADY_UNDERLINE;
     }
     return editorSettings.isBlinkCaret() ? CursorShape.BLINK_VERTICAL_BAR : CursorShape.STEADY_VERTICAL_BAR;
   }

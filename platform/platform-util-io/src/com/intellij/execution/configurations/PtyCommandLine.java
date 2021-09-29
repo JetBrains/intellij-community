@@ -148,6 +148,15 @@ public class PtyCommandLine extends GeneralCommandLine {
   public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
+    if (!SystemInfo.isWindows) {
+      // Let programs know about the emulator's capabilities to allow them produce appropriate escape sequences.
+      // https://www.gnu.org/software/gettext/manual/html_node/The-TERM-variable.html
+      // Moreover, some programs require TERM set, e.g. `/usr/bin/clear` or Python code `os.system("clear")`.
+      // The following error will be reported if TERM is missing: "TERM environment variable set not set."
+      if (!getEnvironment().containsKey("TERM")) {
+        env.put("TERM", "xterm-256color");
+      }
+    }
 
     String[] command = ArrayUtilRt.toStringArray(commands);
     File workDirectory = getWorkDirectory();

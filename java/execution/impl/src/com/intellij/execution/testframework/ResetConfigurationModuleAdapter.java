@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -68,8 +68,8 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (configuration instanceof JavaTestConfigurationBase &&
         ((JavaTestConfigurationBase)configuration).getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
-      PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
-      if (directories.length > aPackage.getDirectories(GlobalSearchScope.moduleScope(module)).length) {
+      PsiDirectory[] directories = ReadAction.compute(() -> aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module)));
+      if (directories.length > ReadAction.compute(() -> aPackage.getDirectories(GlobalSearchScope.moduleScope(module))).length) {
         String message = new HtmlBuilder().append(JavaBundle.message("popup.content.tests.were.not.found.in.module", module.getName()))
           .appendLink("scope", JavaBundle.message("popup.content.tests.were.not.found.in.module.search.in.dependencies"))
           .toString();

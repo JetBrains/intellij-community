@@ -143,8 +143,12 @@ interface Instruction {
 
     @Override
     public String generate() {
-      if (myInstructions.size() == 1 && !hasElseBranch() && !(myInstructions.get(0) instanceof Declaration)) {
-        return "if(" + myCondition.getText() + ")" + myInstructions.get(0).generate();
+      if (myInstructions.size() == 1 && !hasElseBranch()) {
+        Instruction instruction = myInstructions.get(0);
+        if (!(instruction instanceof Declaration) &&
+            (!(instruction instanceof CodeBlock) || ((CodeBlock)instruction).myBlock.getCodeBlock().getStatements().length == 1)) {
+          return "if(" + myCondition.getText() + ")" + instruction.generate();
+        }
       }
       String thenBranch = "if(" + myCondition.getText() + "){\n" +
                           StringUtil.join(myInstructions, i -> i.generate(), "") +

@@ -84,7 +84,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                        virtualFileManager)
     }
     else {
-      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin"), null, moduleEntity, entitySource)
+      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin"), null, null, moduleEntity, entitySource)
     }
 
     val emlUrl = getEmlFileUrl(imlFileUrl)
@@ -101,7 +101,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
         }
       }
       else {
-        builder.addJavaModuleSettingsEntity(true, false, null, null, moduleEntity, entitySource)
+        builder.addJavaModuleSettingsEntity(true, false, null, null, null, moduleEntity, entitySource)
       }
     }
   }
@@ -199,7 +199,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             outputUrl = getUrlByRelativePath(path)
           }
           builder.addJavaModuleSettingsEntity(false, true, outputUrl, null,
-                                              moduleEntity, contentRootEntity.entitySource)
+                                              null, moduleEntity, contentRootEntity.entitySource)
         }
         EclipseXml.LIB_KIND -> {
           val linked = expandLinkedResourcesPath(storageRootPath, expandMacroMap, path)

@@ -438,6 +438,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup labelGroup = new DefaultActionGroup(new Spacer(), replacementTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralReplaceDialog", labelGroup, true);
+    labelToolbar.setTargetComponent(null);
 
     final CheckboxAction shortenFqn = new CheckboxAction(SSRBundle.message("shorten.fully.qualified.names.checkbox")) {
 
@@ -493,6 +494,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     };
     final DefaultActionGroup replacementActionGroup = new DefaultActionGroup(shortenFqn, staticImport, reformat);
     final ActionToolbar replacementToolbar = actionManager.createActionToolbar("StructuralSearchDialog", replacementActionGroup, true);
+    replacementToolbar.setTargetComponent(null);
 
     final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
@@ -538,6 +540,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                               SSRBundle.messagePointer("history.button.description"),
                                                               AllIcons.Actions.SearchWithHistory) {
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!ConfigurationManager.getInstance(getProject()).getHistoryConfigurations().isEmpty());
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Object source = e.getInputEvent().getSource();
         if (!(source instanceof Component)) return;
@@ -560,6 +567,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
+    historyToolbar.setTargetComponent(null);
 
     final CheckboxAction injected = new CheckboxAction(SSRBundle.message("search.in.injected.checkbox")) {
 
@@ -658,6 +666,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
     templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -666,6 +678,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       });
     templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
@@ -728,6 +745,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup optionsActionGroup =
       new DefaultActionGroup(injected, recursive, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
+    myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
 
@@ -1343,6 +1361,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     CopyConfigurationAction() {
       super(SSRBundle.messagePointer("export.template.action"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
     }
 
     @Override

@@ -1,6 +1,9 @@
 <html>
 <body>
-Checks that <code>PsiElement</code> is not directly concatenated in the string which will be used for
-<code>createExpressionFromText</code>, etc. <code>PsiElement.getText()</code> usually should be used instead.
+Reports direct usage of <code>PsiElement</code> and <code>PsiType</code> in strings.
+<p>
+  When building strings for <code>PsiJavaParserFacade.createExpressionFromText()</code> (or similar methods), <code>PsiElement.getText()</code> should be used
+  instead.
+</p>
 </body>
 </html>

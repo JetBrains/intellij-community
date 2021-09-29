@@ -22,6 +22,23 @@ static const int g_interItemSpacings = 5;
 @implementation ScrubberItem
 @end
 
+@interface NSScrubber_safeLayout : NSScrubber
+- (void)layout;
+@end
+
+@implementation NSScrubber_safeLayout
+- (void)layout {
+    // suppress exception (actually assertion) from [NSScrubber layout]
+    // workaround for IDEA-269957 macOS: SIGILL at [libsystem_kernel] Range {0, XXX} exceeds maximum index value of NSNotFound - 1
+    @try {
+        [super layout];
+    } @catch (NSException *ex) {
+        NSLog(@"WARNING: suppressed exception from [NSScrubber layout] (workaround for IDEA-269957)");
+    }
+}
+@end
+
+
 @interface NSScrubberContainer : NSCustomTouchBarItem<NSScrubberDataSource, NSScrubberDelegate, NSScrubberFlowLayoutDelegate>
 {
     ScrubberItemView * _lastSelected;
@@ -192,7 +209,7 @@ id createScrubber(const char* uid, int itemWidth, executeScrubberItem delegate, 
 
     _fillCache(scrubberItem.itemsCache, scrubberItem.visibleItems, packedItems, byteCount, 0);
 
-    NSScrubber *scrubber = [[[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, itemWidth, g_heightOfTouchBar)] autorelease];
+    NSScrubber *scrubber = [[[NSScrubber_safeLayout alloc] initWithFrame:NSMakeRect(0, 0, itemWidth, g_heightOfTouchBar)] autorelease];
 
     scrubber.delegate = scrubberItem;
     scrubber.dataSource = scrubberItem;

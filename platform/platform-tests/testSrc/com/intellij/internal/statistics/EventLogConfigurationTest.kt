@@ -34,7 +34,7 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
   private fun doTest(function: (configuration: EventLogRecorderConfiguration) -> Any,
                      values: Map<String, String>): Pair<Any, Any> {
     val recorderId = "ABC"
-    val configuration = EventLogConfiguration.getOrCreate(recorderId)
+    val configuration = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val initialValue = function(configuration)
 
     EventLogConfigOptionsService.getInstance().updateOptions(recorderId, TestEventLogMetadataLoader(values))

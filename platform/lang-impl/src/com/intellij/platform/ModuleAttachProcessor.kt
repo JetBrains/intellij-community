@@ -26,7 +26,6 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Path
-import java.util.*
 
 private val LOG = logger<ModuleAttachProcessor>()
 
@@ -66,7 +65,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       val primaryModule = getPrimaryModule(project) ?: modules.first()
       val result = StringBuilder(primaryModule.name)
         .append(", ")
-        .append(modules.asSequence().filter { it !== primaryModule }.first())
+        .append(modules.asSequence().filter { it !== primaryModule }.first().name)
       if (modules.size > 2) {
         result.append("...")
       }

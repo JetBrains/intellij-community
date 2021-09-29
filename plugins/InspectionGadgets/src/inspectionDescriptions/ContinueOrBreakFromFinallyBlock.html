@@ -1,10 +1,9 @@
 <html>
 <body>
 Reports <code>break</code> or <code>continue</code> statements inside of <code>finally</code> blocks.
-While occasionally intended, such statements are very confusing, may mask exceptions thrown, and
-tremendously complicate debugging.
-<p>Example:</p>
-<pre>
+<p>While occasionally intended, such statements are very confusing, may mask thrown exceptions, and complicate debugging.</p>
+<p><b>Example:</b></p>
+<pre><code>
     while (true) {
         try {
           throwingMethod();
@@ -12,9 +11,7 @@ tremendously complicate debugging.
             continue;
         }
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

@@ -37,13 +37,21 @@ import java.util.function.Supplier;
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   public static final String METHOD_TYPE = "Method {0}";
 
-  /** @deprecated Not used. See {@link com.intellij.ide.hierarchy.method.OverrideImplementMethodAction#getMethodHierarchyBrowser(AnActionEvent)}*/
+  /** @deprecated Use {@link #HIERARCHY_BROWSER} data key instead. */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   public static final DataKey<MethodHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.MethodHierarchyBrowserBase");
 
   public MethodHierarchyBrowserBase(Project project, PsiElement method) {
     super(project, method);
+  }
+
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    return super.getData(dataId);
   }
 
   @Override
@@ -133,7 +141,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), MethodHierarchyBrowserBase.class, LanguageMethodHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageMethodHierarchy.INSTANCE);
     }
   }
 

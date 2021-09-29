@@ -41,7 +41,8 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
     for (int i = 0; i < toolWindows.length; i++) {
       assertTrue(manager.isToolWindowRegistered(toolWindows[i]));
       assertEquals(expectedStripes[i], layout.getInfo(toolWindows[i]).isShowStripeButton());
-      assertEquals(expectedVisibility[i], manager.getStripeButton(toolWindows[i]).isVisible());
+      StripeButton button = manager.getStripeButton(toolWindows[i]);
+      assertEquals(expectedVisibility[i], button != null && button.isVisible());
     }
   }
 }

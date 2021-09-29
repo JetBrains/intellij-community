@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.maven.server;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.MavenSession;
@@ -21,6 +23,7 @@ import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 @Named("Intellij Idea Maven Embedded Event Spy")
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
+
   @Override
   public void onEvent(Object event) {
     try {
@@ -84,7 +87,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     MojoExecution mojoExec = event.getMojoExecution();
     String projectId = event.getProject() == null ? "unknown" : event.getProject().getId();
     if (mojoExec != null) {
-      String errMessage = event.getException() == null ? "" : event.getException().getMessage();
+      String errMessage = event.getException() == null ? "" : getErrorMessage(event.getException());
       printMavenEventInfo(event.getType(), "source", mojoExec.getSource(), "goal", mojoExec.getGoal(), "id", projectId, "error",
                           errMessage);
     }
@@ -96,6 +99,13 @@ public class IntellijMavenSpy extends AbstractEventSpy {
         printMavenEventInfo(event.getType(), "id", projectId);
       }
     }
+  }
+
+  private static String getErrorMessage(Exception exception) {
+    String baseMessage = exception.getMessage();
+    Throwable rootCause = ExceptionUtils.getRootCause(exception);
+    String rootMessage = rootCause != null ? rootCause.getMessage() : StringUtils.EMPTY;
+    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
   }
 
   private static void printSessionStartedEventAndReactorData(ExecutionEvent event, String projectId) {

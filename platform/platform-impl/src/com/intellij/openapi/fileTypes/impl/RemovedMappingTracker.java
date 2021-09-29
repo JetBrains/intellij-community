@@ -105,7 +105,7 @@ final class RemovedMappingTracker {
     Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
     for (RemovedMapping mapping : removedMappings) {
       if (!uniques.add(mapping)) {
-        LOG.error(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
+        LOG.warn(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
       }
     }
     for (RemovedMapping mapping : uniques) {

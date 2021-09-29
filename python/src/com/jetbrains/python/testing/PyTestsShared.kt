@@ -68,7 +68,8 @@ internal val pythonFactories: Array<PyAbstractTestFactory<*>>
 internal val defaultFactory: PyAbstractTestFactory<*> get() = PyUnitTestFactory()
 
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
-  pythonFactories.firstOrNull { it.id == id || it.idForSettings == id }
+  // user may have "pytest" because it was used instead of py.test (old id) for some time
+  pythonFactories.firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
 
 fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
 
@@ -265,7 +266,8 @@ private const val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
-                               @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
+                               @ConfigField(
+                                 "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -650,6 +652,10 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
   PythonTestConfigurationType.getInstance()) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
 
+  // Several insances of the same class point to the same factory
+  override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
+  override fun hashCode(): Int = id.hashCode()
+
   /**
    * Only UnitTest inheritors are supported
    */
@@ -664,15 +670,6 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
     val requiredPackage = packageRequired ?: return true // No package required
     return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
   }
-
-  /**
-   * "Integrated settings" form displays this ID and stores it in the settings.
-   * Pytest has "py.test" id (which can't be changed because it is used in existing configuration) so we added this field
-   * for this case.
-   *
-   * Integrated settings should use "name" instead
-   */
-  open val idForSettings: String = id
 }
 
 

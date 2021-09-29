@@ -20,4 +20,11 @@ interface NewProjectWizard<T> {
   }
 }
 
+class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectWizard<T> by wizard {
+  var settings : T = settingsFactory.invoke()
+
+  fun settingsList() = settingsList(settings)
+  fun setupProject(project: Project?, context: WizardContext) = setupProject(project, settings, context)
+}
+
 data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)

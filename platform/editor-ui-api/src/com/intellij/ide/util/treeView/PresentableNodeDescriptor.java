@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -6,9 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +74,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     PresentationData presentation = myUpdatedPresentation != null ? myUpdatedPresentation : createPresentation();
     myUpdatedPresentation = presentation;
     presentation.clear();
+    presentation.setBackground(computeBackgroundColor());
     update(presentation);
 
     if (shouldPostprocess()) {
@@ -101,6 +103,12 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   protected boolean shouldUpdateData() {
     return true;
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  protected @Nullable Color computeBackgroundColor() {
+    return null;
   }
 
   protected abstract void update(@NotNull PresentationData presentation);

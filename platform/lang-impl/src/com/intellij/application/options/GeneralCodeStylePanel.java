@@ -29,7 +29,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -51,7 +50,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
+public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final ExtensionPointName<GeneralCodeStyleOptionsProviderEP> EP_NAME = new ExtensionPointName<>("com.intellij.generalCodeStyleOptionsProvider");
 
   @SuppressWarnings("UnusedDeclaration")
@@ -76,10 +75,11 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myVisualGuidesHint;
   private JBLabel myLineSeparatorHint;
   private JBLabel myVisualGuidesLabel;
-  private JPanel myExcludedFilesPanel;
   private JBTabbedPane myTabbedPane;
   private ExcludedGlobPatternsPanel myExcludedPatternsPanel;
   private ExcludedScopesPanel       myExcludedScopesPanel;
+  private JPanel myGeneralTab;
+  private JPanel myFormatterTab;
   private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
 
@@ -105,7 +105,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myAutodetectIndentsBox.setBorder(JBUI.Borders.emptyTop(10));
 
-    myPanel.setBorder(JBUI.Borders.empty(0, 10));
+    myPanel.setBorder(JBUI.Borders.empty());
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
 
@@ -118,8 +118,10 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setForeground(JBColor.GRAY);
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
-    myExcludedFilesPanel
-      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.excluded.files")));
+    myGeneralTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myFormatterTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myMarkerOptionsPanel.setBorder(JBUI.Borders.emptyTop(10));
+
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
@@ -208,6 +210,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
                                                      0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
                                                      ApplicationBundle.message("settings.code.style.visual.guides.optional"));
     myExcludedPatternsPanel = new ExcludedGlobPatternsPanel();
+    myExcludedPatternsPanel.setBorder(JBUI.Borders.emptyTop(5));
     myExcludedScopesPanel = new ExcludedScopesPanel();
   }
 

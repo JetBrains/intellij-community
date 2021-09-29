@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -22,6 +23,7 @@ public final class LocationOnDragTracker {
   private double myScale;
 
   private LocationOnDragTracker(MouseEvent e) {
+    e = SwingUtilities.convertMouseEvent(e.getComponent(), e, UIUtil.getWindow(e.getComponent()));
     myOffsetXY = e.getPoint();
     myMonitorBounds = e.getComponent().getGraphicsConfiguration().getBounds();
     myScale = JBUIScale.sysScale(e.getComponent());

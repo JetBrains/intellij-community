@@ -68,6 +68,12 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
   }
 
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
+                                    @NotNull Processor<? super K> processor,
+                                    @NotNull GlobalSearchScope scope) {
+    return processAllKeys(indexKey, processor, scope, null);
+  }
+
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);

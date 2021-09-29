@@ -6,8 +6,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArguments
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsField
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent

@@ -114,11 +114,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.gradle.dependencyUpdater"),
 Android Studio: exclude dependencyUpdater */
 /* Android Studio: exclude intellij.gradle.dsl
-    plugin("intellij.android.gradle.dsl") {
-      withModule("intellij.android.gradle.dsl")
-      withModule("intellij.android.gradle.dsl.kotlin.impl")
-      withModule("intellij.android.gradle.dsl.impl")
-    },
+    plugin("intellij.android.gradle.dsl"),
 Android Studio: exclude intellij.gradle.dsl */
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
@@ -257,11 +253,14 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("intellij.android.app-inspection.ide", "android.jar")
       withModule("intellij.android.app-inspection.inspector", "android.jar")
       withModule("intellij.android.app-inspection.inspector.ide", "android.jar")
+      withModule("intellij.android.app-inspection.inspectors.workmanager.ide", "android.jar")
+      withModule("intellij.android.app-inspection.inspectors.workmanager.model", "android.jar")
+      withModule("intellij.android.app-inspection.inspectors.workmanager.view", "android.jar")
       withModule("intellij.android.dagger", "android.jar")
       withModule("intellij.android.databinding", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
       withModule("intellij.android.emulator", "android.jar")
-      //withModule("intellij.android.gradle.dsl", "android.jar") // this is in IJ platform currently. Will be moved back to Android later
+      //withModule("intellij.android.gradle.dsl", "android.jar") // this is in IJ platform currently
       withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.lang-databinding", "android.jar")
       withModule("intellij.android.mlkit", "android.jar")
@@ -304,9 +303,11 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("intellij.android.projectSystem.gradle.sync", "android.jar")
       withModule("intellij.android.gradle-tooling", "android.jar")
       withModule("intellij.android.gradle-tooling.impl", "android.jar")
+      //withModule("intellij.android.newProjectWizard", "android.jar") // exclude empty module from IDEA
       withModule("intellij.android.resources-base", "android.jar")
       withModule("intellij.android.testRetention", "android.jar")
       withModule("intellij.android.android-layout-inspector", "android.jar")
+      /* do not put into IJ android plugin: analytics */
       /* do not put into IJ android plugin: assistant, connection-assistant, whats-new-assistant */
       withModule("intellij.android.lint", "lint-ide.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
@@ -319,7 +320,10 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+
       withModule("android.sdktools.layoutlib-api") // force layoutlib-standard (IDEA-256114)
+      withModuleLibrary("layoutlib", "intellij.android.layoutlib", "")
+
       //withModule("android.game-tools.main", "game-tools.jar") // no such module in IDEA
       withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")

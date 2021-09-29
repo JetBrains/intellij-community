@@ -1,19 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
@@ -95,7 +88,6 @@ public class ProjectViewTree extends DnDAwareTree {
     return enabled;
   }
 
-  @DirtyUI
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
@@ -103,56 +95,18 @@ public class ProjectViewTree extends DnDAwareTree {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
       object = node.getUserObject();
     }
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
-      Object value = node.getValue();
-      if (value instanceof PsiElement) {
-        return getColorForElement((PsiElement)value);
-      }
-    }
-    if (object instanceof ProjectViewNode) {
-      ProjectViewNode<?> node = (ProjectViewNode<?>)object;
-      VirtualFile file = node.getVirtualFile();
-      if (file != null) {
-        Project project = node.getProject();
-        if (project != null && !project.isDisposed()) {
-          Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
-          if (color != null) return color;
-        }
-      }
+    if (object instanceof PresentableNodeDescriptor) {
+      return ((PresentableNodeDescriptor<?>)object).getPresentation().getBackground();
     }
     return null;
   }
 
   @Nullable
   public static Color getColorForElement(@Nullable PsiElement psi) {
-    Color color = null;
-    if (psi != null) {
-      if (!psi.isValid()) return null;
-
-      Project project = psi.getProject();
-      final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
-
-      if (file != null) {
-        color = VfsPresentationUtil.getFileBackgroundColor(project, file);
-      }
-      else if (psi instanceof PsiDirectory) {
-        color = VfsPresentationUtil.getFileBackgroundColor(project, ((PsiDirectory)psi).getVirtualFile());
-      }
-      else if (psi instanceof PsiDirectoryContainer) {
-        final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
-        for (PsiDirectory dir : dirs) {
-          Color c = VfsPresentationUtil.getFileBackgroundColor(project, dir.getVirtualFile());
-          if (c != null && color == null) {
-            color = c;
-          }
-          else if (c != null) {
-            color = null;
-            break;
-          }
-        }
-      }
+    if (psi == null || !psi.isValid()) {
+      return null;
     }
-    return color;
+    Project project = psi.getProject();
+    return FilePresentationService.getInstance(project).getFileBackgroundColor(psi);
   }
 }

@@ -40,6 +40,7 @@ class ExtractModuleFromPackageActionTest {
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
     val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
     val dep2 = projectModel.moduleManager.findModuleByName("dep2")!!
+    assertThat(xxx.moduleNioFile).isEqualTo(projectModel.baseProjectDir.rootPath.resolve("main/main.xxx.iml"))
     val xxxRoots = ModuleRootManager.getInstance(xxx)
     assertThat(xxxRoots.sourceRoots).containsExactly(directory.virtualFile)
     assertThat(xxxRoots.dependencies).containsExactly(dep1)
@@ -55,6 +56,7 @@ class ExtractModuleFromPackageActionTest {
     extractModule(directory, main, targetSourceRoot)
     val srcRoot = LocalFileSystem.getInstance().findFileByPath(targetSourceRoot)!!
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    assertThat(xxx.moduleNioFile).isEqualTo(projectModel.baseProjectDir.rootPath.resolve("xxx/main.xxx.iml"))
     val xxxRoots = ModuleRootManager.getInstance(xxx)
     assertThat(xxxRoots.contentRoots).containsExactly(srcRoot.parent)
     assertThat(xxxRoots.sourceRoots).containsExactly(srcRoot)

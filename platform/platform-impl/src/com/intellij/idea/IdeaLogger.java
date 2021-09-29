@@ -49,9 +49,20 @@ public final class IdeaLogger extends Log4jBasedLogger {
    * We try to report exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}) judiciously,
    * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
    * we print the error message and the stacktrace once in a while.
+   *
+   * "-Didea.logger.report.every.nth.exception=10" means print the exception stacktrace to the log the first time it occurred,
+   *     and then, for each 10-th occurrence of this very same exception, print "this exception was reported n times already".
+   *  "-Didea.logger.exception.expiration.minutes=5" means to forget about this particular exception if it didn't occur for five minutes.
+   *
+   *  To disable this "mute frequent exceptions" feature completely specify "-Didea.logger.exception.expiration.minutes=0"
    */
-  final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger("ide.muted.error.logger.frequency", 10);
-  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("ide.muted.error.logger.expiration", 5);
+  private static final String REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY = "idea.logger.report.every.nth.exception";
+  final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, 10);
+  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 5);
+
+  static void setMutedExceptionFrequency(String frequency) {
+    System.setProperty(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, frequency);
+  }
 
   // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
   private static final class MyCache {
@@ -86,7 +97,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
     reportToFus(t);
 
     if (occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0 && occurrences > 1) {
-      error(false, getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
+      doLogError(getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
     }
 
     return true;
@@ -166,10 +177,11 @@ public final class IdeaLogger extends Log4jBasedLogger {
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (isTooFrequentException(t)) return;
-    error(true, message, t, details);
+    doLogError(message, t, details);
+    logErrorHeader(t);
   }
 
-  private void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
+  private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
@@ -187,9 +199,6 @@ public final class IdeaLogger extends Log4jBasedLogger {
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
     myLogger.error(message + detailString, t);
-    if (addErrorHeader) {
-      logErrorHeader(t);
-    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {

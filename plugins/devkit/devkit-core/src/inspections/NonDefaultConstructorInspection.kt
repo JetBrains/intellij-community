@@ -193,8 +193,7 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 
   return tag.attributes.any {
     val name = it.name
-    // ignore lang.elementManipulator
-    (name != "forClass" && name != "presentation" && name != "vcsClass") && it.value == qualifiedName
+    (name.startsWith(Extension.IMPLEMENTATION_ATTRIBUTE) || name == "instance") && it.value == qualifiedName
   }
 }
 

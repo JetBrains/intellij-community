@@ -49,20 +49,21 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
                                                 : ContainerUtil.emptyList();
 
       execute(project, repositories,
-              selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories);
+              selectedRepositories.isEmpty() ? Collections.singletonList(HgUtil.getCurrentRepository(project)) : selectedRepositories,
+              event.getDataContext());
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);
   }
 
   protected abstract void execute(@NotNull Project project,
                                   @NotNull Collection<HgRepository> repositories,
-                                  @NotNull List<HgRepository> selectedRepositories);
+                                  @NotNull List<HgRepository> selectedRepositories,
+                                  @NotNull DataContext context);
 
   public boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);

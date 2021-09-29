@@ -25,9 +25,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -66,7 +64,6 @@ private val gitOptionGroupName get() = message("settings.git.option.group")
 
 // @formatter:off
 private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
-private val cdCommitOnCherryPick                                        get() = CheckboxDescriptor(message("settings.commit.automatically.on.cherry.pick"), PropertyBinding(applicationSettings::isAutoCommitOnCherryPick, applicationSettings::setAutoCommitOnCherryPick), groupName = gitOptionGroupName)
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), PropertyBinding({ projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), PropertyBinding({ projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutDetachedHead(project: Project)                         = CheckboxDescriptor(message("settings.detached.head"), PropertyBinding({ projectSettings(project).warnAboutDetachedHead() }, { projectSettings(project).setWarnAboutDetachedHead(it) }), groupName = gitOptionGroupName)
@@ -80,7 +77,6 @@ private val cdEnableStagingArea                                         get() = 
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
-    cdCommitOnCherryPick,
     cdAutoUpdateOnPush(project),
     cdWarnAboutCrlf(project),
     cdWarnAboutDetachedHead(project),
@@ -297,10 +293,6 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
     row {
-      checkBox(cdCommitOnCherryPick)
-        .enableIf(ChangeListsEnabledPredicate(project, disposable!!))
-    }
-    row {
       checkBox(cdAddCherryPickSuffix(project))
     }
     row {
@@ -472,12 +464,4 @@ private class StagingAreaAvailablePredicate(val project: Project, val disposable
   }
 
   override fun invoke(): Boolean = canEnableStagingArea()
-}
-
-private class ChangeListsEnabledPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    onChangeListAvailabilityChanged(project, disposable, false) { listener(invoke()) }
-  }
-
-  override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
 }

@@ -12,6 +12,7 @@ import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 import javax.swing.event.DocumentEvent
 
+@Deprecated("Replaced with simpler and more flexible version [com.intellij.collaboration.ui.CollaborationToolsUIUtil.attachSearch]")
 class ListWithSearchComponent<T : SearchableListItem>(
   originModel: ListModel<T>,
   listCellRenderer: ListCellRenderer<T>
@@ -59,6 +60,7 @@ class ListWithSearchComponent<T : SearchableListItem>(
   }
 }
 
+@Deprecated("Replaced with simpler and more flexible version [com.intellij.collaboration.ui.CollaborationToolsUIUtil.attachSearch]")
 interface SearchableListItem {
   val stringToSearch: String?
 }

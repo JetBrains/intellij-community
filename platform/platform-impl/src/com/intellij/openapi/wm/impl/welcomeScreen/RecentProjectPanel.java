@@ -196,7 +196,7 @@ public class RecentProjectPanel extends JPanel {
     if (FileUtil.startsWith(path, home)) {
       path = path.substring(home.length());
     }
-    return projectItem.getProjectName() + " " + path;
+    return projectItem.getProjectNameToDisplay() + " " + path;
   }
 
   @NotNull

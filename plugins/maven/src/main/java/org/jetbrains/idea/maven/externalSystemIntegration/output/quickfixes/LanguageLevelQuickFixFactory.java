@@ -16,23 +16,40 @@ public class LanguageLevelQuickFixFactory {
 
   @Nullable
   public static LanguageLevelQuickFix getInstance(@NotNull Project project, @NotNull MavenProject mavenProject) {
+    return getInstance(project, mavenProject, false);
+  }
+
+  @Nullable
+  public static LanguageLevelQuickFix getTargetInstance(@NotNull Project project, @NotNull MavenProject mavenProject) {
+    return getInstance(project, mavenProject, true);
+  }
+
+  @Nullable
+  private static LanguageLevelQuickFix getInstance(@NotNull Project project, @NotNull MavenProject mavenProject, boolean targetVersion) {
+    FixHolder holder = getFixHolder(project, mavenProject, targetVersion);
+    if (holder == null) return null;
+    return holder.toInstance();
+  }
+
+  @Nullable
+  private static FixHolder getFixHolder(@NotNull Project project, @NotNull MavenProject mavenProject, boolean targetVersion) {
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile());
     if (model == null) return null;
     if (containCompilerPluginSource(model)) {
-      return new LanguageLevelPluginQuickFix(project, mavenProject);
+      return new FixHolder(true, targetVersion, mavenProject, project);
     }
     else if (containPropertySource(model)) {
-      return new LanguageLevelPropertyQuickFix(project, mavenProject);
+      return new FixHolder(false, targetVersion, mavenProject, project);
     }
     else if (mavenProject.getParentId() == null) {
-      return new LanguageLevelPropertyQuickFix(project, mavenProject);
+      return new FixHolder(false, targetVersion, mavenProject, project);
     }
 
     mavenProject = getParentMavenProject(project, mavenProject);
     model = MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile());
     if (model == null) return null;
     return containCompilerPluginSource(model)
-           ? new LanguageLevelPluginQuickFix(project, mavenProject) : new LanguageLevelPropertyQuickFix(project, mavenProject);
+           ? new FixHolder(true, targetVersion, mavenProject, project) : new FixHolder(false, targetVersion, mavenProject, project);
   }
 
   @NotNull
@@ -57,5 +74,35 @@ public class LanguageLevelQuickFixFactory {
     return Optional.ofNullable(model.getProperties().getXmlTag())
       .map(tag -> tag.findFirstSubTag(LanguageLevelPropertyQuickFix.MAVEN_COMPILER_SOURCE) != null)
       .orElse(false);
+  }
+
+  private static class FixHolder {
+    final boolean isPlugin;
+    final boolean isTarget;
+    final MavenProject mavenProject;
+    final Project project;
+
+    private FixHolder(boolean plugin, boolean target, MavenProject mavenProject, Project project) {
+      this.isPlugin = plugin;
+      this.isTarget = target;
+      this.mavenProject = mavenProject;
+      this.project = project;
+    }
+
+
+    private LanguageLevelQuickFix toInstance() {
+      if (isPlugin && isTarget) {
+        return new TargetLevelPluginQuickFix(project, mavenProject);
+      }
+      else if (!isPlugin && isTarget) {
+        return new TargetLevelPropertyQuickFix(project, mavenProject);
+      }
+      else if (isPlugin) {
+        return new LanguageLevelPluginQuickFix(project, mavenProject);
+      }
+      else {
+        return new LanguageLevelPropertyQuickFix(project, mavenProject);
+      }
+    }
   }
 }

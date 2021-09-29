@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -17,12 +17,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import com.sun.jna.Platform;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,7 +71,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
-      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && ArrayUtil.contains(Platform.RESOURCE_PREFIX, "linux-x86", "linux-x86-64")) {
+      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && CpuArch.isIntel64()) {
         notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
       }
       else if (SystemInfo.isLinux) {
@@ -142,27 +141,17 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       return customFile != null ? customFile.toFile() : new File(customPath);
     }
 
-    String[] names = ArrayUtil.EMPTY_STRING_ARRAY;
+    String name = null;
     if (SystemInfo.isWindows) {
-      if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) {
-        names = new String[]{"fsnotifier.exe"};
-      }
-      else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) {
-        names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
-      }
+      name = "fsnotifier.exe";
     }
     else if (SystemInfo.isMac) {
-      names = new String[]{"fsnotifier"};
+      name = "fsnotifier";
     }
-    else if (SystemInfo.isLinux) {
-      if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) {
-        names = new String[]{"fsnotifier"};
-      }
-      else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) {
-        names = new String[]{"fsnotifier64"};
-      }
+    else if (SystemInfo.isLinux && CpuArch.isIntel64()) {
+      name = "fsnotifier";
     }
-    for (String name : names) {
+    if (name != null) {
       Path file = PathManager.findBinFile(name);
       if (file != null) {
         return file.toFile();

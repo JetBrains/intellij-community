@@ -19,9 +19,9 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -951,7 +951,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   private LanguageLevel getLanguageLevelForModule() {
-    return LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel();
+    return LanguageLevelUtil.getCustomLanguageLevel(getModule("project"));
   }
 
   @Test

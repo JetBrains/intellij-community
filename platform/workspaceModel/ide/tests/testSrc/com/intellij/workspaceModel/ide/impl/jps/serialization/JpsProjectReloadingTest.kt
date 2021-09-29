@@ -4,10 +4,10 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 
@@ -27,7 +27,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       assertEquals("util", utilModule.name)
       val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
       assertEquals("$projectDirUrl/util/src2", utilModuleSrc.url.url)
-      assertEquals("""<component LANGUAGE_LEVEL="JDK_1_7">
+      assertEquals("""<component>
   <annotation-paths>
     <root url="$projectDirUrl/lib/anno2" />
   </annotation-paths>

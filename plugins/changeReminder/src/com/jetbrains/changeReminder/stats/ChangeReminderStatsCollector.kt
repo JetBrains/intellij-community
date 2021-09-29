@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.stats
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration.anonymize
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
@@ -31,9 +31,13 @@ internal enum class ChangeReminderEventDataKey {
   override fun toString() = name.toLowerCase(Locale.ENGLISH)
 }
 
-internal fun VirtualFile.anonymize(): ChangeReminderAnonymousPath = ChangeReminderAnonymousPath(anonymize(path))
+internal fun VirtualFile.anonymize(): ChangeReminderAnonymousPath {
+  return ChangeReminderAnonymousPath(EventLogConfiguration.getInstance().anonymize(path))
+}
 
-internal fun FilePath.anonymize(): ChangeReminderAnonymousPath = ChangeReminderAnonymousPath(anonymize(path))
+internal fun FilePath.anonymize(): ChangeReminderAnonymousPath {
+  return ChangeReminderAnonymousPath(EventLogConfiguration.getInstance().anonymize(path))
+}
 
 internal fun Collection<VirtualFile>.anonymizeVirtualFileCollection(): Collection<ChangeReminderAnonymousPath> = this.map { it.anonymize() }
 

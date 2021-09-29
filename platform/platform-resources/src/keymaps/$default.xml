@@ -269,9 +269,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="control N"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoSymbol">
     <keyboard-shortcut first-keystroke="control shift alt N"/>
   </action>

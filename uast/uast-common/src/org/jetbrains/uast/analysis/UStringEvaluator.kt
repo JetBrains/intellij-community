@@ -40,21 +40,21 @@ object UStringEvaluationStrategy : UNeDfaValueEvaluator.UValueEvaluatorStrategy<
 
   override fun constructValueFromList(element: UElement, values: List<PartiallyKnownString>?): PartiallyKnownString {
     if (values == null) {
-      return PartiallyKnownString(StringEntry.Unknown(element.sourcePsi!!, element.ownTextRange))
+      return PartiallyKnownString(StringEntry.Unknown(null, TextRange.EMPTY_RANGE))
     }
-    return values.collapse(element)
+    return values.collapse()
   }
 
   override fun constructUnknownValue(element: UElement): PartiallyKnownString {
-    return PartiallyKnownString(StringEntry.Unknown(element.sourcePsi!!, element.ownTextRange))
+    return PartiallyKnownString(StringEntry.Unknown(null, TextRange.EMPTY_RANGE))
   }
 }
 
 private val UElement.ownTextRange: TextRange
   get() = TextRange(0, sourcePsi!!.textLength)
 
-private fun List<PartiallyKnownString>.collapse(element: UElement): PartiallyKnownString = when {
-  isEmpty() -> PartiallyKnownString(StringEntry.Unknown(element.sourcePsi, element.ownTextRange))
+private fun List<PartiallyKnownString>.collapse(): PartiallyKnownString = when {
+  isEmpty() -> PartiallyKnownString(StringEntry.Unknown(null, TextRange.EMPTY_RANGE))
   size == 1 -> single()
   else -> {
     val maxIndex = this.maxOf { it.segments.lastIndex }
@@ -69,8 +69,8 @@ private fun List<PartiallyKnownString>.collapse(element: UElement): PartiallyKno
 
     if (segments.size != maxIndex + 1) {
       segments.add(StringEntry.Unknown(
-        element.sourcePsi!!,
-        element.ownTextRange,
+        null,
+        TextRange.EMPTY_RANGE,
         map { PartiallyKnownString(it.segments.subList(segments.size, it.segments.size)) }
       ))
     }

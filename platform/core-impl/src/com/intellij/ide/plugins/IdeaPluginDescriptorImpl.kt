@@ -73,7 +73,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     pluginDependencies = list ?: Collections.emptyList()
   }
 
-  @Transient @JvmField internal var jarFiles: List<Path>? = null
+  @Transient @JvmField var jarFiles: List<Path>? = null
   @JvmField var classLoader: ClassLoader? = null
 
   @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor>? = raw.actions

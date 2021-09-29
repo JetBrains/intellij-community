@@ -22,7 +22,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class HighlightingPanel(project: Project, state: ProblemsViewState)
+open class HighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
     FileEditorManagerListener, PowerSaveMode.Listener {
 
@@ -96,11 +96,13 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
       }
       else {
         if (currentRoot?.file == file) return
-        treeModel.root = HighlightingFileRoot(this, file)
+        treeModel.root = getRoot(file)
         TreeUtil.promiseSelectFirstLeaf(tree)
       }
       powerSaveStateChanged()
     }
+
+  protected open fun getRoot(file: VirtualFile): HighlightingFileRoot = HighlightingFileRoot(this, file)
 
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val problem = currentRoot?.findProblem(highlighter) ?: return

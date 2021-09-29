@@ -51,8 +51,9 @@ class ClientExperimentStatus : ExperimentStatus {
   private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
 
   init {
+    val eventLogConfiguration = EventLogConfiguration.getInstance()
     for (languageSettings in experimentConfig.languages) {
-      val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
+      val bucket = eventLogConfiguration.bucket % languageSettings.experimentBucketsCount
       val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
       val group = experimentConfig.groups.find { it.number == groupNumber }
       val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)

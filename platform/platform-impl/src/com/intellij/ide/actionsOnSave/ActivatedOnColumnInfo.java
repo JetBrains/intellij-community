@@ -2,7 +2,7 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actionsOnSave.api.ActionOnSaveInfo;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,12 +16,12 @@ class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSave
 
   @Override
   public String getMaxStringValue() {
-    // Affects column width
-    return "Explicit save (Ctrl + S)  []";
+    // Affects column width. Use the longest label + space for drop-down arrow + insets
+    return ActionOnSaveInfo.getExplicitSaveText() + "xxxxxx";
   }
 
   @Override
-  protected @NotNull JComponent getCellComponent(@NotNull ActionOnSaveInfo info, boolean hovered) {
+  protected @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info, boolean hovered) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
     panel.add(info.getActivatedOnComponent(), BorderLayout.NORTH);

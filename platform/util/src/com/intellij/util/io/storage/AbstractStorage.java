@@ -194,7 +194,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myDataTable = new DataTable(oldDataFile, myPool);
       }
       catch (IOException e) {
-        LOG.info("Compact failed: " + e.getMessage());
+        LOG.info("Compact failed", e);
       }
 
       long timedelta = System.currentTimeMillis() - start;

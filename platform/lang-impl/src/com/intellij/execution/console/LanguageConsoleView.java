@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,8 @@ import static com.intellij.openapi.util.NlsContexts.TabTitle;
  * @author gregsh
  */
 public interface LanguageConsoleView extends ConsoleView, Disposable {
+  Key<ConsoleExecutionEditor> EXECUTION_EDITOR_KEY = new Key<>("EXECUTION_EDITOR_KEY");
+
   @NotNull
   Project getProject();
 

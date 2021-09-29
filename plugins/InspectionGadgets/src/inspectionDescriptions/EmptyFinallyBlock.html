@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports empty <code>finally</code> blocks. Empty <code>finally</code> blocks
-usually indicate coding errors or could be left over after refactoring the code and can be removed.
-<p>This inspection does not report in JSP files.
-<p>Example:
-<pre>
+Reports empty <code>finally</code> blocks.
+<p>Empty <code>finally</code> blocks usually indicate coding errors. They may also remain after code refactoring and can safely be removed.</p>
+<p>This inspection doesn't report empty <code>finally</code> blocks found in JSP files.</p>
+<p><b>Example:</b></p>
+<pre><code>
   try {
     Files.readString(Paths.get("in.txt"));
   } catch (IOException e) {
@@ -12,15 +12,15 @@ usually indicate coding errors or could be left over after refactoring the code 
   } finally {
 
   }
-</pre>
-<p>After the quick fix is applied the result looks like:
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:
+<pre><code>
   try {
     Files.readString(Paths.get("in.txt"));
   } catch (IOException e) {
     throw new RuntimeException(e);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

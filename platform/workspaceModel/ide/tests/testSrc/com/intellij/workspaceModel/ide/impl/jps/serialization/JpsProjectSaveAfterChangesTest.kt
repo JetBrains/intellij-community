@@ -39,7 +39,7 @@ class JpsProjectSaveAfterChangesTest {
         url = configLocation.baseDirectoryUrl.append("util/src2")
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
-        rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
+        rootManagerTagCustomData = """<component>
   <annotation-paths>
     <root url="${configLocation.baseDirectoryUrlString}/lib/anno2" />
   </annotation-paths>
@@ -96,7 +96,7 @@ class JpsProjectSaveAfterChangesTest {
       val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"),
                                                          false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
-      builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
+      builder.addJavaModuleSettingsEntity(true, true, null, null, null, module, source)
     }
   }
 

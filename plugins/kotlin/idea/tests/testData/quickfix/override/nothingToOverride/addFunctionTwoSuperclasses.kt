@@ -1,4 +1,4 @@
-// "Add function to supertype..." "true"
+// "Add function to supertype…" "true"
 open class A {
 }
 open class B : A() {

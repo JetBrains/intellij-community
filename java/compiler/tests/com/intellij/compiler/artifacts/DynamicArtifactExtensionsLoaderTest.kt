@@ -149,10 +149,10 @@ private class MockPackagingElementType : PackagingElementType<MockPackagingEleme
   }
 }
 
-private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
+internal class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
   var data: String = ""
 
-  override fun getState(): MockArtifactProperties? {
+  override fun getState(): MockArtifactProperties {
     return this
   }
 
@@ -165,7 +165,7 @@ private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties
   }
 }
 
-private class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
+internal class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
   companion object {
     fun getInstance(): MockArtifactPropertiesProvider = EP_NAME.findExtensionOrFail(MockArtifactPropertiesProvider::class.java)
   }

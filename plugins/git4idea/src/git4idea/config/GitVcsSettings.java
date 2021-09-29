@@ -155,14 +155,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setRecentCommonBranch(value);
   }
 
-  public void setAutoCommitOnRevert(boolean value) {
-    getState().setAutoCommitOnRevert(value);
-  }
-
-  public boolean isAutoCommitOnRevert() {
-    return getState().isAutoCommitOnRevert();
-  }
-
   public boolean warnAboutCrlf() {
     return getState().getWarnAboutCrlf();
   }

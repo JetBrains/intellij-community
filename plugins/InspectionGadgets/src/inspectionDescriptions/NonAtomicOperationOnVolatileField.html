@@ -1,12 +1,13 @@
 <html>
 <body>
-Reports any non-atomic operations on volatile fields. Non-atomic
-operations on volatile fields are operations where the field is read and
-the value is used to update the field. It is possible for the value of the
-field to change between the read and the write, possibly invalidating the operation.
-The non-atomic operation can be avoided by surrounding it with a <code>synchronized</code> block or
-by making use of one of the classes from the <code>java.util.concurrent.atomic</code> package.
-<p>Example:</p>
+Reports non-atomic operations on volatile fields.
+<p>
+  An example of a non-atomic operation is updating the field using the increment operator.
+  As the operation involves read and write, and other modifications may happen in between, data may become corrupted.
+  The operation can be made atomic by surrounding it with a <code>synchronized</code> block or
+  using one of the classes from the <code>java.util.concurrent.atomic</code> package.
+</p>
+<p><b>Example:</b></p>
 <pre>
   private volatile int v = 1;
 

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.externalSystem.service.ui.addKeyboardAction
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.externalSystem.service.ui.*
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.getKeyStrokes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -31,10 +31,10 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Experimental
 class TextCompletionPopup<C : JTextComponent>(
   private val project: Project,
-  private val parentComponent: C,
+  private val textComponent: C,
   private val contributor: TextCompletionContributor<C>
 ) {
-  private val isSkipNextUpdate = AtomicBoolean()
+  private val isSkipTextUpdate = AtomicBoolean()
 
   private var popup: Popup? = null
   private val visibleCompletionVariants = ArrayList<TextCompletionInfo?>()
@@ -42,17 +42,17 @@ class TextCompletionPopup<C : JTextComponent>(
   private fun isFocusedParent(): Boolean {
     val focusManager = IdeFocusManager.getInstance(project)
     val focusOwner = focusManager.focusOwner
-    return SwingUtilities.isDescendingFrom(focusOwner, parentComponent)
+    return SwingUtilities.isDescendingFrom(focusOwner, textComponent)
   }
 
   private fun isValidParent(): Boolean {
-    return parentComponent.height > 0 && parentComponent.width > 0
+    return textComponent.height > 0 && textComponent.width > 0
   }
 
   fun updatePopup(type: UpdatePopupType) {
     if (isValidParent() && isFocusedParent()) {
-      val textToComplete = contributor.getTextToComplete(parentComponent)
-      val completionVariants = contributor.getCompletionVariants(parentComponent, textToComplete)
+      val textToComplete = contributor.getTextToComplete(textComponent)
+      val completionVariants = contributor.getCompletionVariants(textComponent, textToComplete)
       visibleCompletionVariants.clear()
       visibleCompletionVariants.add(null)
       for (variant in completionVariants) {
@@ -80,28 +80,58 @@ class TextCompletionPopup<C : JTextComponent>(
   }
 
   private fun showPopup() {
-    if (!isSkipNextUpdate.compareAndSet(true, false)) {
-      if (popup == null) {
-        popup = Popup().also {
-          Disposer.register(it, Disposable { popup = null })
-        }
-        popup?.showUnderneathOf(parentComponent)
+    if (popup == null) {
+      popup = Popup().also {
+        Disposer.register(it, Disposable { popup = null })
       }
+      popup?.showUnderneathOf(textComponent)
     }
     popup?.update()
   }
 
   private fun hidePopup() {
-    if (!isSkipNextUpdate.compareAndSet(true, false)) {
-      popup?.cancel()
-      popup = null
-    }
+    popup?.cancel()
+    popup = null
   }
 
   private fun fireVariantChosen(variant: TextCompletionInfo?) {
     if (variant != null) {
-      isSkipNextUpdate.set(true)
-      contributor.fireVariantChosen(parentComponent, variant)
+      isSkipTextUpdate.set(true)
+      try {
+        contributor.fireVariantChosen(textComponent, variant)
+      }
+      finally {
+        isSkipTextUpdate.set(false)
+      }
+    }
+  }
+
+  init {
+    textComponent.whenFocusGained {
+      if (textComponent.text.isEmpty()) {
+        updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
+      }
+    }
+    textComponent.whenFirstFocusGained {
+      updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
+    }
+    textComponent.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CODE_COMPLETION)) {
+      updatePopup(UpdatePopupType.SHOW)
+    }
+    textComponent.addCaretListener {
+      if (!isSkipTextUpdate.get()) {
+        updatePopup(UpdatePopupType.UPDATE)
+      }
+    }
+    textComponent.whenTextModified {
+      if (!isSkipTextUpdate.get()) {
+        // Listener for caret update is invoked after all other modification listeners,
+        // But we needed crop text completion by updated caret position.
+        // So invokeLater is here to postpone our completion popup update.
+        invokeLater {
+          updatePopup(UpdatePopupType.SHOW_IF_HAS_VARIANCES)
+        }
+      }
     }
   }
 
@@ -112,8 +142,8 @@ class TextCompletionPopup<C : JTextComponent>(
     fun update() {
       listModel.updateOriginalList()
 
-      val insets = parentComponent.insets
-      val popupWidth = parentComponent.width - (insets.right + insets.left)
+      val insets = textComponent.insets
+      val popupWidth = textComponent.width - (insets.right + insets.left)
       val rowNumber = maxOf(1, minOf(list.model.size, list.visibleRowCount))
       val popupHeight = list.fixedCellHeight * rowNumber
       size = Dimension(popupWidth, popupHeight)
@@ -182,7 +212,7 @@ class TextCompletionPopup<C : JTextComponent>(
 
       icon = value.icon
       val textStyle = SimpleTextAttributes.STYLE_PLAIN
-      val prefix = contributor.getTextToComplete(parentComponent)
+      val prefix = contributor.getTextToComplete(textComponent)
       val prefixForeground = LookupCellRenderer.MATCHED_FOREGROUND_COLOR
       val prefixAttributes = SimpleTextAttributes(textStyle, prefixForeground)
       if (value.text.startsWith(prefix)) {

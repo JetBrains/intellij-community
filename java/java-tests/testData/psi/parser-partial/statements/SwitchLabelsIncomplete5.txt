@@ -6,7 +6,7 @@ PsiJavaFile:SwitchLabelsIncomplete5.java
       PsiLiteralExpression:1
         PsiJavaToken:INTEGER_LITERAL('1')
       PsiJavaToken:COMMA(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:Expression, pattern, 'default' or 'null' expected
         <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:COLON(':')

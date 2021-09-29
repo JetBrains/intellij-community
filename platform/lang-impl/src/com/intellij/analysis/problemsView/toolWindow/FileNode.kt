@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
-internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
+class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
 
   override fun getLeafState() = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
 

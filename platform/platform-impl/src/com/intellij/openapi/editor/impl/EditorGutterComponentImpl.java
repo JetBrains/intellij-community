@@ -1091,9 +1091,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                           myLastActionableClick.myProgressGutterMark == renderer;
       Icon icon = scaleIcon(renderer.getIcon());
       if (isLoading) {
-        x -= (AnimatedIcon.Default.INSTANCE.getIconWidth() - icon.getIconWidth()) / 2;
-        y -= (AnimatedIcon.Default.INSTANCE.getIconHeight() - icon.getIconHeight()) / 2;
-        icon = AnimatedIcon.Default.INSTANCE;
+        Icon loadingIcon = scaleIcon(AnimatedIcon.Default.INSTANCE);
+        x -= (loadingIcon.getIconWidth() - icon.getIconWidth()) / 2;
+        y -= (loadingIcon.getIconHeight() - icon.getIconHeight()) / 2;
+        icon = loadingIcon;
       }
 
       AffineTransform old = setMirrorTransformIfNeeded(g, x, icon.getIconWidth());
@@ -2044,6 +2045,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public @Nullable Runnable setLoadingIconForCurrentGutterMark() {
+    EDT.assertIsEdt();
     if (myLastActionableClick == null || myLastActionableClick.myProgressRemover == null) {
       return null;
     }
@@ -2289,20 +2291,21 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       repaint();
     }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
     myLastActionableClick.myProgressRemover = () -> {
+      EDT.assertIsEdt();
       removed[0] = true;
       if (myLastActionableClick == clickInfo) {
         clickInfo.myProgressVisualLine = -1;
         clickInfo.myProgressGutterMark = null;
+        repaint();
       }
     };
   }
 
   private void removeLoadingIconForGutterMark() {
-    if (myLastActionableClick == null) return;
-    Runnable remover = myLastActionableClick.myProgressRemover;
+    Runnable remover = myLastActionableClick == null ? null : myLastActionableClick.myProgressRemover;
+    if (remover == null) return;
     myLastActionableClick.myProgressRemover = null;
-    if (remover != null) remover.run();
-    repaint();
+    remover.run();
   }
 
   @Override

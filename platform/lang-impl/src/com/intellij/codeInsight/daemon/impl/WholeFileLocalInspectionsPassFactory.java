@@ -43,7 +43,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
 
     myProject.getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         clearCaches();
       }
 

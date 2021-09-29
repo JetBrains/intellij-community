@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased
 
 import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -61,6 +62,7 @@ class MyTextChange(text: String, viaDocument: Boolean) : JavaPsiIndexConsistency
 
 }
 
+@InternalIgnoreDependencyViolation
 class MyFileTypeDetector : FileTypeRegistry.FileTypeDetector {
   override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? {
     if (file.name != FILE_NAME) return null

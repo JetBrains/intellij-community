@@ -3,6 +3,7 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
   @Nullable
   private static MethodHierarchyBrowser getMethodHierarchyBrowser(@NotNull AnActionEvent event) {
-    return UIUtil.getParentOfType(MethodHierarchyBrowser.class, event.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return ObjectUtils.tryCast(event.getData(HierarchyBrowserBaseEx.HIERARCHY_BROWSER), MethodHierarchyBrowser.class);
   }
 
   protected abstract void update(Presentation presentation, int toImplement, int toOverride);

@@ -20,11 +20,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -59,7 +57,7 @@ import java.nio.file.Paths
  * @author vlan
  */
 
-val BASE_DIR: Key<Path> = Key.create("PYTHON_BASE_PATH")
+val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
 
 fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val context: UserDataHolder = UserDataHolderBase()
@@ -104,14 +102,14 @@ fun resetSystemWideSdksDetectors() {
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
+  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, context)
 
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
 }
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, true)
+  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, context, true)
 
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
@@ -191,16 +189,6 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
 val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
-
-@Deprecated("Use Sdk.associatedModuleDir instead. There may be several Module objects opened in different projects for a single *.iml module file. To be removed in 2021.2")
-val Sdk.associatedModule: Module?
-  get() {
-    val associatedPath = associatedModulePath
-    return ProjectManager.getInstance().openProjects
-      .asSequence()
-      .flatMap { ModuleManager.getInstance(it).modules.asSequence() }
-      .firstOrNull { it?.basePath == associatedPath }
-  }
 
 val Sdk.associatedModuleDir: VirtualFile?
   get() = associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it) }
@@ -309,8 +297,12 @@ private val Sdk.sitePackagesDirectory: VirtualFile?
   get() = PythonSdkUtil.getSitePackagesDirectory(this)
 
 private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
+  return isLocatedInsideBaseDir(module?.baseDir?.toNioPath())
+}
+
+private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {
   val homePath = homePath ?: return false
-  val basePath = module?.basePath ?: return false
+  val basePath = baseDir?.toString() ?: return false
   return FileUtil.isAncestor(basePath, homePath, true)
 }
 
@@ -341,8 +333,10 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
                                  existingSdks: List<Sdk>,
                                  module: Module?,
+                                 context: UserDataHolder,
                                  mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
   val existingPaths = existingSdks.mapTo(HashSet()) { it.homePath }
+  val baseDirFromContext = context.getUserData(BASE_DIR)
   return suggestedPaths
     .asSequence()
     .filterNot { it in existingPaths }
@@ -350,7 +344,7 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
     .map { PyDetectedSdk(it) }
     .sortedWith(
       compareBy(
-        { !it.isAssociatedWithModule(module) },
+        { !it.isAssociatedWithModule(module) && !it.isLocatedInsideBaseDir(baseDirFromContext) },
         { if (mayContainCondaEnvs) !PythonSdkUtil.isBaseConda(it.homePath) else false },
         { it.homePath }
       )

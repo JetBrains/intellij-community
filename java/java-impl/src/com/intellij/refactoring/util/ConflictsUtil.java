@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.util;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -39,7 +41,7 @@ public final class ConflictsUtil {
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           @Nullable PsiMethod refactoredMethod,
                                           final PsiMethod prototype,
-                                          final MultiMap<PsiElement,String> conflicts) {
+                                          final MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
     if (prototype == null) return;
     String protoMethodInfo = getMethodPrototypeString(prototype);
 
@@ -87,8 +89,9 @@ public final class ConflictsUtil {
       ClassInheritorsSearch.search(aClass).forEach(aClass1 -> {
         final PsiMethod[] methods = aClass1.findMethodsBySignature(prototype, false);
         for (PsiMethod method1 : methods) {
-          conflicts.putValue(method1, "Method " + RefactoringUIUtil.getDescription(method1, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(
-            aClass1, false));
+          conflicts.putValue(method1, JavaBundle.message("conflict.message.method.will.override.method.base.class",
+                                                         RefactoringUIUtil.getDescription(method1, true),
+                                                         RefactoringUIUtil.getDescription(aClass, false)));
         }
         return true;
       });

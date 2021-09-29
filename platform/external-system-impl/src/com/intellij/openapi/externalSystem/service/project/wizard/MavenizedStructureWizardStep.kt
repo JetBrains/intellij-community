@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.comap
@@ -144,7 +146,16 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
 
   protected open fun suggestName(): String {
     val projectFileDirectory = File(context.projectFileDirectory)
-    return createSequentFileName(projectFileDirectory, "untitled", "")
+    val moduleNames = findAllModules().map { it.name }.toSet()
+    return createSequentFileName(projectFileDirectory, "untitled", "") {
+      !it.exists() && it.name !in moduleNames
+    }
+  }
+
+  protected fun findAllModules(): List<Module> {
+    val project = context.project ?: return emptyList()
+    val moduleManager = ModuleManager.getInstance(project)
+    return moduleManager.modules.toList()
   }
 
   protected open fun suggestNameByLocation(): String {
@@ -229,6 +240,12 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
                                                  context.presentationName, propertyPresentation)
       return error(message)
     }
+    val moduleNames = findAllModules().map { it.name }.toSet()
+    if (entityName in moduleNames) {
+      val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.entity.name.exists.error",
+                                                 context.presentationName.capitalize(), entityName)
+      return error(message)
+    }
     return null
   }
 
@@ -289,9 +306,9 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
 
   companion object {
     private val EMPTY_VIEW = object : DataView<Nothing>() {
-      override val data: Nothing by lazy { throw UnsupportedOperationException() }
+      override val data: Nothing get() = throw UnsupportedOperationException()
       override val location: String = ""
-      override val icon: Nothing by lazy { throw UnsupportedOperationException() }
+      override val icon: Nothing get() = throw UnsupportedOperationException()
       override val presentationName: String = "<None>"
       override val groupId: String = "org.example"
       override val version: String = "1.0-SNAPSHOT"

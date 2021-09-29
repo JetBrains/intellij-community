@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -332,16 +334,15 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
         }
         else {
           ApplicationManager.getApplication().runWriteAction(() -> {
-            try {
+            PotemkinProgress progress = new PotemkinProgress(getCommandName(), project, editor.getComponent(), null);
+            progress.setIndeterminate(true);
+            ProgressManager.getInstance().runProcess(() -> {
               List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
               List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
               List<PsiGenerationInfo<PsiMethod>> resultMembers =
                 GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
               resultMembers.get(0).positionCaret(editor, true);
-            }
-            catch (IncorrectOperationException ioe) {
-              LOG.error(ioe);
-            }
+            }, progress);
           });
         }
       }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());

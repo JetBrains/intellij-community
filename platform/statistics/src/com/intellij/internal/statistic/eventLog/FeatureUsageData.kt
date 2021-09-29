@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -62,7 +62,7 @@ class FeatureUsageData(private val recorderId: String) {
   fun addClientId(clientId: String?): FeatureUsageData {
     clientId?.let {
       val permanentClientId = parsePermanentClientId(clientId)
-      data["client_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(permanentClientId)
+      data["client_id"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(permanentClientId)
     }
     return this
   }
@@ -83,7 +83,7 @@ class FeatureUsageData(private val recorderId: String) {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
+      data["project"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
     }
     return this
   }
@@ -189,17 +189,17 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   fun addAnonymizedPath(@NonNls path: String?): FeatureUsageData {
-    data["file_path"] = path?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(path) } ?: "undefined"
+    data["file_path"] = path?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(path) } ?: "undefined"
     return this
   }
 
   fun addAnonymizedId(@NonNls id: String): FeatureUsageData {
-    data["anonymous_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(id)
+    data["anonymous_id"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(id)
     return this
   }
 
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
-    data[key] = value?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(value) } ?: "undefined"
+    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value) } ?: "undefined"
     return this
   }
 

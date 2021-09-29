@@ -942,6 +942,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myConsoleToolbarActionGroup = new DefaultActionGroup();
       myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
       myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
+      myToolbar.setTargetComponent(myView);
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
         TreePath path = e.getPath();

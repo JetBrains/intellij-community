@@ -84,7 +84,7 @@ final class ComboContentLayout extends ContentLayout {
     myUi.getTabComponent().removeAll();
 
     myUi.getTabComponent().add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true, true);
 
     myUi.getTabComponent().add(myComboLabel);
     ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);

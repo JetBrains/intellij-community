@@ -6,7 +6,7 @@ Reports labels that don't points to a functions.
 <p><b>Example:</b></p>
 <pre><code>
   fun testValLabelInReturn() {
-      L@ val fn = { return@L&lt;caret&gt; }
+      L@ val fn = { return@L }
       fn()
   }
 </code></pre>

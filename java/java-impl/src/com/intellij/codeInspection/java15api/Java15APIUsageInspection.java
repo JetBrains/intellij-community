@@ -10,7 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -395,7 +395,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
     private LanguageLevel getEffectiveLanguageLevel(Module module) {
       if (myEffectiveLanguageLevel != null) return myEffectiveLanguageLevel;
-      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
     private void registerError(PsiElement reference, LanguageLevel api) {

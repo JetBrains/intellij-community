@@ -1221,7 +1221,7 @@
       <separator/>
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
     </group>
-    
+
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
 
     <group>

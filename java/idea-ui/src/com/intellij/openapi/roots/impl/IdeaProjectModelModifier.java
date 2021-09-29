@@ -10,6 +10,7 @@ import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryAttachDialog;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -116,7 +117,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
 
   @Override
   public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level) {
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     if (moduleLevel != null && JavaSdkUtil.isLanguageLevelAcceptable(myProject, module, level)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);

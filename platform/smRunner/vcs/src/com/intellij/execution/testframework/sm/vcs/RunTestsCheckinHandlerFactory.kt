@@ -148,7 +148,9 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
                                          problems: ArrayList<FailureDescription>) {
-    val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build() ?: return
+    val environmentBuilder = ExecutionUtil.createEnvironment(executor, configurationSettings) ?: return
+    val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
+    val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
     val console = suspendCancellableCoroutine<ExecutionConsole?> { continuation ->
       val messageBus = project.messageBus

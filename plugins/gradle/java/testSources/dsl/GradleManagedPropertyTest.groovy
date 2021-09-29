@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
+import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
@@ -29,7 +29,9 @@ package pkg;
 import org.gradle.api.provider.Property;
 public abstract class MyExtension {
     abstract Property<String> getStringProperty();
-    abstract Property<Integer> getIntegerProperty();
+    Property<Integer> getIntegerProperty() {
+      throw new RuntimeException();
+    }
 }
 ''')
     importProject('project.extensions.create("myExt", pkg.MyExtension)')

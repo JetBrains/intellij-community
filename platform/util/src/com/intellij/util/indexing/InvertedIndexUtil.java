@@ -18,7 +18,8 @@ public final class InvertedIndexUtil {
                                                                   @NotNull Collection<? extends K> dataKeys,
                                                                   @Nullable Condition<? super K> keyChecker,
                                                                   @Nullable Condition<? super V> valueChecker,
-                                                                  @Nullable IntPredicate idChecker)
+                                                                  @Nullable IntPredicate idChecker,
+                                                                  @Nullable Runnable checkCancelledRunnable)
     throws StorageException {
     IntSet mainIntersection = null;
 
@@ -28,10 +29,17 @@ public final class InvertedIndexUtil {
       IntSet copy = new IntOpenHashSet();
       ValueContainer<V> container = index.getData(dataKey);
 
+      if (checkCancelledRunnable != null) {
+        checkCancelledRunnable.run();
+      }
+
       for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
         if (valueChecker != null && !valueChecker.value(value)) {
           continue;
+        }
+        if (checkCancelledRunnable != null) {
+          checkCancelledRunnable.run();
         }
 
         ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
@@ -41,8 +49,7 @@ public final class InvertedIndexUtil {
           while (iterator.hasNext()) {
             final int id = iterator.next();
             if (mainIntersection == null && (idChecker == null || idChecker.test(id)) ||
-                mainIntersection != null && mainIntersection.contains(id)
-              ) {
+                mainIntersection != null && mainIntersection.contains(id)) {
               copy.add(id);
             }
           }

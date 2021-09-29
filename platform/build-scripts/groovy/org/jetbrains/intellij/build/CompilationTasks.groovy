@@ -30,8 +30,6 @@ abstract class CompilationTasks {
 
   abstract void resolveProjectDependenciesAndCompileAll()
 
-  abstract boolean areCompiledClassesProvided()
-
   abstract void reuseCompiledClassesIfProvided()
 
   static CompilationTasks create(CompilationContext context) {

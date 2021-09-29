@@ -192,9 +192,7 @@ public class PyStackFrame extends XStackFrame {
   private static Map<String, XValue> mergeSpecialGroupElementsOrdered(List<Map<String, XValue>> specialValuesGroups) {
     final LinkedHashMap<String, XValue> result = new LinkedHashMap<>();
     for (Map<String, XValue> group : specialValuesGroups) {
-      for (Map.Entry<String, XValue> entry : group.entrySet()) {
-        result.put(entry.getKey(), entry.getValue());
-      }
+      result.putAll(group);
     }
     return result;
   }

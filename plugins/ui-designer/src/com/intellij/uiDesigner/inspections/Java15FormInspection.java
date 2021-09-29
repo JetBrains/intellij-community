@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -44,7 +44,7 @@ public class Java15FormInspection extends BaseFormInspection {
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
-      final LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
         registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
       }

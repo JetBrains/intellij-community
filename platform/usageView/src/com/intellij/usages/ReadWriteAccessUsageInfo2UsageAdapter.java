@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.usageView.UsageInfo;
@@ -20,6 +6,7 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -29,12 +16,11 @@ import java.util.Objects;
  */
 public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implements ReadWriteAccessUsage{
   private final byte initialRwLevel; // 0,1,2 -> R, W, RW
-  private byte myRwLevel;
+  private volatile byte myRwLevel;
 
   public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, final boolean accessedForReading, final boolean accessedForWriting) {
     super(usageInfo);
-    initialRwLevel = myRwLevel = (byte)((accessedForReading ? 1 : 0) | (accessedForWriting ? 2 : 0));
-    computeIcon();
+    myRwLevel = initialRwLevel = (byte)((accessedForReading ? 1 : 0) | (accessedForWriting ? 2 : 0));
   }
 
   private static class RW {
@@ -45,16 +31,17 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
       PlatformIcons.VARIABLE_RW_ACCESS};
   }
 
-  private void computeIcon() {
-    myIcon = RW.ICONS[myRwLevel];
+  @Override
+  protected @Nullable Icon computeIcon() {
+    return RW.ICONS[myRwLevel];
   }
 
   @Override
   public boolean merge(@NotNull MergeableUsage other) {
     boolean merged = super.merge(other);
     if (merged && other instanceof ReadWriteAccessUsageInfo2UsageAdapter) {
-      myRwLevel |= ((ReadWriteAccessUsageInfo2UsageAdapter)other).myRwLevel;
-      computeIcon();
+      int newLevel = myRwLevel | ((ReadWriteAccessUsageInfo2UsageAdapter)other).myRwLevel;
+      myRwLevel = (byte)newLevel;
     }
     return merged;
   }
@@ -63,7 +50,6 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
   public void reset() {
     super.reset();
     myRwLevel = initialRwLevel;
-    computeIcon();
   }
 
   @Override

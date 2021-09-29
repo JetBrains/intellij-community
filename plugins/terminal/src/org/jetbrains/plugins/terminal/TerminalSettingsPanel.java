@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -58,7 +59,7 @@ public class TerminalSettingsPanel {
 
   private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
   private ActionLink myConfigureTerminalKeybindingsActionLink;
-  private ComboBox<TerminalOptionsProvider.CursorShape> myCursorShape;
+  private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
 
   private TerminalOptionsProvider myOptionsProvider;
@@ -182,7 +183,7 @@ public class TerminalSettingsPanel {
       }
     });
     myProjectOptionsProvider.setEnvData(myEnvVarField.getData());
-    myOptionsProvider.setCursorShape(ObjectUtils.notNull(myCursorShape.getItem(), TerminalOptionsProvider.CursorShape.BLOCK));
+    myOptionsProvider.setCursorShape(ObjectUtils.notNull(myCursorShape.getItem(), TerminalUiSettingsManager.CursorShape.BLOCK));
   }
 
   public void reset() {
@@ -221,7 +222,7 @@ public class TerminalSettingsPanel {
         }
     });
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
-    myCursorShape = new ComboBox<>(TerminalOptionsProvider.CursorShape.values());
+    myCursorShape = new ComboBox<>(TerminalUiSettingsManager.CursorShape.values());
     myCursorShape.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       label.setText(value.getText());
     }));

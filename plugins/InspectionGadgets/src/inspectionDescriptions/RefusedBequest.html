@@ -1,21 +1,22 @@
 <html>
 <body>
-Reports any methods which override a concrete method,
-but which do not call that method as <code>super</code>. This is also known as a <i>refused bequest</i> and such methods
-may represent a failure of abstraction which can lead to hard-to-trace bugs. Default methods and methods overridden
-from <code>java.lang.Object</code>, except for <code>clone()</code>, are not reported by this inspection.
-A <code>clone()</code> method is expected to call its super, which will automatically return an object of the correct type.
+Reports methods that override a particular method without calling <code>super</code>.
+<p>This is also known as a <i>refused bequest</i>. Such methods
+  may represent a failure of abstraction and cause hard-to-trace bugs.</p>
+  <p>The inspection doesn't report default methods and methods overridden
+from <code>java.lang.Object</code>, except for <code>clone()</code>.
+  The <code>clone()</code> method is expected to call its <code>super</code>, which will automatically return an object of the correct type.</p>
 <p><b>Examples:</b></p>
 <ul>
-  <li><pre>
+  <li><pre><code>
   class A {
     @Override
     public Object clone() { // reported, because it does not call 'super.clone()'
       return new A();
     }
   }
-  </pre> </li>
-  <li><pre>
+  </code></pre> </li>
+  <li><pre><code>
   interface I {
     default void foo() {}
   }
@@ -25,15 +26,21 @@ A <code>clone()</code> method is expected to call its super, which will automati
     @Override
     public void foo(){}
   }
-  </pre></li>
+    </code></pre></li>
 </ul>
 <!-- tooltip end -->
-<p>Use the checkboxes below to ignore the following cases:</p>
+<p>Configure the inspection:</p>
 <ul>
-  <li>super method is annotated by an annotation specified in the table</li>
-  <li>super method is empty or only throws an exception</li>
-  <li>super method is default method</li>
+  <li>
+    Use the <b>Only report when super method is annotated by</b> option to ignore <code>super</code> methods marked with the annotations
+    from the provided list. You can manually add annotations to the list.
+  </li>
+  <li>
+    Use the <b>Ignore empty super methods</b> option to ignore <code>super</code> methods that are either empty or only throw an exception.
+  </li>
+  <li>
+    Use the <b>Ignore 'default' super methods</b> option to ignore <code>super</code> methods with the <code>default</code> keyword.
+  </li>
 </ul>
-<p>
 </body>
 </html>

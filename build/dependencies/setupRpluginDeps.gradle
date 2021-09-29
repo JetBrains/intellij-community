@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 configurations {
   rkernel
 }
@@ -37,8 +37,8 @@ task copyFsNotifierForRPlugin {
     copy {
       from "$projectDir/../../bin/linux/"
       into "$buildDir/rplugin/"
-      include "fsnotifier64"
-      rename "fsnotifier64", "fsnotifier-linux"
+      include "fsnotifier"
+      rename "fsnotifier", "fsnotifier-linux"
     }
     copy {
       from "$projectDir/../../bin/mac/"

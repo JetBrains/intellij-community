@@ -48,7 +48,7 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
                                caretAdvance: Ref<Int>,
                                dataContext: DataContext,
                                originalHandler: EditorActionHandler?): EnterHandlerDelegate.Result {
-    marker = null
+    marker = null // if last post-processing ended with an exception, clear the state
     if (file !is MarkdownFile || isInBlockQuoteOrCodeFence(caretOffset.get(), file))
       return EnterHandlerDelegate.Result.Continue
 
@@ -136,6 +136,8 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
       .list.renumberInBulk(document, recursive = false, restart = false)
 
+    // it is possible that there will be no pre-processing before next post-processing, see IDEA-270501 and EnterInLineCommentHandler
+    this.marker = null
     return EnterHandlerDelegate.Result.Stop
   }
 }

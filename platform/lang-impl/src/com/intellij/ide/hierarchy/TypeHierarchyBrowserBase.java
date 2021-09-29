@@ -146,7 +146,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.class"), TypeHierarchyBrowserBase.class, LanguageTypeHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.class"), LanguageTypeHierarchy.INSTANCE);
     }
 
     @Override

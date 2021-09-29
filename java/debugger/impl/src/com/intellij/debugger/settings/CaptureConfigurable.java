@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -551,9 +551,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     if (project == null) { // fallback
       project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
-    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
-    scanPointsInt(project, debuggerProjectSettings, true, consumer);
-    scanPointsInt(project, debuggerProjectSettings, false, consumer);
+    if (!project.isDefault()) {
+      DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+      scanPointsInt(project, debuggerProjectSettings, true, consumer);
+      scanPointsInt(project, debuggerProjectSettings, false, consumer);
+    }
   }
 
   private static void scanPointsInt(Project project,

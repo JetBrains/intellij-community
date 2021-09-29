@@ -386,6 +386,23 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  fun scrollableTextArea(prop: KMutableProperty0<String>, rows: Int? = null): CellBuilder<JBTextArea> = scrollableTextArea(prop.toBinding(), rows)
+
+  fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
+
+  fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
+    val textArea = JBTextArea(binding.get(), rows ?: 0, 0)
+    val scrollPane = JBScrollPane(textArea)
+    return component(textArea, scrollPane)
+      .withTextBinding(binding)
+  }
+
+  fun scrollableTextArea(property: GraphProperty<String>, rows: Int? = null): CellBuilder<JBTextArea> {
+    return scrollableTextArea(property::get, property::set, rows)
+      .withGraphProperty(property)
+      .applyToComponent { bind(property) }
+  }
+
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range)
   }
@@ -593,6 +610,8 @@ abstract class Cell : BaseBuilder {
 
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
+  abstract fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T>
+
   operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,
     growPolicy: GrowPolicy? = null,
@@ -621,6 +640,10 @@ private fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
 class InnerCell(val cell: Cell) : Cell() {
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
+  }
+
+  override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
+    return cell.component(component, viewComponent)
   }
 
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {

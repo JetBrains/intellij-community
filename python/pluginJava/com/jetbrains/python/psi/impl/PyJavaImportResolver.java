@@ -2,6 +2,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -19,7 +23,7 @@ public class PyJavaImportResolver implements PyImportResolver {
     String fqn = name.toString();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
     final PsiPackage aPackage = psiFacade.findPackage(fqn);
-    if (aPackage != null) {
+    if (aPackage != null && isUnderJvmModule(aPackage)) {
       return aPackage;
     }
 
@@ -29,5 +33,18 @@ public class PyJavaImportResolver implements PyImportResolver {
       if (aClass != null) return aClass;
     }
     return null;
+  }
+
+  private static boolean isUnderJvmModule(@NotNull PsiPackage psiPackage) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiPackage);
+
+    if (module != null) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

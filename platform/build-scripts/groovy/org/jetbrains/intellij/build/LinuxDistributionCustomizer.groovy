@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -21,11 +21,6 @@ abstract class LinuxDistributionCustomizer {
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []
-
-  /**
-   * When {@code true}, the launcher script will suggest downloading an x86 JRE when launched on a corresponding OS.
-   */
-  boolean includeX86Files = true
 
   /**
    * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced.

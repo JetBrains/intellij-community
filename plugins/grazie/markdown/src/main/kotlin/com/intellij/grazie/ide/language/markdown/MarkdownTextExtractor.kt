@@ -1,5 +1,7 @@
 package com.intellij.grazie.ide.language.markdown
 
+import com.intellij.grazie.ide.language.markdown.MarkdownPsiUtils.isMarkdownCodeType
+import com.intellij.grazie.ide.language.markdown.MarkdownPsiUtils.isMarkdownLinkType
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
@@ -13,9 +15,8 @@ class MarkdownTextExtractor : TextExtractor() {
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
       return TextContentBuilder.FromPsi
         .withUnknown { e ->
-          e.firstChild == null &&
-          PsiUtilCore.getElementType(e) !== MarkdownTokenTypes.TEXT &&
-          MarkdownPsiUtils.isInline(e.parent)
+          e.node.isMarkdownCodeType() ||
+          e.firstChild == null && PsiUtilCore.getElementType(e) !== MarkdownTokenTypes.TEXT && e.parent.node.isMarkdownLinkType()
         }
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
     }

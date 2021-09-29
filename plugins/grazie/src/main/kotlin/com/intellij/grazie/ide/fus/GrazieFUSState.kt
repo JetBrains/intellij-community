@@ -6,6 +6,9 @@ import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
@@ -35,12 +38,19 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
 
 
     for (id in state.checkingContext.disabledLanguages) {
-      val language = Language.findLanguageByID(id) ?: continue
-      if (!getPluginInfo(language.javaClass).isSafeToReport()) continue
-
       metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
     }
 
     return metrics
+  }
+
+  internal class ContextLanguageValidator : CustomValidationRule() {
+    override fun doValidate(data: String, context: EventContext): ValidationResultType {
+      val language = Language.findLanguageByID(data)
+      if (language == null || !getPluginInfo(language.javaClass).isSafeToReport()) return ValidationResultType.REJECTED
+      return ValidationResultType.ACCEPTED
+    }
+
+    override fun acceptRuleId(ruleId: String?) = ruleId == "grazie_context_language"
   }
 }

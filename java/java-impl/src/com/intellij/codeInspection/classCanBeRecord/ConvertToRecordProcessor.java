@@ -21,11 +21,13 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,6 +237,13 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private static void tryToCompactCanonicalCtor(@NotNull PsiClass record) {
     PsiMethod canonicalCtor = ArrayUtil.getFirstElement(record.getConstructors());
     if (canonicalCtor != null) {
+      PsiCodeBlock ctorBody = canonicalCtor.getBody();
+      if (ctorBody != null) {
+        StreamEx.of(ctorBody.getStatements()).select(PsiExpressionStatement.class)
+          .filter(st -> JavaPsiConstructorUtil.isSuperConstructorCall(st.getExpression()))
+          .findFirst()
+          .ifPresent(st -> st.delete());
+      }
       ConstructorSimplifier ctorSimplifier = RedundantRecordConstructorInspection.createCtorSimplifier(canonicalCtor);
       if (ctorSimplifier != null) {
         ctorSimplifier.simplify(canonicalCtor);

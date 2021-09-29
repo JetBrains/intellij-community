@@ -60,7 +60,7 @@ class KtorServerTemplate : Template() {
         targetConfigurationIR.addWithJavaIntoJvmTarget()
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = listOf(
-        FileTemplateDescriptor("$id/server.kt.vm", "server.kt".asPath()) asSrcOf SourcesetType.main
+        FileTemplateDescriptor("$id/server.kt.vm", "Server.kt".asPath()) asSrcOf SourcesetType.main
     )
 
     val imports = InterceptionPoint("imports", emptyList<String>())

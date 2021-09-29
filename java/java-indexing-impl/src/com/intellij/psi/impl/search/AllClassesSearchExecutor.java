@@ -15,7 +15,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,7 +101,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       PsiShortNamesCache.getInstance(project).processAllClassNames(s -> {
         ProgressManager.checkCanceled();
         return processor.process(s);
-      }, scope, IdFilter.getProjectIdFilter(project, true)));
+      }, scope, null));
 
     ProgressManager.checkCanceled();
     return success;

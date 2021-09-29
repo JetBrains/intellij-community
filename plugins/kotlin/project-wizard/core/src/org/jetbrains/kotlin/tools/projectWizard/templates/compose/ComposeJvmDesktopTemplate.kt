@@ -70,10 +70,10 @@ class ComposeJvmDesktopTemplate : Template() {
         val dependsOnMppModule: Module? =
             module.originalModule.dependencies.map { moduleByReference(it) }.firstOrNull { it.template is ComposeMppModuleTemplate }
         if (dependsOnMppModule == null) {
-            +(FileTemplateDescriptor("$id/main.kt", "main.kt".asPath()) asSrcOf SourcesetType.main)
+            +(FileTemplateDescriptor("$id/main.kt", "Main.kt".asPath()) asSrcOf SourcesetType.main)
         } else {
             val javaPackage = dependsOnMppModule.javaPackage(pomIR()).asCodePackage()
-            +(FileTemplateDescriptor("composeMpp/main.kt.vm", "main.kt".asPath())
+            +(FileTemplateDescriptor("composeMpp/main.kt.vm", "Main.kt".asPath())
                     asSrcOf SourcesetType.main
                     withSettings ("sharedPackage" to javaPackage)
                     )

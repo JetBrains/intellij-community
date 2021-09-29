@@ -1,21 +1,6 @@
 <html>
 <body>
-This intention replaces either
-<table>
-  <tr>
-    <td> &nbsp;&nbsp;&nbsp;</td>
-    <td>
-      <b>a || b</b> with <b>!(!a && !b)</b> or
-    </td>
-  </tr>
-  <tr>
-    <td> &nbsp;&nbsp;&nbsp;</td>
-    <td>
-      <b>a && b</b> with <b>!(!a || !b)</b>
-    </td>
-  </tr>
-</table>
-
-inside boolean expression.
+Replaces either <code>a || b</code> with <code>!(!a && !b)</code> or
+<code>a && b</code> with <code>!(!a || !b)</code> inside boolean expression.
 </body>
 </html>

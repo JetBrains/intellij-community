@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -19,12 +19,6 @@ abstract class WindowsDistributionCustomizer {
    * If {@code true} *.bat files (productName.bat and inspect.bat) will be included into the distribution
    */
   boolean includeBatchLaunchers = true
-
-  /**
-   * When {@code false}, only 64-bit *64.exe launcher and *64.exe.vmoptions files will be created,
-   * and no 32-bit JRE will be uploaded for the installer to suggest.
-   */
-  boolean include32BitLauncher = true
 
   /**
    * If {@code true} a Zip archive containing the installation will be produced

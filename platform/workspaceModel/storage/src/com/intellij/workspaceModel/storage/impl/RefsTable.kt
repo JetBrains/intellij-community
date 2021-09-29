@@ -318,7 +318,8 @@ internal class MutableRefsTable(
       ConnectionType.ABSTRACT_ONE_TO_ONE -> {
         val copiedMap = getAbstractOneToOneMutableMap(connectionId)
         copiedMap.remove(childId)
-        copiedMap[childId] = parentId
+        copiedMap.forcePut(childId, parentId)
+        Unit
       }
     }.let { }
   }

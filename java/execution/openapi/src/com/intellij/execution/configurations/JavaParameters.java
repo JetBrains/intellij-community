@@ -5,7 +5,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -83,7 +83,7 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
     orderEnumerator.forEachModule(module -> {
-      LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (languageLevel.isPreview()) {
         vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
         return false;

@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,9 @@ public interface ChangeProvider {
   /**
    * Returns true if the initial unsaved modification of a document should cause dirty scope invalidation
    * for the file corresponding to the document.
+   * <p>
+   * Such implementations will need to check {@link FileDocumentManager#getUnsavedDocuments()} or {@link FileDocumentManager#isFileModified(VirtualFile)}
+   * to report {@link Change} for files with in-memory-only changes (that are yet unmodified on disk).
    *
    * @return true if document modification should mark the scope as dirty, false otherwise
    */

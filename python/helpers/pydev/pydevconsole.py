@@ -10,7 +10,7 @@ start_new_thread = thread.start_new_thread
 try:
     from code import InteractiveConsole
 except ImportError:
-    from _pydevd_bundle.pydevconsole_code_for_ironpython import InteractiveConsole
+    from _pydevd_bundle.pydevconsole_code_for_ironpython import IronPythonInteractiveConsole as InteractiveConsole
 
 import os
 import sys
@@ -279,7 +279,7 @@ try:
         exitfunc = None
 
     if IPYTHON:
-        from _pydev_bundle.pydev_ipython_console import InterpreterInterface
+        from _pydev_bundle.pydev_ipython_console import IPythonInterpreterInterface as InterpreterInterface
         if exitfunc is not None:
             sys.exitfunc = exitfunc
         else:

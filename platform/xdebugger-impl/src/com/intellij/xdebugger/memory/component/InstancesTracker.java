@@ -103,9 +103,7 @@ public class InstancesTracker implements PersistentStateComponent<InstancesTrack
 
     MyState(@NotNull MyState state) {
       isBackgroundTrackingEnabled = state.isBackgroundTrackingEnabled;
-      for (Map.Entry<String, TrackingType> classState : state.classes.entrySet()) {
-        classes.put(classState.getKey(), classState.getValue());
-      }
+      classes.putAll(state.classes);
     }
   }
 }

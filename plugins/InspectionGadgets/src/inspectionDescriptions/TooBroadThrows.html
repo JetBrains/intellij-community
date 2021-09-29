@@ -3,12 +3,18 @@
 Reports <code>throws</code> clauses which contain exceptions which are more generic than the
 exceptions actually thrown by the method.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public void createFile() throws Exception { // warning: 'throws Exception' is too broad, masking exception 'IOException'
     File file = new File("pathToFile");
     file.createNewFile();
   }
-</pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  public void createFile() throws IOException {
+    File file = new File("pathToFile");
+    file.createNewFile();
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to have this inspection only warn on the most generic exceptions.

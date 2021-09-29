@@ -85,6 +85,16 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myProjectName;
   }
 
+  @NlsSafe
+  @Nullable
+  public String getProjectNameToDisplay() {
+    final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
+    String displayName = mgr instanceof RecentProjectsManagerBase
+                         ? ((RecentProjectsManagerBase)mgr).getDisplayName(myProjectPath)
+                         : null;
+    return displayName != null ? displayName : getProjectName();
+  }
+
   @NlsActions.ActionText
   @Nullable
   @Override

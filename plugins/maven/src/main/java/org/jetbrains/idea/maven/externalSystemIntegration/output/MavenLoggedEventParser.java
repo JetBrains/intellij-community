@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import org.jetbrains.annotations.ApiStatus;

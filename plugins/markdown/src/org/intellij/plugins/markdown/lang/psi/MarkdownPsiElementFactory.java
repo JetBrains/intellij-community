@@ -10,10 +10,14 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
+import org.intellij.plugins.markdown.editor.images.ImageUtils;
+import org.intellij.plugins.markdown.editor.images.MarkdownImageData;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class MarkdownPsiElementFactory {
   private MarkdownPsiElementFactory() { }
@@ -51,6 +55,32 @@ public final class MarkdownPsiElementFactory {
   }
 
   @NotNull
+  public static PsiElement createImage(@NotNull Project project,
+                                       @Nullable String description,
+                                       @NotNull String path,
+                                       @Nullable String title) {
+    String text = ImageUtils.createMarkdownImageText(
+      Objects.requireNonNullElse(description, ""),
+      path,
+      Objects.requireNonNullElse(title, "")
+    );
+    return createFile(project, text).getFirstChild().getFirstChild().getFirstChild();
+  }
+
+  @NotNull
+  public static PsiElement createHtmlBlockWithImage(@NotNull Project project, @NotNull MarkdownImageData imageData) {
+    String text = ImageUtils.createHtmlImageText(imageData);
+    return createFile(project, text).getFirstChild().getFirstChild();
+  }
+
+  @NotNull
+  public static PsiElement createHtmlImageTag(@NotNull Project project, @NotNull MarkdownImageData imageData) {
+    String text = ImageUtils.createHtmlImageText(imageData);
+    PsiElement root = createFile(project, "Prefix text" + text).getFirstChild();
+    return root.getFirstChild().getFirstChild().getNextSibling();
+  }
+
+  @NotNull
   public static MarkdownPsiElement createTextElement(@NotNull Project project, @NotNull String text) {
     return (MarkdownPsiElement)createFile(project, text).getFirstChild().getFirstChild();
   }
@@ -69,6 +99,7 @@ public final class MarkdownPsiElementFactory {
   public static PsiElement createNewLine(@NotNull Project project) {
     return createFile(project, "\n").getFirstChild().getFirstChild();
   }
+
   /**
    * Prepares markdown file with [num] of new lines.
    *

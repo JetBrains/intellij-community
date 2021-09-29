@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemReifiedRunConfigurationExtension
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments.Argument
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments.Task
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArguments
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArguments.Argument
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArguments.Task
 import com.intellij.openapi.project.Project
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider

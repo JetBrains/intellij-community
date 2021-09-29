@@ -61,7 +61,7 @@ class GitRevertAction : DumbAwareAction() {
 
       object : Task.Backgroundable(project, GitBundle.message("progress.title.reverting.n.commits", commits.size)) {
         override fun run(indicator: ProgressIndicator) {
-          GitRevertOperation(project, commits, GitVcsSettings.getInstance(project).isAutoCommitOnRevert).execute()
+          GitRevertOperation(project, commits, true).execute()
         }
       }.queue()
     }

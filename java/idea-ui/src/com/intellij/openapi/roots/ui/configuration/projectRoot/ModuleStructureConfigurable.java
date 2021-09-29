@@ -1034,7 +1034,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
       modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class)
-        .setLanguageLevel(LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
+        .setLanguageLevel(LanguageLevelUtil.getCustomLanguageLevel(myRootModel.getModule()));
 
       for (OrderEntry entry : myRootModel.getOrderEntries()) {
         if (entry instanceof JdkOrderEntry) continue;

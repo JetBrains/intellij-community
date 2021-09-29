@@ -40,6 +40,6 @@ class ConsoleJvmApplicationTemplate : Template() {
 
     override fun Reader.getFileTemplates(module: ModuleIR) =
         buildList<FileTemplateDescriptorWithPath> {
-            +(FileTemplateDescriptor("$id/main.kt.vm", "main.kt".asPath()) asSrcOf SourcesetType.main)
+            +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
         }
 }

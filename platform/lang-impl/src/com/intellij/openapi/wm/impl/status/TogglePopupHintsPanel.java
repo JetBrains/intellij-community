@@ -101,7 +101,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
       }
 
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         updateStatus();
       }
     });

@@ -129,7 +129,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
         ModuleRootModel model = ModuleRootManager.getInstance(module);
         String storageRoot = module2StorageRoot.get(module);
         try {
-          Element classpathElement = new EclipseClasspathWriter().writeClasspath(null, model);
+          Element classpathElement = new EclipseClasspathWriter().writeClasspath(model);
           File classpathFile = new File(storageRoot, EclipseXml.CLASSPATH_FILE);
           if (!FileUtil.createIfDoesntExist(classpathFile)) {
             continue;

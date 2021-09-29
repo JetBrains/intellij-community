@@ -87,7 +87,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions... [a]\n" +
+                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
@@ -111,7 +111,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions... [a]\n" +
+                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
@@ -202,16 +202,16 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     val module = addModule("a", null)
     myProject.messageBus.connect(testRootDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
       override fun compilationFinished(aborted: Boolean, errors: Int, warnings: Int, compileContext: CompileContext) {
-        compileContext.addMessage(INFORMATION, "some progress 0%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 30%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 60%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "another message\n", null, -1, -1);
-        compileContext.addMessage(WARNING, "another yellow message\n", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 90%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 95%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "this message will be dropped because of subsequent message started with CR", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 99%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 100%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "some progress 0%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 30%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 60%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "another message\n", null, -1, -1)
+        compileContext.addMessage(WARNING, "another yellow message\n", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 90%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 95%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "this message will be dropped because of subsequent message started with CR", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 99%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 100%", null, -1, -1)
       }
     })
     build(module)

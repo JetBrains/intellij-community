@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myLanguageLevel = JavaTestUtil.getMaxRegisteredLanguageLevel();
+    getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
   }

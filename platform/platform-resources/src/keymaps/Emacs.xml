@@ -101,9 +101,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="shift alt G"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="shift alt G"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="control X" second-keystroke="B"/>
   </action>

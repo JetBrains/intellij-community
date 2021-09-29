@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -95,6 +95,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     get() = tracker.state
 
   private var hasPendingUpdates = false
+
+  internal val commitMessage get() = commitPanel.commitMessage
 
   init {
     _tree = MyChangesTree(project)
@@ -216,7 +218,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     if (!force && (isInEditor == (editorTabPreview != null))) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, this)
+    diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
     diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
@@ -227,10 +229,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       editorTabPreview = null
       commitDiffSplitter.secondComponent = diffPreviewProcessor!!.component
     }
-  }
-
-  internal fun setCommitMessage(commitMessage: String) {
-    commitPanel.commitMessage.setCommitMessage(commitMessage)
   }
 
   override fun dispose() {

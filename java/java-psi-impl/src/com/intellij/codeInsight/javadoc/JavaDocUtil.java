@@ -6,6 +6,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -245,8 +246,8 @@ public final class JavaDocUtil {
       buffer.append(name);
       buffer.append("(");
       PsiParameter[] parms = method.getParameterList().getParameters();
-      boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-      boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+      boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceBeforeComma();
+      boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceAfterComma();
       for (int i = 0; i < parms.length; i++) {
         PsiParameter parm = parms[i];
         String typeText = TypeConversionUtil.erasure(parm.getType()).getCanonicalText();
@@ -372,8 +373,8 @@ public final class JavaDocUtil {
     if (!StringUtil.endsWithChar(memberText, ')')) return memberText;
     String parms = memberText.substring(parenthIndex + 1, memberText.length() - 1);
     StringBuilder buffer = new StringBuilder();
-    boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-    boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+    boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceBeforeComma();
+    boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceAfterComma();
     StringTokenizer tokenizer = new StringTokenizer(parms, ",");
     while (tokenizer.hasMoreTokens()) {
       String param = tokenizer.nextToken().trim();

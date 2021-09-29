@@ -10,7 +10,7 @@ import java.util.List;
 
 public class BooleanAccessor extends CodeStyleFieldAccessor<Boolean,Boolean> implements CodeStyleChoiceList {
 
-  private final static List<String> BOOLEAN_VALS = Arrays.asList("false", "true");
+  final static List<String> BOOLEAN_VALS = Arrays.asList("false", "true");
 
   public BooleanAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);

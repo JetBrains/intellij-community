@@ -31,8 +31,11 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
+    throw AssertionError("Cannot load plugin from $dir")
   }
-  return result!!
+
+  result.jarFiles = emptyList()
+  return result
 }
 
 @JvmOverloads
@@ -59,7 +62,7 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   val descriptor = loadDescriptorInTest(pluginDirectory)
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
-    DynamicPlugins.loadPlugin(pluginDescriptor = descriptor, classLoaderForTest = loader)
+    DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
   }
   catch (e: Exception) {
     DynamicPlugins.unloadPlugin(descriptor)

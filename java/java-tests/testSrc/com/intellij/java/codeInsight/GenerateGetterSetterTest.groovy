@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.generation.*
@@ -52,6 +52,7 @@ class Foo {
   void "test strip is of boolean fields"() {
     myFixture.configureByText 'a.java', '''
 class Foo {
+    static final String CONST = "const";
     boolean isStateForceMailField;
     boolean isic;
 
@@ -61,6 +62,7 @@ class Foo {
     generateGetter()
     myFixture.checkResult '''
 class Foo {
+    static final String CONST = "const";
     boolean isStateForceMailField;
     boolean isic;
 

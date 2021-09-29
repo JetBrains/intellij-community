@@ -280,7 +280,8 @@ object DynamicPlugins {
 
     var dependencyMessage: String? = null
     processOptionalDependenciesOnPlugin(descriptor, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
-      if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(mainDescriptor.pluginId, subDescriptor.packagePrefix)) {
+      if (subDescriptor.packagePrefix == null
+          || !ClassLoaderConfigurator.isMigratedToNewModel(mainDescriptor.pluginId)) {
         dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} does not have a separate classloader for the dependency"
         return@processOptionalDependenciesOnPlugin false
       }
@@ -803,9 +804,7 @@ object DynamicPlugins {
     return loadPlugin(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
-                 checkImplementationDetailDependencies: Boolean = true,
-                 classLoaderForTest: ClassLoader? = null): Boolean {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] != null) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
@@ -816,7 +815,7 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginSet = PluginManagerCore.getPluginSet().concat(pluginDescriptor)
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
-    classLoaderConfigurator.configure(pluginDescriptor, classLoaderForTest)
+    classLoaderConfigurator.configure(pluginDescriptor)
 
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {
@@ -1103,7 +1102,7 @@ private fun processOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDesc
     wantedIds.add(module.name)
   }
 
-  for (plugin in pluginSet.loadedPlugins) {
+  for (plugin in pluginSet.enabledPlugins) {
     if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyPlugin.id, plugin, isLoaded, processor)) {
       return
     }

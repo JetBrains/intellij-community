@@ -4,7 +4,7 @@ Reports any attempt to return or assign an array, <code>Collection</code>, <code
 <code>Calendar</code>, etc. field from a method parameter.
 Since such types are mutable, this construct may
 result in an object having its state modified unexpectedly from outside the owning class.
-While occasionally useful for performance reasons, this construct is inherently bug prone.
+While occasionally useful for performance reasons, this construct is inherently bug prone. Quick-fix adds a call to the field's <code>.clone()</code> method.
 
 <p>The inspection reports usage of following mutable types:
   <ul>
@@ -16,6 +16,28 @@ While occasionally useful for performance reasons, this construct is inherently 
   <li><code>com.google.common.collect.Table</code></li>
   </ul>
 </p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Log {
+    String[] messages;
+    ...
+
+    String[] getMessages() {
+      return messages; // warning: Return of String[] field 'messages'
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Log {
+    String[] messages;
+    ...
+
+    String[] getMessages() {
+      return messages.clone();
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>Use the checkbox below to ignore assignments and returns in <code>private</code> methods.
 

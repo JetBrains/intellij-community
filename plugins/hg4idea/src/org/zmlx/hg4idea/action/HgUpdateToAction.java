@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +30,7 @@ public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
   @Override
   protected void execute(@NotNull final Project project,
                          @NotNull final Collection<HgRepository> repositories,
-                         @Nullable HgRepository selectedRepo) {
+                         @Nullable HgRepository selectedRepo, @NotNull DataContext dataContext) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project, repositories, selectedRepo);
     if (dialog.showAndGet()) {
       FileDocumentManager.getInstance().saveAllDocuments();

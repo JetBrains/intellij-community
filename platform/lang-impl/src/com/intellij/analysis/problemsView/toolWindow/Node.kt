@@ -11,7 +11,7 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.TreePathUtil.pathToCustomNode
 import java.util.Collections.emptyList
 
-internal abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
+abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
   protected constructor(project: Project) : super(project, null)
   protected constructor(parent: Node) : super(parent.project, parent)
 

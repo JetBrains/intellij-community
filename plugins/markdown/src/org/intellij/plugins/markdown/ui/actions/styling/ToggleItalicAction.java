@@ -5,6 +5,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class ToggleItalicAction extends BaseToggleStateAction {
+
   @Override
   @NotNull
   protected String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {

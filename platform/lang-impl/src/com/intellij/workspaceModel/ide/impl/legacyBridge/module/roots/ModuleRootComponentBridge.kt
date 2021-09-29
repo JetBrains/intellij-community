@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
@@ -36,7 +35,7 @@ class ModuleRootComponentBridge(
     CachedValue { storage ->
       RootModelBridgeImpl(
         moduleEntity = storage.findModuleEntity(moduleBridge),
-        storage = storage,
+        storage = moduleBridge.entityStorage,
         itemUpdater = null,
         // TODO
         rootModel = this,
@@ -100,7 +99,7 @@ class ModuleRootComponentBridge(
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
-    moduleBridge.entityStorage.current, accessor)
+    accessor)
 
   /**
    * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
@@ -110,12 +109,12 @@ class ModuleRootComponentBridge(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
                                                                ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
-    moduleBridge.entityStorage.current, accessor)
+    accessor)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
                          initialStorage: WorkspaceEntityStorage,
                          accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff, moduleBridge,
-                                                                                                                   initialStorage, accessor,
+                                                                                                                   accessor,
                                                                                                                    false)
 
 
@@ -127,18 +126,7 @@ class ModuleRootComponentBridge(
   override fun getExcludeRoots(): Array<VirtualFile> = model.excludeRoots
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, orderRootsCache)
 
-  private val compilerModuleExtension by lazy {
-    CompilerModuleExtensionBridge(moduleBridge, entityStorage = moduleBridge.entityStorage, diff = null)
-  }
-
-  private val compilerModuleExtensionClass = CompilerModuleExtension::class.java
-
   override fun <T : Any?> getModuleExtension(klass: Class<T>): T? {
-    if (compilerModuleExtensionClass.isAssignableFrom(klass)) {
-      @Suppress("UNCHECKED_CAST")
-      return compilerModuleExtension as T
-    }
-
     return model.getModuleExtension(klass)
   }
 

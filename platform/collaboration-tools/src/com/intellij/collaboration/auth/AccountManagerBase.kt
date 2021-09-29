@@ -115,6 +115,11 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
     }
   }
 
+  @VisibleForTesting
+  fun addListener(listener: AccountsListener<A>) {
+    listeners.add(listener)
+  }
+
   override fun dispose() {}
 
   companion object {

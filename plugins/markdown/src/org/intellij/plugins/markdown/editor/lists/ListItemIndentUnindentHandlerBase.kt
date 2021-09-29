@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -30,21 +29,22 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
   }
 
   private fun doExecuteAction(editor: Editor, caret: Caret): Boolean {
-    val file = PsiEditorUtil.getPsiFile(editor)
-    val document = editor.document
+    val project = editor.project ?: return false
+    val psiDocumentManager = PsiDocumentManager.getInstance(project)
 
-    if (file !is MarkdownFile) return false
+    val document = editor.document
+    val file = psiDocumentManager.getPsiFile(document) as? MarkdownFile ?: return false
 
     val firstLinesOfSelectedItems = getFirstLinesOfSelectedItems(caret, document, file)
 
     // use lines instead of items, because items may become invalid before used
     for (line in firstLinesOfSelectedItems) {
-      PsiDocumentManager.getInstance(file.project).commitDocument(document)
+      psiDocumentManager.commitDocument(document)
       val item = file.getListItemAtLine(line, document)!!
 
       if (!doIndentUnindent(item, file, document)) continue
 
-      PsiDocumentManager.getInstance(file.project).commitDocument(document)
+      psiDocumentManager.commitDocument(document)
       run {
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
         val item = file.getListItemAtLine(line, document)!!

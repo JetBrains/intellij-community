@@ -34,6 +34,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenServerCMDState extends CommandLineState {
+  private static final com.intellij.openapi.diagnostic.Logger LOG = com.intellij.openapi.diagnostic
+    .Logger.getInstance(MavenServerCMDState.class);
   private static boolean setupThrowMainClass = false;
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
@@ -121,7 +123,7 @@ public class MavenServerCMDState extends CommandLineState {
     }
     else {
       if (xmxProperty == null) {
-        xmxProperty = getDefaultXmxProperty("-Xmx768m", xmsProperty);
+        xmxProperty = getMaxXmxStringValue("-Xmx768m", xmsProperty);
       }
     }
     params.getVMParametersList().add(xmsProperty);
@@ -141,24 +143,6 @@ public class MavenServerCMDState extends CommandLineState {
     //TODO: WSL
     //MavenUtil.addEventListener(mavenVersion, params);
     return params;
-  }
-
-  @NotNull
-  static String getDefaultXmxProperty(@NotNull String xmxProperty, @Nullable String xmsProperty) {
-    assert xmxProperty.startsWith("-Xmx");
-    if (xmsProperty != null) {
-      assert xmsProperty.startsWith("-Xms");
-      Matcher matcherXms = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmsProperty);
-      Matcher matcherXmx = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmxProperty);
-      if (matcherXms.find() && matcherXmx.find()) {
-        MemoryProperty xmsMemoryProperty = new MemoryProperty(matcherXms.group(1), matcherXms.group(2), matcherXms.group(3));
-        MemoryProperty xmxMemoryProperty = new MemoryProperty(matcherXmx.group(1), matcherXmx.group(2), matcherXmx.group(3));
-        if (xmsMemoryProperty.valueBytes > xmxMemoryProperty.valueBytes) {
-          xmxProperty = xmxMemoryProperty.updateValue(xmsMemoryProperty.valueBytes).toString(xmsMemoryProperty.unit);
-        }
-      }
-    }
-    return xmxProperty;
   }
 
   private void configureSslRelatedOptions(Map<String, String> defs) {
@@ -240,20 +224,46 @@ public class MavenServerCMDState extends CommandLineState {
     setupThrowMainClass = false;
   }
 
+  @Nullable
+  static String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {
+    MemoryProperty propertyA = MemoryProperty.valueOf(memoryValueA);
+    MemoryProperty propertyB = MemoryProperty.valueOf(memoryValueB);
+    if (propertyA != null && propertyB != null) {
+      MemoryProperty maxMemoryProperty = propertyA.valueBytes > propertyB.valueBytes ? propertyA : propertyB;
+      return MemoryProperty.of(MemoryProperty.MemoryPropertyType.XMX, maxMemoryProperty.valueBytes).toString(maxMemoryProperty.unit);
+    }
+    return Optional
+      .ofNullable(propertyA).or(() -> Optional.ofNullable(propertyB))
+      .map(property -> MemoryProperty.of(MemoryProperty.MemoryPropertyType.XMX, property.valueBytes).toString(property.unit))
+      .orElse(null);
+  }
+
   private static class MemoryProperty {
-    static final Pattern MEMORY_PROPERTY_PATTERN = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
+    private static final Pattern MEMORY_PROPERTY_PATTERN = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
     final String type;
     final long valueBytes;
     final MemoryUnit unit;
 
-    MemoryProperty(@NotNull String type, @NotNull String value, @Nullable String unit) {
+    private MemoryProperty(@NotNull String type, long value, @Nullable String unit) {
       this.type = type;
       this.unit = unit != null ? MemoryUnit.valueOf(unit.toUpperCase()) : MemoryUnit.B;
-      this.valueBytes = Long.parseLong(value) * this.unit.ratio;
+      this.valueBytes = value * this.unit.ratio;
     }
 
-    MemoryProperty updateValue(long valueBytes) {
-      return new MemoryProperty(type, String.valueOf(valueBytes), null);
+    @NotNull
+    public static MemoryProperty of(@NotNull MemoryPropertyType propertyType, long bytes) {
+      return new MemoryProperty(propertyType.type, bytes, MemoryUnit.B.name());
+    }
+
+    @Nullable
+    public static MemoryProperty valueOf(@Nullable String value) {
+      if (value == null) return null;
+      Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
+      if (matcher.find()) {
+        return new MemoryProperty(matcher.group(1), Long.valueOf(matcher.group(2)), matcher.group(3));
+      }
+      LOG.warn(value + " not match " + MEMORY_PROPERTY_PATTERN);
+      return null;
     }
 
     @Override
@@ -270,6 +280,14 @@ public class MavenServerCMDState extends CommandLineState {
       final int ratio;
       MemoryUnit(int ratio) {
         this.ratio = ratio;
+      }
+    }
+
+    private enum MemoryPropertyType {
+      XMX("-Xmx"), XMS("-Xms");
+      private final String type;
+      MemoryPropertyType(String type) {
+        this.type = type;
       }
     }
   }

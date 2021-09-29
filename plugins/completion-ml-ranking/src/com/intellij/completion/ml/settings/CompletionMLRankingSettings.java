@@ -94,9 +94,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public void loadState(@NotNull State state) {
     myState.rankingEnabled = state.rankingEnabled;
     myState.showDiff = state.showDiff;
-    state.language2state.forEach((rankerId, enabled) -> {
-      myState.language2state.put(rankerId, enabled);
-    });
+    myState.language2state.putAll(state.language2state);
   }
 
   private void logCompletionState(@NotNull String languageName, boolean isEnabled) {

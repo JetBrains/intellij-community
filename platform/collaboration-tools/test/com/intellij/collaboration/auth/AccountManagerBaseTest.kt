@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.collaboration.api.ServerPath
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
 import org.junit.Before
 import org.junit.Test
@@ -31,7 +29,7 @@ class AccountManagerBaseTest {
     @Suppress("UNCHECKED_CAST")
     accountsListener = mock(AccountsListener::class.java) as AccountsListener<MockAccount>
     manager = TestManager(accountsRepository, passwordSafe).apply {
-      addListener(Disposer.newDisposable(), accountsListener)
+      addListener(accountsListener)
     }
   }
 

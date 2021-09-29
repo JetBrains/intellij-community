@@ -62,16 +62,6 @@ class MavenStructureWizardStep(
     }
   }
 
-  override fun ValidationInfoBuilder.validateName(): ValidationInfo? {
-    val moduleNames = findAllModules().map { it.name }.toSet()
-    if (entityName in moduleNames) {
-      val message = MavenWizardBundle.message("maven.structure.wizard.entity.name.exists.error",
-                                              context.presentationName.capitalize(), entityName)
-      return error(message)
-    }
-    return superValidateName()
-  }
-
   override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
     return validateCoordinates() ?: superValidateGroupId()
   }
@@ -88,12 +78,6 @@ class MavenStructureWizardStep(
       return error(message)
     }
     return null
-  }
-
-  private fun findAllModules(): List<Module> {
-    val project = context.project ?: return emptyList()
-    val moduleManager = ModuleManager.getInstance(project)
-    return moduleManager.modules.toList()
   }
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {

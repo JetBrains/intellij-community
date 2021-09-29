@@ -136,7 +136,7 @@ inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
   for (item in module.dependencies.modules) {
     val dep = pluginSet.findEnabledModule(item.name)
     if (dep != null) {
-      processor(dep.requireDescriptor())
+      processor(dep)
     }
   }
   for (item in module.dependencies.plugins) {

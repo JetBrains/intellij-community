@@ -17,9 +17,19 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.KotlinSimpleGetterDetector.isSimpleGetter
-import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.function.Function
 
 class KotlinClassRenderer : ClassRenderer() {
+    init {
+        setIsApplicableChecker(Function { type: Type? ->
+            if (type is ReferenceType && type !is ArrayType) {
+                return@Function type.isInKotlinSourcesAsync()
+            }
+            CompletableFuture.completedFuture(false)
+        })
+    }
+
     override fun buildChildren(value: Value?, builder: ChildrenBuilder, evaluationContext: EvaluationContext) {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (value !is ObjectReference) {
@@ -60,8 +70,7 @@ class KotlinClassRenderer : ClassRenderer() {
         return renderer.calcLabel(descriptor, evaluationContext, labelListener)
     }
 
-    override fun isApplicable(type: Type?): Boolean =
-        type is ReferenceType && type !is ArrayType && type.isInKotlinSources()
+    override fun isApplicable(type: Type?) = throw IllegalStateException("Should not be called")
 
     override fun shouldDisplay(context: EvaluationContext?, objInstance: ObjectReference, field: Field): Boolean {
         val referenceType = objInstance.referenceType()

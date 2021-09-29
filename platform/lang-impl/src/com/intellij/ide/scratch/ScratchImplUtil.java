@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,5 +71,27 @@ public final class ScratchImplUtil {
   @NotNull
   public static String getRelativePath(@NotNull Project project, @NotNull VirtualFile file) {
     return ScratchUtil.getRelativePath(project, file);
+  }
+
+  @NotNull
+  static String getNextAvailableName(@NotNull VirtualFile dir, @NotNull String fileName, @NotNull String extension) {
+    TIntHashSet existing = new TIntHashSet();
+    int fileNameLen = fileName.length();
+    for (VirtualFile child : dir.getChildren()) {
+      String childName = child.getNameWithoutExtension();
+      if (!StringUtil.startsWithIgnoreCase(childName, fileName)) continue;
+      if (childName.length() == fileNameLen) {
+        existing.add(0);
+      }
+      else if (childName.length() > fileNameLen + 1 &&
+               childName.charAt(fileNameLen) == '_') {
+        int val = StringUtil.parseInt(childName.substring(fileNameLen + 1), -1);
+        if (val > -1) existing.add(val);
+      }
+    }
+    int num = 0;
+    while (existing.contains(num)) num++;
+
+    return PathUtil.makeFileName(num == 0 ? fileName : fileName + "_" + num, extension);
   }
 }

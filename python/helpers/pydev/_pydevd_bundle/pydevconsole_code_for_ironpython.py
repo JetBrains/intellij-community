@@ -211,7 +211,7 @@ class CommandCompiler:
 
 
 
-__all__ = ["InteractiveInterpreter", "InteractiveConsole", "interact",
+__all__ = ["IronPythonInteractiveInterpreter", "IronPythonInteractiveConsole", "interact",
            "compile_command"]
 
 def softspace(file, newvalue):
@@ -227,7 +227,7 @@ def softspace(file, newvalue):
         pass
     return oldvalue
 
-class InteractiveInterpreter:
+class IronPythonInteractiveInterpreter:
     """Base class for InteractiveConsole.
 
     This class deals with parsing and interpreter state (the user's
@@ -373,7 +373,7 @@ class InteractiveInterpreter:
         sys.stderr.write(data)
 
 
-class InteractiveConsole(InteractiveInterpreter):
+class IronPythonInteractiveConsole(IronPythonInteractiveInterpreter):
     """Closely emulate the behavior of the interactive Python interpreter.
 
     This class builds on InteractiveInterpreter and adds prompting
@@ -391,7 +391,7 @@ class InteractiveConsole(InteractiveInterpreter):
         of the input stream; it will show up in tracebacks.
 
         """
-        InteractiveInterpreter.__init__(self, locals)
+        IronPythonInteractiveInterpreter.__init__(self, locals)
         self.filename = filename
         self.resetbuffer()
 
@@ -497,7 +497,7 @@ def interact(banner=None, readfunc=None, local=None):
     local -- passed to InteractiveInterpreter.__init__()
 
     """
-    console = InteractiveConsole(local)
+    console = IronPythonInteractiveConsole(local)
     if readfunc is not None:
         console.raw_input = readfunc
     else:

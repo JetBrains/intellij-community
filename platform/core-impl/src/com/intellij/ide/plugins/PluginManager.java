@@ -193,7 +193,7 @@ public final class PluginManager {
                                                 boolean withOptionalDeps,
                                                 @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
     @NotNull PluginSet pluginSet = PluginManagerCore.getPluginSet();
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = CachingSemiGraphKt.createPluginIdGraph(pluginSet.loadedPlugins, pluginSet,
+    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = CachingSemiGraphKt.createPluginIdGraph(pluginSet.enabledPlugins, pluginSet,
                                                                                                   withOptionalDeps);
     Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
     Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();

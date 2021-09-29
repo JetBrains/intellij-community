@@ -1,26 +1,28 @@
 <html>
 <body>
 Reports <a href="https://www.c2.com/cgi/wiki?DoubleBraceInitialization">Double Brace Initialization</a>.
-Double brace initialization can cause memory leaks when used from a non-static context,
-because the anonymous class created will maintain a reference to the surrounding object.
-It has worse performance than regular initialization because of the additional class loading required.
-It can cause <code>equals()</code> comparisons to fail, if the <code>equals()</code> method does not accept subclasses as parameter
-(see link above).
-And finally, before Java 9 it could not be combined with the diamond operator, because that could not be used with anonymous classes.
-<p>Example:</p>
-<pre>
+<p>Double brace initialization may cause memory leaks when used in a non-static context because it creates an anonymous class
+  that will reference the surrounding object.</p>
+<p>Compared to regular initialization, double brace initialization provides worse performance since it requires loading an
+  additional class.</p>
+<p>It may also cause failure of <code>equals()</code> comparisons if the <code>equals()</code> method doesn't accept subclasses as
+  parameters.</p>
+<p>In addition, before Java 9, double brace initialization couldn't be combined with the diamond operator since it was incompatible
+  with anonymous classes.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   List&lt;Integer&gt; list = new ArrayList&lt;&gt;() {{
     add(1);
     add(2);
   }};
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   List&lt;Integer&gt; list = new ArrayList&lt;&gt;();
   list.add(1);
   list.add(2);
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

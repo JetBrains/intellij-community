@@ -280,6 +280,7 @@ public final class NewRunConfigurationPopup {
       };
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.POPUP, new DefaultActionGroup(collapseAllAction), true);
+    toolbar.setTargetComponent(treePopup.getComponent());
     toolbar.setMiniMode(true);
     treePopup.getTitle().setButtonComponent(new ActiveComponent() {
       @Override

@@ -38,9 +38,6 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
 
-    // Presentation settings
-    var ENABLE_SYNC_SCROLL: Boolean = true,
-
     // Editor settings
     var SHOW_WHITESPACES: Boolean = false,
     var SHOW_LINE_NUMBERS: Boolean = true,
@@ -68,16 +65,18 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Presentation settings
 
-    var isEnableSyncScroll: Boolean
-      get()      = PLACE_SETTINGS.ENABLE_SYNC_SCROLL
-      set(value) { PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value }
+    var isEnableSyncScroll: Boolean = true
 
     // Diff settings
 
-    var highlightPolicy: HighlightPolicy
-      get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
+    var highlightPolicy: HighlightPolicy = PLACE_SETTINGS.HIGHLIGHT_POLICY
+      set(value) {
+        field = value
+        if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
+          PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+        }
+        PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
+      }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY

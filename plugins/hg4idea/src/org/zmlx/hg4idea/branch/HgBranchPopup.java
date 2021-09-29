@@ -10,6 +10,7 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -50,20 +51,22 @@ public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    */
-  public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository) {
+  public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository, @NotNull DataContext dataContext) {
 
     HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
     HgProjectSettings hgProjectSettings = project.getService(HgProjectSettings.class);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
-    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse());
+    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse(), dataContext);
   }
 
   private HgBranchPopup(@NotNull HgRepository currentRepository,
                         @NotNull HgRepositoryManager repositoryManager,
                         @NotNull HgMultiRootBranchConfig hgMultiRootBranchConfig, @NotNull HgProjectSettings vcsSettings,
-                        @NotNull Condition<AnAction> preselectActionCondition) {
-    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY);
+                        @NotNull Condition<AnAction> preselectActionCondition,
+                        @NotNull DataContext dataContext) {
+    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY,
+          dataContext);
   }
 
   @Override

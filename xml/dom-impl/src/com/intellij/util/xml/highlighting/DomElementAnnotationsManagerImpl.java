@@ -83,7 +83,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
 
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         dropAnnotationsCache();
       }
     });

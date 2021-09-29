@@ -54,7 +54,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     checkEdtAndReadAction();
     Path wslExe = WSLDistribution.findWslExe();
     if (wslExe == null) {
-      throw new IOException("Cannot load WSL distributions with versions: wsl.exe is not found in %PATH%");
+      LOG.info("Cannot load WSL distributions with versions: wsl.exe is not found in %PATH%");
+      return List.of();
     }
 
     GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE);

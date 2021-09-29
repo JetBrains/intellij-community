@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.actions;
 
@@ -281,7 +281,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
     if (node.canNavigateToSource()) {
       SimpleColoredComponent renderer = new SimpleColoredComponent();
-      renderer.setIcon(group.getIcon(false));
+      renderer.setIcon(group.getIcon());
       SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
       renderer.append(group.getText(myUsageView), attributes);
       SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);

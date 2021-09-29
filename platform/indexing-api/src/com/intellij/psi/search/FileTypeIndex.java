@@ -9,7 +9,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,10 +48,5 @@ public final class FileTypeIndex {
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().processValues(NAME, fileType, null, (file, value) -> processor.process(file), scope);
-  }
-
-  @ApiStatus.Experimental
-  public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-    return FileBasedIndex.getInstance().processValues(NAME, fileType, null, (file, value) -> processor.process(file), scope, idFilter);
   }
 }

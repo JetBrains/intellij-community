@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
@@ -172,6 +173,20 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     return new ArrayList<>(myAllThreads.values());
+  }
+
+  public CompletableFuture<Collection<ThreadReferenceProxyImpl>> allThreadsAsync() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myAllThreadsDirty) {
+      return DebuggerUtilsAsync.allThreads(myVirtualMachine).thenApply(threads -> {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
+        threads.forEach(this::getThreadReferenceProxy); // add proxies
+        myAllThreadsDirty = false;
+        return new ArrayList<>(myAllThreads.values());
+      });
+    }
+
+    return CompletableFuture.completedFuture(new ArrayList<>(myAllThreads.values()));
   }
 
   public void threadStarted(ThreadReference thread) {

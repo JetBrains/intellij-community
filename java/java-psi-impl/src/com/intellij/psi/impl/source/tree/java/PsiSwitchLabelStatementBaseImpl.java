@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -8,6 +8,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,5 +62,10 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
     }
 
     return true;
+  }
+
+  @Override
+  public @Nullable PsiCaseLabelElementList getCaseLabelElementList() {
+    return PsiTreeUtil.getChildOfType(this, PsiCaseLabelElementList.class);
   }
 }

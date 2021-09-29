@@ -176,9 +176,7 @@ private fun startApp(app: ApplicationImpl,
       }
     })
     .thenRun {
-      if (!app.isHeadlessEnvironment) {
-        addActivateAndWindowsCliListeners()
-      }
+      addActivateAndWindowsCliListeners()
       initAppActivity.end()
 
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {

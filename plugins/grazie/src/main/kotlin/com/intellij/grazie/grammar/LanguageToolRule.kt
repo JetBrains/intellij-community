@@ -1,6 +1,8 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.*
 import kotlinx.html.style
@@ -12,8 +14,10 @@ import org.languagetool.rules.IncorrectExample
 import java.net.URL
 
 internal class LanguageToolRule(
-  private val ltRule: org.languagetool.rules.Rule, enabledByDefault: Boolean
-) : Rule(ltRule.id, ltRule.description, ltRule.category.name, enabledByDefault) {
+  private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, ltRule.category.name) {
+
+  override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
 
   override fun getUrl(): URL? = ltRule.url
 

@@ -21,13 +21,16 @@ open class RuleGroup(rules: Set<String>) {
      */
     const val SENTENCE_END_PUNCTUATION = "PUNCTUATION_PARAGRAPH_END"
 
+    /** An abstract category for all rules that report sentences starting with an unexpected punctuation (e.g. a semicolon). */
+    const val UNLIKELY_OPENING_PUNCTUATION = "UNLIKELY_OPENING_PUNCTUATION"
+
     val EMPTY = RuleGroup()
 
     /** Rules for checking casing errors */
     val CASING = RuleGroup(SENTENCE_START_CASE)
 
     /** Rules for checking punctuation errors */
-    val PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, "UNLIKELY_OPENING_PUNCTUATION")
+    val PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, UNLIKELY_OPENING_PUNCTUATION)
 
     /** Rules that are usually disabled for literal strings */
     val LITERALS = CASING + PUNCTUATION

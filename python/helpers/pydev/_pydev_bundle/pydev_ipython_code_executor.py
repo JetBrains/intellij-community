@@ -2,7 +2,7 @@ import sys
 import traceback
 
 from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
-from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
 from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 
@@ -11,17 +11,17 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 # TODO reuse `CodeExecutor` in `InterpreterInterface` in pydev_ipython_console.py
 #=======================================================================================================================
-# CodeExecutor
+# IPythonCodeExecutor
 #=======================================================================================================================
-class CodeExecutor(BaseCodeExecutor):
+class IPythonCodeExecutor(BaseCodeExecutor):
     '''
         The methods in this class should be registered in the xml-rpc server.
     '''
 
     def __init__(self, show_banner=True, rpc_client=None):
-        super(CodeExecutor, self).__init__()
+        super(IPythonCodeExecutor, self).__init__()
 
-        self.interpreter = get_pydev_frontend(rpc_client)
+        self.interpreter = get_pydev_ipython_frontend(rpc_client)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0

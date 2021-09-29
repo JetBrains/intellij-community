@@ -9,14 +9,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.PresentableChange;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,22 +78,22 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
     @Override
-    public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
+    public @NotNull List<? extends PresentableChange> getChanges() {
       return getAllChanges()
-        .map(wrapper -> wrapper.createProducer(getProject()))
+        .map(wrapper -> ObjectUtils.tryCast(wrapper.createProducer(getProject()), ChangeDiffRequestChain.Producer.class))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
     }
 
     @Override
-    public void selectFilePath(@NotNull FilePath filePath) {
-      VcsLogChangeProcessor.this.selectFilePath(filePath);
+    public void select(@NotNull PresentableChange change) {
+      VcsLogChangeProcessor.this.selectFilePath(change.getFilePath());
     }
 
     @Nullable
     @Override
-    public FilePath getSelectedFilePath() {
-      return VcsLogChangeProcessor.this.getSelectedFilePath();
+    public PresentableChange getSelectedChange() {
+      return VcsLogChangeProcessor.this.getCurrentChange();
     }
   }
 

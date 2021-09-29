@@ -12,11 +12,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -66,16 +66,13 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           }
         }
         for (Module module : ModuleManager.getInstance(project).getModules()) {
-          LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
-          if (moduleExtension != null) {
-            LanguageLevel level = moduleExtension.getLanguageLevel();
-            if (level != null) {
-              if (!isLanguageLevelAccepted(level)) {
-                unacceptedLevels.putValue(level, module);
-              }
-              if (level.isPreview()) {
-                previewLevels.add(level);
-              }
+          LanguageLevel level = LanguageLevelUtil.getCustomLanguageLevel(module);
+          if (level != null) {
+            if (!isLanguageLevelAccepted(level)) {
+              unacceptedLevels.putValue(level, module);
+            }
+            if (level.isPreview()) {
+              previewLevels.add(level);
             }
           }
         }
@@ -200,7 +197,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
       LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+        LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
         if (languageLevel != null && !isLanguageLevelAccepted(languageLevel)) {
           LanguageLevel newLanguageLevel = highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
           service.changeLanguageLevel(module, newLanguageLevel);

@@ -1725,12 +1725,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter);
       hint.setResetIgnoreFilters(myMethodFilter != null && !mySession.shouldIgnoreSteppingFilters());
       if (myForcedIgnoreFilters) {
-        try {
-          mySession.setIgnoreStepFiltersFlag(stepThread.frameCount());
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
+        mySession.setIgnoreStepFiltersFlag(getFrameCount(stepThread, suspendContext));
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(stepThread);

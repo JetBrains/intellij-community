@@ -117,11 +117,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   @Override
   public Document createDefaultDocument() {
     StyleSheet styles = getStyleSheet();
-    // static class instead anonymous for exclude $this [memory leak]
     StyleSheet ss = new StyleSheetCompressionThreshold();
     ss.addStyleSheet(styles);
 
-    HTMLDocument doc = myDisableLinkedCss ? new HTMLDocumentNoLinkedCss(ss) : new HTMLDocument(ss);
+    HTMLDocument doc = new OurDocument(ss);
     doc.setParser(getParser());
     doc.setAsynchronousLoadPriority(4);
     doc.setTokenThreshold(100);
@@ -189,16 +188,13 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     super.deinstall(c);
   }
 
-  private class StyleSheetCompressionThreshold extends StyleSheet {
+  // This needs to be a static class to avoid memory leaks.
+  // It's because StyleSheet instance gets leaked into parent (global) StyleSheet
+  // due to JDK implementation nuances (see javax.swing.text.html.CSS#getStyleSheet)
+  private static class StyleSheetCompressionThreshold extends StyleSheet {
     @Override
     protected int getCompressionThreshold() {
       return -1;
-    }
-
-    @Override
-    public Font getFont(AttributeSet a) {
-      Font font = super.getFont(a);
-      return myFontResolver == null ? font : myFontResolver.getFont(font, a);
     }
   }
 
@@ -439,22 +435,30 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static final class HTMLDocumentNoLinkedCss extends HTMLDocument {
-    private HTMLDocumentNoLinkedCss(StyleSheet styles) {
+  private final class OurDocument extends HTMLDocument {
+    private OurDocument(StyleSheet styles) {
       super(styles);
     }
 
     @Override
+    public Font getFont(AttributeSet a) {
+      Font font = super.getFont(a);
+      return myFontResolver == null ? font : myFontResolver.getFont(font, a);
+    }
+
+    @Override
     public ParserCallback getReader(int pos) {
-      return new CallbackWrapper(super.getReader(pos));
+      ParserCallback reader = super.getReader(pos);
+      return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     @Override
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
-      return new CallbackWrapper(super.getReader(pos, popDepth, pushDepth, insertTag));
+      ParserCallback reader = super.getReader(pos, popDepth, pushDepth, insertTag);
+      return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
-    private static final class CallbackWrapper extends ParserCallback {
+    private final class CallbackWrapper extends ParserCallback {
       private final ParserCallback delegate;
       private int depth;
 

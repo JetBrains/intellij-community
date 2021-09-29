@@ -3,7 +3,6 @@ package org.jetbrains.idea.eclipse.config
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.toPath
@@ -28,8 +27,7 @@ internal class EmlFileLoader(
   private val virtualFileManager: VirtualFileUrlManager
 ) {
   fun loadEml(emlTag: Element, contentRoot: ContentRootEntity) {
-    loadLanguageLevel(emlTag)
-    loadCompilerSettings(emlTag)
+    loadCustomJavaSettings(emlTag)
     loadContentEntries(emlTag, contentRoot)
     loadJdkSettings(emlTag)
 
@@ -143,8 +141,8 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadCompilerSettings(emlTag: Element) {
-    val javaSettings = module.javaSettings ?: builder.addJavaModuleSettingsEntity(true, true, null, null, module, module.entitySource)
+  private fun loadCustomJavaSettings(emlTag: Element) {
+    val javaSettings = module.javaSettings ?: builder.addJavaModuleSettingsEntity(true, true, null, null, null, module, module.entitySource)
     builder.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, javaSettings) {
       val testOutputElement = emlTag.getChild(IdeaXml.OUTPUT_TEST_TAG)
       if (testOutputElement != null) {
@@ -157,22 +155,8 @@ internal class EmlFileLoader(
       }
 
       excludeOutput = emlTag.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null
-    }
-  }
 
-  private fun loadLanguageLevel(emlTag: Element) {
-    val languageLevelAttribute = emlTag.getAttributeValue("LANGUAGE_LEVEL")
-    if (languageLevelAttribute != null) {
-      val languageLevelTag = JDOMUtil.write(Element("component").setAttribute("LANGUAGE_LEVEL", languageLevelAttribute))
-      val customImlData = module.customImlData
-      if (customImlData != null) {
-        builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlData) {
-          rootManagerTagCustomData = languageLevelTag
-        }
-      }
-      else {
-        builder.addModuleCustomImlDataEntity(languageLevelTag, emptyMap(), module, module.entitySource)
-      }
+      languageLevelId = emlTag.getAttributeValue("LANGUAGE_LEVEL")
     }
   }
 

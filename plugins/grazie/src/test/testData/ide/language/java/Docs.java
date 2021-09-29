@@ -3,6 +3,8 @@
  * <p>
  * This class has no useful logic; it's just a documentation example.
  *
+ * This is thought to be a great news, e.g. a new invention.
+ *
  * @param T the type of member in this group.
  */
 class ExampleClassWithNoTypos<T> {

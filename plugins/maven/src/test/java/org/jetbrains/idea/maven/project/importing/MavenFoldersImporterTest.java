@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project.importing;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -451,7 +452,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
   }
 
   @Test 
@@ -502,7 +503,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
   }
 
   private void updateProjectFolders() {

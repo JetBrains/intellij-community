@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +18,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /**
    * Returns the constants associated with the {@code case} block,
-   * or {@code null} if the statement is incomplete or the element represents a {@code default} section.
+   * or {@code null} if the statement is incomplete, the element represents a {@code default} section or it is a pattern rule.
    */
   @Nullable PsiExpressionList getCaseValues();
 
@@ -48,4 +48,9 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
     PsiSwitchBlock block = getEnclosingSwitchBlock();
     return block instanceof PsiSwitchStatement ? (PsiSwitchStatement)block : null;
   }
+
+  /**
+   * @return list of case labels or null if it is old style constant list or it is incomplete
+   */
+  @Nullable PsiCaseLabelElementList getCaseLabelElementList();
 }

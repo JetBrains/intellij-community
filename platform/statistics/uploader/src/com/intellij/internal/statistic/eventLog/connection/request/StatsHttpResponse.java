@@ -1,26 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.utils.DateUtils;
-import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.stream.Stream;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class StatsHttpResponse {
-  private final HttpResponse myResponse;
-  private final int myCode;
+  private static final SimpleDateFormat RFC1123_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+  private static final SimpleDateFormat RFC1036_FORMAT = new SimpleDateFormat("EEE, dd-MMM-yy HH:mm:ss zzz");
+  private static final SimpleDateFormat ASCTIME_FORMAT = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
+  private static final SimpleDateFormat[] DATE_FORMATS = new SimpleDateFormat[]{RFC1123_FORMAT, RFC1036_FORMAT, ASCTIME_FORMAT};
 
-  public StatsHttpResponse(@Nullable HttpResponse response, int code) {
-    myResponse = response;
+  private final HttpResponse<String> myHttpResponse;
+  private final int myCode;
+  public StatsHttpResponse(@Nullable HttpResponse<String> httpResponse, int code) {
+    myHttpResponse = httpResponse;
     myCode = code;
   }
 
@@ -30,24 +31,30 @@ public class StatsHttpResponse {
 
   @Nullable
   public Long lastModified() {
-    if (myResponse == null) return null;
-    Header[] headers = myResponse.getHeaders(HttpHeaders.LAST_MODIFIED);
-    return Stream.of(headers).
-      map(header -> header.getValue()).
-      filter(Objects::nonNull).
-      map(value -> DateUtils.parseDate(value).getTime()).
+    return myHttpResponse == null ? null : myHttpResponse.headers().
+      allValues("Last-Modified").stream().
+      map(value -> parseDate(value)).filter(date -> date != null).map(date -> date.getTime()).
       max(Long::compareTo).orElse(null);
   }
 
   @Nullable
   public String readAsString() throws IOException {
-    HttpEntity entity = myResponse != null ? myResponse.getEntity() : null;
-    return entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+    return  myHttpResponse != null && myHttpResponse.body() != null ? myHttpResponse.body() : null;
   }
 
   @Nullable
   public InputStream read() throws IOException {
-    HttpEntity entity = myResponse != null ? myResponse.getEntity() : null;
-    return entity != null ? entity.getContent() : null;
+    return myHttpResponse != null && myHttpResponse.body() != null
+           ? new ByteArrayInputStream(myHttpResponse.body().getBytes(StandardCharsets.UTF_8)) : null;
+  }
+
+  private static @Nullable Date parseDate(String string) {
+    for (SimpleDateFormat format : DATE_FORMATS) {
+      Date date = format.parse(string, new ParsePosition(0));
+      if (date != null) {
+        return date;
+      }
+    }
+    return null;
   }
 }

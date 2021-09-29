@@ -1,31 +1,27 @@
 <html>
 <body>
-Reports any methods which override methods in a superclass but do not have the
-<code>@java.lang.Override</code> annotation.
+  Reports methods overriding superclass methods without the
+  <code>@java.lang.Override</code> annotation.
 <p>
-  Having annotation is good for readability because it shows intent. Also in this
-  case compiler emits error when signature of the overridden method doesn't match
-  super class method.
+  Annotating methods improves code readability since it shows the intent. In addition, the compiler emits an error when a signature
+  of the overridden method doesn't match the superclass method.
 </p>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>
   <li>
-    Use the first checkbox below to have this inspection ignore the
-    <code>java.lang.Object</code> methods
-    <code>equals()</code>,
-    <code>hashCode()</code> and
-    <code>toString()</code>. The risk that these methods will disappear and thus
+    Use the <b>Ignore 'equals()', 'hashCode()' and 'toString()'</b> option to ignore these
+    <code>java.lang.Object</code> methods: <code>equals()</code>, <code>hashCode()</code>, and
+    <code>toString()</code>. The risk that these methods will disappear and
     your code won't be compiling anymore due to the <code>@Override</code>
-    annotation is vanishingly small.
+    annotation is relatively small.
   </li>
   <li>
-    Use the second checkbox below to have this inspection ignore overriding methods
-    in anonymous classes. It might be useful for you if you want anonymous classes
-    to be as short as possible.
+    Use the <b>Ignore methods in anonymous classes</b> option to ignore methods
+    in anonymous classes.
   </li>
 </ul>
-<p>This inspection only reports if the language level of the project or module is 5 or higher</p>
+<p>This inspection is only applicable if the language level of a project or module is five or higher.</p>
 
 </body>
 </html>

@@ -8,10 +8,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
 import git4idea.index.GitStageTracker
@@ -19,10 +23,17 @@ import git4idea.index.GitStageTrackerListener
 import git4idea.index.createTwoSidesDiffRequestProducer
 import java.util.stream.Stream
 
-class GitStageDiffPreview(project: Project, private val tree: GitStageTree, tracker: GitStageTracker, parent: Disposable) :
+class GitStageDiffPreview(project: Project,
+                          private val tree: GitStageTree,
+                          tracker: GitStageTracker,
+                          isInEditor: Boolean,
+                          parent: Disposable) :
   ChangeViewDiffRequestProcessor(project, "Stage") {
 
   init {
+    if (!isInEditor) {
+      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
     tree.addSelectionListener(Runnable {
       val modelUpdateInProgress = tree.isModelUpdateInProgress
       runInEdtAsync(this) { updatePreview(component.isShowing, modelUpdateInProgress) }
@@ -55,17 +66,17 @@ class GitStageDiffPreview(project: Project, private val tree: GitStageTree, trac
   }
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getActualProducers(): List<DiffRequestProducer> {
+    override fun getChanges(): List<PresentableChange> {
       return tree.statusNodesListSelection(true)
         .map { createTwoSidesDiffRequestProducer(project, it) }.list
     }
 
-    override fun selectFilePath(filePath: FilePath) {
-      this@GitStageDiffPreview.selectFilePath(filePath)
+    override fun select(change: PresentableChange) {
+      this@GitStageDiffPreview.selectFilePath(change.filePath)
     }
 
-    override fun getSelectedFilePath(): FilePath? {
-      return this@GitStageDiffPreview.selectedFilePath
+    override fun getSelectedChange(): PresentableChange? {
+      return currentChange
     }
   }
 
@@ -81,6 +92,7 @@ class GitStageDiffPreview(project: Project, private val tree: GitStageTree, trac
     override fun getUserObject(): Any = node
 
     override fun getFilePath(): FilePath = node.filePath
+    override fun getFileStatus(): FileStatus = node.fileStatus
 
     override fun createProducer(project: Project?): DiffRequestProducer? {
       return createTwoSidesDiffRequestProducer(project!!, node)

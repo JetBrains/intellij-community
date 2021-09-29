@@ -55,7 +55,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
     GitRepository repo = Objects.requireNonNull(GitBranchUtil.getCurrentRepository(project));
 
-    ListPopup popup = GitBranchPopup.getInstance(project, repo).asListPopup();
+    ListPopup popup = GitBranchPopup.getInstance(project, repo, context).asListPopup();
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

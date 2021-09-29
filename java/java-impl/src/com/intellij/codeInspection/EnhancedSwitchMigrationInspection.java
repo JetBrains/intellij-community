@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -53,6 +53,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         ProblemHighlightType type = myWarnOnlyOnExpressionConversion && replacer.getType() == ReplacementType.Statement
                                     ? ProblemHighlightType.INFORMATION
                                     : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        if (!holder.isOnTheFly() && type == ProblemHighlightType.INFORMATION) return;
         List<LocalQuickFix> fixes = new ArrayList<>();
         fixes.add(new ReplaceWithSwitchExpressionFix(replacer.getType()));
         if (!myWarnOnlyOnExpressionConversion && replacer.getType() == ReplacementType.Statement) {

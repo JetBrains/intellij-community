@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -68,15 +69,22 @@ abstract class ProductProperties {
   boolean useSplash = false
 
   /**
-   * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
+   * Class-loader that product application should use by default.
+   * <p/>
+   * `com.intellij.util.lang.PathClassLoader` is used by default as
+   * it unifies class-loading logic of an application and allows to avoid double-loading of bootstrap classes.
    */
-  String additionalIdeJvmArguments = ""
+  @Nullable String classLoader = "com.intellij.util.lang.PathClassLoader"
 
   /**
-   * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers
-   * for all operating systems.
+   * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
    */
-  String customJvmMemoryOptionsX64 = null
+  List<String> additionalIdeJvmArguments = []
+
+  /**
+   * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
+   */
+  Map<String, String> customJvmMemoryOptions = [:]
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name

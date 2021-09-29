@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -16,7 +14,6 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -237,14 +234,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       myZoomer.paint(g);
     }
     else {
-      if (LoadingState.APP_STARTED.isOccurred()) {
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
-          super.paint(g);
-        }
-      }
-      else {
-        super.paint(g);
-      }
+      super.paint(g);
 
       if (myEmptyText != null) {
         myEmptyText.paint(this, g);

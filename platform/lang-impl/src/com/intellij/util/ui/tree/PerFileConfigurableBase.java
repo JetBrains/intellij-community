@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -610,6 +610,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
+    return createActionPanel(editor, changeAction);
+  }
+
+  protected JPanel createActionPanel(AnAction changeAction) {
+    return createActionPanel(false, changeAction);
+  }
+
+  private @NotNull JPanel createActionPanel(boolean editor, AnAction changeAction) {
     JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(
       changeAction.getTemplatePresentation(), ActionPlaces.UNKNOWN);
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -712,45 +720,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @NotNull
   protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
-    return new ComboBoxAction() {
-      void updateText(Presentation p) {
-        String text = renderValue(value.get(), StringUtil.notNullize(getNullValueText(target)));
-        p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        updateText(getTemplatePresentation());
-      }
-
-      @NotNull
-      @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
-        return new ComboBoxButton(presentation) {
-          @Override
-          protected @NotNull JBPopup createPopup(Runnable onDispose) {
-            JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
-              value.set(o);
-              updateText(presentation);
-            }, value::commit);
-            popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
-            return popup;
-          }
-
-          @Nullable
-          @Override
-          public String getToolTipText() {
-            boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
-            return cellEditor ? null : getToolTipFor(value.get());
-          }
-        };
-      }
-    };
+    return new PerFileConfigurableComboBoxAction(value, target, StringUtil.notNullize(getNullValueText(target)));
   }
 
   @NotNull
@@ -883,6 +853,58 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     public void fireTableDataChanged() {
       data.sort((o1, o2) -> StringUtil.naturalCompare(keyToString(o1.first), keyToString(o2.first)));
       super.fireTableDataChanged();
+    }
+  }
+
+  public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
+    private final @NotNull Value<T> myValue;
+    private @Nullable final Object myTarget;
+    private final @NlsActions.ActionText @NotNull String myNullValue;
+
+    public PerFileConfigurableComboBoxAction(@NotNull Value<T> value,
+                                             @Nullable Object target,
+                                             @NotNull @NlsActions.ActionText String nullValue) {
+      myValue = value;
+      myTarget = target;
+      myNullValue = nullValue;
+    }
+
+    private void updateText(Presentation p) {
+      final String text = renderValue(myValue.get(), myNullValue);
+      p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
+    }
+
+    @Override
+    public final void update(@NotNull AnActionEvent e) {
+      updateText(getTemplatePresentation());
+    }
+
+    @NotNull
+    @Override
+    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected final @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+      return new ComboBoxButton(presentation) {
+        @Override
+        protected @NotNull JBPopup createPopup(Runnable onDispose) {
+          JBPopup popup = createValueEditorPopup(myTarget, myValue.get(), onDispose, getDataContext(), o -> {
+            myValue.set(o);
+            updateText(presentation);
+          }, myValue::commit);
+          popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+          return popup;
+        }
+
+        @Nullable
+        @Override
+        public String getToolTipText() {
+          boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
+          return cellEditor ? null : getToolTipFor(myValue.get());
+        }
+      };
     }
   }
 }

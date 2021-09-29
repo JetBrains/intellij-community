@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
@@ -28,6 +29,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
@@ -38,9 +40,12 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.cloneDialog.*
+import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Account
 import com.intellij.util.ui.cloneDialog.AccountMenuItem.Action
+import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
+import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
+import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
@@ -127,22 +132,33 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   protected val content: JComponent get() = wrapper.targetComponent
 
   init {
-    val listWithSearchBundle = ListWithSearchComponent(originListModel, GHRepositoryListCellRenderer { getAccounts() })
-
-    repositoryList = listWithSearchBundle.list
-    val mouseAdapter = GHRepositoryMouseAdapter(repositoryList)
-    repositoryList.addMouseListener(mouseAdapter)
-    repositoryList.addMouseMotionListener(mouseAdapter)
-    repositoryList.addListSelectionListener {
-      if (it.valueIsAdjusting) return@addListSelectionListener
-      updateSelectedUrl()
+    repositoryList = JBList(originListModel).apply {
+      cellRenderer = GHRepositoryListCellRenderer { getAccounts() }
+      isFocusable = false
+      selectionModel = SingleSelectionModel()
+    }.also {
+      val mouseAdapter = GHRepositoryMouseAdapter(it)
+      it.addMouseListener(mouseAdapter)
+      it.addMouseMotionListener(mouseAdapter)
+      it.addListSelectionListener { evt ->
+        if (evt.valueIsAdjusting) return@addListSelectionListener
+        updateSelectedUrl()
+      }
     }
 
-    searchField = listWithSearchBundle.searchField
-    searchField.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) = updateSelectedUrl()
-    })
-    createFocusFilterFieldAction(searchField)
+    searchField = SearchTextField(false).also {
+      it.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) = updateSelectedUrl()
+      })
+      createFocusFilterFieldAction(it)
+    }
+
+    CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) {
+      when (it) {
+        is GHRepositoryListItem.Repo -> it.repo.fullName
+        is GHRepositoryListItem.Error -> ""
+      }
+    }
 
     progressManager = object : ProgressVisibilityManager() {
       override fun setProgressVisible(visible: Boolean) = repositoryList.setPaintBusy(visible)

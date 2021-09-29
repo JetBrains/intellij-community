@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -8,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -110,6 +113,12 @@ final class VfsEventGenerationHelper {
         Path path = Paths.get(projectRootPath);
         if (child.startsWith(path)) return true;
       }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        for (VirtualFile contentRoot : ProjectRootManager.getInstance(openProject).getContentRoots()) {
+          Path nioContentRoot = LocalFileSystem.getInstance().getNioPath(contentRoot);
+          if (nioContentRoot != null && child.startsWith(nioContentRoot)) return true;
+        }
+      }
     }
     return false;
   }
@@ -141,6 +150,16 @@ final class VfsEventGenerationHelper {
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (!dir.equals(root)) {
           visitFile(dir, attrs);
+        }
+        if (SystemInfo.isWindows) {
+          // Even though Files.walkFileTree does not follow symbolic links, but it follows Windows Junctions for some reason.
+          // We shouldn't follow any links (including Windows Junctions) to avoid possible performance issues
+          // caused by symlink configuration leading to exponential amount of visited files.
+          // `BasicFileAttribute.isSymbolicLink()` doesn't support Windows Junctions.
+          FileAttributes attributes = FileSystemUtil.getAttributes(dir.toString());
+          if (attributes != null && attributes.isSymLink()) {
+            return FileVisitResult.SKIP_SUBTREE;
+          }
         }
         // on average, this "excluded" array is very small for any particular root, so linear search it is.
         if (excluded.contains(dir)) {

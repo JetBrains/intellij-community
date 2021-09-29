@@ -4,8 +4,10 @@ package com.intellij.vcs.log.util
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.jetbrains.annotations.ApiStatus
 
-
+@Deprecated("Used only to migrate old user filters persistence format to a new one")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 object FilterConfigMigrationUtil {
   private const val RECENT_USER_FILTER_NAME = "User"
 
