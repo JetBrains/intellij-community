@@ -30,8 +30,10 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.content.*
+import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
@@ -44,7 +46,6 @@ import java.util.function.Predicate
 import javax.swing.Icon
 
 private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
-private val CLOSE_LISTENER_KEY: Key<ContentManagerListener> = Key.create("CloseListener")
 
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
@@ -135,6 +136,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
       id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
+    UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
