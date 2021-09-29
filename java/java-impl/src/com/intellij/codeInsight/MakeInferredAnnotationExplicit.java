@@ -95,14 +95,26 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
-    makeAnnotationsExplicit(project, file, owner);
+    doMakeAnnotationExplicit(project, file, owner);
   }
 
+  /**
+   * Explicitly adds inferred annotations to the code (if any). Creates write action inside, so should be run in write-thread.
+   *
+   * @param project current project
+   * @param file file
+   * @param owner annotation owner (e.g., PsiMethod)
+   */
   public void makeAnnotationsExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(owner)) return;
+    WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null,
+                                             () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+                                               () -> doMakeAnnotationExplicit(project, file, owner)), file);
+  }
+
+  private void doMakeAnnotationExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(owner)) return;
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
@@ -116,13 +128,10 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         return;
       }
 
-      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-        () -> {
-          PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(owner, qname);
-          assert target != null;
-          PsiElement element = target.addAnnotation(qname).replace(toInsert);
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
-        }), file);
+      PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(owner, qname);
+      assert target != null;
+      PsiElement element = target.addAnnotation(qname).replace(toInsert);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
     }
   }
 
@@ -141,10 +150,5 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
       return facade.getElementFactory().createAnnotationFromText("@" + nnnm.getDefaultNotNull(), null);
     }
     return annotation;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }
