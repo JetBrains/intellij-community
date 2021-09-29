@@ -14,9 +14,12 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import kotlin.text.StringsKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
@@ -28,7 +31,10 @@ import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 class YAMLFormattingContext {
@@ -79,6 +85,15 @@ class YAMLFormattingContext {
     getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
+  private static final TokenSet TOKENS_TO_SKIP = TokenSet.create(TokenType.WHITE_SPACE, YAMLTokenTypes.SEQUENCE_MARKER);
+
+  private static boolean isAfterKey(ASTNode node) {
+    List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, TreeUtil::prevLeaf).skip(1)
+      .dropWhile(n -> TOKENS_TO_SKIP.contains(n.getElementType())).limit(2).toList();
+    if (nodes.size() != 2) return false;
+    return YAMLTokenTypes.COLON.equals(nodes.get(0).getElementType()) && YAMLTokenTypes.SCALAR_KEY.equals(nodes.get(1).getElementType());
+  }
+
   @Nullable
   Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && endsWithTemplate(((ASTBlock)child1).getNode())) {
@@ -86,6 +101,11 @@ class YAMLFormattingContext {
     }
     
     if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
+      if (isAfterKey(((ASTBlock)child2).getNode())) {
+        IElementType parentType = Optional.of(parent)
+          .map(it -> ObjectUtils.tryCast(it, ASTBlock.class)).map(it -> it.getNode()).map(it -> it.getElementType()).orElse(null);
+        return mySpaceBuilder.getSpacing(parent, parentType, YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+      }
       return null;
     }
 
@@ -138,7 +158,7 @@ class YAMLFormattingContext {
   private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
     while (astNode != null) {
       if (astNode instanceof OuterLanguageElement) return true;
-      if (YAMLTokenTypes.SEQUENCE_MARKER.equals(astNode.getElementType()) || TokenType.WHITE_SPACE.equals(astNode.getElementType())) {
+      if (TOKENS_TO_SKIP.contains(astNode.getElementType())) {
         astNode = astNode.getTreeNext();
       }
       else {
