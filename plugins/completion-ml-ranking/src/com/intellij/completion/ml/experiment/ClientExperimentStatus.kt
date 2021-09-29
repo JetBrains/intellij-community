@@ -7,7 +7,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.util.*
 import kotlin.collections.HashMap
@@ -23,7 +22,7 @@ class ClientExperimentStatus : ExperimentStatus {
         }
 
         val experimentInfo = ClientExperimentStatus::class.java.classLoader.getResourceAsStream("experiment.json")!!.use {
-          Json.Default.decodeFromString<ExperimentConfig>(it.readAllBytes().toString(Charsets.UTF_8))
+          Json.Default.decodeFromString(ExperimentConfig.serializer(), it.readAllBytes().toString(Charsets.UTF_8))
         }
         checkExperimentGroups(experimentInfo)
         return experimentInfo
