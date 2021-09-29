@@ -268,6 +268,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Activity activity = StartUpMeasurer.startActivity("project data obtaining", ActivityCategory.GRADLE_IMPORT);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
     ProjectImportAction.AllModels allModels;
+    int errorsCount = 0;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
     try {
       allModels = buildActionRunner.fetchModels(
@@ -293,6 +294,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     catch (Throwable t) {
       buildFinishWaiter.countDown();
+      errorsCount += 1;
       throw t;
     }
     finally {
@@ -300,7 +302,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       activity.end();
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
-      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs);
+      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
 
@@ -311,10 +313,21 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     allModels.setBuildEnvironment(buildEnvironment);
+    final long startDataConversionTime = System.currentTimeMillis();
+    int resolversErrorsCount = 0;
     try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings)) {
       pathsConverter.mayBeApplyTo(allModels);
       return convertData(allModels, executionSettings, resolverCtx, gradleVersion,
                          tracedResolverChain, performanceTrace, isBuildSrcProject, useCustomSerialization);
+    } catch (Throwable t) {
+      resolversErrorsCount += 1;
+      throw t;
+    }
+    finally {
+      final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
+      performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
+      LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
+      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs, resolversErrorsCount);
     }
   }
 
@@ -327,7 +340,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             @NotNull PerformanceTrace performanceTrace,
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
-    final long startDataConversionTime = System.currentTimeMillis();
     Activity activity = StartUpMeasurer.startActivity("project data converting", ActivityCategory.GRADLE_IMPORT);
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
@@ -476,10 +488,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     activity.end();
-    final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
-    performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
-    LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
-    ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs);
     return projectDataNode;
   }
 

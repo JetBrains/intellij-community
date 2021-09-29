@@ -5,12 +5,10 @@ import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.DurationMs
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -70,15 +68,18 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
+
     @JvmStatic
-    fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long) =
-      phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs))
+    fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
+      phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
+        EventPair(Int("error_count"), errorCount))
 
     @JvmStatic
     fun logError(project: Project?, activityId: Long, throwable: Throwable) {
       val description = ThrowableDescription(throwable)
       val data = ArrayList<EventPair<*>>()
       data.add(activityIdField.with(activityId))
+      data.add(severityField.with("fatal"))
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
       data.add(EventFields.PluginInfo.with(if (pluginId == null) platformPlugin else getPluginInfoById(pluginId)))
