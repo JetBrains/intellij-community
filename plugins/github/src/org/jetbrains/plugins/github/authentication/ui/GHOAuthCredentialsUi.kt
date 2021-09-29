@@ -11,7 +11,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.GHOAuthRequest
 import org.jetbrains.plugins.github.authentication.GHOAuthService
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.Validator
@@ -57,7 +56,7 @@ internal class GHOAuthCredentialsUi(
   }
 
   private fun acquireToken(indicator: ProgressIndicator): String {
-    val credentialsFuture = GHOAuthService.instance.authorize(GHOAuthRequest())
+    val credentialsFuture = GHOAuthService.instance.authorize()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
     }
