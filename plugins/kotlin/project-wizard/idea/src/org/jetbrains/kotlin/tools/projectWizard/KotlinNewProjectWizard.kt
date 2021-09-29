@@ -114,6 +114,8 @@ class KotlinNewProjectWizard : NewProjectWizard {
 
         override val self = this
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
+        override val comment = JavaUiBundle.message("project.wizard.new.project.kotlin.comment")
+        override val commentLink = NewProjectWizardModuleBuilder.MODULE_BUILDER_ID
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
         override lateinit var sdkComboBox: Cell<JdkComboBox>

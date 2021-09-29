@@ -77,8 +77,9 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public interface Listener {
-    void buttonsUpdateRequested();
-    void nextStepRequested();
+    default void buttonsUpdateRequested() {};
+    default void nextStepRequested() {};
+    default void switchToRequested(@NotNull String placeId) {};
   }
 
   public WizardContext(@Nullable Project project, Disposable parentDisposable) {
@@ -156,6 +157,12 @@ public class WizardContext extends UserDataHolderBase {
   public void requestNextStep() {
     for (Listener listener : myListeners) {
       listener.nextStepRequested();
+    }
+  }
+
+  public void requestSwitchTo(@NotNull String placeId) {
+    for (Listener listener : myListeners) {
+      listener.switchToRequested(placeId);
     }
   }
 
