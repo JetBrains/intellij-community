@@ -264,7 +264,7 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  boolean allDirtyScopesAreNull(@NotNull Document document) {
+  public boolean allDirtyScopesAreNull(@NotNull Document document) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
 
