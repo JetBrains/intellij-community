@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
+import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
@@ -77,6 +78,11 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logError(project: Project?, activityId: Long, throwable: Throwable) {
       val description = ThrowableDescription(throwable)
+      val framesHash = if (throwable is ExternalSystemException) {
+        throwable.originalReason.hashCode()
+      } else {
+        description.getLastFrames(50).hashCode()
+      }
       val data = ArrayList<EventPair<*>>()
       data.add(activityIdField.with(activityId))
       data.add(severityField.with("fatal"))
@@ -85,8 +91,6 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
       data.add(EventFields.PluginInfo.with(if (pluginId == null) platformPlugin else getPluginInfoById(pluginId)))
       data.add(errorField.with(description.className))
       if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
-        val frames = description.getLastFrames(50)
-        val framesHash = frames.hashCode()
         data.add(errorHashField.with(framesHash))
       }
       else {

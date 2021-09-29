@@ -33,6 +33,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.gradle.api.ProjectConfigurationException;
+import org.gradle.tooling.BuildActionFailureException;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
@@ -803,7 +805,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (esException != null && esException != e) {
           LOG.info("\nCaused by: " + esException.getOriginalReason());
         }
-        ExternalSystemSyncActionsCollector.logError(null, activityId, e);
+        ExternalSystemSyncActionsCollector.logError(null, activityId, extractCause(e));
         ExternalSystemSyncActionsCollector.logSyncFinished(null, activityId, false);
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
@@ -812,6 +814,24 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myCancellationMap.remove(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
       }
     }
+  }
+
+  private static Throwable extractCause(Throwable e) {
+    if (e instanceof BuildActionFailureException) {
+      return extractCause(e.getCause());
+    }
+    // Exceptions returned by Gradle TAPI have classes loaded by a separate classloader
+    Class<? extends Throwable> exceptionClass = e.getClass();
+    if (exceptionClass.getName().equals(ProjectConfigurationException.class.getName())) {
+      try {
+        //noinspection unchecked
+        List<Throwable> causes = (List<Throwable>)exceptionClass.getMethod("getCauses").invoke(e);
+        return causes.get(0);
+      } catch (Throwable ignore) {
+        return e;
+      }
+    }
+    return e;
   }
 
   @ApiStatus.Experimental // chaining of resolver extensions complicates things and can be replaced in future
