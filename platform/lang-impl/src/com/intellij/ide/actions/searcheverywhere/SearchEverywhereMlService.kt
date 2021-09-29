@@ -37,5 +37,7 @@ abstract class SearchEverywhereMlService {
 
   abstract fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
 
+  abstract fun notifySearchResultsUpdated()
+
   abstract fun onDialogClose()
 }
