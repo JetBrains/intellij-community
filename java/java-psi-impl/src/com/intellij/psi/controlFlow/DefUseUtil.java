@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -257,6 +257,15 @@ public final class DefUseUtil {
   }
 
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+     if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
+      final PsiElement containingClass = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
+      PsiElement refContainer = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      while (containingClass != refContainer && refContainer != null) {
+        ref = refContainer;
+        refContainer = PsiTreeUtil.getParentOfType(refContainer.getParent(), PsiClass.class, PsiLambdaExpression.class);
+      }
+    }
+
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         final PsiManager psiManager = def.getManager();
