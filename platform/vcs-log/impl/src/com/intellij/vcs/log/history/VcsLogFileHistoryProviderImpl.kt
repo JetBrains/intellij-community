@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
@@ -26,10 +26,10 @@ import java.util.function.Function
 
 fun isNewHistoryEnabled() = Registry.`is`("vcs.new.history")
 
-class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
+class VcsLogFileHistoryProviderImpl(private val project: Project) : VcsLogFileHistoryProvider {
   private val tabGroupId: TabGroupId = TabGroupId("History", VcsBundle.messagePointer("file.history.tab.name"), false)
 
-  override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
+  override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (!isNewHistoryEnabled()) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
 
@@ -47,7 +47,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
            canShowHistoryInLog(dataManager, getCorrectedPath(project, path, root, isRevisionHistory), root)
   }
 
-  override fun showFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?) {
+  override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {
     val hash = revisionNumber?.let { HashImpl.build(it) }
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
 
