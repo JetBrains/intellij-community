@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
@@ -13,6 +14,13 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 
 class IdeDocumentationTargetProviderImpl(private val project: Project) : IdeDocumentationTargetProvider {
+
+  override fun documentationTarget(editor: Editor, file: PsiFile, lookupElement: LookupElement): DocumentationTarget? {
+    val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
+                        ?: return null
+    val sourceElement = file.findElementAt(editor.caretModel.offset)
+    return PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null)
+  }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
     val symbolTargets = symbolDocumentationTargets(file, offset)
