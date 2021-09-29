@@ -136,6 +136,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  @Nullable
   public Configurable getConfigurable() {
     return null;
   }
