@@ -163,9 +163,8 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     if (needSkipInlay(inlay, inlaySide)) return
 
     val alignSide = inlaySide.other()
-    val alignEditor = viewer.getEditor(alignSide)
-    val lineToBeAligned = getRelatedLogicalLine(inlaySide, inlayLine)
-    val isAboveInlay = lineToBeAligned != DiffUtil.getLineCount(alignEditor.document) - 1
+    val isAboveInlay = inlay.properties.isShownAbove
+    val lineToBeAligned = getRelatedLogicalLine(inlaySide, inlayLine, isAboveInlay)
     val changeIntersection = getChangeIntersection(inlaySide, inlayLine)
     val inlayId = InlayId(alignSide, inlay.offset, inlay.id)
 
@@ -268,11 +267,19 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private data class InlayId(val side: Side, val offset: Int, val id: Long)
   private data class SideAndChange(val side: Side, val change: SimpleDiffChange)
 
-  private fun getRelatedLogicalLine(side: Side, logicalLine: Int): Int {
-    if (logicalLine == DiffUtil.getLineCount(viewer.getEditor(side).document) - 1) {
-      // for last line, related line should be always the last line
-      return DiffUtil.getLineCount(viewer.getEditor(side.other()).document) - 1
+  private fun getRelatedLogicalLine(side: Side, logicalLine: Int, isAboveInlay: Boolean): Int {
+    val needAlignLastLine = logicalLine == DiffUtil.getLineCount(viewer.getEditor(side).document) - 1
+
+    if (needAlignLastLine && !isAboveInlay) {
+      // for last line and below added inlay, related line should be always the last line (if there is no change intersection)
+      val alignSide = side.other()
+      val lastLine = DiffUtil.getLineCount(viewer.getEditor(alignSide).document) - 1
+      val changeIntersection = getChangeIntersection(alignSide, lastLine)
+      if (changeIntersection == NoIntersection) {
+        return lastLine
+      }
     }
+
     return viewer.transferPosition(side, LineCol(logicalLine, 0)).line
   }
 
