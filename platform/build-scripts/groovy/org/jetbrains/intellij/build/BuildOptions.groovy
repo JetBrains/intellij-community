@@ -13,8 +13,14 @@ class BuildOptions {
     if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION) == null) {
       System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
     }
+    def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
     if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION) == null) {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Runtime.getRuntime().availableProcessors().toString())
+      System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
+    }
+    // TODO: replace with org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder#RESOLUTION_PARALLELISM_PROPERTY
+    def resolutionParallelismKey = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism"
+    if (System.getProperty(resolutionParallelismKey) == null) {
+      System.setProperty(resolutionParallelismKey, availableProcessors)
     }
   }
 
