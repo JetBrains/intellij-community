@@ -935,7 +935,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return assertSameProject(getElementFromLookup(editor, file));
     }
 
-    TargetElementUtil util = TargetElementUtil.getInstance();
     PsiElement element;
     element = assertSameProject(customElement(editor, file, offset, contextElement));
 
@@ -944,13 +943,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      PsiReference ref = TargetElementUtil.findReference(editor, offset);
-      if (ref != null) {
-        element = assertSameProject(util.adjustReference(ref));
-        if (ref instanceof PsiPolyVariantReference) {
-          element = assertSameProject(ref.getElement());
-        }
-      }
+      element = assertSameProject(fromReference(editor, offset));
     }
 
     storeOriginalElement(myProject, contextElement, element);
@@ -983,6 +976,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     // Allow context doc over xml tag content
     PsiElement adjusted = util.adjustElement(editor, util.getAllAccepted(), element, contextElement);
     return adjusted != null ? adjusted : element;
+  }
+
+  private static @Nullable PsiElement fromReference(@NotNull Editor editor, int offset) {
+    PsiReference ref = TargetElementUtil.findReference(editor, offset);
+    if (ref == null) {
+      return null;
+    }
+    if (ref instanceof PsiPolyVariantReference) {
+      return ref.getElement();
+    }
+    return TargetElementUtil.getInstance().adjustReference(ref);
   }
 
   private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {
