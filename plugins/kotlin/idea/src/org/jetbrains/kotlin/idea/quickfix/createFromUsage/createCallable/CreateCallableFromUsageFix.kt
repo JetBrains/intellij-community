@@ -179,7 +179,8 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val element = element ?: return false
 
         val callableInfos = notEmptyCallableInfos() ?: return false
-        val receiverInfo = callableInfos.first().receiverTypeInfo
+        val callableInfo = callableInfos.first()
+        val receiverInfo = callableInfo.receiverTypeInfo
 
         if (receiverInfo == TypeInfo.Empty) {
             if (callableInfos.any { it is PropertyInfo && it.possibleContainers.isEmpty() }) return false
@@ -189,11 +190,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         if (isExtension && receiverInfo.staticContextRequired) return false
 
         val callableBuilder = CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension).createBuilder()
-        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(callableInfos.first().receiverTypeInfo)
+        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverInfo)
         val propertyInfo = callableInfos.firstOrNull { it is PropertyInfo } as PropertyInfo?
         val isFunction = callableInfos.any { it.kind == CallableKind.FUNCTION }
+        val isCompanionReceiver = callableInfo.isCompanionReceiver()
         return receiverTypeCandidates.any {
-            val declaration = getDeclarationIfApplicable(element.project, it)
+            val declaration = getDeclarationIfApplicable(element.project, it, isCompanionReceiver)
             val insertToJavaInterface = declaration is PsiClass && declaration.isInterface
             when {
                 !isExtension && propertyInfo != null && insertToJavaInterface && (!receiverInfo.staticContextRequired || propertyInfo.writable) ->
@@ -242,12 +244,15 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
     }
 
-    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate): PsiElement? {
+    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate, isCompanionReceiver: Boolean): PsiElement? {
         val descriptor = candidate.theType.constructor.declarationDescriptor ?: return null
         val declaration = getDeclaration(descriptor, project) ?: return null
         if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
-        return if (isExtension || declaration.canRefactor()) declaration else null
+        return if ((isExtension && !isCompanionReceiver) || declaration.canRefactor()) declaration else null
     }
+
+    private fun CallableInfo.isCompanionReceiver(): Boolean =
+        isForCompanion || (receiverTypeInfo as? TypeInfo.ByType)?.theType?.constructor?.declarationDescriptor?.isCompanionObject() == true
 
     private fun checkIsInitialized() {
         check(initialized) { "${javaClass.simpleName} is not initialized" }
@@ -305,8 +310,9 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                 it
         }
         if (receiverTypeCandidates.isNotEmpty()) {
+            val isCompanionReceiver = callableInfo.isCompanionReceiver()
             val containers = receiverTypeCandidates
-                .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate)?.let { candidate to it } }
+                .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate, isCompanionReceiver)?.let { candidate to it } }
 
             chooseContainerElementIfNecessary(containers, editorForBuilder, popupTitle, false, { it.second }) {
                 runBuilder {
