@@ -2,7 +2,6 @@
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
@@ -29,9 +28,7 @@ public final class ContentManagerWatcher {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        if (!((ToolWindowImpl)toolWindow).getDecorator().isSplitUnsplitInProgress()) {
-          toolWindow.setAvailable(!contentManager.isEmpty());
-        }
+        toolWindow.setAvailable(!contentManager.isEmpty());
       }
     });
   }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.ToolWindowDragHelper.Companion.createDragImage
 import com.intellij.openapi.wm.impl.ToolWindowDragHelper.Companion.createHighlighterComponent
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
@@ -27,8 +26,9 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decorator: @NotNull InternalDecoratorImpl)
-  : MouseDragHelper<InternalDecoratorImpl>(parent, decorator) {
+internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable,
+                                         val decorator: @NotNull InternalDecoratorImpl) : MouseDragHelper<InternalDecoratorImpl>(parent,
+  decorator) {
   private var mySourceDecorator = null as InternalDecoratorImpl?
   private var myInitialIndex = -1
   private var myCurrentDecorator = null as InternalDecoratorImpl?
@@ -37,6 +37,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
   private var myCurrentDropSide = -1
   private val myHighlighter = createHighlighterComponent()
   private val myInitialOffset = Point()
+
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
     return getTab(RelativePoint(dragComponent, dragComponentPoint)) != null
@@ -51,7 +52,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
 
   override fun canFinishDragging(component: JComponent, point: RelativePoint): Boolean {
     if (myCurrentDecorator == null) return false
-    return myCurrentDecorator!!.contains(point.getPoint(myCurrentDecorator))
+    return decorator.contains(point.getPoint(decorator)) //todo too naive condition
   }
 
   override fun processMousePressed(event: MouseEvent) {
@@ -80,32 +81,31 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
     val content = myDraggingTab!!.content
 
     if (mySourceDecorator == myCurrentDecorator) {
-      if (mySourceDecorator!!.contentManager.contentCount > 0) {
+      if (mySourceDecorator!!.contentManager.contentCount > 1) {
         mySourceDecorator!!.splitWithContent(content, myCurrentDropSide)
-      } else {
-        mySourceDecorator!!.contentManager.addContent(myDraggingTab!!.content)
       }
       return
     }
 
     content.putUserData(TEMPORARY_REMOVED_KEY, true)
+    mySourceDecorator!!.setSplitInProgress(true)
     try {
-      myCurrentDecorator!!.splitWithContent(content, myCurrentDropSide)
+      mySourceDecorator!!.contentManager!!.removeContent(content, false)
+      val targetManager = myCurrentDecorator!!.contentManager!!
+      (content as ContentImpl).manager = targetManager
+      targetManager.addContent(content)
     } finally {
+      mySourceDecorator!!.setSplitInProgress(false)
       content.putUserData(TEMPORARY_REMOVED_KEY, null)
     }
 
     if (mySourceDecorator!!.contentManager.isEmpty) {
-      mySourceDecorator!!.unsplit(content)
+      mySourceDecorator!!.unsplit(null)
     }
   }
 
   override fun cancelDragging(): Boolean {
     if (super.cancelDragging()) {
-      with(myDraggingTab!!.content as ContentImpl) {
-        mySourceDecorator!!.contentManager.addContent(this, myInitialIndex)
-        putUserData(TEMPORARY_REMOVED_KEY, null)
-      }
       stopDrag()
       return true
     }
@@ -127,17 +127,13 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
   }
 
   fun stopDrag() {
-    if (myDraggingTab == null) return
-    (myDraggingTab!!.content as ContentImpl).putUserData(TEMPORARY_REMOVED_KEY, null)
-    mySourceDecorator?.setSplitUnsplitInProgress(false)
-    mySourceDecorator = null
     myDraggingTab = null
+    mySourceDecorator = null
     myCurrentDecorator = null
-    val parent = myHighlighter.parent
-    if (parent is JComponent) {
-      parent.remove(myHighlighter)
-      parent.revalidate()
-      parent.repaint()
+    with(decorator.rootPane.glassPane as JComponent) {
+      remove(myHighlighter)
+      revalidate()
+      repaint()
     }
     @Suppress("SSBasedInspection")
     myDialog?.dispose()
@@ -145,28 +141,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
   }
 
   private fun startDrag(event: MouseEvent) {
-    if (mySourceDecorator == null || mySourceDecorator?.contentManager?.contentCount == 0 || myDialog == null) {
-      return
-    }
-    with(IdeGlassPaneUtil.find(decorator) as JComponent) {
-      add(myHighlighter)
-      revalidate()
-      repaint()
-    }
-    if (myDraggingTab!!.content.manager != null) {
-      with(myDraggingTab!!.content as ContentImpl) {
-        this.putUserData(TEMPORARY_REMOVED_KEY, true)
-        SwingUtilities.invokeLater {
-          try {
-            mySourceDecorator!!.setSplitUnsplitInProgress(true)
-            manager!!.removeContent(this, false)
-          } finally {
-            mySourceDecorator!!.setSplitUnsplitInProgress(false)
-          }
-        }
-      }
-    }
-
+    relocate(event)
     myDialog?.isVisible = true
   }
 
@@ -186,7 +161,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
     else {
       myHighlighter.bounds = Rectangle()
     }
-    with(decorator.rootPane?.glassPane as JComponent) {
+    with(decorator.rootPane.glassPane as JComponent) {
       add(myHighlighter)
       revalidate()
       repaint()
@@ -194,7 +169,7 @@ internal class ToolWindowInnerDragHelper(parent: @NotNull Disposable, val decora
   }
 
   private fun getDecorator(relativePoint: RelativePoint): InternalDecoratorImpl? {
-    val rootPane = decorator.rootPane
+    val rootPane = mySourceDecorator!!.rootPane
     if (rootPane is IdeRootPane) {
       val point = relativePoint.getPoint(rootPane)
       val component = SwingUtilities.getDeepestComponentAt(rootPane.toolWindowPane, point.x, point.y)

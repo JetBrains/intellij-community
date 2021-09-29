@@ -38,7 +38,6 @@ public interface Content extends UserDataHolder, ComponentContainer {
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
   Key<DnDTarget> TAB_DND_TARGET_KEY = Key.create("tabDndTarget");
   Key<Boolean> TEMPORARY_REMOVED_KEY = Key.create("temporaryRemoved");
-  Key<ContentManagerListener> CLOSE_LISTENER_KEY = Key.create("CloseListener");
 
   void setComponent(JComponent component);
 
