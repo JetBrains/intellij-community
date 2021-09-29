@@ -14217,6 +14217,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeAllArgumentNames/collectionLiteralIsNotLast.kt");
         }
 
+        @TestMetadata("defaultArguments.kt")
+        public void testDefaultArguments() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments.kt");
+        }
+
+        @TestMetadata("defaultArguments2.kt")
+        public void testDefaultArguments2() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments2.kt");
+        }
+
+        @TestMetadata("defaultArguments3.kt")
+        public void testDefaultArguments3() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/defaultArguments3.kt");
+        }
+
         @TestMetadata("noNamedArguments.kt")
         public void testNoNamedArguments() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/noNamedArguments.kt");
