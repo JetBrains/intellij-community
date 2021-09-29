@@ -2163,4 +2163,15 @@ class A {
 
 A.cl()""", GroovyAssignabilityCheckInspection
   }
+
+  void 'test field closure'() {
+    testHighlighting """
+class A {
+  Closure<?> f
+  
+  def foo() {
+    f()
+  }
+}"""
+  }
 }
