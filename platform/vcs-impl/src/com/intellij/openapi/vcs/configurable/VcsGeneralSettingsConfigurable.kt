@@ -6,10 +6,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.BoundCompositeConfigurable
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ConfigurableEP
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -33,7 +30,7 @@ internal class GeneralVcSettingsProviderEP(project: Project) : ConfigurableEP<Un
 
 private val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
 
-class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeConfigurable<UnnamedConfigurable>(
+class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"
 ), Configurable.WithEpDependencies {
