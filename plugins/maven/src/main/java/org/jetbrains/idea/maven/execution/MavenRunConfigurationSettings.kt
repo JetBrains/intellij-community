@@ -23,14 +23,14 @@ class MavenRunConfigurationSettings : Cloneable {
   var userSettings: String? = null
   var localRepository: String? = null
   var threads: String? = null
-  var isWorkOffline: Boolean = false
   var checksumPolicy: ChecksumPolicy? = null
   var outputLevel: LoggingLevel? = null
+  var failureBehavior: FailureMode? = null
+  var isWorkOffline: Boolean = false
   var isUsePluginRegistry: Boolean = false
   var isPrintErrorStackTraces: Boolean = false
   var isAlwaysUpdateSnapshots: Boolean = false
-  var failureBehavior: FailureMode? = null
-  var isExecuteGoalsRecursive: Boolean = true
+  var isNonRecursive: Boolean = false
 
   /** @see MavenRunnerSettings */
   var jreName: String? = null
@@ -63,7 +63,7 @@ class MavenRunConfigurationSettings : Cloneable {
     isPrintErrorStackTraces = settings.isPrintErrorStackTraces
     isAlwaysUpdateSnapshots = settings.isAlwaysUpdateSnapshots
     failureBehavior = settings.failureBehavior
-    isExecuteGoalsRecursive = settings.isExecuteGoalsRecursive
+    isNonRecursive = settings.isNonRecursive
 
     jreName = settings.jreName
     vmOptions = settings.vmOptions
@@ -82,14 +82,14 @@ class MavenRunConfigurationSettings : Cloneable {
     userSettings?.let { settings.setUserSettingsFile(expandPathAndMacros(it, null, project)) }
     localRepository?.let { settings.setLocalRepository(expandPathAndMacros(it, null, project)) }
     threads?.let { settings.threads = it }
-    isWorkOffline.let { settings.isWorkOffline = it }
     checksumPolicy?.let { settings.checksumPolicy = it }
     outputLevel?.let { settings.outputLevel = it }
-    isUsePluginRegistry.let { settings.isUsePluginRegistry = it }
-    isPrintErrorStackTraces.let { settings.isPrintErrorStackTraces = it }
-    isAlwaysUpdateSnapshots.let { settings.isAlwaysUpdateSnapshots = it }
     failureBehavior?.let { settings.failureBehavior = it }
-    isExecuteGoalsRecursive.let { settings.isNonRecursive = !it }
+    if (isWorkOffline) settings.isWorkOffline = isWorkOffline
+    if (isUsePluginRegistry) settings.isUsePluginRegistry = isUsePluginRegistry
+    if (isPrintErrorStackTraces) settings.isPrintErrorStackTraces = isPrintErrorStackTraces
+    if (isAlwaysUpdateSnapshots) settings.isAlwaysUpdateSnapshots = isAlwaysUpdateSnapshots
+    if (isNonRecursive) settings.isNonRecursive = isNonRecursive
     return if (settings == originalSettings) null else settings
   }
 
@@ -106,7 +106,7 @@ class MavenRunConfigurationSettings : Cloneable {
     isPrintErrorStackTraces = settings.isPrintErrorStackTraces
     isAlwaysUpdateSnapshots = settings.isAlwaysUpdateSnapshots
     failureBehavior = settings.failureBehavior
-    isExecuteGoalsRecursive = !settings.isNonRecursive
+    isNonRecursive = settings.isNonRecursive
   }
 
   @Transient
@@ -116,10 +116,10 @@ class MavenRunConfigurationSettings : Cloneable {
     val settings = originalSettings.clone()
     jreName?.let { settings.setJreName(it) }
     vmOptions?.let { settings.setVmOptions(expandPathAndMacros(it, null, project)) }
-    environment.let { settings.environmentProperties = it }
     isPassParentEnvs.let { settings.isPassParentEnv = it }
-    isSkipTests.let { settings.isSkipTests = it }
-    mavenProperties.let { settings.mavenProperties = it }
+    if (environment.isNotEmpty()) settings.environmentProperties = environment
+    if (mavenProperties.isNotEmpty()) settings.mavenProperties = mavenProperties
+    if (isSkipTests) settings.isSkipTests = isSkipTests
     return if (settings == originalSettings) null else settings
   }
 

@@ -99,11 +99,11 @@ class MavenRunConfigurationSettingsEditor(
       )
       addTag(
         "maven.execute.recursively.tag",
-        MavenConfigurableBundle.message("maven.settings.general.execute.recursively"),
+        MavenConfigurableBundle.message("maven.settings.general.execute.non.recursively"),
         MavenConfigurableBundle.message("maven.run.configuration.options.group"),
         MavenConfigurableBundle.message("maven.settings.general.execute.recursively.tooltip"),
-        { settings.isExecuteGoalsRecursive },
-        { settings.isExecuteGoalsRecursive = it }
+        { settings.isNonRecursive },
+        { settings.isNonRecursive = it }
       )
       addTag(
         "maven.work.offline.tag",
