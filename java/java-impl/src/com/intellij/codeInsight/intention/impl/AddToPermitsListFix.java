@@ -8,6 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,10 @@ public class AddToPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (parentClass == null) parentClass = findParent(psiClass.getImplementsListTypes());
     if (parentClass == null) return;
     SealedUtils.fillPermitsList(parentClass, Collections.singleton(qualifiedName));
+    PsiReferenceList list = parentClass.getPermitsList();
+    if (list != null) {
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(list);
+    }
   }
 
   private PsiClass findParent(PsiClassType[] types) {
