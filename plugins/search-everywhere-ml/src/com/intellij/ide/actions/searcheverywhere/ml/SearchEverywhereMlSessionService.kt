@@ -86,6 +86,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     }
   }
 
+  override fun notifySearchResultsUpdated() {
+    if (experiment.isAllowed) {
+      getCurrentSession()?.notifySearchResultsUpdated()
+    }
+  }
+
   override fun onDialogClose() {
     activeSession.updateAndGet { null }
   }
