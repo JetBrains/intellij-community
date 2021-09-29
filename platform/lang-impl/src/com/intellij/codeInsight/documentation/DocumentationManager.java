@@ -876,6 +876,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private @Nullable PsiElement findTargetElementFromContext(@NotNull Editor editor, int offset, @Nullable PsiFile file) {
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+      try {
+        return assertSameProject(getElementFromLookup(editor, file));
+      }
+      catch (IndexNotReadyException e) {
+        return null;
+      }
+    }
     var elementAndContext = findTargetElementAndContext(editor, offset, file);
     return elementAndContext == null ? null : elementAndContext.first;
   }
@@ -887,10 +895,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nullable PsiFile file
   ) {
     PsiElement originalElement = getContextElement(file, offset);
-    PsiElement element = assertSameProject(findTargetElement(editor, offset, file, originalElement));
+    PsiElement element = findTargetElementAtOffset(editor, offset, file, originalElement);
     if (element == null) {
       PsiElement list = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
-      if (list != null && LookupManager.getInstance(myProject).getActiveLookup() == null) {
+      if (list != null) {
         element = list;
       }
     }

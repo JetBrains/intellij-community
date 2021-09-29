@@ -575,7 +575,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
           int offset = injectedEditor instanceof EditorWindow
             ? ((EditorWindow) injectedEditor).getDocument().hostToInjected(targetOffset)
             : targetOffset;
-          return documentationManager.findTargetElement(injectedEditor, offset, containingFile, element);
+          return documentationManager.findTargetElementAtOffset(injectedEditor, offset, containingFile, element);
         }
         return null;
       }).executeSynchronously();
