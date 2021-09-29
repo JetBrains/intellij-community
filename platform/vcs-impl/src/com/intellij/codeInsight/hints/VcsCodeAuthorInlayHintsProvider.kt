@@ -59,6 +59,9 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
 }
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
+  override val groupId: String
+    get() = CODE_AUTHOR_GROUP
+
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
 

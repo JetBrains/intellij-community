@@ -11,9 +11,9 @@ import com.intellij.psi.PsiFile
 
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
-  val language: Language
+  language: Language
 ) : InlayProviderSettingsModel(
-  isParameterHintsEnabledForLanguage(language), "parameter.hints.old") {
+  isParameterHintsEnabledForLanguage(language), "parameter.hints.old", language) {
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String

@@ -35,26 +35,21 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     val settings = InlayHintsSettings.instance()
     val root = CheckedTreeNode()
     var nodeToSelect: CheckedTreeNode? = null
-    for (group in InlayHintsProviderExtension.findProviders().groupBy { it.provider.groupId }) {
+    val groups = InlayHintsProviderExtension.findProviders().groupBy { it.provider.groupId }.mapValues { entry ->
+      entry.value.map {
+        NewInlayProviderSettingsModel(it.provider.withSettings(it.language, settings), settings) as InlayProviderSettingsModel
+      }
+    }.toMutableMap()
+    val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull { ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!) }
+    groups[PARAMETERS_GROUP] = paramLanguages
+    for (group in groups) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
         val langNode = CheckedTreeNode(lang.key)
         groupNode.add(langNode)
-
-        if (group.key == CODE_VISION_GROUP) {
-          val parameterHintsProvider = InlayParameterHintsExtension.forLanguage(lang.key)
-          if (parameterHintsProvider != null) {
-            val node = addModelNode(ParameterInlayProviderSettingsModel(parameterHintsProvider, lang.key), langNode)
-            if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
-              nodeToSelect = node
-            }
-          }
-        }
-
         lang.value.forEach {
-          val withSettings = it.provider.withSettings(lang.key, settings)
-          val node = addModelNode(NewInlayProviderSettingsModel(withSettings, settings), langNode)
+          val node = addModelNode(it, langNode)
           if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
             nodeToSelect = node
           }

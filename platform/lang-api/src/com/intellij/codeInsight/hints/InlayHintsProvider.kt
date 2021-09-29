@@ -22,7 +22,12 @@ import kotlin.reflect.KMutableProperty0
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
 const val CODE_VISION_GROUP = "code.vision"
+const val PARAMETERS_GROUP = "parameters"
 const val TYPES_GROUP = "types"
+const val ANNOTATIONS_GROUP = "annotations"
+const val METHOD_CHAINS_GROUP = "method.chains"
+const val LAMBDAS_GROUP = "lambdas"
+const val CODE_AUTHOR_GROUP = "code.author"
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {

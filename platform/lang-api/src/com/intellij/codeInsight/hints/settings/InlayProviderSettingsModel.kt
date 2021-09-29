@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -17,7 +18,7 @@ import javax.swing.JComponent
  * Model of settings of single language hints provider (Preferences | Editor | Inlay Hints)
  * @param isEnabled language is enabled in terms of InlayHintsSettings.hintsEnabled
  */
-abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String) {
+abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String, val language: Language) {
   /**
    * Listener must be notified if any settings of inlay provider was changed
    */

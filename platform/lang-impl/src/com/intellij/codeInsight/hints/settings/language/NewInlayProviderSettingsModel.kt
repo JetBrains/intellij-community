@@ -20,7 +20,8 @@ class NewInlayProviderSettingsModel<T : Any>(
   private val config: InlayHintsSettings
 ) : InlayProviderSettingsModel(
   isEnabled = config.hintsEnabled(providerWithSettings.provider.key, providerWithSettings.language),
-  id = providerWithSettings.provider.key.id
+  id = providerWithSettings.provider.key.id,
+  language = providerWithSettings.language
 ) {
   override val name: String
     get() = providerWithSettings.provider.name

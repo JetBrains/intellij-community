@@ -12,6 +12,10 @@ import com.intellij.psi.*
 import com.siyeh.ig.psiutils.ExpressionUtils
 
 class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallExpression, PsiType, Unit>() {
+
+  override val groupId: String
+    get() = METHOD_CHAINS_GROUP
+
   override fun PsiType.getInlayPresentation(
     expression: PsiElement,
     factory: PresentationFactory,
