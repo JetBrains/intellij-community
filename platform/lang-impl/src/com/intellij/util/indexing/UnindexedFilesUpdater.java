@@ -94,7 +94,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myStartSuspended = startSuspended;
     myIndexingReason = indexingReason;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
-    myProject.putUserData(CONTENT_SCANNED, null);
+    if (predefinedIndexableFilesIterators == null) {
+      myProject.putUserData(CONTENT_SCANNED, null);
+    }
 
     synchronized (ourLastRunningTaskLock) {
       UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
@@ -511,7 +513,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   protected @NotNull ProjectIndexingHistory performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject, myIndexingReason);
     myIndex.loadIndexes();
-    myIndex.filesUpdateStarted(myProject);
+    myIndex.filesUpdateStarted(myProject, myPredefinedIndexableFilesIterators == null);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);

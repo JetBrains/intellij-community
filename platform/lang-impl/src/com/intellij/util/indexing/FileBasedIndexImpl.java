@@ -873,8 +873,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myFilesModCount.get();
   }
 
-  void filesUpdateStarted(Project project) {
-    myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+  void filesUpdateStarted(Project project, boolean isFullUpdate) {
+    if (isFullUpdate) {
+      myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+    }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
