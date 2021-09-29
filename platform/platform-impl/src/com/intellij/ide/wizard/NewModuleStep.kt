@@ -32,7 +32,7 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
 
   override fun getComponent() =
     panelBuilder.panel { step.setupUI(this) }
-      .apply { withBorder(JBUI.Borders.empty(20, 20)) }
+      .apply { withBorder(JBUI.Borders.empty(14, 20)) }
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
 
   private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
