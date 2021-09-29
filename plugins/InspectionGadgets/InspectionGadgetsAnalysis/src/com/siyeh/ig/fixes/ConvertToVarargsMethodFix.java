@@ -109,4 +109,15 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
       lastArgument.delete();
     }
   }
+
+  @Override
+  public boolean applyFixForPreview(@NotNull Project project,
+                                    @NotNull ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof PsiMethod)) {
+      return false;
+    }
+    makeMethodVarargs((PsiMethod)element);
+    return true;
+  }
 }

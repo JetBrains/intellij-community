@@ -122,4 +122,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
     ProblemDescriptor descriptor = myDescriptor.getDescriptorForPreview(target);
     return new QuickFixWrapper(descriptor, result);
   }
+
+  @Override
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return myFix.applyFixForPreview(project, myDescriptor.getDescriptorForPreview(file));
+  }
 }

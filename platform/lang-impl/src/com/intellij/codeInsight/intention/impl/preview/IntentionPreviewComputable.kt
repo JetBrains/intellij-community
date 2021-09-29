@@ -55,9 +55,6 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 
   private fun tryCreateDiffContent(): IntentionPreviewDiffResult? {
-    if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
-      return null
-    }
     try {
       return generatePreview()
     }
@@ -89,13 +86,19 @@ internal class IntentionPreviewComputable(private val project: Project,
     val psiFileCopy = origFile.copy() as PsiFile
     ProgressManager.checkCanceled()
     val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset)
-    val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
 
     val writable = originalEditor.document.isWritable
     try {
       originalEditor.document.setReadOnly(true)
       ProgressManager.checkCanceled()
-      action.invoke(project, editorCopy, psiFileCopy)
+      if (!action.invokeForPreview(project, editorCopy, psiFileCopy)) {
+        if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
+          return null
+        }
+        val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
+        LOG.warn("Intention preview fallback is used for action " + action::class.java + "|" + action.familyName)
+        action.invoke(project, editorCopy, psiFileCopy)
+      }
       ProgressManager.checkCanceled()
     }
     finally {
@@ -133,7 +136,7 @@ internal class IntentionPreviewComputable(private val project: Project,
   companion object {
     private val LOG = Logger.getInstance(IntentionPreviewComputable::class.java)
 
-    fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActionWithTextCaching> =
+    private fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActionWithTextCaching> =
       sequenceOf<IntentionActionWithTextCaching>()
         .plus(cachedIntentions.intentions)
         .plus(cachedIntentions.inspectionFixes)
@@ -143,8 +146,6 @@ internal class IntentionPreviewComputable(private val project: Project,
                                   editorCopy: Editor,
                                   psiFileCopy: PsiFile,
                                   originalAction: IntentionAction): IntentionAction? {
-      val transferred = originalAction.getFileModifierForPreview(psiFileCopy) as? IntentionAction
-      if (transferred != null) return transferred
       val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
       val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
 

@@ -74,11 +74,8 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
-    if (result == null) return null;
-    ProblemDescriptor descriptor = myProblemDescriptor.getDescriptorForPreview(target);
-    return new LocalQuickFixAsIntentionAdapter(result, descriptor);
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return myFix.applyFixForPreview(project, myProblemDescriptor.getDescriptorForPreview(file));
   }
 }
 
