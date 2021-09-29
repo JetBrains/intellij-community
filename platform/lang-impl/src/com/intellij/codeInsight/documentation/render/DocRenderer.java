@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +40,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
@@ -273,11 +273,19 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     group.add(new DocRenderItem.ChangeFontSize());
 
+    PsiDocCommentBase comment = getComment();
     for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
-      provider.additionalActions(myItem.editor, myItem.getComment(), myItem.textToRender).forEach(group::add);
+      provider.additionalActions(myItem.editor, comment, myItem.textToRender).forEach(group::add);
     }
 
     return group;
+  }
+
+  private @Nullable PsiDocCommentBase getComment() {
+    InlineDocumentation documentation = myItem.getInlineDocumentation();
+    return documentation instanceof PsiCommentInlineDocumentation
+           ? ((PsiCommentInlineDocumentation)documentation).getComment()
+           : null;
   }
 
   private static int scale(int value) {
@@ -408,11 +416,11 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     if (location == null) return;
 
-    PsiDocCommentBase comment = myItem.getComment();
-    if (comment == null) return;
+    InlineDocumentation documentation = myItem.getInlineDocumentation();
+    if (documentation == null) return;
 
-    PsiElement context = ObjectUtils.notNull(comment.getOwner(), comment);
     String url = event.getDescription();
+    PsiElement context = ((PsiCommentInlineDocumentation)documentation).getContext();
     if (isGotoDeclarationEvent()) {
       navigateToDeclaration(context, url);
     }
