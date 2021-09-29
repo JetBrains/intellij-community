@@ -174,7 +174,10 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     return [context.kotlinBinaries.setUpPlugin(context)]
     */
     def workspaceRoot = "$context.paths.communityHome/../.."
-    return [Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize()]
+    return [
+      Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize(),
+      Path.of("$workspaceRoot/prebuilts/tools/common/toml-plugin/intellij-toml").toAbsolutePath().normalize()  // until included in the platform
+    ]
   }
 
   @Override
