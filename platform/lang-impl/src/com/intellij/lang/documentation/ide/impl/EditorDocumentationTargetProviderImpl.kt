@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.editor.Editor
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 
-class EditorDocumentationTargetProviderImpl : EditorDocumentationTargetProvider {
+class EditorDocumentationTargetProviderImpl : IdeDocumentationTargetProvider {
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
     val symbolTargets = symbolDocumentationTargets(file, offset)

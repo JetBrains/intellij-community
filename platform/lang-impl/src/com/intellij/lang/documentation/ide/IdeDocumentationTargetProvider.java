@@ -14,10 +14,10 @@ import java.util.List;
 
 // TODO consider EP instead of a service override
 @Internal
-public interface EditorDocumentationTargetProvider {
+public interface IdeDocumentationTargetProvider {
 
-  static @NotNull EditorDocumentationTargetProvider getInstance() {
-    return ApplicationManager.getApplication().getService(EditorDocumentationTargetProvider.class);
+  static @NotNull IdeDocumentationTargetProvider getInstance() {
+    return ApplicationManager.getApplication().getService(IdeDocumentationTargetProvider.class);
   }
 
   @RequiresReadLock

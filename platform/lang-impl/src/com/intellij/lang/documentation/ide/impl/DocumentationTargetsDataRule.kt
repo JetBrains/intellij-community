@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -17,7 +17,7 @@ class DocumentationTargetsDataRule : GetDataRule {
     val editor = CommonDataKeys.EDITOR.getData(dataProvider)
     if (editor != null) {
       val file = PsiUtilBase.getPsiFileInEditor(editor, project) ?: return null
-      val targets = EditorDocumentationTargetProvider.getInstance().documentationTargets(editor, file, editor.caretModel.offset)
+      val targets = IdeDocumentationTargetProvider.getInstance().documentationTargets(editor, file, editor.caretModel.offset)
       if (targets.isNotEmpty()) {
         return targets
       }
