@@ -28,6 +28,10 @@ const val ANNOTATIONS_GROUP = "annotations"
 const val METHOD_CHAINS_GROUP = "method.chains"
 const val LAMBDAS_GROUP = "lambdas"
 const val CODE_AUTHOR_GROUP = "code.author"
+const val OTHER_GROUP = "other"
+
+val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP, LAMBDAS_GROUP,
+  CODE_AUTHOR_GROUP, OTHER_GROUP)
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -80,7 +84,7 @@ interface InlayHintsProvider<T : Any> {
   val name: String
 
   @JvmDefault
-  val groupId: String get() = CODE_VISION_GROUP
+  val groupId: String get() = OTHER_GROUP
 
   /**
    * Used for persisting settings.

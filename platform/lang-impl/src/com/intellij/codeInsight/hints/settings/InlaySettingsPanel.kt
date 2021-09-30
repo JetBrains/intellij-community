@@ -42,7 +42,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }.toMutableMap()
     val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull { ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!) }
     groups[PARAMETERS_GROUP] = paramLanguages
-    for (group in groups) {
+    val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+    for (group in sortedMap) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {

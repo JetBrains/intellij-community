@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.codeInsight.hints.InlayHintsProviderKt.CODE_VISION_GROUP;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings> {
@@ -142,6 +143,12 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
   @Override
   public @Nls String getName() {
     return JavaBundle.message("project.problems.title");
+  }
+
+  @NotNull
+  @Override
+  public String getGroupId() {
+    return CODE_VISION_GROUP;
   }
 
   private static final String RELATED_PROBLEMS_ID = "RelatedProblems";
