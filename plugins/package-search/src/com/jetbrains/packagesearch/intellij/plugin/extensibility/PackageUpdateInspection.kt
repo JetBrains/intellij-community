@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
@@ -107,6 +108,8 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     }
 
     private fun shouldCheckFile(file: PsiFile): Boolean {
+        if (!file.project.isTrusted()) return false
+
         val provider = ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
             ?.takeIf { it.usesSharedPackageUpdateInspection() }
             ?: return false
