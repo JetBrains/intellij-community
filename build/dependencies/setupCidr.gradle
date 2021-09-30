@@ -61,7 +61,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "810660",
+    version: "78c68ee",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
