@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.wizard.NewProjectWizardMultiStepFactory
 import com.intellij.openapi.extensions.ExtensionPointName
 
-interface KotlinBuildSystemType : NewProjectWizardMultiStepFactory<KotlinNewProjectWizard.Step> {
+interface BuildSystemKotlinNewProjectWizard : NewProjectWizardMultiStepFactory<KotlinNewProjectWizard.Step> {
     companion object {
-        var EP_NAME = ExtensionPointName<KotlinBuildSystemType>("com.intellij.newProjectWizard.buildSystem.kotlin")
+        var EP_NAME = ExtensionPointName<BuildSystemKotlinNewProjectWizard>("com.intellij.newProjectWizard.kotlin.buildSystem")
     }
 }

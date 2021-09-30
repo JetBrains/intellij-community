@@ -3,17 +3,17 @@ package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
-import org.jetbrains.idea.maven.wizards.MavenBuildSystemStep
-import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
+import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
-internal class MavenKotlinBuildSystemType : KotlinBuildSystemType {
+internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Maven"
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) =
-        object : MavenBuildSystemStep<KotlinNewProjectWizard.Step>(parent) {
+        object : MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent) {
             override fun setupProject(project: Project) {
                 KotlinNewProjectWizard.generateProject(
                     project = project,
