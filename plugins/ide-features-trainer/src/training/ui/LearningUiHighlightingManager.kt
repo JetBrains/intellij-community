@@ -153,13 +153,13 @@ internal class RepaintHighlighting<T : Component>(val original: T,
 
   fun reinitHighlightComponent() {
     val cellBounds = rectangle() ?: return
+    cleanup()
 
     val pt = SwingUtilities.convertPoint(original, cellBounds.location, SwingUtilities.getRootPane(original))
     val bounds = Rectangle(pt.x - pulsationOffset, pt.y - pulsationOffset, cellBounds.width + 2 * pulsationOffset,
                            cellBounds.height + 2 * pulsationOffset)
 
     val newPainter = LearningHighlightPainter(startDate, options, bounds)
-    disposable?.let { Disposer.dispose(it) }
     Disposer.newDisposable("RepaintHighlightingDisposable").let {
       disposable = it
       IdeGlassPaneUtil.find(original).addPainter(null, newPainter, it)
