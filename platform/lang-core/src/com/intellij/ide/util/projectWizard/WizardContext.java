@@ -77,9 +77,9 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public interface Listener {
-    default void buttonsUpdateRequested() {};
-    default void nextStepRequested() {};
-    default void switchToRequested(@NotNull String placeId) {};
+    default void buttonsUpdateRequested() {}
+    default void nextStepRequested() {}
+    default void switchToRequested(@NotNull String placeId) {}
   }
 
   public WizardContext(@Nullable Project project, Disposable parentDisposable) {
