@@ -43,6 +43,9 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   /** Map: name -> url */
   open val helpLinks: Map<String, String> get() = emptyMap()
 
+  /** IDs of TipAndTrick suggestions in that this lesson can be promoted */
+  open val suitableTips: List<String> = emptyList()
+
   open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
   open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
