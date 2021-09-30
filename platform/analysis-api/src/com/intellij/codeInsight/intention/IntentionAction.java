@@ -104,9 +104,9 @@ public interface IntentionAction extends FileModifier {
    * @return true if the action was applied successfully to the non-physical file.
    */
   default boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!startInWriteAction() || getElementToMakeWritable(file) != file) return false;
+    if (!startInWriteAction()) return false;
     var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
-    if (copy == null) return false;
+    if (copy == null || copy.getElementToMakeWritable(file) != file) return false;
     copy.invoke(project, editor, file);
     return true;
   }

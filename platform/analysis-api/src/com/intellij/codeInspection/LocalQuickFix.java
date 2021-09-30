@@ -59,9 +59,8 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     PsiElement element = previewDescriptor.getStartElement();
     if (element == null) return false;
     PsiFile file = element.getContainingFile();
-    if (getElementToMakeWritable(file) != file) return false;
     LocalQuickFix fix = ObjectUtils.tryCast(getFileModifierForPreview(file), LocalQuickFix.class);
-    if (fix == null) return false;
+    if (fix == null || fix.getElementToMakeWritable(file) != file) return false;
     fix.applyFix(project, previewDescriptor);
     return true;
   }
