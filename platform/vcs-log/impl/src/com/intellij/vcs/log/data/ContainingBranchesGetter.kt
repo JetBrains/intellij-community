@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
-import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
@@ -24,7 +24,9 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
   // other fields accessed only from EDT
   private val loadingFinishedListeners: MutableList<Runnable> = ArrayList()
-  private var cache = createCache()
+  private val cache = Caffeine.newBuilder()
+    .maximumSize(2000)
+    .build<CommitId, List<String>>()
   private val conditionsCache: CurrentBranchConditionCache
   private var currentBranchesChecksum = 0
 
@@ -41,8 +43,17 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     }
   }
 
+  @RequiresEdt
+  private fun cache(commitId: CommitId, branches: List<String>, branchesChecksum: Int) {
+    if (branchesChecksum == currentBranchesChecksum) {
+      cache.put(commitId, branches)
+      notifyListeners()
+    }
+  }
+
+  @RequiresEdt
   private fun clearCache() {
-    cache = createCache()
+    cache.invalidateAll()
     taskExecutor.clear()
     conditionsCache.clear()
     // re-request containing branches information for the commit user (possibly) currently stays on
@@ -77,7 +88,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     LOG.assertTrue(EventQueue.isDispatchThread())
     val refs = getContainingBranchesFromCache(root, hash)
     if (refs == null) {
-      taskExecutor.queue(CachingTask(createTask(root, hash, logData.dataPack), cache))
+      taskExecutor.queue(CachingTask(createTask(root, hash, logData.dataPack), currentBranchesChecksum))
     }
     return refs
   }
@@ -172,25 +183,18 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
       provider.getContainingBranches(root, hash).sorted()
   }
 
-  private inner class CachingTask(private val delegate: Task, private val cache: Cache<CommitId, List<String>>) {
+  private inner class CachingTask(private val delegate: Task, private val branchesChecksum: Int) {
     fun run() {
       val branches = delegate.getContainingBranches()
+      val commitId = CommitId(delegate.myHash, delegate.myRoot)
       ApplicationManager.getApplication().invokeLater {
-
-        // if cache is cleared (because of log refresh) during this task execution,
-        // this will put obsolete value into the old instance we don't care anymore
-        cache.put(CommitId(delegate.myHash, delegate.myRoot), branches)
-        notifyListeners()
+        cache(commitId, branches, branchesChecksum)
       }
     }
   }
 
   companion object {
     private val LOG = Logger.getInstance(ContainingBranchesGetter::class.java)
-
-    private fun createCache() = Caffeine.newBuilder()
-      .maximumSize(2000)
-      .build<CommitId, List<String>>()
 
     private fun canUseGraphForComputation(logProvider: VcsLogProvider) =
       VcsLogProperties.LIGHTWEIGHT_BRANCHES.getOrDefault(logProvider)
