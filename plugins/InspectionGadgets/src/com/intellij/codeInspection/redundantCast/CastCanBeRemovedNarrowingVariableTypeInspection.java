@@ -160,6 +160,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       if (var == null) return;
       PsiTypeElement castType = cast.getCastType();
       if (castType == null) return;
+      var.normalizeDeclaration();
       PsiTypeElement typeElement = var.getTypeElement();
       if (typeElement == null) return;
       PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeElement.replace(castType));
