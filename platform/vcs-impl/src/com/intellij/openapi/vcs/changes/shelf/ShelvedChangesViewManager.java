@@ -737,7 +737,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (isEditorPreview) {
         myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
         Disposer.register(this, myEditorChangeProcessor);
-        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor);
+        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
         myEditorDiffPreview = null;
@@ -754,7 +754,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor) {
+    private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
         public void updateAvailability(@NotNull AnActionEvent event) {
@@ -789,7 +789,7 @@ public class ShelvedChangesViewManager implements Disposable {
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
       });
-      editorPreview.installListeners(myTree, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+      editorPreview.installListeners(myTree, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview);
       editorPreview.installNextDiffActionOn(myTreeScrollPane);
 
       return editorPreview;
