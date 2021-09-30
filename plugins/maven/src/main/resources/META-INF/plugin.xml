@@ -62,6 +62,7 @@
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
+    <externalSystemDependencyAnalyzer implementation="org.jetbrains.idea.maven.project.MavenDependencyAnalyzerExtension"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
@@ -720,6 +721,10 @@
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
 
+    <action id="Maven.AnalyzeDependencies" class="org.jetbrains.idea.maven.project.actions.AnalyzeDependenciesAction">
+      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
+      <add-to-group group-id="Maven.NavigatorActionsToolbar" anchor="after" relative-to-action="Maven.ToggleSkipTests"/>
+    </action>
   </actions>
 
   <projectListeners>

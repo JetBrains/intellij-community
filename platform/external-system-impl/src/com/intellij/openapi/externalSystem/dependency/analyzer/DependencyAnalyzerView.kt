@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependenciesContributor.Dependency
 import javax.swing.JComponent
 
 interface DependencyAnalyzerView {
@@ -10,5 +11,5 @@ interface DependencyAnalyzerView {
 
   fun setSelectedProjectId(projectId: ExternalSystemProjectId)
 
-  fun setSelectedDependency(projectId: ExternalSystemProjectId, dependency: DependencyData)
+  fun setSelectedDependency(projectId: ExternalSystemProjectId, dependency: Dependency)
 }
