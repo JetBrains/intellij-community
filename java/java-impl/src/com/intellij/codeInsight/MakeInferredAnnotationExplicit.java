@@ -22,17 +22,21 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
+  private boolean myNeedToAddDependency;
 
   @Nls
   @Override
@@ -45,19 +49,20 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return false;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
-    return isAvailable(project, file, owner);
+    return isAvailable(file, owner);
   }
 
-  public boolean isAvailable(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
+  public boolean isAvailable(PsiFile file, PsiModifierListOwner owner) {
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
-      String annotations = StreamEx.of(InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner))
-                                   .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
-                                   .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
-                                   .joining(" ");
+      List<PsiAnnotation> annotations = getAnnotationsToAdd(owner);
       if (!annotations.isEmpty()) {
-        setText(JavaBundle.message("intention.text.insert.0.annotation", annotations));
+        String presentation = StreamEx.of(annotations)
+          .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
+          .joining(" ");
+        setText(JavaBundle.message("intention.text.insert.0.annotation", presentation));
+        myNeedToAddDependency = needToAddDependency(file, annotations);
         return true;
       }
     }
@@ -84,7 +89,11 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
-    doMakeAnnotationExplicit(project, owner);
+    if (myNeedToAddDependency) {
+      makeAnnotationsExplicit(project, file, owner);
+    } else {
+      doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
+    }
   }
 
   /**
@@ -99,33 +108,48 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
-    String qualifiedName = NotNull.class.getCanonicalName();
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    if (facade.findClass(qualifiedName, file.getResolveScope()) == null) {
-      Promise<Void> promise =
-        InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), qualifiedName, getFamilyName());
+    // Inferred annotations are non-physical, so we can pass them between actions
+    List<PsiAnnotation> annotations = getAnnotationsToAdd(owner);
+    if (needToAddDependency(file, annotations)) {
+      Promise<Void> promise = InferNullityAnnotationsAction.addAnnotationsDependency(
+        project, Collections.singleton(module), AnnotationUtil.NOT_NULL, getFamilyName());
       if (promise != null) {
         SmartPsiElementPointer<PsiModifierListOwner> ownerPointer = SmartPointerManager.createPointer(owner);
-        promise.onSuccess(__ -> ApplicationManager.getApplication().invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement()),
-                                                                                ModalityState.NON_MODAL,
-                                                                                module.getDisposed()));
+        promise.onSuccess(__ -> ApplicationManager.getApplication().invokeLater(
+          () -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations), ModalityState.NON_MODAL, module.getDisposed()));
       }
       return;
     }
 
-    doStartWriteAction(project, file, owner);
+    doStartWriteAction(project, file, owner, annotations);
   }
 
-  private void doStartWriteAction(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
+  private static boolean needToAddDependency(PsiFile file, List<PsiAnnotation> annotations) {
+    return ContainerUtil.exists(annotations, anno -> {
+      String qualifiedName = anno.getQualifiedName();
+      return qualifiedName != null && qualifiedName.startsWith("org.jetbrains.annotations.");
+    }) && JavaPsiFacade.getInstance(file.getProject()).findClass(AnnotationUtil.NOT_NULL, file.getResolveScope()) == null;
+  }
+
+  private void doStartWriteAction(@NotNull Project project,
+                                  @NotNull PsiFile file,
+                                  @Nullable PsiModifierListOwner owner,
+                                  @NotNull List<PsiAnnotation> annotations) {
+    if (owner == null) return;
     WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null,
                                              () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-                                               () -> doMakeAnnotationExplicit(project, owner)), file);
+                                               () -> doMakeAnnotationExplicit(project, owner, annotations)), file);
   }
 
-  private static void doMakeAnnotationExplicit(@NotNull Project project, PsiModifierListOwner owner) {
-    for (PsiAnnotation inferred : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner)) {
-      if (DefaultInferredAnnotationProvider.isExperimentalInferredAnnotation(inferred)) continue;
-      final PsiAnnotation toInsert = correctAnnotation(inferred);
+  private static List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
+    return StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
+      .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
+      .map(MakeInferredAnnotationExplicit::correctAnnotation)
+      .toList();
+  }
+
+  private static void doMakeAnnotationExplicit(@NotNull Project project, @NotNull PsiModifierListOwner owner, @NotNull List<PsiAnnotation> annotations) {
+    for (PsiAnnotation toInsert : annotations) {
       final String qname = toInsert.getQualifiedName();
       assert qname != null;
       
@@ -138,18 +162,29 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
 
   private static @NotNull PsiAnnotation correctAnnotation(@NotNull PsiAnnotation annotation) {
     Project project = annotation.getProject();
+    NullableNotNullManager nnnm = NullableNotNullManager.getInstance(project);
+    PsiAnnotation corrected = null;
+    if (annotation.hasQualifiedName(AnnotationUtil.NULLABLE)) {
+      corrected = createAnnotation(project, nnnm.getDefaultNullable());
+    }
+    else if (annotation.hasQualifiedName(AnnotationUtil.NOT_NULL)) {
+      corrected = createAnnotation(project, nnnm.getDefaultNotNull());
+    }
+    return corrected != null ? corrected : annotation;
+  }
+
+  @Nullable
+  private static PsiAnnotation createAnnotation(Project project, String qualifiedName) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-    NullableNotNullManager nnnm = NullableNotNullManager.getInstance(project);
-    if (AnnotationUtil.NULLABLE.equals(annotation.getQualifiedName()) && 
-        facade.findClass(nnnm.getDefaultNullable(), allScope) != null) {
-      return facade.getElementFactory().createAnnotationFromText("@" + nnnm.getDefaultNullable(), null);
+    if (facade.findClass(qualifiedName, allScope) != null) {
+      return facade.getElementFactory().createAnnotationFromText("@" + qualifiedName, null);
     }
-    
-    if (AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName()) && 
-        facade.findClass(nnnm.getDefaultNotNull(), allScope) != null) {
-      return facade.getElementFactory().createAnnotationFromText("@" + nnnm.getDefaultNotNull(), null);
-    }
-    return annotation;
+    return null;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return !myNeedToAddDependency;
   }
 }

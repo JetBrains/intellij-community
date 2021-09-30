@@ -214,7 +214,7 @@ class InsertAnnotationAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val intention = MakeInferredAnnotationExplicit()
-    if (intention.isAvailable(project, file, element)) {
+    if (intention.isAvailable(file, element)) {
       intention.makeAnnotationsExplicit(project, file, element)
     }
   }
