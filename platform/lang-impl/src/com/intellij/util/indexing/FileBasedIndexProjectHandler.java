@@ -60,7 +60,7 @@ public final class FileBasedIndexProjectHandler {
   public static void scheduleReindexingInDumbMode(@NotNull Project project) {
     DumbModeTask task = createChangedFilesIndexingTask(project);
     if (task != null) {
-      DumbService.getInstance(project).queueTask(task);
+      task.queue(project);
     }
   }
 

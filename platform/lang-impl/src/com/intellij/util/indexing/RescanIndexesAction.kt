@@ -23,7 +23,7 @@ internal class RescanIndexesAction : RecoveryAction {
 
   override fun performSync(project: Project): List<CacheInconsistencyProblem> {
     val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
-    val updater = object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
+    object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
       override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
         try {
           IndexingFlag.cleanupProcessedFlag()
@@ -36,8 +36,7 @@ internal class RescanIndexesAction : RecoveryAction {
           throw e
         }
       }
-    }
-    DumbService.getInstance(project).queueTask(updater)
+    }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems()
     }

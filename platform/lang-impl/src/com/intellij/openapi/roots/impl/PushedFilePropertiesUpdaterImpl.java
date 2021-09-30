@@ -225,7 +225,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         DumbService.getInstance(myProject).cancelTask(task);
       }
     });
-    DumbService.getInstance(myProject).queueTask(task);
+    task.queue(myProject);
   }
 
   public void performDelayedPushTasks() {
