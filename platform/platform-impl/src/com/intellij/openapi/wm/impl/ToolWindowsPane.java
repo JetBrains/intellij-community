@@ -159,6 +159,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (Registry.is("ide.new.tool.window.dnd")) {
       new ToolWindowDragHelper(parentDisposable, this).start();
     }
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window")) {
+      new ToolWindowInnerDragHelper(parentDisposable, this).start();
+    }
   }
 
   void initDocumentComponent(@NotNull Project project) {

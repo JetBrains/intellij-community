@@ -124,7 +124,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     val cellContentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable, ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
       ToolWindowContentUi(this, contentManager, componentGetter.get())
     })
-    contentManager.value.addNestedManager(cellContentManager)
     return InternalDecoratorImpl(this, cellContentManager.ui as ToolWindowContentUi, cellContentManager.component)
   }
 
