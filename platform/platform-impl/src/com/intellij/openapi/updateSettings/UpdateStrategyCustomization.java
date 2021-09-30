@@ -1,8 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
  * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
  */
 public class UpdateStrategyCustomization {
+  private static final Logger LOG = Logger.getInstance(UpdateStrategyCustomization.class);
+
   public static UpdateStrategyCustomization getInstance() {
     return ApplicationManager.getApplication().getService(UpdateStrategyCustomization.class);
   }
@@ -44,5 +54,27 @@ public class UpdateStrategyCustomization {
    */
   public boolean isNewerVersion(@NotNull BuildNumber candidateBuild, @NotNull BuildNumber currentBuild) {
     return candidateBuild.compareTo(currentBuild) > 0;
+  }
+
+  public void updateDefaultChannel(UpdateSettings settings, ChannelStatus currentChannelStatus) {
+    boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
+
+    if (eap && currentChannelStatus != ChannelStatus.EAP && forceEapUpdateChannelForEapBuilds()) {
+      settings.setSelectedChannelStatus(ChannelStatus.EAP);
+      LOG.info("channel forced to 'eap'");
+      if (!ConfigImportHelper.isFirstSession()) {
+        String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+        String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
+        UpdateChecker.getNotificationGroup()
+          .createNotification(title, message, NotificationType.INFORMATION)
+          .setDisplayId("ide.update.channel.switched")
+          .notify(null);
+      }
+    }
+
+    if (!eap && currentChannelStatus == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
+      settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
+      LOG.info("channel set to 'release'");
+    }
   }
 }

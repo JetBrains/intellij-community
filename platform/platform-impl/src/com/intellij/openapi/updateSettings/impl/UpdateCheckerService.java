@@ -91,25 +91,7 @@ final class UpdateCheckerService {
   private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
-    boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
-
-    if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
-      settings.setSelectedChannelStatus(ChannelStatus.EAP);
-      LOG.info("channel forced to 'eap'");
-      if (!ConfigImportHelper.isFirstSession()) {
-        String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-        String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        UpdateChecker.getNotificationGroup()
-          .createNotification(title, message, NotificationType.INFORMATION)
-          .setDisplayId("ide.update.channel.switched")
-          .notify(null);
-      }
-    }
-
-    if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
-      settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
-      LOG.info("channel set to 'release'");
-    }
+    UpdateStrategyCustomization.getInstance().updateDefaultChannel(settings, current);
   }
 
   private void scheduleFirstCheck(UpdateSettings settings) {

@@ -38,7 +38,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
     val manager = ExternalUpdateManager.ACTUAL
-    val eapLocked = ApplicationInfoEx.getInstanceEx().isMajorEAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()
+    val isChannelSelectionLocked = UpdateStrategyCustomization.getInstance().isChannelSelectionLocked()
     val appInfo = ApplicationInfo.getInstance()
     val channelModel = CollectionComboBoxModel(settings.activeChannels)
 
@@ -52,7 +52,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           manager != null -> {
             comment(IdeBundle.message("updates.settings.external", manager.toolName))
           }
-          eapLocked -> {
+          isChannelSelectionLocked -> {
             checkBox(IdeBundle.message("updates.settings.checkbox"))
               .bindSelected(settings.state::isCheckNeeded)
             comment(IdeBundle.message("updates.settings.channel.locked"))
