@@ -6,6 +6,7 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 apply from: 'archivesCleanup.gradle'
+apply from: 'retries.gradle'
 
 def jbrVersion = System.getProperty('intellij.build.jdk.version', '11').toInteger()
 def setupJdkTasks = ["setupJbr$jbrVersion"]
@@ -65,13 +66,14 @@ def downloadJbr = task("downloadJbr$jbrVersion") {
   outputs.file(outputFile)
   doLast {
     logger.info("Downloading JBR $jbrVersion to compile (using $jbrUrl)")
-    download {
-      src jbrUrl
-      dest outputFile
-      tempAndMove true
-      connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
-      readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
-      retries 10
+    project.ext.retry {
+      download {
+        src jbrUrl
+        dest outputFile
+        tempAndMove true
+        connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+        readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+      }
     }
   }
 }
