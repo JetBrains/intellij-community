@@ -147,7 +147,7 @@ public final class TipUIUtil {
           if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
         }
 
-        if (tipLoader == null && pluginDescriptor.getPluginClassLoader() != null) {
+        if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.getPluginClassLoader() != null) {
           tipLoader = pluginDescriptor.getPluginClassLoader();
         }
 
@@ -332,7 +332,6 @@ public final class TipUIUtil {
   }
 
   private static void updateShortcuts(StringBuilder text) {
-
 
 
     int lastIndex = 0;
