@@ -36,7 +36,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   void nodeAdded() {
-    dropProblemCountCaches();
+    super.dropProblemCountCaches();
     ReadAction.run(() -> myValid = calculateIsValid());
     //force calculation
     getProblemLevels();
