@@ -18,6 +18,7 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
 import kotlin.math.abs
+import kotlin.math.max
 
 class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   /**
@@ -116,7 +117,6 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   private open class BaseAlignDiffInlayPresentation(private val editor: EditorEx,
                                                     var height: Int,
-                                                    var width: Int,
                                                     private val inlayColor: Color? = null) : EditorCustomElementRenderer {
 
     override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
@@ -124,19 +124,21 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
       val paintColor = inlayColor ?: return
 
       g.color = paintColor
-      g.fillRect(targetRegion.x, targetRegion.y, editor.preferredSize.width, height)
+      g.fillRect(targetRegion.x, targetRegion.y, editor.maxWidth, height)
     }
 
-    override fun calcWidthInPixels(inlay: Inlay<*>): Int = width
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int = editor.maxWidth
 
     override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
+
+    private val EditorEx.maxWidth get() = max((this as EditorImpl).preferredSize.width, editor.component.width)
   }
 
   private class EmptyLineAlignDiffInlayPresentation(editor: EditorEx, height: Int, inlayColor: Color? = editor.backgroundColor) :
-    BaseAlignDiffInlayPresentation(editor, height, editor.component.width, inlayColor)
+    BaseAlignDiffInlayPresentation(editor, height, inlayColor)
 
   private class ChangeAlignDiffInlayPresentation(editor: EditorEx, height: Int, diffType: TextDiffType) :
-    BaseAlignDiffInlayPresentation(editor, height, editor.component.width, getAlignedChangeColor(diffType, editor))
+    BaseAlignDiffInlayPresentation(editor, height, getAlignedChangeColor(diffType, editor))
 
   private inner class MyInlayModelListener : InlayModel.Listener {
     override fun onAdded(inlay: Inlay<*>) = processInlay(inlay, ProcessType.ADDED)
