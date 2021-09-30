@@ -110,6 +110,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
    */
   Key<Boolean> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
 
+  Key<Boolean> DIFF_NEW_TOOLBAR = Key.create("Diff.NewToolbar");
+
   //
   // MergeContext / MergeRequest
   //

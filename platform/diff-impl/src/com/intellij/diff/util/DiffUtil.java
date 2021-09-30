@@ -450,8 +450,17 @@ public final class DiffUtil {
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, @Nullable List<? extends AnAction> actions) {
+    addActionBlock(group, actions, true);
+  }
+
+  public static void addActionBlock(@NotNull DefaultActionGroup group,
+                                    @Nullable List<? extends AnAction> actions,
+                                    boolean prependSeparator) {
     if (actions == null || actions.isEmpty()) return;
-    group.addSeparator();
+
+    if (prependSeparator) {
+      group.addSeparator();
+    }
 
     AnAction[] children = group.getChildren(null);
     for (AnAction action : actions) {

@@ -10,6 +10,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSetti
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.diagnostic.logger
@@ -23,7 +24,7 @@ interface CombinedDiffRequestProducer : DiffRequestProducer {
 
 open class CombinedDiffRequestProcessor(project: Project?,
                                         private val requestProducer: CombinedDiffRequestProducer) :
-  CacheDiffRequestProcessor.Simple(project) {
+  CacheDiffRequestProcessor.Simple(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.DIFF_NEW_TOOLBAR, true)) {
 
   override fun getCurrentRequestProvider(): DiffRequestProducer = requestProducer
 
