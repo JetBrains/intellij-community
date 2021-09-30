@@ -173,7 +173,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val model = node.userObject as InlayProviderSettingsModel
         if (model.isEnabled != node.isChecked) {
           node.isChecked = model.isEnabled
-          (tree.model as DefaultTreeModel).nodeChanged(node)
+          refreshNode(node)
         }
         model.reset()
       }
@@ -181,11 +181,18 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val case = node.userObject as ImmediateConfigurable.Case
         if (case.value != node.isChecked) {
           node.isChecked = case.value
-          (tree.model as DefaultTreeModel).nodeChanged(node)
+          refreshNode(node)
         }
       }
     }
     node.children().toList().forEach { reset(it as CheckedTreeNode) }
+  }
+
+  private fun refreshNode(node: CheckedTreeNode) {
+    val treeModel = tree.model as DefaultTreeModel
+    treeModel.nodeChanged(node)
+    treeModel.nodeChanged(node.parent)
+    treeModel.nodeChanged(node.parent.parent)
   }
 
   fun apply() {
