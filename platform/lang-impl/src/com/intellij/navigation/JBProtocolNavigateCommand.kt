@@ -5,7 +5,6 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.project.Project
 
 private val LOG = logger<JBProtocolNavigateCommand>()
 
@@ -32,20 +31,14 @@ open class JBProtocolNavigateCommand: JBProtocolCommand(NAVIGATE_COMMAND) {
       return
     }
     openProjectWithAction(parameters) {
-      findAndNavigateToReference(it, parameters)
-    }
-  }
-
-  private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
-    fun locationToOffset(locationInFile: LocationInFile, editor: Editor) =
-      editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))
-
-    val keyPrefixToNavigator = mapOf(
-      (FQN_KEY to ::navigateByFqn),
-      (PATH_KEY to ::navigateByPath)
-    )
-    keyPrefixToNavigator.forEach { (keyPrefix, navigator) ->
-      parameters.filterKeys { it.startsWith(keyPrefix) }.values.forEach { navigator.invoke(project, parameters, it, ::locationToOffset) }
+      NavigatorWithinProject(it, parameters, ::locationToOffset)
+        .navigate(listOf(
+          NavigatorWithinProject.NavigationKeyPrefix.FQN,
+          NavigatorWithinProject.NavigationKeyPrefix.PATH
+        ))
     }
   }
 }
+
+private fun locationToOffset(locationInFile: LocationInFile, editor: Editor) =
+  editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))

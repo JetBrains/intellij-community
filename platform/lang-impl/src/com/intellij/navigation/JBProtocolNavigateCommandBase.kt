@@ -12,17 +12,14 @@ abstract class JBProtocolNavigateCommandBase(command: String): JBProtocolCommand
 
   fun openProject(parameters: Map<String, String>, action: (Project) -> Unit) = openProjectWithAction(parameters, action)
 
-  fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
-    fun locationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
-      val offsetOfLine = editor.logicalPositionToOffset(LogicalPosition(ComparatorUtil.max(locationInFile.line - 1, 0), 0))
-      val offsetInLine = locationInFile.column - 1
-      return ComparatorUtil.max(offsetOfLine + offsetInLine, 0)
-    }
-
-    parameters.filterKeys { it.startsWith(PATH_KEY) }.values.forEach {
-      navigateByPath(project, parameters, it, ::locationToOffset)
-    }
-  }
+  fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) =
+    NavigatorWithinProject(project, parameters, ::locationToOffset).navigate(listOf(NavigatorWithinProject.NavigationKeyPrefix.PATH))
 }
 
-fun parseNavigatePath(pathText: String) = parseNavigationPath(pathText)
+fun parseNavigatePath(pathText: String) = NavigatorWithinProject.parseNavigationPath(pathText)
+
+private fun locationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
+  val offsetOfLine = editor.logicalPositionToOffset(LogicalPosition(ComparatorUtil.max(locationInFile.line - 1, 0), 0))
+  val offsetInLine = locationInFile.column - 1
+  return ComparatorUtil.max(offsetOfLine + offsetInLine, 0)
+}
