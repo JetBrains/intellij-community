@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.util.Time.*
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
@@ -230,13 +231,14 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     val project = item.project
+    val openedPsiFile = PsiManager.getInstance(project).findFile(openedFile) ?: return null
 
     val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-      val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
+      val foundFileDirectory = if (item.isDirectory) item else item.containingFile?.containingDirectory
 
-      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
-      val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
+      val openedFilePackageName = openedPsiFile.containingDirectory?.let { fileIndex.getPackageNameByDirectory(it.virtualFile) }
+      val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it.virtualFile) }
 
       Pair(openedFilePackageName, foundFilePackageName)
     }.run {
