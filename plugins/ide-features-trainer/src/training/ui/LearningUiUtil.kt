@@ -10,7 +10,6 @@ import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
@@ -160,7 +159,7 @@ object LearningUiUtil {
    *
    * @throws ComponentLookupException if desired component haven't been found under the container (gets from receiver) in specified timeout
    */
-  inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>.findComponentWithTimeout(
+  inline fun <reified ComponentType : Component, ContainerComponentType : Container> IftTestContainerFixture<ContainerComponentType>.findComponentWithTimeout(
     timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
     crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {

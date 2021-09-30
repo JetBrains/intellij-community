@@ -18,10 +18,14 @@ import org.fest.swing.driver.BasicJListCellReader
 import org.fest.swing.driver.ComponentDriver
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.*
+import org.fest.swing.fixture.AbstractComponentFixture
+import org.fest.swing.fixture.JButtonFixture
+import org.fest.swing.fixture.JListFixture
+import org.fest.swing.fixture.JMenuItemFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
+import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.invokeActionForFocusContext
@@ -59,7 +63,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     }
   }
 
-  fun ideFrame(action: ContainerFixture<IdeFrameImpl>.() -> Unit) {
+  fun ideFrame(action: IftTestContainerFixture<IdeFrameImpl>.() -> Unit) {
     with(findIdeFrame(project, robot, defaultTimeout)) {
       action()
     }
@@ -77,7 +81,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
    *
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <C : Container> ContainerFixture<C>.jList(containingItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
+  fun <C : Container> IftTestContainerFixture<C>.jList(containingItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
     return generalListFinder(timeout, containingItem) { element, p -> element == p }
   }
 
@@ -99,7 +103,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
    *
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <C : Container> ContainerFixture<C>.button(name: String, timeout: Timeout = defaultTimeout): JButtonFixture {
+  fun <C : Container> IftTestContainerFixture<C>.button(name: String, timeout: Timeout = defaultTimeout): JButtonFixture {
     return button(timeout) { b: JButton -> b.text == name }
   }
 
@@ -111,7 +115,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return JButtonFixture(robot(), button)
   }
 
-  fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout: Timeout = defaultTimeout)
+  fun <C : Container> IftTestContainerFixture<C>.actionButton(actionName: String, timeout: Timeout = defaultTimeout)
     : AbstractComponentFixture<*, ActionButton, ComponentDriver<*>> {
     val actionButton: ActionButton = findComponentWithTimeout(timeout) {
       it.isShowing && it.isEnabled && actionName == it.action.templatePresentation.text
@@ -119,16 +123,15 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return ActionButtonFixture(robot(), actionButton)
   }
 
-  inline fun <C : Container, reified MenuItemType : JMenuItem> ContainerFixture<C>.jMenuItem(
-    timeout: Timeout = defaultTimeout,
-    crossinline finderFunction: (MenuItemType) -> Boolean
+  inline fun <C : Container, reified MenuItemType : JMenuItem> IftTestContainerFixture<C>.jMenuItem(timeout: Timeout = defaultTimeout,
+                                                          crossinline finderFunction: (MenuItemType) -> Boolean
   ): JMenuItemFixture {
     val item = findComponentWithTimeout(timeout) { item: MenuItemType -> item.isShowing && finderFunction(item) }
     return JMenuItemFixture(robot(), item)
   }
 
   // Modified copy-paste
-  fun <C : Container> ContainerFixture<C>.jListContains(partOfItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
+  fun <C : Container> IftTestContainerFixture<C>.jListContains(partOfItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
     return generalListFinder(timeout, partOfItem) { element, p -> element.contains(p) }
   }
 
@@ -139,7 +142,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
              ignoreCaseTitle: Boolean = false,
              predicate: (String, String) -> Boolean = { found: String, wanted: String -> found == wanted },
              timeout: Timeout = defaultTimeout,
-             func: ContainerFixture<JDialog>.() -> Unit = {})
+             func: IftTestContainerFixture<JDialog>.() -> Unit = {})
     : AbstractComponentFixture<*, JDialog, ComponentDriver<*>> {
     val jDialogFixture = if (title == null) {
       val jDialog = LearningUiUtil.waitUntilFound(robot, typeMatcher(JDialog::class.java) { true }, timeout) {
@@ -168,7 +171,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return jDialogFixture
   }
 
-  fun ContainerFixture<*>.jComponent(target: Component): AbstractComponentFixture<*, Component, ComponentDriver<*>> {
+  fun IftTestContainerFixture<*>.jComponent(target: Component): AbstractComponentFixture<*, Component, ComponentDriver<*>> {
     return SimpleComponentFixture(robot(), target)
   }
 
@@ -183,9 +186,9 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
   }
 
   ////////////------------------------------
-  private fun <C : Container> ContainerFixture<C>.generalListFinder(timeout: Timeout,
-                                                                    containingItem: String?,
-                                                                    predicate: (String, String) -> Boolean): JListFixture {
+  private fun <C : Container> IftTestContainerFixture<C>.generalListFinder(timeout: Timeout,
+                                                                           containingItem: String?,
+                                                                           predicate: (String, String) -> Boolean): JListFixture {
     val extCellReader = ExtendedJListCellReader()
     val myJList: JList<*> = findComponentWithTimeout(timeout) { jList: JList<*> ->
       if (containingItem == null) true //if were searching for any jList()
@@ -333,13 +336,13 @@ private open class ComponentFixture<S, C : Component>(selfType: Class<S>, robot:
 }
 
 private class ActionButtonFixture(robot: Robot, target: ActionButton) :
-  ComponentFixture<ActionButtonFixture, ActionButton>(ActionButtonFixture::class.java, robot, target), ContainerFixture<ActionButton>
+  ComponentFixture<ActionButtonFixture, ActionButton>(ActionButtonFixture::class.java, robot, target), IftTestContainerFixture<ActionButton>
 
 private class IdeFrameFixture(robot: Robot, target: IdeFrameImpl)
-  : ComponentFixture<IdeFrameFixture, IdeFrameImpl>(IdeFrameFixture::class.java, robot, target), ContainerFixture<IdeFrameImpl>
+  : ComponentFixture<IdeFrameFixture, IdeFrameImpl>(IdeFrameFixture::class.java, robot, target), IftTestContainerFixture<IdeFrameImpl>
 
 private class JDialogFixture(robot: Robot, jDialog: JDialog) :
-  ComponentFixture<JDialogFixture, JDialog>(JDialogFixture::class.java, robot, jDialog), ContainerFixture<JDialog>
+  ComponentFixture<JDialogFixture, JDialog>(JDialogFixture::class.java, robot, jDialog), IftTestContainerFixture<JDialog>
 
 private fun findIdeFrame(project: Project, robot: Robot, timeout: Timeout): IdeFrameFixture {
   val matcher: GenericTypeMatcher<IdeFrameImpl> = object : GenericTypeMatcher<IdeFrameImpl>(
