@@ -93,21 +93,31 @@ def setupJbr = tasks.create(name: "setupJbr$jbrVersion", dependsOn: [downloadJbr
 setupJbr.finalizedBy(checkJbr(jbrVersion, jbrOutputDir))
 setupJbr.finalizedBy(deleteObsoleteJdkArchives)
 
-def unpackJdk(jbrArchive, outputDir) {
+def untar(File archive, String directory) {
+  copy {
+    from tarTree(archive)
+    into directory
+  }
+}
+
+def unpackJdk(File jbrArchive, String outputDir) {
   logger.info("Unpacking $jbrArchive to ${outputDir}")
   if (file(outputDir).exists()) {
     delete(outputDir)
   }
   def currentOs = OperatingSystem.current()
   if (currentOs.isWindows()) {
-    copy {
-      from tarTree(jbrArchive)
-      into outputDir
-    }
+    untar(jbrArchive, outputDir)
   }
   else {
-    exec { commandLine 'mkdir', '-p', outputDir }
-    exec { commandLine 'tar', 'xpf', "$jbrArchive.absolutePath", '--directory', outputDir }
+    try {
+      exec { commandLine 'mkdir', '-p', outputDir }
+      exec { commandLine 'tar', 'xpf', "$jbrArchive.absolutePath", '--directory', outputDir }
+    }
+    catch (Throwable e) {
+      logger.log(LogLevel.WARN, 'Failed to unpack via native executables', e)
+      untar(jbrArchive, outputDir)
+    }
   }
   def rootDirs = ['jbrsdk', 'jbr', 'jdk']
   if (file(outputDir).list()?.any { rootDirs.contains(it) }) {
