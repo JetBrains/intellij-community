@@ -41,7 +41,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         singleJarMvnLib("kotlinc.kotlin-scripting-compiler", "$ktGroup:kotlin-scripting-compiler:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-scripting-jvm", "$ktGroup:kotlin-scripting-jvm:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-script-util", "$ktGroup:kotlin-script-util:$version", transitive = false),
-        singleJarMvnLib("kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
+        singleJarMvnLib("kotlinc.kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
         singleJarMvnLib("kotlin-script-runtime", "$ktGroup:kotlin-script-runtime:$version"),
         run {
             val mavenIds = listOf(
@@ -51,7 +51,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
                 MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk7:$version")
             )
             JpsLibrary(
-                "kotlin-stdlib-jdk8",
+                "kotlinc.kotlin-stdlib",
                 JpsLibrary.Kind.Maven(mavenIds.first(), excludes = listOf(MavenId("org.jetbrains", "annotations"))),
                 annotations = listOf(JpsUrl.File(JpsPath.ProjectDir("lib/annotations/kotlin", isCommunity))),
                 classes = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it)) },

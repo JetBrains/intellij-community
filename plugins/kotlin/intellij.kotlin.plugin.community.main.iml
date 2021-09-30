@@ -97,7 +97,7 @@
     <orderEntry type="library" exported="" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable-jvm" level="project" />
-    <orderEntry type="library" exported="" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-script-runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javaslang" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="completion-ranking-kotlin" level="project" />

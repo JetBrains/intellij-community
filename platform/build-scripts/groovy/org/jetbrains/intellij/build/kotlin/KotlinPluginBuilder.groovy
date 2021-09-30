@@ -241,8 +241,8 @@ class KotlinPluginBuilder {
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlin-stdlib-jdk8", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-stdlib", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")
