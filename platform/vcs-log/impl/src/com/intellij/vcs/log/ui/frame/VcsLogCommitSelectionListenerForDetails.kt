@@ -12,6 +12,7 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.data.ContainingBranchesGetter
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
@@ -31,18 +32,16 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
   : CommitSelectionListener<VcsCommitMetadata>(graphTable, graphTable.logData.miniDetailsGetter), Disposable {
 
   private val logData = graphTable.logData
-  private val containingBranchesGetter = logData.containingBranchesGetter
 
   private val refsLoader = CommitDataLoader()
   private val hashesResolver = CommitDataLoader()
+  private val containingBranchesLoader = ContainingBranchesAsyncLoader(logData.containingBranchesGetter, detailsPanel).also {
+    Disposer.register(this, it)
+  }
 
   private var currentSelection = IntArray(0)
 
   init {
-    val containingBranchesListener = Runnable { branchesChanged() }
-    containingBranchesGetter.addTaskCompletedListener(containingBranchesListener)
-
-    Disposer.register(this) { containingBranchesGetter.removeTaskCompletedListener(containingBranchesListener) }
     Disposer.register(parentDisposable, this)
   }
 
@@ -65,7 +64,6 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
       panel.setCommit(presentation)
 
       val commit = commitIds[idx]
-      panel.setBranches(containingBranchesGetter.requestContainingBranches(commit.root, commit.hash))
       val root = commit.root
       if (colorManager.hasMultiplePaths()) {
         panel.setRoot(RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, colorManager)))
@@ -78,6 +76,9 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     refsLoader.loadData(
       { currentSelection.map(myGraphTable.model::getRefsAtRow) },
       { panel, refs -> panel.setRefs(sortRefs(refs)) })
+
+    containingBranchesLoader.requestData(commitIds)
+  }
 
     if (unResolvedHashes.isNotEmpty()) {
       hashesResolver.loadData(
@@ -144,15 +145,10 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     }
   }
 
-  private fun branchesChanged() {
-    detailsPanel.forEachPanel { commit, panel ->
-      panel.setBranches(containingBranchesGetter.requestContainingBranches(commit.root, commit.hash))
-    }
-  }
-
   private fun cancelLoading() {
     hashesResolver.cancelLoading()
     refsLoader.cancelLoading()
+    containingBranchesLoader.requestData(emptyList())
   }
 
   override fun dispose() {
@@ -182,6 +178,40 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
         progressIndicator = null
       }
     }
+  }
+
+  private class ContainingBranchesAsyncLoader(private val getter: ContainingBranchesGetter,
+                                              private val detailsPanel: CommitDetailsListPanel) : Disposable {
+
+    private var requestedCommits: List<CommitId> = emptyList()
+
+    init {
+      val containingBranchesListener = Runnable { branchesChanged() }
+      getter.addTaskCompletedListener(containingBranchesListener)
+      Disposer.register(this) { getter.removeTaskCompletedListener(containingBranchesListener) }
+    }
+
+    private fun branchesChanged() {
+      requestData(requestedCommits)
+    }
+
+    fun requestData(commits: List<CommitId>) {
+      val result = mutableMapOf<CommitId, List<String>>()
+      for (commit in commits) {
+        val branches = getter.requestContainingBranches(commit.root, commit.hash)
+        if (branches != null)
+          result[commit] = branches
+      }
+
+      if (result.isNotEmpty()) {
+        detailsPanel.forEachPanel { commit, panel ->
+          panel.setBranches(result[commit])
+        }
+      }
+      requestedCommits = commits
+    }
+
+    override fun dispose() {}
   }
 
   companion object {
