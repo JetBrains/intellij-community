@@ -58,6 +58,11 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private val inheritSitePackagesCheckBox: JBCheckBox
 
+  /**
+   * Encapsulates the work with the files synchronization options.
+   */
+  private var projectSync: ProjectSync? = null
+
   override var newProjectPath: String? = null
     set(value) {
       field = value
@@ -106,6 +111,11 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       updateComponentsVisibility()
 
       interpreterCombobox.childComponent.addActionListener(ActionListener { updateComponentsVisibility() })
+
+      targetEnvironmentConfiguration?.let {
+        projectSync = PythonInterpreterTargetEnvironmentFactory.findProjectSync(project, it)
+          ?.also { projectSync -> projectSync.extendDialogPanelWithOptionalFields(this) }
+      }
     }
     add(panel, BorderLayout.NORTH)
 
@@ -129,12 +139,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
   override fun getOrCreateSdk(): Sdk? =
     getOrCreateSdk(targetEnvironmentConfiguration = null)
 
-  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? =
-    when (val item = interpreterCombobox.selectedItem) {
+  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+    // TODO [targets] Refactor this workaround
+    applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
+
+    return when (val item = interpreterCombobox.selectedItem) {
       is NewPySdkComboBoxItem -> createNewVirtualenvSdk(targetEnvironmentConfiguration)
       is ExistingPySdkComboBoxItem -> configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk)
       null -> null
     }
+  }
 
   /**
    * Note: there is a careful work with SDK names because of the caching of Python package managers in
@@ -218,5 +232,9 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       .map { ModuleUtil.findModuleForFile(rootFile, it) }
       .filterNotNull()
       .firstOrNull()
+  }
+
+  private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
+    if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
   }
 }
