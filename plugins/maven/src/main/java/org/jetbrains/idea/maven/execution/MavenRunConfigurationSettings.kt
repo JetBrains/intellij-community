@@ -85,11 +85,11 @@ class MavenRunConfigurationSettings : Cloneable {
     checksumPolicy?.let { settings.checksumPolicy = it }
     outputLevel?.let { settings.outputLevel = it }
     failureBehavior?.let { settings.failureBehavior = it }
-    if (isWorkOffline) settings.isWorkOffline = isWorkOffline
-    if (isUsePluginRegistry) settings.isUsePluginRegistry = isUsePluginRegistry
-    if (isPrintErrorStackTraces) settings.isPrintErrorStackTraces = isPrintErrorStackTraces
-    if (isAlwaysUpdateSnapshots) settings.isAlwaysUpdateSnapshots = isAlwaysUpdateSnapshots
-    if (isNonRecursive) settings.isNonRecursive = isNonRecursive
+    isWorkOffline.let { settings.isWorkOffline = it }
+    isUsePluginRegistry.let { settings.isUsePluginRegistry = it }
+    isPrintErrorStackTraces.let { settings.isPrintErrorStackTraces = it }
+    isAlwaysUpdateSnapshots.let { settings.isAlwaysUpdateSnapshots = it }
+    isNonRecursive.let { settings.isNonRecursive = it }
     return if (settings == originalSettings) null else settings
   }
 
@@ -117,9 +117,9 @@ class MavenRunConfigurationSettings : Cloneable {
     jreName?.let { settings.setJreName(it) }
     vmOptions?.let { settings.setVmOptions(expandPathAndMacros(it, null, project)) }
     isPassParentEnvs.let { settings.isPassParentEnv = it }
-    if (environment.isNotEmpty()) settings.environmentProperties = environment
-    if (mavenProperties.isNotEmpty()) settings.mavenProperties = mavenProperties
-    if (isSkipTests) settings.isSkipTests = isSkipTests
+    environment.let { settings.environmentProperties = it }
+    mavenProperties.let { settings.mavenProperties = it }
+    isSkipTests.let { settings.isSkipTests = it }
     return if (settings == originalSettings) null else settings
   }
 
