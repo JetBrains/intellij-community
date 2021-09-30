@@ -33,7 +33,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 3)
+    private val GROUP = EventLogGroup("build.gradle.import", 4)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
