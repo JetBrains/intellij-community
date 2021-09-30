@@ -27,7 +27,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import java.util.Collections;
 import java.util.List;
@@ -111,13 +110,11 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     // Inferred annotations are non-physical, so we can pass them between actions
     List<PsiAnnotation> annotations = getAnnotationsToAdd(owner);
     if (needToAddDependency(file, annotations)) {
-      Promise<Void> promise = InferNullityAnnotationsAction.addAnnotationsDependency(
-        project, Collections.singleton(module), AnnotationUtil.NOT_NULL, getFamilyName());
-      if (promise != null) {
-        SmartPsiElementPointer<PsiModifierListOwner> ownerPointer = SmartPointerManager.createPointer(owner);
-        promise.onSuccess(__ -> ApplicationManager.getApplication().invokeLater(
-          () -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations), ModalityState.NON_MODAL, module.getDisposed()));
-      }
+      SmartPsiElementPointer<PsiModifierListOwner> ownerPointer = SmartPointerManager.createPointer(owner);
+      InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), AnnotationUtil.NOT_NULL, getFamilyName())
+        .onSuccess(__ -> ApplicationManager.getApplication().invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations),
+                                                                         ModalityState.NON_MODAL, 
+                                                                         module.getDisposed()));
       return;
     }
 

@@ -107,14 +107,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      Promise<Void> promise = addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
-                                                       JavaBundle.message("action.description.infer.nullity.annotations"));
-      
-      if (promise != null) {
-        promise.onSuccess(__ -> {
+      addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
+                                                       JavaBundle.message("action.description.infer.nullity.annotations"))
+        .onSuccess(__ -> {
           restartAnalysis(project, scope);
         });
-      }
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -150,7 +147,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         });
         return Promises.resolvedPromise();
       }
-      return null;
+      return Promises.rejectedPromise();
     }
     
     if (Messages.showOkCancelDialog(project, JavaBundle.message(
@@ -160,7 +157,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
                                                                              DependencyScope.COMPILE);
     }
-    return null;
+    return Promises.rejectedPromise();
   }
 
   protected UsageInfo @Nullable [] findUsages(@NotNull final Project project,
