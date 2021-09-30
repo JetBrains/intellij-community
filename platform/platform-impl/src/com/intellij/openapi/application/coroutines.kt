@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -125,6 +126,12 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
   }
 }
 
+fun ModalityState.asContextElement(): CoroutineContext.Element = ModalityStateElement(this)
+
+private class ModalityStateElement(val modalityState: ModalityState) : AbstractCoroutineContextElement(ModalityStateElementKey)
+
+private object ModalityStateElementKey : CoroutineContext.Key<ModalityStateElement>
+
 /**
  * Please don't use unless you know what you are doing.
  * The code in this context can only perform pure UI operations,
@@ -139,6 +146,7 @@ val Dispatchers.EDT: CoroutineDispatcher
 private object EdtCoroutineDispatcher : CoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
+    val state = context[ModalityStateElementKey]?.modalityState ?: ModalityState.any()
+    ApplicationManager.getApplication().invokeLater(block, state)
   }
 }
