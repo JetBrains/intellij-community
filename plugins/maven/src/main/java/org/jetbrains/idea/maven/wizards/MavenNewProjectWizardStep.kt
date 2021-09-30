@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import javax.swing.Icon
 
-abstract class MavenBuildSystemStep<ParentStep>(parent: ParentStep)
+abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep)
   : MavenizedNewProjectWizardStep<MavenProject, ParentStep>(parent)
   where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
 

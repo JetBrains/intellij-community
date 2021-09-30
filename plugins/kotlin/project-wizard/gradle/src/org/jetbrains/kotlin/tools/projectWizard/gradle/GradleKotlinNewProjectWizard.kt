@@ -5,17 +5,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.buttonGroup
 import com.intellij.util.io.systemIndependentPath
-import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleBuildSystemStep
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 
-internal class GradleKotlinBuildSystemType : KotlinBuildSystemType {
+internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Gradle"
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step) = object : GradleBuildSystemStep<KotlinNewProjectWizard.Step>(parent) {
+    override fun createStep(parent: KotlinNewProjectWizard.Step) = object : GradleNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent) {
         var buildSystemType: BuildSystemType = BuildSystemType.GradleKotlinDsl
 
         override fun setupUI(builder: Panel) {

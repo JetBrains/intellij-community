@@ -9,8 +9,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
  *
  * @see NewProjectWizardMultiStepFactory
  */
-interface JavaBuildSystemType : NewProjectWizardMultiStepFactory<JavaNewProjectWizard.Step> {
+interface BuildSystemJavaNewProjectWizard : NewProjectWizardMultiStepFactory<JavaNewProjectWizard.Step> {
   companion object {
-    var EP_NAME = ExtensionPointName<JavaBuildSystemType>("com.intellij.newProjectWizard.buildSystem.java")
+    var EP_NAME = ExtensionPointName<BuildSystemJavaNewProjectWizard>("com.intellij.newProjectWizard.java.buildSystem")
   }
 }

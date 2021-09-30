@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 
-internal class IntelliJKotlinBuildSystemType : KotlinBuildSystemType {
+internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "IntelliJ"
 

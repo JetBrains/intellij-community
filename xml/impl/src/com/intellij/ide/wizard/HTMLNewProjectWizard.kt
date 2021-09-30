@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.PlatformUtils
 
-class HTMLNewProjectWizard : NewProjectWizard {
+class HTMLNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "HTML"
 
   override fun isEnabled(context: WizardContext) = PlatformUtils.isCommunityEdition()

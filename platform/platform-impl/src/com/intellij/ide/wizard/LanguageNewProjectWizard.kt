@@ -3,8 +3,8 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-interface NewProjectWizard : NewProjectWizardMultiStepFactory<NewProjectWizardLanguageStep> {
+interface LanguageNewProjectWizard : NewProjectWizardMultiStepFactory<NewProjectWizardLanguageStep> {
   companion object {
-    val EP_NAME = ExtensionPointName<NewProjectWizard>("com.intellij.newProjectWizard")
+    val EP_NAME = ExtensionPointName<LanguageNewProjectWizard>("com.intellij.newProjectWizard.language")
   }
 }

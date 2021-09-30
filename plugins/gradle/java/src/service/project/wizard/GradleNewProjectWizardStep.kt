@@ -19,7 +19,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.*
 import javax.swing.Icon
 
-abstract class GradleBuildSystemStep<ParentStep>(parent: ParentStep)
+abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep)
   : MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
   where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardSdkData, ParentStep : NewProjectWizardStep {
 

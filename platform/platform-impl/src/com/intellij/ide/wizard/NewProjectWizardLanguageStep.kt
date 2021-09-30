@@ -5,7 +5,7 @@ import com.intellij.ui.UIBundle
 
 class NewProjectWizardLanguageStep(
   parent: NewProjectWizardBaseStep
-) : AbstractNewProjectWizardMultiStep<NewProjectWizardBaseStep, NewProjectWizardLanguageStep>(parent, NewProjectWizard.EP_NAME),
+) : AbstractNewProjectWizardMultiStep<NewProjectWizardBaseStep, NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
     NewProjectWizardLanguageData,
     NewProjectWizardBaseData by parent {
 

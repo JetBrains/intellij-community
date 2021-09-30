@@ -30,12 +30,11 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemP
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.templates.ConsoleJvmApplicationTemplate
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.nio.file.Path
 import java.util.*
 
-class KotlinNewProjectWizard : NewProjectWizard {
+class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     companion object {
         private const val DEFAULT_GROUP_ID = "me.user"
@@ -107,7 +106,7 @@ class KotlinNewProjectWizard : NewProjectWizard {
     override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
     class Step(parent: NewProjectWizardLanguageStep) :
-        AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, KotlinBuildSystemType.EP_NAME),
+        AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         NewProjectWizardBuildSystemData,
         NewProjectWizardLanguageData by parent,
         NewProjectWizardSdkData {

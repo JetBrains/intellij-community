@@ -16,13 +16,13 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
 
-class JavaNewProjectWizard : NewProjectWizard {
+class JavaNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "Java"
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
   class Step(parent: NewProjectWizardLanguageStep)
-    : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, JavaBuildSystemType.EP_NAME),
+    : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
       NewProjectWizardLanguageData by parent,
       NewProjectWizardBuildSystemData, NewProjectWizardSdkData {
 

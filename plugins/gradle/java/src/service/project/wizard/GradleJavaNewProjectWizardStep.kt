@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
-import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.externalSystem.model.project.ProjectId
@@ -12,8 +12,8 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleJavaBuildSystemStep(parent: JavaNewProjectWizard.Step)
-  : GradleBuildSystemStep<JavaNewProjectWizard.Step>(parent) {
+class GradleJavaNewProjectWizardStep(parent: JavaNewProjectWizard.Step)
+  : GradleNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
 
   override fun setupProject(project: Project) {
     val builder = InternalGradleModuleBuilder().apply {
@@ -45,9 +45,9 @@ class GradleJavaBuildSystemStep(parent: JavaNewProjectWizard.Step)
     builder.commit(project)
   }
 
-  class Factory : JavaBuildSystemType {
+  class Factory : BuildSystemJavaNewProjectWizard {
     override val name = GradleConstants.SYSTEM_ID.readableName
 
-    override fun createStep(parent: JavaNewProjectWizard.Step) = GradleJavaBuildSystemStep(parent)
+    override fun createStep(parent: JavaNewProjectWizard.Step) = GradleJavaNewProjectWizardStep(parent)
   }
 }

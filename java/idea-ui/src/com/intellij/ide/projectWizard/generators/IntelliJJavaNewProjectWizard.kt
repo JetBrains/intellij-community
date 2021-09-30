@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths
 
-class IntelliJJavaBuildSystemType : JavaBuildSystemType {
+class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = "IntelliJ"
 
   override fun createStep(parent: JavaNewProjectWizard.Step) =
