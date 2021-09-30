@@ -12,8 +12,8 @@ class JA extends A {
     }
 
     @Override
-    public void setB(@NotNull int b) {
-        super.setB(receiver);
+    public void setB(@NotNull int a) {
+        super.setB(a);
     }
 }
 
