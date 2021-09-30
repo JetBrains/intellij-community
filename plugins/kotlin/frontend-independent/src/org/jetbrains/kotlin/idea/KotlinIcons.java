@@ -3,68 +3,65 @@
 package org.jetbrains.kotlin.idea;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IconManager;
 import com.intellij.util.PlatformIcons;
+import icons.KotlinFirFrontendIndependentIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface KotlinIcons {
-    Icon SMALL_LOGO = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin.svg");
 
-    Icon SMALL_LOGO_13 = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin13.svg");
-
-    Icon CLASS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/classKotlin.svg");
-    Icon ABSTRACT_CLASS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/abstractClassKotlin.svg");
-    Icon ENUM = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/enumKotlin.svg");
-    Icon FILE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_file.svg");
-    Icon SCRIPT = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_script.svg");
-    Icon GRADLE_SCRIPT = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_gradle_script.svg");
-    Icon OBJECT = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/objectKotlin.svg");
-    Icon INTERFACE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg");
-    Icon ANNOTATION = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/annotationKotlin.svg");
-    Icon FUNCTION = AllIcons.Nodes.Function;
+    /** 16x16 */ @NotNull Icon SMALL_LOGO = KotlinFirFrontendIndependentIcons.Kotlin;
+    /** 13x13 */ @NotNull Icon SMALL_LOGO_13 = KotlinFirFrontendIndependentIcons.Kotlin13;
+    Icon FIR = KotlinFirFrontendIndependentIcons.Fir;
+    /** 16x16 */ @NotNull Icon ABSTRACT_EXTENSION_FUNCTION = KotlinFirFrontendIndependentIcons.Abstract_extension_function;
+    /** 16x16 */ @NotNull Icon ABSTRACT_CLASS = KotlinFirFrontendIndependentIcons.AbstractClassKotlin;
+    /** 16x16 */ @NotNull Icon ACTUAL = KotlinFirFrontendIndependentIcons.Actual;
+    /** 16x16 */ @NotNull Icon ANNOTATION = KotlinFirFrontendIndependentIcons.AnnotationKotlin;
+    /** 16x16 */ @NotNull Icon CLASS_INITIALIZER = KotlinFirFrontendIndependentIcons.ClassInitializerKotlin;
+    /** 16x16 */ @NotNull Icon CLASS = KotlinFirFrontendIndependentIcons.ClassKotlin;
+    /** 12x12 */ @NotNull Icon DSL_MARKER_ANNOTATION = KotlinFirFrontendIndependentIcons.DslMarkerAnnotation;
+    /** 16x16 */ @NotNull Icon ENUM = KotlinFirFrontendIndependentIcons.EnumKotlin;
+    /** 16x16 */ @NotNull Icon EXPECT = KotlinFirFrontendIndependentIcons.Expect;
     Icon EXTENSION_FUNCTION = PlatformIcons.FUNCTION_ICON;
-    Icon ABSTRACT_EXTENSION_FUNCTION = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg");
-    Icon LAMBDA = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/lambda.svg");
-    Icon VAR = PlatformIcons.VARIABLE_ICON;
-    Icon VAL = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/value.svg");
+    /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinFirFrontendIndependentIcons.Field_value;
+    /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinFirFrontendIndependentIcons.Field_variable;
+    Icon FUNCTION = AllIcons.Nodes.Function;
+    /** 16x16 */ @NotNull Icon INTERFACE = KotlinFirFrontendIndependentIcons.InterfaceKotlin;
+    /** 16x16 */ @NotNull Icon FILE = KotlinFirFrontendIndependentIcons.Kotlin_file;
+    /** 16x16 */ @NotNull Icon GRADLE_SCRIPT = KotlinFirFrontendIndependentIcons.Kotlin_gradle_script;
+    /** 16x16 */ @NotNull Icon JS = KotlinFirFrontendIndependentIcons.Kotlin_js;
+    /** 16x16 */ @NotNull Icon LAUNCH = KotlinFirFrontendIndependentIcons.Kotlin_launch_configuration;
+    /** 16x16 */ @NotNull Icon MPP = KotlinFirFrontendIndependentIcons.Kotlin_multiplatform_project;
+    /** 16x16 */ @NotNull Icon NATIVE = KotlinFirFrontendIndependentIcons.Kotlin_native;
+    /** 16x16 */ @NotNull Icon SCRIPT = KotlinFirFrontendIndependentIcons.Kotlin_script;
+    /** 16x16 */ @NotNull Icon LAMBDA = KotlinFirFrontendIndependentIcons.Lambda;
+    /** 16x16 */ @NotNull Icon LOAD_SCRIPT_CONFIGURATION = KotlinFirFrontendIndependentIcons.LoadScriptConfiguration;
+    /** 16x16 */ @NotNull Icon OBJECT = KotlinFirFrontendIndependentIcons.ObjectKotlin;
     Icon PARAMETER = PlatformIcons.PARAMETER_ICON;
-    Icon FIELD_VAL = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/field_value.svg");
-    Icon FIELD_VAR = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/field_variable.svg");
-    Icon CLASS_INITIALIZER = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/classInitializerKotlin.svg");
-    Icon TYPE_ALIAS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/typeAlias.svg");
+    /** 12x12 */ @NotNull Icon SUSPEND_CALL = KotlinFirFrontendIndependentIcons.SuspendCall;
+    /** 16x16 */ @NotNull Icon TYPE_ALIAS = KotlinFirFrontendIndependentIcons.TypeAlias;
+    Icon VAR = PlatformIcons.VARIABLE_ICON;
+    /** 16x16 */ @NotNull Icon VAL = KotlinFirFrontendIndependentIcons.Value;
 
-    Icon DSL_MARKER_ANNOTATION = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/dslMarkerAnnotation.svg");
-
-    Icon SUSPEND_CALL = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/suspendCall.svg");
-
-    Icon ACTUAL = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/actual.svg");
-    Icon EXPECT = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/expect.svg");
-
-    Icon LAUNCH = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg");
-    Icon LOAD_SCRIPT_CONFIGURATION = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/loadScriptConfiguration.svg");
-
-    Icon JS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_js.svg");
-    Icon MPP = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_multiplatform_project.svg");
-    Icon NATIVE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/kotlin_native.svg");
-
-    interface Wizard {
-        Icon JVM = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/jvm.svg");
-        Icon JS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/js.svg");
-        Icon CONSOLE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/console.svg");
-        Icon MULTIPLATFORM = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/multiplatform.svg");
-        Icon MULTIPLATFORM_LIBRARY = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/multiplatformLibrary.svg");
-        Icon MULTIPLATFORM_MOBILE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobile.svg");
-        Icon MULTIPLATFORM_MOBILE_LIBRARY = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobileLibrary.svg");
-        Icon NATIVE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/native.svg");
-        Icon WEB = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/ppWeb.svg");
-        Icon ANDROID = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/android.svg");
-        Icon IOS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/ios.svg");
-        Icon LINUX = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/linux.svg");
-        Icon MAC_OS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/macOS.svg");
-        Icon WINDOWS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/windows.svg");
-        Icon NODE_JS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg");
-        Icon REACT_JS = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/react.svg");
-        Icon COMPOSE = IconLoader.getIcon("/org/jetbrains/kotlin/idea/icons/wizard/compose.svg");
+    final class Wizard {
+        /** 16x16 */ public static final @NotNull Icon ANDROID = KotlinFirFrontendIndependentIcons.Wizard.Android;
+        /** 16x16 */ public static final @NotNull Icon COMPOSE = KotlinFirFrontendIndependentIcons.Wizard.Compose;
+        /** 16x16 */ public static final @NotNull Icon CONSOLE = KotlinFirFrontendIndependentIcons.Wizard.Console;
+        /** 16x16 */ public static final @NotNull Icon IOS = KotlinFirFrontendIndependentIcons.Wizard.Ios;
+        /** 16x16 */ public static final @NotNull Icon JS = KotlinFirFrontendIndependentIcons.Wizard.JS;
+        /** 16x16 */ public static final @NotNull Icon JVM = KotlinFirFrontendIndependentIcons.Wizard.Jvm;
+        /** 16x16 */ public static final @NotNull Icon LINUX = KotlinFirFrontendIndependentIcons.Wizard.Linux;
+        /** 16x16 */ public static final @NotNull Icon MAC_OS = KotlinFirFrontendIndependentIcons.Wizard.MacOS;
+        /** 16x16 */ public static final @NotNull Icon MULTIPLATFORM = KotlinFirFrontendIndependentIcons.Wizard.Multiplatform;
+        /** 16x16 */ public static final @NotNull Icon MULTIPLATFORM_LIBRARY = KotlinFirFrontendIndependentIcons.Wizard.MultiplatformLibrary;
+        /** 16x16 */ public static final @NotNull Icon MULTIPLATFORM_MOBILE = KotlinFirFrontendIndependentIcons.Wizard.MultiplatformMobile;
+        /** 16x16 */ public static final @NotNull Icon MULTIPLATFORM_MOBILE_LIBRARY = KotlinFirFrontendIndependentIcons.Wizard.MultiplatformMobileLibrary;
+        /** 16x16 */ public static final @NotNull Icon NATIVE = KotlinFirFrontendIndependentIcons.Wizard.Native;
+        /** 16x16 */ public static final @NotNull Icon NODE_JS = KotlinFirFrontendIndependentIcons.Wizard.Nodejs;
+        /** 16x16 */ public static final @NotNull Icon WEB = KotlinFirFrontendIndependentIcons.Wizard.PpWeb;
+        /** 16x16 */ public static final @NotNull Icon REACT_JS = KotlinFirFrontendIndependentIcons.Wizard.React;
+        /** 16x16 */ public static final @NotNull Icon WINDOWS = KotlinFirFrontendIndependentIcons.Wizard.Windows;
     }
 }
