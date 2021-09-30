@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -94,9 +93,7 @@ interface InlayHintsProvider<T : Any> {
   @JvmDefault
   val description: String?
     get() {
-      val path = "inlayProviders/" + key.id + "/description.html"
-      val stream = javaClass.classLoader.getResourceAsStream(path)
-      return if (stream != null) ResourceUtil.loadText(stream) else null
+      return getProperty("inlay." + key.id + ".description")
     }
 
   /**

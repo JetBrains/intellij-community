@@ -29,7 +29,7 @@ import javax.swing.tree.DefaultTreeModel
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private val tree: CheckboxTree
-  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0"))
+  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
 
   init {
     val settings = InlayHintsSettings.instance()
@@ -149,7 +149,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     if (previewText != null) {
       val editor = createEditor(language, project) {}
       editor.text = previewText
-      rightPanel.add(editor, "gaptop 10")
+      rightPanel.add(editor)
     }
   }
 
