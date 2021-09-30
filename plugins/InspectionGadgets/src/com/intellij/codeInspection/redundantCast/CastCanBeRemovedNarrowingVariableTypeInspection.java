@@ -28,7 +28,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       public void visitTypeCastExpression(PsiTypeCastExpression cast) {
         PsiTypeElement castTypeElement = cast.getCastType();
         if (castTypeElement == null || castTypeElement.getAnnotations().length > 0) return;
-        PsiType castType = cast.getType();
+        PsiType castType = GenericsUtil.getVariableTypeByExpressionType(cast.getType());
         if (!(castType instanceof PsiClassType) || ((PsiClassType)castType).isRaw()) return;
         PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);
         if (ref == null) return;
@@ -56,7 +56,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         else {
           PsiExpression variableInitializer = variable.getInitializer();
           if (variableInitializer != null) {
-            PsiType initializerType = variableInitializer.getType();
+            PsiType initializerType = GenericsUtil.getVariableTypeByExpressionType(variableInitializer.getType());
             if (initializerType == null || !castType.isAssignableFrom(initializerType)) return;
           }
         }
