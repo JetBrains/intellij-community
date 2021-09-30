@@ -11,6 +11,7 @@ import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -80,7 +81,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
           }.bottomGap(BottomGap.SMALL)
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
-              FileChooserDescriptorFactory.createSingleFolderDescriptor())
+              FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
               .bindText(contentRootProperty.transform(::getPresentablePath, ::getCanonicalPath))
               .horizontalAlign(HorizontalAlign.FILL)
               .validationOnApply { validateContentRoot() }
@@ -98,7 +99,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
         }
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+            FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
             .bindText(moduleFileLocationProperty.transform(::getPresentablePath, ::getCanonicalPath))
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
