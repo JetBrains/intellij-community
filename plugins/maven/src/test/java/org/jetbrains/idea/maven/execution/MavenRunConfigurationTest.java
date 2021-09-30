@@ -151,10 +151,10 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
-    containMavenKey(parameters, MavenConfigSettings.NON_RECURSIVE);
-    containMavenKey(parameters, MavenConfigSettings.UPDATE_SNAPSHOTS);
-    containMavenKey(parameters, MavenConfigSettings.OFFLINE);
-    containMavenKey(parameters, MavenConfigSettings.ERRORS);
+    notContainMavenKey(parameters, MavenConfigSettings.NON_RECURSIVE);
+    notContainMavenKey(parameters, MavenConfigSettings.UPDATE_SNAPSHOTS);
+    notContainMavenKey(parameters, MavenConfigSettings.OFFLINE);
+    notContainMavenKey(parameters, MavenConfigSettings.ERRORS);
     containMavenKey(parameters, MavenConfigSettings.THREADS);
     Assert.assertTrue(parameters.getProgramParametersList().hasParameter(generalSettings.getThreads()));
     containMavenKey(parameters, MavenConfigSettings.ALTERNATE_USER_SETTINGS);
@@ -206,9 +206,9 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     Assert.assertTrue(parameters.getVMParametersList().hasParameter(runnerSettings.getVmOptions()));
-    Assert.assertTrue(parameters.getProgramParametersList().hasParameter("-DskipTests=true"));
-    Assert.assertEquals(runnerSettings.getEnvironmentProperties(), parameters.getEnv());
-    Assert.assertEquals("mp1", parameters.getProgramParametersList().getPropertyValue("mp1"));
+    Assert.assertFalse(parameters.getProgramParametersList().hasParameter("-DskipTests=true"));
+    //Assert.assertEquals(runnerSettings.getEnvironmentProperties(), parameters.getEnv());
+    //Assert.assertEquals("mp1", parameters.getProgramParametersList().getPropertyValue("mp1"));
   }
 
   public void testOverrideRunnerSettings() throws ExecutionException {
