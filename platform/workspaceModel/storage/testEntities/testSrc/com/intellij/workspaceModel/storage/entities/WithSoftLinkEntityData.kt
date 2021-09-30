@@ -11,8 +11,6 @@ import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
 // ------------------------------ Persistent Id ---------------
 
 data class NameId(private val name: String) : PersistentEntityId<NamedEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 
@@ -20,8 +18,6 @@ data class NameId(private val name: String) : PersistentEntityId<NamedEntity>() 
 }
 
 data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 
@@ -29,8 +25,6 @@ data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEnt
 }
 
 data class ComposedId(val name: String, val link: NameId) : PersistentEntityId<ComposedIdSoftRefEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = "$name - ${link.presentableName}"
 }
