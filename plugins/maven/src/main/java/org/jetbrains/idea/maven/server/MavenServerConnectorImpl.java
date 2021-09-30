@@ -131,11 +131,13 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       int count = myLoggerConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling logger was failed: " + count + " times");
       myLoggerFuture.cancel(true);
+      myLoggerFuture = null;
     }
     if (myDownloadListenerFuture != null) {
       int count = myDownloadConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
       myDownloadListenerFuture.cancel(true);
+      myDownloadListenerFuture = null;
     }
   }
 
@@ -198,7 +200,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   @Override
   public boolean checkConnected() {
-    return !mySupport.getActiveConfigurations().isEmpty();
+    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
+    return support!=null && !support.getActiveConfigurations().isEmpty();
   }
 
   private static class MavenServerDownloadDispatcher implements MavenServerDownloadListener {
@@ -226,7 +229,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
         mySupport.onTerminate(e -> {
-          myManager.cleanUp(MavenServerConnectorImpl.this);
+          shutdown(false);
         });
         MavenServer server = mySupport.acquire(this, "", indicator);
         startPullingDownloadListener(server);
