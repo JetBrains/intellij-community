@@ -171,7 +171,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   boolean needAlignChanges() {
-    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF));
+    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF))
+           || getTextSettings().isEnableAligningChangesMode();
   }
 
   @NotNull
