@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinIconsIndependent.ACTUAL
-import org.jetbrains.kotlin.idea.KotlinIconsIndependent.EXPECT
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.idea.util.ifTrue
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,8 +39,8 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
     private fun Icon.addExpectActualMarker(element: PsiElement): Icon {
         val declaration = (element as? KtNamedDeclaration) ?: return this
         val additionalIcon = when {
-            declaration.isExpectDeclaration() -> EXPECT
-            declaration.isMatchingExpected() -> ACTUAL
+            declaration.isExpectDeclaration() -> KotlinIcons.EXPECT
+            declaration.isMatchingExpected() -> KotlinIcons.ACTUAL
             else -> return this
         }
         return RowIcon(2).apply {
@@ -55,12 +53,12 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
         if (psiElement is KtFile) {
             if (psiElement.isScript()) {
                 return when {
-                    psiElement.name.endsWith(".gradle.kts") -> KotlinIconsIndependent.GRADLE_SCRIPT
-                    else -> KotlinIconsIndependent.SCRIPT
+                    psiElement.name.endsWith(".gradle.kts") -> KotlinIcons.GRADLE_SCRIPT
+                    else -> KotlinIcons.SCRIPT
                 }
             }
             val mainClass = getSingleClass(psiElement)
-            return if (mainClass != null) getIcon(mainClass, flags) else KotlinIconsIndependent.FILE
+            return if (mainClass != null) getIcon(mainClass, flags) else KotlinIcons.FILE
         }
 
         val result = psiElement.getBaseIcon()
@@ -120,39 +118,39 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
 
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
             is KtPackageDirective -> PlatformIcons.PACKAGE_ICON
-            is KtFile, is KtLightClassForFacade -> KotlinIconsIndependent.FILE
+            is KtFile, is KtLightClassForFacade -> KotlinIcons.FILE
             is KtLightClassForSourceDeclaration -> navigationElement.getBaseIcon()
             is KtNamedFunction -> when {
                 receiverTypeReference != null ->
-                    if (KtPsiUtil.isAbstract(this)) KotlinIconsIndependent.ABSTRACT_EXTENSION_FUNCTION else KotlinIconsIndependent.EXTENSION_FUNCTION
+                    if (KtPsiUtil.isAbstract(this)) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
                     if (KtPsiUtil.isAbstract(this)) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
                 else ->
-                    KotlinIconsIndependent.FUNCTION
+                    KotlinIcons.FUNCTION
             }
             is KtConstructor<*> -> PlatformIcons.METHOD_ICON
             is KtLightMethod -> when(val u = unwrapped) {
                 is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
                 else -> PlatformIcons.METHOD_ICON
             }
-            is KtFunctionLiteral -> KotlinIconsIndependent.LAMBDA
+            is KtFunctionLiteral -> KotlinIcons.LAMBDA
             is KtClass -> when {
-                isInterface() -> KotlinIconsIndependent.INTERFACE
-                isEnum() -> KotlinIconsIndependent.ENUM
-                isAnnotation() -> KotlinIconsIndependent.ANNOTATION
-                this is KtEnumEntry && getPrimaryConstructorParameterList() == null -> KotlinIconsIndependent.ENUM
-                else -> if (isAbstract()) KotlinIconsIndependent.ABSTRACT_CLASS else KotlinIconsIndependent.CLASS
+                isInterface() -> KotlinIcons.INTERFACE
+                isEnum() -> KotlinIcons.ENUM
+                isAnnotation() -> KotlinIcons.ANNOTATION
+                this is KtEnumEntry && getPrimaryConstructorParameterList() == null -> KotlinIcons.ENUM
+                else -> if (isAbstract()) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
             }
-            is KtObjectDeclaration -> KotlinIconsIndependent.OBJECT
+            is KtObjectDeclaration -> KotlinIcons.OBJECT
             is KtParameter -> {
                 if (KtPsiUtil.getClassIfParameterIsProperty(this) != null) {
-                    if (isMutable) KotlinIconsIndependent.FIELD_VAR else KotlinIconsIndependent.FIELD_VAL
+                    if (isMutable) KotlinIcons.FIELD_VAR else KotlinIcons.FIELD_VAL
                 } else
-                    KotlinIconsIndependent.PARAMETER
+                    KotlinIcons.PARAMETER
             }
-            is KtProperty -> if (isVar) KotlinIconsIndependent.FIELD_VAR else KotlinIconsIndependent.FIELD_VAL
-            is KtClassInitializer -> KotlinIconsIndependent.CLASS_INITIALIZER
-            is KtTypeAlias -> KotlinIconsIndependent.TYPE_ALIAS
+            is KtProperty -> if (isVar) KotlinIcons.FIELD_VAR else KotlinIcons.FIELD_VAL
+            is KtClassInitializer -> KotlinIcons.CLASS_INITIALIZER
+            is KtTypeAlias -> KotlinIcons.TYPE_ALIAS
             is KtAnnotationEntry -> {
                 (shortName == JVM_NAME_SHORT).ifTrue {
                     val grandParent = parent.parent
@@ -166,7 +164,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
             is PsiClass -> (this is KtLightClassForDecompiledDeclarationBase).ifTrue {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
-                if (origin != null) origin.getBaseIcon() else KotlinIconsIndependent.CLASS
+                if (origin != null) origin.getBaseIcon() else KotlinIcons.CLASS
             }
             else -> unwrapped?.takeIf { it != this }?.getBaseIcon()
         }

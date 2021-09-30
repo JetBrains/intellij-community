@@ -670,7 +670,7 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
   for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
     val root = Path.of(JpsPathUtil.urlToPath(resourceRoot.url))
     var pluginXml = root.resolve("META-INF/plugin.xml")
-    if (!Files.exists(pluginXml)) {
+    if (Files.exists(root) && !Files.exists(pluginXml)) {
       // ok, any xml file
       pluginXml = Files.newDirectoryStream(root).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
     }
