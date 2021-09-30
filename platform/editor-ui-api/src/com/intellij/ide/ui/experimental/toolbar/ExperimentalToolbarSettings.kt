@@ -4,7 +4,10 @@ package com.intellij.ide.ui.experimental.toolbar
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -41,11 +44,13 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
 
   init {
     if (!newToolbarEnabled) {
-      if(!UISettings.instance.state.showMainToolbar && !UISettings.instance.state.showNavigationBar){
+      val uiSettings = UISettings.instance.state
+
+      if(!(uiSettings.showMainToolbar || uiSettings.showNavigationBar || Registry.`is`("editor.distraction.free.mode"))){
         UISettings.instance.state.showNavigationBar = true
       }
-      toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
-                                                            UISettings.instance.state.showNavigationBar)
+      toolbarState.state = getToolbarStateByVisibilityFlags(false, uiSettings.showMainToolbar, false,
+        uiSettings.showNavigationBar)
     }
     Disposer.register(ApplicationManager.getApplication(), disposable)
     Registry.get(newToolbarRegistryKey).addListener(ToolbarRegistryListener(), disposable)
