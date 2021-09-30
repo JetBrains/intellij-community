@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.SLRUMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
@@ -83,13 +84,13 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
   fun getContainingBranchesFromCache(root: VirtualFile, hash: Hash): List<String>? {
     LOG.assertTrue(EventQueue.isDispatchThread())
-    return cache[CommitId(hash, root)]
+    return cache.getIfPresent(CommitId(hash, root))
   }
 
   fun getContainingBranchesQuickly(root: VirtualFile, hash: Hash): List<String>? {
     LOG.assertTrue(EventQueue.isDispatchThread())
     val commitId = CommitId(hash, root)
-    var branches = cache[commitId]
+    var branches = cache.getIfPresent(commitId)
     if (branches == null) {
       val index = logData.getCommitIndex(hash, root)
       val pg = logData.dataPack.permanentGraph
@@ -171,7 +172,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
       provider.getContainingBranches(root, hash).sorted()
   }
 
-  private inner class CachingTask(private val delegate: Task, private val cache: SLRUMap<CommitId, List<String>>) {
+  private inner class CachingTask(private val delegate: Task, private val cache: Cache<CommitId, List<String>>) {
     fun run() {
       val branches = delegate.getContainingBranches()
       ApplicationManager.getApplication().invokeLater {
@@ -187,7 +188,9 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   companion object {
     private val LOG = Logger.getInstance(ContainingBranchesGetter::class.java)
 
-    private fun createCache(): SLRUMap<CommitId, List<String>> = SLRUMap(1000, 1000)
+    private fun createCache() = Caffeine.newBuilder()
+      .maximumSize(2000)
+      .build<CommitId, List<String>>()
 
     private fun canUseGraphForComputation(logProvider: VcsLogProvider) =
       VcsLogProperties.LIGHTWEIGHT_BRANCHES.getOrDefault(logProvider)
