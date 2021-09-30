@@ -79,12 +79,12 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       if (!forceExecuteImmediately) {
         delay(300)
       }
-      processTasks()
+      processTasks(forceExecuteImmediately)
       currentJob.set(null)
     })?.cancel(CancellationException("Superseded by another request"))
   }
 
-  private suspend fun processTasks() {
+  private suspend fun processTasks(forceExecuteImmediately: Boolean) {
     while (true) {
       val app = ApplicationManager.getApplication()
       if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
@@ -104,6 +104,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       LOG.runAndLogException {
+        myDispatcher.multicaster.beforeSave(task, forceExecuteImmediately)
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }
     }
@@ -256,6 +257,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   }
 
   private fun doScheduledRefresh() {
+    myDispatcher.multicaster.beforeRefresh()
     if (canSyncOrSave()) {
       refreshOpenFiles()
     }
