@@ -7,23 +7,28 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  *  @author dsl
@@ -83,10 +88,74 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (Boolean.FALSE.equals(infos[0])) {
-      return null;
+    PsiElement target = (PsiElement)infos[0];
+    if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)target.getParent();
+      final PsiType type = getSuggestedType(variable);
+      if (type != null) {
+        final String typeText = GenericsUtil.getVariableTypeByExpressionType(type).getPresentableText();
+        final String message =
+          JavaBundle.message("raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
+        return new RawTypeCanBeGenericFix(message);
+      }
     }
-    return new RawTypeCanBeGenericFix((String)infos[1]);
+    if (target instanceof PsiJavaCodeReferenceElement) {
+      PsiTypeElement typeElement = ObjectUtils.tryCast(target.getParent(), PsiTypeElement.class);
+      if (typeElement == null) return null;
+      PsiTypeCastExpression cast = ObjectUtils.tryCast(typeElement.getParent(), PsiTypeCastExpression.class);
+      if (cast == null) return null;
+      if (!canUseUpperBound(cast)) return null;
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(cast.getType());
+      if (psiClass == null) return null;
+      int count = psiClass.getTypeParameters().length;
+      return new CastQuickFix(typeElement.getText() + StreamEx.constant("?", count).joining(",", "<", ">"));
+    }
+    return null;
+  }
+
+  private static boolean canUseUpperBound(PsiTypeCastExpression cast) {
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(cast.getType());
+    if (psiClass == null) return false;
+    Set<PsiTypeParameter> parameters = Set.of(psiClass.getTypeParameters());
+    if (parameters.isEmpty()) return false;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(cast.getParent());
+    if (parent instanceof PsiReferenceExpression) {
+      PsiReferenceExpression ref = (PsiReferenceExpression)parent;
+      PsiElement target = ref.resolve();
+      if (!(target instanceof PsiMember)) return false;
+      PsiClass containingClass = ((PsiMember)target).getContainingClass();
+      if (containingClass == null) return false;
+      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+      if (target instanceof PsiField) {
+        PsiType type = substitutor.substitute(((PsiField)target).getType());
+        PsiClass varType = PsiUtil.resolveClassInClassTypeOnly(type);
+        return varType instanceof PsiTypeParameter && parameters.contains(varType) ||
+               !PsiTypesUtil.mentionsTypeParameters(type, parameters);
+      }
+      if (target instanceof PsiMethod) {
+        PsiMethodCallExpression call = ObjectUtils.tryCast(ref.getParent(), PsiMethodCallExpression.class);
+        if (call == null) return false;
+        if (!ExpressionUtils.isVoidContext(call)) {
+          PsiType type = substitutor.substitute(((PsiMethod)target).getReturnType());
+          PsiClass varType = PsiUtil.resolveClassInClassTypeOnly(type);
+          if (!(varType instanceof PsiTypeParameter && parameters.contains(varType)) &&
+              PsiTypesUtil.mentionsTypeParameters(type, parameters)) {
+            return false;
+          }
+        }
+        PsiParameterList parameterList = ((PsiMethod)target).getParameterList();
+        for (PsiParameter parameter : parameterList.getParameters()) {
+          if (parameter.isVarArgs() && call.getArgumentList().getExpressionCount() == parameterList.getParametersCount() - 1) {
+            // No vararg parameters specified
+            continue;
+          }
+          PsiType parameterType = parameter.getType();
+          if (PsiTypesUtil.mentionsTypeParameters(parameterType, tp -> true)) return false;
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -117,17 +186,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       PsiElement directParent = typeElement.getParent();
       if (directParent instanceof PsiVariable) {
-        if (directParent instanceof PsiPatternVariable) {
-          return;
-        }
-        PsiVariable variable = (PsiVariable)directParent;
-        final PsiType type = getSuggestedType(variable);
-        if (type != null) {
-          final String typeText = GenericsUtil.getVariableTypeByExpressionType(type).getPresentableText();
-          final String message =
-            JavaBundle.message("raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
-          final boolean isQuickFixAvailable = true;
-          registerError(typeElement, isQuickFixAvailable, message);
+        if (directParent instanceof PsiPatternVariable) return;
+        if (getSuggestedType((PsiVariable)directParent) != null) {
+          registerError(typeElement, typeElement);
           return;
         }
       }
@@ -229,7 +290,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!aClass.hasTypeParameters()) {
         return;
       }
-      registerError(reference, false, null);
+      registerError(reference, reference);
     }
   }
 
@@ -256,6 +317,31 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     PsiType type = JavaPsiFacade.getElementFactory(variable.getProject()).createType(variableResolved, targetSubstitutor);
     if (variableType.equals(type)) return null;
     return type;
+  }
+
+  private static class CastQuickFix extends InspectionGadgetsFix {
+    private final String myTargetType;
+
+    private CastQuickFix(String type) {
+      myTargetType = type;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("raw.variable.type.can.be.generic.cast.quickfix", myTargetType);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("raw.variable.type.can.be.generic.cast.quickfix.family");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiTypeElement cast = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiTypeElement.class);
+      if (cast == null) return;
+      CodeStyleManager.getInstance(project).reformat(new CommentTracker().replace(cast, myTargetType));
+    }
   }
 
   private static class RawTypeCanBeGenericFix extends InspectionGadgetsFix {

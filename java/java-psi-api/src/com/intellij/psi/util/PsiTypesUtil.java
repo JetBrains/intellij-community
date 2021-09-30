@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class PsiTypesUtil {
   private static final Logger LOG = Logger.getInstance(PsiTypesUtil.class);
@@ -528,8 +529,12 @@ public final class PsiTypesUtil {
    * Checks if {@code type} mentions type parameters from the passed {@code Set}
    * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
    */
-  public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
-    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters);
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Set<PsiTypeParameter> typeParameters) {
+    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters::contains);
+  }
+
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Predicate<PsiTypeParameter> wantedTypeParameter) {
+    return mentionsTypeParametersOrUnboundedWildcard(type, wantedTypeParameter);
   }
 
   /**
@@ -558,7 +563,7 @@ public final class PsiTypesUtil {
   }
 
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   Set<PsiTypeParameter> typeParameters) {
+                                                                   final Predicate<PsiTypeParameter> wantedTypeParameter) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
@@ -584,7 +589,7 @@ public final class PsiTypesUtil {
             if (type != null && type.accept(this)) return true;
           }
         }
-        return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
+        return psiClass instanceof PsiTypeParameter && wantedTypeParameter.test((PsiTypeParameter)psiClass);
       }
 
       @Override
