@@ -3,7 +3,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
