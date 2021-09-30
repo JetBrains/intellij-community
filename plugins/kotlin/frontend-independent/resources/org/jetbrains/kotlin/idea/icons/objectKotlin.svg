@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 24.1.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.2" baseProfile="tiny" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-	 x="0px" y="0px" viewBox="0 0 16 16" overflow="visible" xml:space="preserve">
-<g>
-	<path fill-rule="evenodd" fill="#F4AF3D" fill-opacity="0.6" d="M8,15c-3.9000001,0-7-3.1000004-7-7s3.0999999-7,7-7
-		s7,3.0999999,7,7H8V15z"/>
-	<path fill-rule="evenodd" fill="#231F20" fill-opacity="0.7" d="M11,8H9.8999996c0-1.0999999-0.8000002-2.0999999-2-2.0999999
-		S6.0999999,6.9000001,6.0999999,8l0,0c0,1.1000004,0.8000002,2.1000004,1.9000001,2.1000004V11l0,0c-1.8000002,0-3-1.3999996-3-3
-		l0,0c0-1.5999999,1.1999998-3,3-3S11,6.4000001,11,8L11,8z"/>
-	<polygon fill="#7F52FF" points="16,16 9,16 9,9 16,9 12.3999996,12.3999996 	"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="objectKotlin">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1C11.866 1 15 4.134 15 8H8V15Z" fill="#F4AF3D" fill-opacity="0.6"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M11 8H9.94262C9.94262 6.87293 9.13115 5.94475 7.9918 5.94475C6.85246 5.94475 6.05738 6.85635 6.05738 7.98343V8C6.05738 9.12437 6.86496 10.0508 8 10.0552V11C7.99727 11 7.99454 11 7.9918 11C6.22951 11 5 9.64917 5 8.01657V8C5 6.3674 6.2459 5 8.0082 5C9.77049 5 11 6.35083 11 7.98343V8Z" fill="#231F20" fill-opacity="0.7"/>
+<g id="&#226;&#140;&#152;/modifier/kotlin">
+<path id="&#226;&#140;&#152;/modifier/kotlin_2" d="M16 16H9V9H16L12.4 12.4L16 16Z" fill="#B99BF8"/>
+</g>
 </g>
 </svg>
