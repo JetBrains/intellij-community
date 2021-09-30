@@ -44,6 +44,7 @@ class QuickPopupsLesson(private val sample: LessonSample) :
         actions(it)
         val delay = Timeout.timeout(3, TimeUnit.SECONDS)
         LearningUiUtil.findShowingComponentWithTimeout(project, ImplementationViewComponent::class.java, delay)
+        Thread.sleep(500)
         invokeActionViaShortcut("ESCAPE")
       }
     }
