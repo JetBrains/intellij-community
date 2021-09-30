@@ -266,9 +266,9 @@ public final class DefUseUtil {
    */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
-      final PsiElement containingClass = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
+      final PsiElement defContainer = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
       PsiElement refContainer = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
-      while (containingClass != refContainer && refContainer != null) {
+      while (defContainer != refContainer && refContainer != null) {
         ref = refContainer;
         refContainer = PsiTreeUtil.getParentOfType(refContainer.getParent(), PsiClass.class, PsiLambdaExpression.class);
       }
