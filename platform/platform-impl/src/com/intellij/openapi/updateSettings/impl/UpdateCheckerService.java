@@ -52,7 +52,7 @@ final class UpdateCheckerService {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
-  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
@@ -284,7 +284,7 @@ final class UpdateCheckerService {
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
     UpdateChecker.getNotificationGroupForUpdateResults()
       .createNotification(title, text, NotificationType.INFORMATION)
-      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed on project close
+      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed of on project close
       .setDisplayId("plugins.updated.after.restart")
       .notify(project);
   }
