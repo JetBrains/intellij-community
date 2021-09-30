@@ -583,6 +583,8 @@ class KtSymbolBasedPropertyDescriptor(
     override fun isActual(): Boolean = implementationPostponed()
     override fun isExternal(): Boolean = implementationPlanned()
 
+    override fun getInType(): KotlinType? = implementationPostponed()
+
     override fun setOverriddenDescriptors(overriddenDescriptors: MutableCollection<out CallableMemberDescriptor>) =
         noImplementation()
 
