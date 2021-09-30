@@ -17,6 +17,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.TreeModelEvent;
@@ -76,10 +78,18 @@ public class InspectionTree extends Tree {
   private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
-  private final ConcurrentHashMap<ProblemDescriptionNode, Promise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<ProblemDescriptionNode, CancellablePromise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
 
   public InspectionTree(@NotNull InspectionResultsView view) {
     myView = view;
+    Disposer.register(myView, new Disposable() {
+      @Override
+      public void dispose() {
+        scheduledTooltipTasks.forEach((node, promise) -> promise.cancel());
+        scheduledTooltipTasks.clear();
+      }
+    });
+
     myModel = new InspectionTreeModel();
     Disposer.register(view, myModel);
     setModel(new AsyncTreeModel(myModel, false, view));
@@ -235,7 +245,6 @@ public class InspectionTree extends Tree {
     if (tooltipLazy.isSucceeded()) {
       try {
         final String text = tooltipLazy.blockingGet(0);
-        scheduledTooltipTasks.remove(node);
         return text;
       }
       catch (TimeoutException | ExecutionException error) {
