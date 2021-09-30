@@ -51,18 +51,18 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * overriding {@code getFileModifierForPreview} or {@code applyFixForPreview} is desired.
    *
    * @param project current project
-   * @param descriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
+   * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
    * @return true if the fix was successfully applied to the copy; false otherwise
    */
-  default boolean applyFixForPreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  default boolean applyFixForPreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return false;
-    PsiElement element = descriptor.getStartElement();
+    PsiElement element = previewDescriptor.getStartElement();
     if (element == null) return false;
     PsiFile file = element.getContainingFile();
     if (getElementToMakeWritable(file) != file) return false;
     LocalQuickFix fix = ObjectUtils.tryCast(getFileModifierForPreview(file), LocalQuickFix.class);
     if (fix == null) return false;
-    fix.applyFix(project, descriptor);
+    fix.applyFix(project, previewDescriptor);
     return true;
   }
 }

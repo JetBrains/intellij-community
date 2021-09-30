@@ -96,7 +96,7 @@ internal class IntentionPreviewComputable(private val project: Project,
           return null
         }
         val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
-        LOG.warn("Intention preview fallback is used for action " + action::class.java + "|" + action.familyName)
+        LOG.error("Intention preview fallback is used for action " + action::class.java + "|" + action.familyName)
         action.invoke(project, editorCopy, psiFileCopy)
       }
       ProgressManager.checkCanceled()

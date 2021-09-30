@@ -112,8 +112,8 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
 
   @Override
   public boolean applyFixForPreview(@NotNull Project project,
-                                    @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+                                    @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiElement element = previewDescriptor.getPsiElement();
     if (!(element instanceof PsiMethod)) {
       return false;
     }
