@@ -24,9 +24,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
-import org.intellij.plugins.markdown.google.accounts.*
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsProvider
+import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
 import org.intellij.plugins.markdown.google.authorization.*
@@ -48,7 +48,7 @@ internal object GoogleAccountsUtils {
 
   @RequiresEdt
   fun chooseAccount(project: Project): Credential? {
-    val accountsListModel = GoogleAccountsListModel(project)
+    val accountsListModel = GoogleAccountsListModel()
     val accountManager = service<GoogleAccountManager>()
     val oAuthService = service<GoogleOAuthService>()
 
@@ -57,7 +57,7 @@ internal object GoogleAccountsUtils {
 
     return try {
       val selectedAccount = accountsListModel.selectedAccount ?: error("The selected account cannot be null")
-      val accountCredentials: GoogleCredentials = getOrUpdateUserCredentials(project, oAuthService, accountManager, selectedAccount)
+      val accountCredentials: GoogleCredentials = getOrUpdateUserCredentials(oAuthService, accountManager, selectedAccount)
                                                   ?: tryToReLogin(project)
                                                   ?: return null
 
@@ -93,8 +93,7 @@ internal object GoogleAccountsUtils {
    * Returns the user's credentials if the access token is still valid, otherwise updates the credentials and returns updated.
    */
   @RequiresEdt
-  fun getOrUpdateUserCredentials(project: Project,
-                                 oAuthService: GoogleOAuthService,
+  fun getOrUpdateUserCredentials(oAuthService: GoogleOAuthService,
                                  accountManager: GoogleAccountManager,
                                  account: GoogleAccount): GoogleCredentials? =
     accountManager.findCredentials(account)?.let { credentials ->
@@ -109,7 +108,7 @@ internal object GoogleAccountsUtils {
           accountManager.updateAccount(account, newCred)
 
           newCred
-        }, MarkdownBundle.message("markdown.google.account.update.credentials.progress.title"), true, project)
+        }, MarkdownBundle.message("markdown.google.account.update.credentials.progress.title"), true, null)
       }
       catch (e: RuntimeException) {
         val message = e.cause?.cause?.localizedMessage.alsoIfNull { e.localizedMessage }
@@ -122,8 +121,7 @@ internal object GoogleAccountsUtils {
   /**
    * @return the panel for selecting Google accounts with the ability to edit the list of accounts.
    */
-  fun createGoogleAccountPanel(project: Project,
-                               disposable: Disposable,
+  fun createGoogleAccountPanel(disposable: Disposable,
                                accountsListModel: GoogleAccountsListModel,
                                accountManager: GoogleAccountManager): DialogPanel {
     val oAuthService = service<GoogleOAuthService>()
@@ -132,8 +130,13 @@ internal object GoogleAccountsUtils {
     val indicatorsProvider = ProgressIndicatorsProvider().also {
       Disposer.register(disposable, it)
     }
-    val detailsProvider = GoogleAccountsDetailsProvider(indicatorsProvider, accountManager, accountsListModel,
-      project, oAuthService, userInfoService)
+    val detailsProvider = GoogleAccountsDetailsProvider(
+      indicatorsProvider,
+      accountManager,
+      accountsListModel,
+      oAuthService,
+      userInfoService
+    )
 
     return panel {
       row {

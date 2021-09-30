@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAuthorizedUserException
@@ -29,7 +28,6 @@ internal class GoogleAccountsDetailsProvider(
   progressIndicatorsProvider: ProgressIndicatorsProvider,
   private val accountManager: GoogleAccountManager,
   private val accountsListModel: GoogleAccountsListModel,
-  private val project: Project,
   private val oAuthService: GoogleOAuthService,
   private val userInfoService: GoogleUserInfoService
 ) : LoadingAccountsDetailsProvider<GoogleAccount, GoogleUserDetailed>(progressIndicatorsProvider) {
@@ -81,7 +79,7 @@ internal class GoogleAccountsDetailsProvider(
   @RequiresEdt
   private fun getUserCredentials(account: GoogleAccount): GoogleCredentials? =
     accountsListModel.newCredentials.getOrElse(account) {
-      getOrUpdateUserCredentials(project, oAuthService, accountManager, account)
+      getOrUpdateUserCredentials(oAuthService, accountManager, account)
     }
 
   private fun noCredentials() =

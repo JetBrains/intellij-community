@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.awt.RelativePoint
@@ -24,8 +23,7 @@ import org.intellij.plugins.markdown.google.authorization.getGoogleAuthRequest
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
-internal class GoogleAccountsListModel(private val project: Project)
-  : AccountsListModelBase<GoogleAccount, GoogleCredentials>() {
+class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCredentials>() {
 
   companion object {
     private val LOG = logger<GoogleAccountsListModel>()
@@ -63,7 +61,7 @@ internal class GoogleAccountsListModel(private val project: Project)
     MessageDialogBuilder.Message(
       title = MarkdownBundle.message("markdown.google.network.problems.title"),
       message = MarkdownBundle.message("markdown.google.login.network.problems.msg")
-    ).buttons(Messages.getOkButton()).icon(UIUtil.getErrorIcon()).show(project, parentComponent)
+    ).buttons(Messages.getOkButton()).icon(UIUtil.getErrorIcon()).show(null, parentComponent)
   }
 
   private inner class AcquireUserInfoTask(

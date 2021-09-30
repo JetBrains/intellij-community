@@ -3,18 +3,16 @@ package org.intellij.plugins.markdown.google.ui
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.createGoogleAccountPanel
 
-internal class GoogleSettingsConfigurable internal constructor(private val project: Project)
-  : BoundConfigurable(MarkdownBundle.message("markdown.google.accounts.preferences")) {
+internal class GoogleSettingsConfigurable : BoundConfigurable(MarkdownBundle.message("markdown.google.accounts.preferences")) {
 
-  private val accountsListModel = GoogleAccountsListModel(project)
+  private val accountsListModel = GoogleAccountsListModel()
   private val accountManager = service<GoogleAccountManager>()
 
-  override fun createPanel(): DialogPanel = createGoogleAccountPanel(project, disposable!!, accountsListModel, accountManager)
+  override fun createPanel(): DialogPanel = createGoogleAccountPanel(disposable!!, accountsListModel, accountManager)
 }

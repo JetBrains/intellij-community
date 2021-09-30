@@ -167,7 +167,7 @@ Includes the following features:</p>
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
-    <projectConfigurable parentId="Settings.Markdown" instance="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurable"/>
+    <applicationConfigurable parentId="Settings.Markdown" instance="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurable"/>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>

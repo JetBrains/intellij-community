@@ -12,7 +12,7 @@ import java.awt.Dimension
 import javax.swing.JComponent
 
 internal class GoogleChooseAccountDialog(
-  private val project: Project,
+  project: Project,
   private val accountsListModel: GoogleAccountsListModel,
   private val accountManager: GoogleAccountManager
 ) : DialogWrapper(project, false) {
@@ -25,7 +25,7 @@ internal class GoogleChooseAccountDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return createGoogleAccountPanel(project, disposable, accountsListModel, accountManager).also { it.reset() }.apply {
+    return createGoogleAccountPanel(disposable, accountsListModel, accountManager).also { it.reset() }.apply {
       preferredSize = Dimension(650, 250)
     }
   }
