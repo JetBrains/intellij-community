@@ -10,8 +10,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
