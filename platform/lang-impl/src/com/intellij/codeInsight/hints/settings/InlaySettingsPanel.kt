@@ -46,12 +46,20 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
-        val langNode = CheckedTreeNode(lang.key)
-        groupNode.add(langNode)
-        lang.value.forEach {
-          val node = addModelNode(it, langNode)
+        if (lang.value.size == 1) {
+          val node = addModelNode(lang.value.first(), groupNode)
           if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
             nodeToSelect = node
+          }
+        }
+        else {
+          val langNode = CheckedTreeNode(lang.key)
+          groupNode.add(langNode)
+          lang.value.forEach {
+            val node = addModelNode(it, langNode)
+            if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
+              nodeToSelect = node
+            }
           }
         }
       }
@@ -70,7 +78,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         when (val item = value.userObject) {
           is String -> textRenderer.append(item)
           is Language -> textRenderer.append(item.displayName)
-          is InlayProviderSettingsModel -> textRenderer.append(item.name)
+          is InlayProviderSettingsModel -> textRenderer.append(
+            if ((value.parent as DefaultMutableTreeNode).userObject is String) item.language.displayName else item.name)
           is ImmediateConfigurable.Case -> textRenderer.append(item.name)
         }
       }
@@ -90,7 +99,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun addModelNode(model: InlayProviderSettingsModel,
-                           langNode: CheckedTreeNode): CheckedTreeNode {
+                           parent: CheckedTreeNode): CheckedTreeNode {
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
 
@@ -98,7 +107,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
     val node = CheckedTreeNode(model)
     node.isChecked = model.isEnabled
-    langNode.add(node)
+    parent.add(node)
     model.cases.forEach {
       val caseNode = object: CheckedTreeNode(it) {
         override fun setChecked(checked: Boolean) {
@@ -121,23 +130,23 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         addDescription(item.description)
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
-        addPreview(treeNode, item.previewText)
+        addPreview(item.previewText, item.language)
       }
       is ImmediateConfigurable.Case -> {
         val parent = treeNode.parent as CheckedTreeNode
         val model = parent.userObject as InlayProviderSettingsModel
         addDescription(model.getCaseDescription(item))
         val preview = model.getCasePreview(item)
-        addPreview(parent, preview)
+        addPreview(preview, model.language)
       }
     }
     rightPanel.revalidate()
     rightPanel.repaint()
   }
 
-  private fun addPreview(treeNode: CheckedTreeNode, previewText: String?) {
+  private fun addPreview(previewText: String?, language: Language) {
     if (previewText != null) {
-      val editor = createEditor(getModelLanguage(treeNode), project) {}
+      val editor = createEditor(language, project) {}
       editor.text = previewText
       rightPanel.add(editor, "gaptop 10")
     }
@@ -149,12 +158,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
-    val language = getModelLanguage(treeNode)
-    return language.id + "." + (treeNode.userObject as InlayProviderSettingsModel).id
-  }
-
-  private fun getModelLanguage(treeNode: CheckedTreeNode): Language {
-    return (treeNode.parent as DefaultMutableTreeNode).userObject as Language
+    val model = treeNode.userObject as InlayProviderSettingsModel
+    return model.language.id + "." + model.id
   }
 
   fun reset() {
