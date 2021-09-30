@@ -255,4 +255,11 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   public boolean isVisibleInSettings() {
     return true;
   }
+
+  @Nls
+  @Nullable
+  @Override
+  public String getProperty(@NotNull String key) {
+    return JavaBundle.message(key);
+  }
 }

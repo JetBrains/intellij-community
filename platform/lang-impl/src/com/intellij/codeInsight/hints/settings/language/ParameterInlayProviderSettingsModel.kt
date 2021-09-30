@@ -22,7 +22,7 @@ class ParameterInlayProviderSettingsModel(
   override val previewText: String?
     get() = null
 
-  override fun getCasePreview(case: ImmediateConfigurable.Case): String? {
+  override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     return getCasePreview(language, provider, case)
   }
 

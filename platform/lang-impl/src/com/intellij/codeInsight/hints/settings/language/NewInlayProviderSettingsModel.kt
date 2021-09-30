@@ -51,7 +51,7 @@ class NewInlayProviderSettingsModel<T : Any>(
   override val previewText: String?
     get() = providerWithSettings.provider.previewText
 
-  override fun getCasePreview(case: ImmediateConfigurable.Case): String? {
+  override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     return getCasePreview(providerWithSettings.language, providerWithSettings.provider, case)
   }
 
@@ -85,10 +85,10 @@ class NewInlayProviderSettingsModel<T : Any>(
   }
 }
 
-fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case): String? {
+fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case?): String? {
   val key = (provider as? InlayHintsProvider<*>)?.key?.id ?: "Parameters"
   val fileType = language.associatedFileType ?: PlainTextFileType.INSTANCE
-  val path = "inlayProviders/" + key + "/" + case.id + "." + fileType.defaultExtension
+  val path = "inlayProviders/" + key + "/" + (case?.id ?: "preview") + "." + fileType.defaultExtension
   val stream = provider.javaClass.classLoader.getResourceAsStream(path)
   return if (stream != null) ResourceUtil.loadText(stream) else null
 }

@@ -131,7 +131,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         addDescription(item.description)
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
-        addPreview(item.previewText, item.language)
+        addPreview(item.getCasePreview(null) ?: item.previewText, item.language)
       }
       is ImmediateConfigurable.Case -> {
         val parent = treeNode.parent as CheckedTreeNode

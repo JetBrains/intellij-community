@@ -170,6 +170,13 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
     return null;
   }
 
+  @Nls
+  @Nullable
+  @Override
+  public String getProperty(@NotNull String key) {
+    return JavaBundle.message(key);
+  }
+
   @NotNull
   @Override
   public ImmediateConfigurable createConfigurable(@NotNull NoSettings settings) {
