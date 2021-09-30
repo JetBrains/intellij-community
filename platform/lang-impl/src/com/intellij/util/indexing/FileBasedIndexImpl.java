@@ -957,7 +957,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRebuild(String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, reason));
+      new UnindexedFilesUpdater(project, reason).queue(project);
     }
   }
 

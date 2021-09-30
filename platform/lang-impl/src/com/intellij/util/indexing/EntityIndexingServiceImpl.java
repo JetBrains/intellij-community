@@ -51,8 +51,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
-        DumbService.getInstance(project)
-          .queueTask(new UnindexedFilesUpdater(project, "Reindex on unexpected change in EntityIndexingServiceImpl"));
+        new UnindexedFilesUpdater(project, "Reindex on unexpected change in EntityIndexingServiceImpl").queue(project);
         return;
       }
     }
@@ -71,8 +70,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       if (debugNames.size() > maxNamesToLog) {
         reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
       }
-      DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, mergedIterators, reasonMessage));
+      new UnindexedFilesUpdater(project, mergedIterators, reasonMessage).queue(project);
     }
   }
 

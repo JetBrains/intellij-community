@@ -233,7 +233,7 @@ public abstract class DumbService {
    * Tasks can specify custom "equality" policy via their constructor.
    * Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
    *
-   * Alternatively one may call {@link DumbModeTask#queue(Project)} instead.
+   * Alternatively one may call a short-cut {@link DumbModeTask#queue(Project)} instead.
    */
   public abstract void queueTask(@NotNull DumbModeTask task);
 
