@@ -386,9 +386,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
-  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter,
-                                                       @NotNull Object highlightInfo,
-                                                       boolean excludingHierarchy);
+  @NotNull
+  public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
 
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
