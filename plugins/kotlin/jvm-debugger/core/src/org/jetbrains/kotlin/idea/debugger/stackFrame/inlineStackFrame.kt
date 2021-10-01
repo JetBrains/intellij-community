@@ -33,5 +33,8 @@ class InlineStackFrame(
     }
 
     override fun getBackgroundColor(): Color? =
-        EditorColorsManager.getInstance().globalScheme.getAttributes(DebuggerColors.INLINE_STACK_FRAMES).backgroundColor
+        EditorColorsManager.getInstance()
+            .schemeForCurrentUITheme
+            .getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
+            .backgroundColor
 }
