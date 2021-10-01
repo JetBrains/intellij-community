@@ -30,6 +30,9 @@ object ReactJsClientTemplate : JsClientTemplate() {
     @NonNls
     override val id: String = "reactJsClient"
 
+    private const val clientSourceFile = "Client.kt"
+    override val filesToOpenInEditor = listOf(clientSourceFile)
+
     val useStyledComponents by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.styled.components"),
         GenerationPhase.PROJECT_GENERATION
@@ -86,7 +89,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
                 if (!hasKtorServNeighbourTarget) {
                     +(FileTemplateDescriptor("jsClient/index.html.vm") asResourceOf SourcesetType.main)
                 }
-                +(FileTemplateDescriptor("$id/reactClient.kt.vm", "Client.kt".asPath()) asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/reactClient.kt.vm", clientSourceFile.asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/reactComponent.kt.vm", "Welcome.kt".asPath()) asSrcOf SourcesetType.main)
 
                 if (useStyledComponents.reference.settingValue) {
