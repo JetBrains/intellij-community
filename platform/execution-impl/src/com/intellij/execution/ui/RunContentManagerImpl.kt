@@ -7,6 +7,7 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
@@ -136,7 +137,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
       id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
-    UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+    if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
+      UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+    }
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
