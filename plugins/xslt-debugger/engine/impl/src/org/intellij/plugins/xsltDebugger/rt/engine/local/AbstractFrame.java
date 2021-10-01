@@ -28,7 +28,7 @@ public abstract class AbstractFrame<F extends Frame> implements Frame<F> {
     myPrev = prev;
 
     if (prev != null) {
-      ((AbstractFrame<?>)prev).myNext = this;
+      ((AbstractFrame)prev).myNext = this;
     }
   }
 
