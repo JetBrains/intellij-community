@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
@@ -62,6 +62,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(
             KtFirDiagnostic.VirtualMemberHidden::class,
             AddModifierFix.addOverrideModifier
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters::class,
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnLoopParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
