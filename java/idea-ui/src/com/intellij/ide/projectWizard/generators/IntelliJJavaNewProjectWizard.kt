@@ -11,7 +11,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = "IntelliJ"
 
   override fun createStep(parent: JavaNewProjectWizard.Step) =
-    object : IntellijBuildSystemStep<JavaNewProjectWizard.Step>(parent) {
+    object : IntelliJNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
       override fun setupProject(project: Project) {
         val builder = JavaModuleBuilder()
         val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
@@ -19,7 +19,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         builder.name = moduleName
         builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
         builder.contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
-        builder.moduleJdk = parent.sdk
+        builder.moduleJdk = sdk
 
         builder.commit(project)
       }

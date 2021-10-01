@@ -21,8 +21,6 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
   protected abstract val self: S
 
   protected abstract val label: @NlsContexts.Label String
-  protected open val comment: @NlsContexts.Label String? = null
-  protected open val commentLink: @NlsContexts.Label String? = null
 
   val stepProperty = propertyGraph.graphProperty { "" }
   var step by stepProperty
@@ -33,18 +31,8 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
   }
 
-  open fun setupCommonUI(builder: Panel) {}
-
   final override fun setupUI(builder: Panel) {
     with(builder) {
-      comment?.let {
-        row("") {
-          commentHtml(it) {
-            commentLink?.let { context.requestSwitchTo(it) }
-          }
-        }.bottomGap(BottomGap.SMALL)
-      }
-
       row(label) {
         if (steps.size > 4) {
           comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))
@@ -54,8 +42,6 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
           segmentedButton(steps.map { it.key }, stepProperty) { it }
         }
       }.bottomGap(BottomGap.SMALL)
-
-      setupCommonUI(this)
 
       val panelBuilder = NewProjectWizardPanelBuilder.getInstance(context)
       val stepsPanels = HashMap<String, DialogPanel>()

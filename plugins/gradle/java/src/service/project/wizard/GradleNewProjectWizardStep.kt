@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
-import com.intellij.ide.projectWizard.generators.NewProjectWizardSdkData
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -9,9 +9,18 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
@@ -22,14 +31,24 @@ import javax.swing.Icon
 abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
   where ParentStep : NewProjectWizardStep,
-        ParentStep : NewProjectWizardBaseData,
-        ParentStep : NewProjectWizardSdkData {
+        ParentStep : NewProjectWizardBaseData {
+
+  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+
+  val sdk by sdkProperty
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 
   override fun setupUI(builder: Panel) {
+    with(builder) {
+      row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+        val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+        sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+          .validationOnApply { validateGradleVersion() }
+          .columns(COLUMNS_MEDIUM)
+      }
+    }
     super.setupUI(builder)
-    parentStep.sdkComboBox.validationOnApply { validateGradleVersion() }
   }
 
   override fun findAllParents(): List<ProjectData> {
@@ -72,7 +91,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun getJavaVersion(): JavaVersion? {
-    val jdk = parentStep.sdk ?: return null
+    val jdk = sdk ?: return null
     val versionString = jdk.versionString ?: return null
     return JavaVersion.tryParse(versionString)
   }
