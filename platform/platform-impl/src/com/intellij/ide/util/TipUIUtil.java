@@ -224,7 +224,7 @@ public final class TipUIUtil {
       .forEach(img -> {
 
         final String src = img.attributes().getIgnoreCase("src");
-        final TodImage baseImage = TodImage.of(src);
+        final TodImage baseImage = TodImage.of(src).base();
         //Here we're preparing the list of images in the order of their preference.
         //We need to be thorough and account for all possible combinations
         final ArrayList<TodImage> imagesToTryLight = new ArrayList<>();
@@ -263,15 +263,17 @@ public final class TipUIUtil {
               image = read(actualURL);
             }
             catch (IOException ignored) {
+            }
+            //Found something, look no further
+            if (image != null) {
               if (hidpi) {
                 fallbackUpscale = baseImage.isRetina() && !i.isRetina();
               }
               else {
                 fallbackDownscale = !baseImage.isRetina() && i.isRetina();
               }
+              break;
             }
-            //Found something, look no further
-            if (image != null) break;
           }
           //Let's not ignore author specified values here
           int w = intValueOf(img.attributes().getIgnoreCase("width"), image.getWidth());
