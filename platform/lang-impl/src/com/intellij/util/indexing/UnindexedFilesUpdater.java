@@ -577,7 +577,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public static int getNumberOfScanningThreads() {
     int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
     if (scanningThreadCount > 0) return scanningThreadCount;
-    int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
+    int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
+                                       ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
   }
 }
