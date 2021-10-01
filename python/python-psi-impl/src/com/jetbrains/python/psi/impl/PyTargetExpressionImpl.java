@@ -653,18 +653,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Override
   public ItemPresentation getPresentation() {
-    return new PyElementPresentation(this) {
-      @Nullable
-      @Override
-      public String getLocationString() {
-        final PyClass containingClass = getContainingClass();
-        final String packageForFile = getPackageForFile(getContainingFile());
-        if (containingClass != null && packageForFile != null) {
-          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
-        }
-        return super.getLocationString();
-      }
-    };
+    return new PyElementPresentation(this);
   }
 
   @Nullable
