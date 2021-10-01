@@ -1,0 +1,127 @@
+package java11;
+
+public class TestJava11StringConcatEmptyAffix {
+   public String testEmptyPrefixInt(int value) {
+      return "" + value;// 6
+   }
+
+   public String testEmptyPrefixString(String value) {
+      return "" + value;// 10
+   }
+
+   public String testPrefixInt(int value) {
+      return "prefix" + value;// 14
+   }
+
+   public String testPrefixString(String value) {
+      return "prefix" + value;// 18
+   }
+
+   public String testIntEmptySuffix(int value) {
+      return "" + value;// 23
+   }
+
+   public String testStringEmptySuffix(String value) {
+      return "" + value;// 28
+   }
+
+   public String testIntSuffix(int value) {
+      return "" + value + "suffix";// 32
+   }
+
+   public String testStringSuffix(String value) {
+      return value + "suffix";// 36
+   }
+
+   public String testIntInt(int first, int second) {
+      return "" + first + second;// 40
+   }
+
+   public String testIntIntSuffix(int first, int second) {
+      return "" + first + second + "suffix";// 44
+   }
+
+   public String testIntString(int intValue, String stringValue) {
+      return "" + intValue + stringValue;// 48
+   }
+
+   public String testStringInt(int intValue, String stringValue) {
+      return stringValue + intValue;// 52
+   }
+}
+
+class 'java11/TestJava11StringConcatEmptyAffix' {
+   method 'testEmptyPrefixInt (I)Ljava/lang/String;' {
+      1      4
+      6      4
+   }
+
+   method 'testEmptyPrefixString (Ljava/lang/String;)Ljava/lang/String;' {
+      1      8
+      6      8
+   }
+
+   method 'testPrefixInt (I)Ljava/lang/String;' {
+      1      12
+      6      12
+   }
+
+   method 'testPrefixString (Ljava/lang/String;)Ljava/lang/String;' {
+      1      16
+      6      16
+   }
+
+   method 'testIntEmptySuffix (I)Ljava/lang/String;' {
+      1      20
+      6      20
+   }
+
+   method 'testStringEmptySuffix (Ljava/lang/String;)Ljava/lang/String;' {
+      1      24
+      6      24
+   }
+
+   method 'testIntSuffix (I)Ljava/lang/String;' {
+      1      28
+      6      28
+   }
+
+   method 'testStringSuffix (Ljava/lang/String;)Ljava/lang/String;' {
+      1      32
+      6      32
+   }
+
+   method 'testIntInt (II)Ljava/lang/String;' {
+      2      36
+      7      36
+   }
+
+   method 'testIntIntSuffix (II)Ljava/lang/String;' {
+      2      40
+      7      40
+   }
+
+   method 'testIntString (ILjava/lang/String;)Ljava/lang/String;' {
+      2      44
+      7      44
+   }
+
+   method 'testStringInt (ILjava/lang/String;)Ljava/lang/String;' {
+      2      48
+      7      48
+   }
+}
+
+Lines mapping:
+6 <-> 5
+10 <-> 9
+14 <-> 13
+18 <-> 17
+23 <-> 21
+28 <-> 25
+32 <-> 29
+36 <-> 33
+40 <-> 37
+44 <-> 41
+48 <-> 45
+52 <-> 49
