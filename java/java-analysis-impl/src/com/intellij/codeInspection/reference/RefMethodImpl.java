@@ -20,7 +20,6 @@ import org.jetbrains.uast.*;
 import java.util.*;
 
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
-  private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
 
   private static final int IS_APPMAIN_MASK = 0x10000;
@@ -131,10 +130,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()){
       List<RefParameter> newParameters = new ArrayList<>(paramList.size());
+      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
         if (param.getSourcePsi() != null) {
-          ContainerUtil.addIfNotNull(newParameters, getRefJavaManager().getParameterReference(param, i, this));
+          final RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
+          if (refParameter != null) {
+            add(refParameter);
+            refUtil.setIsFinal(refParameter, param.isFinal());
+            newParameters.add(refParameter);
+          }
         }
       }
       synchronized (this) {
@@ -207,13 +212,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   @NotNull
   public synchronized Collection<RefMethod> getSuperMethods() {
-    return ObjectUtils.notNull(mySuperMethods, EMPTY_METHOD_LIST);
+    return ObjectUtils.notNull(mySuperMethods, Collections.emptyList());
   }
 
   @Override
   @NotNull
   public synchronized Collection<RefMethod> getDerivedMethods() {
-    return ObjectUtils.notNull(myDerivedMethods, EMPTY_METHOD_LIST);
+    return ObjectUtils.notNull(myDerivedMethods, Collections.emptyList());
   }
 
   @Override
@@ -260,12 +265,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (!refSuperMethod.getSuperMethods().contains(this)) {
       synchronized (this) {
-        List<RefMethod> superMethods = mySuperMethods;
-        if (superMethods == null){
-          mySuperMethods = superMethods = new ArrayList<>(1);
+        if (mySuperMethods == null){
+          mySuperMethods = new ArrayList<>(1);
         }
-        if (!superMethods.contains(refSuperMethod)) {
-          superMethods.add(refSuperMethod);
+        if (!mySuperMethods.contains(refSuperMethod)) {
+          mySuperMethods.add(refSuperMethod);
         }
       }
     }
@@ -274,11 +278,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void markExtended(RefMethodImpl method) {
     if (!method.getDerivedMethods().contains(this)) {
       synchronized (this) {
-        List<RefMethod> derivedMethods = myDerivedMethods;
-        if (derivedMethods == null) {
-          myDerivedMethods = derivedMethods = new ArrayList<>(1);
+        if (myDerivedMethods == null) {
+          myDerivedMethods = new ArrayList<>(1);
         }
-        if (!derivedMethods.contains(method)) {
+        if (!myDerivedMethods.contains(method)) {
           myDerivedMethods.add(method);
         }
       }
@@ -303,13 +306,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(body));
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
-
-    for (RefParameter parameter : getParameters()) {
-      UParameter uParameter = parameter.getUastElement();
-      if (uParameter != null) {
-        refUtil.setIsFinal(parameter, uParameter.isFinal());
-      }
-    }
 
     getRefManager().fireBuildReferences(this);
   }
