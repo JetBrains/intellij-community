@@ -20,10 +20,10 @@ class AddReifiedToTypeParameterOfFunctionFix(
 ) : AddModifierFixMpp(typeParameter, KtTokens.REIFIED_KEYWORD) {
 
     private val inlineFix = AddInlineToFunctionWithReifiedFix(function)
-    private val elementName = RemoveModifierFix.getElementName(function)
+    private val elementName = RemoveModifierFixBase.getElementName(function)
 
     override fun getText() =
-        element?.let { KotlinBundle.message("fix.make.type.parameter.reified", RemoveModifierFix.getElementName(it), elementName) } ?: ""
+        element?.let { KotlinBundle.message("fix.make.type.parameter.reified", RemoveModifierFixBase.getElementName(it), elementName) } ?: ""
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         super.invokeImpl(project, editor, file)
