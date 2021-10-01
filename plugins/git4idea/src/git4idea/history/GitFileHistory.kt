@@ -1,36 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.history;
+package git4idea.history
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.vcs.log.impl.VcsFileStatusInfo;
-import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.config.GitVersionSpecialty;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.history.VcsFileRevision
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Consumer
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitFileRevision
+import git4idea.GitRevisionNumber
+import git4idea.GitUtil
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.config.GitVersionSpecialty
+import git4idea.history.GitLogParser.GitLogOption
+import org.jetbrains.annotations.NonNls
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * An implementation of file history algorithm with renames detection.
@@ -58,59 +52,41 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * <p>
  * TODO: handle multiple repositories configuration: a file can be moved from one repo to another
  */
-public final class GitFileHistory {
-  private static final Logger LOG = Logger.getInstance(GitFileHistory.class);
+class GitFileHistory private constructor(private val project: Project,
+                                         private val root: VirtualFile,
+                                         path: FilePath,
+                                         private val startingRevision: VcsRevisionNumber) {
+  private val path = VcsUtil.getLastCommitPath(project, path)
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final FilePath myPath;
-  @NotNull private final VcsRevisionNumber myStartingRevision;
-
-  private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
-    myProject = project;
-    myRoot = root;
-    myPath = VcsUtil.getLastCommitPath(myProject, path);
-    myStartingRevision = revision;
-  }
-
-  private void load(@NotNull Consumer<? super GitFileRevision> consumer,
-                    @NotNull Consumer<? super VcsException> exceptionConsumer,
-                    String... parameters) {
-    GitLogParser<GitLogFullRecord> logParser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
-                                                                                HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL,
-                                                                                COMMITTER_NAME,
-                                                                                COMMITTER_EMAIL, PARENTS,
-                                                                                SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer);
-
-    String firstCommitParent = myStartingRevision.asString();
-    FilePath currentPath = myPath;
-
-    while (currentPath != null && firstCommitParent != null) {
-      recordConsumer.reset(currentPath);
-
-      GitLineHandler handler = createLogHandler(logParser, currentPath, firstCommitParent, parameters);
-      GitLogOutputSplitter<GitLogFullRecord> splitter = new GitLogOutputSplitter<>(handler, logParser, recordConsumer);
-
-      Git.getInstance().runCommandWithoutCollectingOutput(handler);
+  private fun load(consumer: Consumer<in GitFileRevision>,
+                   exceptionConsumer: Consumer<in VcsException>,
+                   vararg parameters: String) {
+    val logParser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
+                                                     GitLogOption.AUTHOR_NAME, GitLogOption.AUTHOR_EMAIL, GitLogOption.COMMITTER_NAME,
+                                                     GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
+                                                     GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
+                                                     GitLogOption.AUTHOR_TIME)
+    val recordConsumer = GitLogRecordConsumer(consumer)
+    var firstCommitParent: String? = startingRevision.asString()
+    var currentPath = path
+    while (firstCommitParent != null) {
+      recordConsumer.reset(currentPath)
+      val handler = createLogHandler(logParser, currentPath, firstCommitParent, *parameters)
+      val splitter = GitLogOutputSplitter(handler, logParser, recordConsumer)
+      Git.getInstance().runCommandWithoutCollectingOutput(handler)
       if (splitter.hasErrors()) {
-        return;
+        return
       }
-
       try {
-        String firstCommit = recordConsumer.getFirstCommit();
-        if (firstCommit == null) return;
-        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit, currentPath);
-        if (firstCommitParentAndPath == null) {
-          return;
-        }
-        currentPath = firstCommitParentAndPath.second;
-        firstCommitParent = firstCommitParentAndPath.first;
+        val firstCommit = recordConsumer.firstCommit ?: return
+        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit, currentPath) ?: return
+        currentPath = firstCommitParentAndPath.second
+        firstCommitParent = firstCommitParentAndPath.first
       }
-      catch (VcsException e) {
-        LOG.warn("Tried to get first commit rename path", e);
-        exceptionConsumer.consume(e);
-        return;
+      catch (e: VcsException) {
+        LOG.warn("Tried to get first commit rename path", e)
+        exceptionConsumer.consume(e)
+        return
       }
     }
   }
@@ -120,182 +96,170 @@ public final class GitFileHistory {
    * If yes, returns the older file path, which file was renamed from and a parent commit hash as a string.
    * If it's not a rename, returns null.
    */
-  @Nullable
-  private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull @NonNls String commit,
-                                                                     @NotNull FilePath filePath) throws VcsException {
-    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.SHOW);
-    GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
-                                                                             HASH, COMMIT_TIME, PARENTS);
-    h.setStdoutSuppressed(true);
-    h.addParameters("-M", "-m", "--follow", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    h.endOptions();
-    h.addRelativePaths(filePath);
-
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    List<GitLogFullRecord> records = parser.parse(output);
-
-    if (records.isEmpty()) return null;
-    for (int i = 0; i < records.size(); i++) {
-      GitLogFullRecord record = records.get(i);
-      List<Change> changes = record.parseChanges(myProject, myRoot);
-      for (Change change : changes) {
-        if ((change.isMoved() || change.isRenamed()) && filePath.equals(Objects.requireNonNull(change.getAfterRevision()).getFile())) {
-          String[] parents = record.getParentsHashes();
-          String parent = parents.length > 0 ? parents[i] : null;
-          return Pair.create(parent, Objects.requireNonNull(change.getBeforeRevision()).getFile());
+  @Throws(VcsException::class)
+  private fun getFirstCommitParentAndPathIfRename(commit: @NonNls String, filePath: FilePath): Pair<String?, FilePath>? {
+    val h = GitLineHandler(project, root, GitCommand.SHOW)
+    val parser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
+                                                  GitLogOption.PARENTS)
+    h.setStdoutSuppressed(true)
+    h.addParameters("-M", "-m", "--follow", "--name-status", parser.pretty, "--encoding=UTF-8", commit)
+    h.endOptions()
+    h.addRelativePaths(filePath)
+    val output = Git.getInstance().runCommand(h).getOutputOrThrow()
+    val records = parser.parse(output)
+    if (records.isEmpty()) return null
+    for (i in records.indices) {
+      val record = records[i]
+      val changes = record.parseChanges(project, root)
+      for (change in changes) {
+        if ((change.isMoved || change.isRenamed) && filePath == change.afterRevision!!.file) {
+          val parents = record.parentsHashes
+          val parent = if (parents.isNotEmpty()) parents[i] else null
+          return Pair(parent, change.beforeRevision!!.file)
         }
       }
     }
-    return null;
+    return null
   }
 
-  @NotNull
-  private GitLineHandler createLogHandler(@NotNull GitLogParser<GitLogFullRecord> parser,
-                                          @NotNull FilePath path,
-                                          @NotNull @NonNls String lastCommit,
-                                          @NonNls String... parameters) {
-    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LOG);
-    h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
-    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(myProject) && Registry.is("git.file.history.full")) {
-      h.addParameters("--full-history", "--simplify-merges");
+  private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
+                               path: FilePath,
+                               lastCommit: @NonNls String,
+                               vararg parameters: String): GitLineHandler {
+    val h = GitLineHandler(project, root, GitCommand.LOG)
+    h.setStdoutSuppressed(true)
+    h.addParameters("--name-status", parser.pretty, "--encoding=UTF-8", lastCommit)
+    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(project) && Registry.`is`("git.file.history.full")) {
+      h.addParameters("--full-history", "--simplify-merges")
     }
-    if (parameters != null && parameters.length > 0) {
-      h.addParameters(parameters);
+    if (parameters.isNotEmpty()) {
+      h.addParameters(*parameters)
     }
-    h.endOptions();
-    h.addRelativePaths(path);
-    return h;
+    h.endOptions()
+    h.addRelativePaths(path)
+    return h
   }
 
-  /**
-   * Get history for the file starting from specific revision and feed it to the consumer.
-   *
-   * @param project           Context project.
-   * @param path              FilePath which history is queried.
-   * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
-   * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
-   * @param exceptionConsumer This consumer is notified in case of error while executing git command.
-   * @param parameters        Optional parameters which will be added to the git log command just before the path.
-   */
-  public static void loadHistory(@NotNull Project project,
-                                 @NotNull FilePath path,
-                                 @Nullable VcsRevisionNumber startingFrom,
-                                 @NotNull Consumer<? super GitFileRevision> consumer,
-                                 @NotNull Consumer<? super VcsException> exceptionConsumer,
-                                 @NonNls String... parameters) {
-    try {
-      VirtualFile repositoryRoot = GitUtil.getRootForFile(project, path);
-      VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
-      new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
-    }
-    catch (VcsException e) {
-      exceptionConsumer.consume(e);
-    }
-  }
+  private inner class GitLogRecordConsumer(private val revisionConsumer: Consumer<in GitFileRevision>) : Consumer<GitLogFullRecord> {
+    private val skipFurtherOutput = AtomicBoolean()
+    private val _firstCommit = AtomicReference<String>()
+    private val currentPath = AtomicReference<FilePath>()
 
-  /**
-   * Get history for the file starting from specific revision.
-   *
-   * @param project      the context project
-   * @param path         the file path
-   * @param startingFrom revision from which to start file history
-   * @param parameters   optional parameters which will be added to the git log command just before the path
-   * @return list of the revisions
-   * @throws VcsException if there is problem with running git
-   */
-  @NotNull
-  public static List<VcsFileRevision> collectHistoryForRevision(@NotNull Project project,
-                                                                @NotNull FilePath path,
-                                                                @NotNull VcsRevisionNumber startingFrom,
-                                                                @NonNls String... parameters) throws VcsException {
-    List<VcsFileRevision> revisions = new ArrayList<>();
-    List<VcsException> exceptions = new ArrayList<>();
+    val firstCommit: String?
+      get() = _firstCommit.get()
 
-    loadHistory(project, path, startingFrom, revisions::add, exceptions::add, parameters);
-
-    if (!exceptions.isEmpty()) {
-      throw exceptions.get(0);
-    }
-    return revisions;
-  }
-
-  /**
-   * Get history for the file.
-   *
-   * @param project    the context project
-   * @param path       the file path
-   * @param parameters optional parameters which will be added to the git log command just before the path
-   * @return list of the revisions
-   * @throws VcsException if there is problem with running git
-   */
-  @NotNull
-  public static List<VcsFileRevision> collectHistory(@NotNull Project project, @NotNull FilePath path, @NonNls String... parameters)
-    throws VcsException {
-    return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, parameters);
-  }
-
-  private class GitLogRecordConsumer implements Consumer<GitLogFullRecord> {
-    @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
-    @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
-    @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<? super GitFileRevision> myRevisionConsumer;
-
-    GitLogRecordConsumer(@NotNull Consumer<? super GitFileRevision> revisionConsumer) {
-      myRevisionConsumer = revisionConsumer;
+    fun reset(path: FilePath) {
+      currentPath.set(path)
+      skipFurtherOutput.set(false)
     }
 
-    public void reset(@NotNull FilePath path) {
-      myCurrentPath.set(path);
-      mySkipFurtherOutput.set(false);
-    }
-
-    @Override
-    public void consume(@NotNull GitLogFullRecord record) {
-      if (mySkipFurtherOutput.get()) {
-        return;
+    override fun consume(record: GitLogFullRecord) {
+      if (skipFurtherOutput.get()) {
+        return
       }
-
-      myFirstCommit.set(record.getHash());
-
-      myRevisionConsumer.consume(createGitFileRevision(record));
-      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      _firstCommit.set(record.hash)
+      revisionConsumer.consume(createGitFileRevision(record))
+      val statusInfos = record.statusInfos
       if (statusInfos.isEmpty()) {
         // can safely be empty, for example, for simple merge commits that don't change anything.
-        return;
+        return
       }
-      if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
-        mySkipFurtherOutput.set(true);
+      if (statusInfos[0]!!.type == Change.Type.NEW && !path.isDirectory) {
+        skipFurtherOutput.set(true)
       }
     }
 
-    @NotNull
-    private GitFileRevision createGitFileRevision(@NotNull GitLogFullRecord record) {
-      GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-      FilePath revisionPath = getRevisionPath(record);
-      Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
-      Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
-      Collection<String> parents = Arrays.asList(record.getParentsHashes());
-      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
-      boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
-      return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
-                                 record.getFullMessage(),
-                                 null, new Date(record.getAuthorTimeStamp()), parents, deleted);
+    private fun createGitFileRevision(record: GitLogFullRecord): GitFileRevision {
+      val revision = GitRevisionNumber(record.hash, record.date)
+      val revisionPath = getRevisionPath(record)
+      val authorPair = Couple.of(record.authorName, record.authorEmail)
+      val committerPair = Couple.of(record.committerName, record.committerEmail)
+      val parents = listOf(*record.parentsHashes)
+      val statusInfos = record.statusInfos
+      val deleted = statusInfos.isNotEmpty() && statusInfos[0]!!.type == Change.Type.DELETED
+      return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
+                             record.fullMessage,
+                             null, Date(record.authorTimeStamp), parents, deleted)
     }
 
-    @NotNull
-    private FilePath getRevisionPath(@NotNull GitLogFullRecord record) {
-      List<FilePath> paths = record.getFilePaths(myRoot);
-      if (paths.size() > 0) {
-        return paths.get(0);
+    private fun getRevisionPath(record: GitLogFullRecord): FilePath {
+      val paths = record.getFilePaths(root)
+      return if (paths.size > 0) {
+        paths[0]
       }
+      else currentPath.get()
       // no paths are shown for merge commits, so we're using the saved path we're inspecting now
-      return myCurrentPath.get();
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitFileHistory::class.java)
+
+    /**
+     * Get history for the file starting from specific revision and feed it to the consumer.
+     *
+     * @param project           Context project.
+     * @param path              FilePath which history is queried.
+     * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
+     * @param consumer          This consumer is notified ([Consumer.consume] when new history records are retrieved.
+     * @param exceptionConsumer This consumer is notified in case of error while executing git command.
+     * @param parameters        Optional parameters which will be added to the git log command just before the path.
+     */
+    @JvmStatic
+    fun loadHistory(project: Project,
+                    path: FilePath,
+                    startingFrom: VcsRevisionNumber?,
+                    consumer: Consumer<in GitFileRevision>,
+                    exceptionConsumer: Consumer<in VcsException>,
+                    vararg parameters: String) {
+      try {
+        val repositoryRoot = GitUtil.getRootForFile(project, path)
+        val revision = startingFrom ?: GitRevisionNumber.HEAD
+        GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, *parameters)
+      }
+      catch (e: VcsException) {
+        exceptionConsumer.consume(e)
+      }
     }
 
-    @Nullable
-    public String getFirstCommit() {
-      return myFirstCommit.get();
+    /**
+     * Get history for the file starting from specific revision.
+     *
+     * @param project      the context project
+     * @param path         the file path
+     * @param startingFrom revision from which to start file history
+     * @param parameters   optional parameters which will be added to the git log command just before the path
+     * @return list of the revisions
+     * @throws VcsException if there is problem with running git
+     */
+    @JvmStatic
+    @Throws(VcsException::class)
+    fun collectHistoryForRevision(project: Project,
+                                  path: FilePath,
+                                  startingFrom: VcsRevisionNumber,
+                                  vararg parameters: String): List<VcsFileRevision> {
+      val revisions = mutableListOf<VcsFileRevision>()
+      val exceptions = mutableListOf<VcsException>()
+      loadHistory(project, path, startingFrom, revisions::add, exceptions::add, *parameters)
+      if (exceptions.isNotEmpty()) {
+        throw exceptions[0]
+      }
+      return revisions
+    }
+
+    /**
+     * Get history for the file.
+     *
+     * @param project    the context project
+     * @param path       the file path
+     * @param parameters optional parameters which will be added to the git log command just before the path
+     * @return list of the revisions
+     * @throws VcsException if there is problem with running git
+     */
+    @JvmStatic
+    @Throws(VcsException::class)
+    fun collectHistory(project: Project, path: FilePath, vararg parameters: String): List<VcsFileRevision> {
+      return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, *parameters)
     }
   }
 }
