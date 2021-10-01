@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,8 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   @NotNull private final FilePath myFilePath;
@@ -37,7 +39,8 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
                                                                                  PermanentGraph.SortType.Normal,
                                                                                  new FileHistoryFilterer(logData),
                                                                                  FileHistoryUi.getFileHistoryLogId(myFilePath, myHash));
-    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot);
+    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot,
+                                         Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));
 
     RegistryValueListener registryValueListener = new RegistryValueListener() {
       @Override
