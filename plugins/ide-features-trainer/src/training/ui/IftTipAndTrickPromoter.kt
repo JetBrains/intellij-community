@@ -15,6 +15,7 @@ import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
+import training.statistic.StatisticBase
 import training.util.RoundedPanel
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -24,7 +25,7 @@ import javax.swing.JPanel
 class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   override fun createPromotionPanel(project: Project, tip: TipAndTrickBean): JPanel? {
     val lesson = findLessonForTip(tip) ?: return null
-    return createOpenLessonPanel(project, lesson)
+    return createOpenLessonPanel(project, lesson, tip)
   }
 
   private fun findLessonForTip(tip: TipAndTrickBean): Lesson? {
@@ -40,7 +41,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     return null
   }
 
-  private fun createOpenLessonPanel(project: Project, lesson: Lesson): JPanel {
+  private fun createOpenLessonPanel(project: Project, lesson: Lesson, tip: TipAndTrickBean): JPanel {
     val container = RoundedPanel(8)
     container.layout = BoxLayout(container, BoxLayout.X_AXIS)
     container.background = UISettings.instance.shortcutBackgroundColor
@@ -55,6 +56,7 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     val openLessonLink = ActionLink(LearnBundle.message("tip.and.trick.promotion.open.lesson")) {
       TipDialog.hideForProject(project)
       CourseManager.instance.openLesson(project, lesson, forceStartLesson = true)
+      StatisticBase.logLessonOpenedFromTip(lesson.id, tip.fileName)
     }
     container.add(openLessonLink)
     container.add(Box.createRigidArea(JBDimension(12, 28)))

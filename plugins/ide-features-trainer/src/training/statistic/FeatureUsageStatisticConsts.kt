@@ -29,4 +29,6 @@ object FeatureUsageStatisticConsts {
   const val NEW_LESSONS_COUNT = "new_lessons_count"
   const val LAST_BUILD_LEARNING_OPENED = "last_build_learning_opened"
   const val SHOULD_SHOW_NEW_LESSONS = "show_it"
+  const val TIP_FILENAME = "filename"
+  const val LESSON_OPENED_FROM_TIP = "lesson_opened_from_tip"
 }
