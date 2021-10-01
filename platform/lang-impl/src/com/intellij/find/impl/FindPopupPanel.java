@@ -1074,7 +1074,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
     if (fileMasks.length > 0) {
       String fileMask = findSettings.getFileMask();
-      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[0]);
+      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
     }
     myFileMaskField.setEnabled(isThereFileFilter);
     String toSearch = myModel.getStringToFind();
