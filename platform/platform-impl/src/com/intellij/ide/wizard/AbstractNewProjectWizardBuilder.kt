@@ -7,12 +7,21 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JTextField
 
-abstract class AbstractNewProjectWizardBuilder(private val factory: NewProjectWizardStep.RootStepFactory) : ModuleBuilder() {
-  private var step: NewModuleStep? = null
+abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
+  private var step: BridgeStep? = null
+
+  protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
-    return NewModuleStep(context, factory)
+    return BridgeStep(context, createStep(context))
       .also { step = it }
   }
 
@@ -23,6 +32,49 @@ abstract class AbstractNewProjectWizardBuilder(private val factory: NewProjectWi
 
   override fun cleanup() {
     step = null
+  }
+
+  private class BridgeStep(context: WizardContext, private val step: NewProjectWizardStep) : ModuleWizardStep() {
+
+    fun setupProject(project: Project) = step.setupProject(project)
+
+    private val panelBuilder = NewProjectWizardPanelBuilder(context)
+
+    override fun validate() = panelBuilder.validate()
+
+    override fun updateDataModel() = panelBuilder.apply()
+
+    override fun getPreferredFocusedComponent() = panelBuilder.preferredFocusedComponent
+
+    override fun updateStep() {
+      (preferredFocusedComponent as? JTextField)?.selectAll()
+    }
+
+    override fun getComponent() =
+      panelBuilder.panel { step.setupUI(this) }
+        .apply { withBorder(JBUI.Borders.empty(14, 20)) }
+        .also { fixUiShiftingWhenChoosingMultiStep(it) }
+
+    private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
+      val labels = UIUtil.uiTraverser(panel)
+        .filterIsInstance<JLabel>()
+        .filter { isRowLabel(it) }
+      val width = labels.maxOf { it.preferredSize.width }
+      labels.forEach { it.setMinimumWidth(width) }
+    }
+
+    private fun isRowLabel(label: JLabel): Boolean {
+      val layout = (label.parent as? DialogPanel)?.layout as? GridLayout
+      if (layout == null) {
+        return false
+      }
+      val constraints = layout.getConstraints(label)
+      return constraints != null && constraints.x == 0 && constraints.gaps.left == 0
+    }
+
+    private fun JComponent.setMinimumWidth(width: Int) {
+      minimumSize = minimumSize.apply { this.width = width }
+    }
   }
 
   companion object {
