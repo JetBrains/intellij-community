@@ -6,12 +6,31 @@ import com.intellij.testFramework.TemporaryDirectory
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import java.nio.file.Path
 
 class PersistentMapWalTest {
   @Rule
   @JvmField
   val tempDirectory = TemporaryDirectory()
+
+  @Rule
+  @JvmField
+  val debugWal = TestRule { base, _ ->
+    object : Statement() {
+      override fun evaluate() {
+        debugWalRecords = true
+        try {
+          base.evaluate()
+        }
+        finally {
+          debugWalRecords = false
+        }
+      }
+    }
+  }
 
   @Test
   fun `test single put`() {
