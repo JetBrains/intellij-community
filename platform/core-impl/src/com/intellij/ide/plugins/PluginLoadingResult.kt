@@ -96,15 +96,19 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
       return true
     }
 
-    if (!descriptor.isBundled) {
-      if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
-        val error = PluginLoadingError(plugin = descriptor,
-                                       detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
-                                       shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
-                                       isNotifyUser = true)
-        addIncompletePlugin(descriptor, error)
-        return false
-      }
+    if (checkModuleDependencies &&
+        !descriptor.isBundled && descriptor.packagePrefix == null &&
+        !PluginManagerCore.hasModuleDependencies(descriptor)) {
+      val error = PluginLoadingError(plugin = descriptor,
+                                     detailedMessageSupplier = {
+                                       CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name)
+                                     },
+                                     shortMessageSupplier = {
+                                       CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
+                                     },
+                                     isNotifyUser = true)
+      addIncompletePlugin(descriptor, error)
+      return false
     }
 
     // remove any error that occurred for plugin with the same `id`

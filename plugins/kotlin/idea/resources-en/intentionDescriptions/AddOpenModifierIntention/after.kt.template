@@ -1,5 +1,3 @@
-open class Foo {
-    <spot>open</spot> fun foo() {
-
-    }
+open class Example {
+    <spot>open</spot> fun run() {}
 }

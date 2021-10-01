@@ -80,6 +80,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
     IntelliJPlatformProduct.DBE,
     IntelliJPlatformProduct.ANDROID_STUDIO,
     IntelliJPlatformProduct.CWM_GUEST,
+    IntelliJPlatformProduct.GATEWAY,
     IntelliJPlatformProduct.IDEA_IE -> null
   }
 }

@@ -25,7 +25,7 @@ public final class IdentifierHighlighterPassFactory {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
         !DumbService.isDumb(file.getProject()) &&
-        isEnabledInHeadlessMode() &&
+        isEnabled() &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file, editor, visibleRange);
     }
@@ -33,7 +33,7 @@ public final class IdentifierHighlighterPassFactory {
     return null;
   }
 
-  public static boolean isEnabledInHeadlessMode() {
+  public static boolean isEnabled() {
     return !ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourTestingIdentifierHighlighting);
   }
 

@@ -1,14 +1,14 @@
 <html>
 <body>
 Reports <code>equals()</code> methods taking an argument type other than
-<code>java.lang.Object</code> if the containing class does not have another
-<b>equals()</b> method which does take <code>java.lang.Object</code> as
+<code>java.lang.Object</code> if the containing class does not have other overloads of
+<code>equals()</code> that take <code>java.lang.Object</code> as
 its argument type.
 <p>
   A covariant version of <code>equals()</code> does not override the
   <code>Object.equals(Object)</code> method. It may cause unexpected
   behavior at runtime. For example, if the class is used to construct
-  one of the standard collection classes which expect that the
+  one of the standard collection classes, which expect that the
   <code>Object.equals(Object)</code> method is overridden.
 </p>
 <p><b>Example:</b></p>
@@ -29,7 +29,6 @@ its argument type.
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

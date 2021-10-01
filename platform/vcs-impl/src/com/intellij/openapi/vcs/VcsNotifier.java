@@ -418,7 +418,7 @@ public class VcsNotifier {
   }
 
   @NotNull
-  private NotificationAction createShowDetailsAction() {
+  public NotificationAction createShowDetailsAction() {
     return NotificationAction.createSimple(
       VcsBundle.message("notification.showDetailsInConsole"),
       () -> {

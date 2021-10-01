@@ -147,7 +147,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     SyntaxTreeBuilder.Marker mark = myBuilder.mark();
     myBuilder.remapCurrentToken(PyTokenTypes.MATCH_KEYWORD);
     myBuilder.advanceLexer();
-    myContext.getExpressionParser().parseTupleExpression(true, false, false);
+    myContext.getExpressionParser().parseExpression();
     if (!matchToken(PyTokenTypes.COLON)) {
       mark.rollbackTo();
       myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
@@ -165,21 +165,15 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        if (myBuilder.eof()) {
-          myBuilder.error(PyPsiBundle.message("indented.block.expected"));
-          return false;
-        }
-        else {
-          while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
-            if (!parseCaseClause()) {
-              SyntaxTreeBuilder.Marker illegalStatement = myBuilder.mark();
-              parseStatement();
-              illegalStatement.error(PyPsiBundle.message("PARSE.expected.case.clause"));
-            }
+        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          if (!parseCaseClause()) {
+            SyntaxTreeBuilder.Marker illegalStatement = myBuilder.mark();
+            parseStatement();
+            illegalStatement.error(PyPsiBundle.message("PARSE.expected.case.clause"));
           }
         }
         if (!myBuilder.eof()) {
-          checkMatches(PyTokenTypes.DEDENT, PyPsiBundle.message("dedent.expected"));
+          assert matchToken(PyTokenTypes.DEDENT);
         }
       }
       else {
@@ -932,13 +926,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        if (myBuilder.eof()) {
-          myBuilder.error(PyPsiBundle.message("indented.block.expected"));
-        }
-        else {
-          while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
-            parseStatement();
-          }
+        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          parseStatement();
         }
       }
       else {
@@ -951,7 +940,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (indentFound && !myBuilder.eof()) {
-        checkMatches(PyTokenTypes.DEDENT, PyPsiBundle.message("dedent.expected"));
+        assert matchToken(PyTokenTypes.DEDENT);
       }
     }
     else {

@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.function.Supplier;
 
-public final class ModulePathMacroManager extends PathMacroManager {
+public class ModulePathMacroManager extends PathMacroManager {
   private final Supplier<@SystemIndependent String> myModuleDirPointer;
 
   public ModulePathMacroManager(@NotNull Module module) {

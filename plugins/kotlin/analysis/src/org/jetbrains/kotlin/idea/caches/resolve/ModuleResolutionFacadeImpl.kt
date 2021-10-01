@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.container.tryGetService
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -54,11 +55,14 @@ internal class ModuleResolutionFacadeImpl(
         }
     }
 
-    override fun analyzeWithAllCompilerChecks(elements: Collection<KtElement>): AnalysisResult {
+    override fun analyzeWithAllCompilerChecks(
+        elements: Collection<KtElement>,
+        callback: DiagnosticSink.DiagnosticsCallback?
+    ): AnalysisResult {
         ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
 
         return runWithCancellationCheck {
-            projectFacade.getAnalysisResultsForElements(elements)
+            projectFacade.getAnalysisResultsForElements(elements, callback)
         }
     }
 

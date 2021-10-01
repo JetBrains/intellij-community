@@ -76,12 +76,13 @@ class GradleRunConfigurationExtension
         val tasks = allTasks[projectPath] ?: return emptyList()
         val wildcardTasksInfo = ArrayList<Task>()
         val tasksInfo = ArrayList<Task>()
-        for ((path, tasksData) in tasks.entrySet()) {
+        for ((_, tasksData) in tasks.entrySet()) {
           for (taskData in tasksData) {
-            val taskFqn = getGradleFqnTaskName(path, taskData)
-              .removePrefix(gradlePath)
+            val taskFqn = taskData.getFqnTaskName().removePrefix(gradlePath)
             val taskDescription = taskData.description
-            wildcardTasksInfo.add(Task(taskFqn.removePrefix(":"), taskDescription))
+            if (!taskData.isFromIncludedBuild) {
+              wildcardTasksInfo.add(Task(taskFqn.removePrefix(":"), taskDescription))
+            }
             if (!taskData.isInherited) {
               tasksInfo.add(Task(taskFqn, taskDescription))
             }

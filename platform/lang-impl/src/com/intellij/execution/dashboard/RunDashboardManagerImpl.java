@@ -69,7 +69,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private State myState = new State();
   private final Set<String> myTypes = new HashSet<>();
   private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
-  private volatile List<List<RunDashboardServiceImpl>> myServices = Collections.emptyList();
+  private volatile List<List<RunDashboardServiceImpl>> myServices = new SmartList<>();
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
   private String myToolWindowId;
@@ -83,6 +83,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myServiceContentManagerListener = new ServiceContentManagerListener();
     myReuseCondition = this::canReuseContent;
     initExtensionPointListeners();
+
+    myContentManager.addContentManagerListener(new ContentManagerListener() {
+      @Override
+      public void contentAdded(@NotNull ContentManagerEvent event) {
+        initServiceContentListeners();
+        myContentManager.removeContentManagerListener(this);
+      }
+    });
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

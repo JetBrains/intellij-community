@@ -340,7 +340,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         project.runSynchronouslyWithProgress(KotlinBundle.message("searching.for.0", element.name.toString()), true) {
             runReadAction {
-                ReferencesSearch.search(element).mapNotNullTo(externalUsages) { ref ->
+                ReferencesSearch.search(element, element.useScope).mapNotNullTo(externalUsages) { ref ->
                     ProgressManager.checkCanceled()
                     when (ref) {
                         is PsiReferenceExpression -> JavaUsageInfo(ref)

@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
@@ -15,6 +16,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +31,30 @@ import java.util.Collections;
 import java.util.List;
 
 public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
+    private final @NotNull Project myProject;
+
+    public ActionsOnSaveConfigurableProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public boolean canCreateConfigurable() {
+      return !PlatformUtils.isRider();
+    }
+
+    @Override
+    public @Nullable Configurable createConfigurable() {
+      return new ActionsOnSaveConfigurable(myProject);
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
   private static final String CONFIGURABLE_ID = "actions.on.save";
 
   private final @NotNull Project myProject;
 
+  private ActionOnSaveContext myActionOnSaveContext;
   private TableView<ActionOnSaveInfo> myTable;
 
   public ActionsOnSaveConfigurable(@NotNull Project project) {
@@ -48,6 +69,11 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
   @Override
   public @NotNull String getId() {
     return CONFIGURABLE_ID;
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "settings.actions.on.save";
   }
 
   @Override
@@ -74,7 +100,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       public void ancestorAdded(AncestorEvent event) {
         // The 'Actions on Save' page has become visible, either the first time (right after createComponent()), or after switching to some
         // other page in Settings and then back to this page. Need to update the table.
-        reset();
+        updateTable();
       }
     });
 
@@ -98,11 +124,19 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
   @Override
   public boolean isModified() {
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      if (info.isModified()) {
+        return true;
+      }
+    }
     return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      info.apply();
+    }
   }
 
   @Override
@@ -113,6 +147,17 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       return;
     }
 
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      if (info instanceof ActionOnSaveBackedByOwnConfigurable<?>) {
+        ((ActionOnSaveBackedByOwnConfigurable<?>)info).resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage();
+      }
+    }
+
+    myActionOnSaveContext = null;
+    updateTable();
+  }
+
+  private void updateTable() {
     Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTable));
     if (settings == null) {
       myTable.getListTableModel().setItems(Collections.emptyList());
@@ -120,20 +165,16 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       return;
     }
 
-    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject, settings);
-    for (ActionOnSaveInfo info : infos) {
-      info.onActionsOnSaveConfigurableReset(settings);
+    if (myActionOnSaveContext == null) {
+      myActionOnSaveContext = new ActionOnSaveContext(myProject, settings);
     }
 
+    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
     myTable.getListTableModel().setItems(infos);
   }
 
   public static @NotNull ActionLink createGoToActionsOnSavePageLink() {
     return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.all.actions.on.save"), CONFIGURABLE_ID);
-  }
-
-  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
-    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
   }
 
   public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,

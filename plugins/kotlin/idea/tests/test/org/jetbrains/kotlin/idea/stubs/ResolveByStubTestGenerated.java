@@ -41,6 +41,11 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             runTest("testData/compiler/loadJava/compiledKotlin/annotations/AnnotationInAnnotationArguments.kt");
         }
 
+        @TestMetadata("AnnotationInArray.kt")
+        public void testAnnotationInArray() throws Exception {
+            runTest("testData/compiler/loadJava/compiledKotlin/annotations/AnnotationInArray.kt");
+        }
+
         @TestMetadata("ClassLiteralArguments.kt")
         public void testClassLiteralArguments() throws Exception {
             runTest("testData/compiler/loadJava/compiledKotlin/annotations/ClassLiteralArguments.kt");

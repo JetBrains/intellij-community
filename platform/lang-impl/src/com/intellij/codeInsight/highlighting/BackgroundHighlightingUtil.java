@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
@@ -19,6 +18,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -77,7 +77,7 @@ public class BackgroundHighlightingUtil {
   private static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
-           EditorActivityManager.getInstance().isVisible(editor);
+           UIUtil.isShowing(editor.getContentComponent());
   }
 
   @NotNull

@@ -8,9 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.scratch.ui.ScratchFileOptionsFile
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     var replScratchExecutor: SequentialScratchExecutor? = null
@@ -27,6 +30,9 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     fun getPsiFile(): PsiFile? = runReadAction {
         file.toPsiFile(project)
     }
+
+    val ktScratchFile: KtFile?
+        get() = getPsiFile().safeAs()
 
     fun setModule(value: Module?) {
         module = value
@@ -62,6 +68,7 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     }
 
     abstract fun getExpressions(psiFile: PsiFile): List<ScratchExpression>
+    @RequiresBackgroundThread
     abstract fun hasErrors(): Boolean
 }
 

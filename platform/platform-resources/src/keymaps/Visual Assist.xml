@@ -61,8 +61,6 @@
   <action id="hg4idea.QGotoFromPatches" />
   <action id="NextTab" />
   <action id="PreviousTab" />
-  <action id="Diff.NextChange" />
-  <action id="Diff.PrevChange" />
   <action id="WD.UploadCurrentRemoteFileAction" />
   <action id="AddToFavoritesPopup" />
   <action id="EditorAddCaretPerSelectedLine"/>

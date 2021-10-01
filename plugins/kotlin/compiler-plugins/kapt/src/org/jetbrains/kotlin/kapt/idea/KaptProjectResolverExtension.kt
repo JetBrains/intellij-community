@@ -21,14 +21,12 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
     }
 
     override fun getExtraProjectModelClasses(): Set<Class<KaptGradleModel>> {
-        error("getModelProvider() is overridden instead")
-    }
+        val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
+        if (isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null) {
+            return emptySet()
+        }
 
-    override fun getModelProvider(): ProjectImportModelProvider? {
-        val isAndroidPluginRequestingKaptGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
-        val isAndroidPluginRequestingKaptGradleModel =
-            isAndroidPluginRequestingKaptGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKaptGradleModelKey) != null
-        return AndroidAwareGradleModelProvider(KaptGradleModel::class.java, isAndroidPluginRequestingKaptGradleModel)
+        return setOf(KaptGradleModel::class.java)
     }
 
     override fun getToolingExtensionsClasses() = setOf(KaptModelBuilderService::class.java, Unit::class.java)

@@ -2,8 +2,8 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightExpressionList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -24,7 +24,11 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
 
   @Override
   public PsiExpressionList getCaseValues() {
-    return (PsiExpressionList)findPsiChildByType(JavaElementType.EXPRESSION_LIST);
+    PsiCaseLabelElementList elementList = getCaseLabelElementList();
+    if (elementList == null) return null;
+    PsiExpression[] expressions = PsiTreeUtil.getChildrenOfType(elementList, PsiExpression.class);
+    expressions = expressions != null ? expressions : PsiExpression.EMPTY_ARRAY;
+    return new LightExpressionList(getManager(), getLanguage(), expressions, elementList, elementList.getTextRange());
   }
 
   @Nullable
@@ -45,7 +49,7 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent instanceof PsiExpressionList) {
+    if (lastParent instanceof PsiCaseLabelElementList) {
       PsiSwitchBlock switchStatement = getEnclosingSwitchBlock();
       if (switchStatement != null) {
         PsiExpression expression = switchStatement.getExpression();

@@ -149,7 +149,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "m = Horror(name='Alien', year=1979)\n" +
                  "d={'name':'Garden State', 'year':2004}\n" +
                  "m.update(d)\n" +
-                 "m.update({'name':'Garden State', 'year':<warning descr=\"Expected type 'Optional[int]', got 'str' instead\">'2004'</warning>, <warning descr=\"TypedDict \\\"Horror\\\" cannot have key 'based_on'\">'based_on'</warning>: 'book'})\n" +
+                 "m.update({'name':'Garden State', 'year':<warning descr=\"Expected type 'int | None', got 'str' instead\">'2004'</warning>, <warning descr=\"TypedDict \\\"Horror\\\" cannot have key 'based_on'\">'based_on'</warning>: 'book'})\n" +
                  "m.update(name=<warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>, year=1984, based_on_book=<warning descr=\"Expected type 'bool', got 'str' instead\">'yes'</warning>)\n" +
                  "m.update([('name',<warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>), ('year',None)])");
   }

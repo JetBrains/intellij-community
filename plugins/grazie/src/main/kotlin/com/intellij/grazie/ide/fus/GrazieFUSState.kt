@@ -6,16 +6,12 @@ import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.lang.Language
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "grazie.state"
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
 
   override fun getMetrics(): Set<MetricEvent> {
     val metrics = HashSet<MetricEvent>()
@@ -27,30 +23,24 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
     val allRules by lazy { allRules().values.flatten().groupBy { it.globalId } }
-    fun mayLogRule(id: String) = allRules[id].orEmpty().all { getPluginInfo(it.javaClass).isSafeToReport() }
-
-    for (id in state.userEnabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", true)))
+    fun logRule(id: String, enabled: Boolean) {
+      val rule = allRules[id]?.firstOrNull() ?: return
+      metrics.add(newMetric("rule", FeatureUsageData()
+        .addPluginInfo(getPluginInfo(rule.javaClass))
+        .addData("id", id)
+        .addData("enabled", enabled)))
     }
-    for (id in state.userDisabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", false)))
-    }
 
+    state.userEnabledRules.forEach { logRule(it, enabled = true) }
+    state.userDisabledRules.forEach { logRule(it, enabled = false) }
 
     for (id in state.checkingContext.disabledLanguages) {
-      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("language", id).addData("userChange", "disabled")))
+    }
+    for (id in state.checkingContext.enabledLanguages) {
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("language", id).addData("userChange", "enabled")))
     }
 
     return metrics
-  }
-
-  internal class ContextLanguageValidator : CustomValidationRule() {
-    override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      val language = Language.findLanguageByID(data)
-      if (language == null || !getPluginInfo(language.javaClass).isSafeToReport()) return ValidationResultType.REJECTED
-      return ValidationResultType.ACCEPTED
-    }
-
-    override fun acceptRuleId(ruleId: String?) = ruleId == "grazie_context_language"
   }
 }

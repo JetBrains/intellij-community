@@ -13,10 +13,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.impl.IntersectionFileEnumeration;
+import com.intellij.psi.search.impl.UnionFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -394,7 +400,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     };
   }
 
-  private static final class IntersectionScope extends GlobalSearchScope {
+  private static final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
 
@@ -486,10 +492,32 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public String toString() {
       return "Intersection: (" + myScope1 + ", " + myScope2 + ")";
     }
+
+    @Override
+    public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+      VirtualFileEnumeration fileEnumeration1 = VirtualFileEnumeration.extract(myScope1);
+      VirtualFileEnumeration fileEnumeration2 = VirtualFileEnumeration.extract(myScope2);
+      if (fileEnumeration1 == null) return fileEnumeration2;
+      if (fileEnumeration2 == null) return fileEnumeration1;
+      return new IntersectionFileEnumeration(Arrays.asList(fileEnumeration1, fileEnumeration2));
+    }
   }
 
-  private static final class UnionScope extends GlobalSearchScope {
-    private final GlobalSearchScope[] myScopes;
+  private static final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
+    private final GlobalSearchScope @NotNull [] myScopes;
+
+    @Override
+    public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+      Collection<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
+      for (GlobalSearchScope scope : myScopes) {
+        VirtualFileEnumeration fileEnumeration = VirtualFileEnumeration.extract(scope);
+        if (fileEnumeration == null) {
+          return null;
+        }
+        fileEnumerations.add(fileEnumeration);
+      }
+      return new UnionFileEnumeration(fileEnumerations);
+    }
 
     @NotNull
     static GlobalSearchScope create(GlobalSearchScope @NotNull [] scopes) {
@@ -663,7 +691,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FileTypeRestrictionScope(scope, fileTypes);
   }
 
-  private static final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope {
+  private static final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope implements VirtualFileEnumerationAware {
     private final FileType[] myFileTypes;
 
     private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, FileType @NotNull [] fileTypes) {
@@ -730,6 +758,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public String toString() {
       return "(restricted by file types: "+Arrays.asList(myFileTypes)+" in "+ myBaseScope + ")";
     }
+
+    @Override
+    public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+      return myBaseScope instanceof VirtualFileEnumeration ? (VirtualFileEnumeration)myBaseScope : null;
+    }
   }
 
   private static class EmptyScope extends GlobalSearchScope {
@@ -768,7 +801,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
 
-  private static final class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
+  private static final class FileScope extends GlobalSearchScope implements VirtualFileEnumeration {
     private final VirtualFile myVirtualFile; // files can be out of project roots
     @Nullable private final @Nls String myDisplayName;
     private final Module myModule;
@@ -803,12 +836,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @NotNull
     @Override
-    public Iterator<VirtualFile> iterator() {
-      return Collections.singletonList(myVirtualFile).iterator();
-    }
-
-    @NotNull
-    @Override
     public String getDisplayName() {
       return myDisplayName != null ? myDisplayName : super.getDisplayName();
     }
@@ -834,10 +861,27 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     protected int calcHashCode() {
       return Objects.hash(myVirtualFile, myModule, myDisplayName);
     }
+
+    @Override
+    public boolean contains(int fileId) {
+      return myVirtualFile instanceof VirtualFileWithId && ((VirtualFileWithId)myVirtualFile).getId() == fileId;
+    }
+
+    @Override
+    public int[] asInts() {
+      return myVirtualFile instanceof VirtualFileWithId
+             ? new int[] { ((VirtualFileWithId)myVirtualFile).getId()}
+             : ArrayUtil.EMPTY_INT_ARRAY;
+    }
+
+    @Override
+    public @NotNull Iterable<VirtualFile> asIterable() {
+      return Collections.singletonList(myVirtualFile);
+    }
   }
 
-  public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
-    private final Set<? extends VirtualFile> myFiles;
+  public static class FilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
+    private final CompactVirtualFileSet myFiles;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
     private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
@@ -848,7 +892,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project);
       myFiles = new CompactVirtualFileSet(files);
-      ((CompactVirtualFileSet)myFiles).freeze();
+      myFiles.freeze();
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
 
@@ -894,12 +938,19 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 
-    @NotNull
     @Override
-    public Iterator<VirtualFile> iterator() {
-      //noinspection unchecked
-      return (Iterator<VirtualFile>) // optimization hack: avoid copying in `new ArrayList(myFiles).iterator()`
-        myFiles.iterator();
+    public boolean contains(int fileId) {
+      return myFiles.containsId(fileId);
+    }
+
+    @Override
+    public int[] asInts() {
+      return myFiles.onlyFileIds();
+    }
+
+    @Override
+    public @NotNull Iterable<VirtualFile> asIterable() {
+      return Collections.unmodifiableSet(myFiles);
     }
   }
 }

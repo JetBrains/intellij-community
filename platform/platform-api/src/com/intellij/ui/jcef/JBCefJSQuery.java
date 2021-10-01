@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefMessageRouterHandler;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    * @return name of the global function JS must call to send query to Java
    */
   @NotNull
-  public final String getFuncName() {
+  public String getFuncName() {
     return myFunc.myFuncName;
   }
 
@@ -72,6 +73,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
   /**
    * @deprecated use {@link #create(JBCefBrowserBase)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
     return create((JBCefBrowserBase)browser);

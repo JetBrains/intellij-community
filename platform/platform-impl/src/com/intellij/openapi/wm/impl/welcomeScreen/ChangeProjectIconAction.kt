@@ -64,8 +64,9 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     deleteButtonToolbar.setTargetComponent(ui.iconLabel)
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
-      val iconSvg = File("$projectPath/.idea/icon.svg")
-      val iconPng = File("$projectPath/.idea/icon.png")
+      val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath)
+      val iconSvg = basePath.resolve("icon.svg").toFile()
+      val iconPng = basePath.resolve("icon.png").toFile()
 
       if (ui.pathToIcon != null) {
         FileUtil.copy(File(ui.pathToIcon!!.path), iconSvg)

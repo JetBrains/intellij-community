@@ -16,6 +16,7 @@ internal sealed class ApiResult<T : Any> {
         if (isSuccess) {
             Success(action((this as Success<T>).result))
         } else {
+            @Suppress("UNCHECKED_CAST")
             this as Failure<V>
         }
 

@@ -67,9 +67,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       @Suppress("IncorrectParentDisposable")
       ReadAction
         .nonBlocking(Runnable {
-          val psiFile = provider.getPsi(provider.baseLanguage)
-          if (psiFile == null || !psiFile.isValid) return@Runnable
-          val element = provider.findElementAt(offset)
+          val element = provider.tryFindElementAt(offset)
           if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
             recentPlaces.addToTop(element.text)
             val declaration = findDeclaration(element)
@@ -89,6 +87,15 @@ class RecentPlacesFeatures : ElementFeatureProvider {
 
     private fun PsiElement.getChildrenNames(): List<String> =
       this.children.filterIsInstance<PsiNamedElement>().mapNotNull { it.name }
+
+    private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? =
+      try {
+        if (getPsi(baseLanguage)?.isValid == true)
+          findElementAt(offset)
+        else null
+      } catch (t: Throwable) {
+        null
+      }
 
     private fun findDeclaration(element: PsiElement): PsiElement? {
       var curElement = element

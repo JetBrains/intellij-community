@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.statistics
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.Companion.ACTION_INVOKED_EVENT_ID
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -28,9 +27,9 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
     private val ACTION_EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
     private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 
-    private val ACTION_INVOKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, EXTERNAL_SYSTEM_ID)
+    private val ACTION_INVOKED = ActionsEventLogGroup.registerActionEvent(GROUP, "action.invoked", EXTERNAL_SYSTEM_ID)
     private val DELEGATE_ACTION_INVOKED = GROUP.registerVarargEvent(
-      ACTION_INVOKED_EVENT_ID, DELEGATE_ACTION_ID, EventFields.ActionPlace,
+      "action.invoked", DELEGATE_ACTION_ID, EventFields.ActionPlace,
       ActionsEventLogGroup.CONTEXT_MENU, ACTION_EXECUTOR_FIELD, EXTERNAL_SYSTEM_ID
     )
 

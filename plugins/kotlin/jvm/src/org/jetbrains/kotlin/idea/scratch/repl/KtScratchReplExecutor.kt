@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
@@ -83,7 +84,7 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
 
         history.addEntry(expression)
         try {
-            sendCommandToProcess(expression.element.text)
+            sendCommandToProcess(runReadAction { expression.element.text })
         } catch (e: Throwable) {
             errorOccurs(KotlinJvmBundle.message("couldn.t.execute.statement.0", expression.element.text), e, true)
         }

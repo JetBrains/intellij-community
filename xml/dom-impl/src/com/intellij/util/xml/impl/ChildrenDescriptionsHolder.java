@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.SmartList;
@@ -24,40 +24,36 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
     this(null);
   }
 
-  final T addDescription(@NotNull T t) {
+  T addDescription(@NotNull T t) {
     myMap.put(t.getXmlName(), t);
     myCached = null;
     return t;
   }
 
-  final void addDescriptions(@NotNull Collection<? extends T> collection) {
+  void addDescriptions(@NotNull Collection<? extends T> collection) {
     for (final T t : collection) {
       addDescription(t);
     }
   }
 
-  @Nullable
-  final T getDescription(final XmlName name) {
+  @Nullable T getDescription(final XmlName name) {
     final T t = myMap.get(name);
     if (t != null) return t;
     return myDelegate != null ? myDelegate.getDescription(name) : null;
   }
 
-  @Nullable
-  final T getDescription(@NotNull final String localName, String namespaceKey) {
+  @Nullable T getDescription(@NotNull final String localName, String namespaceKey) {
     return getDescription(new XmlName(localName, namespaceKey));
   }
 
-  @Nullable
-  final T findDescription(@NotNull final String localName) {
+  @Nullable T findDescription(@NotNull final String localName) {
     for (final XmlName xmlName : myMap.keySet()) {
       if (xmlName.getLocalName().equals(localName)) return myMap.get(xmlName);
     }
     return myDelegate != null ? myDelegate.findDescription(localName) : null;
   }
 
-  @NotNull
-  final List<T> getDescriptions() {
+  @NotNull List<T> getDescriptions() {
     final List<T> result = new ArrayList<>();
     dumpDescriptions(result);
     return result;
@@ -80,7 +76,7 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
   }
 
 
-  final void dumpDescriptions(Collection<? super T> to) {
+  void dumpDescriptions(Collection<? super T> to) {
     to.addAll(getSortedDescriptions());
     if (myDelegate != null) {
       myDelegate.dumpDescriptions(to);

@@ -1,15 +1,16 @@
 <html>
 <body>
-Reports any module declarations, classes, fields, or methods which have the <code>@deprecated</code>
-javadoc tag but do not have the <code>@java.lang.Deprecated</code> annotation.
-<p>Example:</p>
+Reports the module declarations, classes, fields, or methods that have the <code>@deprecated</code>
+Javadoc tag but do not have the <code>@java.lang.Deprecated</code> annotation.
+<p>Suggests adding the missing <code>@Deprecated</code> annotation.</p>
+<p><b>Example:</b></p>
 <pre>
   /**
    * @deprecated use {@code example()} instead
    */
   void sample(){ }
 </pre>
-<p>The quick-fix adds the missing <code>@Deprecated</code> annotation:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   /**
    * @deprecated use {@code example()} instead
@@ -18,10 +19,10 @@ javadoc tag but do not have the <code>@java.lang.Deprecated</code> annotation.
   void sample(){ }
 </pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 5 or higher.</p>
+<p>This inspection works only if the language level of the project or module is 5 or higher.</p>
 <p>
-Use the checkbox below to warn on symbols annotated with <code>@Deprecated</code> without a corresponding explanation in a
-<code>@deprecated</code> Javadoc tag.
+Use the checkbox below to be warned on the symbols annotated with <code>@deprecated</code> without
+  an explanation in the <code>@Deprecated</code> Javadoc tag.
 
 </body>
 </html>

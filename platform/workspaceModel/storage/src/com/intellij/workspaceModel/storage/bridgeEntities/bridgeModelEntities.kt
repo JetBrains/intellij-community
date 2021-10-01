@@ -263,17 +263,15 @@ sealed class ModuleDependencyItem : Serializable {
 @Suppress("unused")
 class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   lateinit var url: VirtualFileUrl
-  var tests: Boolean = false
   lateinit var rootType: String
 
-  override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also {
+  override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootEntity = SourceRootEntity(url, rootType).also {
     addMetaData(it, snapshot)
   }
 }
 
 open class SourceRootEntity(
   val url: VirtualFileUrl,
-  val tests: Boolean,
   val rootType: String
 ) : WorkspaceEntityBase() {
   val contentRoot: ContentRootEntity by contentRootDelegate
@@ -761,7 +759,7 @@ class FacetEntity(
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, FacetEntity>(ModuleEntity::class.java)
-    val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
+    val facetDelegate = ManyToOne.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java)
   }
 
   override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)

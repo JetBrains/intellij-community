@@ -5,8 +5,10 @@ import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
@@ -39,11 +41,36 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     Path pom = createPom();
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
     assertThat(module.getName()).isEqualTo("project");
+    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
+    assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
+  }
+
+  public void testImportProjectWithWrapper() throws Exception {
+    Path pom = createPom();
+    createMavenWrapper(pom, "distributionUrl=wrapper-url");
+    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
+    assertThat(module.getName()).isEqualTo("project");
+    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
+    assertEquals(MavenServerManager.WRAPPED_MAVEN, mavenHome);
+  }
+
+  public void testImportProjectWithWrapperWithoutUrl() throws Exception {
+    Path pom = createPom();
+    createMavenWrapper(pom, "property1=value1");
+    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
+    assertThat(module.getName()).isEqualTo("project");
+    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
+    assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
   }
 
   private @NotNull Path createPom() throws IOException {
     return createTempFile("pom.xml", MavenTestCase.createPomXml("<groupId>test</groupId>" +
                                                                 "<artifactId>project</artifactId>" +
                                                                 "<version>1</version>")).toPath();
+  }
+
+  private static void createMavenWrapper(@NotNull Path pomPath, @NotNull String context) {
+    Path fileName = pomPath.getParent().resolve(".mvn").resolve("wrapper").resolve("maven-wrapper.properties");
+    PathKt.write(fileName, context);
   }
 }

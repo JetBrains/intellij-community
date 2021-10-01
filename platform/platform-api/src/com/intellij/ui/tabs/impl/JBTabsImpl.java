@@ -1007,6 +1007,7 @@ public class JBTabsImpl extends JComponent
     if (titleProducer != null) {
       ActionToolbar toolbar = ActionManager.getInstance()
         .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(new TitleAction(titleProducer)), true);
+      toolbar.setTargetComponent(null);
       toolbar.setMiniMode(true);
       myTitleWrapper.setContent(toolbar.getComponent());
     }

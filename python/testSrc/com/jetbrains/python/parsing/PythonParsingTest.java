@@ -986,11 +986,35 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON310);
   }
 
+  public void testPatternMatchingRecoveryNoSubjectAfterMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
   public void testPatternMatchingRecoveryNoPatternAfterCase() {
     doTest(LanguageLevel.PYTHON310);
   }
 
   public void testPatternMatchingRecoveryIllegalStatementsInsideMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryDanglingBracketsInNestedPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClauses() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesWithComment() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesAtEndOfFile() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesWithCommentAtEndOfFile() {
     doTest(LanguageLevel.PYTHON310);
   }
 
@@ -1174,4 +1198,6 @@ public class PythonParsingTest extends ParsingTestCase {
       functionToCheck.getStatementList(); //To make sure each function has statement list (does not throw exception)
     }
   }
+  
+  
 }

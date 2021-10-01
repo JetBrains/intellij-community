@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,8 +94,9 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
         final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);
         if (sourceFile != null && PyUtil.isStarImportableFrom(name, sourceFile)) {
           final PyModuleType moduleType = new PyModuleType(sourceFile);
+          final var context = TypeEvalContext.codeInsightFallback(sourceFile.getProject());
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
-                                                                                      PyResolveContext.defaultContext());
+                                                                                      PyResolveContext.defaultContext(context));
           if (!ContainerUtil.isEmpty(results)) {
             return Lists.newArrayList(results);
           }

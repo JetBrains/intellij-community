@@ -87,4 +87,9 @@ public final class ConcurrentCollectionFactory {
   public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
     return new ConcurrentIntKeySoftValueHashMap<>();
   }
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
+    return new ConcurrentIntKeyWeakValueHashMap<>();
+  }
+
 }

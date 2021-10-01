@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -28,7 +28,6 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.MathUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +59,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
   public static int getHeaderResizeArea() {
-    return JBUI.scale(MathUtil.clamp(Registry.intValue("ide.new.tool.window.resize.area.height", 14), 1, 26));
+    return JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26));
   }
 
   private final JFrame frame;
@@ -232,7 +231,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
-  final void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
@@ -258,28 +257,31 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
-      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
-      if (sideInfo == null) {
-        setComponent(null, info.getAnchor(), 0);
-      }
-      else {
-        ToolWindowAnchor anchor = info.getAnchor();
-        JComponent c = getComponentAt(anchor);
-        if (c instanceof Splitter) {
-          Splitter splitter = (Splitter)c;
-          InternalDecoratorImpl component1 = (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
-          state.addSplitProportion(info, component1, splitter);
-          setComponent(component1, anchor,
-                       component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
+      if (component != null && component.isShowing()) {
+        WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
+        if (sideInfo == null) {
+          setComponent(null, info.getAnchor(), 0);
         }
         else {
-          setComponent(null, anchor, 0);
+          ToolWindowAnchor anchor = info.getAnchor();
+          JComponent c = getComponentAt(anchor);
+          if (c instanceof Splitter) {
+            Splitter splitter = (Splitter)c;
+            InternalDecoratorImpl component1 =
+              (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+            state.addSplitProportion(info, component1, splitter);
+            setComponent(component1, anchor,
+                         component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
+          }
+          else {
+            setComponent(null, anchor, 0);
+          }
         }
-      }
 
-      if (!dirtyMode) {
-        layeredPane.validate();
-        layeredPane.repaint();
+        if (!dirtyMode) {
+          layeredPane.validate();
+          layeredPane.repaint();
+        }
       }
     }
     else if (info.getType() == ToolWindowType.SLIDING) {
@@ -289,7 +291,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  public final @NotNull JComponent getLayeredPane() {
+  public @NotNull JComponent getLayeredPane() {
     return layeredPane;
   }
 
@@ -1038,11 +1040,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       add(splitter, JLayeredPane.DEFAULT_LAYER);
     }
 
-    final Image getBottomImage() {
+    Image getBottomImage() {
       return myBottomImageCache.get(ScaleContext.create(this));
     }
 
-    final Image getTopImage() {
+    Image getTopImage() {
       return myTopImageCache.get(ScaleContext.create(this));
     }
 
@@ -1082,7 +1084,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       }
     }
 
-    final void setBoundsInPaletteLayer(@NotNull Component component, @NotNull ToolWindowAnchor anchor, float weight) {
+    void setBoundsInPaletteLayer(@NotNull Component component, @NotNull ToolWindowAnchor anchor, float weight) {
       if (weight < .0f) {
         weight = WindowInfoImpl.DEFAULT_WEIGHT;
       }

@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
@@ -22,7 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -35,7 +34,7 @@ internal object GHPRTitleComponent {
       font = font.deriveFont((font.size * 1.5).toFloat())
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }

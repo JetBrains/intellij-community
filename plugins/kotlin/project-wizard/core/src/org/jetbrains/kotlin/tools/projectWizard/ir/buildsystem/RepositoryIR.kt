@@ -28,16 +28,11 @@ data class RepositoryIR(override val repository: Repository) : BuildSystemIR, Re
                 +"()"
             }
             is CustomMavenRepository -> {
-                +"maven { url "
                 val url = repository.url.quotified
                 when (dsl) {
-                    GradlePrinter.GradleDsl.KOTLIN -> {
-                        +"= "
-                        call("uri") { +url }
-                    }
-                    GradlePrinter.GradleDsl.GROOVY -> +url
+                    GradlePrinter.GradleDsl.KOTLIN -> +"maven(${url})"
+                    GradlePrinter.GradleDsl.GROOVY -> +"maven { url ${url} }"
                 }
-                +" }"
             }
             else -> Unit
         }

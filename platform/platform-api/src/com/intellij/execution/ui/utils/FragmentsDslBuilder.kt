@@ -151,8 +151,14 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
   var commandLinePosition: Int = 0
 
+  var editorGetter: ((Component) -> JComponent)? = null
+
   override fun build(): SettingsEditorFragment<Settings, Component> {
     return object : SettingsEditorFragment<Settings, Component>(id, name, group, component, commandLinePosition, reset, apply, visible) {
+
+      init {
+        setEditorGetter(editorGetter)
+      }
 
       private val validator = if (validation != null) ComponentValidator(this) else null
 

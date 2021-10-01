@@ -5,7 +5,7 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
 class GHPRDiffRequestModelImpl : GHPRDiffRequestModel {

@@ -4,11 +4,11 @@ Reports a lambda expression with one callable reference because it is a common e
 <br /><br />
 Example:
 <pre><code>
-listOf(1,2,3).map { it::toString }
+  listOf(1,2,3).map { it::toString }
 </code></pre>
 Should be turned into
 <pre><code>
-listOf(1,2,3).map(Int::toString)
+  listOf(1,2,3).map(Int::toString)
 </code></pre>
 </body>
 </html>

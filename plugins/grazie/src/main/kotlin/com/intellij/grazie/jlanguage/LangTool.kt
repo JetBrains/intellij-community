@@ -6,12 +6,15 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
+import com.intellij.grazie.utils.text
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
+import org.apache.commons.text.similarity.LevenshteinDistance
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
+import org.languagetool.rules.IncorrectExample
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
@@ -91,10 +94,35 @@ internal object LangTool : GrazieStateLifecycle {
         }
       }
 
+      for (rule in allRules) {
+        rule.correctExamples = emptyList()
+        rule.errorTriggeringExamples = emptyList()
+        rule.incorrectExamples = removeVerySimilarExamples(rule.incorrectExamples)
+      }
+
       //Fix problem with Authenticator installed by LT
       this.language.disambiguator
       Authenticator.setDefault(null)
     }
+  }
+
+  private fun removeVerySimilarExamples(examples: List<IncorrectExample>): List<IncorrectExample> {
+    val accepted = ArrayList<IncorrectExample>()
+    for (example in examples) {
+      if (accepted.none { it.text.isSimilarTo(example.text) }) {
+        val firstCorrection = example.corrections.find { it.isNotBlank() }
+        accepted.add(IncorrectExample(example.example, ContainerUtil.createMaybeSingletonList(firstCorrection)))
+        if (accepted.size > 5) break
+      }
+    }
+    return accepted
+  }
+
+  private const val MINIMUM_EXAMPLE_SIMILARITY = 0.2
+  private val levenshtein = LevenshteinDistance()
+
+  private fun CharSequence.isSimilarTo(sequence: CharSequence): Boolean {
+    return levenshtein.apply(this, sequence).toDouble() / length < MINIMUM_EXAMPLE_SIMILARITY
   }
 
   internal fun isRuleEnabledByDefault(lang: Lang, ruleId: String): Boolean {

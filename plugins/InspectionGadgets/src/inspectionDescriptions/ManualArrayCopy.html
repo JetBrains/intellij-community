@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports the manual copying of array contents which can be replaced by
-calls to <code>System.arraycopy()</code>.
-<p>Example:</p>
+Reports manual copying of array contents which can be replaced with <code>System.arraycopy()</code>.
+<p><b>Example:</b></p>
 <pre>
   for (int i = 0; i &lt; array.length; i++) {
     new_array[i] = array[i];
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   System.arraycopy(array, 0, new_array, 0, array.length);
 </pre>

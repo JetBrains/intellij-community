@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -15,7 +16,6 @@ import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.SelectionSaver
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
@@ -43,7 +43,7 @@ internal class GHPRChangesTreeFactory(private val project: Project,
         }
       })
     }
-    changesModel.addAndInvokeValueChangedListener(tree::rebuildTree)
+    changesModel.addAndInvokeListener { tree.rebuildTree() }
     return tree
   }
 

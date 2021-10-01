@@ -10,16 +10,16 @@ that are not <code>static final</code>.
 Because only one atomic field updater is needed for updating a <code>volatile</code> field in all instances
 of a class, it can almost always be <code>static</code>.
 
-<p>Making the updater <code>final</code>, allows the JVM to optimize access for improved performance.</p>
+<p>Making the updater <code>final</code> allows the JVM to optimize access for improved performance.</p>
 
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre>
   class Main {
     private volatile int id;
     private AtomicIntegerFieldUpdater&lt;Main&gt; idFieldUpdater = AtomicIntegerFieldUpdater.newUpdater(Main.class, "id");
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class Main {
     private volatile int id;
@@ -27,6 +27,5 @@ of a class, it can almost always be <code>static</code>.
   }
 </pre>
 <!-- tooltip end -->
-<small>New in 16</small>
 </body>
 </html>

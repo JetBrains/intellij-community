@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.VMOptions;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.MathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -102,7 +103,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    if (isUnderRosetta()) {
+    // Temporary disable notification for Rider only for 212 release because we don't have M1 build yet.
+    if (isUnderRosetta() && !PlatformUtils.isRider()) {
       NotificationAction downloadAction =
         NotificationAction.createSimpleExpiring(
           IdeBundle.message("bundled.jre.m1.arch.message.download"), () ->
@@ -137,7 +139,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
-      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), SystemInfo.JAVA_VENDOR, jreHome);
+      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), System.getProperty("java.vendor"), jreHome);
     }
   }
 

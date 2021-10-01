@@ -1,14 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiCaseLabelElement;
 import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiCaseLabelElementListImpl extends CompositePsiElement implements PsiCaseLabelElementList {
   private volatile PsiCaseLabelElement[] myElements;
@@ -51,6 +51,34 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
     else {
       visitor.visitElement(this);
     }
+  }
+
+
+  @Override
+  public TreeElement addInternal(TreeElement first,
+                                 ASTNode last,
+                                 @Nullable ASTNode anchor,
+                                 @Nullable Boolean before) {
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+    TreeElement element = first;
+    while (true) {
+      if (ElementType.JAVA_CASE_LABEL_ELEMENT_BIT_SET.contains(element.getElementType())) {
+        JavaSourceUtil.addSeparatingComma(this, element, ElementType.JAVA_CASE_LABEL_ELEMENT_BIT_SET);
+        break;
+      }
+      if (element == last) break;
+      element = element.getTreeNext();
+    }
+    return firstAdded;
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (ElementType.JAVA_CASE_LABEL_ELEMENT_BIT_SET.contains(child.getElementType())) {
+      JavaSourceUtil.deleteSeparatingComma(this, child);
+    }
+
+    super.deleteChildInternal(child);
   }
 
   @Override

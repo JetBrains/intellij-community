@@ -354,6 +354,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    new PyMatchStatementControlFlowBuilder(myBuilder, this).build(matchStatement);
+  }
+
+  @Override
   public void visitPyIfStatement(final @NotNull PyIfStatement node) {
     myBuilder.startNode(node);
 
@@ -506,7 +511,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private static boolean isConjunctionOrDisjunction(@Nullable PyExpression node) {
+  static boolean isConjunctionOrDisjunction(@Nullable PyExpression node) {
     if (node instanceof PyBinaryExpression) {
       final var operator = ((PyBinaryExpression)node).getOperator();
       return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;

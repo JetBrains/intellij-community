@@ -86,7 +86,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     @NotNull
-    public String getText(@Nullable UsageView view) {
+    public String getPresentableGroupText() {
       return myUsageType.toString();
     }
 
@@ -102,7 +102,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

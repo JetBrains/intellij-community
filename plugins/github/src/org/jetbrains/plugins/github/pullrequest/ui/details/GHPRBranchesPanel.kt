@@ -18,6 +18,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -56,7 +57,7 @@ internal object GHPRBranchesPanel {
     }
   }
 
-  private fun createLabel() = JBLabel(GithubIcons.Branch).also {
+  private fun createLabel() = JBLabel(CollaborationToolsIcons.Branch).also {
     GHUIUtil.overrideUIDependentProperty(it) {
       foreground = CurrentBranchComponent.TEXT_COLOR
       background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
@@ -90,7 +91,7 @@ internal object GHPRBranchesPanel {
       from.icon = when {
         currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
         localBranch != null -> GithubIcons.LocalBranch
-        else -> GithubIcons.Branch
+        else -> CollaborationToolsIcons.Branch
       }
 
       branchesTooltipFactory.apply {

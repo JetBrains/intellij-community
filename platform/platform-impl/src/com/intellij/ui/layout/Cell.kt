@@ -525,8 +525,8 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  fun actionButton(action: AnAction): CellBuilder<ActionButton> {
-    val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+  fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
+    val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return actionButton()
   }
 

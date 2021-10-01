@@ -60,14 +60,14 @@ internal sealed class PackageModel(
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
 
-        fun findUsagesIn(projectModules: Collection<ProjectModule>): List<DependencyUsageInfo> {
+        private fun findUsagesIn(projectModules: Collection<ProjectModule>): List<DependencyUsageInfo> {
             if (projectModules.isEmpty()) return emptyList()
             return usageInfo.filter { usageInfo -> projectModules.any { it == usageInfo.projectModule } }
         }
 
         fun canBeUpgraded(onlyStable: Boolean): Boolean {
             val latestVersion = getLatestAvailableVersion(onlyStable) ?: return false
-            return usageInfo.any { it.version < latestVersion }
+            return usageInfo.any { it.version !is PackageVersion.Missing && it.version < latestVersion }
         }
 
         fun canBeUpgraded(currentVersion: PackageVersion, onlyStable: Boolean): Boolean {

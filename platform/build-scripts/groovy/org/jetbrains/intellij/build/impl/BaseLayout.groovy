@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -12,6 +12,8 @@ import org.jetbrains.intellij.build.ResourcesGenerator
  */
 @CompileStatic
 abstract class BaseLayout {
+  public static final String PLATFORM_JAR = "platform-impl.jar"
+
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiMap<String, String> moduleJars = MultiMap.createLinkedSet()
   /** artifact name to relative output path */

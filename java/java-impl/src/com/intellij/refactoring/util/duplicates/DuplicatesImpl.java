@@ -97,7 +97,7 @@ public final class DuplicatesImpl {
                                       Ref<Boolean> showAll,
                                       final String confirmDuplicatePrompt,
                                       boolean skipPromptWhenOne) {
-    final ArrayList<RangeHighlighter> highlighters = previewMatch(project, match, editor);
+    final ArrayList<RangeHighlighter> highlighters = previewMatch(project, editor, match.getTextRange());
     try {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
@@ -142,12 +142,11 @@ public final class DuplicatesImpl {
     return false;
   }
 
-  public static ArrayList<RangeHighlighter> previewMatch(Project project, Match match, Editor editor) {
+  public static ArrayList<RangeHighlighter> previewMatch(Project project, Editor editor, TextRange range) {
     final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
-    highlightMatch(project, editor, match, highlighters);
-    final TextRange textRange = match.getTextRange();
-    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
-    expandAllRegionsCoveringRange(project, editor, textRange);
+    highlightMatch(project, editor, range, highlighters);
+    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(range.getStartOffset());
+    expandAllRegionsCoveringRange(project, editor, range);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
     return highlighters;
   }
@@ -172,8 +171,8 @@ public final class DuplicatesImpl {
     }
   }
 
-  public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList<? super RangeHighlighter> highlighters) {
-    HighlightManager.getInstance(project).addRangeHighlight(editor, match.getTextRange().getStartOffset(), match.getTextRange().getEndOffset(),
+  public static void highlightMatch(final Project project, Editor editor, final TextRange range, final ArrayList<? super RangeHighlighter> highlighters) {
+    HighlightManager.getInstance(project).addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(),
                                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
   }
 
@@ -183,7 +182,7 @@ public final class DuplicatesImpl {
       List<Match> duplicates = provider.getDuplicates();
       ArrayList<RangeHighlighter> highlighters = null;
       if (duplicates.size() == 1) {
-        highlighters = previewMatch(project, duplicates.get(0), editor);
+        highlighters = previewMatch(project, editor, duplicates.get(0).getTextRange());
       }
       final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
                                                                                                                                                  RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",

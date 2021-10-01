@@ -536,4 +536,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
       myListeners.forEach(RemoteDebuggerCloseListener::detached);
     }
   }
+
+  @Override
+  public void interruptDebugConsole() {
+    for (RemoteDebugger debugger : myDebuggers) {
+      debugger.interruptDebugConsole();
+    }
+  }
 }

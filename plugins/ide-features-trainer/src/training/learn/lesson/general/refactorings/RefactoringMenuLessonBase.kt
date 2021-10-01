@@ -2,6 +2,7 @@
 package training.learn.lesson.general.refactorings
 
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.ui.components.JBList
 import training.dsl.*
@@ -18,6 +19,14 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       showPopupTaskId = taskId
       restoreIfModifiedOrMoved()
       LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
+    }
+
+    if (TaskTestContext.inTestMode) {
+      task {
+        stateCheck {
+          focusOwner !is EditorComponentImpl
+        }
+      }
     }
 
     if (!adaptToNotNativeLocalization) {

@@ -1,12 +1,12 @@
   <html>
 <body>
-Reports any <code>assert</code> statements that cause side effects outside of the assert statement. Since assertions can be switched off,
-the side effects are not guaranteed to happen and can cause subtle bugs. Common unwanted side effects detected by this inspection are
-modifications of variables and fields in the assert statement. Also methods called are analyzed one level deep for any modifications of
-fields.
-<p>Example:</p>
-<pre>
-  assert i++ &lt; 10;
+Reports <code>assert</code> statements that cause side-effects.
+<p>
+  Since assertions can be switched off,
+  these side-effects are not guaranteed, which can cause subtle bugs. Common unwanted side effects detected by this inspection are
+  modifications of variables and fields. When methods calls are involved, they are analyzed one level deep.</p>
+<p><b>Example:</b></p>
+<pre>  assert i++ &lt; 10;
 </pre>
 </body>
 </html>

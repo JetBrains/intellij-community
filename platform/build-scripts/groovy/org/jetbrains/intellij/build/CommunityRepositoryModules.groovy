@@ -189,6 +189,7 @@ Android Studio: exclude smali */
     },
 Android Studio: exclude intellij.statsCollector */
     plugin("intellij.ml.models.local") {
+      withModule("intellij.ml.models.local.java")
       bundlingRestrictions.includeInEapOnly = true
     },
     plugin("intellij.jps.cache"),

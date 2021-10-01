@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports any use of <b>==</b> or <b>!=</b> to test for <code>Number</code> equality,
-instead of an <code>equals()</code> call. With auto-boxing it is easy
-to make the mistake of comparing two <code>Integer</code> (or other subclass of <code>java.lang.Number</code>) objects instead
-of two ints.
+Reports code that uses <b>==</b> or <b>!=</b> instead of <code>equals()</code> to test for <code>Number</code> equality.
+<p>
+  With auto-boxing, it is easy
+  to make the mistake of comparing two instances of a wrapper type instead of two primitives, for example <code>Integer</code> instead of
+  <code>int</code>.
+</p>
 <p><b>Example:</b></p>
-<pre><code>
-  void foo(Integer a, Integer b) {
+<pre><code>  void foo(Integer a, Integer b) {
     final boolean bool = a == b;
   }
 </code></pre>
-<p>If <code>a</code> is known to be <code>non null</code>, then it's safe to apply "unsafe" quickfix and get the result like:</p>
-<pre><code>
-  void foo(Integer a, Integer b) {
+<p>If <code>a</code> is known to be non-null, then it's safe to apply the "unsafe" quick-fix and get the result similar to the following:</p>
+<pre><code>  void foo(Integer a, Integer b) {
     final boolean bool = a.equals(b);
   }
 </code></pre>

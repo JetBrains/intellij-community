@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLSearchSession;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -97,18 +99,25 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     myProvider.filterElements(pattern, element -> {
       if (progressIndicator.isCanceled()) return false;
 
-      if (!myDisabledActions &&
-          element.value instanceof GotoActionModel.ActionWrapper &&
-          !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
-        return true;
-      }
-
       if (element == null) {
         LOG.error("Null action has been returned from model");
         return true;
       }
 
-      FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+      final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
+      if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
+        return true;
+      }
+
+      final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
+      SearchEverywhereMlSessionService mlService = SearchEverywhereMlSessionService.getInstance();
+      if (mlService.shouldOrderByML()) {
+        descriptor = getMLWeightedItemDescriptor(mlService, element);
+      }
+      else {
+        descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+      }
+
       return consumer.process(descriptor);
     });
   }
@@ -221,6 +230,19 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, window);
     });
+  }
+
+  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlSessionService service,
+                                                                                        @NotNull GotoActionModel.MatchedValue element) {
+    if (element.isAbbreviation()) {
+      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
+    }
+    SearchEverywhereMLSearchSession session = service.getCurrentSession();
+    double mlWeight = session != null ? session.getMLWeight(this, element) : -1.0;
+    if (mlWeight > 0) {
+      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
+    }
+    return new FoundItemDescriptor<>(element, element.getMatchingDegree());
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {

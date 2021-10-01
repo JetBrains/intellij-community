@@ -1,0 +1,35 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.psi.search.impl;
+
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * An internal interface to perform index search optimization based on scope.
+ * It represents file enumeration which contains whole {@link GlobalSearchScope}
+ *
+ * You definitely don't need to use it.
+ */
+@ApiStatus.Internal
+public interface VirtualFileEnumeration {
+
+  boolean contains(int fileId);
+
+  int[] asInts();
+
+  @NotNull Iterable<VirtualFile> asIterable();
+
+  static @Nullable VirtualFileEnumeration extract(@NotNull GlobalSearchScope scope) {
+    if (scope instanceof VirtualFileEnumeration) {
+      return (VirtualFileEnumeration)scope;
+    }
+    if (scope instanceof VirtualFileEnumerationAware) {
+      return ((VirtualFileEnumerationAware)scope).extractFileEnumeration();
+    }
+    return null;
+  }
+}
+

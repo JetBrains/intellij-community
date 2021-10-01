@@ -25,6 +25,46 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-44974
+  public void testBitwiseOrUnionOnReturnType() {
+    doTestByText("def foo() -> <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str</warning>:\n" +
+                 "    return 42\n");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOnReturnTypeFromFeatureAnnotations() {
+    doTestByText("from __future__ import annotations\n" +
+                 "def foo() -> int | str:\n" +
+                 "    return 42\n");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOnIsInstance() {
+    doTestByText("class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str</warning>)\n");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInPrint() {
+    doTestByText("print(<warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str | dict</warning>)");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInOverloadedOperator() {
+    doTestByText("class A:\n" +
+                 "  def __or__(self, other) -> int: return 5\n" +
+                 "  \n" +
+                 "expr = A() | A()");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInParenthesizedUnionOfUnions() {
+    doTestByText("def foo() -> <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | ((list | dict) | (float | str))</warning>:\n" +
+                 "    pass\n");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -16,6 +17,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualityToEqualsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +76,7 @@ public class NewObjectEqualityInspection extends BaseInspection {
     }
 
     private static PsiExpression resolveExpression(PsiExpression expression) {
+      PsiElement parent = expression.getParent();
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiReferenceExpression)) return expression;
       PsiReferenceExpression reference = (PsiReferenceExpression)expression;
@@ -81,6 +84,10 @@ public class NewObjectEqualityInspection extends BaseInspection {
       if (variable == null) return expression;
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return expression;
+      if (parent instanceof PsiBinaryExpression) {
+        // Check if variable is reused in the same expression
+        if (VariableAccessUtils.getVariableReferences(variable, parent).size() != 1) return expression;
+      }
       PsiElement block = ControlFlowUtil.findCodeFragment(variable);
       PsiElement expressionContext = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
       if (expressionContext == null || PsiTreeUtil.isAncestor(block, expressionContext, true)) return expression;

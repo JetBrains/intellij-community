@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports any class initializers which may safely be made <code>static</code>.
-A class initializer may be static if it does not reference any of its class' non static methods
-and non static fields. Static initializers are executed once when the class is resolved,
-though non-static initializer are executed on each class instance creation.  
+Reports instance initializers which may be made <code>static</code>.
+<p>
+  An instance initializer may be static if it does not reference any of its class' non-static members.
+  Static initializers are executed once the class is resolved,
+  while instance initializers are executed on each instantiation of the class.</p>
 <p><b>Example:</b></p>
 <pre>
   class A {
@@ -13,12 +14,12 @@ though non-static initializer are executed on each class instance creation.
      }
   }
 </pre>
-<p>After the quickfix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class A {
      public static String CONSTANT;
      static {
-        CONSTANT = "Hello"; //initialized now only once per class
+        CONSTANT = "Hello"; //now initialized only once per class
      }
   }
 </pre>

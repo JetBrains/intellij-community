@@ -24,10 +24,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiReference
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -166,6 +168,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
+                       "import com.intellij.util.xmlb.annotations.Property; " +
+                       "@Property(style = Property.Style.ATTRIBUTE) " +
+                       "public class ClassLevelProperty {" +
+                       " public String classLevel;"+
+                       " @Attribute(\"customAttributeName\") public int intProperty; " +
+                       "}")
+    myFixture.addClass("package foo; " +
+                       "import com.intellij.util.xmlb.annotations.Attribute; " +
                        "import com.intellij.openapi.extensions.RequiredElement; " +
                        "public class MyServiceDescriptor { " +
                        "  @Attribute public String serviceImplementation; " +
@@ -175,6 +185,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "  @Attribute @RequiredElement(allowEmpty=true) public String canBeEmptyString; " +
                        "  @Attribute public boolean forClass; " +
                        "  @Attribute(\"class\") public boolean _class; " +
+                       "  @Attribute(\"myClassName\") public boolean className; " +
                        "}")
 
     configureByFile()
@@ -184,6 +195,27 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.testHighlighting("ExtensionsHighlighting-included.xml")
     myFixture.testHighlighting("ExtensionsHighlighting-via-depends.xml")
+  }
+
+  void testExtensionsDependencies() {
+    addExtensionsModule("ExtensionsDependencies-module")
+    VirtualFile contentFile = addExtensionsModule("ExtensionsDependencies-content")
+
+    doHighlightingTest("ExtensionsDependencies.xml",
+                       "ExtensionsDependencies-plugin.xml")
+
+    myFixture.configureFromExistingVirtualFile(contentFile)
+    doHighlightingTest()
+  }
+
+  private VirtualFile addExtensionsModule(String name) {
+    String moduleDescriptorFilename = name+ ".xml"
+    VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(name)
+    VirtualFile file = myFixture.copyFileToProject(moduleDescriptorFilename, "/" + name + "/" + moduleDescriptorFilename)
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot);
+    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17());
+    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+    return file
   }
 
   void testDependsHighlighting() {

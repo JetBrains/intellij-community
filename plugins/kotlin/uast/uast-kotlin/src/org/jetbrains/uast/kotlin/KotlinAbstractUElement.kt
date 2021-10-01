@@ -249,7 +249,7 @@ abstract class KotlinAbstractUExpression(givenParent: UElement?) :
     override val psi
         get() = sourcePsi
 
-    override val annotations: List<UAnnotation>
+    override val uAnnotations: List<UAnnotation>
         get() {
             val annotatedExpression = sourcePsi?.parent as? KtAnnotatedExpression ?: return emptyList()
             return annotatedExpression.annotationEntries.map { KotlinUAnnotation(it, this) }

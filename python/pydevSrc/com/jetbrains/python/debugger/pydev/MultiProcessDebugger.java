@@ -595,4 +595,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public interface DebuggerProcessListener {
     void threadsClosed(Set<String> threadIds);
   }
+
+  @Override
+  public void interruptDebugConsole() {
+    for (RemoteDebugger d : allDebuggers()) {
+      d.interruptDebugConsole();
+    }
+  }
 }

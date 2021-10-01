@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -20,7 +20,7 @@ public final class ExternalLanguageAnnotators extends LanguageExtension<External
 
   @NotNull
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
-    List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
+    List<ExternalAnnotator> annotators = INSTANCE.allForLanguageOrAny(language);
     List<ExternalAnnotatorsFilter> filters = ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.getExtensionList();
     return ContainerUtil.findAll(annotators, annotator ->
        !ContainerUtil.exists(filters, filter -> filter.isProhibited(annotator, file)));

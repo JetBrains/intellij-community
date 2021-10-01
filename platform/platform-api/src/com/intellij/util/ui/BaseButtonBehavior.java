@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 public abstract class BaseButtonBehavior {
+  public static final int MOUSE_PRESSED_RELEASED = -1;
 
   private final JComponent myComponent;
 
@@ -74,7 +75,7 @@ public abstract class BaseButtonBehavior {
   }
 
   public void setActionTrigger(int trigger) {
-    assert trigger == MouseEvent.MOUSE_PRESSED || trigger == MouseEvent.MOUSE_RELEASED;
+    assert trigger == MouseEvent.MOUSE_PRESSED || trigger == MouseEvent.MOUSE_RELEASED || trigger == MOUSE_PRESSED_RELEASED;
     myActionTrigger = trigger;
   }
 
@@ -137,9 +138,11 @@ public abstract class BaseButtonBehavior {
 
       setPressedByMouse(true);
 
-      if (myActionTrigger == MouseEvent.MOUSE_PRESSED) {
+      if (myActionTrigger == MouseEvent.MOUSE_PRESSED ||
+          myActionTrigger == MOUSE_PRESSED_RELEASED) {
         execute(e);
-      } else {
+      }
+      else {
         repaintComponent();
       }
     }
@@ -152,9 +155,11 @@ public abstract class BaseButtonBehavior {
 
         setPressedByMouse(false);
 
-        if (myActionTrigger == MouseEvent.MOUSE_RELEASED) {
+        if (myActionTrigger == MouseEvent.MOUSE_RELEASED ||
+            myActionTrigger == MOUSE_PRESSED_RELEASED) {
           execute(e);
-        } else {
+        }
+        else {
           repaintComponent();
         }
       }
@@ -182,7 +187,9 @@ public abstract class BaseButtonBehavior {
     }
 
     private boolean passIfNeeded(final MouseEvent e, boolean considerDeadZone) {
-      final boolean actionClick = UIUtil.isActionClick(e, myActionTrigger);
+      final boolean actionClick = myActionTrigger == MOUSE_PRESSED_RELEASED
+                                  ? UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)
+                                  : UIUtil.isActionClick(e, myActionTrigger);
 
       if (!actionClick || (considerDeadZone && myMouseDeadzone.isWithin())) {
         pass(e);

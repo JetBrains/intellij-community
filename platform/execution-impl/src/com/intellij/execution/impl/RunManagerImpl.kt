@@ -35,12 +35,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
-import com.intellij.ui.GuiUtils
-import com.intellij.util.IconUtil
-import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
+import com.intellij.util.*
 import com.intellij.util.containers.*
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -376,7 +372,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
             // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
             StartupManager.getInstance(project).runAfterOpened {
-              GuiUtils.invokeLaterIfNeeded(Runnable {
+              ModalityUiUtil.invokeLaterIfNeeded(Runnable {
                 // Empty string means that there's no information about initially selected RC in workspace.xml
                 // => IDE should select any if still none selected (CLion could have set the selected RC itself).
                 if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {

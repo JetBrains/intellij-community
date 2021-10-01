@@ -3,7 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
@@ -11,7 +10,6 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.LifetimeProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
@@ -22,23 +20,37 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.rd.util.reactive.map
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
-    private val rootDataModelProvider: RootDataModelProvider,
+    rootDataModelProvider: RootDataModelProvider,
     selectedPackageSetter: SelectedPackageSetter,
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
-    operationExecutor: OperationExecutor,
-    lifetimeProvider: LifetimeProvider
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), Disposable {
+    operationExecutor: OperationExecutor
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
+
+    override val coroutineContext = SupervisorJob() + CoroutineName("PackageManagementPanel")
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -54,10 +66,11 @@ internal class PackageManagementPanel(
     private val packagesListPanel = PackagesListPanel(
         project = project,
         searchClient = searchClient,
-        lifetimeProvider = lifetimeProvider,
         operationExecutor = operationExecutor,
         operationFactory = operationFactory
-    )
+    ) {
+        launch { selectedPackageSetter.setSelectedPackage(it) }
+    }
 
     private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
 
@@ -89,50 +102,71 @@ internal class PackageManagementPanel(
         }
 
         packagesListPanel.content.minimumSize = Dimension(250.scaled(), 0)
-        packagesListPanel.selectedPackage.advise(lifetimeProvider.lifetime) { selectedPackage ->
+
+        packagesListPanel.selectedPackage.onEach { selectedPackage ->
             selectedPackageSetter.setSelectedPackage(selectedPackage)
+        }.launchIn(this)
 
-            packageDetailsPanel.display(
-                selectedPackageModel = selectedPackage,
-                knownRepositoriesInTargetModules = rootDataModelProvider.dataModelProperty.value.knownRepositoriesInTargetModules,
-                allKnownRepositories = rootDataModelProvider.dataModelProperty.value.allKnownRepositories,
-                targetModules = rootDataModelProvider.dataModelProperty.value.targetModules,
-                onlyStable = rootDataModelProvider.dataModelProperty.value.filterOptions.onlyStable
-            )
-        }
-
-        rootDataModelProvider.statusProperty.advise(lifetimeProvider.lifetime) { status ->
+        rootDataModelProvider.dataStatusState.onEach { status ->
             packagesListPanel.setIsBusy(status.isBusy)
-        }
+        }.launchIn(this)
 
-        rootDataModelProvider.statusProperty.map { it.isExecutingOperations }.advise(lifetimeProvider.lifetime) { isExecutingOperations ->
-            content.isEnabled = !isExecutingOperations
-            content.updateAndRepaint()
-        }
+        rootDataModelProvider.dataStatusState.map { it.isExecutingOperations }
+            .onEach { isExecutingOperations ->
+                content.isEnabled = !isExecutingOperations
+                content.updateAndRepaint()
+            }.launchIn(this)
 
-        rootDataModelProvider.dataModelProperty.advise(lifetimeProvider.lifetime) { data ->
-            modulesTree.display(
-                projectModules = data.projectModules,
-                targetModules = data.targetModules,
-                traceInfo = data.traceInfo
+        rootDataModelProvider.dataModelFlow.filter { it.moduleModels.isNotEmpty() }
+            .onEach { data ->
+                val (treeModel, selectionPath) = computeModuleTreeModel(
+                    modules = data.moduleModels,
+                    currentTargetModules = data.targetModules,
+                    traceInfo = data.traceInfo
+                )
+                withContext(Dispatchers.AppUI) {
+                    modulesTree.display(
+                        treeModel = treeModel,
+                        traceInfo = data.traceInfo,
+                        pendingSelectionPath = selectionPath
+                    )
+                }
+            }
+            .launchIn(this)
+
+        rootDataModelProvider.dataModelFlow.onEach { data ->
+
+            val tableData = computePackagesTableItems(
+                project,
+                data.packageModels,
+                data.filterOptions.onlyStable,
+                data.targetModules,
+                data.traceInfo
             )
-            packagesListPanel.display(
-                headerData = data.headerData,
-                packageModels = data.packageModels,
-                targetModules = data.targetModules,
-                knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
-                allKnownRepositories = data.allKnownRepositories,
-                filterOptions = data.filterOptions,
-                traceInfo = data.traceInfo
-            )
-            packageDetailsPanel.display(
-                selectedPackageModel = data.selectedPackage,
-                knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
-                allKnownRepositories = data.allKnownRepositories,
-                targetModules = data.targetModules,
-                onlyStable = data.filterOptions.onlyStable
-            )
-        }
+
+            withContext(Dispatchers.AppUI) {
+
+                packagesListPanel.display(
+                    headerData = data.headerData,
+                    packageModels = data.packageModels,
+                    targetModules = data.targetModules,
+                    knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
+                    allKnownRepositories = data.allKnownRepositories,
+                    filterOptions = data.filterOptions,
+                    tableData = tableData,
+                    traceInfo = data.traceInfo
+                )
+
+                packageDetailsPanel.display(
+                    selectedPackageModel = data.selectedPackage,
+                    knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
+                    allKnownRepositories = data.allKnownRepositories,
+                    targetModules = data.targetModules,
+                    onlyStable = data.filterOptions.onlyStable
+                )
+            }
+
+        }.launchIn(this)
     }
 
     private fun updatePackageDetailsVisible(becomeVisible: Boolean) {
@@ -164,7 +198,6 @@ internal class PackageManagementPanel(
 
     override fun dispose() {
         logDebug("PackageManagementPanel#dispose()") { "Disposing PackageManagementPanel..." }
-        Disposer.dispose(modulesTree)
-        Disposer.dispose(packagesListPanel)
+        cancel("Disposing PackageManagementPanel")
     }
 }

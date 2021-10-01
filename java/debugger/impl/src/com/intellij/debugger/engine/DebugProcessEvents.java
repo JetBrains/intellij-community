@@ -537,8 +537,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         try {
           CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get();
         }
+        catch (InterruptedException ignored) {
+        }
         catch (Exception e) {
-          LOG.error(e);
+          DebuggerUtilsAsync.logError(e);
         }
       }
     }

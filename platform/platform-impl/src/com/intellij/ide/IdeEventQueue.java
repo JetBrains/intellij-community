@@ -85,7 +85,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean ourTypeAheadSearchEverywhereEnabled = Boolean.getBoolean("action.aware.typeAhead.searchEverywhere");
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
-  private static PerformanceWatcher ourPerformanceWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -129,6 +128,13 @@ public final class IdeEventQueue extends EventQueue {
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
 
+  /**
+   * Executes given {@code runnable} after all focus activities are finished.
+   *
+   * @apiNote be careful with this method. It may run {@code runnable} synchronously in the context of the current thread, or may queue
+   * runnable until the focus events queue is empty. In the latter case runnable is going to be run while processing the last focus
+   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer {@link IdeFocusManager#doWhenFocusSettlesDown(Runnable, ModalityState)}
+   */
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
       List<Runnable> runnables = myRunnablesWaitingFocusChange.get(e);
@@ -148,35 +154,33 @@ public final class IdeEventQueue extends EventQueue {
 
   @NotNull
   public String runnablesWaitingForFocusChangeState() {
-    return StringUtil.join(focusEventsList, event -> "[" + event.getID() + "; "+ event.getSource().getClass().getName()+"]", ", ");
+    return StringUtil.join(focusEventsList, event -> "[" + event.getID() + "; " + event.getSource().getClass().getName() + "]", ", ");
+  }
+
+  private @Nullable AWTEvent getLastFocusGainedEvent() {
+    AWTEvent result = null;
+    for (AWTEvent event : focusEventsList) {
+      if (event.getID() == FocusEvent.FOCUS_GAINED) {
+        result = event;
+      }
+    }
+    return result;
   }
 
   private void ifFocusEventsInTheQueue(@NotNull Consumer<? super AWTEvent> yes, @NotNull Runnable no) {
-    if (!focusEventsList.isEmpty()) {
+    AWTEvent lastFocusGainedEvent = getLastFocusGainedEvent();
+
+    if (lastFocusGainedEvent != null) {
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): "+runnablesWaitingForFocusChangeState());
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
+                                        "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
+                                        lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
       }
-
-      // find the latest focus gained
-      AWTEvent first = ContainerUtil.find(focusEventsList, e -> e.getID() == FocusEvent.FOCUS_GAINED);
-
-      if (first != null) {
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG
-            .debug("    runnable saved for : [" + first.getID() + "; " + first.getSource() + "] -> " + no.getClass().getName());
-        }
-        yes.accept(first);
-      }
-      else {
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
-        }
-        EdtInvocationManager.invokeLaterIfNeeded(no);
-      }
+      yes.accept(lastFocusGainedEvent);
     }
     else {
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+        FOCUS_AWARE_RUNNABLES_LOG.debug("No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
       }
       EdtInvocationManager.invokeLaterIfNeeded(no);
     }
@@ -367,7 +371,7 @@ public final class IdeEventQueue extends EventQueue {
   public void dispatchEvent(@NotNull AWTEvent e) {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
+    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
     EventWatcher eventWatcher = EventWatcher.getInstance();
     try {
       if (performanceWatcher != null) {
@@ -559,17 +563,6 @@ public final class IdeEventQueue extends EventQueue {
         }
       }
     }
-  }
-
-  private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
-    PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && appIsLoaded()) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        ourPerformanceWatcher = watcher = app.getServiceIfCreated(PerformanceWatcher.class);
-      }
-    }
-    return watcher;
   }
 
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {

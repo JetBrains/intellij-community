@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -209,14 +210,12 @@ public class PyUserSkeletonsUtil {
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile, context);
       if (originalOwner instanceof PyClass) {
         final PyClass classOwner = (PyClass)originalOwner;
-        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
+        final var fallbackContext = TypeEvalContext.codeInsightFallback(classOwner.getProject());
+        final PyType type = fallbackContext.getType(classOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();
-          PyResolveContext resolveContext = PyResolveContext.defaultContext();
-          if (context != null) {
-            resolveContext = resolveContext.withTypeEvalContext(context);
-          }
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(ObjectUtils.notNull(context, fallbackContext));
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
                                                                                                resolveContext, false);
           if (resolveResults != null && !resolveResults.isEmpty()) {

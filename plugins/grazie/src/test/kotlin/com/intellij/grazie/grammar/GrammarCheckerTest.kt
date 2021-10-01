@@ -74,7 +74,7 @@ class GrammarCheckerTest : GrazieTestBase() {
     Assert.assertEquals(4, fixes.size)
     fixes[0].assertTypoIs(IntRange(27, 28), listOf(","))
     fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"))
-    fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"))
-    fixes[3].assertTypoIs(IntRange(9, 11), listOf("is"))
+    fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"))
+    fixes[3].assertTypoIs(IntRange(5, 7), listOf("is"))
   }
 }

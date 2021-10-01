@@ -60,7 +60,7 @@ public final class CpuUsageData {
   @NotNull
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
-    return myCompilationTimeMs + "ms (" + (myCompilationTimeMs * 100 / (myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) JITc" +
+    return myCompilationTimeMs + "ms (" + (myCompilationTimeMs * 100 / (myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) compilation" +
            (gcTotal > 0 ? " and " + gcTotal + "ms (" + (gcTotal*100/(myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) GC" : "") +
            " of " + myProcessTimeMs + "ms total";
   }

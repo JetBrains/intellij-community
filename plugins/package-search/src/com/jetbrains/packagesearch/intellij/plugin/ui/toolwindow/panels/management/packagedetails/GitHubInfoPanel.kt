@@ -2,6 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.icons.AllIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
@@ -66,6 +68,9 @@ internal class GitHubInfoPanel : JPanel() {
             AC().grow(),
             AC().fill()
         )
+        linkLabel.urlClickedListener = {
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.GitHub, url ?: "unknown")
+        }
         add(linkLabel, CC().pad(1, (-2).scaled(), 0, 0))
         add(starsLabel)
     }

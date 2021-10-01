@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -9,7 +9,7 @@ public class JUnit5MalformedParameterizedArgumentsTest extends LightJavaCodeInsi
 
   @Override
   protected String getBasePath() {
-    return "/plugins/junit/testData/codeInsight/malformedParameterized/streamArgumentsMethodFix";
+    return "/plugins/junit/testData/codeInsight/junit5malformed/streamArgumentsMethodFix";
   }
 
   @Override
@@ -30,7 +30,7 @@ public class JUnit5MalformedParameterizedArgumentsTest extends LightJavaCodeInsi
   private void doTest() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention("Create method 'Stream parmeters()'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Create method 'parameters' in 'Test'"));
     myFixture.checkResultByFile(name + ".after.java");
   }
 }

@@ -3,12 +3,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentFactory
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -19,10 +22,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
+import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
@@ -41,13 +41,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -65,7 +65,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private val repositoryDataService = dataContext.repositoryDataService
 
-  private val directionModel = GHPRCreateDirectionModelImpl(repositoryDataService.repositoryMapping)
+  private val directionModel = GHPRMergeDirectionModelImpl(repositoryDataService.repositoryMapping, repositoriesManager)
   private val titleDocument = PlainDocument()
   private val descriptionDocument = DisableableDocument()
   private val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
@@ -86,7 +86,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       checkLoadChanges(true)
       commitSelectionModel.value = null
     }
-    commitSelectionModel.addAndInvokeValueChangedListener {
+    commitSelectionModel.addAndInvokeListener {
       checkLoadSelectedCommitChanges(true)
     }
     project.messageBus.connect(disposable).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
@@ -116,7 +116,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       return
     }
 
-    val repository = headRepo.gitRemote.repository
+    val repository = headRepo.gitRemoteUrlCoordinates.repository
     changesLoadingModel.load(EmptyProgressIndicator()) {
       GitChangeUtils.getThreeDotDiff(repository, baseBranch.name, headBranch.name)
     }
@@ -140,7 +140,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private fun checkUpdateHead() {
     val headRepo = directionModel.headRepo
-    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo, headRepo.gitRemote.repository.currentBranch)
+    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo, headRepo.gitRemoteUrlCoordinates.repository.currentBranch)
   }
 
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
@@ -158,7 +158,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   val component by lazy {
-    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
+    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, dataContext, viewController)
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 
@@ -202,9 +202,18 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                                     GithubBundle.message("cannot.load.commits"),
                                                     commitsLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponentFactory(project).create(model) { commit ->
+        val (commitBrowser, commitList) = CommitsBrowserComponentFactory(project).create(model) { commit ->
           commitSelectionModel.value = commit
         }
+
+        commitList.emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
+
+        PopupHandler.installSelectionListPopup(
+          commitList,
+          DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
+          "GHPRCommitsPopup")
+
+        commitBrowser
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(commitChangesLoadingModel,
@@ -287,9 +296,9 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     directionModel.preFill()
   }
 
-  private fun GHPRCreateDirectionModel.preFill() {
+  private fun GHPRMergeDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
-    val currentRemote = repositoryDataService.repositoryMapping.gitRemote
+    val currentRemote = repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates
     val currentRepo = currentRemote.repository
 
     val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
@@ -309,13 +318,13 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork
     val recentHead = settings.recentNewPullRequestHead
-    val headRepo = repos.find { it.repository == recentHead } ?: when {
+    val headRepo = repos.find { it.ghRepositoryCoordinates == recentHead } ?: when {
       repos.size == 1 -> repos.single()
       baseIsFork -> baseRepo
-      else -> repos.find { it.gitRemote.remote.name == "origin" }
+      else -> repos.find { it.gitRemoteUrlCoordinates.remote.name == "origin" }
     }
 
-    val headBranch = headRepo?.gitRemote?.repository?.currentBranch
+    val headBranch = headRepo?.gitRemoteUrlCoordinates?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
   }

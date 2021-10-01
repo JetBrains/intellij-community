@@ -1,10 +1,9 @@
 <html>
 <body>
-Reports the <em>Feature Envy</em> code smell. Feature
-envy is defined as occurring when a method calls methods on another class three
+Reports the <em>Feature Envy</em> code smell. The warning is thrown when a method calls methods on another class three
 or more times. Calls to library classes, parent classes, contained or containing
-classes are not counted for purposes of this inspection. Feature
-envy is often an indication that functionality is located in the wrong class.
+classes are not counted by this inspection. Feature
+envy is often an indication of the fact that this functionality is located in a wrong class.
 <p>Example:</p>
 <pre><code>
   class JobManager {

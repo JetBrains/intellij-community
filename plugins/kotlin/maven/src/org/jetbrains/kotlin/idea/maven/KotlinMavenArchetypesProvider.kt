@@ -72,7 +72,7 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
         }
     }
 
-    internal fun extractVersions(root: JsonElement) =
+    fun extractVersions(root: JsonElement) =
         root.asJsonObject.get("response")
             .asJsonObject.get("docs")
             .asJsonArray

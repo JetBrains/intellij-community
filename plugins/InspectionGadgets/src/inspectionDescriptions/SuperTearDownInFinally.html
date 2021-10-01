@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports calls to JUnit 3's <code>super.tearDown()</code> which are not performed inside a <code>finally</code> block.
-If there are other method calls in the <code>tearDown()</code> method, which may throw
+Reports the calls of the JUnit 3's <code>super.tearDown()</code> method that are not performed inside the <code>finally</code> block.
+If there are other method calls in the <code>tearDown()</code> method that may throw
 an exception before the <code>super.tearDown()</code> call, this may lead to inconsistencies and leaks.
-<p>Problem example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   <b>public class</b> AnotherTest <b>extends</b> CompanyTestCase {
     <b>private</b> Path path;
@@ -21,7 +21,7 @@ an exception before the <code>super.tearDown()</code> call, this may lead to inc
     }
   }
 </code></pre>
-<p>Good example:</p>
+<p>The improved code:</p>
 <pre><code>
   <b>public class</b> AnotherTest <b>extends</b> CompanyTestCase {
     <b>private</b> Path path;

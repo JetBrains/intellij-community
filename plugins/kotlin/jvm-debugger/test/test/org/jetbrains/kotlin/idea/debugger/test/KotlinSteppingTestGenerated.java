@@ -457,6 +457,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepOver/kt24343.kt");
         }
 
+        @TestMetadata("kt44074.kt")
+        public void testKt44074() throws Exception {
+            runTest("testData/stepping/stepOver/kt44074.kt");
+        }
+
         @TestMetadata("lambdaToInlineFold.kt")
         public void testLambdaToInlineFold() throws Exception {
             runTest("testData/stepping/stepOver/lambdaToInlineFold.kt");
@@ -475,6 +480,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("lambdaToInlineMapFiltersDisabled.kt")
         public void testLambdaToInlineMapFiltersDisabled() throws Exception {
             runTest("testData/stepping/stepOver/lambdaToInlineMapFiltersDisabled.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("testData/stepping/stepOver/localFunction.kt");
+        }
+
+        @TestMetadata("localFunctionWithSingleLineExpressionBody.kt")
+        public void testLocalFunctionWithSingleLineExpressionBody() throws Exception {
+            runTest("testData/stepping/stepOver/localFunctionWithSingleLineExpressionBody.kt");
         }
 
         @TestMetadata("noParameterExtensionLambdaArgumentCallInInline.kt")
@@ -1149,6 +1164,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("manyFilesWithInlineCalls2.kt")
         public void testManyFilesWithInlineCalls2() throws Exception {
             runTest("testData/stepping/custom/manyFilesWithInlineCalls2.kt");
+        }
+
+        @TestMetadata("multilineFunctionCall.kt")
+        public void testMultilineFunctionCall() throws Exception {
+            runTest("testData/stepping/custom/multilineFunctionCall.kt");
+        }
+
+        @TestMetadata("sequentialInlineFunctionCalls.kt")
+        public void testSequentialInlineFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/sequentialInlineFunctionCalls.kt");
         }
 
         @TestMetadata("severalFunLiterals.kt")

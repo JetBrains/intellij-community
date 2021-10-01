@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 
@@ -50,14 +51,14 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 }
 
 
-class PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
+class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFactory<PyTrialTestConfiguration>(type) {
   override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
   override fun getName(): String = PyBundle.message("runcfg.trial.display_name")
 
   override fun getId(): String = "Twisted Trial"
 
-  override val onlyClassesSupported: Boolean = true
+  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
 
   override val packageRequired: String = "Twisted"
 }

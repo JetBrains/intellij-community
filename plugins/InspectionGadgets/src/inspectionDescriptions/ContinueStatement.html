@@ -1,15 +1,15 @@
 <html>
 <body>
 Reports <code>continue</code> statements.
-<code>continue</code> statements complicate refactoring, and can be confusing.
+<p><code>continue</code> statements complicate refactoring and can be confusing.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   void foo(List&lt;String&gt; strs) {
     for (String str : strs) {
       if (str.contains("skip")) continue;
       handleStr(str);
     }
   }
-</pre>
+</code></pre>
 </body>
 </html>

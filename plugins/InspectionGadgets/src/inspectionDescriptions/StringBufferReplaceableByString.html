@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports any usages of <code>StringBuffer</code>, <code>StringBuilder</code> or <code>StringJoiner</code>
-which can be replaced with a single <code>String</code> concatenation. Using a <code>String</code> concatenation
-makes the code shorter and simpler.
+Reports usages of <code>StringBuffer</code>, <code>StringBuilder</code>, or <code>StringJoiner</code>
+which can be replaced with a single <code>String</code> concatenation.
+<p>Using <code>String</code> concatenation
+  makes the code shorter and simpler.</p>
 <p>
 This inspection only reports when the suggested replacement does not result in significant
-performance drawback on modern JVMs. In many cases the String concatenation may perform better.
+performance drawback on modern JVMs. In many cases, <code>String</code> concatenation may perform better.
 </p>
 <p><b>Example:</b></p>
 <pre>
@@ -15,7 +16,7 @@ performance drawback on modern JVMs. In many cases the String concatenation may 
   result.append(";");
   return result.toString();
 </pre>
-<p>After the quickfix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   String result = "i = " + i + ";";
   return result;

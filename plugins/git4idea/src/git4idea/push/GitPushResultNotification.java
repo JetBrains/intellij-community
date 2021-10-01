@@ -17,8 +17,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
@@ -181,12 +179,7 @@ final class GitPushResultNotification extends Notification {
         && !grouped.errors.isEmpty()
         || !grouped.rejected.isEmpty()
         || !grouped.customRejected.isEmpty()) {
-      notification.addAction(NotificationAction.createSimple(
-        VcsBundle.message("notification.showDetailsInConsole"),
-        () -> {
-          ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-          vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
-        }));
+      notification.addAction(VcsNotifier.getInstance(project).createShowDetailsAction());
     }
 
     return notification;

@@ -30,8 +30,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -192,7 +192,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     myCollectWatchRootsFuture.cancel(false);
     myCollectWatchRootsFuture = myExecutor.submit(() -> {
       Pair<Set<String>, Set<String>> watchRoots = ReadAction.compute(() -> myProject.isDisposed() ? null : collectWatchRoots(newDisposable));
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         if (myProject.isDisposed()) return;
         myRootPointersDisposable = newDisposable;
         // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
@@ -324,16 +324,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myStartupActivityPerformed) return;
 
     if (changeType == RootsChangeType.ROOTS_REMOVED) {
-      logRootChanges("some project roots were removed");
+      logRootChanges("Project roots of " + myProject.getName() + " were removed");
       return;
     }
 
-    String reason = "Project roots have changed";
-    logRootChanges(reason);
+    logRootChanges("Project roots of " + myProject.getName() + " have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject, reason));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, "Project roots have changed"));
     }
   }
 

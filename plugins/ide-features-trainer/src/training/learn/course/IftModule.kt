@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.course
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.ToolWindowAnchor
 import org.jetbrains.annotations.Nls
 import training.lang.LangSupport
 
@@ -22,6 +24,8 @@ abstract class IftModule(@Nls val name: String,
   }
 
   abstract val sanitizedName: @NlsSafe String
+
+  abstract fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor
 
   override fun toString(): String {
     return "($name for $primaryLanguage)"

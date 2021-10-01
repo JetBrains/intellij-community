@@ -12,21 +12,25 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.InplaceButton
-import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
+import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.plaf.basic.BasicHTML
+import javax.swing.text.View
+import kotlin.math.min
 
 /**
  * @author Alexander Lobas
@@ -36,7 +40,10 @@ import javax.swing.border.Border
 class AlertMessagesManager : MacMessages() {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", false)
+    fun isEnabled(): Boolean {
+      val app = ApplicationManager.getApplication()
+      return app != null && !app.isUnitTestMode && !app.isHeadlessEnvironment && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
+    }
 
     @JvmStatic
     fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
@@ -51,7 +58,16 @@ class AlertMessagesManager : MacMessages() {
                                      doNotAskOption: DialogWrapper.DoNotAskOption?,
                                      icon: Icon?,
                                      helpId: String?): Int {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText, cancelText), 0, -1, icon, doNotAskOption, helpId)
+    val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
+                             helpId)
+    dialog.show()
+    val exitCode = when (dialog.exitCode) {
+      0 -> Messages.YES
+      2 -> Messages.NO
+      else -> Messages.CANCEL
+    }
+    doNotAskOption?.setToBeShown(dialog.toBeShown(), exitCode)
+    return exitCode
   }
 
   override fun showOkMessageDialog(title: String, message: String?, okText: String, window: Window?) {
@@ -66,7 +82,7 @@ class AlertMessagesManager : MacMessages() {
                                doNotAskDialogOption: DialogWrapper.DoNotAskOption?,
                                icon: Icon?,
                                helpId: String?): Boolean {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, null, doNotAskDialogOption,
+    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, icon, doNotAskDialogOption,
                              null) == Messages.YES
   }
 
@@ -101,23 +117,25 @@ class AlertMessagesManager : MacMessages() {
     dialog.show()
     return dialog.exitCode
   }
+
+  private fun getIcon(icon: Icon?): Icon {
+    if (icon == UIUtil.getInformationIcon() || icon == null) {
+      return AllIcons.General.InformationDialog
+    }
+    if (icon == UIUtil.getQuestionIcon()) {
+      return AllIcons.General.QuestionDialog
+    }
+    if (icon == UIUtil.getWarningIcon()) {
+      return AllIcons.General.WarningDialog
+    }
+    if (icon == UIUtil.getErrorIcon()) {
+      return AllIcons.General.ErrorDialog
+    }
+    return icon
+  }
 }
 
-private fun getIcon(icon: Icon?): Icon {
-  if (icon == UIUtil.getInformationIcon() || icon == null) {
-    return AllIcons.General.InformationDialog
-  }
-  if (icon == UIUtil.getQuestionIcon()) {
-    return AllIcons.General.QuestionDialog
-  }
-  if (icon == UIUtil.getWarningIcon()) {
-    return AllIcons.General.WarningDialog
-  }
-  if (icon == UIUtil.getErrorIcon()) {
-    return AllIcons.General.ErrorDialog
-  }
-  return icon
-}
+private const val PARENT_WIDTH_KEY = "parent.width"
 
 private class AlertDialog(project: Project?,
                           parentComponent: Component?,
@@ -126,25 +144,27 @@ private class AlertDialog(project: Project?,
                           val myOptions: Array<String>,
                           val myDefaultOptionIndex: Int,
                           val myFocusedOptionIndex: Int,
-                          val myIcon: Icon,
+                          icon: Icon,
                           doNotAskOption: DoNotAskOption?,
                           val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
-  private val myTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
+  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
-  private val myIconComponent = JLabel(myIcon)
-  private val mySouthPanel = JPanel(BorderLayout(0, JBUI.scale(20)))
-  private val myButtonsPanel = JPanel(HorizontalLayout(JBUI.scale(12)))
+  private val myRootLayout = RootLayout()
+  private val myIconComponent = JLabel(icon)
+  private var myTitleComponent: JComponent? = null
+  private var myMessageComponent: JComponent? = null
+  private val mySouthPanel = JPanel(BorderLayout())
+  private val myButtonsPanel = JPanel()
   private val myCloseButton: JComponent?
   private val myButtons = ArrayList<JButton>()
   private var myHelpButton: JButton? = null
 
   init {
-    setUndecorated(myTitleComponent)
     title = myTitle
     setDoNotAskOption(doNotAskOption)
 
-    if (myTitleComponent && !SystemInfoRt.isMac) {
+    if (myIsTitleComponent && !SystemInfoRt.isMac) {
       myCloseButton = InplaceButton(IconButton(null, AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null)) {
         doCancelAction()
       }
@@ -153,25 +173,40 @@ private class AlertDialog(project: Project?,
       myCloseButton = null
     }
 
+    if (SystemInfoRt.isMac) {
+      setInitialLocationCallback {
+        val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
+        if (rootPane == null) {
+          return@setInitialLocationCallback null
+        }
+        val location = rootPane.locationOnScreen
+        Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
+      }
+    }
+
     init()
 
     if (myHelpButton != null) {
       val helpButton = myHelpButton!!
       helpButton.parent.remove(helpButton)
-      contentPane.add(helpButton, 0)
+      myRootLayout.addAdditionalComponent(helpButton)
     }
 
     if (myCloseButton != null) {
-      contentPane.add(myCloseButton, 0)
+      myRootLayout.addAdditionalComponent(myCloseButton)
     }
 
-    if (myTitleComponent) {
+    if (myIsTitleComponent) {
+      setUndecorated(true)
+      rootPane.windowDecorationStyle = JRootPane.NONE
+      rootPane.border = PopupBorder.Factory.create(true, true)
+
       object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
         var myLocation: Point? = null
 
         override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
           val target = dragComponent.findComponentAt(dragComponentPoint)
-          return target == null || target == dragComponent || target is JPanel
+          return target == null || target == dragComponent || target == myTitleComponent || target is JPanel
         }
 
         override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
@@ -206,41 +241,82 @@ private class AlertDialog(project: Project?,
     }
   }
 
-  override fun getInitialSize(): Dimension = Dimension(
-    JBUI.scale(if (StringUtil.length(myMessage) < 130 || myButtonsPanel.preferredSize.width < JBUI.scale(300)) 370 else 440),
-    preferredSize.height)
+  override fun getInitialSize(): Dimension {
+    val buttonsWidth = myButtonsPanel.preferredSize.width
 
-  override fun createRootLayout(): LayoutManager {
-    return object : BorderLayout() {
-      override fun addLayoutComponent(name: String?, comp: Component) {
-        if (comp != myCloseButton && comp != myHelpButton) {
-          super.addLayoutComponent(name, comp)
-        }
+    if (buttonsWidth > JBUI.scale(348)) {
+      configureMessageWidth(min(buttonsWidth, JBUI.scale(450)))
+      return preferredSize
+    }
+
+    val width = JBUI.scale(if (buttonsWidth <= JBUI.scale(278) && StringUtil.length(myMessage) <= 130) 370 else 440)
+
+    configureMessageWidth(width - myRootLayout.getWidthWithoutMessageComponent())
+
+    return Dimension(width, preferredSize.height)
+  }
+
+  private fun configureMessageWidth(width: Int) {
+    val scrollPane = ComponentUtil.getScrollPane(myMessageComponent)
+    if (scrollPane == null) {
+      myMessageComponent!!.putClientProperty(PARENT_WIDTH_KEY, width)
+    }
+    else {
+      scrollPane.preferredSize = Dimension(width, scrollPane.preferredSize.height)
+    }
+  }
+
+  override fun createContentPaneBorder(): Border {
+    val insets = JButton().insets
+    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 18 - insets.bottom, 20 - insets.right)
+  }
+
+  override fun createRootLayout(): LayoutManager = myRootLayout
+
+  private inner class RootLayout : BorderLayout() {
+    private var myParent: Container? = null
+
+    fun getWidthWithoutMessageComponent(): Int {
+      val insets = myParent!!.insets
+      val layout = myIconComponent.parent.parent.layout as BorderLayout
+      return insets.left + myIconComponent.preferredSize.width + layout.hgap + insets.right
+    }
+
+    fun addAdditionalComponent(component: Component) {
+      myParent!!.add(component, 0)
+    }
+
+    override fun addLayoutComponent(name: String?, comp: Component) {
+      if (myParent == null) {
+        myParent = comp.parent
+      }
+      if (comp != myCloseButton && comp != myHelpButton) {
+        super.addLayoutComponent(name, comp)
+      }
+    }
+
+    override fun layoutContainer(target: Container) {
+      super.layoutContainer(target)
+
+      if (myCloseButton != null) {
+        val offset = JBUI.scale(20)
+        val size = myCloseButton.preferredSize
+        myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
       }
 
-      override fun layoutContainer(target: Container) {
-        super.layoutContainer(target)
+      if (myHelpButton != null) {
+        val helpButton = myHelpButton!!
+        val firstButton = myButtons[0]
 
-        if (myCloseButton != null) {
-          val offset = JBUI.scale(20)
-          val size = myCloseButton.preferredSize
-          myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
-        }
+        val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
+        val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
 
-        if (myHelpButton != null) {
-          val helpButton = myHelpButton!!
-          val firstButton = myButtons[0]
+        val iconSize = myIconComponent.preferredSize
+        val helpSize = helpButton.preferredSize
+        val buttonSize = firstButton.preferredSize
 
-          val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
-          val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
-
-          val iconSize = myIconComponent.preferredSize
-          val helpSize = helpButton.preferredSize
-          val buttonSize = firstButton.preferredSize
-
-          helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
-                               buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
-        }
+        helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
+                             buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
       }
     }
   }
@@ -255,15 +331,30 @@ private class AlertDialog(project: Project?,
     val textPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     dialogPanel.add(textPanel)
 
-    if (myTitleComponent && !StringUtil.isEmpty(myTitle)) {
-      val titleComponent = createTextComponent(myTitle)
-      titleComponent.font = JBFont.create(titleComponent.font).biggerOn(3f).asBold()
+    if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
+      val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
+      titleComponent.font = JBFont.h3().asBold()
+      myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
 
     if (!StringUtil.isEmpty(myMessage)) {
-      val messageComponent = createTextComponent(myMessage)
-      val lines = myMessage!!.length / 100
+      val messageComponent = createTextComponent(object : JTextPane() {
+        override fun getPreferredSize(): Dimension {
+          val parentWidth = getClientProperty(PARENT_WIDTH_KEY)
+          if (parentWidth is Int) {
+            val view = getUI().getRootView(this)
+            view.setSize(parentWidth.toFloat(), Int.MAX_VALUE.toFloat())
+            return Dimension(parentWidth, view.getPreferredSpan(View.Y_AXIS).toInt())
+          }
+          return super.getPreferredSize()
+        }
+      }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
+
+      messageComponent.font = JBFont.medium()
+      myMessageComponent = messageComponent
+
+      val lines = myMessage.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
@@ -271,8 +362,7 @@ private class AlertDialog(project: Project?,
       }
       textPanel.add(object : Wrapper(scrollPane) {
         override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-          val maxWidth = JBUI.scale(450)
-          super.setBounds(x, y, if (width > maxWidth) maxWidth else width, height)
+          super.setBounds(x, y, min(width, JBUI.scale(450)), height)
         }
       })
     }
@@ -281,18 +371,37 @@ private class AlertDialog(project: Project?,
 
     createSouthPanel()
 
+    val buttonInsets = if (myButtons.size > 0) myButtons[0].insets else Insets(0, 0, 0, 0)
+
     if (myCheckBoxDoNotShowDialog == null || !myCheckBoxDoNotShowDialog.isVisible) {
-      myButtonsPanel.border = JBUI.Borders.emptyTop(12)
+      // vertical gap 22 between text message and visual part of buttons
+      myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
+      myCheckBoxDoNotShowDialog.font = JBFont.medium()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
-      wrapper.border = JBUI.Borders.empty(8, 0)
+      // vertical gap 12 between text message and check box
+      wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
+      // vertical gap 22 between check box and visual part of buttons
+      (mySouthPanel.layout as BorderLayout).vgap = JBUI.scale(22 - buttonInsets.top)
       mySouthPanel.add(wrapper, BorderLayout.NORTH)
     }
+
+    myButtonsPanel.layout = HorizontalLayout(JBUI.scale(12 - buttonInsets.left - buttonInsets.right))
 
     for (button in myButtons) {
       button.parent.remove(button)
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
+    }
+
+    if (SystemInfoRt.isMac) {
+      for ((index, button) in myButtons.withIndex()) {
+        button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
+        val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
+        if (button.action.getValue(DEFAULT_ACTION) != null) {
+          descriptor.isDefault = true
+        }
+      }
     }
 
     mySouthPanel.add(myButtonsPanel)
@@ -300,24 +409,32 @@ private class AlertDialog(project: Project?,
     return dialogPanel
   }
 
-  private fun createTextComponent(message: @Nls String?): JTextPane {
-    val component = JTextPane()
+  private fun createTextComponent(component: JTextPane, message: @Nls String?): JTextPane {
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
     component.isFocusable = false
     component.border = null
-    component.editorKit = UIUtil.getHTMLEditorKit()
+
+    val kit = JBWordWrapHtmlEditorKit()
+    kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
+    component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+
+    if (BasicHTML.isHTMLString(message)) {
+      component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                  StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")))
+    }
+
     component.text = message
+
     component.isEditable = false
     if (component.caret != null) {
       component.caretPosition = 0
     }
+
     return component
   }
-
-  override fun createContentPaneBorder(): Border = JBUI.Borders.empty(20)
 
   override fun createActions(): Array<Action> {
     val actions: MutableList<Action> = ArrayList()
@@ -344,27 +461,52 @@ private class AlertDialog(project: Project?,
     return actions.toTypedArray()
   }
 
-  override fun createJButtonForAction(action: Action?): JButton {
+  override fun createJButtonForAction(action: Action): JButton {
     val button = super.createJButtonForAction(action)
     val size = button.preferredSize
-    val width100 = JBUI.scale(100)
+    val insets = button.insets
+
+    val width100 = JBUI.scale(100) + insets.left + insets.right
     if (size.width < width100) {
-      button.preferredSize = Dimension(width100, size.height)
+      size.width = width100
     }
     else {
       val diffWidth = JBUI.scale(20) - UIUtil.getButtonTextHorizontalOffset(button, size, null)
       if (diffWidth > 0) {
-        button.preferredSize = Dimension(size.width + 2 * diffWidth, size.height)
+        size.width += 2 * diffWidth
       }
     }
-    myButtons.add(button)
+
+    val height28 = JBUI.scale(28) + insets.top + insets.bottom
+    if (size.height < height28) {
+      size.height = height28
+    }
+
+    button.preferredSize = size
+
+    if (SystemInfoRt.isMac) {
+      myButtons.add(0, button)
+    }
+    else {
+      myButtons.add(button)
+    }
+
     return button
   }
 
   override fun createDoNotAskCheckbox(): JComponent? = null
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return super.getPreferredFocusedComponent() ?: myCheckBoxDoNotShowDialog
+    val focusedComponent = super.getPreferredFocusedComponent()
+    if (SystemInfoRt.isMac && focusedComponent == null) {
+      if (myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible) {
+        return myCheckBoxDoNotShowDialog
+      }
+      if (myButtons.isNotEmpty()) {
+        return myButtons[0]
+      }
+    }
+    return focusedComponent
   }
 
   override fun doCancelAction() = close(-1)
@@ -376,4 +518,6 @@ private class AlertDialog(project: Project?,
   }
 
   override fun getHelpId(): String? = myHelpId
+
+  public override fun toBeShown(): Boolean = super.toBeShown()
 }

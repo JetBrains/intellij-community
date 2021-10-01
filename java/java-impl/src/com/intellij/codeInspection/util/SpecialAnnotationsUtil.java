@@ -3,11 +3,13 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -22,13 +24,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -89,7 +90,8 @@ public final class SpecialAnnotationsUtil {
     final JList<String> injectionList = new JBList<>(listModel);
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(injectionList)
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator
+      .createDecorator(injectionList)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -109,7 +111,10 @@ public final class SpecialAnnotationsUtil {
             listModel.add(selected.getQualifiedName());
           }
         }
-      }).setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class")).disableUpDownActions();
+      })
+      .setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class"))
+      .disableUpDownActions()
+      .setToolbarPosition(ActionToolbarPosition.RIGHT);
 
     if (acceptPatterns) {
       toolbarDecorator
@@ -129,16 +134,17 @@ public final class SpecialAnnotationsUtil {
                                  JavaBundle.message("special.annotations.list.annotation.pattern"),
                                  JavaBundle.message("special.annotations.list.remove.pattern"));
     }
+    final var panel = toolbarDecorator.createPanel();
+    panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
 
-    if (borderTitle == null) {
-      return toolbarDecorator.createPanel();
-    }
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(borderTitle);
-    label.setBorder(JBUI.Borders.emptyBottom(3));
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    return panel;
+    if (borderTitle == null) return panel;
+
+    return UI.PanelFactory
+      .panel(panel)
+      .withLabel(borderTitle)
+      .moveLabelOnTop()
+      .resizeY(true)
+      .createPanel();
   }
 
   public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final @IntentionName String text,

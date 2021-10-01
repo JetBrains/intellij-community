@@ -28,6 +28,10 @@ val KotlinVersion.isRC: Boolean
     get() = this.classifier != null &&
             this.classifier.matches(Regex("""(rc|RC)-?\d*"""))
 
+val KotlinVersion.isWildcard: Boolean
+    get() = this.classifier != null &&
+            this.classifier == WILDCARD_KOTLIN_VERSION_CLASSIFIER
+
 
 val KotlinVersion.isStable: Boolean get() = this.classifier == null
 
@@ -35,6 +39,7 @@ val KotlinVersion.isPreRelease: Boolean get() = !isStable
 
 
 enum class KotlinVersionMaturity {
+    WILDCARD,
     UNKNOWN,
     SNAPSHOT,
     DEV,
@@ -54,6 +59,7 @@ val KotlinVersion.maturity: KotlinVersionMaturity
         isMilestone -> KotlinVersionMaturity.MILESTONE
         isSnapshot -> KotlinVersionMaturity.SNAPSHOT
         isDev -> KotlinVersionMaturity.DEV
+        isWildcard -> KotlinVersionMaturity.WILDCARD
         else -> KotlinVersionMaturity.UNKNOWN
     }
 
@@ -145,5 +151,14 @@ fun parseKotlinVersion(value: String): KotlinVersion {
         minor = baseVersionSplit[1].toIntOrNull() ?: throwInvalid(),
         patch = baseVersionSplit.getOrNull(2)?.let { it.toIntOrNull() ?: throwInvalid() } ?: 0,
         classifier = classifier?.toLowerCase()
+    )
+}
+
+private const val WILDCARD_KOTLIN_VERSION_CLASSIFIER = "__*__"
+
+fun KotlinVersion.toWildcard(): KotlinVersion {
+    return KotlinVersion(
+        major, minor, patch,
+        classifier = WILDCARD_KOTLIN_VERSION_CLASSIFIER
     )
 }

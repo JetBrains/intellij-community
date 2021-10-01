@@ -187,9 +187,10 @@ public class LocalHistoryFacade {
       public void visit(StructuralChange c) throws StopVisitingException {
         if (!revertTargetChange && c.equals(targetChange)) stop();
 
-        c.revertOn(root, warnOnFileNotFound);
-        result[0] = c.revertPath(result[0]);
-
+        if (c.affectsPath(result[0])) {
+          c.revertOn(root, warnOnFileNotFound);
+          result[0] = c.revertPath(result[0]);
+        }
         if (c.equals(targetChange)) stop();
       }
     });

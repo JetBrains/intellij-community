@@ -6,6 +6,7 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavaTextExtractor"/>
     <problemFilter language="JAVA" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
+    <problemFilter language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavadocProblemFilter"/>
   </extensions>
 </idea-plugin>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -106,7 +106,10 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
         @Override
         public void run() {
           if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-          myBuilder.select(rootNode1.myCachedChildren.get(0)); //first there is ony one child
+          List<SliceNode> children = rootNode1.myCachedChildren;
+          if (!children.isEmpty()) {
+            myBuilder.select(children.get(0)); //first there is ony one child
+          }
         }
       });
       treeSelectionChanged();
@@ -401,14 +404,14 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     }
 
     @Override
-    public final void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       SliceNode rootNode = (SliceNode)myBuilder.getRootNode().getUserObject();
       rootNode.setChanged();
       myBuilder.addSubtreeToUpdate(myBuilder.getRootNode());
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);
     }

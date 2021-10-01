@@ -250,7 +250,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
+  public static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
                                                                @NotNull String packageName) throws IOException {
     return HttpRequests.request(archivesUrl).userAgent(getUserAgent()).connect(request -> {
       final List<String> versions = new ArrayList<>();
@@ -294,11 +294,11 @@ public class PyPIPackageUtil {
     }
     final String packageNameWithUnderscores = packageName.replace('-', '_');
     final String suffix;
-    if (withoutExtension.startsWith(packageName)) {
-      suffix = StringUtil.trimStart(withoutExtension, packageName);
+    if (StringUtil.startsWithIgnoreCase(withoutExtension, packageName)) {
+      suffix = withoutExtension.substring(packageName.length());
     }
-    else if (withoutExtension.startsWith(packageNameWithUnderscores)) {
-      suffix = StringUtil.trimStart(withoutExtension, packageNameWithUnderscores);
+    else if (StringUtil.startsWithIgnoreCase(withoutExtension, packageNameWithUnderscores)) {
+      suffix = withoutExtension.substring(packageNameWithUnderscores.length());
     }
     else {
       return null;
@@ -318,7 +318,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
+  public static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.info("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -635,15 +635,28 @@ public final class ExpectedTypesProvider {
       }
       else if (parent instanceof PsiSwitchLabelStatementBase) {
         PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
-        if (switchBlock != null) {
-          PsiExpression expression = switchBlock.getExpression();
-          if (expression != null) {
-            PsiType type = expression.getType();
-            if (type != null) {
-              myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.forSwitchLabel(switchBlock)));
-            }
+        handleCaseElementList(switchBlock);
+      }
+    }
+
+    private void handleCaseElementList(PsiSwitchBlock switchBlock) {
+      if (switchBlock != null) {
+        PsiExpression expression = switchBlock.getExpression();
+        if (expression != null) {
+          PsiType type = expression.getType();
+          if (type != null) {
+            myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.forSwitchLabel(switchBlock)));
           }
         }
+      }
+    }
+
+    @Override
+    public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiSwitchLabelStatementBase) {
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
+        handleCaseElementList(switchBlock);
       }
     }
 

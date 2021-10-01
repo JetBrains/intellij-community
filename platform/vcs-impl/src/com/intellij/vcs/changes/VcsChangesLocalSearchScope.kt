@@ -42,9 +42,9 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
             val endLine = document.getLineNumber(range.endOffset)
             var startOffset = document.getLineStartOffset(startLine)
             var endOffset = document.getLineEndOffset(endLine)
-            startOffset = CharArrayUtil.shiftForward(document.charsSequence, startOffset, endOffset, " /t")
+            startOffset = CharArrayUtil.shiftForward(document.charsSequence, startOffset, endOffset, " \t")
             if (startOffset == endOffset) continue
-            endOffset = CharArrayUtil.shiftBackward(document.charsSequence, startOffset, endOffset, " /t")
+            endOffset = CharArrayUtil.shiftBackward(document.charsSequence, startOffset, endOffset, " \t")
             val lineRange = TextRange(startOffset, endOffset)
             ranges.add(lineRange)
           }

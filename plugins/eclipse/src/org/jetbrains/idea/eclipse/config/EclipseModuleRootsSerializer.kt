@@ -165,7 +165,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val srcUrl: VirtualFileUrl
             val sourceRoot = if (linkedPath == null) {
               srcUrl = getUrlByRelativePath(path)
-              builder.addSourceRootEntity(contentRootEntity, srcUrl, false, JAVA_SOURCE_ROOT_TYPE_ID, contentRootEntity.entitySource)
+              builder.addSourceRootEntity(contentRootEntity, srcUrl, JAVA_SOURCE_ROOT_TYPE_ID, contentRootEntity.entitySource)
             }
             else {
               srcUrl = convertToRootUrl(linkedPath, virtualUrlManager)
@@ -174,7 +174,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
               }
               val newContentRoot = moduleEntity.contentRoots.firstOrNull { it.url == srcUrl }
                                    ?: builder.addContentRootEntity(srcUrl, emptyList(), emptyList(), moduleEntity)
-              builder.addSourceRootEntity(newContentRoot, srcUrl, false, JAVA_SOURCE_ROOT_TYPE_ID, newContentRoot.entitySource)
+              builder.addSourceRootEntity(newContentRoot, srcUrl, JAVA_SOURCE_ROOT_TYPE_ID, newContentRoot.entitySource)
             }
             builder.addJavaSourceRootEntity(sourceRoot, false, "")
             sourceRoots.add(sourceRoot.url)

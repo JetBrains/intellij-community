@@ -5,10 +5,10 @@ import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -336,7 +336,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   @NotNull
   private RefreshResult refreshFiles(@Nullable List<FilePath> dirty) {
     try {
-      boolean withIgnored = Registry.is("git.process.ignored");
+      boolean withIgnored = AdvancedSettings.getBoolean("vcs.process.ignored");
       List<StatusRecord> fileStatuses = GitIndexStatusUtilKt.getFileStatus(myProject, myRoot, ContainerUtil.notNullize(dirty),
                                                                            false, true, withIgnored);
 

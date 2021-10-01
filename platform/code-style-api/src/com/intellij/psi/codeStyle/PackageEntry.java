@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -16,7 +16,7 @@ public class PackageEntry {
 
   public PackageEntry(boolean isStatic, @NotNull @NonNls String packageName, boolean withSubpackages) {
     this.isStatic = isStatic;
-    myPackageName = StringUtil.trimEnd(packageName, ".*");
+    myPackageName = StringUtil.trimStart(StringUtil.trimEnd(packageName, ".*"), "import ");
     myWithSubpackages = withSubpackages;
   }
 

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class CloneableImplementsCloneInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("class /*'X' does not define 'clone()' method*//*_*/X/**/ implements Cloneable {}" +
+    doTest("class /*'X' is 'Cloneable' but does not define 'clone()' method*//*_*/X/**/ implements Cloneable {}" +
            "class Y extends X {}" +
            "class Z implements Cloneable {" +
            "  Z copy() {" +
@@ -41,8 +41,8 @@ public class CloneableImplementsCloneInspectionTest extends LightJavaInspectionT
     final CloneableImplementsCloneInspection inspection = new CloneableImplementsCloneInspection();
     inspection.m_ignoreCloneableDueToInheritance = false;
     myFixture.enableInspections(inspection);
-    doTest("class /*'X' does not define 'clone()' method*/X/**/ implements Cloneable {}" +
-           "class /*'Y' does not define 'clone()' method*/Y/**/ extends X {}" +
+    doTest("class /*'X' is 'Cloneable' but does not define 'clone()' method*/X/**/ implements Cloneable {}" +
+           "class /*'Y' is 'Cloneable' but does not define 'clone()' method*/Y/**/ extends X {}" +
            "class Z implements Cloneable {" +
            "  Z copy() {" +
            "    try {" +
@@ -58,9 +58,9 @@ public class CloneableImplementsCloneInspectionTest extends LightJavaInspectionT
     final CloneableImplementsCloneInspection inspection = new CloneableImplementsCloneInspection();
     inspection.ignoreWhenCloneCalled = false;
     myFixture.enableInspections(inspection);
-    doTest("class /*'X' does not define 'clone()' method*/X/**/ implements Cloneable {}" +
+    doTest("class /*'X' is 'Cloneable' but does not define 'clone()' method*/X/**/ implements Cloneable {}" +
            "class Y extends X {}" +
-           "class /*'Z' does not define 'clone()' method*/Z/**/ implements Cloneable {" +
+           "class /*'Z' is 'Cloneable' but does not define 'clone()' method*/Z/**/ implements Cloneable {" +
            "  Z copy() {" +
            "    try {" +
            "      return (Z)clone();" +

@@ -11,11 +11,15 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 public interface UsageSearchPresentation {
 
   /**
-   * <ul>
-   *   <li>the string must not include the search scope</li>
-   *   <li>the string must include what results are searched and the target,
-   *   for example <i>Usages and Implementations of Method 'foo'</i></li>
-   * </ul>
+   * Basically returns formatted psi element name.
    */
   @Nls(capitalization = Title) @NotNull String getSearchString();
+
+  /**
+   * Search options converted to formatted string.
+   */
+  @Nls
+  default @NotNull String getSearchOptions() {
+    return "";
+  }
 }

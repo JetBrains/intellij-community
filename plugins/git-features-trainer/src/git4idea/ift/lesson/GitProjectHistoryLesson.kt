@@ -2,6 +2,7 @@
 package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
@@ -29,7 +30,7 @@ import java.awt.Graphics2D
 import javax.swing.Icon
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
-  override val existedFile = "src/git/sphinx_cat.yml"
+  override val existedFile = "git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
 
@@ -131,6 +132,13 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       }
       triggerByUiComponentAndHighlight(false, false) { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
+    }
+
+    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) {
+      task("EditorEscape") {
+        text(GitLessonsBundle.message("git.project.history.close.diff", action(it)))
+        stateCheck { previous.ui?.isShowing != true }
+      }
     }
 
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))

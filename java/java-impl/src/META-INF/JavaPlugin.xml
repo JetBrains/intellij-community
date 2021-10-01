@@ -268,7 +268,6 @@
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.starter.modulePreprocessor" interface="com.intellij.ide.starters.StarterModulePreprocessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.java" interface="com.intellij.ide.projectWizard.generators.JavaBuildSystemType" dynamic="true"/>
   </extensionPoints>
 
@@ -507,8 +506,8 @@
     </projectConfigurable>
 
     <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
-                              implementation="com.intellij.compiler.options.CompilerConfigurable$BuildOnSaveInfoProvider"
-                              order="after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, before FileWatcherOnSaveActionProvider, before UploadOnSaveActionProvider"/>
+                              implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"
+                              order="after FormatOnSaveInfoProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveInfoProvider, after UploadOnSaveInfoProvider"/>
 
     <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
                      bundle="messages.JavaBundle"/>
@@ -762,6 +761,9 @@
     <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
+    <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
+                 defaultValue="false"
+                 description="Enable experimental extract duplicates implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>
@@ -864,7 +866,6 @@
                     overrides="true"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
-
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>

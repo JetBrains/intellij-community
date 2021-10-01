@@ -1,13 +1,11 @@
 <html>
 <body>
 Reports non-<code>final</code> <code>static</code> fields.
-Applying the quick fix makes the field <code>final</code>.
-<p>
-Please note that the inspection doesn't check the fields mutability,
-e.g. if a field is being set some value anywhere, addition <code>final</code> modifier will cause a compilation error.
-</p>
+<p>A quick-fix is available to add the <code>final</code> modifier to a non-<code>final</code> <code>static</code> field.</p>
+<p>This inspection doesn't check fields' mutability. For example, adding the <code>final</code> modifier to a field that has a value
+  being set somewhere will cause a compilation error.</p>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to have this inspection only report on <code>public</code> fields.
+  Use the <b>Only report 'public' fields</b> option so that the inspection reported only <code>public</code> fields.</p>
 </body>
 </html>

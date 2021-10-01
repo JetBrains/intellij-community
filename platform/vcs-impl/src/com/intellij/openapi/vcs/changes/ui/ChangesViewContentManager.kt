@@ -2,14 +2,14 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -24,8 +24,10 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-private val isCommitToolWindowRegistryValue
-  get() = Registry.get("vcs.commit.tool.window")
+private val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
+
+private val isCommitToolWindowEnabled
+  get() = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW)
 
 internal val Project.isCommitToolWindowShown: Boolean
   get() = ChangesViewContentManager.isCommitToolWindowShown(this)
@@ -64,9 +66,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
 
   init {
-    isCommitToolWindowRegistryValue.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = updateToolWindowMapping()
-    }, this)
+    ApplicationManager.getApplication().messageBus.connect(project)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+          if (id == COMMIT_TOOL_WINDOW) {
+            updateToolWindowMapping()
+          }
+        }
+      })
     project.messageBus.connect().subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() = updateToolWindowMapping()
     })
@@ -77,7 +84,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   private fun shouldUseCommitToolWindow() = CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow() &&
-                                            isCommitToolWindowRegistryValue.asBoolean()
+                                            isCommitToolWindowEnabled
 
   private fun remapContents() {
     val remapped = findContents { it.resolveContentManager() != it.manager }

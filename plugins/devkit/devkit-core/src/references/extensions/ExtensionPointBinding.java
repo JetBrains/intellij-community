@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -15,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
+
+import static com.intellij.util.ObjectUtils.tryCast;
+import static com.intellij.util.xmlb.annotations.Property.Style.ATTRIBUTE;
 
 public class ExtensionPointBinding {
 
@@ -34,6 +38,8 @@ public class ExtensionPointBinding {
       fields = myPsiClass.getAllFields(); // fallback
     }
 
+    boolean hasClassLevelPropertyAnnotation = hasClassLevelPropertyAnnotation();
+
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
       final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
@@ -44,7 +50,7 @@ public class ExtensionPointBinding {
       BindingVisitor.RequiredFlag required = BindingVisitor.RequiredFlag.NOT_REQUIRED;
       if (requiredAnnotation != null) {
         required = PsiUtil.getAnnotationBooleanAttribute(requiredAnnotation, "allowEmpty") ?
-                    BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY : BindingVisitor.RequiredFlag.REQUIRED;
+                   BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY : BindingVisitor.RequiredFlag.REQUIRED;
       }
 
       final PsiAnnotation attributeAnnotation = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
@@ -53,6 +59,9 @@ public class ExtensionPointBinding {
         if (fieldName != null) {
           visitor.visitAttribute(field, fieldName, required);
         }
+      }
+      else if (hasClassLevelPropertyAnnotation) {
+        visitor.visitAttribute(field, field.getName(), required);
       }
       else {
         final PsiAnnotation tagAnno = PsiUtil.findAnnotation(Tag.class, field, getter, setter);
@@ -95,5 +104,17 @@ public class ExtensionPointBinding {
                           @Nullable @NonNls String tagName,
                           @NotNull PsiAnnotation collectionAnnotation,
                           RequiredFlag required);
+  }
+
+  private boolean hasClassLevelPropertyAnnotation() {
+    final PsiAnnotation propertyAnnotation = myPsiClass.getAnnotation(Property.class.getName());
+    if (propertyAnnotation == null) return false;
+    final PsiNameValuePair style = AnnotationUtil.findDeclaredAttribute(propertyAnnotation, "style");
+    if (style == null) return false;
+
+    final PsiReferenceExpression referenceExpression = tryCast(style.getDetachedValue(), PsiReferenceExpression.class);
+    if (referenceExpression == null) return false;
+    final PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
+    return enumConstant != null && enumConstant.getName().equals(ATTRIBUTE.name());
   }
 }

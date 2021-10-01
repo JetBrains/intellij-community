@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.MathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -86,6 +87,13 @@ public final class Registry  {
     catch (MissingResourceException ignore) {
       return defaultValue;
     }
+  }
+
+  public static int intValue(@NonNls @NotNull String key, int defaultValue, int minValue, int maxValue) {
+    if (defaultValue < minValue || defaultValue > maxValue) {
+      throw new IllegalArgumentException("Wrong values for default:min:max (" + defaultValue + ":" + minValue + ":" + maxValue+")");
+    }
+    return MathUtil.clamp(intValue(key, defaultValue), minValue, maxValue);
   }
 
   public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {
@@ -212,6 +220,7 @@ public final class Registry  {
     return myUserProperties;
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<RegistryValue> getAll() {
     Map<String, String> bundle = null;
     try {
@@ -220,10 +229,9 @@ public final class Registry  {
     catch (IOException ignored) {
     }
     Set<String> keys = bundle == null ? Collections.emptySet() : bundle.keySet();
-
     List<RegistryValue> result = new ArrayList<>();
-
-    Registry instance = getInstance();
+    // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
+    Registry instance = ourInstance;
     Map<String, RegistryKeyDescriptor> contributedKeys = instance.myContributedKeys;
     for (String key : keys) {
       if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {

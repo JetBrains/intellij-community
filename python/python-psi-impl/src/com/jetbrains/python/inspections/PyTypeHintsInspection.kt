@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
@@ -22,6 +23,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.isBitwiseOrUnionAvailable
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -205,7 +207,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
       var covariant = false
       var contravariant = false
       var bound: PyExpression? = null
@@ -269,11 +271,24 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkInstanceAndClassChecks(call: PyCallExpression) {
       if (call.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
         val base = call.arguments.getOrNull(1) ?: return
-
-        checkInstanceAndClassChecksOnTypeVar(base)
-        checkInstanceAndClassChecksOnReference(base)
-        checkInstanceAndClassChecksOnSubscription(base)
+        checkInstanceAndClassChecksOn(base)
       }
+    }
+
+    private fun checkInstanceAndClassChecksOn(base: PyExpression) {
+      if (base is PyBinaryExpression && base.operator == PyTokenTypes.OR) {
+        if (isBitwiseOrUnionAvailable(base)) {
+          val left = base.leftExpression
+          val right = base.rightExpression
+          if (left != null) checkInstanceAndClassChecksOn(left)
+          if (right != null) checkInstanceAndClassChecksOn(right)
+        }
+        return
+      }
+
+      checkInstanceAndClassChecksOnTypeVar(base)
+      checkInstanceAndClassChecksOnReference(base)
+      checkInstanceAndClassChecksOnSubscription(base)
     }
 
     private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
@@ -341,8 +356,6 @@ class PyTypeHintsInspection : PyInspection() {
 
               when (qName) {
                 PyTypingTypeProvider.GENERIC,
-                PyTypingTypeProvider.UNION,
-                PyTypingTypeProvider.OPTIONAL,
                 PyTypingTypeProvider.CLASS_VAR,
                 PyTypingTypeProvider.FINAL,
                 PyTypingTypeProvider.FINAL_EXT,
@@ -350,10 +363,24 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.LITERAL_EXT,
                 PyTypingTypeProvider.ANNOTATED,
                 PyTypingTypeProvider.ANNOTATED_EXT -> {
-                  val shortName = qName.substringAfterLast('.')
-                  registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
-                                  ProblemHighlightType.GENERIC_ERROR)
+                  registerParametrizedGenericsProblem(qName, base)
                   return@forEach
+                }
+
+                PyTypingTypeProvider.UNION,
+                PyTypingTypeProvider.OPTIONAL -> {
+                  if (!isBitwiseOrUnionAvailable(base)) {
+                    registerParametrizedGenericsProblem(qName, base)
+                  }
+                  else if (base is PySubscriptionExpression) {
+                    val indexExpr = base.indexExpression
+                    if (indexExpr is PyTupleExpression) {
+                      indexExpr.elements.forEach { tupleElement -> checkInstanceAndClassChecksOn(tupleElement) }
+                    }
+                    else if (indexExpr != null) {
+                      checkInstanceAndClassChecksOn(indexExpr)
+                    }
+                  }
                 }
 
                 PyTypingTypeProvider.CALLABLE,
@@ -385,6 +412,12 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    private fun registerParametrizedGenericsProblem(qName: String, base: PsiElement) {
+      val shortName = qName.substringAfterLast('.')
+      registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
+                      ProblemHighlightType.GENERIC_ERROR)
+    }
+
     private fun checkParenthesesOnGenerics(call: PyCallExpression) {
       val callee = call.callee
       if (callee is PyReferenceExpression) {
@@ -413,8 +446,10 @@ class PyTypeHintsInspection : PyInspection() {
         .asSequence()
         .filterIsInstance<PyReferenceExpression>()
         .filter { genericQName in PyResolveUtil.resolveImportedElementQNameLocally(it) }
-        .forEach { registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.plain.generic"),
-                                   ProblemHighlightType.GENERIC_ERROR) }
+        .forEach {
+          registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.plain.generic"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
     }
 
     private fun checkGenericDuplication(superClassExpressions: List<PyExpression>) {
@@ -431,8 +466,10 @@ class PyTypeHintsInspection : PyInspection() {
             .any { genericQName in PyResolveUtil.resolveImportedElementQNameLocally(it) }
         }
         .drop(1)
-        .forEach { registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.generic.multiple.times"),
-                                   ProblemHighlightType.GENERIC_ERROR) }
+        .forEach {
+          registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.generic.multiple.times"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
     }
 
     private fun checkGenericCompleteness(cls: PyClass) {
@@ -546,7 +583,8 @@ class PyTypeHintsInspection : PyInspection() {
     private fun reportParameterizedTypeAlias(index: PyExpression) {
       // There is another warning in the type hint context
       if (!PyTypingTypeProvider.isInsideTypeHint(index, myTypeEvalContext)) {
-        registerProblem(index, PyPsiBundle.message("INSP.type.hints.type.alias.cannot.be.parameterized"), ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.type.alias.cannot.be.parameterized"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 

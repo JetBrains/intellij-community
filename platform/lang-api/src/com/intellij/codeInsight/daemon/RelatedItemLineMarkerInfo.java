@@ -23,12 +23,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
   private final NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> myTargets;
@@ -65,6 +67,17 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
                                    @NotNull GutterIconRenderer.Alignment alignment,
                                    @NotNull NotNullFactory<? extends Collection<? extends GotoRelatedItem>> targets) {
     super(element, range, icon, tooltipProvider, navHandler, alignment);
+    myTargets = NotNullLazyValue.createValue(targets);
+  }
+
+  public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon,
+                                   @Nullable Function<? super T, String> tooltipProvider,
+                                   @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
+                                   @Nullable GutterIconNavigationHandler<T> navHandler,
+                                   @NotNull GutterIconRenderer.Alignment alignment,
+                                   @NotNull NotNullFactory<? extends Collection<? extends GotoRelatedItem>> targets,
+                                   @NotNull Supplier<@NotNull @Nls String> accessibleNameProvider) {
+    super(element, range, icon, tooltipProvider, presentationProvider, navHandler, alignment, accessibleNameProvider);
     myTargets = NotNullLazyValue.createValue(targets);
   }
 

@@ -421,7 +421,7 @@ public class PyDocumentationBuilder {
 
   @Nullable
   private PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(myContext);
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }

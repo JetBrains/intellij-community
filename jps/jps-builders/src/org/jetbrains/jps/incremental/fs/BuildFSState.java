@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,7 +89,7 @@ public final class BuildFSState {
     }
   }
 
-  public final void clearRecompile(final BuildRootDescriptor rd) {
+  public void clearRecompile(final BuildRootDescriptor rd) {
     getDelta(rd.getTarget()).clearRecompile(rd);
   }
 
@@ -241,11 +241,11 @@ public final class BuildFSState {
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
    * @throws IOException
    */
-  public final boolean markDirty(@Nullable CompileContext context,
-                                 File file,
-                                 final BuildRootDescriptor rd,
-                                 @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage,
-                                 boolean saveEventStamp) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context,
+                           File file,
+                           final BuildRootDescriptor rd,
+                           @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                           boolean saveEventStamp) throws IOException {
     return markDirty(context, CompilationRound.NEXT, file, rd, stampStorage, saveEventStamp);
   }
 

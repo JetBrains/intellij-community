@@ -1,5 +1,3 @@
-// TODO NOTE: [VD] Temporary workaround for KT-36460
-// SKIP_ANALYZE_CHECK
-// OUT_OF_CODE_BLOCK: TRUE
+// OUT_OF_CODE_BLOCK: FALSE
 
 val test: String = "<caret>"

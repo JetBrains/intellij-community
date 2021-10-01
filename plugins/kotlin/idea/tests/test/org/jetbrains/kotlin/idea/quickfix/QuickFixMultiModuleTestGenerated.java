@@ -441,6 +441,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createActual/sealedSubclass/");
         }
 
+        @TestMetadata("valueClass")
+        public void testValueClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/createActual/valueClass/");
+        }
+
         @TestMetadata("withFakeJvm")
         public void testWithFakeJvm() throws Exception {
             runTest("testData/multiModuleQuickFix/createActual/withFakeJvm/");

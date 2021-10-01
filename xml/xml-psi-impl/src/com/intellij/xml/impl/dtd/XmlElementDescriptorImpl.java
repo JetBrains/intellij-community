@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -49,7 +49,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<>() {
     @Override
-    protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
+    protected CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
       return CachedValuesManager.getManager(owner.getProject()).createCachedValue(() -> {
         XmlAttlistDecl[] decls = doCollectAttlistDeclarations(owner);
         return new CachedValueProvider.Result<>(decls, (Object[])ArrayUtil.append(decls, owner, XmlElement.class));

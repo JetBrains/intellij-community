@@ -393,7 +393,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 
-  public boolean setValid(boolean value) {
+  protected boolean setValid(boolean value) {
     RangeMarkerTree.RMNode<?> node = myNode;
     return node == null || node.setValid(value);
   }

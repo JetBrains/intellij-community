@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -187,10 +187,8 @@ internal object UpdateInstaller {
       }
     }
 
-    val mx = System.getProperty("idea.updater.heap")?.toInt() ?: if (CpuArch.is32Bit()) Runtime.getRuntime().maxMemory() shr 20 else 2000
-
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += "-Xmx${mx}m"
+    args += "-Xmx${2000}m"
     args += "-cp"
     args += arrayOf(patchFiles.last().path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 
@@ -221,7 +219,6 @@ internal object UpdateInstaller {
 
   private fun getJdkSuffix(): String = when {
     SystemInfo.isMac && CpuArch.isArm64() -> "-jbr11-aarch64"
-    !SystemInfo.isMac && Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
     Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-jbr11"
     else -> "-no-jbr"
   }

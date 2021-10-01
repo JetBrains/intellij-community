@@ -30,7 +30,7 @@ import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEven
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.lang.annotations.MagicConstant
@@ -365,7 +365,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun runWhenProjectIsInitialized(action: Runnable) {
     if (DumbService.isDumbAware(action)) {
-      runAfterOpened { GuiUtils.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, project.disposed) }
+      runAfterOpened {
+        ModalityUiUtil.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, project.disposed)
+      }
     }
     else {
       runAfterOpened { DumbService.getInstance(project).unsafeRunWhenSmart(action) }

@@ -1,8 +1,14 @@
 <html>
 <body>
-Reports fields with the same name as a field in an ancestor class. Such field
-names may be confusing, and can be bug-prone.
-<p>Example:</p>
+Reports fields in a derived class that are named identically to visible fields of base classes.
+Java fields cannot be overridden in derived classes,
+so the field in the derived class will hide the field from the base class.
+<p>
+  As a result of such naming, you may accidentally use the field of the derived class
+  where the identically named field of a base class is intended.
+</p>
+<p>A quick-fix is suggested to rename the field in the derived class.</p>
+<p><b>Example:</b></p>
 <pre><code>class Parent {
   Parent parent;
 }
@@ -10,14 +16,20 @@ class Child extends Parent {
   Child parent;
 }
 </code></pre>
-<p>A quick-fix to rename the field is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to indicate whether this inspection should report all name clashes, or only
-clashes with fields which are visible from the subclass.
-<p>
-Use the second checkbox below to ignore <code>static</code> fields which hide <code>static</code> fields in super classes.
-<p>
+  You can configure the following options for this inspection:
+</p>
+<ol>
+  <li>
+    <strong>Ignore non-accessible fields</strong> - indicates whether this inspection should report all name clashes,
+    or only clashes with fields which are visible from the subclass.
+  </li>
+  <li>
+    <strong>Ignore static fields hiding static fields</strong> - ignore <code>static</code> fields
+    which hide <code>static</code> fields in base classes.
+  </li>
+</ol>
 
 </body>
 </html>

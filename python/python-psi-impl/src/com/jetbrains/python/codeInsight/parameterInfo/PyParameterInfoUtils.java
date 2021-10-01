@@ -41,7 +41,7 @@ public final class PyParameterInfoUtils {
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withRemote().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext).withRemote();
 
         return call.multiResolveCallee(resolveContext)
           .stream()

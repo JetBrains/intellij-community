@@ -1703,6 +1703,7 @@ public final class DiffUtil {
   /**
    * @deprecated Use {@link #addNotification(DiffNotificationProvider, UserDataHolder)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
     if (component == null) return;

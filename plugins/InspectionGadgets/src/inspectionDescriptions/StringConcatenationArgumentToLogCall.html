@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports non-constant string concatenations used as arguments to SLF4J and Log4j 2 logging methods.
-Non-constant concatenations will be evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
+Reports the non-constant string concatenations that are used as arguments to <code>SLF4J</code> and <code>Log4j 2</code> logging methods.
+Non-constant concatenations are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
-<p>For example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   <b>public class</b> Vital {
     <b>private static final</b> Logger LOG = LoggerFactory.getLogger(Vital.class);
@@ -14,7 +14,7 @@ It is recommended to use a parameterized log message instead, which will not be 
     }
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   <b>public class</b> Vital {
     <b>private static final</b> Logger LOG = LoggerFactory.getLogger(Vital.class);
@@ -27,7 +27,12 @@ It is recommended to use a parameterized log message instead, which will not be 
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the combobox below to ignore certain higher logging levels.
-Higher logging levels may be enabled even in production, and the arguments will always be evaluated.
+  Configure the inspection:
+</p>
+<ul>
+  <li>
+    Use the <b>Warn on</b> list to ignore certain higher logging levels. Higher logging levels may be enabled even in production, and the arguments will always be evaluated.
+  </li>
+</ul>
 </body>
 </html>

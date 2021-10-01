@@ -331,9 +331,6 @@
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
   </action>
   <action id="Diff.FocusOppositePane">
-    <keyboard-shortcut first-keystroke="control TAB"/>
-  </action>
-  <action id="Diff.FocusOppositePaneAndScroll">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
   <action id="Vcs.QuickListPopupAction">
@@ -526,16 +523,16 @@
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
-  </action>
-  <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
   </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="control meta RIGHT"/>
+  </action>
   <action id="Diff.ApplyRightSide">
-    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control meta LEFT"/>
   </action>
   <action id="EditorCodeBlockStart">
     <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>

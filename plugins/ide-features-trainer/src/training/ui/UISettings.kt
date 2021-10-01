@@ -66,9 +66,14 @@ internal class UISettings {
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
 
+  val balloonAdditionalBorder: Border
+    get() = EmptyBorder(JBUI.scale(7), 0, JBUI.scale(7), 0)
+
   val checkIndent: Int get() = JBUI.scale(40)
 
   val numberTaskIndent: Int get() = JBUI.scale(11)
+
+  val balloonIndent: Int get() = JBUI.scale(27)
 
   companion object {
     val instance: UISettings

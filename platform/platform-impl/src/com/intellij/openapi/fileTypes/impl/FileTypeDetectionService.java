@@ -4,7 +4,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -15,7 +14,6 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -70,14 +68,16 @@ final class FileTypeDetectionService implements Disposable {
 
   private static final String FILE_TYPE_DETECTORS_PROPERTY = "fileTypeDetectors";
   private static final String FILE_TYPE_CHANGED_COUNTER_PROPERTY = "fileTypeChangedCounter";
+  private static final FileAttribute AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE =
+    new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE",
+                      PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0), true);
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   private static final int CHUNK_SIZE = 10;
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Executor
-    reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
+  private final Executor reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
                                                                             AppExecutorUtil.getAppExecutorService(),
                                                                             1,
                                                                             this);
@@ -94,9 +94,8 @@ final class FileTypeDetectionService implements Disposable {
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager) {
     myFileTypeManager = fileTypeManager;
 
-    int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0);
-    fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
-    autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
+    fileTypeChangedCount = new AtomicInteger(AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE.getVersion());
+    autoDetectedAttribute = AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE;
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
@@ -182,9 +181,6 @@ final class FileTypeDetectionService implements Disposable {
     if (!StringUtil.equals(prevDetectors, getDetectorsString())) {
       onDetectorsChange();
     }
-
-    Application app = ApplicationManager.getApplication();
-    Disposer.register(app, this);
   }
 
   private boolean toLog() {
@@ -278,9 +274,15 @@ final class FileTypeDetectionService implements Disposable {
       }
     }
     if (fileTypeChangedCounterStr != null) {
-      fileTypeChangedCount.set(StringUtilRt.parseInt(fileTypeChangedCounterStr, 0));
-      autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+      int storedCounter = StringUtilRt.parseInt(fileTypeChangedCounterStr, 0);
+      updateFileTypeChangedCount(storedCounter-fileTypeChangedCount.get());
     }
+  }
+
+  private void updateFileTypeChangedCount(int countDelta) {
+    int newValue = fileTypeChangedCount.addAndGet(countDelta);
+    autoDetectedAttribute = autoDetectedAttribute.newVersion(newValue);
+    PropertiesComponent.getInstance().setValue(FILE_TYPE_CHANGED_COUNTER_PROPERTY, Integer.toString(newValue));
   }
 
   void clearCaches() {
@@ -308,7 +310,7 @@ final class FileTypeDetectionService implements Disposable {
     LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
   }
 
-  static boolean isDetectable(@NotNull final VirtualFile file) {
+  private static boolean isDetectable(@NotNull final VirtualFile file) {
     if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
       // for empty file there is still hope its type will change
       return false;
@@ -346,9 +348,7 @@ final class FileTypeDetectionService implements Disposable {
 
 
   private void clearPersistentAttributes() {
-    int count = fileTypeChangedCount.incrementAndGet();
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
-    PropertiesComponent.getInstance().setValue(FILE_TYPE_CHANGED_COUNTER_PROPERTY, Integer.toString(count));
+    updateFileTypeChangedCount(1);
     if (toLog()) {
       log("F: clearPersistentAttributes()");
     }

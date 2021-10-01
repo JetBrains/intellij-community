@@ -45,7 +45,8 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
       else if (value instanceof PsiLiteralExpression && Boolean.FALSE.equals(((PsiLiteralExpression)value).getValue())) {
         targets = ArrayUtil.EMPTY_STRING_ARRAY;
       }
-      boolean targetApplies = StreamEx.of(targets).map(TARGET_MAP::get).nonNull().anyMatch(loc -> ArrayUtil.contains(loc, types));
+      boolean targetApplies = StreamEx.of(targets).map(TARGET_MAP::get).nonNull()
+        .anyMatch(loc -> loc == PsiAnnotation.TargetType.TYPE_USE ? types.length == 1 && types[0] == loc : ArrayUtil.contains(loc, types));
       return new NullabilityAnnotationInfo(anno, targetApplies ? Nullability.NOT_NULL : Nullability.UNKNOWN, true);
     }
     return null;

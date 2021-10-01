@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -140,7 +140,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       queueTasks(delayedTasks);
     }
     if (pushingSomethingSynchronously) {
-      GuiUtils.invokeLaterIfNeeded(() -> scheduleDumbModeReindexingIfNeeded(), ModalityState.defaultModalityState());
+      ModalityUiUtil.invokeLaterIfNeeded(() -> scheduleDumbModeReindexingIfNeeded(), ModalityState.defaultModalityState());
     }
   }
 
@@ -427,9 +427,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static void reloadPsi(final VirtualFile file, final Project project) {
     final FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
     if (fileManager.findCachedViewProvider(file) != null) {
-      GuiUtils.invokeLaterIfNeeded(() -> WriteAction.run(() -> fileManager.forceReload(file)),
-                                   ModalityState.defaultModalityState(),
-                                   project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(() -> WriteAction.run(() -> fileManager.forceReload(file)),
+                                         ModalityState.defaultModalityState(),
+                                         project.getDisposed());
     }
   }
 

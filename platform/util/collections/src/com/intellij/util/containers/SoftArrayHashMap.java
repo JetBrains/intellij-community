@@ -38,7 +38,7 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
     return null;
   }
 
-  public final V get(T[] key) {
+  public V get(T[] key) {
     if (key.length == 0) {
       return myEmptyValue;
     }
@@ -82,7 +82,7 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
     }
   }
 
-  public final void put(T[] key, V value) {
+  public void put(T[] key, V value) {
     if (key.length == 0) {
       myEmptyValue = value;
     } else {
@@ -90,18 +90,18 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
     }
   }
 
-  public final void clear() {
+  public void clear() {
     myContinuationMap = null;
     myValuesMap = null;
     myEmptyValue = null;
   }
 
-  public final boolean containsKey(final T[] path) {
+  public boolean containsKey(final T[] path) {
     return get(path) != null;
   }
 
   @Override
-  public final SoftArrayHashMap<T,V> clone() {
+  public SoftArrayHashMap<T,V> clone() {
     final SoftArrayHashMap<T, V> copy = new SoftArrayHashMap<>(myStrategy);
     copy.myContinuationMap = copyMap(myContinuationMap);
     copy.myValuesMap = copyMap(myValuesMap);

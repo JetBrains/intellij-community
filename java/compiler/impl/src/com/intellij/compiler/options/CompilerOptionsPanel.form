@@ -178,11 +178,11 @@
           <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="7261c"/>
+          <labelFor value="d1ea8"/>
           <text resource-bundle="messages/JavaCompilerBundle" key="settings.shared.build.process.vm.options"/>
         </properties>
       </component>
-      <component id="7261c" class="javax.swing.JTextField" binding="mySharedVMOptionsField">
+      <component id="d1ea8" class="com.intellij.ui.components.fields.ExpandableTextField" binding="mySharedVMOptionsField">
         <constraints>
           <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
@@ -211,11 +211,11 @@
           <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="b5547"/>
+          <labelFor value="ad4d7"/>
           <text resource-bundle="messages/JavaCompilerBundle" key="settings.user.local.build.process.vm.options"/>
         </properties>
       </component>
-      <component id="b5547" class="javax.swing.JTextField" binding="myVMOptionsField">
+      <component id="ad4d7" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myVMOptionsField">
         <constraints>
           <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>

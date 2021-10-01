@@ -9,6 +9,7 @@ import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.TestRunnerService
 
 class PyTestCreationModelTest : PyTestCase() {
@@ -23,7 +24,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithUnitTest() {
-    service.projectConfiguration = PyUnitTestFactory().name
+    service.projectConfiguration = PythonTestConfigurationType.getInstance().unitTestFactory.name
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("TestSpam", modelToTestClass.className)
@@ -44,7 +45,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithPyTest() {
-    service.projectConfiguration = PyTestFactory().id
+    service.projectConfiguration = PyTestFactory(PythonTestConfigurationType.getInstance()).id
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("", modelToTestClass.className)

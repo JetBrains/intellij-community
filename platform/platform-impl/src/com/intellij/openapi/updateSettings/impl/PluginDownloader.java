@@ -19,6 +19,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableNotNullBiFunction;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -37,11 +39,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author anna
- */
 public final class PluginDownloader {
-
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private final @NotNull PluginId myPluginId;
@@ -188,10 +186,9 @@ public final class PluginDownloader {
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile == null) return null;
 
-    if (Registry.is("marketplace.certificate.signature.check")) {
-      boolean certified = isFromMarketplace()
-                          ? PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile, showMessageOnError)
-                          : PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile, showMessageOnError);
+    // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !isPluginFromBuiltinRepo()) {
+      boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
         return null;
@@ -229,6 +226,26 @@ public final class PluginDownloader {
     }
 
     return actualDescriptor;
+  }
+
+  private boolean isPluginFromBuiltinRepo() {
+    String builtinPluginsUrlPluginsXml = ApplicationInfoImpl.getShadowInstance().getBuiltinPluginsUrl();
+    String builtinPluginsUrl = null;
+    if (builtinPluginsUrlPluginsXml != null) {
+      builtinPluginsUrl = StringUtil.substringBeforeLast(builtinPluginsUrlPluginsXml, "/");
+    }
+    if (builtinPluginsUrl != null) {
+      try {
+        URL builtinPluginsUrlURL = new URL(builtinPluginsUrl);
+        URL myPluginUrlURL = new URL(myPluginUrl);
+        if (!myPluginUrlURL.getHost().equals(builtinPluginsUrlURL.getHost())) return false;
+        if (!myPluginUrlURL.getPath().startsWith(builtinPluginsUrlURL.getPath())) return false;
+        return true;
+      } catch (MalformedURLException ignored) {
+        return false;
+      }
+    }
+    return false;
   }
 
   private void reportError(boolean showMessageOnError, @Nullable @Nls String errorMessage) {

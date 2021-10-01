@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.diff.DiffDialogHints
@@ -14,10 +14,7 @@ class GHPRShowDiffActionProvider : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(DiffRequestChainProducer.DATA_KEY) != null
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    val selection = e.getData(VcsDataKeys.CHANGES_SELECTION)
-    val diffHelper = e.getData(DiffRequestChainProducer.DATA_KEY)
-    e.presentation.isEnabled = project != null && selection?.isEmpty == false && diffHelper != null
+    updateAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -28,5 +25,15 @@ class GHPRShowDiffActionProvider : AnActionExtensionProvider {
     val chainProducer = e.getRequiredData(DiffRequestChainProducer.DATA_KEY)
     val requestChain = chainProducer.getRequestChain(selection)
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
+  }
+
+  companion object {
+    @JvmStatic
+    fun updateAvailability(e: AnActionEvent) {
+      val project = e.project
+      val selection = e.getData(VcsDataKeys.CHANGES_SELECTION)
+      val diffHelper = e.getData(DiffRequestChainProducer.DATA_KEY)
+      e.presentation.isEnabled = project != null && selection?.isEmpty == false && diffHelper != null
+    }
   }
 }

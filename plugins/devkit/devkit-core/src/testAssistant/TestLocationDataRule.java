@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -41,7 +41,7 @@ public final class TestLocationDataRule implements GetDataRule {
   }
 
   @NotNull
-  protected static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
+  static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     final List<Location> locations = new ArrayList<>();

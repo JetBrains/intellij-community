@@ -1,7 +1,3 @@
-    package one.two.three
-    
-    class Test
-    
-    fun test() {
-        one.two.three.Test()
-    }
+fun example() {
+    <spot>kotlin.collections.</spot>ArrayList<String>()
+}

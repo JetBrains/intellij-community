@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
@@ -94,7 +97,7 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
   }
 }
 
-abstract class EditorDiffPreview(private val project: Project,
+abstract class EditorDiffPreview(protected val project: Project,
                                  private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
   private val previewFileDelegate = lazy { PreviewDiffVirtualFile(this) }
@@ -147,7 +150,7 @@ abstract class EditorDiffPreview(private val project: Project,
 }
 
 class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :
-  EditorDiffPreview(project, changesBrowser) {
+  EditorDiffPreview(project, changesBrowser), ChainBackedDiffPreviewProvider {
 
   init {
     init()
@@ -175,5 +178,12 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
       }
     }, owner)
     changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
+  }
+
+  override fun createDiffRequestChain(): DiffRequestChain? {
+    val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {
+      changesBrowser.getDiffRequestProducer(it, false)
+    }
+    return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
   }
 }

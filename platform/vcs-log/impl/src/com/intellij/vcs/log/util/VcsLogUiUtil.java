@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -168,7 +168,7 @@ public final class VcsLogUiUtil {
     }
 
     @Override
-    public final void queryPlace(@NotNull Place place) {
+    public void queryPlace(@NotNull Place place) {
       List<CommitId> commits = myUi.getVcsLog().getSelectedCommits();
       if (commits.size() > 0) {
         place.putPath(PLACE_KEY, commits.get(0));
@@ -176,7 +176,7 @@ public final class VcsLogUiUtil {
     }
 
     @Override
-    public final ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+    public ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);

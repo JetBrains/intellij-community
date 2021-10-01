@@ -37,7 +37,7 @@ object LanguageGrammarChecking : LanguageExtension<GrammarCheckingStrategy>(EXTE
    * @return all strategies without internal ones which match element language, if the checking in it isn't disabled by the user.
    */
   fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {
-    val disabledLanguages = GrazieConfig.get().checkingContext.disabledLanguages
+    val disabledLanguages = GrazieConfig.get().checkingContext.getEffectivelyDisabledLanguageIds()
     return allForLanguage(element.language)
       .asSequence()
       .filter {

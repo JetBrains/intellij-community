@@ -1,15 +1,14 @@
 <html>
 <body>
-Reports calls to <code>new StringBuffer()</code> and <code>new StringBuilder()</code> with an argument of type <code>char</code>.
-In this case <code>char</code> is silently cast to an integer and interpreted as initial capacity of the buffer.
-In this case <code>char</code> probably should be replaced with a string literal.
-<p>Example:</p>
-<pre>
-  new StringBuilder('(').append("1").append(')');
+Reports calls to <code>StringBuffer</code> and <code>StringBuilder</code> constructors with <code>char</code> as the argument.
+<p>
+  In this case, <code>char</code> is silently cast to an integer and interpreted as the initial capacity of the buffer.
+  This can be fixed by replacing <code>char</code> with a string literal.</p>
+<p><b>Example:</b></p>
+<pre>  new StringBuilder('(').append("1").append(')');
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
-  new StringBuilder("(").append("1").append(')');
+<p>After the quick-fix is applied:</p>
+<pre>  new StringBuilder("(").append("1").append(')');
 </pre>
 <!-- tooltip end -->
 </body>

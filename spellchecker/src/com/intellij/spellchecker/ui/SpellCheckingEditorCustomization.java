@@ -128,6 +128,11 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     }
   }
 
+  public static boolean isSpellCheckingDisabled(@NotNull PsiFile file) {
+    Function<InspectionProfileImpl, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    return strategy instanceof MyInspectionProfileStrategy && !((MyInspectionProfileStrategy)strategy).myUseSpellCheck;
+  }
+
   public static Set<String> getSpellCheckingToolNames() {
     return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -6,12 +6,12 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.notification.*;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,8 +113,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       }
       builder.append('"').append(plugin.getName()).append('"');
     }
-    String dependenciesString = builder.toString();
-    return dependenciesString;
+    return builder.toString();
   }
 
   private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor) {
@@ -209,7 +208,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
           IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION)
         .setTitle(IdeBundle.message("plugins.changed.notification.title"))
-        .addAction(new AnAction(IdeBundle.message("ide.restart.action")) {
+        .addAction(new DumbAwareAction(IdeBundle.message("ide.restart.action")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             ApplicationManager.getApplication().restart();

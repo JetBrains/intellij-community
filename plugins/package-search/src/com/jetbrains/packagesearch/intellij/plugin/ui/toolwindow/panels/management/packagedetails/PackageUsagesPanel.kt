@@ -3,6 +3,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
@@ -23,6 +25,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         val navigatable = linkActionsMap[anchor] ?: return
         if (!navigatable.canNavigate()) return
         navigatable.navigate(true)
+        PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.PackageUsages, anchor)
     }
 
     fun display(packageModel: PackageModel.Installed) {
@@ -33,7 +36,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         chunks += HtmlChunk.ul().children(
             packageModel.usageInfo.mapIndexed { index, usageInfo ->
                 val anchor = "#$index"
-                linkActionsMap[anchor] = usageInfo.projectModule.getNavigatableDependency(
+                linkActionsMap[anchor] = usageInfo.projectModule.navigatableDependency(
                     packageModel.groupId,
                     packageModel.artifactId,
                     usageInfo.version

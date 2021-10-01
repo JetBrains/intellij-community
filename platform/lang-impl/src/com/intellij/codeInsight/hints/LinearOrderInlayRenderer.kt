@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -109,6 +110,9 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
 
   @TestOnly
   fun getConstrainedPresentations(): List<ConstrainedPresentation<*, Constraint>> = presentations
+
+  @ApiStatus.Internal
+  fun getCachedPresentation(): InlayPresentation = cachedPresentation
 
   companion object {
     fun effectsIn(attributes: TextAttributes): TextAttributes {

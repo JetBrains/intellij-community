@@ -2,6 +2,7 @@
 package com.intellij.sh.highlighting;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +38,7 @@ public class ShOccurrencesHighlightUsagesHandler extends HighlightUsagesHandlerB
       ShTextOccurrencesUtil.consumeAllOccurrences(
         documentText,
         textRange.subSequence(documentText),
-        !hasSelection, range -> myReadUsages.add(range));
+        !hasSelection, range -> myReadUsages.add(InjectedLanguageManager.getInstance(myFile.getProject()).injectedToHost(myFile, range)));
     }
   }
 }

@@ -695,11 +695,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myVisualLineStart = myEditor.visualPositionToOffset(new VisualPosition(myVisibleCaret.line, 0));
     myVisualLineEnd = myEditor.visualPositionToOffset(new VisualPosition(myVisibleCaret.line + 1, 0));
 
-    int y = myEditor.visualLineToY(myVisibleCaret.line);
+    int[] yRange = myEditor.visualLineToYRange(myVisibleCaret.line);
 
     int logicalLineStartY;
     if (myEditor.getSoftWrapModel().getSoftWrap(myVisualLineStart) == null) {
-      logicalLineStartY = y;
+      logicalLineStartY = yRange[0];
     }
     else {
       int startVisualLine = myEditor.myView.offsetToVisualLine(EditorUtil.getNotFoldedLineStartOffset(myEditor, getOffset()), false);
@@ -708,14 +708,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     int logicalLineEndY;
     if (myEditor.getSoftWrapModel().getSoftWrap(myVisualLineEnd) == null) {
-      logicalLineEndY = y;
+      logicalLineEndY = yRange[1];
     }
     else {
       int endVisualLine = myEditor.myView.offsetToVisualLine(EditorUtil.getNotFoldedLineEndOffset(myEditor, getOffset()), true);
-      logicalLineEndY = myEditor.visualLineToY(endVisualLine);
+      logicalLineEndY = myEditor.visualLineToY(endVisualLine) + myEditor.getLineHeight();
     }
 
-    myVerticalInfo = new VerticalInfo(y, logicalLineStartY, logicalLineEndY - logicalLineStartY + myEditor.getLineHeight());
+    myVerticalInfo = new VerticalInfo(yRange[0], logicalLineStartY, logicalLineEndY - logicalLineStartY);
   }
 
   void onInlayAdded(int offset) {
@@ -1486,7 +1486,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     private final int y; // y coordinate of caret
     private final int logicalLineY; // y coordinate of caret's logical line start
     private final int logicalLineHeight; // height of caret's logical line
-                                         // (if there are soft wraps, it's larger than a visual line's height)
+                                         // (If there are soft wraps, it's larger than a visual line's height.
+                                         // it's also larger if caret is located at a custom fold region)
 
     private VerticalInfo(int y, int logicalLineY, int logicalLineHeight) {
       this.y = y;

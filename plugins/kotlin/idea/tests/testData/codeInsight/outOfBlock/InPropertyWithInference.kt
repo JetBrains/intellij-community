@@ -1,4 +1,6 @@
-// OUT_OF_CODE_BLOCK: TRUE
+// OUT_OF_CODE_BLOCK: FALSE
+// SKIP_ANALYZE_CHECK
 class Test {
-   val a = "aasdf<caret>"
+   val a = 42
+   val q = "aasdf${<caret>}"
 }

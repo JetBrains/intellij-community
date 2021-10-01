@@ -4,6 +4,8 @@ package git4idea.config
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
@@ -14,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -22,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -44,6 +46,7 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
@@ -239,7 +242,7 @@ internal class GitVcsPanel(private val project: Project) :
 
   private fun updateBranchUpdateInfoRow() {
     val branchInfoSupported = GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(project)
-    branchUpdateInfoRow.enabled = Registry.`is`("git.update.incoming.outgoing.info") && branchInfoSupported
+    branchUpdateInfoRow.enabled = AdvancedSettings.getBoolean("git.update.incoming.outgoing.info") && branchInfoSupported
     branchUpdateInfoCommentRow.visible = !branchInfoSupported
     supportedBranchUpLabel.foreground = if (!branchInfoSupported && projectSettings.incomingCheckStrategy != GitIncomingCheckStrategy.Never) {
       DialogWrapper.ERROR_FOREGROUND_COLOR
@@ -365,6 +368,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
       updateProjectInfoFilter()
     }
+    createGpgSignRow(project, disposable!!)
   }
 
   private fun LayoutBuilder.updateProjectInfoFilter() {
@@ -454,7 +458,7 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
 }
 
-private class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
     project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
       override fun settingsChanged() {
@@ -464,4 +468,13 @@ private class StagingAreaAvailablePredicate(val project: Project, val disposable
   }
 
   override fun invoke(): Boolean = canEnableStagingArea()
+}
+
+class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) {
+    project.messageBus.connect(disposable).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
+                                                     VcsRepositoryMappingListener { listener(invoke()) })
+  }
+
+  override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
 }

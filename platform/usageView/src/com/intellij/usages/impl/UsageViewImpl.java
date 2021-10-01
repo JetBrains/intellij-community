@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -49,6 +51,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -188,7 +191,7 @@ public class UsageViewImpl implements UsageViewEx {
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
 
-    myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings());
+    myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings(), getPresentation());
     myFilteringRules = getActiveFilteringRules(project);
 
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, myFilteringRules, myRoot, myProject);
@@ -671,7 +674,7 @@ public class UsageViewImpl implements UsageViewEx {
 
         treeState.invalidatePathBounds(eachPath);
         Object node = eachPath.getLastPathComponent();
-        if (node instanceof UsageNode) {
+        if (node instanceof UsageNode || node instanceof GroupNode) {
           toUpdate.add((Node)node);
         }
       }
@@ -807,12 +810,15 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
 
-  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull Project project,
-                                                                        @NotNull UsageViewSettings usageViewSettings) {
+  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(
+    @NotNull Project project,
+    @NotNull UsageViewSettings usageViewSettings,
+    @Nullable UsageViewPresentation presentation
+  ) {
     List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
-      ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
+      ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings, presentation));
     }
 
     list.sort(Comparator.comparingInt(UsageGroupingRule::getRank));
@@ -862,6 +868,12 @@ public class UsageViewImpl implements UsageViewEx {
       }
       return value == null ? null : value.toString();
     }, true);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(new FileStatusListener() {
+      @Override
+      public void fileStatusesChanged() {
+        clearRendererCache();
+      }
+    }, this);
   }
 
   @NotNull
@@ -1092,7 +1104,7 @@ public class UsageViewImpl implements UsageViewEx {
     allUsages.sort(USAGE_COMPARATOR);
     Set<Usage> excludedUsages = getExcludedUsages();
     reset();
-    myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings());
+    myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings(), getPresentation());
     myFilteringRules = getActiveFilteringRules(myProject);
 
     myBuilder.setGroupingRules(myGroupingRules);
@@ -1394,7 +1406,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
-      node.update(this, edtFireTreeNodesChangedQueue);
+      node.update(edtFireTreeNodesChangedQueue);
     }
 
     return child;
@@ -1526,7 +1538,7 @@ public class UsageViewImpl implements UsageViewEx {
       .nonBlocking(() -> {
         for (Node node : toUpdate) {
           try {
-            node.update(this, edtFireTreeNodesChangedQueue);
+            node.update(edtFireTreeNodesChangedQueue);
           }
           catch (IndexNotReadyException ignore) {
           }
@@ -1942,7 +1954,7 @@ public class UsageViewImpl implements UsageViewEx {
         @Nullable
         @Override
         public Collection<String> getTextLinesToCopy() {
-          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getText(UsageViewImpl.this) : null);
+          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
           return lines.isEmpty() ? null : lines;
         }
       };
@@ -2029,7 +2041,7 @@ public class UsageViewImpl implements UsageViewEx {
           .traverse()
           .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
                           o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile ? Collections.singletonList(((UsageInFile)o).getFile()) :
+          .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
                         o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
                         o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
                         Collections.emptyList())

@@ -14,8 +14,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
@@ -46,7 +46,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   }
 
   private void updateVisibility() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(() -> {
       boolean hasCollectors = updateCollectors(myCrumbsShown);
       if (hasCollectors != isVisible()) {
         setVisible(hasCollectors);

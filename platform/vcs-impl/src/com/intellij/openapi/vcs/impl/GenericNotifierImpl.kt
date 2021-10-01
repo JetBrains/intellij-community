@@ -8,7 +8,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.GuiUtils.invokeLaterIfNeeded
+import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
 import com.intellij.util.ui.UIUtil
 import java.util.*
 import javax.swing.event.HyperlinkEvent

@@ -3,8 +3,9 @@ package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -12,7 +13,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
-  private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<>();
+  private final Int2ObjectMap<MyReference<V>> myMap = new Int2ObjectOpenHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   private static final class MyReference<T> extends WeakReference<T> {
@@ -25,8 +26,8 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   }
 
   private void processQueue() {
-    while(true){
-      MyReference ref = (MyReference)myQueue.poll();
+    while (true) {
+      MyReference<?> ref = (MyReference<?>)myQueue.poll();
       if (ref == null) {
         return;
       }
@@ -78,12 +79,11 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
   @Override
   @NotNull
-  public final Collection<V> values() {
-    Object[] refs = myMap.getValues();
-    List<V> result = new ArrayList<>(refs.length);
-    for (Object o : refs) {
-      @SuppressWarnings("unchecked")
-      final V value = ((MyReference<V>)o).get();
+  public final Collection<@NotNull V> values() {
+    Collection<MyReference<V>> refs = myMap.values();
+    List<V> result = new ArrayList<>(refs.size());
+    for (MyReference<V> o : refs) {
+      V value = o.get();
       if (value != null) {
         result.add(value);
       }
@@ -120,19 +120,9 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     }
   }
 
-  private static class MovingIterator<V> extends TIntObjectIterator<MyReference<V>> {
-    MovingIterator(TIntObjectHashMap<MyReference<V>> map) {
-      super(map);
-    }
-
-    void removed() {
-      _expectedSize--;
-    }
-  }
-
   @NotNull
   private Iterator<Entry<V>> entriesIterator() {
-    final MovingIterator<V> entryIterator = new MovingIterator<>(myMap);
+    ObjectIterator<Int2ObjectMap.Entry<MyReference<V>>> entryIterator = myMap.int2ObjectEntrySet().iterator();
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private int lastReturned;
@@ -155,14 +145,14 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
       private void nextAliveEntry() {
         while (entryIterator.hasNext()) {
-          entryIterator.advance();
+          Int2ObjectMap.Entry<MyReference<V>> entry = entryIterator.next();
 
-          MyReference<V> ref = entryIterator.value();
-          final V v = ref.get();
+          MyReference<V> ref = entry.getValue();
+          V v = ref.get();
           if (v == null) {
             continue;
           }
-          final int key = entryIterator.key();
+          int key = entry.getIntKey();
           nextVEntry = new SimpleEntry<>(key, v);
           return;
         }
@@ -172,7 +162,6 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
       @Override
       public void remove() {
         myMap.remove(lastReturned);
-        entryIterator.removed();
       }
     };
   }

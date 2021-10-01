@@ -2,11 +2,12 @@
 <body>
 Reports the <code>synchronized</code> modifier on methods.
 <p>
-There are several reasons a <code>synchronized</code> modifier on a method may be a bad idea:
+  There are several reasons a <code>synchronized</code> modifier on a method may be a bad idea:
 </p>
 <ol>
   <li>
-    As little work as possible should be performed under a lock. Therefore it is often better to use a <code>synchronized</code> block and keep there only code that works with shared state.
+    As little work as possible should be performed under a lock. Therefore it is often better to use a <code>synchronized</code> block and
+    keep there only the code that works with shared state.
   </li>
   <li>
     Synchronization becomes a part of a method's interface. This makes a transition to a different locking mechanism difficult.
@@ -21,8 +22,8 @@ There are several reasons a <code>synchronized</code> modifier on a method may b
 <p>
   As an alternative, consider synchronizing on a <code>private final</code> lock object, access to which can be completely controlled.
 </p>
-<p>The quick-fix is provided to wrap the method body with <code>synchronized(this)</code>.</p>
-<p>Example:</p>
+<p>A quick-fix is provided to wrap the method body with <code>synchronized(this)</code>.</p>
+<p><b>Example:</b></p>
 <pre>
   <code>
     class Main {
@@ -44,10 +45,11 @@ There are several reasons a <code>synchronized</code> modifier on a method may b
 </pre>
 
 <!-- tooltip end -->
-<p>Use the "Options" panel to configure the inspection:</p>
+<p>You can configure the following options for this inspection:</p>
 <ol>
-  <li>Enable the <strong>"Include native methods"</strong> checkbox to include native methods into the inspection's scope.</li>
-  <li>Enable the <strong>"Ignore methods overriding a synchronized method"</strong> checkbox to exclude methods that override a <code>synchronized</code> method.</li>
+  <li><strong>Include native methods</strong> - include native methods into the inspection's scope.</li>
+  <li><strong>Ignore methods overriding a synchronized method</strong> -
+    do not report methods that override a <code>synchronized</code> method.</li>
 </ol>
 
 </body>

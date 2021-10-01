@@ -1,5 +1,0 @@
-<idea-plugin package="git4idea.terminal">
-  <extensions defaultExtensionNs="com.intellij">
-    <terminal.shellCommandHandler implementation="git4idea.terminal.GitLogTerminalCustomCommandHandler"/>
-  </extensions>
-</idea-plugin>

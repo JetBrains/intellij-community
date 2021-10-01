@@ -32,6 +32,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private @PopupTitle String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
+  private JComponent myNorthComponent;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
   private JComponent myPreferableFocusComponent;
@@ -182,6 +183,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   public PopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable) {
     myItemChosenRunnable = runnable;
+    return this;
+  }
+
+  public PopupChooserBuilder<T> setNorthComponent(@NotNull JComponent cmp) {
+    myNorthComponent = cmp;
     return this;
   }
 
@@ -347,6 +353,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addCenterComponentToContentPane(contentPane, myScrollPane);
     }
 
+    if (myNorthComponent != null) {
+      addNorthComponentToContentPane(contentPane, myNorthComponent);
+    }
+
     if (mySouthComponent != null) {
       addSouthComponentToContentPane(contentPane, mySouthComponent);
     }
@@ -403,6 +413,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private static void addEastComponentToContentPane(JPanel contentPane, JComponent component) {
     contentPane.add(component, BorderLayout.EAST);
+  }
+
+  private static void addNorthComponentToContentPane(JPanel contentPane, JComponent component) {
+    contentPane.add(component, BorderLayout.NORTH);
   }
 
   private static void addSouthComponentToContentPane(JPanel contentPane, JComponent component) {

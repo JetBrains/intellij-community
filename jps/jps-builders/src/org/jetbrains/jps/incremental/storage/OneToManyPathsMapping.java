@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.Function;
@@ -30,11 +30,11 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.update(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
-  public final void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.update(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
   }
 
-  public final void appendData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void appendData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.appendData(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
   }
 
@@ -71,7 +71,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     return Iterators.map(super.getKeysIterator(), toFull());
   }
 
-  public final void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     final Collection<String> outputPaths = getState(keyPath);
     if (outputPaths != null) {
       final boolean removed = outputPaths.remove(normalizePath(boundPath));

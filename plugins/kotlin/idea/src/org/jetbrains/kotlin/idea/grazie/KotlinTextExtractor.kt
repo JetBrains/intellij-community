@@ -33,7 +33,7 @@ internal class KotlinTextExtractor : TextExtractor() {
       }
     }
     if (COMMENTS in allowedDomains && root is PsiCommentImpl) {
-      val roots = getNotSoDistantSimilarSiblings(root, TokenSet.WHITE_SPACE) {
+      val roots = getNotSoDistantSimilarSiblings(root) {
         it == root || root.elementType == KtTokens.EOL_COMMENT && it.elementType == KtTokens.EOL_COMMENT
       }
       return TextContent.joinWithWhitespace(roots.mapNotNull {

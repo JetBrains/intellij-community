@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
@@ -96,12 +95,25 @@ import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInf
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
-  private static final String CLICK_INFO = "CLICK_INFO";
   private static final String ACTION_ID = "UiInspector";
-  private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+
+  private static final Key<List<PropertyBean>> CLICK_INFO = Key.create("CLICK_INFO");
+  private static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
+  private static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
+
   private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
+
+  private static boolean ourGlobalInstanceInitialized = false;
+  public static synchronized void initGlobalInspector() {
+    if (!ourGlobalInstanceInitialized) {
+      ourGlobalInstanceInitialized = true;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        new UiInspector(null);
+      });
+    }
+  }
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
@@ -131,9 +143,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
       }
     }, AWTEvent.MOUSE_EVENT_MASK);
-    if (Boolean.getBoolean("idea.ui.debug.mode") || Boolean.getBoolean("idea.ui.inspector")) {
-      ApplicationManager.getApplication().invokeLater(() -> new UiInspector(null));
-    }
   }
 
   private void updateMouseShortcuts() {
@@ -426,7 +435,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     public void close() {
       if (myInitialComponent instanceof JComponent) {
-        ((JComponent)myInitialComponent).putClientProperty(CLICK_INFO, null);
+        UIUtil.putClientProperty((JComponent)myInitialComponent, CLICK_INFO, null);
       }
       myIsHighlighted = false;
       myInfo = null;
@@ -684,7 +693,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       setCellRenderer(new ComponentTreeCellRenderer(c));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
-      if (c instanceof JComponent && ((JComponent)c).getClientProperty(CLICK_INFO) != null) {
+      if (c instanceof JComponent && UIUtil.getClientProperty(c, CLICK_INFO) != null) {
         SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
       }
     }
@@ -848,10 +857,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
 
         if (parent instanceof JComponent) {
-          Object o = ((JComponent)parent).getClientProperty(CLICK_INFO);
-          if (o instanceof List) {
-            //noinspection unchecked
-            result.add(new ClickInfoNode((List<PropertyBean>)o));
+          List<PropertyBean> o = UIUtil.getClientProperty(parent, CLICK_INFO);
+          if (o != null) {
+            result.add(new ClickInfoNode(o));
           }
         }
         if (parent instanceof Container) {
@@ -996,14 +1004,19 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         @Override
         protected boolean onDoubleClick(@NotNull MouseEvent event) {
           int row = myTable.rowAtPoint(event.getPoint());
-          int column = myTable.columnAtPoint(event.getPoint());
-          if (row >=0 && row < myTable.getRowCount() && column >= 0 && column < myTable.getColumnCount()) {
+          int column = 1;
+          if (row >=0 && row < myTable.getRowCount() && column < myTable.getColumnCount()) {
             Component renderer = myTable.getCellRenderer(row, column)
                                         .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
+              StringBuilder sb = new StringBuilder();
+              if (component != null) sb.append(getComponentName(component)).append(" ");
+              String value = StringUtil.trimStart(((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"), "at ");
+              sb.append("'").append(myModel.getValueAt(row, 0)).append("':");
+              sb.append(value.contains("\n") || value.length() > 100 ? "\n" : " ");
+              sb.append(value);
               //noinspection UseOfSystemOutOrSystemErr
-              System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
+              System.out.println(sb);
               return true;
             }
           }
@@ -1499,7 +1512,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           if (table instanceof Object[]) {
             Object[] arr = (Object[])table;
             for (int i = 0; i < arr.length; i += 2) {
-              if (arr[i].equals("uiInspector.addedAt")) continue;
+              if (arr[i].equals(ADDED_AT_STACKTRACE)) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(arr[i]).append("->").append(arr[i + 1]).append(']');
             }
@@ -1507,7 +1520,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           else if (table instanceof Map) {
             Map<?, ?> map = (Map<?, ?>)table;
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-              if (entry.getKey().equals("uiInspector.addedAt")) continue;
+              if (entry.getKey().equals(ADDED_AT_STACKTRACE)) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
             }
@@ -1602,7 +1615,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     void fillTable() {
       addProperties("", myComponent, PROPERTIES);
-      Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty("uiInspector.addedAt") : null;
+      String addedAt = getAddedAtStacktrace(myComponent);
       myProperties.add(new PropertyBean("added-at", addedAt, addedAt != null));
 
       // Add properties related to Accessibility support. This is useful for manually
@@ -1634,7 +1647,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
       Class<?> clazz = component.getClass();
-      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()+"@"+System.identityHashCode(component)));
 
       if (clazz.isAnonymousClass()) {
         Class<?> superClass = clazz.getSuperclass();
@@ -1727,8 +1740,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     private void addGutterInfo(Object component) {
-      if (component instanceof EditorGutterComponentEx && ((JComponent)component).getClientProperty(CLICK_INFO_POINT) instanceof Point) {
-        Point clickPoint = (Point)((JComponent)component).getClientProperty(CLICK_INFO_POINT);
+      Point clickPoint = component instanceof EditorGutterComponentEx ? UIUtil.getClientProperty(component, CLICK_INFO_POINT) : null;
+      if (clickPoint != null) {
         GutterMark renderer = ((EditorGutterComponentEx)component).getGutterRenderer(clickPoint);
         if (renderer != null) {
           myProperties.add(new PropertyBean("gutter renderer", renderer.getClass().getName(), true));
@@ -2267,8 +2280,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
       if (component != null) {
         if (component instanceof JComponent) {
-          ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
-          ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
+          UIUtil.putClientProperty((JComponent)component, CLICK_INFO, getClickInfo(me, component));
+          UIUtil.putClientProperty((JComponent)component, CLICK_INFO_POINT, me.getPoint());
         }
 
         showInspector(project, component);
@@ -2351,14 +2364,19 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static void processContainerEvent(ContainerEvent event) {
       Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
       if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
-        String text = ExceptionUtil.getThrowableText(new Throwable());
-        int first = text.indexOf("at com.intellij", text.indexOf("at java.awt"));
-        int last = text.indexOf("at java.awt.EventQueue");
-        if (last == -1) last = text.length();
-        String val = last > first && first > 0 ? text.substring(first, last).trim() : null;
-        ((JComponent)child).putClientProperty("uiInspector.addedAt", val);
+        UIUtil.putClientProperty((JComponent)child, ADDED_AT_STACKTRACE, new Throwable());
       }
     }
+  }
+
+  private static @Nullable String getAddedAtStacktrace(@Nullable Component component) {
+    Throwable throwable = UIUtil.getClientProperty(component, ADDED_AT_STACKTRACE);
+    if (throwable == null) return null;
+    String text = ExceptionUtil.getThrowableText(throwable);
+    int first = text.indexOf("at com.intellij", text.indexOf("at java."));
+    int last = text.indexOf("at java.awt.EventQueue");
+    if (last == -1) last = text.length();
+    return last > first && first > 0 ? text.substring(first, last).trim() : null;
   }
 
   /** @noinspection UseJBColor*/

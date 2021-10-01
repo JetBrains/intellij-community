@@ -1,9 +1,13 @@
 <html>
 <body>
-Reports any <code>Logger</code>s initialized with a class literal other than the class the  <code>Logger</code>
-resides in. This can easily happen when copy-pasting some contents from another class.
-It may result in logging events under an unexpected category and cause filters to be applied incorrectly.
-<br /><br />
-Use the table below to specify the logger factory classes and logger factory methods recognized by this inspection.
+Reports <code>Logger</code> instances initialized with a class literal other than the class the <code>Logger</code>
+resides in.
+<p>
+    This can happen when copy-pasting from another class.
+    It may result in logging events under an unexpected category and incorrect filtering.
+</p>
+<p>
+    Use the inspection options to specify the logger factory classes and methods recognized by this inspection.
+</p>
 </body>
 </html>

@@ -1,20 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import org.cef.misc.CefPdfPrintSettings
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
-import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
-import java.io.File
-import java.util.function.BiConsumer
 import kotlin.random.Random
 
 class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getClassUrl()), MarkdownHtmlPanel {
@@ -40,7 +35,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
   @Volatile
   private var delayedContent: String? = null
   private var firstUpdate = true
-  private var previousRenderClousure: String = ""
+  private var previousRenderClosure: String = ""
 
   init {
     Disposer.register(this, browserPipe)
@@ -65,7 +60,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
   }
 
   private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
-    previousRenderClousure = renderClosure
+    previousRenderClosure = renderClosure
     val scrollCode = if (firstUpdate) {
       "window.scrollController.scrollTo($initialScrollOffset, true);"
     }
@@ -76,7 +71,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
         (function() {
           const action = () => {
             console.time("incremental-dom-patch");
-            const render = $previousRenderClousure;
+            const render = $previousRenderClosure;
             IncrementalDOM.patch(document.body, () => render());
             $scrollCode
             if (IncrementalDOM.notifications.afterPatchListeners) {
@@ -105,7 +100,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     delayedContent = null
     firstUpdate = true
     super.setHtml(indexContent)
-    updateDom(previousRenderClousure, offset)
+    updateDom(previousRenderClosure, offset)
   }
 
   override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {

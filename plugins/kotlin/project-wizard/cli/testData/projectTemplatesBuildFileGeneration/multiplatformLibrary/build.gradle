@@ -42,25 +42,20 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation kotlin('test-common')
-                implementation kotlin('test-annotations-common')
+                implementation kotlin('test')
             }
         }
         jvmMain {
 
         }
         jvmTest {
-            dependencies {
-                implementation kotlin('test-junit')
-            }
+
         }
         jsMain {
 
         }
         jsTest {
-            dependencies {
-                implementation kotlin('test-js')
-            }
+
         }
         nativeMain {
 

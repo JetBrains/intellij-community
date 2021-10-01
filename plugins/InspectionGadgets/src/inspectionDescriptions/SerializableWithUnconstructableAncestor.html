@@ -1,21 +1,21 @@
 <html>
 <body>
-Reports <code>Serializable</code> classes whose closest non-serializable ancestor lacks
-a no-argument constructor. Such classes can not be deserialized, but will fail with an <code>InvalidClassException</code>.
-<p>Example:</p>
+Reports <code>Serializable</code> classes whose closest non-serializable ancestor doesn't have
+a no-argument constructor. Such classes cannot be deserialized and will fail with an <code>InvalidClassException</code>.
+<p><b>Example:</b></p>
 <pre><code>
-  <b>class</b> Ancestor {
-    <b>private</b> String name;
+  class Ancestor {
+    private String name;
     Ancestor(String name) {
-      <b>this</b>.name = name;
+      this.name = name;
     }
   }
-  // warning on this class because super class is not
-  // serializable, and its constructor takes arguments
-  <b>class</b> Descendant <b>extends</b> Ancestor <b>implements</b> Serializable {
 
+  // warning on this class because the superclass is not
+  // serializable, and its constructor takes arguments
+  class Descendant extends Ancestor implements Serializable {
     Descendant() {
-      <b>super</b>("Bob");
+      super("Bob");
     }
   }
 </code></pre>

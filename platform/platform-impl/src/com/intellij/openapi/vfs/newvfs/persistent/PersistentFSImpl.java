@@ -701,7 +701,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           try {
             boolean isEndOfFileReached;
             try {
-              isEndOfFileReached = available() <= 0;
+              isEndOfFileReached = available() < 0 || read() == -1;
             }
             catch (IOException ignored) {
               isEndOfFileReached = false;

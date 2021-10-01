@@ -6,7 +6,9 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
@@ -166,7 +168,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   }
 
   private fun suggestPackageName(): String {
-    return "${groupId.toLowerCase()}.${sanitizePackage(artifactId)}"
+    return StarterModuleBuilder.suggestPackageName(groupId, artifactId)
   }
 
   private fun createComponent(): DialogPanel {
@@ -196,6 +198,13 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
+
+        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
+          val nameGeneratorUi = nameGenerator.getUi(moduleBuilder.builderId) { entityNameProperty.set(it) }
+          if (nameGeneratorUi != null) {
+            component(nameGeneratorUi).constraints(pushX)
+          }
+        }
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.location.label")) {
@@ -560,14 +569,6 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     }
 
     contentPanel.revalidate()
-  }
-
-  private fun sanitizePackage(input: String): String {
-    val fileName = FileUtil.sanitizeFileName(input, false)
-    return fileName
-      .replace(' ', '-')
-      .replace("-", "")
-      .toLowerCase()
   }
 
   @Suppress("SameParameterValue")

@@ -90,7 +90,6 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val contentRootEntity = getContentRootFor(toUrl(path)) ?: error("Can't find content root for the source root $path")
     val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity,
                                                        virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)),
-                                                       rootType.isForTests,
                                                        typeId,
                                                        entitySource)
 

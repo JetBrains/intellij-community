@@ -51,7 +51,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "  }" +
       "}");
   }
-  
+
   public void testRaw() {
     doTest(
       "import java.util.Collection;" +
@@ -74,6 +74,73 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "  BiPredicate<Long, Double> bp2 = Object::/*'equals' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
            "  BiPredicate<Long, Long> bpOk = Object::equals;\n" +
            "}\n");
+  }
+
+  public void testSimplePredicateIsEqualTest() {
+    doMemberTest("public <T> void foo(T t) {\n" +
+                 "    (java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'int'*/isEqual/**/(\"1\")).test(1);\n" +
+                 "    java.util.function.Predicate.isEqual(\"1\").test(new Object());\n" +
+                 "    java.util.function.Predicate.isEqual(new Object()).test(1);\n" +
+                 "    java.util.function.Predicate.isEqual(\"1\").test(t);\n" +
+                 "    java.util.function.Predicate.not(\n" +
+                 "                        java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'int'*/isEqual/**/(\"1\")\n" +
+                 "                )\n" +
+                 "                        .or(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'int'*/isEqual/**/(\"1\"))\n" +
+                 "                        .and(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'int'*/isEqual/**/(\"1\"))\n" +
+                 "                        .negate().test(1);\n" +
+                 "    java.util.function.Predicate.not(\n" +
+                 "                        java.util.function.Predicate.isEqual(new Object())\n" +
+                 "                )\n" +
+                 "                        .or(java.util.function.Predicate.isEqual(new Object()))\n" +
+                 "                        .and(java.util.function.Predicate.isEqual(new Object()))\n" +
+                 "                        .negate().test(1);\n" +
+                 "}\n");
+  }
+
+  public void testStreamPredicateEqualTest() {
+    doMemberTest("    public void foo() {\n" +
+                 "        java.util.List<Integer> collect = java.util.stream.Stream.of(1)\n" +
+                 "                .filter(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\"))\n" +
+                 "                .filter(java.util.function.Predicate.not(\n" +
+                 "                        java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\")\n" +
+                 "                )\n" +
+                 "                        .or(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\"))\n" +
+                 "                        .and(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\"))\n" +
+                 "                        .negate())\n" +
+                 "                .filter(java.util.function.Predicate.not(\n" +
+                 "                        java.util.function.Predicate.isEqual(new Object())\n" +
+                 "                )\n" +
+                 "                        .or(t->t.equals(1))\n" +
+                 "                        .and(java.util.function.Predicate.isEqual(new Object()))\n" +
+                 "                        .negate())\n" +
+                 "                .filter(java.util.function.Predicate.isEqual(new Object()))\n" +
+                 "                .collect(java.util.stream.Collectors.toList());\n" +
+                 "    }\n");
+  }
+
+  public void testStreamPredicateEqualWithGenericTest() {
+    doTest(
+      "import java.util.function.Predicate;\n" +
+      "\n" +
+      "public class X {\n" +
+      "    public static void example() {\n" +
+      "        test(Predicate.isEqual(\"1\"), Predicate.isEqual(\"1\"),\n" +
+      "                Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\"), " +
+      "                Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Number'*/isEqual/**/(\"1\"));\n" +
+      "        test(Predicate.not(Predicate.isEqual(\"1\")), Predicate.not(Predicate.isEqual(\"1\")),\n" +
+      "                Predicate.not(Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\")), " +
+      "                Predicate.not(Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Number'*/isEqual/**/(\"1\")));\n" +
+      "\n" +
+      "        test(Predicate.isEqual(new Object()), Predicate.isEqual(new Object()),\n" +
+      "                Predicate.isEqual(new Object()), Predicate.isEqual(new Object()));\n" +
+      "        test(Predicate.not(Predicate.isEqual(new Object())), Predicate.not(Predicate.isEqual(new Object())),\n" +
+      "                Predicate.not(Predicate.isEqual(new Object())), Predicate.not(Predicate.isEqual(new Object())));\n" +
+      "    }\n" +
+      "\n" +
+      "    static <T> void test(Predicate t1, Predicate<T> t2,\n" +
+      "                         Predicate<? super Integer> t3, Predicate<? extends Number> t4) {}\n" +
+      "}\n" +
+      "\n");
   }
 
   public void testNoCommonSubclass() {
@@ -207,7 +274,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "  }\n" +
            "}");
   }
-  
+
   public void testCapture() {
     doTest("class X<A, B> {\n" +
            "  static final X<?, ?> CONST = new X<>();\n" +
@@ -240,6 +307,6 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_11;
   }
 }

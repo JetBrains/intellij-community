@@ -1479,5 +1479,23 @@
   <item name='java.lang.Thread void setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Thread void sleep(long) 0'>
+      <annotation name='org.jetbrains.annotations.Range'>
+          <val name="from" val="0"/>
+          <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999"/>
+    </annotation>
+  </item>
 </root>
 

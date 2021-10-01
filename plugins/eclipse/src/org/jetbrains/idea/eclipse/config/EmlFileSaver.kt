@@ -19,6 +19,7 @@ import org.jetbrains.idea.eclipse.IdeaXml.*
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 /**
  * Saves additional module configuration from [ModuleEntity] to *.eml file
@@ -124,7 +125,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
     module.contentRoots.forEach { contentRoot ->
       val contentRootTag = Element(CONTENT_ENTRY_TAG).setAttribute(URL_ATTR, contentRoot.url.url)
       contentRoot.sourceRoots.forEach { sourceRoot ->
-        if (sourceRoot.tests) {
+        if (sourceRoot.rootType == JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID) {
           contentRootTag.addContent(Element(TEST_FOLDER_TAG).setAttribute(URL_ATTR, sourceRoot.url.url))
         }
         val packagePrefix = sourceRoot.asJavaSourceRoot()?.packagePrefix

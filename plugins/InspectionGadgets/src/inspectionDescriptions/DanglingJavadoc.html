@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports Javadoc comments if they don't belong to any class, method or field.
-Dangling Javadoc comments are ignored by the Javadoc tool and will not become part of the html documentation it generates.
+Reports Javadoc comments that don't belong to any class, method or field.
+<p>The Javadoc tool ignores dangling Javadoc comments and doesn't include them in the generated HTML documentation.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class A {
     /**
      * Dangling comment
@@ -13,9 +13,9 @@ Dangling Javadoc comments are ignored by the Javadoc tool and will not become pa
       */
       public void m(){}
   }
-</pre>
-<p>Quickfix may delete such comment completely or convert to a block comment, like: </p>
-<pre>
+</code></pre>
+<p>A quick-fix is available to delete such comments completely or convert them into a block comment. After the quick-fix is applied:</p>
+<pre><code>
   class A {
   /*
     Dangling comment
@@ -25,7 +25,7 @@ Dangling Javadoc comments are ignored by the Javadoc tool and will not become pa
    */
   public void m(){}
 }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

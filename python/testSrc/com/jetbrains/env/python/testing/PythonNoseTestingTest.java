@@ -11,6 +11,7 @@ import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurat
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -108,7 +109,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(new PyNoseTestFactory().getId(),
+      new CreateConfigurationMultipleCasesTask<>(new PyNoseTestFactory(PythonTestConfigurationType.getInstance()).getId(),
                                                  PyNoseTestConfiguration.class));
   }
 
@@ -163,7 +164,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyNoseTestFactory createFactory() {
-          return new PyNoseTestFactory();
+          return new PyNoseTestFactory(PythonTestConfigurationType.getInstance());
         }
       });
   }

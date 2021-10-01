@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -26,6 +27,7 @@ final class ComboContentLayout extends ContentLayout {
     reset();
 
     myIdLabel = new BaseLabel(myUi, false);
+    MouseDragHelper.setComponentDraggable(myIdLabel, true);
     myComboLabel = new ContentComboLabel(this);
   }
 

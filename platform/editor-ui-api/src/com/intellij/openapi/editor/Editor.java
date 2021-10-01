@@ -3,17 +3,13 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
@@ -327,6 +323,19 @@ public interface Editor extends UserDataHolder {
 
   default int yToVisualLine(int y) {
     return xyToVisualPosition(new Point(0, y)).line;
+  }
+
+  /**
+   * Returns the range of Y coordinates corresponding to the given visual line (not including associated block inlays).
+   *
+   * @return array of length 2, containing boundaries of the target Y range
+   */
+  default int @NotNull [] visualLineToYRange(int visualLine) {
+    int startY = visualLineToY(visualLine);
+    int startOffset = visualPositionToOffset(new VisualPosition(visualLine, 0));
+    FoldRegion foldRegion = getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    int endY = startY + (foldRegion instanceof CustomFoldRegion ? ((CustomFoldRegion)foldRegion).getHeightInPixels() : getLineHeight());
+    return new int[] {startY, endY};
   }
 
   /**

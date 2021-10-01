@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableNotNullBiFunction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.isDirectory
@@ -116,7 +118,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = createConfigDir("2019.2", product = "DataGrip")
     ConfigImportHelper.setKeymapIfNeeded(oldConfigDir, newConfigDir, LOG)
 
-    val optionFile = newConfigDir.resolve("${PathManager.OPTIONS_DIRECTORY}/keymap.xml")
+    val optionFile = newConfigDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${getPerOsSettingsStorageFolderName()}/keymap.xml")
     if (isMigrationExpected) {
       assertThat(optionFile).usingCharset(StandardCharsets.UTF_8).hasContent("""
         <application>
@@ -155,7 +157,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
-
+    Registry.get("marketplace.certificate.signature.check").setValue(false, testRootDisposable) // skip verifying plugin certificates
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
@@ -351,7 +353,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `finding related directories`() {
     fun populate(config: Path, plugins: Path?, system: Path?, logs: Path?) {
-      writeStorageFile(config, System.nanoTime() / 1_000_000)
+      writeStorageFile(config, System.currentTimeMillis())
       plugins?.createDirectories()
       system?.createDirectories()
       logs?.createDirectories()
@@ -359,14 +361,39 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     val cfg191 = createConfigDir("2019.1")
     populate(cfg191, null, null, null)
-    Files.writeString(cfg191.parent.resolve("some_file.txt"), "...")
+    if (!SystemInfo.isMac) {
+      Files.writeString(cfg191.parent.resolve("some_file.txt"), "...")
+    }
 
     val cfg192 = createConfigDir("2019.2")
     populate(cfg192, null, null, null)
+    val expected192 = when {
+      SystemInfo.isMac -> listOf(cfg192)
+      else -> listOf(cfg192.parent)
+    }
 
     val cfg193 = createConfigDir("2019.3")
-    val sys193 = cfg193.parent.resolve("system")
-    populate(cfg193, cfg193.resolve("plugins"), sys193, sys193.resolve("logs"))
+    val plugins193 = when {
+      SystemInfo.isMac -> cfg193.parent.parent.resolve("Application Support").resolve(cfg193.fileName)
+      else -> cfg193.resolve("plugins")
+    }
+    val sys193 = when {
+      SystemInfo.isMac -> cfg193.parent.parent.resolve("Caches").resolve(cfg193.fileName)
+      else -> cfg193.parent.resolve("system")
+    }
+    val logs193 = when {
+      SystemInfo.isMac -> cfg193.parent.parent.resolve("Logs").resolve(cfg193.fileName)
+      else -> sys193.resolve("logs")
+    }
+    populate(cfg193, plugins193, sys193, logs193)
+    val expected193 = when {
+      SystemInfo.isMac -> listOf(cfg193, sys193, plugins193, logs193)
+      else -> listOf(cfg193.parent)
+    }
+    val cachesAndLogs193 = when {
+      SystemInfo.isMac -> listOf(sys193, logs193)
+      else -> listOf(sys193)
+    }
 
     val cfg201 = createConfigDir("2020.1")
     populate(cfg201, null, null, null)
@@ -396,10 +423,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     val related = result.paths.map { result.findRelatedDirectories(it, false) }
     assertThat(related).containsExactlyInAnyOrder(
-      listOf(cfg191), listOf(cfg192.parent), listOf(cfg193.parent), listOf(cfg201), listOf(cfg202, sys202), expected203)
+      listOf(cfg191), expected192, expected193, listOf(cfg201), listOf(cfg202, sys202), expected203)
 
     val cachesAndLogs = result.paths.map { result.findRelatedDirectories(it, true) }.filter { it.isNotEmpty() }
     assertThat(cachesAndLogs).containsExactlyInAnyOrder(
-      listOf(sys193), listOf(sys202), cachesAndLogs203)
+      cachesAndLogs193, listOf(sys202), cachesAndLogs203)
   }
 }

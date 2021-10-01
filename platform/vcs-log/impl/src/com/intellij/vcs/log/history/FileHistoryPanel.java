@@ -93,9 +93,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         }
       }
     };
-    myGraphTable.setCompactReferencesView(true);
-    myGraphTable.setShowTagNames(false);
-    myGraphTable.setLabelsLeftAligned(false);
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
 
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
@@ -258,7 +255,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   @Nullable
-  private Change getSelectedChange() {
+  Change getSelectedChange() {
     return myFileHistoryModel.getSelectedChange(myGraphTable.getSelectedRows());
   }
 

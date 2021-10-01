@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
 class JavaSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
   }
@@ -25,5 +27,11 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test grammar check in comments`() {
     runHighlightTestForFile("ide/language/java/Comments.java")
+  }
+
+  fun `test split line quick fix`() {
+    runHighlightTestForFile("ide/language/java/SplitLine.java")
+    myFixture.launchAction(myFixture.findSingleIntention(", so"))
+    myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 }

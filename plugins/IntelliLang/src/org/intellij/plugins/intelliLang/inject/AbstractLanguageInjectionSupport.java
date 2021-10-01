@@ -39,6 +39,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,12 +60,14 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return false;
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Override
   public boolean useDefaultCommentInjector() {
     return true;
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Nullable
   @Override

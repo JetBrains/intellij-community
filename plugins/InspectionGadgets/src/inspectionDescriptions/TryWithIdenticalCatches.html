@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports identical <code>catch</code> sections in a single <code>try</code> statement. Such sections can be collapsed into
-a multi-catch section. This reduces code duplication and prevents situations when one <code>catch</code>
-section is updated though another one is not.
+Reports identical <code>catch</code> sections in a single <code>try</code> statement.
+<p>Collapsing such sections into one <i>multi-catch</i> block reduces code duplication and prevents
+  the situations when one <code>catch</code> section is updated, and another one is not.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
     try {
         doSmth();
     }
@@ -14,17 +14,17 @@ section is updated though another one is not.
     catch (URISyntaxException e) {
         LOG.error(e);
     }
-</pre>
-<p>The quickfix changes this code to the compact form:</p>
-<pre>
+</code></pre>
+<p>A quick-fix is available to make the code more compact:</p>
+<pre><code>
     try {
         doSmth();
     }
     catch (IOException | URISyntaxException e) {
         LOG.error(e);
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
+<p>This inspection only reports if the language level of the project or module is seven or higher.</p>
 </body>
 </html>

@@ -32,7 +32,7 @@ public interface PsiElementRenderingInfo<T extends PsiElement> {
     return null;
   }
 
-  static <@NotNull T extends PsiElement>
+  static <T extends @NotNull PsiElement>
   @NotNull Comparator<T> getComparator(@NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
     return Comparator.comparing(element -> ReadAction.compute(() -> {
       String elementText = renderingInfo.getPresentableText(element);
@@ -43,8 +43,8 @@ public interface PsiElementRenderingInfo<T extends PsiElement> {
     }));
   }
 
-  static <T extends PsiElement>
-  @NotNull TargetPresentation targetPresentation(@NotNull T element, @NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
+  static <T extends @NotNull PsiElement>
+  @NotNull TargetPresentation targetPresentation(T element, @NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
     return PsiElementListCellRenderer.targetPresentation(element, renderingInfo);
   }
 }

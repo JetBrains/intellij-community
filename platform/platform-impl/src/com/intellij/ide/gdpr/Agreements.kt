@@ -56,7 +56,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
     commonUserAgreement
       .setAcceptButton(bundle.getString("userAgreement.dialog.continue"), false) { dialogWrapper: DialogWrapper ->
         EndUserAgreement.setAccepted(agreement)
-        if (AppUIUtil.needToShowConsentsAgreement()) {
+        if (AppUIUtil.needToShowUsageStatsConsent()) {
           applyDataSharing(ui, bundle)
         }
         else {
@@ -68,19 +68,17 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
 }
 
 private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): AgreementUi {
-  val dataSharingConsent = ConsentOptions.getInstance().consents.key[0]
+  val dataSharingConsent = ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).first[0]
   ui.setText(prepareConsentsHtmlText(dataSharingConsent, bundle))
     .setTitle(bundle.getString("dataSharing.dialog.title"))
     .clearBottomPanel()
     .focusToText()
     .setAcceptButton(bundle.getString("dataSharing.dialog.accept")) {
-      val consentToSave = dataSharingConsent.derive(true)
-      AppUIUtil.saveConsents(listOf(consentToSave))
+      AppUIUtil.saveConsents(listOf(dataSharingConsent.derive(true)))
       it.close(DialogWrapper.OK_EXIT_CODE)
     }
     .setDeclineButton(bundle.getString("dataSharing.dialog.decline")) {
-      val consentToSave = dataSharingConsent.derive(false)
-      AppUIUtil.saveConsents(listOf(consentToSave))
+      AppUIUtil.saveConsents(listOf(dataSharingConsent.derive(false)))
       it.close(DialogWrapper.CANCEL_EXIT_CODE)
     }
   return ui

@@ -62,7 +62,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
 
       return callExpr.multiResolveCallee(resolveContext)
         .asSequence()
@@ -102,7 +102,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       ) as? PyTypedElement ?: return false
       val osPathLikeType = typeEvalContext.getType(osPathLike) ?: return false
 
-      return callExpr.multiResolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext))
+      return callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
         .mapNotNull {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)

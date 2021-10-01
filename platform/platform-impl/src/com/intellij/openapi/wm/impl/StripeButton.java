@@ -290,8 +290,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
-    return Math.abs(myPressedPoint.x - e.getPoint().x) < MouseDragHelper.DRAG_START_DEADZONE && Math.abs(myPressedPoint.y - e.getPoint().y) < MouseDragHelper
-      .DRAG_START_DEADZONE;
+    return myPressedPoint.distance(e.getPoint()) < JBUI.scale(MouseDragHelper.DRAG_START_DEADZONE);
   }
 
   private static @Nullable JLayeredPane findLayeredPane(MouseEvent e) {

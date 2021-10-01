@@ -91,7 +91,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     GHGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
-      mapping.getGitRemote().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
+      mapping.getGitRemoteUrlCoordinates().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
     if (originMapping == null) {
       GithubNotifications.showError(project,
                                     GithubNotificationIdsHolder.REBASE_REMOTE_ORIGIN_NOT_FOUND,
@@ -101,7 +101,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
-    GithubServerPath serverPath = originMapping.getRepository().getServerPath();
+    GithubServerPath serverPath = originMapping.getGhRepositoryCoordinates().getServerPath();
     GithubAccount githubAccount;
     List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
@@ -144,8 +144,8 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     new SyncForkTask(project, executor, Git.getInstance(), githubAccount.getServer(),
-                     originMapping.getGitRemote().getRepository(),
-                     originMapping.getRepository().getRepositoryPath()).queue();
+                     originMapping.getGitRemoteUrlCoordinates().getRepository(),
+                     originMapping.getGhRepositoryCoordinates().getRepositoryPath()).queue();
   }
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {

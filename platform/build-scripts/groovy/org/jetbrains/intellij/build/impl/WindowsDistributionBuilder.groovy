@@ -322,14 +322,12 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
       String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       Path targetFile = Paths.get(buildContext.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
       buildContext.messages.progress("Building Windows $targetFile archive")
-/* TODO(b/118034991): generate product-info.json files (or not)
       Path productJsonDir = Paths.get(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
-TODO(b/118034991): generate product-info.json files (or not) */
 
       String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath]  // Android Studio: modified by Change I5f8329b4
-      BuildHelper.zip(buildContext, targetFile, dirs, zipPrefix)
+      BuildHelper.zipWithPrefix(buildContext, targetFile, dirs, zipPrefix)
 /* TODO(b/118034991): generate product-info.json files (or not)
       ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
 TODO(b/118034991): generate product-info.json files (or not) */

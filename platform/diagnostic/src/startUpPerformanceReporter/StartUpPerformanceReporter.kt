@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -36,7 +36,8 @@ import java.util.function.Consumer
 
 class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   init {
-    // Since the measurement requires OptionsTopHitProvider.Activity to fire lastOptionTopHitProviderFinishedForProject, and OptionsTopHitProvider.Activity is not available in test or headless mode:
+    // Since the measurement requires OptionsTopHitProvider.Activity to fire lastOptionTopHitProviderFinishedForProject,
+    // and OptionsTopHitProvider.Activity is not available in test or headless mode:
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.INSTANCE
@@ -84,32 +85,29 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       var end = -1L
 
       StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
-        // process it now to ensure that thread will have first name (because report writer can process events in any order)
+        // process it now to ensure that thread will have a first name (because report writer can process events in any order)
         threadNameManager.getThreadName(item)
 
         if (item.end == -1L) {
           instantEvents.add(item)
         }
         else {
-          val category = item.category ?: ActivityCategory.DEFAULT
-          if (category == ActivityCategory.DEFAULT) {
-            if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
-              end = item.end
+          when (val category = item.category ?: ActivityCategory.DEFAULT) {
+            ActivityCategory.DEFAULT -> {
+              if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+                end = item.end
+              }
+              activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
             }
-            activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
-          }
-          else if (category == ActivityCategory.APP_COMPONENT ||
-                   category == ActivityCategory.PROJECT_COMPONENT ||
-                   category == ActivityCategory.MODULE_COMPONENT ||
-                   category == ActivityCategory.APP_SERVICE ||
-                   category == ActivityCategory.PROJECT_SERVICE ||
-                   category == ActivityCategory.MODULE_SERVICE ||
-                   category == ActivityCategory.SERVICE_WAITING) {
-            services.add(item)
-            serviceActivities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
-          }
-          else {
-            activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+            ActivityCategory.APP_COMPONENT, ActivityCategory.PROJECT_COMPONENT, ActivityCategory.MODULE_COMPONENT,
+            ActivityCategory.APP_SERVICE, ActivityCategory.PROJECT_SERVICE, ActivityCategory.MODULE_SERVICE,
+            ActivityCategory.SERVICE_WAITING -> {
+              services.add(item)
+              serviceActivities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+            }
+            else -> {
+              activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+            }
           }
         }
       }
@@ -213,11 +211,19 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     reportIfAnotherAlreadySet(project.name)
   }
 
+  override fun reportStatistics(project: Project) {
+    NonUrgentExecutor.getInstance().execute {
+      logStats(project.name)
+    }
+  }
+
   private fun reportIfAnotherAlreadySet(projectName: String) {
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
       StartUpMeasurer.stopPluginCostMeasurement()
+      // Don't report statistic from here if we want to measure project import duration
+      if (SystemProperties.getBooleanProperty("idea.collect.project.import.performance", false)) return
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
         logStats(projectName)
@@ -227,7 +233,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
   @Synchronized
   private fun logStats(projectName: String) {
-    val params = doLogStats(projectName) ?: return
+    val params = doLogStats(projectName)
     pluginCostMap = params.pluginCostMap
     lastReport = params.lastReport
     lastMetrics = params.lastMetrics
@@ -256,7 +262,7 @@ private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<St
   return result
 }
 
-// to make output more compact (quite a lot slow components)
+// to make output more compact (quite a lot of slow components)
 internal class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   private var objectLevel = 0
 
@@ -273,21 +279,6 @@ internal class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
     objectLevel--
     if (objectLevel <= 1) {
       _objectIndenter = UNIX_LINE_FEED_INSTANCE
-    }
-  }
-}
-
-internal fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {
-  if (item.parent != null) {
-    return true
-  }
-
-  var index = itemIndex
-  while (true) {
-    val prevItem = list.getOrNull(--index) ?: return false
-    // items are sorted, no need to check start or next items
-    if (prevItem.end >= item.end) {
-      return true
     }
   }
 }

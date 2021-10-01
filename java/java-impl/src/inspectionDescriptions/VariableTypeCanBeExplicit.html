@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports local variables with a <code>var</code> type that can be replaced with an explicit type.
-This could be used to eliminate the usages of implicit types in case of downgrading.
+Reports local variables of the <code>var</code> type that can be replaced withvan explicit type.
+<p>The inspection can help find and eliminate usages of implicit types in case of downgrading.</p>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 10 or higher.</p>
-<p>Example: </p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   var str = "Hello";
-</pre>
-<p>After the fix: </p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   String str = "Hello";
-</pre>
+</code></pre>
+<p>This inspection only reports if the language level of the project or module is ten or higher.</p>
 </body>
 </html>

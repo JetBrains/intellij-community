@@ -125,7 +125,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 else -> Indent.getNormalIndent()
             }
 
-            factory.createIndentCalculator(indent, IndentCalculator.LINE_BEFORE)
+            factory.createIndentCalculator(indent, controlFlowKeywordPosition.startOffset)
         }
     }
 

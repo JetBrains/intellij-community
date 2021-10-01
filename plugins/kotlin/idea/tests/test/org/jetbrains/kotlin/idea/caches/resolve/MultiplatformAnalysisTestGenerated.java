@@ -28,6 +28,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/aliasesTypeMismatch/");
     }
 
+    @TestMetadata("builtinsAndStdlib")
+    public void testBuiltinsAndStdlib() throws Exception {
+        runTest("testData/multiplatform/builtinsAndStdlib/");
+    }
+
     @TestMetadata("callableReferences")
     public void testCallableReferences() throws Exception {
         runTest("testData/multiplatform/callableReferences/");
@@ -158,6 +163,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/kt41218/");
     }
 
+    @TestMetadata("kt44898")
+    public void testKt44898() throws Exception {
+        runTest("testData/multiplatform/kt44898/");
+    }
+
     @TestMetadata("lambdas")
     public void testLambdas() throws Exception {
         runTest("testData/multiplatform/lambdas/");
@@ -171,6 +181,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("multilevelParents")
     public void testMultilevelParents() throws Exception {
         runTest("testData/multiplatform/multilevelParents/");
+    }
+
+    @TestMetadata("multiplatformLibrary")
+    public void testMultiplatformLibrary() throws Exception {
+        runTest("testData/multiplatform/multiplatformLibrary/");
     }
 
     @TestMetadata("overrideExpect")
@@ -233,6 +248,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/typeParameters/");
     }
 
+    @TestMetadata("unresolvedInMultiplatformLibrary")
+    public void testUnresolvedInMultiplatformLibrary() throws Exception {
+        runTest("testData/multiplatform/unresolvedInMultiplatformLibrary/");
+    }
+
     @TestMetadata("useCorrectBuiltIns")
     public void testUseCorrectBuiltIns() throws Exception {
         runTest("testData/multiplatform/useCorrectBuiltIns/");
@@ -241,5 +261,10 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("weaklyIncompatibleActualInIntermediateModule")
     public void testWeaklyIncompatibleActualInIntermediateModule() throws Exception {
         runTest("testData/multiplatform/weaklyIncompatibleActualInIntermediateModule/");
+    }
+
+    @TestMetadata("whenExhaustivenessForSealed")
+    public void testWhenExhaustivenessForSealed() throws Exception {
+        runTest("testData/multiplatform/whenExhaustivenessForSealed/");
     }
 }

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
-import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 
 internal abstract class PackageUpdateInspection : LocalInspectionTool() {
@@ -24,7 +24,7 @@ internal abstract class PackageUpdateInspection : LocalInspectionTool() {
         }
 
         val project = file.project
-        val dataModel = project.dataService().dataModelProperty.value
+        val dataModel = project.packageSearchDataService.dataModelFlow.value
 
         if (dataModel.packageModels.isEmpty()) return null
 

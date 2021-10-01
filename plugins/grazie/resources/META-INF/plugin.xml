@@ -14,7 +14,7 @@
     </ul>
 
     <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
-       and select <strong>Editor</strong> > <strong>Proofreading</strong>.</p>
+       and select <strong>Editor</strong> > <strong>Natural Languages</strong>.</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
@@ -50,9 +50,7 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSState$ContextLanguageValidator"/>
-
-    <statistics.counterUsagesCollector groupId="grazie.count" version="3"/>
+    <statistics.counterUsagesCollector groupId="grazie.count" version="4"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
@@ -84,6 +82,9 @@
       <with attribute="implementationClass" implements="com.intellij.grazie.text.ProblemFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
+                    beanClass="com.intellij.grazie.config.CheckingContext$DisableChecking"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

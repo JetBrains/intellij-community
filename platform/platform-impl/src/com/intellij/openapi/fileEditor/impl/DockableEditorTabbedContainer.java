@@ -339,7 +339,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myBoundingBox = null;
       setNeedsRepaint(true);
 
-      Rectangle r = TabsUtil.getDropArea(myCurrentOver);
+      Rectangle r = myCurrentOver.getDropArea();
       int currentDropSide = getCurrentDropSide();
       if (currentDropSide == -1) {
         return;

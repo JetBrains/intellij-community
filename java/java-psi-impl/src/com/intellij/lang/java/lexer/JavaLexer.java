@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -44,7 +44,7 @@ public final class JavaLexer extends LexerBase {
   }
 
   public static boolean isSealedAvailable(@NotNull LanguageLevel level) {
-    return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (level == LanguageLevel.JDK_X || level.isPreview());
+    return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (level.isAtLeast(LanguageLevel.JDK_17) || level.isPreview());
   }
 
   private final _JavaLexer myFlexLexer;
@@ -60,7 +60,7 @@ public final class JavaLexer extends LexerBase {
   }
 
   @Override
-  public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
     myBufferIndex = startOffset;
@@ -76,24 +76,24 @@ public final class JavaLexer extends LexerBase {
   }
 
   @Override
-  public final IElementType getTokenType() {
+  public IElementType getTokenType() {
     locateToken();
     return myTokenType;
   }
 
   @Override
-  public final int getTokenStart() {
+  public int getTokenStart() {
     return myBufferIndex;
   }
 
   @Override
-  public final int getTokenEnd() {
+  public int getTokenEnd() {
     locateToken();
     return myTokenEndOffset;
   }
 
   @Override
-  public final void advance() {
+  public void advance() {
     locateToken();
     myTokenType = null;
   }
@@ -311,7 +311,7 @@ public final class JavaLexer extends LexerBase {
   }
 
   @Override
-  public final int getBufferEnd() {
+  public int getBufferEnd() {
     return myBufferEndOffset;
   }
 }

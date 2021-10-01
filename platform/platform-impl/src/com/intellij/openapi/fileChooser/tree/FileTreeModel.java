@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -84,14 +84,14 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final Object getRoot() {
+  public Object getRoot() {
     if (state.path != null) return state;
     if (roots == null) roots = state.getRoots();
     return 1 == roots.size() ? roots.get(0) : null;
   }
 
   @Override
-  public final Object getChild(Object object, int index) {
+  public Object getChild(Object object, int index) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       if (0 <= index && index < roots.size()) return roots.get(index);
@@ -104,7 +104,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final int getChildCount(Object object) {
+  public int getChildCount(Object object) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       return roots.size();
@@ -117,7 +117,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final boolean isLeaf(Object object) {
+  public boolean isLeaf(Object object) {
     if (object instanceof Node) {
       Entry<Node> entry = getEntry((Node)object, false);
       if (entry != null) return entry.isLeaf();
@@ -126,7 +126,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final int getIndexOfChild(Object object, Object child) {
+  public int getIndexOfChild(Object object, Object child) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       for (int i = 0; i < roots.size(); i++) {

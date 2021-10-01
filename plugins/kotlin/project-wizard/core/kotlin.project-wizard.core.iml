@@ -23,6 +23,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
@@ -30,8 +31,8 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 // WITH_RUNTIME
-// INTENTION_TEXT: "Add return@bar"
+// INTENTION_TEXT: "Add 'return@bar'"
 
 private fun <T> List<T>.bar(a: (T) -> Boolean, b: (T) -> Boolean) {}
 

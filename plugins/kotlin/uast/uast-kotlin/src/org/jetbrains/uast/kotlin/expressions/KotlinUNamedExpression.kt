@@ -17,7 +17,7 @@ class KotlinUNamedExpression private constructor(
 
     override val expression: UExpression by lz { expressionProducer(this) }
 
-    override val annotations: List<UAnnotation> = emptyList()
+    override val uAnnotations: List<UAnnotation> = emptyList()
 
     override val psi: PsiElement? = null
 

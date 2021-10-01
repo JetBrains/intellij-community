@@ -7,11 +7,10 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelBase
 import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
-import kotlin.properties.Delegates
 import kotlin.properties.Delegates.observable
 
 class GHPRCreateMetadataModel(repositoryDataService: GHPRRepositoryDataService,

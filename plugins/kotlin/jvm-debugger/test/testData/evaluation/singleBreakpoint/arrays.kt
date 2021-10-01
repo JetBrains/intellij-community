@@ -26,8 +26,8 @@ fun main(args: Array<String>) {
 // EXPRESSION: arrayOf(1, 2).last()
 // RESULT: 2: I
 
-// EXPRESSION: intArrayOf(1, 2).max()
+// EXPRESSION: intArrayOf(1, 2).maxOrNull()
 // RESULT: instance of java.lang.Integer(id=ID): Ljava/lang/Integer;
 
-// EXPRESSION: arrayOf(1, 2).max()
+// EXPRESSION: arrayOf(1, 2).maxOrNull()
 // RESULT: instance of java.lang.Integer(id=ID): Ljava/lang/Integer;

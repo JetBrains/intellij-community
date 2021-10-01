@@ -151,6 +151,8 @@ private inline fun <T> wrapAbsentInformationException(block: () -> T): T? {
         null
     } catch (e: InternalException) {
         null
+    } catch (e: UnsupportedOperationException) {
+        null
     }
 }
 

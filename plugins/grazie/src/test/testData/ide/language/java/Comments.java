@@ -5,8 +5,8 @@ class ForMultiLanguageSupport {
 
 
     // My
-    // <warning descr="COMMA_WHICH">name
-    //    which</warning> I occurred is
+    // <warning descr="COMMA_WHICH">name</warning>
+    //    <warning descr="COMMA_WHICH">which</warning> I occurred is
     // bad
 
 
@@ -15,4 +15,22 @@ class ForMultiLanguageSupport {
 
     //    which I occurred is
     // bad
+
+  // todo no mistakes here so far
+
+  // also releases ThreadContext.consumer reference
+
+  /** An int list where most values are in the range 0..2^16 */
+
+  // contains only letters, digits, numbers, underscores ("_")
+
+  // An iterable of bundle instances
+
+  // Resolve '../' in paths (like real_path)
+
+  // Thrown when an UPLOAD_ERR_CANT_WRITE error occurred with UploadedFile.
+
+  // We don't use the PHP php_strip_whitespace() function
+
+  // If Content-Type is set to text/html, or is unset -> html
 }

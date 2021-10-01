@@ -364,7 +364,7 @@ class PluginDescriptorTest {
 
     assertThat(foo.pluginId.idString).isEqualTo("foo")
     val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
-    assertThat(fooClassLoader._getParents()).containsExactly(bar.pluginClassLoader)
+    assertThat(fooClassLoader._getParents()!!).containsExactly(bar.pluginClassLoader)
   }
 
   @Test

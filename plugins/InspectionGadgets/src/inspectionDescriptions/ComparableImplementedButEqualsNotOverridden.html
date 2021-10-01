@@ -1,38 +1,41 @@
 <html>
 <body>
-Reports classes which implement <code>java.lang.Comparable</code>
-which do not override <code>equals()</code>. If <code>equals()</code>
-is not overridden, the <code>equals()</code> implementation is not consistent with
-the <code>compareTo()</code> implementation. If an object of such a class is added
-to a collection such as <code>java.util.SortedSet</code>, this collection will violate
-the contract of <code>java.util.Set</code>, which is defined in terms of
-<code>equals()</code>.
-<p>For example:</p>
+Reports classes that implement <code>java.lang.Comparable</code>
+but do not override <code>equals()</code>.
+<p>
+  If <code>equals()</code>
+  is not overridden, the <code>equals()</code> implementation is not consistent with
+  the <code>compareTo()</code> implementation. If an object of such a class is added
+  to a collection such as <code>java.util.SortedSet</code>, this collection will violate
+  the contract of <code>java.util.Set</code>, which is defined in terms of
+  <code>equals()</code>.
+</p>
+<p><b>Example:</b></p>
 <pre><code>
-  <b>class</b> Length <b>implements</b> Comparable&lt;Length> {
-    <b>private int</b> cm = 0;
+  class Length implements Comparable&lt;Length> {
+    private int cm = 0;
 
     @Override
-    <b>public int</b> compareTo(@NotNull Length o) {
-      <b>if</b> (cm == o.cm) <b>return</b> 0;
-      <b>return</b> cm < o.cm ? -1 : 1;
+    public int compareTo(@NotNull Length o) {
+      if (cm == o.cm) return 0;
+      return cm < o.cm ? -1 : 1;
     }
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>After the quick fix is applied:</p>
 <pre><code>
-  <b>class</b> Length <b>implements</b> Comparable&lt;Length> {
-    <b>private int</b> cm = 0;
+  class Length implements Comparable&lt;Length> {
+    private int cm = 0;
 
     @Override
-    <b>public int</b> compareTo(@NotNull Length o) {
-      <b>if</b> (cm == o.cm) <b>return</b> 0;
-      <b>return</b> cm < o.cm ? -1 : 1;
+    public int compareTo(@NotNull Length o) {
+      if (cm == o.cm) return 0;
+      return cm < o.cm ? -1 : 1;
     }
 
     @Override
-    <b>public boolean</b> equals(Object o) {
-      <b>return</b> o <b>instanceof</b> Length && compareTo((Length) o) == 0;
+    public boolean equals(Object o) {
+      return o instanceof Length && compareTo((Length) o) == 0;
     }
   }
 </code></pre>

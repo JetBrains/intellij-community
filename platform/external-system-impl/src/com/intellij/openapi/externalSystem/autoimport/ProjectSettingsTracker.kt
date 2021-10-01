@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -21,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LocalTimeCounter.currentTime
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
@@ -53,8 +51,8 @@ class ProjectSettingsTracker(
   private fun calculateCrc(file: VirtualFile): Long {
     val fileDocumentManager = FileDocumentManager.getInstance()
     val document = fileDocumentManager.getCachedDocument(file)
-    if (document != null) return document.calculateCrc(project, file)
-    return file.calculateCrc(project)
+    if (document != null) return document.calculateCrc(project, projectAware.projectId.systemId, file)
+    return file.calculateCrc(project, projectAware.projectId.systemId)
   }
 
   fun isUpToDate() = status.isUpToDate()

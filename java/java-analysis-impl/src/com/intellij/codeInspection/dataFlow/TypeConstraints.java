@@ -409,7 +409,7 @@ public final class TypeConstraints {
     public StreamEx<Exact> superTypes() {
       List<Exact> superTypes = new ArrayList<>();
       InheritanceUtil.processSupers(myClass, false, t -> {
-        if (!t.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!(t instanceof PsiTypeParameter) && !t.hasModifierProperty(PsiModifier.FINAL)) {
           superTypes.add(exactClass(t));
         }
         return true;

@@ -32,7 +32,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
 
       val call = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java) ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
       val callableTypes = call.multiResolveCallee(resolveContext)
       if (callableTypes.isEmpty()) return
 

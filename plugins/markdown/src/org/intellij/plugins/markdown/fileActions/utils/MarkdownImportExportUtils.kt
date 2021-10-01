@@ -20,9 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
+import com.intellij.util.ModalityUiUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
@@ -60,7 +60,7 @@ object MarkdownImportExportUtils {
    * if the directory is not specified, the base directory of the project is refreshed.
    */
   fun refreshProjectDirectory(project: Project, refreshPath: String) {
-    GuiUtils.invokeLaterIfNeeded(
+    ModalityUiUtil.invokeLaterIfNeeded(
       {
         LocalFileSystem
           .getInstance()

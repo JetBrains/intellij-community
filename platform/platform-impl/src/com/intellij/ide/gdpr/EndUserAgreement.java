@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -245,21 +246,19 @@ public final class EndUserAgreement {
     }
 
     private static @NotNull Version parseVersion(String text) {
-      if (text != null && !text.isBlank()) {
-        try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
-          final String line = reader.readLine();
-          if (line != null) {
-            final int startComment = line.indexOf(VERSION_COMMENT_START);
-            if (startComment >= 0) {
-              final int endComment = line.indexOf(VERSION_COMMENT_END);
-              if (endComment > startComment) {
-                return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
-              }
-            }
+      if (text == null || text.isBlank()) {
+        return Version.UNKNOWN;
+      }
+
+      Iterator<String> iterator = text.lines().iterator();
+      while (iterator.hasNext()) {
+        String line = iterator.next();
+        int startComment = line.indexOf(VERSION_COMMENT_START);
+        if (startComment >= 0) {
+          int endComment = line.indexOf(VERSION_COMMENT_END);
+          if (endComment > startComment) {
+            return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
           }
-        }
-        catch (IOException e) {
-          LOG.info(e);
         }
       }
       return Version.UNKNOWN;

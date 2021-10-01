@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -529,6 +530,7 @@ public final class ArrayUtil {
   /**
    * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
     //noinspection ArrayEquality

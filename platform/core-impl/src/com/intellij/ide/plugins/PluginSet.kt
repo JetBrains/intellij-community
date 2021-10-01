@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
@@ -53,6 +54,9 @@ class PluginSet(
     this.enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginAndV1ModuleMap)
     this.moduleMap = java11Shim.copyOf(moduleMap)
   }
+
+  @TestOnly
+  fun getUnsortedEnabledModules(): Collection<PluginContentDescriptor.ModuleItem> = ArrayList(moduleMap.values)
 
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 

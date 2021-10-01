@@ -2,8 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.actions.NextTabAction;
-import com.intellij.ide.actions.PreviousTabAction;
+import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.ide.lightEdit.project.LightEditProjectManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -175,6 +174,12 @@ public final class LightEditServiceImpl implements LightEditService,
       if (newEditorInfo != null) {
         addEditorTab(newEditorInfo);
         LOG.info("Opened new tab for " + file.getPresentableUrl());
+        if (Boolean.TRUE.equals(file.getUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT))) {
+          file.putUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT, null);
+          if (!LightEditConfiguration.PreferredMode.LightEdit.equals(myConfiguration.preferredMode)) {
+            suggestSwitchToProject(getOrCreateProject(), file);
+          }
+        }
       }
       else {
         processNotOpenedFile(file);
@@ -186,6 +191,24 @@ public final class LightEditServiceImpl implements LightEditService,
     }
 
     logStartupTime();
+  }
+
+  private void suggestSwitchToProject(@NotNull Project project, @NotNull VirtualFile file) {
+    LightEditConfirmationDialog dialog = new LightEditConfirmationDialog(project);
+    dialog.show();
+    if (dialog.isDontAsk()) {
+      switch (dialog.getExitCode()) {
+        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT:
+          myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
+          break;
+        case LightEditConfirmationDialog.PROCEED_TO_PROJECT:
+          myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
+          break;
+      }
+    }
+    if (dialog.getExitCode() == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
+      LightEditOpenInProjectIntention.performOn(getOrCreateProject(), file);
+    }
   }
 
   private void processNotOpenedFile(@NotNull VirtualFile file) {
@@ -525,5 +548,11 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void navigateToTab(@NotNull AnAction navigationAction) {
     getEditPanel().getTabs().navigateToTab(navigationAction);
+  }
+
+  @Override
+  public boolean isPreferProjectMode() {
+    return myConfiguration.preferredMode != null &&
+           LightEditConfiguration.PreferredMode.Project.equals(myConfiguration.preferredMode);
   }
 }

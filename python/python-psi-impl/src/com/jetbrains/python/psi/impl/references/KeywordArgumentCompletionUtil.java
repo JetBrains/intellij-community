@@ -82,7 +82,7 @@ public class KeywordArgumentCompletionUtil {
   }
 
   private static PsiElement getElementByChain(@NotNull PyReferenceExpression callee, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
     final QualifiedResolveResult result = callee.followAssignmentsChain(resolveContext);
     return result.getElement();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -198,14 +198,6 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           }
         }
       }
-      titledRow(message("group.limits")) {
-        row(message("editbox.recent.files.limit")) {
-          intTextField(uiSettings::recentFilesLimit, range = 1..500, columns = 4)
-        }
-        row(message("editbox.recent.locations.limit")) {
-          intTextField(uiSettings::recentLocationsLimit, range = 1..100, columns = 4)
-        }
-      }
       titledRow(message("group.richcopy")) {
         row {
           val copyShortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_COPY)
@@ -301,6 +293,9 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
+      titledRow(message("group.quick.documentation")) {
+        row { checkBox(cdShowQuickDocOnMouseMove) }
+      }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
         titledRow(message("group.refactorings")) {
           row {
@@ -352,9 +347,6 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         for (configurable in configurables) {
           appendDslConfigurableRow(configurable)
         }
-      }
-      titledRow(message("group.quick.documentation")) {
-        row { checkBox(cdShowQuickDocOnMouseMove) }
       }
       titledRow(message("group.editor.tooltips")) {
         row {

@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports copying array content into collection in a loop instead of using
-<code>Collection.addAll(Arrays.asList())</code> or <code>Collections.addAll()</code> methods.
-Replacing loops make your code shorter and potentially faster depending on the collection implementation
+Reports code that uses a loop to copy the contents of an array into a collection.
 <p>
-Note that only loops that don't have any additional statements inside are reported.
-<p>Example:</p>
+  A shorter and potentially faster (depending on the collection implementation) way to do this is using <code>Collection.addAll(Arrays.asList())</code> or <code>Collections.addAll()</code>.
+</p>
+<p>
+<p>Only loops without additional statements inside are reported.</p>
+<p><b>Example:</b></p>
 <pre>
   void addAll(List&lt;String&gt; list, String[] arr) {
     for (int i = 0; i &lt; arr.length; i++) {
@@ -14,7 +15,7 @@ Note that only loops that don't have any additional statements inside are report
     }
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   void addAll(List&lt;String&gt; list, String[] arr) {
     Collections.addAll(list, arr);

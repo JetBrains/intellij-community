@@ -71,28 +71,48 @@ internal class PluginModelValidator {
     }
 
     // 3. check dependencies - we are aware about all modules now
-    for (moduleInfo in pluginIdToInfo.values) {
-      val descriptor = moduleInfo.descriptor
+    for (pluginInfo in pluginIdToInfo.values) {
+      val descriptor = pluginInfo.descriptor
 
-      descriptor.getChild("dependencies")?.let { dependencies ->
-        checkDependencies(dependencies, moduleInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+      val dependenciesElements = descriptor.getChildren("dependencies")
+      if (dependenciesElements.size > 1) {
+        errors.add(PluginValidationError(
+          "The only `dependencies` tag is expected",
+          mapOf(
+            "descriptorFile" to pluginInfo.descriptorFile,
+          )))
+      }
+      else if (dependenciesElements.size == 1) {
+        checkDependencies(dependenciesElements.first(), pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
       }
 
       // in the end after processing content and dependencies
-      if (moduleInfo.packageName == null && hasContentOrDependenciesInV2Format(descriptor)) {
+      if (pluginInfo.packageName == null && hasContentOrDependenciesInV2Format(descriptor)) {
         // some plugins cannot be yet fully migrated
-        System.err.println("Plugin ${moduleInfo.pluginId} is not fully migrated: package is not specified" +
-                           " (pluginId=${moduleInfo.pluginId}, descriptor=${pathToShortString(moduleInfo.descriptorFile)})")
+        System.err.println("Plugin ${pluginInfo.pluginId} is not fully migrated: package is not specified" +
+                           " (pluginId=${pluginInfo.pluginId}, descriptor=${pathToShortString(pluginInfo.descriptorFile)})")
       }
 
-      for (contentModuleInfo in moduleInfo.content) {
+      if (pluginInfo.packageName != null) {
+        descriptor.children.firstOrNull { it.name == "depends" && it.getAttributeValue("optional") == null }?.let {
+          errors.add(PluginValidationError(
+            "Old format must be not used for a plugin with a specified package prefix but `depends` tag is used, use a new format, see " +
+            "(https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
+            mapOf(
+              "descriptorFile" to pluginInfo.descriptorFile,
+              "depends" to it,
+            )))
+        }
+      }
+
+      for (contentModuleInfo in pluginInfo.content) {
         contentModuleInfo.descriptor.getChild("dependencies")?.let { dependencies ->
-          checkDependencies(dependencies, contentModuleInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+          checkDependencies(dependencies, contentModuleInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
         }
 
         contentModuleInfo.descriptor.getChild("depends")?.let {
           errors.add(PluginValidationError(
-            "Old format must be not used for a module: `depends` tag is used",
+            "Old format must be not used for a module but `depends` tag is used",
             mapOf(
               "descriptorFile" to contentModuleInfo.descriptorFile,
               "depends" to it,
@@ -125,20 +145,13 @@ internal class PluginModelValidator {
     return stringWriter.buffer
   }
 
-  fun printGraph() {
-    val graphAsString = graphAsString()
-    println(graphAsString)
-    System.getProperty("plugin.graph.out")?.let {
-      PluginGraphWriter(pluginIdToInfo).write(Path.of(it))
-    }
-  }
-
   fun writeGraph(outFile: Path) {
     PluginGraphWriter(pluginIdToInfo).write(outFile)
   }
 
   private fun checkDependencies(element: XmlElement,
                                 referencingModuleInfo: ModuleInfo,
+                                referencingPluginInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
     if (referencingModuleInfo.packageName == null) {
@@ -169,6 +182,14 @@ internal class PluginModelValidator {
             errors.add(PluginValidationError("Use com.intellij.modules.java id instead of com.intellij.modules.java", getErrorInfo()))
             continue
           }
+          if (id == "com.intellij.modules.platform") {
+            errors.add(PluginValidationError("No need to specify dependency on $id", getErrorInfo()))
+            continue
+          }
+          if (id == referencingPluginInfo.pluginId) {
+            errors.add(PluginValidationError("Do not add dependency on a parent plugin", getErrorInfo()))
+            continue
+          }
 
           val dependency = pluginIdToInfo.get(id)
           if (!id.startsWith("com.intellij.modules.") && dependency == null) {
@@ -176,10 +197,16 @@ internal class PluginModelValidator {
             continue
           }
 
-          val ref = Reference(id, isPlugin = true,
-                              moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
-                                                                    XmlElement("", Collections.emptyMap(), Collections.emptyList(), null)))
-          assert(!referencingModuleInfo.dependencies.contains(ref))
+          val ref = Reference(
+            name = id,
+            isPlugin = true,
+            moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
+                                                  XmlElement("", Collections.emptyMap(), Collections.emptyList(), null))
+          )
+          if (referencingModuleInfo.dependencies.contains(ref)) {
+            errors.add(PluginValidationError("Referencing module dependencies contains $id: $id", getErrorInfo()))
+            continue
+          }
           referencingModuleInfo.dependencies.add(ref)
           continue
         }
@@ -299,6 +326,7 @@ internal class PluginModelValidator {
       moduleNameToInfo.put(moduleName, moduleInfo)
       referencingModuleInfo.content.add(moduleInfo)
 
+      @Suppress("GrazieInspection")
       // check that not specified using `depends` tag
       for (dependsElement in referencingModuleInfo.descriptor.children) {
         if (dependsElement.name != "depends") {
@@ -408,10 +436,9 @@ private fun computeModuleSet(sourceModules: List<PluginModelValidator.Module>,
                              errors: MutableList<Throwable>): LinkedHashMap<String, ModuleDescriptorFileInfo> {
   val sourceModuleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorFileInfo>()
   for (module in sourceModules) {
-    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
+    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now
     if (module.name.startsWith("fleet.") ||
         module.name == "fleet" ||
-        module.name == "intellij.idea.ultimate.resources" ||
         // https://youtrack.jetbrains.com/issue/IDEA-261850
         module.name == "intellij.indexing.shared.ultimate.plugin.internal.generator" ||
         module.name == "intellij.indexing.shared.ultimate.plugin.public" ||

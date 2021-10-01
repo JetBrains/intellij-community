@@ -10,12 +10,16 @@ import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
 import org.jetbrains.kotlin.builtins.replaceReturnType
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.descriptors.impl.ClassDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.load.java.MUTABLE_ANNOTATIONS
+import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
+import org.jetbrains.kotlin.load.java.READ_ONLY_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.components.TypeUsage
 import org.jetbrains.kotlin.load.java.lazy.JavaResolverComponents
 import org.jetbrains.kotlin.load.java.lazy.LazyJavaResolverContext
@@ -45,6 +49,37 @@ fun KotlinType.approximateFlexibleTypes(
     if (isDynamic()) return this
     return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw)
 }
+
+fun KotlinType.withoutRedundantAnnotations(): KotlinType {
+    var argumentsWasChanged = false
+    val newArguments = arguments.map(fun(typeProjection: TypeProjection): TypeProjection {
+        if (typeProjection.isStarProjection) return typeProjection
+
+        val newType = typeProjection.type.withoutRedundantAnnotations()
+        if (typeProjection.type === newType) return typeProjection
+
+        argumentsWasChanged = true
+        return typeProjection.replaceType(newType)
+    })
+
+    val newAnnotations = FilteredAnnotations(
+        annotations,
+        isDefinitelyNewInference = true,
+        fqNameFilter = { !it.isRedundantJvmAnnotation },
+    )
+
+    val annotationsWasChanged = newAnnotations.count() != annotations.count()
+    if (!argumentsWasChanged && !annotationsWasChanged) return this
+
+    return replace(
+        newArguments = newArguments.takeIf { argumentsWasChanged } ?: arguments,
+        newAnnotations = newAnnotations.takeIf { annotationsWasChanged } ?: annotations,
+    )
+}
+
+val FqName.isRedundantJvmAnnotation: Boolean get() = this in NULLABILITY_ANNOTATIONS ||
+        this in MUTABLE_ANNOTATIONS ||
+        this in READ_ONLY_ANNOTATIONS
 
 private fun KotlinType.approximateNonDynamicFlexibleTypes(
     preferNotNull: Boolean = false,

@@ -42,7 +42,7 @@ public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
       if (subscriptionExpression.getOperand() instanceof PyReferenceExpression) {
         PyReferenceExpression referenceExpression = (PyReferenceExpression)subscriptionExpression.getOperand();
         final TypeEvalContext context = TypeEvalContext.userInitiated(project, element.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         element = referenceExpression.followAssignmentsChain(resolveContext).getElement();
         if (element instanceof PyParenthesizedExpression) {
           final PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();

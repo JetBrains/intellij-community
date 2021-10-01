@@ -4,7 +4,7 @@ package com.intellij.collaboration.auth.ui
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
-import com.intellij.collaboration.ui.codereview.SingleValueModelImpl
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -23,7 +23,7 @@ abstract class LoadingAccountsDetailsProvider<in A : Account, D : AccountDetails
 
   open val defaultIcon: Icon = IconUtil.resizeSquared(EmptyIcon.ICON_16, 40)
   private val detailsMap = mutableMapOf<A, CompletableFuture<DetailsLoadingResult<D>>>()
-  override val loadingStateModel = SingleValueModelImpl(false)
+  override val loadingStateModel = SingleValueModel(false)
 
   private var runningProcesses = 0
 

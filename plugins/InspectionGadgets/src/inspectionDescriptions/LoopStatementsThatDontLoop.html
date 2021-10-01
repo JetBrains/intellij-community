@@ -1,19 +1,19 @@
 <html>
 <body>
 Reports any instance of <code>for</code>,
-<code>while</code> and <code>do</code> statements whose
-bodies are guaranteed to execute at most once. Normally, this is an indication of a bug.
+<code>while</code>, and <code>do</code> statements whose
+bodies will be executed once at most. Normally, this is an indication of a bug.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore the foreach loops.
+Use the <b>Ignore enhanced for loops</b> option to ignore the foreach loops.
 They are sometimes used to perform an action only on the first item of an iterable in a compact way.
 </p>
-<p>For example:</p>
-<pre>
+<p>Example:</p>
+<pre><code>
   <b>for</b> (String s : stringIterable) {
     doSomethingOnFirstString(s);
     <b>break</b>;
   }
-</pre>
+</code></pre>
 </body>
 </html>

@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
-import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor;
+import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubBasedPsiElementBase;
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElement;
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement;
@@ -39,8 +39,8 @@ public class MarkdownHeaderImpl extends MarkdownStubBasedPsiElementBase<Markdown
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof MarkdownRecursiveElementVisitor) {
-      ((MarkdownRecursiveElementVisitor)visitor).visitHeader(this);
+    if (visitor instanceof MarkdownElementVisitor) {
+      ((MarkdownElementVisitor)visitor).visitHeader(this);
       return;
     }
 

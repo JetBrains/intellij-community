@@ -181,7 +181,25 @@ public final class InstanceOfUtils {
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
    */
   @Nullable
-  public static PsiInstanceOfExpression findPatternCandidate(PsiTypeCastExpression cast) {
+  public static PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast) {
+    PsiTypeElement castType = cast.getCastType();
+    if (castType == null) return null;
+    PsiExpression castOperand = cast.getOperand();
+    if (castOperand == null) return null;
+    PsiType type = castOperand.getType();
+    if (type == null) return null;
+    if (JavaGenericsUtil.isUncheckedCast(castType.getType(), type)) return null;
+    return findCorrespondingInstanceOf(cast);
+  }
+
+  /**
+   * @param cast a cast expression to find parent instanceof for
+   * @return an instanceof expression that checks for the same raw type as the cast.
+   * Unlike {@link #findPatternCandidate(PsiTypeCastExpression)}, this may find a corresponding instanceof,
+   * even if the cast is unchecked.
+   */
+  @Nullable
+  public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
     PsiIdentifier identifier = null;
     PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (context instanceof PsiLocalVariable) {
@@ -360,8 +378,7 @@ public final class InstanceOfUtils {
     if (castType instanceof PsiClassType) {
       PsiClassType rawType = ((PsiClassType)castType).rawType();
       if (instanceOfType.equals(rawType)) {
-        PsiType type = castOperand.getType();
-        return type != null && !JavaGenericsUtil.isUncheckedCast(castType, type);
+        return castOperand.getType() != null;
       }
     }
     return false;

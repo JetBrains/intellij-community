@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.concurrency;
 
@@ -493,7 +493,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * Implementation for put and putIfAbsent
    */
-  final V putVal(int key, @NotNull V value, boolean onlyIfAbsent) {
+  V putVal(int key, @NotNull V value, boolean onlyIfAbsent) {
     int hash = spread(key);
     int binCount = 0;
     for (Node<V>[] tab = table; ; ) {
@@ -579,7 +579,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * Replaces node value with v, conditional upon match of cv if
    * non-null.  If resulting value is null, delete.
    */
-  final V replaceNode(int key, V value, Object cv) {
+  V replaceNode(int key, V value, Object cv) {
     int hash = spread(key);
     for (Node<V>[] tab = table; ; ) {
       Node<V> f;
@@ -1104,7 +1104,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * Helps transfer if a resize is in progress.
    */
-  final Node<V>[] helpTransfer(Node<V>[] tab, Node<V> f) {
+  Node<V>[] helpTransfer(Node<V>[] tab, Node<V> f) {
     Node<V>[] nextTab;
     int sc;
     if (tab != null && (f instanceof ForwardingNode) &&
@@ -1331,7 +1331,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     /* ---------------- Counter support -------------- */
 
-  final long sumCount() {
+  long sumCount() {
     ConcurrentHashMap.CounterCell[] as = counterCells;
     ConcurrentHashMap.CounterCell a;
     long sum = baseCount;
@@ -1523,7 +1523,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      * Returns the TreeNode (or null if not found) for the given key
      * starting at given root.
      */
-    final TreeNode<V> findTreeNode(int h, int k) {
+    TreeNode<V> findTreeNode(int h, int k) {
       TreeNode<V> p = this;
       do {
         int ph;
@@ -1671,7 +1671,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      * search when lock not available.
      */
     @Override
-    final Node<V> find(int h, int k) {
+    Node<V> find(int h, int k) {
       for (Node<V> e = first; e != null; ) {
         int s;
         if (((s = lockState) & (WAITER | WRITER)) != 0) {
@@ -1706,7 +1706,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      *
      * @return null if added
      */
-    final TreeNode<V> putTreeVal(int h, int k, V v) {
+    TreeNode<V> putTreeVal(int h, int k, V v) {
       boolean searched = false;
       for (TreeNode<V> p = root; ; ) {
         int dir, ph;
@@ -1779,7 +1779,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      *
      * @return true if now too small, so should be untreeified
      */
-    final boolean removeTreeNode(TreeNode<V> p) {
+    boolean removeTreeNode(TreeNode<V> p) {
       TreeNode<V> next = (TreeNode<V>)p.next;
       TreeNode<V> pred = p.prev;  // unlink traversal pointers
       TreeNode<V> r, rl;
@@ -2330,7 +2330,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final V next() {
+    public V next() {
       Node<V> p;
       if ((p = next) == null) {
         throw new NoSuchElementException();
@@ -2342,7 +2342,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final V nextElement() {
+    public V nextElement() {
       return next();
     }
   }
@@ -2355,7 +2355,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final Entry<V> next() {
+    public Entry<V> next() {
       Node<V> p;
       if ((p = next) == null) {
         throw new NoSuchElementException();
@@ -2573,12 +2573,12 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final boolean contains(Object o) {
+    public boolean contains(Object o) {
       return map.containsValue(o);
     }
 
     @Override
-    public final boolean remove(Object o) {
+    public boolean remove(Object o) {
       if (o != null) {
         for (Iterator<V> it = iterator(); it.hasNext(); ) {
           if (o.equals(it.next())) {
@@ -2592,7 +2592,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @NotNull
     @Override
-    public final Iterator<V> iterator() {
+    public Iterator<V> iterator() {
       ConcurrentIntObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2600,12 +2600,12 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final boolean add(V e) {
+    public boolean add(V e) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public final boolean addAll(@NotNull Collection<? extends V> c) {
+    public boolean addAll(@NotNull Collection<? extends V> c) {
       throw new UnsupportedOperationException();
     }
   }
@@ -2672,7 +2672,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
       int h = 0;
       Node<V>[] t;
       if ((t = map.table) != null) {
@@ -2685,7 +2685,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
       Set<?> c;
       return ((o instanceof Set) &&
               ((c = (Set<?>)o) == this ||

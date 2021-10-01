@@ -1,18 +1,16 @@
 <html>
 <body>
-Reports inner classes
-of <code>interface</code> classes. Some coding standards
-discourage such classes. Enumeration and annotation classes are not reported
-by this inspection.
+Reports inner classes in <code>interface</code> classes.
+<p>Some coding standards
+discourage the use of such classes. The inspection doesn't report enumeration and annotation classes.</p>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore inner interfaces, for example:
-<pre>
+Use the <b>Ignore inner interfaces of interfaces</b> option to ignore inner interfaces. For example:
+<pre><code>
   interface I {
     interface Inner {
     }
   }
-</pre>
-<p>
+</code></pre>
 </body>
 </html>

@@ -62,6 +62,7 @@ public class CellRendererPanel extends JPanel {
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
+    if (getWidth() == 0 || getHeight() == 0) return;
     synchronized (getTreeLock()) {
       int count = getComponentCount();
       if (count == 1) {
@@ -70,14 +71,14 @@ public class CellRendererPanel extends JPanel {
         JComponent child = (JComponent)getComponent(0);
         reshapeImpl(child, bounds.x, bounds.y, bounds.width, bounds.height);
         invalidateLayout(child);
-        child.doLayout();
+        child.validate();
       }
       else {
         invalidateLayout(this);
         super.doLayout();
         for (int i = 0; i < count; i++) {
           Component c = getComponent(i);
-          c.doLayout();
+          c.validate();
         }
       }
     }

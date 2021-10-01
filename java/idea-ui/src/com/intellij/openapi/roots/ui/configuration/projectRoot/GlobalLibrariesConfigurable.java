@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getGlobalLibrariesConfigurable()}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static GlobalLibrariesConfigurable getInstance(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getGlobalLibrariesConfigurable();

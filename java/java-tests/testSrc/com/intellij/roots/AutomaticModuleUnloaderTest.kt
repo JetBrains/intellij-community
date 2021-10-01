@@ -118,6 +118,17 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
+  fun `load unloaded module back before adding new module`() {
+    val project = createProject()
+    createModule(project, "root")
+    createModule(project, "a")
+    createModule(project, "b")
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a", "b"))
+    doTest(project, "b", listOf("c"), {}, "b", "c")
+  }
+
+  @Test
   fun `deleted iml file`() {
     val project = createProject()
     createModule(project, "a")

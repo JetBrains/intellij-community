@@ -7,19 +7,16 @@ import com.intellij.execution.wsl.WslPath
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.JdkFinder
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
@@ -30,18 +27,45 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.navigation.Place
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
+import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.event.HyperlinkEvent
 
 internal object MavenWslUtil : MavenUtil() {
+  @JvmStatic
+  fun getWslJdk(project: Project, name: String): Sdk {
+    val projectWslDistr = tryGetWslDistribution(project) ?: throw IllegalStateException("project $project is not WSL based");
+    if (name == MavenRunnerSettings.USE_JAVA_HOME) {
+      val jdk = projectWslDistr.environment["JAVA_HOME"]?.let { projectWslDistr.getWindowsPath(it) }?.let {
+        JavaSdk.getInstance().createJdk("", it)
+      }
+      if (jdk != null && jdk.sdkType is JavaSdkType) {
+        return jdk
+      }
+    }
+
+    if (name == MavenRunnerSettings.USE_PROJECT_JDK) {
+      val jdk = ProjectRootManager.getInstance(project).projectSdk
+      if (jdk != null && jdk.sdkType is JavaSdkType && projectWslDistr == tryGetWslDistributionForPath(jdk.homePath)) {
+        return jdk
+      }
+    }
+    val sdkByExactName = getSdkByExactName(name)
+    if (sdkByExactName != null && projectWslDistr == tryGetWslDistributionForPath(sdkByExactName.homePath)) {
+      return sdkByExactName
+    }
+    return MavenProjectBuilder.suggestProjectSdk(project) ?: throw InvalidSdkException(name)
+  }
+
   @JvmStatic
   fun getPropertiesFromMavenOpts(distribution: WSLDistribution): Map<String, String> {
     return parseMavenProperties(distribution.getEnvironmentVariable("MAVEN_OPTS"))
@@ -89,7 +113,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))!!
+    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))
   }
 
   /**
@@ -184,8 +208,8 @@ internal object MavenWslUtil : MavenUtil() {
   }
 
   @JvmStatic
-  fun WSLDistribution.getWindowsFile(wslFile: File): File? {
-    return FileUtil.toSystemIndependentName(wslFile.path).let(this::getWindowsPath)?.let(::File)
+  fun WSLDistribution.getWindowsFile(wslFile: File): File {
+    return FileUtil.toSystemIndependentName(wslFile.path).let(this::getWindowsPath).let(::File)
   }
 
   @JvmStatic
@@ -205,7 +229,7 @@ internal object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun useWslMaven(project: Project): Boolean {
     val projectWslDistr = tryGetWslDistribution(project) ?: return false
-    val jdkWslDistr = tryGetWslDistributionForPath(ProjectRootManager.getInstance(project).projectSdk?.homePath) ?: return false
+    val jdkWslDistr = tryGetWslDistributionForPath(ProjectRootManager.getInstance(project).projectSdk?.homePath) ?: return true
     return jdkWslDistr.id == projectWslDistr.id
   }
 
@@ -216,25 +240,28 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun restartMavenConnectorsIfJdkIncorrect(project: Project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        val projectWslDistr = tryGetWslDistribution(project)
-        var needReset = false
+    ApplicationManager.getApplication().invokeLater {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        {
+          val projectWslDistr = tryGetWslDistribution(project)
+          var needReset = false
 
-        MavenServerManager.getInstance().allConnectors.forEach {
-          if (it.project == project) {
-            val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
-            if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
-              needReset = true
-              it.shutdown(true)
+          MavenServerManager.getInstance().allConnectors.forEach {
+            if (it.project == project) {
+              val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
+              if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
+                needReset = true
+                it.shutdown(true)
+              }
             }
           }
-        }
-        if (!needReset) {
-          MavenProjectsManager.getInstance(project).embeddersManager.reset()
-        }
+          if (!needReset) {
+            MavenProjectsManager.getInstance(project).embeddersManager.reset()
+          }
 
-      }, SyncBundle.message("maven.sync.restarting"), false, project)
+        }, SyncBundle.message("maven.sync.restarting"), false, project)
+    }
+
   }
 
   @JvmStatic

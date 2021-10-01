@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -38,7 +38,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                commitConsumer: Consumer<in C>) {
     if (hashes.isEmpty()) return
     val handler = GitLogUtil.createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess)
-    GitLogUtil.sendHashesToStdin(vcs, hashes, handler)
+    GitLogUtil.sendHashesToStdin(hashes, handler)
 
     readFullDetailsFromHandler(commitConsumer, handler, requirements, GitLogUtil.getNoWalkParameter(vcs), GitLogUtil.STDIN)
   }

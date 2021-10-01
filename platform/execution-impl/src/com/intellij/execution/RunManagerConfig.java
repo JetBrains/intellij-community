@@ -29,7 +29,7 @@ public final class RunManagerConfig {
   }
 
   public void setRecentsLimit(int recentsLimit) {
-    AdvancedSettings.setInt(RECENTS_LIMIT_KEY, recentsLimit);
+    AdvancedSettings.setInt(RECENTS_LIMIT_KEY, Math.max(MIN_RECENT_LIMIT, recentsLimit));
   }
 
   public void migrateToRegistry() {

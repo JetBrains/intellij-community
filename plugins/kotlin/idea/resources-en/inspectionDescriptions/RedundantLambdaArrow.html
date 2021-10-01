@@ -1,21 +1,21 @@
 <html>
 <body>
-<p>Reports lambdas without parameters that use the lambda arrow.</p>
+<p>Reports redundant lamba arrows in lambdas without parameters.</p>
 <p><b>Example:</b></p>
 <pre><code>
-fun foo(f: () -> Unit) = f()
+  fun foo(f: () -> Unit) = f()
 
-fun bar() {
-    foo { <b>-></b> println("Hi!") }
-}
+  fun bar() {
+      foo { <b>-></b> println("Hi!") }
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun foo(f: () -> Unit) = f()
+  fun foo(f: () -> Unit) = f()
 
-fun bar() {
-    foo { println("Hi!") }
-}
+  fun bar() {
+      foo { println("Hi!") }
+  }
 </code></pre>
 </body>
 </html>

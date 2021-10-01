@@ -297,7 +297,18 @@ public class KotlinTestUtils {
 
         JvmContentRootsKt.addJvmClasspathRoots(configuration, classpath);
 
+        configuration.put(
+                CLIConfigurationKeys.INTELLIJ_PLUGIN_ROOT,
+                KotlinArtifacts.getInstance().getKotlinCompiler().getAbsolutePath()
+        );
+
+        setupIdeaStandaloneExecution();
+
         return configuration;
+    }
+
+    private static void setupIdeaStandaloneExecution() {
+        System.getProperties().setProperty("psi.incremental.reparse.depth.limit", "1000");
     }
 
     @NotNull
@@ -650,7 +661,7 @@ public class KotlinTestUtils {
                     }
                 }
 
-                throw new AssertionError("Looks like this test can be unmuted. Remove IGNORE_BACKEND directive.");
+                throw new AssertionError(String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
             }
         };
     }

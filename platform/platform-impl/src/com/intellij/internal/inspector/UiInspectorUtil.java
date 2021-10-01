@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -74,8 +74,8 @@ public final class UiInspectorUtil {
     result.add(new PropertyBean("Action" + (isGroup ? " Group" : "") + " ID", getActionId(action), true));
 
     final ClassLoader classLoader = action.getClass().getClassLoader();
-    if (classLoader instanceof PluginClassLoader) {
-      result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginId().getIdString(), true));
+    if (classLoader instanceof PluginAwareClassLoader) {
+      result.add(new PropertyBean("Action Plugin ID", ((PluginAwareClassLoader)classLoader).getPluginId().getIdString(), true));
     }
     return result;
   }

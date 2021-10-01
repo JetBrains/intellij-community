@@ -1625,91 +1625,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/assignOperatorAmbiguity")
-    public abstract static class AssignOperatorAmbiguity extends AbstractQuickFixTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/quickfix/assignOperatorAmbiguity/changeToVal")
-        public static class ChangeToVal extends AbstractQuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("arrayList.kt")
-            public void testArrayList() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/arrayList.kt");
-            }
-
-            @TestMetadata("classVariable.kt")
-            public void testClassVariable() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/classVariable.kt");
-            }
-
-            @TestMetadata("hashMap.kt")
-            public void testHashMap() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/hashMap.kt");
-            }
-
-            @TestMetadata("hashSet.kt")
-            public void testHashSet() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/hashSet.kt");
-            }
-
-            @TestMetadata("mutableList.kt")
-            public void testMutableList() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/mutableList.kt");
-            }
-
-            @TestMetadata("mutableMap.kt")
-            public void testMutableMap() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/mutableMap.kt");
-            }
-
-            @TestMetadata("mutableSet.kt")
-            public void testMutableSet() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/changeToVal/mutableSet.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall")
-        public static class ReplaceWithAssignCall extends AbstractQuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("arrayList.kt")
-            public void testArrayList() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/arrayList.kt");
-            }
-
-            @TestMetadata("hashMap.kt")
-            public void testHashMap() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/hashMap.kt");
-            }
-
-            @TestMetadata("hashSet.kt")
-            public void testHashSet() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/hashSet.kt");
-            }
-
-            @TestMetadata("mutableList.kt")
-            public void testMutableList() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/mutableList.kt");
-            }
-
-            @TestMetadata("mutableMap.kt")
-            public void testMutableMap() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/mutableMap.kt");
-            }
-
-            @TestMetadata("mutableSet.kt")
-            public void testMutableSet() throws Exception {
-                runTest("testData/quickfix/assignOperatorAmbiguity/replaceWithAssignCall/mutableSet.kt");
-            }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/assignToProperty")
     public static class AssignToProperty extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -2046,19 +1961,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("vararg.kt")
         public void testVararg() throws Exception {
             runTest("testData/quickfix/canBePrimaryConstructorProperty/vararg.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/changeFeatureSupport")
-    public static class ChangeFeatureSupport extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inlineClass.kt")
-        public void testInlineClass() throws Exception {
-            runTest("testData/quickfix/changeFeatureSupport/inlineClass.kt");
         }
     }
 
@@ -9231,54 +9133,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/obsoleteCoroutines")
-    public static class ObsoleteCoroutines extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("buildIteratorImport.kt")
-        public void testBuildIteratorImport() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/buildIteratorImport.kt");
-        }
-
-        @TestMetadata("buildSequence.kt")
-        public void testBuildSequence() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/buildSequence.kt");
-        }
-
-        @TestMetadata("buildSequenceImport.kt")
-        public void testBuildSequenceImport() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/buildSequenceImport.kt");
-        }
-
-        @TestMetadata("inProjectFix.kt")
-        public void testInProjectFix() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/inProjectFix.kt");
-        }
-
-        @TestMetadata("resume.kt")
-        public void testResume() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/resume.kt");
-        }
-
-        @TestMetadata("resumeWithException.kt")
-        public void testResumeWithException() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/resumeWithException.kt");
-        }
-
-        @TestMetadata("starImport.kt")
-        public void testStarImport() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/starImport.kt");
-        }
-
-        @TestMetadata("unresolvedKotlinxImport.kt")
-        public void testUnresolvedKotlinxImport() throws Exception {
-            runTest("testData/quickfix/obsoleteCoroutines/unresolvedKotlinxImport.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/obsoleteKotlinJsPackages")
     public static class ObsoleteKotlinJsPackages extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -11540,11 +11394,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/addParenthesisForInvalidSealedClass.kt");
         }
 
-        @TestMetadata("addParenthesisForInvalidSealedClass2.kt")
-        public void testAddParenthesisForInvalidSealedClass2() throws Exception {
-            runTest("testData/quickfix/supertypeInitialization/addParenthesisForInvalidSealedClass2.kt");
-        }
-
         @TestMetadata("addParenthesisForLocalClass.kt")
         public void testAddParenthesisForLocalClass() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/addParenthesisForLocalClass.kt");
@@ -11558,6 +11407,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("addParenthesisForSealedClass.kt")
         public void testAddParenthesisForSealedClass() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/addParenthesisForSealedClass.kt");
+        }
+
+        @TestMetadata("addParenthesisForSealedClass2.kt")
+        public void testAddParenthesisForSealedClass2() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
         }
 
         @TestMetadata("baseConstructorError.kt")

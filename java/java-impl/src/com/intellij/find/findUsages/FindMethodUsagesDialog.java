@@ -81,7 +81,8 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     }
 
     if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-        !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        !method.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !method.isConstructor()) {
       myCbSearchForBase = createCheckbox(JavaBundle.message("find.what.search.for.base.methods.checkbox"),
                                          getFindUsagesOptions().isSearchForBaseMethod, true);
 

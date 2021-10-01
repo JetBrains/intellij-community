@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,9 +80,7 @@ public abstract class ApplicationCommandLineState<T extends
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
         if (!inLibrary || JavaModuleGraphUtil.findDescriptorByModule(module.getModule(), false) != null) {
           params.setModuleName(mainModule.getName());
-          PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
-          modulePath.addAll(classPath.getPathList());
-          classPath.clear();
+          JavaParametersUtil.putDependenciesOnModulePath(params.getModulePath(), params.getClassPath(), mainModule);
         }
       }
     }

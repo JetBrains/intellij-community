@@ -25,7 +25,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
-import icons.CompletionMlRankingIcons
+import com.intellij.completion.ml.CompletionMlRankingIcons
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
@@ -42,7 +42,8 @@ class ItemsDecoratorInitializer : LookupTracker() {
     private val HAS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.HAS_RELEVANT_KEY")
     private val IS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.IS_RELEVANT_KEY")
 
-    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.RelevantProposal))
+    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(
+      CompletionMlRankingIcons.RelevantProposal))
     private val RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
     private val DOWN_ICON = prepareIcon(CompletionMlRankingIcons.ProposalDown)
     private val UP_ICON = prepareIcon(CompletionMlRankingIcons.ProposalUp)

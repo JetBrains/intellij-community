@@ -1,18 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift
 
+import com.intellij.dvcs.push.VcsPushAction
+import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
@@ -23,13 +33,13 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
-import training.dsl.LearningBalloonConfig
-import training.dsl.LessonContext
-import training.dsl.TaskContext
-import training.dsl.subscribeForMessageBus
-import training.ui.LearnToolWindow
+import training.dsl.*
+import training.learn.lesson.LessonManager
+import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
+import javax.swing.Icon
+import kotlin.reflect.KClass
 
 object GitLessonsUtil {
   fun LessonContext.checkoutBranch(branchName: String) {
@@ -65,8 +75,10 @@ object GitLessonsUtil {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
       // todo: find out how to open branches if it is hidden (git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY is internal and can't be accessed)
       vcsLogUi?.filterUi?.clearFilters()
-
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
+
+      val vcsLogWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
+      VcsLogContentUtil.selectMainLog(vcsLogWindow!!.contentManager)
     }
 
     // clear Git tool window to return it to default state (needed in case of restarting the lesson)
@@ -83,23 +95,6 @@ object GitLessonsUtil {
         ui.selectionModel.clearSelection()
         true
       }
-    }
-  }
-
-  fun LessonContext.moveLearnToolWindowRight() {
-    prepareRuntimeTask {
-      val learnToolWindow = ToolWindowManager.getInstance(project).getToolWindow("Learn") ?: error("Not found Learn toolwindow")
-      learnToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
-      learnToolWindow.show()
-    }
-
-    task {
-      triggerByUiComponentAndHighlight(false, false) { _: LearnToolWindow -> true }
-    }
-
-    task {
-      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
-      gotItStep(Balloon.Position.atLeft, 300, GitLessonsBundle.message("git.move.learn.window.balloon.text"))
     }
   }
 
@@ -155,20 +150,23 @@ object GitLessonsUtil {
     }
   }
 
-  private fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
+  fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String, duplicateMessage: Boolean = true) {
     val gotIt = CompletableFuture<Boolean>()
-    text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
+    text(text, LearningBalloonConfig(position, width, duplicateMessage) { gotIt.complete(true) })
     addStep(gotIt)
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
-    showWarningIfToolWindowClosed(ToolWindowId.COMMIT, GitLessonsBundle.message("git.window.closed.warning", action("CheckinProject")),
+    showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
+                                  GitLessonsBundle.message("git.window.closed.warning",
+                                                           action("CheckinProject"), strong(VcsBundle.message("commit.dialog.configurable"))),
                                   restoreTaskWhenResolved)
   }
 
   fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
-                                  GitLessonsBundle.message("git.commit.window.closed.warning", action("ActivateVersionControlToolWindow")),
+                                  GitLessonsBundle.message("git.window.closed.warning",
+                                                           action("ActivateVersionControlToolWindow"), strong("Git")),
                                   restoreTaskWhenResolved)
   }
 
@@ -178,5 +176,71 @@ object GitLessonsUtil {
     showWarning(warningMessage, restoreTaskWhenResolved) {
       ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.isVisible != true
     }
+  }
+
+  fun LessonContext.showWarningIfModalCommitEnabled() {
+    if (VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) return
+    task {
+      val step = stateCheck {
+        VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+      before {
+        val callbackId = LearningUiManager.addCallback {
+          CommitModeManager.setCommitFromLocalChanges(project, true)
+          step.complete(true)
+        }
+        LessonManager.instance.setWarningNotification(TaskContext.RestoreNotification(
+          GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                   action("ShowSettings"),
+                                   strong(VcsBundle.message("version.control.main.configurable.name")),
+                                   strong(VcsBundle.message("commit.dialog.configurable")),
+                                   strong(VcsBundle.message("settings.commit.without.dialog")),
+                                   callbackId), callback = {}))
+      }
+    }
+  }
+
+  fun TaskContext.openPushDialogText(@Nls introduction: String) {
+    openGitDialogText(introduction, DvcsBundle.message("action.push").dropMnemonic(),
+                      "Vcs.Push", AllIcons.Vcs.Push, VcsPushAction::class)
+  }
+
+  fun TaskContext.openUpdateDialogText(@Nls introduction: String) {
+    openGitDialogText(introduction, VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name")),
+                      "Vcs.UpdateProject", AllIcons.Actions.CheckOut, CommonUpdateProjectAction::class)
+  }
+
+  fun TaskContext.openCommitWindowText(@Nls introduction: String) {
+    val commitText = VcsBundle.message("commit.dialog.configurable")
+    openGitWindowText(introduction,
+                      GitLessonsBundle.message("git.open.tool.window", 0, action("CheckinProject"),
+                                               icon(AllIcons.Actions.Commit), strong(commitText)),
+                      GitLessonsBundle.message("git.open.tool.window", 1, action("CheckinProject"),
+                                               "", strong(commitText)),
+                      CommonCheckinProjectAction::class)
+  }
+
+  private fun <T : AnAction> TaskContext.openGitDialogText(@Nls introduction: String,
+                                                           @Nls dialogName: String,
+                                                           actionId: String,
+                                                           icon: Icon,
+                                                           actionClass: KClass<T>) {
+    openGitWindowText(introduction,
+                      GitLessonsBundle.message("git.open.dialog", 0, action(actionId), icon(icon), strong(dialogName)),
+                      GitLessonsBundle.message("git.open.dialog", 1, action(actionId), "", strong(dialogName)),
+                      actionClass)
+  }
+
+  private fun <T : AnAction> TaskContext.openGitWindowText(@Nls introduction: String,
+                                                           @Nls suggestionWithIcon: String,
+                                                           @Nls suggestionWithoutIcon: String,
+                                                           actionClass: KClass<T>) {
+    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) {
+      text("$introduction $suggestionWithIcon")
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+        actionClass.isInstance(ui.action)
+      }
+    }
+    else text("$introduction $suggestionWithoutIcon")
   }
 }

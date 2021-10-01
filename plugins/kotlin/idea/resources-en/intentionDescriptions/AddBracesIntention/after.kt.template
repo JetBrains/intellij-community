@@ -1,4 +1,4 @@
-if (b) <spot>{
-  return 1
+if (flag) <spot>{
+  return true
 }</spot>
    

@@ -139,6 +139,23 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   @Override
+  public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+    if (!myDuringDocumentUpdate || myDocument.isInBulkUpdate() || !(region instanceof CustomFoldRegion)) return;
+    myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, region.getStartOffset());
+    myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, region.getEndOffset());
+  }
+
+  @Override
+  public void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion region, int flags) {
+    if ((flags & ChangeFlags.WIDTH_CHANGED) == 0 || myDocument.isInBulkUpdate() || checkDirty()) return;
+    int startOffset = region.getStartOffset();
+    if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset) != region) return;
+    int visualLine = myEditor.offsetToVisualLine(startOffset);
+    myLineWidths.set(visualLine, region.getWidthInPixels());
+    invalidateWidth(true, visualLine);
+  }
+
+  @Override
   public void onFoldProcessingEnd() {
     if (myDocument.isInBulkUpdate()) return;
     if (myFoldingChangeStartOffset <= myFoldingChangeEndOffset) {
@@ -411,6 +428,10 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   private int calculateLineWidth(@NotNull VisualLinesIterator iterator, @Nullable Runnable quickEvaluationListener) {
+    CustomFoldRegion customFoldRegion = iterator.getCustomFoldRegion();
+    if (customFoldRegion != null) {
+      return customFoldRegion.getWidthInPixels();
+    }
     int visualLine = iterator.getVisualLine();
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&

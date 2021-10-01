@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ApplicationLoader")
 @file:ApiStatus.Internal
 package com.intellij.idea
@@ -39,10 +39,12 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EDT
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiFunction
 import javax.swing.UIManager
@@ -79,7 +81,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
           startApp(app, IdeStarter(), initAppActivity, plugins, args)
         }
         else {
-          // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
+          // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
           findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
         }
 
@@ -115,7 +117,7 @@ private fun startApp(app: ApplicationImpl,
                      plugins: List<IdeaPluginDescriptorImpl>,
                      args: List<String>) {
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
-    // but it is ok because registry is not and should be not used
+    // but it is OK, because registry is not and should not be used.
     initConfigurationStore(app)
     val preloadSyncServiceFuture = preloadServices(plugins, app, activityPrefix = "")
 
@@ -227,7 +229,8 @@ private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>
   startApp(app, starter, initAppActivity, plugins, args)
 }
 
-fun createAppLocatorFile() {
+@VisibleForTesting
+internal fun createAppLocatorFile() {
   val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
   try {
     locatorFile.parent?.createDirectories()
@@ -328,7 +331,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
@@ -343,7 +346,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
   if (args.isEmpty()) {
-    return emptyList()
+    return Collections.emptyList()
   }
 
   val arguments = mutableListOf<String>()
@@ -451,7 +454,7 @@ private fun executePreloadActivities(app: ApplicationImpl) {
     return
   }
 
-  // don't execute as one long task, make sure that other more important tasks maybe executed in between
+  // do not execute as a single long task, make sure that other more important tasks may slip in between
   ForkJoinPool.commonPool().execute(object : Runnable {
     private var index = 0
 
@@ -460,7 +463,7 @@ private fun executePreloadActivities(app: ApplicationImpl) {
         return
       }
 
-      val item = list.get(index++)
+      val item = list[index++]
       executePreloadActivity(item.first, item.second, app)
       if (index == list.size || app.isDisposed) {
         activity.end()

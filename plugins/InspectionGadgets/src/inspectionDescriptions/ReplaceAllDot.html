@@ -1,16 +1,18 @@
 <html>
 <body>
-Reports any calls to
+Reports calls to
 <code>String.replaceAll()</code> or <code>String.split()</code> where the first argument is a single regex meta character argument.
-The regex meta characters are one of ".$|()[{^?*+\", and these have a special meaning in regular expressions.
-For example calling <code>"ab.cd".replaceAll(".", "-")</code> produces <code>"-----"</code>, because the dot matches any character.
-Most likely the escaped variant <code>"\\."</code> was intended instead.
+<p>
+  The regex meta characters are one of <code>.$|()[{^?*+\</code>. They have a special meaning in regular expressions.
+  For example, calling <code>"ab.cd".replaceAll(".", "-")</code> produces <code>"-----"</code>, because the dot matches any character.
+  Most likely the escaped variant <code>"\\."</code> was intended instead.
+</p>
 
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre>
   s.replaceAll(".", "-");
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   s.replaceAll("\\.", "-");
 </pre>

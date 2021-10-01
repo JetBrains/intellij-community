@@ -398,7 +398,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
       myAllPoms.add(f);
     }
-    setFileContent(f, createPomXml(xml), true);
+    setPomContent(f, xml);
     return f;
   }
 
@@ -512,6 +512,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     VirtualFile file = createProjectSubFile(relativePath);
     setFileContent(file, content, false);
     return file;
+  }
+
+  protected static void setPomContent(VirtualFile file, @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
+    setFileContent(file, createPomXml(xml), true);
   }
 
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {

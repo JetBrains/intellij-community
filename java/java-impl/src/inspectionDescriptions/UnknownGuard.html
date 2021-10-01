@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports <code>@GuardedBy</code> annotations where the specified guarding field is unknown.
+Reports <code>@GuardedBy</code> annotations in which the specified guarding field is unknown.
 <p>Example:</p>
-<pre>
+<pre><code>
     private Object state;
 
     @GuardedBy("lock") //unknown guard reference
     public void bar() {
         state = new Object();
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-Supported <code>@GuardedBy</code> annotations are:
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
   <li><code>net.jcip.annotations.GuardedBy</code></li>
   <li><code>javax.annotation.concurrent.GuardedBy</code></li>

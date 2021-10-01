@@ -11,10 +11,9 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -40,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
@@ -48,6 +46,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleData;
 
 import java.io.File;
 import java.io.IOException;
@@ -369,7 +368,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     List<Module> affectedModules = new SmartList<>();
     Map<Module, String> rootPathsMap = FactoryMap.create(module -> notNullize(resolveProjectPath(module)));
-    final CachedModuleDataFinder moduleDataFinder = new CachedModuleDataFinder();
     for (ProjectTask projectTask : projectTasks) {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
 
@@ -377,29 +375,34 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       collectAffectedModules(affectedModules, moduleBuildTask);
 
       Module module = moduleBuildTask.getModule();
-      final String rootProjectPath = rootPathsMap.get(module);
+      String rootProjectPath = rootPathsMap.get(module);
       if (isEmpty(rootProjectPath)) continue;
 
       final String projectId = getExternalProjectId(module);
       if (projectId == null) continue;
-      final String externalProjectPath = getExternalProjectPath(module);
-      if (externalProjectPath == null || endsWith(externalProjectPath, "buildSrc")) continue;
+      String externalProjectPath = getExternalProjectPath(module);
+      if (externalProjectPath == null) continue;
 
-      final DataNode<? extends ModuleData> moduleDataNode = moduleDataFinder.findMainModuleData(module);
-      if (moduleDataNode == null) continue;
+      GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+      if (gradleModuleData == null) continue;
+
+      boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
+      if (!isGradleProjectDirUsedToRunTasks) {
+        rootProjectPath = gradleModuleData.getDirectoryToRunTask();
+      }
 
       // all buildSrc runtime projects will be built by gradle implicitly
-      if (Boolean.parseBoolean(moduleDataNode.getData().getProperty(GradleBuildSrcProjectsResolver.BUILD_SRC_MODULE_PROPERTY))) {
+      if (gradleModuleData.isBuildSrcModule()) {
         continue;
       }
 
-      String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
-      if (gradlePath == null) continue;
-      String taskPathPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
+      String gradlePath = gradleModuleData.getGradlePath();
+      List<TaskData> taskDataList =
+        ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
+      if (projectTasks.isEmpty()) continue;
 
-      List<String> gradleModuleTasks = ContainerUtil.mapNotNull(
-        findAll(moduleDataNode, ProjectKeys.TASK), node ->
-          node.getData().isInherited() ? null : trimStart(node.getData().getName(), taskPathPrefix));
+      String taskPathPrefix = trimEnd(gradleModuleData.getFullGradlePath(), ":") + ":";
+      List<String> gradleModuleTasks = ContainerUtil.map(taskDataList, data -> trimStart(data.getName(), taskPathPrefix));
 
       Collection<String> projectInitScripts = initScripts.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);

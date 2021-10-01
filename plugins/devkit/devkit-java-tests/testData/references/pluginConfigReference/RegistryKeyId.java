@@ -1,4 +1,5 @@
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.application.options.RegistryManager;
 
 public class RegistryKeyId {
 
@@ -12,5 +13,13 @@ public class RegistryKeyId {
     Registry.doubleValue("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>");
     Registry.stringValue("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>");
     Registry.getColor("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>", null);
+  }
+
+  public static void testRegistryManager() {
+    RegistryManager registryManager = RegistryManager.getInstance();
+    registryManager.is("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>");
+    registryManager.intValue("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>");
+    registryManager.intValue("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>", 123);
+    registryManager.get("<error descr="Cannot resolve registry key 'INVALID_VALUE'">INVALID_VALUE</error>");
   }
 }

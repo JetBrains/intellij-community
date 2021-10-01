@@ -2,8 +2,9 @@
 <idea-plugin>
   <resource-bundle>messages.PyBundle</resource-bundle>
 
-  <depends optional="true" config-file="pycharm-onboarding.xml">training</depends>
-
+  <content>
+    <module name="intellij.pycharm.community.customization.impl/training"/>
+  </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
   </projectListeners>
@@ -54,7 +55,7 @@
                         overrides="true"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
-    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"
                                     order="before py-function"/>
     <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
 

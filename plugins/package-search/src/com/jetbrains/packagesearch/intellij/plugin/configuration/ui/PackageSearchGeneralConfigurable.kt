@@ -6,8 +6,8 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -28,7 +28,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         .map { it.createDriver() }
 
     private var modified: Boolean = false
-    private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
 
     private val builder = FormBuilder.createFormBuilder()
 
@@ -66,6 +65,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         }
 
         modified = false
+        PackageSearchEventsLogger.logPreferencesReset()
     }
 
     private fun restoreDefaults() {

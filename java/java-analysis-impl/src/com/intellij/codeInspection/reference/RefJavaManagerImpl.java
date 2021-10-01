@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -272,7 +273,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   public RefParameter getParameterReference(UParameter param, int index, RefMethod refMethod) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
-    PsiElement psi = param.getJavaPsi();
+    PsiElement javaPsi = param.getJavaPsi();
+    PsiElement psi = javaPsi instanceof LightElement ? javaPsi.getNavigationElement() : javaPsi;
     LOG.assertTrue(psi != null, "UParameter param has null javaPsi");
     return myRefManager.getFromRefTableOrCache(psi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, psi, index, myRefManager, refMethod);
@@ -331,7 +333,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     else if (psi instanceof PsiJavaModule) {
       return new RefJavaModuleImpl((PsiJavaModule)psi, myRefManager);
     }
-    UElement uElement = UastContextKt.toUElement(psi);
+    UElement uElement = psi instanceof UElement ? (UElement)psi : UastContextKt.toUElement(psi);
     if (uElement instanceof UClass) {
       return new RefClassImpl((UClass)uElement, psi, myRefManager);
     }

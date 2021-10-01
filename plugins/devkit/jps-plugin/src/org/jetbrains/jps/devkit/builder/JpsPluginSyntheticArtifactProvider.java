@@ -64,10 +64,12 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
   private static JpsArtifact createArtifact(JpsModule module, JpsPluginModuleProperties properties) {
     JpsPackagingElementFactory factory = JpsPackagingElementFactory.getInstance();
     JpsCompositePackagingElement root = factory.createArtifactRoot();
+
+    JpsCompositePackagingElement classesDir = factory.getOrCreateDirectory(root, "classes");
     String pluginXmlUrl = properties.getPluginXmlUrl();
     if (pluginXmlUrl != null) {
       String pluginXmlPath = JpsPathUtil.urlToPath(pluginXmlUrl);
-      JpsCompositePackagingElement metaInfDir = factory.getOrCreateDirectory(root, "META-INF");
+      JpsCompositePackagingElement metaInfDir = factory.getOrCreateDirectory(classesDir, "META-INF");
       metaInfDir.addChild(factory.createFileCopy(pluginXmlPath, null));
       File pluginXmlFile = JpsPathUtil.urlToFile(pluginXmlUrl);
       if (pluginXmlFile.exists()) {
@@ -90,7 +92,6 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
 
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(
       JpsJavaClasspathKind.PRODUCTION_RUNTIME);
-    JpsCompositePackagingElement classesDir = factory.getOrCreateDirectory(root, "classes");
     for (JpsModule depModule : enumerator.getModules()) {
       if (depModule.getModuleType().equals(JpsJavaModuleType.INSTANCE)) {
         classesDir.addChild(JpsJavaExtensionService.getInstance().createProductionModuleOutput(depModule.createReference()));

@@ -1,30 +1,35 @@
 <html>
 <body>
 Reports accesses of inner and nested classes where the call is qualified
-by a subclass of the declaring class, rather than the declaring class itself. Java
-allows such qualification, but such accesses
-may be confusing, and may indicate a subtle confusion of inheritance and overriding.
-<p>Example:</p>
-<pre>
+by a subclass of the declaring class, rather than the declaring class itself.
+<p>
+  Java allows such qualification, but such accesses may indicate a subtle confusion of inheritance and overriding.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Super {
     static class Inner {}
   }
 
   class Sub extends Super {
     void test() {
-      Sub.Inner s = new Sub.Inner(); // here 'Inner' class is declared in 'Super' class, but referenced via 'Sub' class
+      Sub.Inner s = new Sub.Inner(); // 'Inner' class is declared in 'Super' class, but referenced via 'Sub' class
     }
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Super {
+    static class Inner {}
+  }
+
   class Sub extends Super {
     void test() {
       Super.Inner s = new Super.Inner();
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
+
 </body>
 </html>

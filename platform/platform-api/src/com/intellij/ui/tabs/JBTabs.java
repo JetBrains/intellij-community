@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
+import com.intellij.ui.DropAreaAware;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +20,7 @@ import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.function.Supplier;
 
-public interface JBTabs {
+public interface JBTabs extends DropAreaAware {
   @NotNull
   TabInfo addTab(TabInfo info, int index);
 
@@ -94,6 +97,29 @@ public interface JBTabs {
   void processDropOver(TabInfo over, RelativePoint point);
 
   Component getTabLabel(TabInfo tabInfo);
+
+  @Override
+  @NotNull
+  default Rectangle getDropArea() {
+    Rectangle r = new Rectangle(getComponent().getBounds());
+    Insets insets = JBUI.insets(0);
+    if (getTabCount() > 0) {
+      Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
+      switch (getPresentation().getTabsPosition()) {
+        case top: insets.top = bounds.height;
+          break;
+        case left: insets.left = bounds.width;
+          break;
+        case bottom: insets.bottom = bounds.height;
+          break;
+        case right: insets.right = bounds.width;
+          break;
+      }
+    }
+    JBInsets.removeFrom(r, insets);
+    return r;
+  }
+
 
   interface SelectionChangeHandler {
     @NotNull

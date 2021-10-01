@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -582,6 +582,13 @@ class A {{
   void "test invoke surround template by tab"() {
     myFixture.configureByText "a.java", "class A { public void B() { I<caret> } }"
     myFixture.type('\t')
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), {
+      def templateState = TemplateManagerImpl.getTemplateState(myFixture.getEditor())
+      assertNotNull(templateState)
+      templateState.nextTab() // Object
+      templateState.nextTab() // o
+    })
+
     myFixture.checkResult("class A { public void B() {\n" +
                           "    for (Object o :) {\n" +
                           "        \n" +

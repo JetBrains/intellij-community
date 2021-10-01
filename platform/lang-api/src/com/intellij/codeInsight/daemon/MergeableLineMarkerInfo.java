@@ -14,7 +14,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.SelectionAwareListCellRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -35,6 +37,8 @@ import java.util.function.Supplier;
 public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends LineMarkerInfo<T> {
 
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
+
+  private @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> myPresentationProvider = null;
 
   /**
    * @deprecated Use {@link #MergeableLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} instead
@@ -76,6 +80,18 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     super(element, textRange, icon, tooltipProvider, navHandler, alignment, accessibleNameProvider);
   }
 
+  public MergeableLineMarkerInfo(@NotNull T element,
+                                 @NotNull TextRange textRange,
+                                 @NotNull Icon icon,
+                                 @Nullable Function<? super T, String> tooltipProvider,
+                                 @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
+                                 @Nullable GutterIconNavigationHandler<T> navHandler,
+                                 @NotNull GutterIconRenderer.Alignment alignment,
+                                 @NotNull Supplier<@NotNull @Nls String> accessibleNameProvider) {
+    super(element, textRange, icon, tooltipProvider, navHandler, alignment, accessibleNameProvider);
+    myPresentationProvider = presentationProvider;
+  }
+
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
 
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
@@ -105,8 +121,9 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getElementPresentation(@NotNull PsiElement element) {
-    return element.getText();
+    return myPresentationProvider != null ? myPresentationProvider.fun(element) : element.getText();
   }
 
   @NotNull
@@ -189,7 +206,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         Icon icon = null;
         final GutterIconRenderer renderer = dom.createGutterRenderer();
         if (renderer != null) {
-          icon = renderer.getIcon();
+          Icon originalIcon = renderer.getIcon();
+          icon = IconUtil.scale(originalIcon, null, JBUIScale.scale(16f) / originalIcon.getIconWidth());
         }
         PsiElement element = dom.getElement();
         @NlsSafe String elementPresentation;

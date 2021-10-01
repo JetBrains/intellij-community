@@ -1,11 +1,9 @@
 <html>
 <body>
-Reports any instantiations of <code>java.util.SimpleDateFormat</code> which do not specify a <code>java.util.Locale</code>. Such calls are
-usually incorrect in an internationalized environment.
-<p>Example:</p>
-<pre>
-  new SimpleDateFormat("yyyy");
-</pre>
+Reports instantiations of <code>java.util.SimpleDateFormat</code> that do not specify <code>java.util.Locale</code>.
+These calls might be incorrect in an internationalized environment.
+<p><code>Example:</code></p>
+<pre><code>new SimpleDateFormat("yyyy");</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

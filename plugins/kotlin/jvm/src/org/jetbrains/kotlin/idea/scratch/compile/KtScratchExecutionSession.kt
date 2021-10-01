@@ -42,7 +42,7 @@ class KtScratchExecutionSession(
     private var backgroundProcessIndicator: ProgressIndicator? = null
 
     fun execute(callback: () -> Unit) {
-        val psiFile = file.getPsiFile() as? KtFile ?: return executor.errorOccurs(
+        val psiFile = file.ktScratchFile ?: return executor.errorOccurs(
             KotlinJvmBundle.message("couldn.t.find.ktfile.for.current.editor"),
             isFatal = true
         )
@@ -61,10 +61,8 @@ class KtScratchExecutionSession(
                         backgroundProcessIndicator = indicator
 
                         ReadAction.nonBlocking {
-                            val modifiedScratchSourceFile = runReadAction {
+                            val modifiedScratchSourceFile =
                                 KtPsiFactory(psiFile.project).createFileWithLightClassSupport("tmp.kt", result.code, psiFile)
-                            }
-
                             try {
                                 runCommandLine(project, modifiedScratchSourceFile, expressions, psiFile, result, indicator, callback)
                             } catch (e: Throwable) {

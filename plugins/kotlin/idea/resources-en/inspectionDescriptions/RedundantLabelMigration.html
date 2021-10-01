@@ -3,9 +3,9 @@
 <p>Reports redundant labels which cause compilation errors since Kotlin 1.4.</p>
 <p>Since Kotlin 1.0, one can mark any statement with a label:</p>
 <pre><code>
-fun foo() {
-  L1@ val x = L2@bar()
-}
+  fun foo() {
+    L1@ val x = L2@bar()
+  }
 </code></pre>
 However, these labels can be referenced only in a limited number of ways:
 <ul>

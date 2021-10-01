@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports cases where the minimum or the maximum of two numbers can be calculated by means of
+Reports the cases in which the minimum or the maximum of two numbers can be calculated by using
 <code>Math.max()</code> or <code>Math.min()</code> instead of doing it manually.
 <p>Example:</p>
 <pre>
@@ -8,7 +8,7 @@ Reports cases where the minimum or the maximum of two numbers can be calculated 
     return b &lt; a ? b : a;
   }
 </pre>
-<p>After the fix is applied, the result will be like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   public int min(int a, int b) {
     return Math.min(a, b);
@@ -16,10 +16,10 @@ Reports cases where the minimum or the maximum of two numbers can be calculated 
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to disable this inspection for <code>double</code> and <code>float</code>
-  This might be useful because quick-fix may slightly break semantics for <code>float</code>/
-  <code>double</code> when handling <code>NaN</code>. Thought in most cases it will actually fix
-  the subtle bug when users did not care about <code>NaN</code>.
+  Use the <b>Disable for float and double</b> option to disable this inspection for <code>double</code> and <code>float</code>.
+  This is useful because the quick-fix may slightly break semantics for <code>float</code>/
+  <code>double</code> when handling <code>NaN</code>. Nevertheless, in most cases it will actually fix
+  the subtle bug when users do not care about <code>NaN</code>.
 </p>
 <p><small>New in 2019.2</small></p>
 </body>

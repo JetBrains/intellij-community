@@ -21,7 +21,6 @@ import javax.swing.table.TableCellRenderer
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageActionsTableCellRendererAndEditor(
-    private val table: JTable,
     private val actionPerformedCallback: (ActionsViewModel) -> Unit
 ) : AbstractTableCellEditor(), TableCellRenderer {
 

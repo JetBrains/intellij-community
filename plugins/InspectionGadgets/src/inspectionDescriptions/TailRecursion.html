@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports tail recursion, that is when a method calls itself as its last action before returning.
+Reports tail recursion, that is, when a method calls itself as its last action before returning.
 <p>
   Tail recursion can always be replaced by looping, which will be considerably faster.
-  Some JVMs perform this optimization, while others do not. Thus, tail recursive solutions may have considerably different
+  Some JVMs perform tail-call optimization, while others do not. Thus, tail-recursive solutions may have considerably different
   performance characteristics on different virtual machines.
 </p>
 <p>Example:</p>
@@ -16,7 +16,7 @@ Reports tail recursion, that is when a method calls itself as its last action be
     }
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   int factorial(int val, int runningVal) {
     while (true) {
@@ -30,7 +30,6 @@ Reports tail recursion, that is when a method calls itself as its last action be
   }
 </pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

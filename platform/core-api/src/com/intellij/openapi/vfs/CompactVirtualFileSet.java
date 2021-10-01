@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -46,6 +47,39 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     if (idSet.size() > BIT_SET_LIMIT) {
       convertToBitSet();
     }
+  }
+
+  //TODO hide it
+  @ApiStatus.Internal
+  public boolean containsId(int fileId) {
+    if (idSet != null) {
+      return idSet.contains(fileId);
+    }
+    if (fileIds != null) {
+      return fileIds.get(fileId);
+    }
+    for (VirtualFile file : weirdFiles) {
+      if (file instanceof VirtualFileWithId && ((VirtualFileWithId)file).getId() == fileId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  //TODO hide it
+  @ApiStatus.Internal
+  public int @NotNull [] onlyFileIds() {
+    if (idSet != null) {
+      return idSet.toIntArray();
+    }
+    if (fileIds != null) {
+      return fileIds.stream().toArray();
+    }
+    return weirdFiles
+      .stream()
+      .filter(f -> f instanceof VirtualFileWithId)
+      .mapToInt(f -> ((VirtualFileWithId)f).getId())
+      .toArray();
   }
 
   @Override
@@ -170,6 +204,53 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     BitSet ids = fileIds;
     IntSet idSet = this.idSet;
     return (ids == null ? 0 : ids.cardinality()) + (idSet == null ? 0 : idSet.size()) + weirdFiles.size();
+  }
+
+  @Override
+  public boolean retainAll(Collection<?> c) {
+    if (frozen) {
+      throw new IllegalStateException();
+    }
+    if (c instanceof CompactVirtualFileSet) {
+      boolean modified = false;
+      IntSet specifiedIdSet = ((CompactVirtualFileSet)c).idSet;
+      BitSet specifiedFileIds = ((CompactVirtualFileSet)c).fileIds;
+      Set<VirtualFile> specifiedWeirdFiles = ((CompactVirtualFileSet)c).weirdFiles;
+
+      if (idSet != null) {
+        IntIterator iterator = idSet.intIterator();
+        while (iterator.hasNext()) {
+          int id = iterator.nextInt();
+          if (!contains(id, specifiedIdSet, specifiedFileIds, specifiedWeirdFiles)) {
+            iterator.remove();
+            modified = true;
+          }
+        }
+      }
+
+      if (fileIds != null) {
+        for (int id : fileIds.stream().toArray()) {
+          if (!contains(id, specifiedIdSet, specifiedFileIds, specifiedWeirdFiles)) {
+            fileIds.set(id, false);
+            modified = true;
+          }
+        }
+      }
+
+      Iterator<VirtualFile> it = weirdFiles.iterator();
+      while (it.hasNext()) {
+        VirtualFile file = it.next();
+        if (!c.contains(file)) {
+          it.remove();
+          modified = true;
+        }
+      }
+
+      return modified;
+    }
+    else {
+      return super.retainAll(c);
+    }
   }
 
   @Override
@@ -314,5 +395,16 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  private static boolean contains(int id, @Nullable IntSet idSet, @Nullable BitSet fileIds, @NotNull Set<VirtualFile> weirdFiles) {
+    if (idSet != null && idSet.contains(id)) return true;
+    if (fileIds != null && fileIds.get(id)) return true;
+    for (VirtualFile file : weirdFiles) {
+      if (file instanceof VirtualFileWithId && ((VirtualFileWithId)file).getId() == id) {
+        return true;
+      }
+    }
+    return false;
   }
 }

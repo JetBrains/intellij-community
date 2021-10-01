@@ -74,13 +74,14 @@ import java.util.stream.Collectors;
 public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
-  private @NotNull List<FileTypeManagerImpl.FileTypeWithDescriptor>
-    myOldRegisteredTypes;
+  private @NotNull List<FileTypeManagerImpl.FileTypeWithDescriptor> myOldRegisteredTypes;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+    myFileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+    myFileTypeManager.initializeComponent();
+    
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
     Assume.assumeTrue(
@@ -354,7 +355,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.@NotNull FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+    FileTypeManagerImpl fileTypeManager = myFileTypeManager;
     fileTypeManager.toLog = true;
     try {
       runnable.run();
@@ -369,7 +370,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     //System.out.println(message);
   }
 
-  private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
+  private void ensureRedetected(@NotNull VirtualFile vFile, @NotNull Set<VirtualFile> detectorCalled) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     log("T: ensureRedetected: commit. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
@@ -640,26 +641,30 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testRemovedMappingsMustNotLeadToDuplicates() throws Exception {
     @Language("XML")
-    String xml = "<blahblah>\n" +
+    String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
                  "   <extensionMap>\n" +
                  "   </extensionMap>\n" +
                  "</blahblah>";
     Element element = JDOMUtil.load(xml);
 
-    myFileTypeManager.loadState(element);
-    myFileTypeManager.initializeComponent();
+    FileTypeManagerImpl fileTypeManager = new FileTypeManagerImpl();
+    Disposer.register(getTestRootDisposable(), fileTypeManager);
 
-    List<RemovedMappingTracker.RemovedMapping> removedMappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    fileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
+    fileTypeManager.loadState(element);
+    fileTypeManager.initializeComponent();
+
+    List<RemovedMappingTracker.RemovedMapping> removedMappings = fileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEmpty(removedMappings);
 
-    FileType type = myFileTypeManager.getFileTypeByFileName("x.txt");
+    FileType type = fileTypeManager.getFileTypeByFileName("x.txt");
     assertEquals(PlainTextFileType.INSTANCE, type);
 
     RemovedMappingTracker.RemovedMapping mapping =
-      myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("txt"), PlainTextFileType.INSTANCE.getName(), true);
+      fileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("txt"), PlainTextFileType.INSTANCE.getName(), true);
 
     try {
-      Element result = myFileTypeManager.getState().getChildren().get(0);
+      Element result = fileTypeManager.getState().getChildren().get(0);
       @Language("XML")
       String expectedXml = "<extensionMap>\n" +
                          "  <removed_mapping ext=\"txt\" approved=\"true\" type=\"PLAIN_TEXT\" />\n" +
@@ -667,7 +672,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       assertEquals(expectedXml, JDOMUtil.write(result));
     }
     finally {
-      assertOneElement(myFileTypeManager.getRemovedMappingTracker().removeIf(m -> m.equals(mapping)));
+      assertOneElement(fileTypeManager.getRemovedMappingTracker().removeIf(m -> m.equals(mapping)));
     }
   }
 
@@ -764,13 +769,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
               virtualFile.setBinaryContent(bytes);
             });
 
-
-            //RandomAccessFile ra = new RandomAccessFile(f, "rw");
-            //ra.setLength(ra.length()+(isText ? 1 : -1));
-            //ra.close();
-            //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
             LOG.debug(i + "; f = " + f.length() + "; virtualFile=" + virtualFile.getLength() + "; type=" + virtualFile.getFileType());
-            //Thread.sleep(random.nextInt(100));
           }
         }
       }
@@ -807,9 +806,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         ApplicationManager.getApplication().runReadAction(() -> {
           String text = psiFile.getText();
           LOG.debug("text = " + text.length());
-          //if (!virtualFile.getFileType().isBinary()) {
-          //  LoadTextUtil.loadText(virtualFile);
-          //}
         });
         try {
           FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
@@ -1104,20 +1100,20 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     WriteAction.run(() -> Disposer.dispose(disposable));
   }
 
-  private static void assertFileTypeIsUnregistered(@NotNull FileType fileType) {
-    for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+  private void assertFileTypeIsUnregistered(@NotNull FileType fileType) {
+    for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
       if (type.getClass() == fileType.getClass()) {
         throw new AssertionError(type + " is still registered");
       }
     }
-    FileType registered = FileTypeManager.getInstance().findFileTypeByName(fileType.getName());
+    FileType registered = myFileTypeManager.findFileTypeByName(fileType.getName());
     if (registered != null && !(registered instanceof AbstractFileType)) {
       fail(registered.toString());
     }
   }
 
   public void testTwoPluginsWhichOverrideBundledFileTypeMustNegotiateBetweenThemselves() {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileTypeManager fileTypeManager = myFileTypeManager;
     FileType bundled = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
     PluginDescriptor pluginDescriptor = Objects.requireNonNull(PluginManagerCore.getPluginDescriptorOrPlatformByClassName(bundled.getClass().getName()));
     assertTrue(pluginDescriptor.isBundled());

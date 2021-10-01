@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -10,22 +12,25 @@ import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.io.jackson.JacksonUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +39,13 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.io.Reader;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -106,6 +110,11 @@ public final class OldDirectoryCleaner {
         .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
         .notify(project);
     }
+    else {
+      UpdateChecker.getNotificationGroup()
+        .createNotification(message("old.dirs.not.found.notification.text"), NotificationType.INFORMATION)
+        .notify(project);
+    }
   }
 
   private static class DirectoryGroup {
@@ -114,13 +123,15 @@ public final class OldDirectoryCleaner {
     private final long lastUpdated;
     private final long size;
     private final int entriesToDelete;
+    private final boolean isInstalled;
 
-    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete) {
+    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
       this.name = name;
       this.directories = directories;
       this.lastUpdated = lastUpdated;
       this.size = size;
       this.entriesToDelete = entriesToDelete;
+      this.isInstalled = isInstalled;
     }
 
     @Override
@@ -132,19 +143,35 @@ public final class OldDirectoryCleaner {
   private List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
     List<Path> configs = result.getPaths();
     List<DirectoryGroup> groups = new ArrayList<>(configs.size());
+    String productInfoFileName = SystemInfo.isMac ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
 
     for (Path config : configs) {
       List<Path> directories = result.findRelatedDirectories(config, myBestBefore != 0);
       if (directories.isEmpty()) continue;
 
+      String nameAndVersion = result.getNameAndVersion(config);
       long lastUpdated = 0, size = 0;
       int entriesToDelete = 0;
+      boolean isInstalled = false;
       for (Path directory : directories) {
         CollectingVisitor visitor = new CollectingVisitor(indicator);
         try {
           Files.walkFileTree(directory, visitor);
+          Path homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
+          if (Files.exists(homeDir)) {
+            try (Reader reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
+                 JsonParser parser = new JsonFactory().createParser(reader)) {
+              if (nameAndVersion.equals(JacksonUtil.readSingleField(parser, "dataDirectoryName"))) {
+                isInstalled = true;
+              }
+            }
+            catch (NoSuchFileException e) {
+              myLogger.debug(e);
+              isInstalled = true;  // the file could be missing from a self-built installation
+            }
+          }
         }
-        catch (IOException e) {
+        catch (IOException | InvalidPathException e) {
           myLogger.debug(e);
         }
         lastUpdated = Math.max(lastUpdated, visitor.lastUpdated);
@@ -152,7 +179,7 @@ public final class OldDirectoryCleaner {
         entriesToDelete += visitor.entriesToDelete;
       }
       if (myBestBefore == 0 || lastUpdated <= myBestBefore) {
-        groups.add(new DirectoryGroup(result.getNameAndVersion(config), directories, lastUpdated, size, entriesToDelete));
+        groups.add(new DirectoryGroup(nameAndVersion, directories, lastUpdated, size, entriesToDelete, isInstalled));
       }
     }
 
@@ -169,16 +196,17 @@ public final class OldDirectoryCleaner {
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-      if (indicator != null) indicator.checkCanceled();
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
       lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
-      size += attrs.size();
       entriesToDelete++;
       return FileVisitResult.CONTINUE;
     }
 
     @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+      if (indicator != null) indicator.checkCanceled();
+      lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
+      size += attrs.size();
       entriesToDelete++;
       return FileVisitResult.CONTINUE;
     }
@@ -192,7 +220,7 @@ public final class OldDirectoryCleaner {
           NioFiles.deleteRecursively(directory);
         }
         catch (IOException e) {
-          myLogger.error(e);
+          myLogger.info(e);
         }
       }
     }
@@ -227,7 +255,7 @@ public final class OldDirectoryCleaner {
                   });
                 }
                 catch (IOException e) {
-                  myLogger.error(e);
+                  myLogger.info(e);
                   errors.add(directory + " (" + IoErrorText.message(e) + ')');
                 }
               }
@@ -253,7 +281,7 @@ public final class OldDirectoryCleaner {
       super(project, false);
       myModel = new MenuTableModel(groups);
       setTitle(message("old.dirs.dialog.title"));
-      setOKButtonText(message("old.dirs.dialog.delete.button", groups.size()));
+      updateOkButton();
       init();
     }
 
@@ -269,9 +297,26 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(1).setPreferredWidth(JBUI.scale(300));
       table.getColumnModel().getColumn(2).setPreferredWidth(JBUI.scale(120));
       table.getColumnModel().getColumn(3).setPreferredWidth(JBUI.scale(120));
-      TableCellRenderer renderer = (tbl, value, selected, focused, row, col) -> {
-        int alignment = col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT;
-        return new JBLabel((String)value, alignment).withBorder(JBUI.Borders.empty(0, 5));
+      JBEmptyBorder border = JBUI.Borders.empty(0, 5);
+      DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+          JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, selected, focused, row, col);
+          label.setBorder(border);
+          label.setHorizontalAlignment(col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+          if (row >= 0) {
+            DirectoryGroup group = myModel.myGroups.get(row);
+            if (col == 1) {
+              @NlsSafe String paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
+              label.setToolTipText(paths);
+            }
+            else if (col == 2) {
+              @NlsSafe String isoDate = FileTime.fromMillis(group.lastUpdated).toString();
+              label.setToolTipText(isoDate);
+            }
+          }
+          return label;
+        }
       };
       table.getColumnModel().getColumn(1).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(1).setCellRenderer(renderer);
@@ -279,17 +324,19 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(2).setCellRenderer(renderer);
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
-      myModel.addTableModelListener(e -> {
-        int n = myModel.mySelected.cardinality();
-        setOKButtonText(message("old.dirs.dialog.delete.button", n));
-        setOKActionEnabled(n > 0);
-      });
+      myModel.addTableModelListener(e -> updateOkButton());
       JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
-      panel.add(new MultiLineLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
+      panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       JBScrollPane tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);
       return panel;
+    }
+
+    private void updateOkButton() {
+      int n = myModel.mySelected.cardinality();
+      setOKButtonText(message("old.dirs.dialog.delete.button", n));
+      setOKActionEnabled(n > 0);
     }
 
     private static class MenuTableModel extends AbstractTableModel {
@@ -301,7 +348,9 @@ public final class OldDirectoryCleaner {
 
       MenuTableModel(List<DirectoryGroup> groups) {
         myGroups = groups;
-        mySelected.set(0, myGroups.size());
+        for (int i = 0; i < groups.size(); i++) {
+          mySelected.set(i, !groups.get(i).isInstalled);
+        }
       }
 
       List<DirectoryGroup> getSelectedGroups() {

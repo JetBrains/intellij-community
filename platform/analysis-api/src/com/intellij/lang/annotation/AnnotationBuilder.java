@@ -213,14 +213,11 @@ interface AnnotationBuilder {
    * Finish creating new annotation.
    * Calling this method means you've completed your annotation and it's ready to be shown on screen.
    */
-  default void create() {
-    createAnnotation();
-  }
+  void create();
 
   /**
-   * Finish creating new annotation and return it.
-   * Calling this method means you've completed your annotation and it's ready to be shown on screen.
+   * @deprecated Use {@link #create()} instead
    */
+  @Deprecated
   Annotation createAnnotation();
-
 }

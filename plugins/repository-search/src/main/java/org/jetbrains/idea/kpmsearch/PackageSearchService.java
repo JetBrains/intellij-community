@@ -58,7 +58,8 @@ public class PackageSearchService implements DependencySearchProvider {
   private static boolean isAcceptable(char c) {
     return (c >= 'a' && c <= 'z') ||
            (c >= 'A' && c <= 'Z') ||
-           c == ':' || c == '-' || c == '.';
+           (c >= '0' && c <= '9') ||
+           c == ':' || c == '-' || c == '.' || c == '_';
   }
 
   @Override

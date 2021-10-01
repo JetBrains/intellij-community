@@ -18,6 +18,8 @@ import java.nio.file.Path
 
 private val testSnapshotDir = Path.of(PlatformTestUtil.getCommunityPath(), "platform/platform-tests/testSnapshots/plugin-validator")
 
+private const val TEST_PLUGIN_ID = "plugin"
+
 @TestDataPath("\$CONTENT_ROOT/testSnapshots/plugin-validator")
 class PluginModelValidatorTest {
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
@@ -66,6 +68,23 @@ class PluginModelValidatorTest {
     val validator = PluginModelValidator()
     validator.validate(modules)
     assertThatErrorsToMatchSnapshot(validator)
+  }
+
+  @Test
+  fun `module must not depend on a parent plugin`() {
+    val root = inMemoryFs.fs.getPath("/")
+    val modules = producePluginWithContentModule(root) {
+      it.replace("<plugin id=\"com.intellij.modules.lang\"/>", "<plugin id=\"$TEST_PLUGIN_ID\"/>")
+    }
+
+    val validator = PluginModelValidator()
+    validator.validate(modules)
+    assertThat(validator.getErrors().joinToString { it.message!! }).isEqualTo("""
+      Do not add dependency on a parent plugin (
+        entry=XmlElement(name=plugin, attributes={id=plugin}, children=[], content=null),
+        referencingDescriptorFile=/intellij.plugin.module/intellij.plugin.module.xml
+      )
+    """.trimIndent())
   }
 
   @Test
@@ -119,7 +138,7 @@ class PluginModelValidatorTest {
     val validator = PluginModelValidator()
     validator.validate(modules)
     assertThat(validator.getErrors().joinToString { it.message!! }).isEqualTo("""
-      Old format must be not used for a module: `depends` tag is used (
+      Old format must be not used for a module but `depends` tag is used (
         descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
         depends=XmlElement(name=depends, attributes={}, children=[], content=com.intellij.modules.lang)
       )
@@ -151,7 +170,7 @@ class PluginModelValidatorTest {
     modules.add(writePluginXml("intellij.plugin", root.resolve("plugin"), """
       <!--suppress PluginXmlValidity -->
       <idea-plugin package="plugin">
-        <id>plugin</id>
+        <id>${TEST_PLUGIN_ID}</id>
         <content>
           <module name="intellij.plugin.module"/>
         </content>

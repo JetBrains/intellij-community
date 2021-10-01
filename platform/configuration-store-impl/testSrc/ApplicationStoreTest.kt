@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -13,12 +13,15 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
+import com.intellij.util.io.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.ClassRule
@@ -370,6 +373,60 @@ internal class ApplicationStoreTest {
         <component name="Unknown" data="some data" />
       </application>
     """.trimIndent())
+  }
+
+  @Test
+  fun `test per-os components are stored in subfolder`() = runBlocking<Unit> {
+    val component = PerOsComponent()
+    componentStore.initComponent(component, null, null)
+    component.foo = "bar"
+
+    componentStore.save()
+
+    val osCode = getPerOsSettingsStorageFolderName()
+    val fs = testAppConfig.fileSystem
+    assertTrue("${osCode}/peros.xml doesn't exist", testAppConfig.resolve(fs.getPath(osCode, "peros.xml")).exists())
+    assertFalse("Old peros.xml without os prefix was not removed", testAppConfig.resolve("peros.xml").exists())
+  }
+
+  @Test
+  fun `test per-os component is read from deprecated top-level storage and moved to new location`() = runBlocking<Unit> {
+    writeConfig("peros.xml", "<application>${createComponentData("new")}</application>")
+
+    testAppConfig.refreshVfs()
+
+    val component = PerOsComponent()
+    componentStore.initComponent(component, null, null)
+    assertThat(component.foo).isEqualTo("new")
+
+    componentStore.save()
+
+    val osCode = getPerOsSettingsStorageFolderName()
+    val fs = testAppConfig.fileSystem
+    assertTrue("${osCode}/peros.xml doesn't exist", testAppConfig.resolve(fs.getPath(osCode, "peros.xml")).exists())
+    assertFalse("Old peros.xml without os prefix was not removed", testAppConfig.resolve("peros.xml").exists())
+  }
+
+  @Test
+  fun `per-os setting is preferred from os subfolder`() {
+    val osCode = getPerOsSettingsStorageFolderName()
+    writeConfig("peros.xml", "<application>${createComponentData("old")}</application>")
+    writeConfig("${osCode}/peros.xml", "<application>${createComponentData("new")}</application>")
+
+    testAppConfig.refreshVfs()
+
+    val component = PerOsComponent()
+    componentStore.initComponent(component, null, null)
+    assertThat(component.foo).isEqualTo("new")
+  }
+
+  @State(name = "A", storages = [Storage(value = "peros.xml", roamingType = RoamingType.PER_OS)])
+  private class PerOsComponent : Foo(), PersistentStateComponent<PerOsComponent> {
+    override fun getState() = this
+
+    override fun loadState(state: PerOsComponent) {
+      XmlSerializerUtil.copyBean(state, this)
+    }
   }
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)

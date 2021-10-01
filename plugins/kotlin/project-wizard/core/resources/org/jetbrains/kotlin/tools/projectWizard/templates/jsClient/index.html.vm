@@ -5,7 +5,7 @@
     <title>JS Client</title>
 </head>
 <body>
-<script src="${moduleName}.js"></script>
+<script src="${indexFile}.js"></script>
 <div id="root"></div>
 </body>
 </html>

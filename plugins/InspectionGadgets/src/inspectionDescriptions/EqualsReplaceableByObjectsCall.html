@@ -1,23 +1,23 @@
 <html>
 <body>
 Reports expressions that can be replaced with a call to <code>java.util.Objects#equals</code>.
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   void f(Object a, Object b) {
     boolean result = a != null && a.equals(b);
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   void f(Object a, Object b) {
     boolean result = Objects.equals(a, b);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Replacing expressions like <code>a != null && a.equals(b)</code> with <code>Objects.equals(a, b)</code>
-  slightly changes the semantics, but if that's what you need there's a check box for that in the inspection settings.
+  slightly changes the semantics. Use the <b>Highlight expressions like 'a != null && a.equals(b)'</b> option to enable or disable this behavior.
 </p>
-<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
+<p>This inspection only reports if the language level of the project or module is seven or higher.</p>
 </body>
 </html>

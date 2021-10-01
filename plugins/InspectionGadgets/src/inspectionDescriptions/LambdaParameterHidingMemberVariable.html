@@ -1,12 +1,9 @@
 <html>
 <body>
-<p>
-  Reports lambda parameters named identically to fields of the surrounding classes or their superclasses.
-</p>
-<p>
-  Use the quick-fix to rename the concerned lambda parameter.
-</p>
-<p>Example:</p>
+Reports lambda parameters named identically to visible fields of the containing classes.
+As a result of such naming, you may accidentally use the lambda parameter where the identically named field is intended.
+<p>A quick-fix is suggested to rename the lambda parameter.</p>
+<p><b>Example:</b></p>
 <pre><code>
   public class MyClass {
     public Object foo;
@@ -18,8 +15,8 @@
 </code></pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore fields that are not actually visible from the lambda expression.
-  For example private fields in a super class.
+  Use the option to choose whether to ignore fields that are not visible from the lambda expression.
+  For example, private fields of a superclass.
 <p>
 </body>
 </html>

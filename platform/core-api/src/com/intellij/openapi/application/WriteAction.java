@@ -25,6 +25,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public WriteAction() {
   }

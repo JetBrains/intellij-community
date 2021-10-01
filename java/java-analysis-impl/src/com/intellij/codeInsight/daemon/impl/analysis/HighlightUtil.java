@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -1712,6 +1712,7 @@ public final class HighlightUtil {
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
     PsiTypeElement typeElement = pattern.getCheckType();
+    if (typeElement == null) return null;
     PsiType checkType = typeElement.getType();
     PsiType expressionType = expression.getOperand().getType();
     if (expressionType != null && checkType.isAssignableFrom(expressionType)) {
@@ -2897,8 +2898,8 @@ public final class HighlightUtil {
         }
 
         if (!levelChecked && element instanceof PsiSwitchLabelStatementBase) {
-          PsiExpressionList values = ((PsiSwitchLabelStatementBase)element).getCaseValues();
-          if (values != null && values.getExpressionCount() > 1) {
+          @Nullable PsiCaseLabelElementList values = ((PsiSwitchLabelStatementBase)element).getCaseLabelElementList();
+          if (values != null && values.getElementCount() > 1) {
             HighlightInfo info = checkFeature(values, HighlightingFeature.ENHANCED_SWITCH, languageLevel, file);
             if (info != null) return info;
             levelChecked = true;

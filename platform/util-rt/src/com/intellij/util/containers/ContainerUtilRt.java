@@ -18,6 +18,7 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  * @deprecated Use collection methods instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 @Deprecated
 public final class ContainerUtilRt {
   /**

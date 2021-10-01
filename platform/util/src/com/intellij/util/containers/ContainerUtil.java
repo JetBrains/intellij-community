@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * @see com.intellij.util.containers.CollectionFactory
+ * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
 
@@ -2292,7 +2292,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all of the collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, @NotNull ? extends List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
@@ -2362,11 +2362,6 @@ public final class ContainerUtil {
       }
     }
     return true;
-  }
-
-  @Contract(pure = true)
-  public static <T> boolean isSameElements(@NotNull Collection<? extends T> list1, @NotNull Collection<? extends T> list2) {
-    return list1.size() == list2.size() && list1.containsAll(list2);
   }
 
   /**
@@ -2480,6 +2475,12 @@ public final class ContainerUtil {
     return createConcurrentList();
   }
 
+  /**
+   * @see #createLockFreeCopyOnWriteList()
+   * @return thread-safe copy-on-write List.
+   * <b>Warning!</b> {@code c} collection must have correct {@link Collection#toArray()} method implementation
+   * which doesn't leak the underlying array to avoid accidental modification in-place.
+   */
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<>(c);
@@ -2488,6 +2489,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
@@ -2497,6 +2499,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
@@ -2506,6 +2509,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
@@ -2517,6 +2521,9 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakValueMap();
   }
 
+  /**
+   * @deprecated Use {@link CollectionFactory#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)} instead
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(value = "_,_,_,_ -> new", pure = true)
@@ -2563,6 +2570,9 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakMap();
   }
 
+  /**
+   * @deprecated use {@link CollectionFactory#createConcurrentSoftMap(int, float, int, HashingStrategy)} instead
+   */
   @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
@@ -2617,9 +2627,15 @@ public final class ContainerUtil {
     return new LockFreeCopyOnWriteArrayList<>();
   }
 
+  /**
+   * @return thread-safe copy-on-write List.
+   * <b>Warning!</b> {@code c} collection must have correct {@link Collection#toArray()} method implementation
+   * which doesn't leak the underlying array to avoid accidental modification in-place.
+   * @see #createLockFreeCopyOnWriteList()
+   */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
-    return new LockFreeCopyOnWriteArrayList<>(collection);
+  public static @NotNull <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> c) {
+    return new LockFreeCopyOnWriteArrayList<>(c);
   }
 
   /**

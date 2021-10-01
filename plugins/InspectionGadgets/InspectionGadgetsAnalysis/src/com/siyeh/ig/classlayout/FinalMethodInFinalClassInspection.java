@@ -16,10 +16,8 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -43,11 +41,10 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new RemoveModifierFix((String)infos[0]);
+    return new RemoveModifierFix(PsiModifier.FINAL);
   }
 
-  private static class FinalMethodInFinalClassVisitor
-    extends BaseInspectionVisitor {
+  private static class FinalMethodInFinalClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -65,7 +62,14 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
       if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
+      final PsiModifierList modifiers = method.getModifierList();
+      final PsiElement[] children = modifiers.getChildren();
+      for (final PsiElement child : children) {
+        final String text = child.getText();
+        if (PsiModifier.FINAL.equals(text)) {
+          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        }
+      }
     }
   }
 }

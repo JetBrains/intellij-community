@@ -5,5 +5,5 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDecla
 
 internal data class ModuleModel(
     val projectModule: ProjectModule,
-    val declaredRepositories: List<RepositoryDeclaration>
+    val declaredRepositories: List<RepositoryDeclaration>,
 )

@@ -1,16 +1,15 @@
 <html>
 <body>
 Reports conditional expressions with identical <code>then</code> and <code>else</code> branches.
-Such expressions almost certainly indicate bugs.
-<p>There is a fix that allows to collapse conditional expression</p>
+<p>Such expressions almost certainly indicate bugs. The inspection provides a fix that collapses conditional expressions.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   int y = x == 10 ? 4 : 4;
-</pre>
-<p>After applying the fix:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   int y = 4;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

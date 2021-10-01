@@ -65,4 +65,9 @@ public interface LightEditService {
   boolean isTabNavigationAvailable(@NotNull AnAction navigationAction);
 
   void navigateToTab(@NotNull AnAction navigationAction);
+
+  /**
+   * @return True if Project mode is preferred without a confirmation.
+   */
+  boolean isPreferProjectMode();
 }

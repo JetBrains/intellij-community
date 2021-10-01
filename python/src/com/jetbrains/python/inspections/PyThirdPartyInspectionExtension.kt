@@ -24,7 +24,7 @@ class PyThirdPartyInspectionExtension : PyInspectionExtension() {
       if (cls.isSubclass(interfaceQName, context)) return true
 
       // Checking for subclassing above does not help while zope.interface.Interface is defined as target with call expression assigned
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext(context)
       for (expression in cls.superClassExpressions) {
         if (resolvesTo(expression, interfaceQName, resolveContext)) return true
       }

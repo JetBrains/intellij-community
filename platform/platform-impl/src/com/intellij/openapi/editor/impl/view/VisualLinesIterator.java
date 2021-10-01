@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
@@ -56,7 +53,7 @@ public final class VisualLinesIterator {
     checkEnd();
     if (y != UNSET) {
       y += EditorUtil.getTotalInlaysHeight(getBlockInlaysBelow());
-      y += myLineHeight;
+      y += getLineHeight();
     }
     if (myNextLocation == null) {
       myLocation.advance();
@@ -152,6 +149,27 @@ public final class VisualLinesIterator {
     checkEnd();
     setInlays();
     return myInlaysBelow;
+  }
+
+  public CustomFoldRegion getCustomFoldRegion() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion instanceof CustomFoldRegion && foldRegion.getStartOffset() == myLocation.offset) {
+        return (CustomFoldRegion)foldRegion;
+      }
+    }
+    return null;
+  }
+
+  public boolean isCustomFoldRegionLine() {
+    return getCustomFoldRegion() != null;
+  }
+
+  public int getLineHeight() {
+    CustomFoldRegion region = getCustomFoldRegion();
+    return region == null ? myLineHeight : region.getHeightInPixels();
   }
 
   private void checkEnd() {

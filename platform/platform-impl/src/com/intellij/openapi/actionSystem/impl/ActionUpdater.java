@@ -27,10 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +41,7 @@ import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -107,13 +105,15 @@ final class ActionUpdater {
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
+    Op updateOp = myEventTransform == null || Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") ?
+                  Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> updateActionReal(action, myEventTransform == null ? Op.update : Op.beforeActionPerformedUpdate),
+      action -> updateActionReal(action, updateOp),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
-    LOG.assertTrue(myEventTransform == null || ActionPlaces.isShortcutPlace(myPlace),
+    LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
                    "beforeActionPerformed requested in '" + myPlace + "'");
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
@@ -126,7 +126,7 @@ final class ActionUpdater {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
-    if (!isBeforePerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
+    if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
     Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), isBeforePerformed);
     boolean success = callAction(action, operation, doUpdate);
     return success ? presentation : null;
@@ -151,9 +151,9 @@ final class ActionUpdater {
   }
 
   // some actions remember the presentation passed to "update" and modify it later, in hope that menu will change accordingly
-  private static void reflectSubsequentChangesInOriginalPresentation(Presentation original, Presentation cloned) {
+  private static void reflectSubsequentChangesInOriginalPresentation(@NotNull Presentation original, @NotNull Presentation cloned) {
     cloned.addPropertyChangeListener(e -> {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         original.copyFrom(cloned);
       }
     });
@@ -251,7 +251,7 @@ final class ActionUpdater {
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ComponentManager disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
 
-    AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
+    AsyncPromise<List<AnAction>> promise = newPromise(myPlace);
     ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
       indicator.cancel();
@@ -263,7 +263,7 @@ final class ActionUpdater {
       cancelOnUserActivity(promise, disposableParent);
     }
     else if (myContextMenuAction) {
-      cancelAllUpdates();
+      cancelAllUpdates("context menu requested");
     }
 
     Runnable runnable = () -> {
@@ -272,38 +272,52 @@ final class ActionUpdater {
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       computeOnEdt(() -> {
-        applyPresentationChanges();
-        promise.setResult(result);
+        try {
+          applyPresentationChanges();
+          promise.setResult(result);
+        }
+        catch (Throwable e) {
+          promise.setError(e);
+        }
         return null;
       });
     };
     ourPromises.add(promise);
     ourExecutor.execute(() -> {
+      boolean[] success = {false};
       try {
-        boolean[] success = {false};
         ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
-          success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(applicationEx, promise::cancel, () ->
-            applicationEx.tryRunReadAction(runnable)), indicator);
+          success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+            applicationEx,
+            () -> cancelPromise(promise, "write-action requested"),
+            () -> applicationEx.tryRunReadAction(runnable)), indicator);
         if (!success[0] && !promise.isDone()) {
-          promise.cancel();
+          cancelPromise(promise, "read-action unavailable");
         }
       }
       catch (Throwable e) {
-        promise.setError(e);
+        if (!promise.isDone()) {
+          promise.setError(e);
+        }
       }
       finally {
         ourPromises.remove(promise);
+        if (!promise.isDone()) {
+          cancelPromise(promise, "unknown reason");
+          LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + success[0] + ")"));
+        }
       }
     });
     return promise;
   }
 
-  static void cancelAllUpdates() {
-    ArrayList<CancellablePromise<?>> copy = new ArrayList<>(ourPromises);
+  static void cancelAllUpdates(@NotNull String reason) {
+    if (ourPromises.isEmpty()) return;
+    CancellablePromise<?>[] copy = ourPromises.toArray(new CancellablePromise[0]);
     ourPromises.clear();
     for (CancellablePromise<?> promise : copy) {
-      promise.cancel();
+      cancelPromise(promise, reason + " (cancelling all updates)");
     }
   }
 
@@ -337,7 +351,7 @@ final class ActionUpdater {
     Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (e instanceof ComponentEvent && !(e instanceof PaintEvent) && (e.getID() & AWTEvent.MOUSE_MOTION_EVENT_MASK) == 0) {
-        promise.cancel();
+        cancelPromise(promise, e);
       }
       return false;
     }, disposable);
@@ -565,9 +579,30 @@ final class ActionUpdater {
     }
     long endTime = System.currentTimeMillis();
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
-      LOG.debug("Action " + action + ": updated in " + (endTime - startTime) + " ms");
+      LOG.debug("'" + e.getPlace() + "' (" + action + "): updated in " + (endTime - startTime) + " ms");
     }
     return result;
+  }
+
+  private static final ConcurrentMap<AsyncPromise<?>, String> ourDebugPromisesMap = CollectionFactory.createConcurrentWeakIdentityMap();
+
+  static <T> @NotNull AsyncPromise<T> newPromise(@NotNull String place) {
+    AsyncPromise<T> promise = new AsyncPromise<>();
+    if (LOG.isDebugEnabled()) {
+      ourDebugPromisesMap.put(promise, place);
+      promise.onProcessed(__ -> ourDebugPromisesMap.remove(promise));
+    }
+    return promise;
+  }
+
+  static void cancelPromise(@NotNull CancellablePromise<?> promise, @NotNull Object reason) {
+    if (LOG.isDebugEnabled()) {
+      String place = ourDebugPromisesMap.remove(promise);
+      if (place == null && promise.isDone()) return;
+      String message = "'" + place + "' update cancelled: " + reason;
+      LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
+    }
+    promise.cancel();
   }
 
   private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }

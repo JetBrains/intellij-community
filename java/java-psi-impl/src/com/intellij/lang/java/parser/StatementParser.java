@@ -440,7 +440,7 @@ public class StatementParser {
       if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
         PsiBuilder.Marker defaultElement = builder.mark();
         builder.advanceLexer();
-        done(defaultElement, JavaElementType.DEFAULT_ELEMENT);
+        done(defaultElement, JavaElementType.DEFAULT_CASE_LABEL_ELEMENT);
         return Pair.create(defaultElement, false);
       }
       if (myParser.getPatternParser().isPattern(builder)) {
@@ -459,22 +459,17 @@ public class StatementParser {
     builder.advanceLexer();
 
     if (isCase) {
-      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X);
+      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17);
       PsiBuilder.Marker list = builder.mark();
-      boolean isExpressionList = true;
       do {
         Pair<PsiBuilder.Marker, Boolean> markerAndIsExpression = parseCaseLabel(builder);
         PsiBuilder.Marker caseLabel = markerAndIsExpression.first;
-        Boolean isExpression = markerAndIsExpression.second;
-        if (!isExpression) {
-          isExpressionList = false;
-        }
         if (caseLabel == null) {
           error(builder, JavaPsiBundle.message(patternsAllowed ? "expected.case.label.element" : "expected.expression"));
         }
       }
       while (expect(builder, JavaTokenType.COMMA));
-      done(list, isExpressionList ? JavaElementType.EXPRESSION_LIST : JavaElementType.CASE_LABEL_ELEMENT_LIST);
+      done(list, JavaElementType.CASE_LABEL_ELEMENT_LIST);
     }
 
     if (expect(builder, JavaTokenType.ARROW)) {

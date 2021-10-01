@@ -156,7 +156,6 @@ class WorkspaceModuleImporter(private val project: Project,
 
       val sourceRootEntity = diff.addSourceRootEntity(contentRootEntity,
                                                       virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
-                                                      entry.value.isForTests,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)
       when (entry.value) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -16,7 +15,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.ide.util.TipAndTrickBean.findByFileName;
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
@@ -36,8 +33,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  @NonNls private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
-  @NonNls private static final String SEEN_TIPS = "seenTips";
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
@@ -46,7 +41,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private @NotNull String myAlgorithm = "unknown";
   private @Nullable String myAlgorithmVersion = null;
   private List<TipAndTrickBean> myTips = Collections.emptyList();
-  private final List<String> mySeenIds = new ArrayList<>();
   private TipAndTrickBean myCurrentTip = null;
 
   public TipPanel() {
@@ -69,8 +63,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myPreviousTipAction = new PreviousTipAction();
     myNextTipAction = new NextTipAction();
 
-    mySeenIds.addAll(StringUtil.split(PropertiesComponent.getInstance().getValue(SEEN_TIPS, ""), ","));
-    Collections.shuffle(mySeenIds);
     setTips(TipAndTrickBean.EP_NAME.getExtensionList());
   }
 
@@ -80,20 +72,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
     if (!isExperiment(myAlgorithm)) {
-      for (String id : mySeenIds) {
-        TipAndTrickBean tip = findByFileName(id);
-        if (tip != null) {
-          if (myTips.remove(tip)) {
-            myTips.add(tip);   //move last seen to the end
-          }
-        }
-      }
-      if (TipDialog.wereTipsShownToday()) {
-        TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
-        if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
-          myTips.add(0, lastSeenTip);
-        }
-      }
+      myTips = TipsUsageManager.getInstance().filterShownTips(myTips);
     }
     showNext(true);
   }
@@ -131,20 +110,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   private void setTip(@NotNull TipAndTrickBean tip) {
     myCurrentTip = tip;
-    PropertiesComponent.getInstance().setValue(LAST_SEEN_TIP_ID, myCurrentTip.fileName);
 
     TipUIUtil.openTipInBrowser(myCurrentTip, myBrowser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(myCurrentTip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
     TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
-
-    if (!mySeenIds.contains(myCurrentTip.fileName)) {
-      mySeenIds.add(myCurrentTip.fileName);
-      if (mySeenIds.size() >= myTips.size()) {
-        mySeenIds.clear();//It's useless to keep all possible IDs in 'last seen'
-      }
-      PropertiesComponent.getInstance().setValue(SEEN_TIPS, StringUtil.join(mySeenIds, ","));
-    }
+    TipsUsageManager.getInstance().fireTipShown(myCurrentTip);
 
     myPreviousTipAction.setEnabled(myTips.indexOf(myCurrentTip) > 0);
     myNextTipAction.setEnabled(myTips.indexOf(myCurrentTip) < myTips.size() - 1);

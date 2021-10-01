@@ -54,7 +54,7 @@ public final class ProblemDescriptorUtil {
       final TextRange elementRange = psiElement.getTextRange();
       if (elementRange != null) {
         range = range.shiftRight(-elementRange.getStartOffset());
-        if (range.getStartOffset() >= 0 && range.getEndOffset() <= elementRange.getLength()) {
+        if (range.getStartOffset() >= 0 && ref.length() > range.getLength()) {
           ref = range.substring(ref);
         }
       }

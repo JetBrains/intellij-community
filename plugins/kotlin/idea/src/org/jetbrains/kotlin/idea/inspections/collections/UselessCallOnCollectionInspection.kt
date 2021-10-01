@@ -24,11 +24,17 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
         "kotlin.collections.filterNotNull" to deleteConversion,
+        "kotlin.sequences.filterNotNull" to deleteConversion,
         "kotlin.collections.filterIsInstance" to deleteConversion,
+        "kotlin.sequences.filterIsInstance" to deleteConversion,
         "kotlin.collections.mapNotNull" to Conversion("map"),
+        "kotlin.sequences.mapNotNull" to Conversion("map"),
         "kotlin.collections.mapNotNullTo" to Conversion("mapTo"),
+        "kotlin.sequences.mapNotNullTo" to Conversion("mapTo"),
         "kotlin.collections.mapIndexedNotNull" to Conversion("mapIndexed"),
-        "kotlin.collections.mapIndexedNotNullTo" to Conversion("mapIndexedTo")
+        "kotlin.sequences.mapIndexedNotNull" to Conversion("mapIndexed"),
+        "kotlin.collections.mapIndexedNotNullTo" to Conversion("mapIndexedTo"),
+        "kotlin.sequences.mapIndexedNotNullTo" to Conversion("mapIndexedTo")
     )
 
     override val uselessNames = uselessFqNames.keys.toShortNames()

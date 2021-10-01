@@ -5,9 +5,11 @@
 package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.analyzer.common.configureCommonSpecificComponents
+import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.*
 import org.jetbrains.kotlin.context.ModuleContext
@@ -19,6 +21,8 @@ import org.jetbrains.kotlin.frontend.di.configureModule
 import org.jetbrains.kotlin.frontend.di.configureStandardResolveComponents
 import org.jetbrains.kotlin.frontend.java.di.configureJavaSpecificComponents
 import org.jetbrains.kotlin.frontend.java.di.initializeJavaSpecificComponents
+import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolverImpl
@@ -29,6 +33,7 @@ import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.resolve.*
@@ -127,8 +132,14 @@ class CompositeResolverForModuleFactory(
         return listOfNotNull(metadataProvider, klibMetadataProvider)
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun getJvmProvidersIfAny(container: StorageComponentContainer): List<PackageFragmentProvider> =
-        if (targetPlatform.has<JvmPlatform>()) listOf(container.get<JavaDescriptorResolver>().packageFragmentProvider) else emptyList()
+        buildList {
+            if (targetPlatform.has<JvmPlatform>()) add(container.get<JavaDescriptorResolver>().packageFragmentProvider)
+
+            // Use JVM built-ins only for completely-JVM modules
+            addIfNotNull(container.tryGetService(JvmBuiltInsPackageFragmentProvider::class.java))
+        }
 
     private fun getNativeProvidersIfAny(moduleInfo: ModuleInfo, container: StorageComponentContainer): List<PackageFragmentProvider> {
         if (!targetPlatform.has<NativePlatform>()) return emptyList()
@@ -176,7 +187,7 @@ class CompositeResolverForModuleFactory(
         }
 
         // Called by all normal containers set-ups
-        configureModule(moduleContext, targetPlatform, analyzerServices, trace, languageVersionSettings,)
+        configureModule(moduleContext, targetPlatform, analyzerServices, trace, languageVersionSettings, IdeSealedClassInheritorsProvider)
         configureStandardResolveComponents()
         useInstance(moduleContentScope)
         useInstance(declarationProviderFactory)
@@ -188,9 +199,11 @@ class CompositeResolverForModuleFactory(
         // JVM-specific
         if (targetPlatform.has<JvmPlatform>()) {
             configureJavaSpecificComponents(
-                moduleContext, moduleClassResolver!!, languageVersionSettings, configureJavaClassFinder = null,
+                moduleContext, moduleClassResolver!!,
+                languageVersionSettings,
+                configureJavaClassFinder = null,
                 javaClassTracker = null,
-                useBuiltInsProvider = false
+                useBuiltInsProvider = IdeBuiltInsLoadingState.isFromDependenciesForJvm && targetPlatform.isJvm() // use JVM BuiltIns only for completely JVM modules
             )
         }
 
@@ -208,7 +221,7 @@ class CompositeResolverForModuleFactory(
 }
 
 class CompositeAnalyzerServices(val services: List<PlatformDependentAnalyzerServices>) : PlatformDependentAnalyzerServices() {
-    override val platformConfigurator: PlatformConfigurator = CompositePlatformConigurator(services.map { it.platformConfigurator })
+    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(services.map { it.platformConfigurator })
 
     override fun computePlatformSpecificDefaultImports(storageManager: StorageManager, result: MutableList<ImportPath>) {
         val intersectionOfDefaultImports = services.map { service ->
@@ -231,7 +244,7 @@ class CompositeAnalyzerServices(val services: List<PlatformDependentAnalyzerServ
         if (isEmpty()) emptyList() else reduce { first, second -> first.intersect(second) }.toList()
 }
 
-class CompositePlatformConigurator(private val componentConfigurators: List<PlatformConfigurator>) : PlatformConfigurator {
+class CompositePlatformConfigurator(private val componentConfigurators: List<PlatformConfigurator>) : PlatformConfigurator {
     override val platformSpecificContainer: StorageComponentContainer
         get() = composeContainer(this::class.java.simpleName) {
             configureDefaultCheckers()
@@ -240,8 +253,8 @@ class CompositePlatformConigurator(private val componentConfigurators: List<Plat
             }
         }
 
-    override fun configureModuleComponents(container: StorageComponentContainer) {
-        componentConfigurators.forEach { it.configureModuleComponents(container) }
+    override fun configureModuleComponents(container: StorageComponentContainer, languageVersionSettings: LanguageVersionSettings) {
+        componentConfigurators.forEach { it.configureModuleComponents(container, languageVersionSettings) }
     }
 
     override fun configureModuleDependentCheckers(container: StorageComponentContainer) {

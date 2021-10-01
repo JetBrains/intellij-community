@@ -263,6 +263,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testCustomFoldRegion() throws Exception {
+    initText("a\nb\nc");
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaret() throws Exception {
+    initText("a\n<caret>b\nc");
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    checkResultWithGutter();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
@@ -316,6 +330,37 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     @Override
     public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myGutterIconRenderer;
+    }
+  }
+
+  private static class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final int WIDTH = 25;
+    private static final int HEIGHT = 15;
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return WIDTH;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return HEIGHT;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics g,
+                      @NotNull Rectangle r,
+                      @NotNull TextAttributes textAttributes) {
+      g.setColor(Color.pink);
+      int startX = r.x;
+      int endX = r.x + r.width - 1;
+      int startY = r.y;
+      int endY = r.y + r.height - 1;
+      g.drawLine(startX, startY, startX, endY);
+      g.drawLine(startX, endY, endX, endY);
+      g.drawLine(endX, endY, endX, startY);
+      g.drawLine(endX, startY, startX, startY);
     }
   }
 }

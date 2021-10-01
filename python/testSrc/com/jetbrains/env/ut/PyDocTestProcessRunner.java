@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public class PyDocTestProcessRunner extends PyScriptTestProcessRunner<PythonDocTestRunConfiguration> {
   public PyDocTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY,
+    super(PythonTestConfigurationType.getInstance().getDocTestFactory(),
           PythonDocTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
     setSkipExitCodeAssertion(true);    //Doctest doesn't support exit codes
   }

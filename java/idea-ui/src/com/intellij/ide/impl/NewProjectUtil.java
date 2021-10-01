@@ -17,12 +17,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -32,7 +29,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +133,7 @@ public final class NewProjectUtil {
 
       Sdk jdk = wizard.getNewProjectJdk();
       if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> applyJdkToProject(newProject, jdk)), null, null);
+        CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> JavaSdkUtil.applyJdkToProject(newProject, jdk)), null, null);
       }
 
       String compileOutput = wizard.getNewCompileOutput();
@@ -205,19 +201,9 @@ public final class NewProjectUtil {
     }), null, null);
   }
 
+  /** @deprecated Use JavaSdkUtil.applyJdkToProject() directly */
+  @Deprecated()
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
-    ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
-    rootManager.setProjectSdk(jdk);
-
-    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    if (version != null) {
-      LanguageLevel maxLevel = version.getMaxLanguageLevel();
-      LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
-      LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
-      if (extension.isDefault() || maxLevel.compareTo(ext.getLanguageLevel()) < 0) {
-        ext.setLanguageLevel(maxLevel);
-        ext.setDefault(true);
-      }
-    }
+    JavaSdkUtil.applyJdkToProject(project, jdk);
   }
 }

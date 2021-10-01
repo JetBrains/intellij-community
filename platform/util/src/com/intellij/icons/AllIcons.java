@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -437,7 +437,7 @@ public class AllIcons {
     /** 2x20 */ public static final @NotNull Icon DropPlace = load("general/dropPlace.svg", 3447837119501758613L, 2);
     /** 9x9 */ public static final @NotNull Icon Ellipsis = load("general/ellipsis.svg", 3102523073998960194L, 2);
     /** 16x16 */ public static final @NotNull Icon Error = load("general/error.svg", 5689198334446313430L, 0);
-    /** 32x32 */ public static final @NotNull Icon ErrorDialog = load("general/errorDialog.svg", 8288035027259547954L, 2);
+    /** 32x32 */ public static final @NotNull Icon ErrorDialog = load("general/errorDialog.svg", 4725392123305420084L, 0);
     /** 16x16 */ public static final @NotNull Icon ExclMark = load("general/exclMark.svg", 1465746164234814075L, 2);
     /** 16x16 */ public static final @NotNull Icon ExpandComponent = load("general/expandComponent.svg", 658200792418753951L, 0);
     /** 16x16 */ public static final @NotNull Icon ExpandComponentHover = load("general/expandComponentHover.svg", -4237517416915604345L, 0);
@@ -450,7 +450,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("general/hideToolWindow.svg", -5040655830085142767L, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("general/implementingMethod.svg", -3819134902329645100L, 1);
     /** 16x16 */ public static final @NotNull Icon Information = load("general/information.svg", 7048014921308783653L, 0);
-    /** 32x32 */ public static final @NotNull Icon InformationDialog = load("general/informationDialog.svg", 4783567910211693747L, 2);
+    /** 32x32 */ public static final @NotNull Icon InformationDialog = load("general/informationDialog.svg", 2566844759370194465L, 0);
     /** 16x16 */ public static final @NotNull Icon InheritedMethod = load("general/inheritedMethod.svg", 6299445481004207875L, 0);
     /** 16x16 */ public static final @NotNull Icon Inline_edit = load("general/inline_edit.svg", 8752623962139330029L, 0);
     /** 16x16 */ public static final @NotNull Icon Inline_edit_hovered = load("general/inline_edit_hovered.svg", -7993547802661351277L, 0);
@@ -458,6 +458,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InlineAddHover = load("general/inlineAddHover.svg", -1274832203393211630L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopy = load("general/inlineCopy.svg", 4086041163192533867L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopyHover = load("general/inlineCopyHover.svg", -118377199179686277L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineRefresh = load("general/inlineRefresh.svg", 7057707416785730877L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineRefreshHover = load("general/inlineRefreshHover.svg", 6223569865014447242L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariables = load("general/inlineVariables.svg", -2890084193764829258L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("general/inlineVariablesHover.svg", 8274939683858428276L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("general/inspectionsError.svg", -7039855443562847008L, 0);
@@ -496,7 +498,7 @@ public class AllIcons {
     /** 9x9 */ public static final @NotNull Icon ProjectConfigurable = load("general/projectConfigurable.svg", -3281035821065596538L, 0);
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("general/projectStructure.svg", 7927167745064937666L, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectTab = load("general/projectTab.svg", -7482724285638477765L, 0);
-    /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("general/questionDialog.svg", -8182844412169860399L, 2);
+    /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("general/questionDialog.svg", -3170857866783015702L, 0);
     /** 16x16 */ public static final @NotNull Icon ReaderMode = load("general/readerMode.svg", 4885173072943589526L, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("general/remove.svg", 5417826838796538124L, 2);
     /** 16x16 */ public static final @NotNull Icon Reset = load("general/reset.svg", -2722652007778730303L, 2);
@@ -506,6 +508,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show_to_implement = load("general/show_to_implement.svg", 5820899675846215684L, 7);
     /** 16x16 */ public static final @NotNull Icon ShowInfos = load("general/showInfos.svg", -7836467967962681646L, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWarning = load("general/showWarning.svg", -880501858508231851L, 2);
+    /** 48x48 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", 7331118895885022616L, 0);
     /** 16x16 */ public static final @NotNull Icon TbHidden = load("general/tbHidden.svg", 2150059385419883630L, 2);
     /** 16x16 */ public static final @NotNull Icon TbShown = load("general/tbShown.svg", -2726647401251720005L, 2);
     /** 32x32 */ public static final @NotNull Icon Tip = load("general/tip.svg", 7483196027967641474L, 2);
@@ -518,7 +521,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", -7586125210954568568L, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", -4939622142106744579L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", 2405998040705208001L, 2);
-    /** 32x32 */ public static final @NotNull Icon WarningDialog = load("general/warningDialog.svg", -5704611480717421042L, 2);
+    /** 32x32 */ public static final @NotNull Icon WarningDialog = load("general/warningDialog.svg", 6423980923993992189L, 0);
     /** 16x16 */ public static final @NotNull Icon Web = load("general/web.svg", -2049562750565831010L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -7507719754184865831L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -1556237764441501987L, 2);

@@ -2,23 +2,23 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.caches.resolve.CompositeAnalyzerServices
-import org.jetbrains.kotlin.caches.resolve.CompositeResolverForModuleFactory
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.caches.resolve.resolution
+import org.jetbrains.kotlin.caches.resolve.*
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.context.withModule
+import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.RESOLUTION_ANCHOR_PROVIDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 
@@ -42,9 +43,7 @@ class IdeaResolverForProject(
     private val syntheticFilesByModule: Map<IdeaModuleInfo, Collection<KtFile>>,
     delegateResolver: ResolverForProject<IdeaModuleInfo>,
     fallbackModificationTracker: ModificationTracker? = null,
-    private val isReleaseCoroutines: Boolean? = null,
-    // TODO(dsavvinov): this is needed only for non-composite analysis, extract separate resolver implementation instead
-    private val constantSdkDependencyIfAny: SdkInfo? = null
+    private val settings: PlatformAnalysisSettings
 ) : AbstractResolverForProject<IdeaModuleInfo>(
     debugName,
     projectContext,
@@ -52,20 +51,29 @@ class IdeaResolverForProject(
     fallbackModificationTracker,
     delegateResolver,
     projectContext.project.getServiceSafe<IdePackageOracleFactory>(),
-    projectContext.project.getServiceSafe<ResolutionAnchorProvider>()
 ) {
+
+    companion object {
+        val PLATFORM_ANALYSIS_SETTINGS = ModuleCapability<PlatformAnalysisSettings>("PlatformAnalysisSettings")
+    }
+
+    private val resolutionAnchorProvider = ServiceManager.getService(projectContext.project, ResolutionAnchorProvider::class.java)
+
+    private val constantSdkDependencyIfAny: SdkInfo? =
+        if (settings is PlatformAnalysisSettingsImpl) settings.sdk?.let { SdkInfo(projectContext.project, it) } else null
+
     private val builtInsCache: BuiltInsCache =
         (delegateResolver as? IdeaResolverForProject)?.builtInsCache ?: BuiltInsCache(projectContext, this)
 
-    override fun sdkDependency(module: IdeaModuleInfo, ownerModuleDescriptor: ModuleDescriptorImpl?): SdkInfo? {
+    override fun getAdditionalCapabilities(): Map<ModuleCapability<*>, Any?> {
+        return super.getAdditionalCapabilities() +
+                (PLATFORM_ANALYSIS_SETTINGS to settings) +
+                (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider)
+    }
+
+    override fun sdkDependency(module: IdeaModuleInfo): SdkInfo? {
         if (projectContext.project.useCompositeAnalysis) {
             require(constantSdkDependencyIfAny == null) { "Shouldn't pass SDK dependency manually for composite analysis mode" }
-        }
-        // This is needed for case when we find sdk dependency for module descriptor of
-        //   that sdk itself. There was some situations when we create additional module
-        //   descriptor for one SdkInfo
-        if (module is SdkInfo && ownerModuleDescriptor?.getCapability(ModuleInfo.Capability) == module) {
-            return module
         }
         return constantSdkDependencyIfAny ?: module.findSdkAcrossDependencies()
     }
@@ -79,7 +87,7 @@ class IdeaResolverForProject(
         val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), getModuleContentScope(moduleInfo))
 
         val languageVersionSettings =
-            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project, isReleaseCoroutines)
+            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
 
@@ -116,6 +124,9 @@ class IdeaResolverForProject(
                     "Unexpected modules passed through JvmPlatformParameters to IDE resolver ($targetModuleInfo, $referencingModuleInfo)"
                 }
                 tryGetResolverForModuleWithResolutionAnchorFallback(targetModuleInfo, referencingModuleInfo)
+            },
+            useBuiltinsProviderForModule = {
+                IdeBuiltInsLoadingState.isFromDependenciesForJvm && it is LibraryInfo && it.isKotlinStdlib(projectContext.project)
             }
         )
 
@@ -146,18 +157,32 @@ class IdeaResolverForProject(
         private val cache = mutableMapOf<BuiltInsCacheKey, KotlinBuiltIns>()
 
         fun getOrCreateIfNeeded(module: IdeaModuleInfo): KotlinBuiltIns = projectContextFromSdkResolver.storageManager.compute {
-            val sdk = resolverForSdk.sdkDependency(module, null)
+            val sdk = resolverForSdk.sdkDependency(module)
+            val stdlib = findStdlibForModulesBuiltins(module)
 
-            val key = module.platform.idePlatformKind.resolution.getKeyForBuiltIns(module, sdk)
+            val key = module.platform.idePlatformKind.resolution.getKeyForBuiltIns(module, sdk, stdlib)
             val cachedBuiltIns = cache[key]
             if (cachedBuiltIns != null) return@compute cachedBuiltIns
 
             module.platform.idePlatformKind.resolution
-                .createBuiltIns(module, projectContextFromSdkResolver, resolverForSdk, sdk)
+                .createBuiltIns(module, projectContextFromSdkResolver, resolverForSdk, sdk, stdlib)
                 .also {
                     // TODO: MemoizedFunction should be used here instead, but for proper we also need a module (for LV settings) that is not contained in the key
                     cache[key] = it
                 }
+        }
+
+        private fun findStdlibForModulesBuiltins(module: IdeaModuleInfo): LibraryInfo? {
+            return when (IdeBuiltInsLoadingState.state) {
+                IdeBuiltInsLoadingState.IdeBuiltInsLoading.FROM_CLASSLOADER -> null
+                IdeBuiltInsLoadingState.IdeBuiltInsLoading.FROM_DEPENDENCIES_JVM -> {
+                    if (module.platform.isJvm()) {
+                        module.findJvmStdlibAcrossDependencies()
+                    } else {
+                        null
+                    }
+                }
+            }
         }
     }
 

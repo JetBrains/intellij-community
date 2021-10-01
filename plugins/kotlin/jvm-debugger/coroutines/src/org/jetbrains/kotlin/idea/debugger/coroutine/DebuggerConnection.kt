@@ -31,9 +31,12 @@ class DebuggerConnection(
     modifyArgs: Boolean = true,
     val alwaysShowPanel: Boolean = false
 ) : XDebuggerManagerListener, Disposable {
+    companion object {
+        private val log by logger
+    }
+
     private var connection: MessageBusConnection? = null
     private val coroutineAgentAttached: Boolean
-    private val log by logger
 
     init {
         if (params is JavaParameters && modifyArgs) {
@@ -41,7 +44,7 @@ class DebuggerConnection(
             coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params)
         } else {
             coroutineAgentAttached = false
-            log.debug("CoroutineDebugger disabled.")
+            log.debug("Coroutine debugger disabled.")
         }
 
         connection = project.messageBus.connect()

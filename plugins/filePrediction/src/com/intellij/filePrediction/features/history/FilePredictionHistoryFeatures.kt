@@ -5,29 +5,20 @@ import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
 import com.intellij.filePrediction.features.FilePredictionFeaturesCache
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
   companion object {
     private val FEATURES = arrayListOf(
-      "bi_max",
-      "bi_min",
-      "bi_mle",
-      "bi_mle_to_max",
-      "bi_mle_to_min",
       "position",
       "size",
       "tri_max",
       "tri_min",
       "tri_mle",
       "tri_mle_to_max",
-      "tri_mle_to_min",
-      "uni_max",
-      "uni_min",
-      "uni_mle",
-      "uni_mle_to_max",
-      "uni_mle_to_min"
+      "tri_mle_to_min"
     )
   }
 
@@ -40,15 +31,14 @@ internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
                                      prevFile: VirtualFile?,
                                      cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
-    val history = FilePredictionHistory.getInstance(project)
-    result["size"] = numerical(history.size())
+    val recentFiles = EditorHistoryManager.getInstance(project).fileList
+    val size = recentFiles.size
+    result["size"] = numerical(size)
 
-    val (position, uniGram, biGram) = history.calcHistoryFeatures(newFile.url)
-    if (position != null) {
-      result["position"] = numerical(position)
+    val index = findFileInHistory(newFile, recentFiles)
+    if (index in 0 until size) {
+      result["position"] = numerical(size - index - 1)
     }
-    addNGramFeatures(uniGram, "uni", result)
-    addNGramFeatures(biGram, "bi", result)
 
     cache.nGrams.calculateFileFeatures(newFile.url)?.let {
       addNGramFeatures(it, "tri", result)
@@ -56,6 +46,16 @@ internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
     return result
   }
 
+  private fun findFileInHistory(file: VirtualFile, recentFiles: List<VirtualFile>): Int {
+    val size = recentFiles.size
+    var i = size - 1
+    while (i >= 0 && recentFiles[i].url != file.url) {
+      i--
+    }
+    return i
+  }
+
+  @Suppress("SameParameterValue")
   private fun addNGramFeatures(probability: NextFileProbability, prefix: String, result: HashMap<String, FilePredictionFeature>) {
     result[prefix + "_mle"] = numerical(probability.mle)
     result[prefix + "_min"] = numerical(probability.minMle)

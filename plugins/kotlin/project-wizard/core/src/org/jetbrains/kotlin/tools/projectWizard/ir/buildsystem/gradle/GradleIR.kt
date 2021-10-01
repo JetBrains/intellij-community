@@ -84,7 +84,9 @@ data class GradleSectionIR(
 ) : GradleIR, FreeIR {
     override fun GradlePrinter.renderGradle() {
         sectionCall(name) {
-            irs.listNl()
+            if (irs.isNotEmpty()) {
+                irs.listNl()
+            }
         }
     }
 }

@@ -331,7 +331,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           pos = pair.indexOf('=', pos + 1);
         }
         pair = pair.replaceAll("[\\\\]","\\\\\\\\");
-        result.put(StringUtil.unescapeStringCharacters(pair.substring(0, pos)),
+        result.put(StringUtil.unescapeStringCharacters(pair.substring(0, pos)).trim(),
           StringUtil.unescapeStringCharacters(pair.substring(pos + 1)));
       }
     }

@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports methods where a parameter appears to be always the same constant.<br>
-<br>
-Example:
+Reports methods in which a parameter appears to always be the same constant.
+
+<p>Example:</p>
 <pre>
 <code>static void printPoint(int x, int y) { // x is always 0
   System.out.println(x + ", " + y);
@@ -14,6 +14,6 @@ public static void main(String[] args) {
 }
 </code>
 </pre>
-Quick fix: inlines the constant value. This may simplify the method implementation.
+<p>The quick-fix inlines the constant value. This may simplify the method implementation.</p>
 </body>
 </html>

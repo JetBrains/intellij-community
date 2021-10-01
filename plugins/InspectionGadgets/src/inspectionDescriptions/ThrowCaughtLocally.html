@@ -1,10 +1,11 @@
 <html>
 <body>
-Reports <code>throw</code> statements whose exceptions are always
-caught by containing <code>try</code> statements. Using <code>throw</code>
-statements as a "goto" to change the local flow of control is both confusing and likely to have poor performance.
+Reports a <code>throw</code> statement whose exceptions are always
+caught by a containing <code>try</code> statement.
+<p>Using <code>throw</code>
+  statements as a "goto" to change the local flow of control is confusing and results in poor performance.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   try {
     if (!Files.isDirectory(PROJECTS)) {
         throw new IllegalStateException("Directory not found."); // warning: 'throw' caught by containing 'try' statement
@@ -14,9 +15,8 @@ statements as a "goto" to change the local flow of control is both confusing and
   catch (Exception e) {
       LOG.error("run failed");
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-  Use the checkbox below to ignore exceptions which are rethrown.
+<p>Use the <b>Ignore rethrown exceptions</b> option to ignore exceptions that are rethrown.</p>
 </body>
 </html>

@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +97,18 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
     toggleFoldRegionState(region, false);
     return region;
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine);
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, heightInPixels);
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int widthInPixels, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, widthInPixels, heightInPixels);
   }
 
   protected void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {

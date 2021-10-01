@@ -1,6 +1,23 @@
 <html>
 <body>
-Reports calls with <code>Deferred</code> result that is never used,
-so nobody will wait for execution of all related actions.
+Reports calls with the <code>Deferred</code> result type in case if the return value is not used.
+<p>If the return value, nothing will wait until the function completes.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun calcEverythingAsync() = CompletableDeferred(42)
+
+  fun usage() {
+      calcEverythingAsync()
+  }
+</code></pre>
+<p>A quick-fix is suggested to introduce a variable with the <code>Deferred</code> initializer:</p>
+<pre><code>
+  fun calcEverythingAsync() = CompletableDeferred(42)
+
+  fun usage() {
+      val answer = calcEverythingAsync()
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

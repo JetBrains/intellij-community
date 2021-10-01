@@ -358,7 +358,7 @@ public class PyTypeParser {
         PyType type = resolveQualifierType(tokens, pyFile, myContext, types, fullRanges, imports);
 
         if (type != null) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myContext);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(myContext);
           final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
 
           for (Token<PyElementType> token : tokens) {

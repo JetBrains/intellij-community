@@ -60,7 +60,8 @@ class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : Variable
             if (expr is KtSimpleNameExpression) {
                 val target = expr.mainReference.resolve()
                 if (target is KtCallableDeclaration) {
-                    if (target is KtParameter || target is KtProperty && target.isLocal) {
+                    if (target is KtParameter && target.ownerFunction !is KtPrimaryConstructor ||
+                        target is KtProperty && target.isLocal) {
                         return KtLocalVariableDescriptor(target)
                     }
                 }

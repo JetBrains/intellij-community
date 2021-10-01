@@ -9,10 +9,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
@@ -36,14 +33,12 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 public class EditorFactoryImpl extends EditorFactory {
@@ -52,7 +47,6 @@ public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-  private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -88,15 +82,15 @@ public class EditorFactoryImpl extends EditorFactory {
     LaterInvocator.addModalityStateListener(new ModalityStateListener() {
       @Override
       public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
-        for (Editor editor : myEditors) {
+        collectAllEditors().forEach(editor -> {
           ((EditorImpl)editor).beforeModalityStateChanged();
-        }
+        });
       }
     }, ApplicationManager.getApplication());
   }
 
   public void validateEditorsAreReleased(@NotNull Project project, boolean isLastProjectClosed) {
-    for (Editor editor : myEditors) {
+    collectAllEditors().forEach(editor -> {
       if (editor.getProject() == project || (editor.getProject() == null && isLastProjectClosed)) {
         try {
           throwNotReleasedError(editor);
@@ -105,7 +99,7 @@ public class EditorFactoryImpl extends EditorFactory {
           releaseEditor(editor);
         }
       }
-    }
+    });
   }
 
   @NonNls
@@ -145,9 +139,9 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void refreshAllEditors() {
-    for (Editor editor : myEditors) {
+    collectAllEditors().forEach(editor -> {
       ((EditorEx)editor).reinitSettings();
-    }
+    });
   }
 
   @Override
@@ -208,7 +202,8 @@ public class EditorFactoryImpl extends EditorFactory {
   private @NotNull EditorEx createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
-    myEditors.add(editor);
+    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
+    editorManager.editorCreated(editor);
     myEditorEventMulticaster.registerEditor(editor);
 
     EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
@@ -216,7 +211,7 @@ public class EditorFactoryImpl extends EditorFactory {
     EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("number of Editors after create: " + myEditors.size());
+      LOG.debug("number of Editors after create: " + editorManager.editors().count());
     }
 
     return editor;
@@ -234,9 +229,16 @@ public class EditorFactoryImpl extends EditorFactory {
         ((EditorImpl)editor).release();
       }
       finally {
-        myEditors.remove(editor);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("number of Editors after release: " + myEditors.size());
+        for (ClientEditorManager clientEditors : ClientEditorManager.getAllInstances()) {
+          if (clientEditors.editorReleased(editor)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("number of Editors after release: " + clientEditors.editors().count());
+            }
+            if (clientEditors != ClientEditorManager.getCurrentInstance()) {
+              LOG.warn("Released editor didn't belong to current session");
+            }
+            break;
+          }
         }
       }
     }
@@ -244,12 +246,24 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
-    return myEditors.stream().filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
+    return collectAllEditors()
+      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
+  }
+
+  @Override
+  public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
+    return ClientEditorManager.getCurrentInstance().editors()
+      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
+  }
+
+  @NotNull
+  private static Stream<Editor> collectAllEditors() {
+    return ClientEditorManager.getAllInstances().stream().flatMap(it -> it.editors());
   }
 
   @Override
   public Editor @NotNull [] getAllEditors() {
-    return myEditors.toArray(Editor.EMPTY_ARRAY);
+    return collectAllEditors().toArray(Editor[]::new);
   }
 
   @Override

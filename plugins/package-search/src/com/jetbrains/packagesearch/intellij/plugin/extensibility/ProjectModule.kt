@@ -6,13 +6,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 
-private fun Module.hashCodeOrZero() =
-    runCatching { moduleFilePath.hashCode() }
+internal fun Module.hashCodeOrZero() =
+    runCatching { moduleFilePath.hashCode() + 31 * name.hashCode() }
         .getOrDefault(0)
 
-private fun Module.areEqualsByPath(other: Module) =
-    runCatching { moduleFilePath == other.moduleFilePath }
+internal fun Module.areTheSame(other: Module) =
+    runCatching { moduleFilePath == other.moduleFilePath && name == other.name }
         .getOrDefault(false)
+
+typealias NavigatableDependency = (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
 
 data class ProjectModule(
     @NlsSafe val name: String,
@@ -20,11 +22,9 @@ data class ProjectModule(
     val parent: ProjectModule?,
     val buildFile: VirtualFile,
     val buildSystemType: BuildSystemType,
-    val moduleType: ProjectModuleType
+    val moduleType: ProjectModuleType,
+    val navigatableDependency: NavigatableDependency = { _, _, _ -> null }
 ) {
-
-    var getNavigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable? =
-        { _, _, _ -> null }
 
     @NlsSafe
     fun getFullName(): String =
@@ -35,7 +35,7 @@ data class ProjectModule(
         if (other !is ProjectModule) return false
 
         if (name != other.name) return false
-        if (!nativeModule.areEqualsByPath(other.nativeModule)) return false // This can't be automated
+        if (!nativeModule.areTheSame(other.nativeModule)) return false // This can't be automated
         if (parent != other.parent) return false
         if (buildFile.path != other.buildFile.path) return false
         if (buildSystemType != other.buildSystemType) return false

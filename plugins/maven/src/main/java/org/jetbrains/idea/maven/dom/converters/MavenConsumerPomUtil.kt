@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom.converters
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.ConvertContext
@@ -13,13 +14,9 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 object MavenConsumerPomUtil {
-
-
   @JvmStatic
   fun isConsumerPomResolutionApplicable(project: Project): Boolean {
-    val mavenVersion = MavenUtil.getMavenVersion(
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.effectiveMavenHome)
-    return VersionComparatorUtil.compare(mavenVersion, "3.6.3") > 0
+    return Registry.`is`("maven.consumer.pom.support")
   }
 
   @JvmStatic
@@ -62,6 +59,4 @@ object MavenConsumerPomUtil {
     if (mavenDomParent != null) return mavenDomParent
     return (context.invocationElement.parent as? MavenDomProjectModel)?.mavenParent
   }
-
-
 }

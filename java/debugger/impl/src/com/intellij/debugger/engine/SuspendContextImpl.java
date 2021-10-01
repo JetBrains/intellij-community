@@ -297,7 +297,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
           .thenCompose(res -> res
                  ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
                  : CompletableFuture.completedFuture(Collections.emptyList()))
-          .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true));
+          .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
+          .exceptionally(DebuggerUtilsAsync::logError);
       }
 
       CompletableFuture<Boolean> addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {

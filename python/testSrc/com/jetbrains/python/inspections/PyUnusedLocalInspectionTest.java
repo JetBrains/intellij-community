@@ -203,6 +203,16 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-48760
+  public void testAllBindingsOfSameNameInOrPatternConsideredUsed() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnusedCapturePatterns() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

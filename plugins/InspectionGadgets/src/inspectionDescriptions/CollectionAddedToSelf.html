@@ -1,17 +1,16 @@
 <html>
 <body>
-Reports cases where the argument of a method call on a <code>java.util.Collection</code>
-or <code>java.util.Map</code> is the collection or map itself.
-This includes adding a collection to itself, which can lead to a <code>java.lang.StackOverflowError</code> when,
-for example, calling <code>hashCode()</code> on the self-containing collection.
-May happen in the code with raw types as a result of copy-paste.
+Reports the cases where the argument of a method call on a <code>java.util.Collection</code>
+or <code>java.util.Map</code> is a collection or map itself.
+This includes adding a collection to itself, for example, calling <code>hashCode()</code> on the self-containing collection, which can lead to a <code>java.lang.StackOverflowError</code>.
+Such situations may occur in the code with raw types as a result of copy-paste.
 
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   ArrayList list = new ArrayList&lt;&gt;();
   list.add(list);
   return list.hashCode(); // throws StackOverflowException
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

@@ -23,6 +23,7 @@ public interface ToolWindowId {
   /**
    * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   String INSPECTION = "Inspection Results";
 

@@ -152,10 +152,10 @@ public final class DaemonListeners implements Disposable {
         @Override
         public void caretPositionChanged(@NotNull CaretEvent e) {
           Editor editor = e.getEditor();
-          if (EditorActivityManager.getInstance().isVisible(editor) &&
+          if (UIUtil.isShowing(editor.getContentComponent()) &&
               worthBothering(editor.getDocument(), editor.getProject())) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              if (!myProject.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
+              if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
                 IntentionsUI.getInstance(myProject).invalidate();
               }
             }, ModalityState.current(), myProject.getDisposed());
@@ -195,7 +195,7 @@ public final class DaemonListeners implements Disposable {
         Project editorProject = editor.getProject();
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
         PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
-        boolean showing = EditorActivityManager.getInstance().isVisible(editor);
+        boolean showing = UIUtil.isShowing(editor.getContentComponent());
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
           LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +

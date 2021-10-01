@@ -52,12 +52,22 @@ internal class AboutHttpService : RestService() {
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
     val originAllowed = super.isOriginAllowed(request)
-    if (originAllowed == OriginCheckResult.FORBID) {
-      val origin = request.origin ?: return OriginCheckResult.FORBID
-      @Suppress("SpellCheckingInspection")
-      return if (origin.matches(Regex("https://([a-z0-9-]+\\.)*hyperskill.org$"))) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
+    if (originAllowed == OriginCheckResult.FORBID && request.isEduToolsPluginRelated()) {
+      return OriginCheckResult.ALLOW
     }
     return originAllowed
+  }
+
+  /**
+   * [EduTools](https://plugins.jetbrains.com/plugin/10081-edutools) plugin requires IDE to respond with its version
+   * from hyperskill.org and academy.jetbrains.com sites
+   */
+  private fun HttpRequest.isEduToolsPluginRelated(): Boolean {
+    val origin = origin ?: return false
+    @Suppress("SpellCheckingInspection")
+    val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill.org$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-]+)*.jetbrains.com$")
+    return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {

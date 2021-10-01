@@ -133,7 +133,11 @@ class KotlinImportOptimizer : ImportOptimizer {
         override fun visitElement(element: PsiElement) {
             ProgressIndicatorProvider.checkCanceled()
             elementProgress += 1
-            progressIndicator?.fraction = elementProgress / elementsSize.toDouble()
+            progressIndicator?.apply {
+                if (elementsSize != 0) {
+                    fraction = elementProgress / elementsSize.toDouble()
+                }
+            }
 
             element.acceptChildren(this)
         }

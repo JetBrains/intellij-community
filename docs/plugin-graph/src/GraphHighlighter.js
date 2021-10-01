@@ -4,11 +4,22 @@ export class GraphHighlighter {
     this.cy = cy
     this.graphTextSearch = graphTextSearch
 
+    let timeout = null
     cy.on("mouseover", "node", e => {
-      this.selectNode(e.target)
+      const target = e.target
+      timeout = setTimeout(() => {
+        timeout = null
+        this.selectNode(target)
+      }, 100)
     })
     cy.on("mouseout", "node", e => {
-      this.deselectNode(e.target)
+      if (timeout === null) {
+        this.deselectNode(e.target)
+      }
+      else {
+        clearTimeout(timeout)
+        timeout = null
+      }
     })
   }
 

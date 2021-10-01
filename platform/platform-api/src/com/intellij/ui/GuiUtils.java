@@ -45,8 +45,10 @@ public final class GuiUtils {
 
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
     JPanel result = new JPanel(new GridBagLayout());
-    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-    FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
+    result.add(aComponent,
+               new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+    FixedSizeButton browseButton =
+      new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
     result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                     JBUI.emptyInsets(), 0, 0));
@@ -89,13 +91,13 @@ public final class GuiUtils {
       final int orientation = pane.getOrientation();
       boolean vertical = orientation == JSplitPane.VERTICAL_SPLIT;
       final Splitter splitter = useOnePixelDivider ? new OnePixelSplitter(vertical) : new JBSplitter(vertical);
-      splitter.setFirstComponent((JComponent) component1);
-      splitter.setSecondComponent((JComponent) component2);
+      splitter.setFirstComponent((JComponent)component1);
+      splitter.setSecondComponent((JComponent)component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
       splitter.setHonorComponentsMinimumSize(true);
 
       if (pane.getDividerLocation() > 0) {
-// let the component chance to resize itself
+        // let the component chance to resize itself
         SwingUtilities.invokeLater(() -> {
           double proportion;
           if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
@@ -111,19 +113,21 @@ public final class GuiUtils {
       }
 
       if (parent instanceof Splitter) {
-        final Splitter psplitter = (Splitter) parent;
-        if (psplitter.getFirstComponent() == root)
+        final Splitter psplitter = (Splitter)parent;
+        if (psplitter.getFirstComponent() == root) {
           psplitter.setFirstComponent(splitter);
-        else
+        }
+        else {
           psplitter.setSecondComponent(splitter);
+        }
       }
       else {
         parent.remove(0);
         parent.setLayout(new BorderLayout());
         parent.add(splitter, BorderLayout.CENTER);
       }
-      replaceJSplitPaneWithIDEASplitter((JComponent) component1, useOnePixelDivider);
-      replaceJSplitPaneWithIDEASplitter((JComponent) component2, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent)component1, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent)component2, useOnePixelDivider);
     }
     else {
       final Component[] components = root.getComponents();
@@ -174,22 +178,22 @@ public final class GuiUtils {
     }
     else if (component instanceof JLabel) {
       Color color = UIUtil.getInactiveTextColor();
-      @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
+      @NonNls String changeColorString = "<font color=#" + colorToHex(color) + ">";
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
         if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
-          text = "<html>"+text.substring(("<html>"+changeColorString).length());
+          text = "<html>" + text.substring(("<html>" + changeColorString).length());
         }
         else if (!StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && !enabled) {
-          text = "<html>"+changeColorString+text.substring("<html>".length());
+          text = "<html>" + changeColorString + text.substring("<html>".length());
         }
         label.setText(text);
       }
     }
     else if (component instanceof JTable) {
       TableColumnModel columnModel = ((JTable)component).getColumnModel();
-      for (int i=0; i<columnModel.getColumnCount();i++) {
+      for (int i = 0; i < columnModel.getColumnCount(); i++) {
         TableCellRenderer cellRenderer = columnModel.getColumn(0).getCellRenderer();
         if (cellRenderer instanceof Component) {
           enableComponent((Component)cellRenderer, enabled);
@@ -200,8 +204,8 @@ public final class GuiUtils {
 
   public static String colorToHex(final Color color) {
     return to2DigitsHex(color.getRed())
-           +to2DigitsHex(color.getGreen())
-           +to2DigitsHex(color.getBlue());
+           + to2DigitsHex(color.getGreen())
+           + to2DigitsHex(color.getBlue());
   }
 
   private static String to2DigitsHex(int i) {
@@ -220,6 +224,11 @@ public final class GuiUtils {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }
 
+  /**
+   * @deprecated Use ModalityUiUtil instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -230,6 +239,11 @@ public final class GuiUtils {
     }
   }
 
+  /**
+   * @deprecated Use ModalityUiUtil instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -246,8 +260,9 @@ public final class GuiUtils {
 
   /**
    * Returns dimension with width required to type certain number of chars in provided component
+   *
    * @param charCount number of chars
-   * @param comp component
+   * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
    */
   @NotNull

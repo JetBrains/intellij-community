@@ -11,9 +11,9 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.pom.Navigatable
@@ -50,9 +50,8 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   fun smallTextWithoutBackground(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
-    return AttributesTransformerPresentation(textWithoutBox) {
-      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND))
-    }
+    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
   override fun container(
@@ -129,9 +128,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   @Contract(pure = true)
   fun folding(placeholder: InlayPresentation, unwrapAction: () -> InlayPresentation): InlayPresentation {
     return ChangeOnClickPresentation(changeOnHover(placeholder, onHover = {
-      attributes(placeholder) {
-        it.with(attributesOf(EditorColors.FOLDED_TEXT_ATTRIBUTES))
-      }
+      attributes(placeholder, EditorColors.FOLDED_TEXT_ATTRIBUTES)
     }), onClick = unwrapAction)
   }
 
@@ -162,14 +159,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }, second = { expanded() }, initiallyFirstEnabled = startWithPlaceholder)
     presentationToChange = content
 
-    class ContentFlippingPresentation(base: InlayPresentation) : StaticDelegatePresentation(base) {
-      override fun mouseClicked(event: MouseEvent, translated: Point) {
-        content.flipState()
-      }
+    val prefixExposed = OnClickPresentation(matchingPrefix) { _: MouseEvent, _: Point ->
+      content.flipState()
     }
-
-    val prefixExposed = ContentFlippingPresentation(matchingPrefix)
-    val suffixExposed = ContentFlippingPresentation(matchingSuffix)
+    val suffixExposed = OnClickPresentation(matchingSuffix) { _: MouseEvent, _: Point ->
+      content.flipState()
+    }
     return seq(prefixExposed, content, suffixExposed)
   }
 
@@ -181,9 +176,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun matching(presentations: List<InlayPresentation>): List<InlayPresentation> = synchronousOnHover(presentations) { presentation ->
-    attributes(presentation) { base ->
-      base.with(attributesOf(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES))
-    }
+    attributes(presentation, CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
   }
 
   /**
@@ -305,12 +298,9 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }, hoverPredicate)
   }
 
-  private fun withReferenceAttributes(noHighlightReference: InlayPresentation): AttributesTransformerPresentation {
-    return attributes(noHighlightReference) {
-      val attributes = attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR)
-      attributes.effectType = null // With underlined looks weird
-      it.with(attributes)
-    }
+  fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
+    return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
+                      WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
   }
 
   @Contract(pure = true)
@@ -363,13 +353,14 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }
   }
 
-  private fun attributes(base: InlayPresentation, transformer: (TextAttributes) -> TextAttributes): AttributesTransformerPresentation =
-    AttributesTransformerPresentation(base, transformer)
+  private fun attributes(base: InlayPresentation,
+                         textAttributesKey: TextAttributesKey,
+                         flags: WithAttributesPresentation.AttributesFlags = WithAttributesPresentation.AttributesFlags()): WithAttributesPresentation =
+    WithAttributesPresentation(base, textAttributesKey, editor, flags)
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
-    return AttributesTransformerPresentation(base) {
-      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLAY_DEFAULT))
-    }
+    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
@@ -426,39 +417,10 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return Point(e.xOnScreen - pointOnScreen.x, e.yOnScreen - pointOnScreen.y)
   }
 
-  private fun attributesOf(key: TextAttributesKey) = editor.colorsScheme.getAttributes(key) ?: TextAttributes()
-
   private fun navigateInternal(resolve: () -> PsiElement?) {
     val target = resolve()
     if (target is Navigatable) {
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
   }
-}
-
-private fun TextAttributes.with(other: TextAttributes): TextAttributes {
-  val result = this.clone()
-  other.foregroundColor?.let { result.foregroundColor = it }
-  other.backgroundColor?.let { result.backgroundColor = it }
-  other.fontType.let { result.fontType = it }
-  other.effectType?.let { result.effectType = it }
-  other.effectColor?.let { result.effectColor = it }
-  return result
-}
-
-private fun TextAttributes.withDefault(other: TextAttributes): TextAttributes {
-  val result = this.clone()
-  if (result.foregroundColor == null) {
-    result.foregroundColor = other.foregroundColor
-  }
-  if (result.backgroundColor == null) {
-    result.backgroundColor = other.backgroundColor
-  }
-  if (result.effectType == null) {
-    result.effectType = other.effectType
-  }
-  if (result.effectColor == null) {
-    result.effectColor = other.effectColor
-  }
-  return result
 }

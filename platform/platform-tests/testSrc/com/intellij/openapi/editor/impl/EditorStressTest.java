@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,7 @@ public class EditorStressTest extends AbstractEditorTest {
   private static final int MIN_INLAY_WIDTH = 1;
   private static final int MAX_INLAY_WIDTH = 9;
   private static final int MAX_INLAY_OPERATIONS_IN_BATCH = 3;
+  private static final int MAX_CUSTOM_FOLD_REGION_WIDTH = 50;
 
   private static final List<? extends Action> INLAY_PRIMITIVE_ACTIONS = Arrays.asList(
     new AddInlay(),
@@ -44,6 +46,8 @@ public class EditorStressTest extends AbstractEditorTest {
     new RemoveText(),
     new MoveText(),
     new AddFoldRegion(),
+    new AddCustomFoldRegion(),
+    new UpdateCustomFoldRegion(),
     new RemoveFoldRegion(),
     new ExpandOrCollapseFoldRegions(),
     new ClearFoldRegions(),
@@ -137,6 +141,35 @@ public class EditorStressTest extends AbstractEditorTest {
       foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(Math.min(startOffset, endOffset),
                                                                              Math.max(startOffset, endOffset),
                                                                              random.nextBoolean() ? "." : ""));
+    }
+  }
+
+  private static class AddCustomFoldRegion implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      int lineCount = Math.max(1, document.getLineCount());
+      final int startLine = random.nextInt(lineCount);
+      final int endLine = random.nextInt(lineCount);
+      final FoldingModel foldingModel = editor.getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(Math.min(startLine, endLine),
+                                                                                     Math.max(startLine, endLine),
+                                                                                     MyCustomFoldRegionRenderer.INSTANCE));
+    }
+  }
+
+  private static class UpdateCustomFoldRegion implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      if (editor.getDocument().isInBulkUpdate()) return;
+      List<CustomFoldRegion> customRegions = ContainerUtil.findAll(editor.getFoldingModel().getAllFoldRegions(), CustomFoldRegion.class);
+      int count = customRegions.size();
+      if (count > 0) {
+        CustomFoldRegion region = customRegions.get(random.nextInt(count));
+        region.putUserData(REGION_WIDTH, random.nextInt(MAX_CUSTOM_FOLD_REGION_WIDTH));
+        region.update();
+      }
     }
   }
 
@@ -262,5 +295,22 @@ public class EditorStressTest extends AbstractEditorTest {
                       @NotNull Graphics g,
                       @NotNull Rectangle targetRegion,
                       @NotNull TextAttributes textAttributes) {}
+  }
+
+  private static final Key<Integer> REGION_WIDTH = Key.create("custom.region.width");
+
+  private static class MyCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final MyCustomFoldRegionRenderer INSTANCE = new MyCustomFoldRegionRenderer();
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      Integer value = region.getUserData(REGION_WIDTH);
+      return value == null ? 0 : value;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return 1;
+    }
   }
 }

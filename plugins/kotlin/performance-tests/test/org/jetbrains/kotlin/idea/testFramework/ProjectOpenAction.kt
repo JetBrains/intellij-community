@@ -105,26 +105,21 @@ enum class ProjectOpenAction {
             check(System.getProperty("org.gradle.native") == "false") {
                 "Please specify -Dorg.gradle.native=false due to known Gradle native issue"
             }
-            val project =
-                ProjectManagerEx.getInstanceEx()
-                    .openProject(
-                        Paths.get(projectPath),
-                        OpenProjectTask(projectName = projectName, isNewProject = true, showWelcomeScreen = false)
-                    ) ?: error("project $projectName at $projectPath is not loaded")
-
-            return openingProject(application, project) {
-                assertTrue(
-                    !project.isDisposed,
-                    "Gradle project $projectName at $projectPath is accidentally disposed immediately after import"
-                )
+            val path = File(projectPath).absolutePath
+            val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)!!
+            assertTrue(
+                !project.isDisposed,
+                "Gradle project $projectName at $path is accidentally disposed immediately after import"
+            )
 
                 with(project) {
                     trusted()
                     setupJdk(jdk)
                 }
 
-                refreshGradleProject(projectPath, project)
-            }
+            refreshGradleProject(path, project)
+
+            return project
         }
 
         private fun refreshGradleProjectIfNeeded(projectPath: String, project: Project) {

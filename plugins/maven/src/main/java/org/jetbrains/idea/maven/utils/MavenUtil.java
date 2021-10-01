@@ -54,7 +54,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -1360,15 +1359,18 @@ public class MavenUtil {
   }
 
   public static @NotNull Sdk getJdk(@NotNull Project project, @NotNull String name) throws ExternalSystemJdkException {
+    if (MavenWslUtil.useWslMaven(project)) {
+      return MavenWslUtil.getWslJdk(project, name);
+    }
     if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA) || project.isDefault()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
-        Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
-        if (res != null && res.getSdkType() instanceof JavaSdkType) {
-          return res;
-        }
+      Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (res != null && res.getSdkType() instanceof JavaSdkType) {
+        return res;
+      }
       throw new ProjectJdkNotFoundException();
     }
 
@@ -1380,17 +1382,21 @@ public class MavenUtil {
       return JavaSdk.getInstance().createJdk("", javaHome);
     }
 
+    Sdk projectJdk = getSdkByExactName(name);
+    if (projectJdk != null) return projectJdk;
+    throw new InvalidSdkException(name);
+  }
+
+  @Nullable
+  protected static Sdk getSdkByExactName(@NotNull String name) {
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
         if(projectJdk.getSdkType() instanceof JavaSdkType) {
           return projectJdk;
-        } else {
-          throw new InvalidSdkException(projectJdk.getName());
         }
-
       }
     }
-    throw new InvalidSdkException(name);
+    return null;
   }
 
   public static File getMavenPluginParentFile() {

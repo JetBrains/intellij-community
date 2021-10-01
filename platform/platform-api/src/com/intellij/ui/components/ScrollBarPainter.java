@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -12,6 +12,7 @@ import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,47 +21,48 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-abstract class ScrollBarPainter implements RegionPainter<Float> {
+@ApiStatus.Internal
+public abstract class ScrollBarPainter implements RegionPainter<Float> {
   final Rectangle bounds = new Rectangle();
   final TwoWayAnimator animator;
 
-  private static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
+  public static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
 
-  private static final ColorKey TRACK_OPAQUE_BACKGROUND
+  public static final ColorKey TRACK_OPAQUE_BACKGROUND
     = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.trackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.trackColor");
-  private static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
+  public static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
     = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.hoverTrackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.hoverTrackColor");
-  private static final ColorKey TRACK_BACKGROUND
+  public static final ColorKey TRACK_BACKGROUND
     = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.Transparent.trackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
-  private static final ColorKey TRACK_HOVERED_BACKGROUND
+  public static final ColorKey TRACK_HOVERED_BACKGROUND
     = SystemInfo.isMac ? key(0x1A808080, 0x1A808080, "ScrollBar.Mac.Transparent.hoverTrackColor")
                          : key(0x1A808080, 0x1A808080, "ScrollBar.Transparent.hoverTrackColor");
 
-  private static final ColorKey THUMB_OPAQUE_FOREGROUND
+  public static final ColorKey THUMB_OPAQUE_FOREGROUND
     = SystemInfo.isMac ? key(0x33000000, 0x59262626, "ScrollBar.Mac.thumbBorderColor")
                          : key(0x33595959, 0x47383838, "ScrollBar.thumbBorderColor");
-  private static final ColorKey THUMB_OPAQUE_BACKGROUND
+  public static final ColorKey THUMB_OPAQUE_BACKGROUND
     = SystemInfo.isMac ? key(0x33000000, 0x59808080, "ScrollBar.Mac.thumbColor")
                          : key(0x33737373, 0x47A6A6A6, "ScrollBar.thumbColor");
-  private static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
+  public static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
     = SystemInfo.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.hoverThumbBorderColor")
                          : key(0x47595959, 0x59383838, "ScrollBar.hoverThumbBorderColor");
-  private static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
+  public static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
     = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.hoverThumbColor");
-  private static final ColorKey THUMB_FOREGROUND
+  public static final ColorKey THUMB_FOREGROUND
     = SystemInfo.isMac ? key(0x00000000, 0x00262626, "ScrollBar.Mac.Transparent.thumbBorderColor")
                          : key(0x33595959, 0x47383838, "ScrollBar.Transparent.thumbBorderColor");
-  private static final ColorKey THUMB_BACKGROUND
+  public static final ColorKey THUMB_BACKGROUND
     = SystemInfo.isMac ? key(0x00000000, 0x00808080, "ScrollBar.Mac.Transparent.thumbColor")
                          : key(0x33737373, 0x47A6A6A6, "ScrollBar.Transparent.thumbColor");
-  private static final ColorKey THUMB_HOVERED_FOREGROUND
+  public static final ColorKey THUMB_HOVERED_FOREGROUND
     = SystemInfo.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.Transparent.hoverThumbBorderColor")
                          : key(0x47595959, 0x59383838, "ScrollBar.Transparent.hoverThumbBorderColor");
-  private static final ColorKey THUMB_HOVERED_BACKGROUND
+  public static final ColorKey THUMB_HOVERED_BACKGROUND
     = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 

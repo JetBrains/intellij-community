@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -333,7 +333,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (isModularized) {
           //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
           for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
-            putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
+            JavaParametersUtil.putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
           }
         }
       }
@@ -392,7 +392,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
         if (manifestFile != null) {
           try (final InputStream inputStream = manifestFile.getInputStream()) {
-            return new Manifest(inputStream).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            Attributes mainAttributes = new Manifest(inputStream).getMainAttributes();
+            if ("junit.org".equals(mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR))) {
+              return mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            }
           }
           catch (IOException ignored) { }
         }
@@ -615,6 +618,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (testFramework instanceof JUnit3Framework) {
         return isClassConfiguration ? JUnitStarter.JUNIT4_PARAMETER : JUnitStarter.JUNIT3_PARAMETER;
       }
+      if (testFramework != null) return JUnitStarter.JUNIT4_PARAMETER;
     }
     return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
   }

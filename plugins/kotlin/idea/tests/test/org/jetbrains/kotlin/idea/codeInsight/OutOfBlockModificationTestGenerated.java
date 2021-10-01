@@ -288,6 +288,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InPropertyWithInference.kt");
     }
 
+    @TestMetadata("InPropertyWithInferencePureStringLiteralChange.kt")
+    public void testInPropertyWithInferencePureStringLiteralChange() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InPropertyWithInferencePureStringLiteralChange.kt");
+    }
+
     @TestMetadata("InPropertyWithoutInference.kt")
     public void testInPropertyWithoutInference() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InPropertyWithoutInference.kt");

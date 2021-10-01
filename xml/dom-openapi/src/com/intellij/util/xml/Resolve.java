@@ -19,10 +19,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * A special case of {@link com.intellij.util.xml.Convert} annotation, used to convert
- * {@link com.intellij.util.xml.DomElement} instances to and from string. Converter here is an
- * instance of {@link com.intellij.util.xml.DomResolveConverter}.
- * Uses {@link com.intellij.util.xml.NameValue} annotation to retrieve the DOM element's name.
+ * A special case of {@link Convert} annotation, used to convert
+ * {@link DomElement} instances to and from string. Converter here is an
+ * instance of {@link DomResolveConverter}.
+ * Uses {@link NameValue} annotation to retrieve the DOM element's name.
  *
  * @author peter
  */

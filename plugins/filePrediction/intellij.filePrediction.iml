@@ -24,9 +24,9 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
       <library name="file-prediction-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.2.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.3.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.2.2/file-prediction-model-0.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

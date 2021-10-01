@@ -41,11 +41,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -783,7 +779,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      remainingPatches.addAll(patchApplier.getFailedPatches());
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }

@@ -1,13 +1,17 @@
 <idea-plugin package="com.intellij.sh">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.lang</depends>
   <name>Shell Script</name>
   <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
 
-  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
-  <depends optional="true" config-file="sh-copyright.xml">com.intellij.copyright</depends>
+  <content>
+    <module name="intellij.sh/terminal"/>
+    <module name="intellij.sh/copyright"/>
+  </content>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <description><![CDATA[
 Adds support for working with shell script files

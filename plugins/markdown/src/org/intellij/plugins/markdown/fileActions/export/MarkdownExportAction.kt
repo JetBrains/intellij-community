@@ -17,7 +17,7 @@ class MarkdownExportAction : AnAction() {
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = getFileToConvert(event) != null
+    event.presentation.isEnabled = getFileToConvert(event) != null
   }
 
   private fun getFileToConvert(event: AnActionEvent): VirtualFile? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -122,11 +122,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     };
     PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
-    myPluginsPanel.setSelectionListener(__ -> {
-      List<ListPluginComponent> selection = myPluginsPanel.getSelection();
-      int size = selection.size();
-      myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
-    });
+    myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
       myGroup.descriptors.add(plugin.getDescriptor());
@@ -151,20 +147,17 @@ public class PluginUpdateDialog extends DialogWrapper {
     for (ListPluginComponent plugin : myGroup.ui.plugins) {
       if (plugin.getChooseUpdateButton().isSelected()) {
         count++;
-        try {
-          total += Long.parseLong(((PluginNode)plugin.getPluginDescriptor()).getSize());
-        }
-        catch (NumberFormatException ignore) {
+
+        IdeaPluginDescriptor descriptor = plugin.getPluginDescriptor();
+        if (descriptor instanceof PluginNode) {
+          total += ((PluginNode)descriptor).getIntegerSize();
         }
       }
     }
 
-    String text = null;
-    if (total > 0) {
-      text = IdeBundle.message("plugin.update.dialog.total.label", StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH));
-    }
-
-    myTotalLabel.setText(text);
+    myTotalLabel.setText(IdeBundle.message("plugin.update.dialog.total.label",
+                                           StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH)));
+    myTotalLabel.setVisible(total > 0);
     getOKAction().setEnabled(count > 0);
   }
 

@@ -9,17 +9,20 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
+import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils.createCredentialsForGoogleApi
+import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils.getGoogleAppCredentials
 
 class GoogleAuthorizationManager(private val project: Project) {
   fun getCredentials(): Credential? {
     val credentials = createNewAccount() ?: return null
 
-    return GoogleCredentialUtils.createCredentialsForGoogleApi(credentials)
+    return createCredentialsForGoogleApi(credentials)
   }
-  
+
   private fun createNewAccount(): GoogleCredentials? {
-    val oAuthService = service<GoogleOAuthService>()
+    val oAuthService = service<GoogleOAuthService>().apply {
+      googleAppCred = getGoogleAppCredentials(project) ?: return null
+    }
     val credentialsFuture = oAuthService.authorize()
 
     try {

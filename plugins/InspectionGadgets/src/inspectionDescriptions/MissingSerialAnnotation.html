@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports methods and fields in <code>Serializable</code> and <code>Externalizable</code>
-classes that are suitable to be annotated with the <code>java.io.Serial</code> annotation. The quick-fix adds the annotation.
-<p>Example:</p>
-<pre>
+<p>Reports methods and fields in the <code>Serializable</code> and <code>Externalizable</code>
+  classes that are suitable to be annotated with the <code>java.io.Serial</code> annotation. The quick-fix adds the annotation.</p>
+<p><b>Example:</b></p>
+<pre><code>
 class Main implements Serializable {
   private static final long serialVersionUID = 7874493593505141603L;
 
   private void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class Main implements Serializable {
     @Serial
     private static final long serialVersionUID = 7874493593505141603L;
@@ -21,27 +21,27 @@ class Main implements Serializable {
     private void writeObject(ObjectOutputStream out) throws IOException {
     }
 }
-</pre>
-<p>Example:</p>
-<pre>
+</code></pre>
+<p><b>Example:</b></p>
+<pre><code>
   class Main implements Externalizable {
     protected Object readResolve() throws ObjectStreamException {
       return "SomeObject";
     }
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class Main implements Externalizable {
     @Serial
     protected Object readResolve() throws ObjectStreamException {
         return "SomeObject";
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>To get more information about all possible cases, refer the documentation for <code>java.io.Serial</code>.</p>
-<p>This inspection only reports if the language level of the project or module is 14 or higher.</p>
+<p>For more information about all possible cases, refer the documentation for <code>java.io.Serial</code>.</p>
+<p>This inspection applies to the language level of the project or module 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

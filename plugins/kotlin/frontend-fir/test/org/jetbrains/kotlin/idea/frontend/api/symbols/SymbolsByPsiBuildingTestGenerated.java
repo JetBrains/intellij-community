@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -28,7 +28,12 @@ public class SymbolsByPsiBuildingTestGenerated extends AbstractSymbolsByPsiBuild
 
     @TestMetadata("annotations.kt")
     public void testAnnotations() throws Exception {
-        runTest("idea/idea-frontend-fir/testData/symbolsByPsi/annotations.kt");
+        runTest("testData/symbolsByPsi/annotations.kt");
+    }
+
+    @TestMetadata("anonymousObject.kt")
+    public void testAnonymousObject() throws Exception {
+        runTest("testData/symbolsByPsi/anonymousObject.kt");
     }
 
     @TestMetadata("class.kt")
@@ -68,6 +73,11 @@ public class SymbolsByPsiBuildingTestGenerated extends AbstractSymbolsByPsiBuild
 
     @TestMetadata("localDeclarations.kt")
     public void testLocalDeclarations() throws Exception {
-        runTest("idea/idea-frontend-fir/testData/symbolsByPsi/localDeclarations.kt");
+        runTest("testData/symbolsByPsi/localDeclarations.kt");
+    }
+
+    @TestMetadata("typeAnnotations.kt")
+    public void testTypeAnnotations() throws Exception {
+        runTest("testData/symbolsByPsi/typeAnnotations.kt");
     }
 }

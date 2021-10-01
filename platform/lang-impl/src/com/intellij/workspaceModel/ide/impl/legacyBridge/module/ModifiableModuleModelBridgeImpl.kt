@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -21,8 +22,8 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -44,16 +45,14 @@ internal class ModifiableModuleModelBridgeImpl(
   private val myModulesToAdd = HashBiMap.create<String, ModuleBridge>()
   private val myModulesToDispose = HashBiMap.create<String, ModuleBridge>()
   private val myUncommittedModulesToDispose = ArrayList<ModuleBridge>()
+  private val currentModulesSet = moduleManager.modules.toMutableSet()
   private val myNewNameToModule = HashBiMap.create<String, ModuleBridge>()
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private var moduleGroupsAreModified = false
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {
-    val modules = moduleManager.modules.toMutableList()
-    modules.removeAll(myModulesToDispose.values)
-    modules.addAll(myModulesToAdd.values)
-    return modules.toTypedArray()
+    return currentModulesSet.toTypedArray()
   }
 
   override fun newModule(filePath: String, moduleTypeId: String): Module = newModule(filePath, moduleTypeId, null)
@@ -68,6 +67,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val module = ModuleBridgeImpl(moduleEntity.persistentId(), moduleName, project, null, entityStorageOnDiff, diff)
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     myModulesToAdd[moduleName] = module
+    currentModulesSet.add(module)
 
     module.init(null)
     module.setModuleType(moduleTypeId)
@@ -116,6 +116,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = isNew)
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     myModulesToAdd[moduleEntity.name] = moduleInstance
+    currentModulesSet.add(moduleInstance)
     return moduleInstance
   }
 
@@ -196,6 +197,7 @@ internal class ModifiableModuleModelBridgeImpl(
     if (myModulesToAdd.inverse().remove(module) != null) {
       myUncommittedModulesToDispose.add(module)
     }
+    currentModulesSet.remove(module)
 
     myNewNameToModule.inverse().remove(module)
     myModulesToDispose[module.name] = module
@@ -264,7 +266,7 @@ internal class ModifiableModuleModelBridgeImpl(
     myUncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
-  fun collectChanges(): WorkspaceEntityStorageBuilder {
+  override fun collectChanges(): WorkspaceEntityStorageBuilder {
     prepareForCommit()
     return diff
   }

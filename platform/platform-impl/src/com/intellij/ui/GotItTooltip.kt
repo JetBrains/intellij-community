@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -12,6 +12,9 @@ import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGrou
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -47,6 +50,25 @@ import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
+@Service
+class GotItTooltipService {
+  val isFirstRun = checkFirstRun()
+
+  private fun checkFirstRun(): Boolean {
+    val prevRunBuild = PropertiesComponent.getInstance().getValue("gotit.previous.run")
+    val currentRunBuild = ApplicationInfo.getInstance().build.asString()
+    if (prevRunBuild != currentRunBuild) {
+      PropertiesComponent.getInstance().setValue("gotit.previous.run", currentRunBuild)
+      return true
+    }
+    return false
+  }
+
+  companion object {
+    fun getInstance(): GotItTooltipService = service()
+  }
+}
+
 /**
  * id is a unique id for the tooltip that will be used to store the tooltip state in <code>PropertiesComponent</code>
  * id has the following format: place.where.used - lowercase words separated with dots.
@@ -71,6 +93,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
   private var showCloseShortcut = false
   private var maxCount = 1
   private var onBalloonCreated : (Balloon) -> Unit = {}
+  private var hideOnClickOutside : Boolean = false
 
   // Ease the access (remove private or val to var) if fine tuning is needed.
   private val savedCount : (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
@@ -190,6 +213,14 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
    */
   fun withShowCount(count: Int) : GotItTooltip {
     if (count > 0) maxCount = count
+    return this
+  }
+
+  /**
+   * Hide popup when user clicks outside.
+   */
+  fun withHideOnClickOutside() : GotItTooltip {
+    hideOnClickOutside = true
     return this
   }
 
@@ -393,6 +424,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
         setHideOnClickOutside(false).
         setHideOnFrameResize(false).
         setHideOnKeyOutside(false).
+        setHideOnClickOutside(hideOnClickOutside).
         setBlockClicksThroughBalloon(true).
         setBorderColor(BORDER_COLOR).
         setCornerToPointerDistance(ARROW_SHIFT).

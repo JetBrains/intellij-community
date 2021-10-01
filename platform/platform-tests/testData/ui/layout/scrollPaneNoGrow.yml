@@ -16,7 +16,12 @@ rowConstraints:
   constraints:
   - align: &id005 {horizontal: false, unit: -1, value: 0.0}
   - align: *id005
-  count: 2
+    gapAfter:
+      max: &id006 {horizontal: true, unit: 0, value: 0.0}
+      min: *id006
+      preferred: *id006
+  - {}
+  count: 3
 columnConstraints:
   constraints:
   - {}

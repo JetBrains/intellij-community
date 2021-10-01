@@ -29,8 +29,7 @@ public final class ScratchUtil {
     return rootType != null && !rootType.isHidden();
   }
 
-  @NotNull
-  public static String getRelativePath(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NotNull String getRelativePath(@NotNull Project project, @NotNull VirtualFile file) {
     RootType rootType = Objects.requireNonNull(RootType.forFile(file));
     String rootPath = ScratchFileService.getInstance().getRootPath(rootType);
     VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(rootPath);

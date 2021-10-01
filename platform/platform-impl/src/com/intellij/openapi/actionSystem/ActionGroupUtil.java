@@ -4,12 +4,14 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ActionGroupUtil {
 
   /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
     return getActiveActions(actionGroup, e).isEmpty();

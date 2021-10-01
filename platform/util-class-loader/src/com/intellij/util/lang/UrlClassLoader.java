@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -140,6 +141,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   /**
    * @deprecated Do not extend UrlClassLoader. If you cannot avoid it, use {@link #UrlClassLoader(Builder, boolean)}.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
     this(builder, null, false);
@@ -358,6 +360,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
+
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
@@ -567,6 +573,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
       List<Path> files = new ArrayList<>(urls.size());

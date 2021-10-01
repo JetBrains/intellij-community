@@ -25,7 +25,7 @@ class MarkdownConfigureImageLineMarkersTest: BasePlatformTestCase() {
     }
   }
 
-  fun `test markdown`() = doTest(5)
+  fun `test markdown`() = doTest(7)
 
   fun `test composite markdown`() = doTest(3)
 

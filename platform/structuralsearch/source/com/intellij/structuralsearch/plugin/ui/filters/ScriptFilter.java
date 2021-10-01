@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +27,11 @@ class ScriptFilter extends FilterAction {
 
   ScriptFilter() {
     super(SSRBundle.messagePointer("script.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    return variable.getScriptCodeConstraint().length() > 2 ? SSRBundle.message("script.tooltip.message") : "";
   }
 
   @Override

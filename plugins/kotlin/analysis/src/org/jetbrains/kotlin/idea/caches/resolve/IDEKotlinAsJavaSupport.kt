@@ -12,10 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.caches.lightClasses.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
@@ -24,6 +22,7 @@ import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
+import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -38,9 +37,10 @@ import org.jetbrains.kotlin.utils.checkWithAttachment
 
 open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     private val psiManager: PsiManager = PsiManager.getInstance(project)
+    private val languageVersionSettings = project.getLanguageVersionSettings()
 
     protected open fun createLightClassForSourceDeclaration(classOrObject: KtClassOrObject): KtLightClass? =
-        KtLightClassForSourceDeclaration.create(classOrObject)
+        KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
 
     protected open fun createLightClassForScript(script: KtScript): KtLightClass? =
         KtLightClassForScript.create(script)

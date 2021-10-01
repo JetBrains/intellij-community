@@ -114,6 +114,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, "taskM", !":taskM", ":module:taskM")
       assertCollection(it, !"taskC", !":taskC", !":module:taskC")
       assertCollection(it, !"taskCM", !":taskCM", !":module:taskCM")
+
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertCollection(it,
+                         getCommonTasks(":composite:") - ":composite:prepareKotlinBuildScriptModel",
+                         getCommonTasks(":composite:module:") - ":composite:module:prepareKotlinBuildScriptModel")
+      }
     }
     withVariantsFor("", "project") {
       assertCollection(it, getGradleOptions())
@@ -144,6 +150,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, !"taskCM", !":taskCM", !":module:taskCM")
     }
     withVariantsFor("", "composite") {
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertThat(it).containsExactlyInAnyOrderElementsOf(getGradleOptions())
+        return@withVariantsFor
+      }
       assertCollection(it, getGradleOptions())
       assertCollection(it, getRootProjectTasks(), getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
       if (isGradleNewerOrSameAs("6.5.1")) {
@@ -157,6 +167,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, "taskCM", !":taskCM", ":module:taskCM")
     }
     withVariantsFor("", "composite.module") {
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertThat(it).containsExactlyInAnyOrderElementsOf(getGradleOptions())
+        return@withVariantsFor
+      }
       assertCollection(it, getGradleOptions())
       assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
       if (isGradleNewerOrSameAs("6.5.1")) {

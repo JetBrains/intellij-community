@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -21,6 +22,10 @@ class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: Change
     openWithDoubleClick(tree)
     installNextDiffActionOn(targetComponent)
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+  }
+
+  override fun updateAvailability(event: AnActionEvent) {
+    GitShowDiffFromStashAction.updateAvailability(event)
   }
 
   override fun getCurrentName(): String {

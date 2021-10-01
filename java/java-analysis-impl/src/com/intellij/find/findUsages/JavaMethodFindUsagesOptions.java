@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author peter
@@ -90,7 +90,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull Set<? super String> strings) {
+  protected void addUsageTypes(@NotNull List<? super String> strings) {
     super.addUsageTypes(strings);
     if (isIncludeOverloadUsages) {
       strings.add(JavaAnalysisBundle.message("find.usages.panel.title.overloaded.methods.usages"));
@@ -100,6 +100,9 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     }
     if (isOverridingMethods) {
       strings.add(JavaAnalysisBundle.message("find.usages.panel.title.overriding.methods"));
+    }
+    if (isSearchForBaseMethod) {
+      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.base.methods"));
     }
   }
 }

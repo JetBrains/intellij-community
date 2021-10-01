@@ -20,7 +20,10 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 @Suppress("DEPRECATION")
-class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(ConvertTryFinallyToUseCallIntention::class) {
+class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(
+    ConvertTryFinallyToUseCallIntention::class,
+    problemText = KotlinBundle.message("convert.try.finally.to.use.before.text")
+) {
     override fun inspectionTarget(element: KtTryExpression) = element.tryKeyword ?: element.tryBlock
 }
 

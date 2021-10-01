@@ -41,10 +41,16 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
     return ActionsTotalSummary(maxUsageCount, minUsageCount)
   }
 
+  @Synchronized
   fun getTotalStats(): ActionsTotalSummary = totalSummary
 
+  @Synchronized
   fun getActionsStats(): Map<String, ActionSummary> = if (state.data.isEmpty()) emptyMap() else HashMap(state.data)
 
+  @Synchronized
+  fun getActionStatsById(actionId: String): ActionSummary? = state.data[actionId]
+
+  @Synchronized
   internal fun updateActionsSummary(actionId: String) {
     val summary = state.data.computeIfAbsent(actionId) { ActionSummary() }
     summary.lastUsedTimestamp = System.currentTimeMillis()

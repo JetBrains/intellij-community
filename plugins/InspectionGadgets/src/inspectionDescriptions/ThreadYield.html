@@ -1,22 +1,23 @@
 <html>
 <body>
-Reports any calls to <b>Thread.yield()</b>.
-The behavior of <code>yield()</code> is non-deterministic and platform dependent, and it is rarely appropriate to use this method.
-Its use should be combined with detailed profiling and benchmarking to ensure that it actually has the desired effect.
-<!-- tooltip end -->
-<p>Example:</p>
+Reports calls to <code>Thread.yield()</code>.
+<p>
+  The behavior of <code>yield()</code> is non-deterministic and platform-dependent, and it is rarely appropriate to use this method.
+  Its use should be combined with detailed profiling and benchmarking to ensure that it actually has the desired effect.
+</p>
+<p><b>Example:</b></p>
 <pre><code>
-  <b>public static void</b> main(String[] args) {
+  public static void main(String[] args) {
     Runnable r = () -> {
-      <b>for</b> (<b>int</b> i = 0; i &lt; 10; i++) {
+      for (int i = 0; i &lt; 10; i++) {
         System.out.println(i);
         Thread.yield();
       }
     };
-    <b>new</b> Thread(r).start();
-    <b>new</b> Thread(r).start();
+    new Thread(r).start();
+    new Thread(r).start();
   }
 </code></pre>
-
+<!-- tooltip end -->
 </body>
 </html>

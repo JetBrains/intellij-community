@@ -160,7 +160,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (raw.resourceBundleBaseName != null) {
-      if (id == PluginManagerCore.CORE_ID) {
+      if (id == PluginManagerCore.CORE_ID && !isSub) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
                  " included into the platform part of the IDE but the platform part uses predefined bundles " +
                  "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
@@ -177,19 +177,21 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       version = context.defaultVersion
     }
 
-    if (context.isPluginDisabled(id)) {
-      markAsIncomplete(context, null, null)
-    }
-    else {
-      for (pluginDependency in dependencies.plugins) {
-        if (context.isPluginDisabled(pluginDependency.id)) {
-          markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-        }
-        else if (context.result.isBroken(pluginDependency.id)) {
-          markAsIncomplete(context = context,
-                           disabledDependency = null,
-                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                           pluginId = pluginDependency.id)
+    if (!isSub) {
+      if (context.isPluginDisabled(id)) {
+        markAsIncomplete(context, disabledDependency = null, shortMessage = null)
+      }
+      else {
+        for (pluginDependency in dependencies.plugins) {
+          if (context.isPluginDisabled(pluginDependency.id)) {
+            markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
+          }
+          else if (context.result.isBroken(pluginDependency.id)) {
+            markAsIncomplete(context = context,
+                             disabledDependency = null,
+                             shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
+                             pluginId = pluginDependency.id)
+          }
         }
       }
     }
@@ -450,7 +452,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getVendorUrl() = vendorUrl
 
-  override fun getUrl() = url!!
+  override fun getUrl() = url
 
   override fun getPluginId() = id
 

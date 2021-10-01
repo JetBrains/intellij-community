@@ -100,6 +100,16 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
             runTest("testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
         }
 
+        @TestMetadata("EOFCommentAfterFor.after.kt")
+        public void testEOFCommentAfterFor() throws Exception {
+            runTest("testData/indentationOnNewline/EOFCommentAfterFor.after.kt");
+        }
+
+        @TestMetadata("EOFCommentAfterIf.after.kt")
+        public void testEOFCommentAfterIf() throws Exception {
+            runTest("testData/indentationOnNewline/EOFCommentAfterIf.after.kt");
+        }
+
         @TestMetadata("FunctionBlock.after.kt")
         public void testFunctionBlock() throws Exception {
             runTest("testData/indentationOnNewline/FunctionBlock.after.kt");

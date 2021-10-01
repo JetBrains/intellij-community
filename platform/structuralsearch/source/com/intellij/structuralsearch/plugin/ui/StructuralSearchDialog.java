@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,6 +55,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -400,8 +402,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
       initValidation();
     });
-    final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
+    final String text = SSRBundle.message("search.target.label");
+    final JLabel searchTargetLabel = new JLabel(text);
     searchTargetLabel.setLabelFor(myTargetComboBox);
+    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
 
     final JPanel centerPanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(centerPanel);
@@ -536,9 +540,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    final DumbAwareAction historyAction = new DumbAwareAction(SSRBundle.messagePointer("history.button"),
-                                                              SSRBundle.messagePointer("history.button.description"),
-                                                              AllIcons.Actions.SearchWithHistory) {
+    final DumbAwareAction historyAction = new DumbAwareAction() {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!ConfigurationManager.getInstance(getProject()).getHistoryConfigurations().isEmpty());
@@ -563,6 +565,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           .showUnderneathOf((Component)source);
       }
     };
+    ActionUtil.copyFrom(historyAction, "ShowSearchHistory");
     final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template"));
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
@@ -600,15 +603,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return myConfiguration instanceof SearchConfiguration && myConfiguration.getMatchOptions().isRecursiveSearch();
+        return myConfiguration.getMatchOptions().isRecursiveSearch();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        if (myConfiguration instanceof SearchConfiguration) {
-          myConfiguration.getMatchOptions().setRecursiveSearch(state);
-          initValidation();
-        }
+        myConfiguration.getMatchOptions().setRecursiveSearch(state);
+        initValidation();
       }
     };
     final CheckboxAction matchCase = new CheckboxAction(FindBundle.message("find.popup.case.sensitive")) {
@@ -696,7 +697,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), false, myReplace);
+          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), myFilterPanel, false, myReplace);
           if (!dialog.showAndGet()) {
             return;
           }
@@ -1370,7 +1371,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(myConfiguration)));
+      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
     }
   }
 
@@ -1406,7 +1407,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (profile != null) {
         TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
       }
-      SubstitutionShortInfoHandler.install(editor, variableName -> {
+      SubstitutionShortInfoHandler.install(editor, myFilterPanel, variableName -> {
         if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
           //noinspection AssignmentToLambdaParameter
           variableName = StringUtil.trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);

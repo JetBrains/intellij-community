@@ -18,6 +18,7 @@ package com.intellij.openapi.options.advanced
  import com.intellij.util.Alarm
  import com.intellij.util.ui.JBUI
  import com.intellij.util.ui.UIUtil
+ import java.awt.Dimension
  import javax.swing.*
  import javax.swing.event.DocumentEvent
 
@@ -85,7 +86,8 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
                     reset()
                   }
                 }
-                actionButton(resetAction)
+                val minSize = AllIcons.Diff.Revert.iconHeight
+                actionButton(resetAction, Dimension(minSize, minSize))
                   .visibleIf(isDefaultPredicate.not())
 
                 label("").constraints(pushX)

@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author peter
@@ -69,7 +69,7 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull Set<? super String> strings) {
+  protected void addUsageTypes(@NotNull List<? super String> strings) {
     if (isUsages || isMethodsUsages || isFieldsUsages) {
       strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }

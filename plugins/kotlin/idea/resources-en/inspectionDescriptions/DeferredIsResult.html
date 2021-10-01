@@ -1,8 +1,28 @@
 <html>
 <body>
 Reports functions with <code>kotlinx.coroutines.Deferred</code> result.
-
-Functions which use <code>Deferred</code> as return type should have a name with suffix <code>Async</code>.
-Otherwise, it's recommended to turn a function into a suspend function and unwrap <code>Deferred</code>.
+<p>
+    Functions that use <code>Deferred</code> as return type should have a name with suffix <code>Async</code>.
+    Otherwise, it's recommended to turn a function into a <code>suspend</code> one and unwrap <code>Deferred</code> inside it.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun calcEverything(): Deferred&lt;Int&gt; {
+      return CompletableDeferred(42)
+  }
+</code></pre>
+<p>After the fix applied (add the <code>Async</code> suffix):</p>
+<pre><code>
+  fun calcEverythingAsync(): Deferred&lt;Int&gt; {
+      return CompletableDeferred(42)
+  }
+</code></pre>
+<p>After the fix applied (turn the function into a <code>suspend</code> one):</p>
+<pre><code>
+  suspend fun calcEverything(): Int {
+      return CompletableDeferred(42).await()
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

@@ -1,30 +1,30 @@
 <html>
 <body>
-Reports constructors of abstract classes declared <code>public</code>.
+Reports the constructors of abstract classes that are declared as <code>public</code>.
 <p>
   Constructors of abstract classes can only be called in constructors of
   their subclasses. So making constructors of abstract classes public may
   be confusing.
 </p>
 <p>The quick-fix makes such constructors protected.</p>
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   <b>public abstract class</b> Foo {
     <b>public</b> Foo () { // warning: has 'public' modifier
         /* ... */
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   <b>public abstract class</b> Foo {
     <b>protected</b> Foo () {
         /* ... */
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>Use the checkbox below to ignore non-public classes.
-<p>
+<p>Configure the inspection:</p>
+<p>Use the option below to ignore non-public classes.</p>
 </body>
 </html>

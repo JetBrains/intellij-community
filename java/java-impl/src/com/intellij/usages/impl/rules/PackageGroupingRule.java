@@ -12,7 +12,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myPackage.getQualifiedName();
     }
 
@@ -98,7 +97,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

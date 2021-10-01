@@ -43,6 +43,7 @@ public abstract class FeatureUsagesCollector {
    */
   @NonNls
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public String getGroupId() {
     EventLogGroup group = getGroup();
@@ -56,6 +57,7 @@ public abstract class FeatureUsagesCollector {
    * Increment collector version if any changes in collector logic were implemented.
    * @deprecated Please use {@link FeatureUsagesCollector#getGroup()} instead.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public int getVersion() {
     EventLogGroup group = getGroup();

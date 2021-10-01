@@ -46,6 +46,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     else {
       text = "<html><body>$body</body></html>"
     }
+    setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
   }
 
   protected open fun createViewFactory(iconsClass: Class<*>): ViewFactory = HtmlEditorViewFactory(iconsClass)
@@ -53,8 +54,11 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
   protected open class HtmlEditorViewFactory(private val iconsClass: Class<*>) : JBHtmlEditorKit.JBHtmlFactory() {
     override fun create(elem: Element): View {
       if (ICON_INLINE_ELEMENT_NAME == elem.name) {
-        val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
-          ?.let { IconLoader.getIcon(it as String, iconsClass) }
+        val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)?.let {
+          val path = it as String
+
+          IconLoader.findIcon(path, iconsClass)
+        }
 
         if (icon != null) {
           return object : InlineView(elem) {

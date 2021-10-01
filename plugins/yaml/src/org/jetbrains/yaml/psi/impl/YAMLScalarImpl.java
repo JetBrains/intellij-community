@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +17,7 @@ import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -172,5 +176,25 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     else {
       super.accept(visitor);
     }
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      @Override
+      public @NotNull String getPresentableText() {
+        return StringUtil.shortenTextWithEllipsis(getTextValue(), 20, 0, true);
+      }
+
+      @Override
+      public @NotNull String getLocationString() {
+        return getContainingFile().getName();
+      }
+
+      @Override
+      public @NotNull Icon getIcon(boolean unused) {
+        return AllIcons.Nodes.Variable;
+      }
+    };
   }
 }

@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports fields with type <code>java.lang.StringBuffer</code> or <code>java.lang.StringBuilder</code>.
-Fields with these types can grow without a limit and are often the cause of memory leaks.
-<p>Example:</p>
+Reports the fields of the <code>java.lang.StringBuffer</code> or <code>java.lang.StringBuilder</code> types.
+Such fields can grow without limit and are often the cause of memory leaks.
+<p><b>Example:</b></p>
 <pre>
+  <code>
 public class Example {
   StringBuilder builder = new StringBuilder();
 
   ...
 }
+  </code>
 </pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

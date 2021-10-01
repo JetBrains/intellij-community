@@ -1,9 +1,11 @@
 <html>
 <body>
-Reports synchronization on a local variable or parameter. It is very difficult to guarantee correctness when such synchronization is used.
-It may be possible to improve code like this by controlling access through e.g. a synchronized wrapper class or by synchronizing on a
-field.
-<p>Example:</p>
+Reports synchronization on a local variable or parameter. 
+<p>
+  It is very difficult to guarantee correct operation when such synchronization is used.
+  It may be possible to improve such code, for example, by controlling access using a synchronized wrapper class or by synchronizing on a
+  field.</p>
+<p><b>Example:</b></p>
 <pre>
   void bar() {
     final Object lock = new Object();

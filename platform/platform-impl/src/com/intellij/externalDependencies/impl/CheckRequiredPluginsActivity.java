@@ -40,7 +40,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
   private static final @NonNls String INSTALL = "install";
 
   CheckRequiredPluginsActivity() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
   }

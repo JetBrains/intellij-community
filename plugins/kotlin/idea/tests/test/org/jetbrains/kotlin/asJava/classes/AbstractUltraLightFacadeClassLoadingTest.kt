@@ -16,14 +16,15 @@ abstract class AbstractUltraLightFacadeClassTest : KotlinLightCodeInsightFixture
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     open fun doTest(testDataPath: String) {
-        val sourceText = File(testDataPath).readText()
-        myFixture.addFileToProject(testDataPath, sourceText) as KtFile
+        val testDataFile = File(testDataPath)
+        val sourceText = testDataFile.readText()
+        myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile
 
         UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
 
-        val additionalFilePath = "$testDataPath.1"
-        if (File(additionalFilePath).exists()) {
-            myFixture.addFileToProject(additionalFilePath.replaceFirst(".kt.1", "1.kt"), File(additionalFilePath).readText())
+        val additionalFile = File("$testDataPath.1")
+        if (additionalFile.exists()) {
+            myFixture.addFileToProject(additionalFile.name.replaceFirst(".kt.1", "1.kt"), additionalFile.readText())
         }
 
         val scope = GlobalSearchScope.allScope(project)

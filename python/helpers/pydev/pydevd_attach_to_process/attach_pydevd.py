@@ -60,19 +60,21 @@ def main(setup):
     if sys.platform == 'win32':
         setup['pythonpath'] = pydevd_dirname.replace('\\', '/')
         setup['pythonpath2'] = os.path.dirname(__file__).replace('\\', '/')
-        python_code = '''import sys;
+        python_code = '''import os, sys;
 sys.path.append("%(pythonpath)s");
 sys.path.append("%(pythonpath2)s");
 import attach_script;
+os.environ.setdefault("PYCHARM_ATTACH", "True");
 attach_script.attach(port=%(port)s, host="%(host)s", protocol="%(protocol)s");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
     else:
         setup['pythonpath'] = pydevd_dirname
         setup['pythonpath2'] = os.path.dirname(__file__)
         # We have to pass it a bit differently for gdb
-        python_code = '''import sys;
+        python_code = '''import os, sys;
 sys.path.append(\\\"%(pythonpath)s\\\");
 sys.path.append(\\\"%(pythonpath2)s\\\");
+os.environ.setdefault(\\\"PYCHARM_ATTACH\\\", \\\"True\\\");
 import attach_script;
 attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\", protocol=\\\"%(protocol)s\\\");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')

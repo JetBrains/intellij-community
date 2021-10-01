@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
+const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
 
 fun Method.isInvokeSuspend(): Boolean =
     name() == "invokeSuspend" && signature() == "(Ljava/lang/Object;)Ljava/lang/Object;"
@@ -101,7 +102,8 @@ fun hasGetCoroutineSuspended(frames: List<StackFrameProxyImpl>) =
     frames.indexOfFirst { it.safeLocation()?.safeMethod()?.isGetCoroutineSuspended() == true }
 
 fun StackTraceElement.isCreationSeparatorFrame() =
-    className.startsWith(CREATION_STACK_TRACE_SEPARATOR)
+    className.startsWith(CREATION_STACK_TRACE_SEPARATOR) ||
+    className == CREATION_CLASS_NAME
 
 fun Location.findPosition(project: Project) =
     readAction {

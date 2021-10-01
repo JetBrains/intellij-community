@@ -1,19 +1,19 @@
 <html>
 <body>
-Reports unnecessary calls to <code>close()</code> at the end of a try-with-resources block, and suggests removing it.
-<p>Example:</p>
-<pre>
+Reports unnecessary calls to <code>close()</code> at the end of a try-with-resources block and suggests removing them.
+<p><b>Example</b>:</p>
+<pre><code>
   try(MyAutoCloseable ac = new MyAutoCloseable()) {
     foo();
     ac.close();
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   try(MyAutoCloseable ac = new MyAutoCloseable()) {
     foo();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <small>New in 2018.1</small>
 </body>

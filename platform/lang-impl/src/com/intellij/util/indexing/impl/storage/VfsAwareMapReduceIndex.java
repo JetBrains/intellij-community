@@ -155,6 +155,11 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
            !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
 
+  @Override
+  protected void checkNonCancellableSection() {
+    LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection());
+  }
+
   @NotNull
   @Override
   protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {

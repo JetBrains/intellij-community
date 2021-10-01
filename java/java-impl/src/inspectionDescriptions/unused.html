@@ -1,44 +1,35 @@
 <html>
 <body>
-Reports classes, methods or fields in the specified inspection scope that are not used or not reachable from entry points.
-Examples of entry points: main method, tests, classes mentioned outside the specified scope, classes accessible from
-<code>module-info.java</code> etc. It's also possible to configure custom entry points by name patterns or annotations.
+<p>Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.</p>
+<p> An entry point can be the main method, tests, classes mentioned outside the specified scope, classes accessible from
+  <code>module-info.java</code>, and so on. You can also configure custom entry points by using name patterns or annotations.
 <p><b>Example:</b></p>
 <pre><code>public class Department {
    private Organization myOrganization;
 }</code></pre>
-Here <code>Department</code> explicitly references <code>Organization</code> but if <code>Department</code> class itself is unused, 
-then inspection would report both classes. 
-
+<p>In this example, <code>Department</code> explicitly references <code>Organization</code> but if <code>Department</code> class itself is unused, then inspection will report both classes. </p>
 <p>
-  The inspection also reports parameters which are not used by their methods and all method implementations/overriders, as well as local
-  variables which are declared but not used.
+  The inspection also reports parameters that are not used by their methods and all method implementations and overriders, as well as local
+  variables that are declared but not used.
 </p>
 <p>
-  <b>NOTE:</b> Some unused members might not be reported during in-editor highlighting. Due to performance reasons, a non-private member is
-  checked only when it's name rarely occurs in the project.
-  To see all results, please run the inspection using Analyze | Inspect Code... or Analyze | Run Inspection by Name...
+  <b>Note:</b> Some unused members may not be reported during in-editor code highlighting. For performance reasons, a non-private member is
+  checked only when its name rarely occurs in the project.
+  To see all results, run the inspection by selecting <b> Analyze | Inspect Code...</b> or <b>Analyze | Run Inspection by Name...</b> from the main menu.
 </p>
 
 <!-- tooltip end -->
-Use visibility settings below to configure what members should be reported, e.g., configuring report <code>private</code> methods only means
-that <code>public</code> methods of <code>private</code> inner class would be reported but <code>protected</code> methods of top level class
-would be ignored.
-
+<p>Use the visibility settings below to configure members to be reported. For example, configuring report <code>private</code> methods only means
+  that <code>public</code> methods of <code>private</code> inner class will be reported but <code>protected</code> methods of top level class
+  will be ignored.</p>
 <p>
-  Use <b>entry points</b> tab to configure which entry points should be considered during inspection run.
-  You will also have a possibility to add entry points manually when inspection results are ready.
-  <br/>
-  If your code uses unsupported framework and this framework:
+  Use the <b>entry points</b> tab to configure entry points to be considered during the inspection run.</p>
+<p> You can add entry points manually when inspection results are ready.</p>
+<p> If your code uses unsupported frameworks, there are several options:</p>
 <ul>
-  <li>
-    rely on annotations, then use 'Annotations...' button to configure framework's annotations.
-  </li>
-  <li>
-    doesn't rely on annotations, then try to configure class name patterns which are expected by the framework.
-  </li>
+  <li>If the framework relies on annotations, use the <b>Annotations...</b> button to configure the framework's annotations.</li>
+  <li>If the framework doesn't rely on annotations, try to configure class name patterns that are expected by the framework.</li>
 </ul>
-This way annotated code which is accessible by the framework internals would be treated as used.
-
+<p>This way the annotated code accessible by the framework internals will be treated as used.</p>
 </body>
 </html>

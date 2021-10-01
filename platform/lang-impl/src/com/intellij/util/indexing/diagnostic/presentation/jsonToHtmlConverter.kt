@@ -18,106 +18,114 @@ fun createAggregateHtml(
   projectName: String,
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
   sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
-): String {
-  val appInfo = JsonIndexDiagnosticAppInfo.create()
-  val runtimeInfo = JsonRuntimeInfo.create()
-  return html {
-    head {
-      title("Indexing diagnostics of '$projectName'")
-      style(CSS_STYLE)
-    }
-    body {
-      div(className = "aggregate-report-content") {
-        h1("Project name")
-        text(projectName)
+): String = html {
+  head {
+    title("Indexing diagnostics of '$projectName'")
+    style(CSS_STYLE)
+    script(LINKABLE_TABLE_ROW_SCRIPT)
+  }
+  body {
+    div(className = "aggregate-report-content") {
+      h1("Project name")
+      text(projectName)
 
-        div {
-          h1("Indexing history")
-          table {
-            thead {
-              tr {
-                th("IDE")
-                th("Reason")
-                th("Started")
-                th("Total time")
-                th("Scanning time")
-                th("Indexing time")
-                th("Content loading time")
-                th("Cancelled?")
-                th(TITLE_NUMBER_OF_FILE_PROVIDERS)
-                th(TITLE_NUMBER_OF_SCANNED_FILES)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
-                th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
-                th("Details")
-              }
+      div {
+        h1("Indexing history")
+        table(className = "centered-text") {
+          appendRaw("<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>")
+          thead {
+            tr {
+              th("Time", colspan = "6")
+              th("Files", colspan = "6")
+              th("IDE", rowspan = "2")
             }
-            tbody {
-              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
-                tr {
-                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build + ", " +
-                     StringUtil.formatFileSize(runtimeInfo.maxMemory) + ", " +
-                     runtimeInfo.maxNumberOfIndexingThreads + " CPU"
-                  )
-                  td(diagnostic.indexingTimes.indexingReason ?: NOT_APPLICABLE)
-                  td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
-                  td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
-                  td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
-                  td(diagnostic.indexingTimes.indexingTime.presentableDuration())
-                  td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
-                  td(if (diagnostic.indexingTimes.wasInterrupted) "Yes" else "No")
-
-                  val fileCount = diagnostic.fileCount
-                  td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
-
-                  td {
-                    link(diagnostic.htmlFile.fileName.toString(), "details")
+            tr {
+              th("Started")
+              th("Total")
+              th("Scanning")
+              th("Indexing")
+              th("Content loading")
+              th("Finished")
+              th("Providers")
+              th("Scanned")
+              th("Shared indexes (w/o content loading)")
+              th("Scheduled for indexing")
+              th("Shared indexes (content loaded)")
+              th("Total indexed (shared indexes included)")
+            }
+          }
+          tbody {
+            for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+              tr(className = "linkable-table-row", href = diagnostic.htmlFile.fileName.toString()) {
+                // Time section.
+                td {
+                  if (diagnostic.indexingTimes.indexingReason != null) {
+                    strong(diagnostic.indexingTimes.indexingReason)
+                    br()
                   }
+                  text(diagnostic.indexingTimes.updatingStart.presentableLocalDateTime())
                 }
+                td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
+                td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+                td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+                td {
+                  if (diagnostic.indexingTimes.wasInterrupted) {
+                    strong("Cancelled")
+                    br()
+                  }
+                  text(diagnostic.indexingTimes.updatingEnd.presentableLocalDateTime())
+                }
+
+                // Files section.
+                val fileCount = diagnostic.fileCount
+                td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
+
+                // IDE section.
+                td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
               }
             }
           }
         }
+      }
 
-        if (sharedIndexEvents.isNotEmpty()) {
-          val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
-          div {
-            h1("Shared Indexes")
-            table {
-              thead {
-                tr {
-                  th("Time")
-                  th("Kind")
-                  th("Name")
-                  th("Size")
-                  th("Download time")
-                  th("Download speed")
-                  th("Status")
-                  th("ID")
-                }
+      if (sharedIndexEvents.isNotEmpty()) {
+        val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
+        div {
+          h1("Shared Indexes")
+          table {
+            thead {
+              tr {
+                th("Time")
+                th("Kind")
+                th("Name")
+                th("Size")
+                th("Download time")
+                th("Download speed")
+                th("Status")
+                th("ID")
               }
-              tbody {
-                for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
-                  val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
-                  val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
-                  tr {
-                    td(event.time.presentableDateTime())
-                    td(lastAttach.kind)
-                    td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
-                    td(event.packedSize.presentableSize())
-                    td(event.downloadTime.presentableDuration())
-                    td(event.downloadSpeed.presentableSpeed())
-                    td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
-                      " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
-                    } ?: " Incompatible"))
-                    td(event.chunkUniqueId)
-                  }
+            }
+            tbody {
+              for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
+                val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
+                val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
+                tr {
+                  td(event.time.presentableLocalDateTime())
+                  td(lastAttach.kind)
+                  td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
+                  td(event.packedSize.presentableSize())
+                  td(event.downloadTime.presentableDuration())
+                  td(event.downloadSpeed.presentableSpeed())
+                  td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
+                    " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
+                  } ?: " Incompatible"))
+                  td(event.chunkUniqueId)
                 }
               }
             }
@@ -125,8 +133,8 @@ fun createAggregateHtml(
         }
       }
     }
-  }.toString()
-}
+  }
+}.toString()
 
 private const val NOT_APPLICABLE = "N/A"
 
@@ -199,9 +207,9 @@ private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
       }
       tbody {
         tr { td("Build"); td(appInfo.build) }
-        tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
+        tr { td("Build date"); td(appInfo.buildDate.presentableLocalDateTime()) }
         tr { td("Product code"); td(appInfo.productCode) }
-        tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
+        tr { td("Generated"); td(appInfo.generated.presentableLocalDateTime()) }
         tr { td("OS"); td(appInfo.os) }
         tr { td("Runtime"); td(appInfo.runtime) }
       }
@@ -260,7 +268,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           h1(SECTION_INDEXING_INFO_TITLE)
           table(className = "two-columns") {
             thead {
-              tr { th("Name"); th("Time") }
+              tr { th("Name"); th("Data") }
             }
             tbody {
               val fileCount = projectIndexingHistory.fileCount
@@ -288,11 +296,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               }
 
               val times = projectIndexingHistory.times
-              tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
-              tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
-              tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
-              tr { td("Finished at"); td(times.updatingEnd.presentableDateTime()) }
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              if (times.indexingReason != null) {
+                tr { td("Reason"); td(times.indexingReason) }
+              }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
@@ -596,6 +607,29 @@ private val CSS_STYLE = """
     position: absolute;
     left: 20%;
   }
+  
+  .centered-text {
+    text-align: center;
+  }
+  
+  .linkable-table-row:hover {
+    background: #f2f3ff;
+    outline: none;
+    cursor: pointer;
+  }
+""".trimIndent()
+
+@Language("JavaScript")
+private val LINKABLE_TABLE_ROW_SCRIPT = """
+  document.addEventListener("DOMContentLoaded", () => {
+    const rows = document.getElementsByClassName("linkable-table-row")
+    for (const row of rows) {
+      const href = row.getAttribute("href")
+      row.addEventListener("click", () => {
+        window.open(href, "_blank");
+      });
+    }
+  });
 """.trimIndent()
 
 @Language("JavaScript")
@@ -642,6 +676,7 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
 private fun HtmlBuilder.text(@Nls text: String) = append(text)
 private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
 private fun HtmlBuilder.title(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("title")))
+private fun HtmlBuilder.strong(@Nls text: String) = append(HtmlChunk.text(text).wrapWith(tag("strong")))
 
 private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
 private fun HtmlBuilder.script(@Nls script: String) = append(tag("script").addRaw(script))
@@ -659,11 +694,14 @@ private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Un
 
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
+private fun HtmlBuilder.tr(className: String = "", href: String = "", body: HtmlBuilder.() -> Unit) = append(
+  createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
 
-private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("th")))
-private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
+private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = "") = append(createTag(body, tag("th")
+  .addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan))
+)
+
+private fun HtmlBuilder.th(@Nls text: String, colspan: String = "", rowspan: String = "") = th({ text(text) }, colspan, rowspan)
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
 

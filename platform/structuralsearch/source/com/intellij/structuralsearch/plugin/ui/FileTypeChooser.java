@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
@@ -122,16 +122,25 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     }
   }
 
+  @Override
+  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+    return new ComboBoxButton(presentation) {
+      @Override
+      public int getDisplayedMnemonicIndex() {
+        return -1;
+      }
+    };
+  }
+
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JPanel panel = new JPanel(new BorderLayout(1, 0));
     final ComboBoxButton button = createComboBoxButton(presentation);
-    final TextWithMnemonic textWithMnemonic = TextWithMnemonic.parse(SSRBundle.message("search.dialog.file.type.label"));
-    final JLabel label = new JBLabel(textWithMnemonic.getText());
+    final String text = SSRBundle.message("search.dialog.file.type.label");
+    final JLabel label = new JBLabel(text);
     label.setLabelFor(button);
-    final int mnemonic = textWithMnemonic.getMnemonic();
-    button.setMnemonic(mnemonic);
+    button.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
 
     panel.add(label, BorderLayout.WEST);
     panel.add(button, BorderLayout.CENTER);

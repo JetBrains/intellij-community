@@ -36,7 +36,10 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !IdentifierHighlighterPassFactory.isEnabledInHeadlessMode()) return; // sorry, upsource
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() || // sorry upsource
+        !IdentifierHighlighterPassFactory.isEnabled()) {
+      return;
+    }
 
     Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
     Disposer.register(project, activityDisposable);

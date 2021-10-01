@@ -82,7 +82,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
+public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
   private static final ExtensionPointName<DynamicActionConfigurationCustomizer> DYNAMIC_EP_NAME =
@@ -132,7 +132,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl() {
+  protected ActionManagerImpl() {
     Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode()) {
       LoadingState.COMPONENTS_LOADED.checkOccurred();
@@ -350,7 +350,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static void reportKeymapNotFoundWarning(@Nullable PluginId pluginId, @NotNull String keymapName) {
-    if (DefaultKeymap.isBundledKeymapHidden(keymapName)) {
+    if (DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)) {
       return;
     }
     String message = "keymap \"" + keymapName + "\" not found";
@@ -1068,8 +1068,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportKeymapNotFoundWarning(pluginId, keymapName);
       return;
     }
-    final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
-    processRemoveAndReplace(element, actionId, keymap, shortcut);
+    processRemoveAndReplace(element, actionId, keymap, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
   }
 
   private static void processRemoveAndReplace(@NotNull XmlElement element, String actionId, @NotNull Keymap keymap, @NotNull Shortcut shortcut) {
@@ -1350,7 +1349,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   /**
-   * Unregisters already registered action and prevents the action from being registered in future.
+   * Unregisters already registered action and prevents the action from being registered in the future.
    * Should be used only in IDE configuration
    */
   @ApiStatus.Internal

@@ -17,15 +17,14 @@ import org.jetbrains.annotations.NotNull;
  *
  * Update methods should call {@link ProgressManager#checkCanceled()} often enough to guard against UI freezes.
  */
-@ApiStatus.Experimental
 public interface UpdateInBackground {
   default boolean isUpdateInBackground() {
     return true;
   }
 
-  static boolean isUpdateInBackground(@NotNull AnAction group) {
-    return group instanceof UpdateInBackground && ((UpdateInBackground)group).isUpdateInBackground() ||
-           group.getClass() == DefaultActionGroup.class;
+  static boolean isUpdateInBackground(@NotNull AnAction action) {
+    return action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground() ||
+           action.getClass() == DefaultActionGroup.class;
   }
 
   @ApiStatus.Experimental

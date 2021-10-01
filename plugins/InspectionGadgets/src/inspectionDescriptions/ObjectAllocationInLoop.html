@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports object or array allocation inside loops. While not
-necessarily a problem, object allocation inside loop is a great place to look for memory leaks
+Reports object or array allocations inside loops. While not
+necessarily a problem, an object allocation inside a loop is a great place to look for memory leaks
 and performance issues.
 <p>
   The inspection reports the following constructs:
@@ -34,7 +34,6 @@ and performance issues.
     descriptor = node.getDescription();
     descriptor.ifPresent(dynamicTestExecutor::execute);
   }
-
 </code>
 </pre>
 <!-- tooltip end -->

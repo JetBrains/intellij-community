@@ -191,28 +191,19 @@ internal class ElementAnnotator(
     }
 
     private fun isUnstableAbiClassDiagnosticForModulesWithEnabledUnstableAbi(diagnostic: Diagnostic): Boolean {
-        // TODO: following code has to be adjusted with 1.5M1 migration
-        //   relates to original commit 913c298be858b63e472cfd6c58af11702b3a101d
+        val factory = diagnostic.factory
+        if (factory != Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS && factory != Errors.FIR_COMPILED_CLASS) return false
 
-        //val factory = diagnostic.factory
-        //if (factory != Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS && factory != Errors.FIR_COMPILED_CLASS) return false
-        //
-        //val module = element.module ?: return false
-        //val moduleFacetSettings = KotlinFacetSettingsProvider.getInstance(element.project)?.getSettings(module) ?: return false
-        //return when (factory) {
-        //    Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS ->
-        //        moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR) &&
-        //                !moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useOldBackend)
-        //    Errors.FIR_COMPILED_CLASS ->
-        //        moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useFir)
-        //    else -> error(factory)
-        //}
-
-        if (diagnostic.factory != Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS) return false
         val module = element.module ?: return false
         val moduleFacetSettings = KotlinFacetSettingsProvider.getInstance(element.project)?.getSettings(module) ?: return false
-        return moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR)
-                || moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::allowUnstableDependencies)
+        return when (factory) {
+            Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS ->
+                moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR) &&
+                        !moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useOldBackend)
+            Errors.FIR_COMPILED_CLASS ->
+                moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useFir)
+            else -> error(factory)
+        }
     }
 
     companion object {

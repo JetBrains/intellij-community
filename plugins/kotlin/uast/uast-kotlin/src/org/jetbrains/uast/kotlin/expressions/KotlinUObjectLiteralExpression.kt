@@ -63,7 +63,7 @@ class KotlinUObjectLiteralExpression(
 
         override fun resolve() = resolveToPsiMethod(sourcePsi)?.containingClass
 
-        override val annotations: List<UAnnotation>
+        override val uAnnotations: List<UAnnotation>
             get() = emptyList()
 
         override val resolvedName: String?

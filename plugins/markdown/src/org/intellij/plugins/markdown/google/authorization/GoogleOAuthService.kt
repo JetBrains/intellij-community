@@ -9,8 +9,10 @@ import com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
 import com.intellij.openapi.components.Service
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.randomToken
 import org.apache.commons.lang.time.DateUtils
+import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
 import java.io.IOException
@@ -28,20 +30,24 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
         "https://www.googleapis.com/auth/userinfo.profile"
       ).joinToString(" ")
 
-    private const val clientId = "82352498753-161nkijr2qa70qhc47k574aeclogpgn2.apps.googleusercontent.com" // Draft client ID
-    private const val clientSecret = "WTPNHUqy1mas5wCGPhNHNoE6" // Draft client secret
     private const val authGrantType = "authorization_code"
     private const val refreshGrantType = "refresh_token"
     private const val responseType = "code" // For installed applications the parameter value is code
+    private const val codeChallengeMethod = "S256"
 
     private val port: Int get() = BuiltInServerManager.getInstance().port
     private val state: String get() = randomToken() // state token to prevent request forgery
+    private val codeVerifier: String = randomToken()
+    private val codeChallenge: String
+      get() = Base64.getUrlEncoder().withoutPadding().encodeToString(DigestUtil.sha256().digest(codeVerifier.toByteArray()))
 
     private val AUTHORIZE_URI: Url get() = newFromEncoded("https://accounts.google.com/o/oauth2/v2/auth")
     private val TOKEN_URI: Url get() = newFromEncoded("https://oauth2.googleapis.com/token")
 
     private val jacksonMapper: ObjectMapper get() = jacksonObjectMapper()
   }
+
+  var googleAppCred: GoogleCredentialUtils.GoogleAppCredentials? = null
 
   override val name: String get() = "google/oauth"
   override val authorizationCodeUrl: Url get() = newFromEncoded("http://localhost:$port/${RestService.PREFIX}/$name/authorization_code")
@@ -115,22 +121,25 @@ class GoogleOAuthService : OAuthServiceBase<GoogleCredentials>(), OAuthServiceWi
   override fun getAuthUrlWithParameters(): Url = AUTHORIZE_URI.addParameters(mapOf(
     "scope" to scope,
     "response_type" to responseType,
+    "code_challenge" to codeChallenge,
+    "code_challenge_method" to codeChallengeMethod,
     "state" to state,
-    "client_id" to clientId,
+    "client_id" to googleAppCred?.clientId,
     "redirect_uri" to authorizationCodeUrl.toExternalForm()
   ))
 
   override fun getTokenUrlWithParameters(code: String): Url = TOKEN_URI.addParameters(mapOf(
-    "client_id" to clientId,
-    "client_secret" to clientSecret,
+    "client_id" to googleAppCred?.clientId,
+    "client_secret" to googleAppCred?.clientSecret,
     "redirect_uri" to authorizationCodeUrl.toExternalForm(),
     "code" to code,
+    "code_verifier" to codeVerifier,
     "grant_type" to authGrantType
   ))
 
   private fun getRefreshTokenUrlWithParameters(refreshToken: String): Url = TOKEN_URI.addParameters(mapOf(
-    "client_id" to clientId,
-    "client_secret" to clientSecret,
+    "client_id" to  googleAppCred?.clientId,
+    "client_secret" to googleAppCred?.clientSecret,
     "refresh_token" to refreshToken,
     "grant_type" to refreshGrantType
   ))

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesForClass
 import org.jetbrains.kotlin.idea.fir.highlighter.textAttributesForKtParameterDeclaration
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
-internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : HighlightingVisitor(holder) {
+internal class DeclarationHighlightingVisitor(private val holder: AnnotationHolder) : AbstractHighlightingVisitor() {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
         highlightNamedDeclaration(typeAlias, Colors.TYPE_ALIAS)
         super.visitTypeAlias(typeAlias)
@@ -24,6 +25,22 @@ internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : Highli
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
         highlightNamedDeclaration(declaration, Colors.OBJECT)
         super.visitObjectDeclaration(declaration)
+    }
+
+    override fun createInfoAnnotation(
+        textRange: com.intellij.openapi.util.TextRange,
+        message: kotlin.String?,
+        textAttributes: com.intellij.openapi.editor.colors.TextAttributesKey?
+    ) {
+        return (message?.let { holder.newAnnotation(HighlightSeverity.INFORMATION, it) }
+            ?: holder.newSilentAnnotation(HighlightSeverity.INFORMATION))
+            .range(textRange)
+            .also { builder ->
+                textAttributes?.let {
+                    builder.textAttributes(it)
+                }
+            }
+            .create()
     }
 
     override fun visitClass(klass: KtClass) {
@@ -56,6 +73,6 @@ internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : Highli
 }
 
 class DeclarationHighlightingExtension : BeforeResolveHighlightingExtension {
-    override fun createVisitor(holder: AnnotationHolder): HighlightingVisitor =
+    override fun createVisitor(holder: AnnotationHolder): AbstractHighlightingVisitor =
         DeclarationHighlightingVisitor(holder)
 }

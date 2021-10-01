@@ -2,7 +2,7 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
-import com.intellij.collaboration.ui.codereview.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.Nullable

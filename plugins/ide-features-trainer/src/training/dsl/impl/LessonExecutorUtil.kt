@@ -48,8 +48,29 @@ internal object LessonExecutorUtil {
                          actionsRecorder: ActionsRecorder,
                          project: Project,
                          visualIndexNumber: Int) {
+    if (balloonConfig.delayBeforeShow == 0) {
+      showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, true)
+    }
+    else {
+      val delayed = {
+        if (!actionsRecorder.disposed) {
+          showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, true)
+        }
+      }
+      Alarm().addRequest(delayed, balloonConfig.delayBeforeShow)
+    }
+  }
+
+  private fun showBalloonMessage(text: String,
+                                 ui: JComponent,
+                                 balloonConfig: LearningBalloonConfig,
+                                 actionsRecorder: ActionsRecorder,
+                                 project: Project,
+                                 visualIndexNumber: Int,
+                                 useAnimationCycle: Boolean) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
+    messagesPane.border = UISettings.instance.balloonAdditionalBorder
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
     messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = visualIndexNumber))
@@ -81,7 +102,7 @@ internal object LessonExecutorUtil {
 
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
-      .setAnimationCycle(0)
+      .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
@@ -97,7 +118,7 @@ internal object LessonExecutorUtil {
         val checkStopLesson = {
           invokeLater {
             if (!actionsRecorder.disposed)
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber)
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, false)
           }
         }
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
@@ -177,7 +198,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> () -> Component)  {
+  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?)  {
     hasDetection = true
   }
 

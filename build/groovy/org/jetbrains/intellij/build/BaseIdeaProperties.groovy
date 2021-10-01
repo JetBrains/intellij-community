@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -34,7 +35,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.java.ide.customization",
     "intellij.copyright",
     "intellij.properties",
-    "intellij.properties.resource.bundle.editor",
     "intellij.terminal",
     "intellij.emojipicker",
     "intellij.textmate",
@@ -64,7 +64,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.ml.models.local",
     "intellij.sh",
     "intellij.vcs.changeReminder",
-    "intellij.filePrediction",
     "intellij.markdown",
     "intellij.webp",
     /* Disabled in Android Studio
@@ -126,7 +125,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
+    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
@@ -172,7 +171,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   @Override
   List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
     /* Android Studio: bundle our own Kotlin plugin instead
-    return [Path.of(context.paths.kotlinHome).toAbsolutePath().normalize()]
+    return [context.kotlinBinaries.setUpPlugin(context)]
     */
     def workspaceRoot = "$context.paths.communityHome/../.."
     return [Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize()]

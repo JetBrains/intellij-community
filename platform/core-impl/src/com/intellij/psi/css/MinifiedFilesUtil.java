@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.css;
 
 import com.intellij.lang.ParserDefinition;
@@ -75,11 +75,11 @@ public final class MinifiedFilesUtil {
     return isMinified(lexer, parserDefinition, noWSRequireBeforeTokenSet, noWSRequireAfterTokenSet, stringsTokenSet);
   }
 
-  protected static boolean isMinified(@NotNull Lexer lexer,
-                                      @NotNull ParserDefinition parserDefinition,
-                                      @NotNull TokenSet noWSRequireBeforeTokenSet,
-                                      @NotNull TokenSet noWSRequireAfterTokenSet,
-                                      @NotNull TokenSet stringLiteralElements) {
+  private static boolean isMinified(@NotNull Lexer lexer,
+                                    @NotNull ParserDefinition parserDefinition,
+                                    @NotNull TokenSet noWSRequireBeforeTokenSet,
+                                    @NotNull TokenSet noWSRequireAfterTokenSet,
+                                    @NotNull TokenSet stringLiteralElements) {
     int offsetIgnoringComments = 0;
     int offsetIgnoringCommentsAndStrings = 0;
     int unneededWhitespaceCount = 0;

@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author Konstantin Bulenkov
- * @deprecated Please use the registry to enable/disable experimental features
+ * @deprecated Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
  */
 @Deprecated
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{

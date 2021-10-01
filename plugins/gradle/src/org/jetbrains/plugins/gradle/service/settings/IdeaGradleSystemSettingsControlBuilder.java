@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeTargetUI;
@@ -177,6 +178,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   /**
    * @deprecated obsolete unused method
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public IdeaGradleSystemSettingsControlBuilder dropServiceDirectory() {
     dropServiceDirectory = true;

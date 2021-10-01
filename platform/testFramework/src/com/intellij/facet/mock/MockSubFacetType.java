@@ -32,6 +32,11 @@ public class MockSubFacetType extends FacetType<Facet, MockFacetConfiguration> {
     return true;
   }
 
+  @Override
+  public boolean isOnlyOneFacetAllowed() {
+    return false;
+  }
+
   public static MockSubFacetType getInstance() {
     return findInstance(MockSubFacetType.class);
   }

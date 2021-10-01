@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -119,7 +119,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    */
   @Contract("null, _ -> null")
   @Nullable
-  public final NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
+  public NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
     return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression, false);
   }
 
@@ -131,7 +131,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public final NullabilityProblem<T> asMyProblem(NullabilityProblem<?> problem) {
+  public NullabilityProblem<T> asMyProblem(NullabilityProblem<?> problem) {
     return problem != null && problem.myKind == this ? (NullabilityProblem<T>)problem : null;
   }
 

@@ -1,12 +1,13 @@
 <html>
 <body>
-<p>Reports annotations on the record components that have no effect. This may happen in two cases:</p>
+<p>Reports annotations used on record components that have no effect.</p>
+<p>This can happen in two cases:</p>
 <ul>
-  <li>Annotation has METHOD target but the corresponding accessor is explicitly defined</li>
-  <li>Annotation has PARAMETER target but the canonical constructor is explicitly defined</li>
+  <li>The reported annotation has the METHOD target, but the corresponding accessor is explicitly defined.</li>
+  <li>The reported annotation has the PARAMETER target, but the canonical constructor is explicitly defined.</li>
 </ul>
 <p>Example:</p>
-<pre>
+<pre><code>
 @Target(ElementType.METHOD)
 @interface A { }
   
@@ -15,7 +16,7 @@
 record R(@A int x) {
   public int x() { return x; }
 }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2021.1</small></p>
 </body>

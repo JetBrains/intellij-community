@@ -3,6 +3,7 @@ package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -137,7 +138,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       var options = originalOptions
       if (LightEditUtil.isForceOpenInLightEditMode()) {
-        val lightEditProject = LightEditUtil.openFile(file)
+        val lightEditProject = LightEditUtil.openFile(file, false)
         if (lightEditProject != null) {
           return lightEditProject
         }
@@ -152,8 +153,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       // no reasonable directory -> create new temp one or use parent
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
-        if (LightEditUtil.isLightEditEnabled()) {
-          val lightEditProject = LightEditUtil.openFile(file)
+        if (LightEditUtil.isLightEditEnabled() && !LightEditService.getInstance().isPreferProjectMode) {
+          val lightEditProject = LightEditUtil.openFile(file, true)
           if (lightEditProject != null) {
             return lightEditProject
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +51,8 @@ final class JdkZipResourceFile implements ResourceFile {
   }
 
   @NotNull ZipFile getZipFile() throws IOException {
-    // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
-    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
+    // This code is executed at least 100K times (O(number of classes needed to load)), and it takes considerable time to open ZipFile's
+    // such number of times, so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
     if (!lockJars) {
       return createZipFile(file);
     }
@@ -78,15 +78,6 @@ final class JdkZipResourceFile implements ResourceFile {
 
   private ZipFile createZipFile(@NotNull File file) throws IOException {
     return isSecureLoader ? new JarFile(file) : new ZipFile(file);
-  }
-
-  public void close() throws IOException {
-    SoftReference<ZipFile> ref = zipFileSoftReference;
-    ZipFile zipFile = ref == null ? null : ref.get();
-    if (zipFile != null) {
-      zipFileSoftReference = null;
-      zipFile.close();
-    }
   }
 
   @Override

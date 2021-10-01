@@ -17,13 +17,13 @@ package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NonNls;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
 /**
- * If you have several {@link com.intellij.util.xml.SubTagList} collections and you need to access them all at once, this
+ * If you have several {@link SubTagList} collections and you need to access them all at once, this
   annotation will help. "value" property will hold the array of possible subtag names. One should have different
   addition methods for each subtag name, each returning its own DomElement type, each may have an "index" parameter.
   The element will be inserted in proper place in the "merged" collection, allowing you to mix elements of different

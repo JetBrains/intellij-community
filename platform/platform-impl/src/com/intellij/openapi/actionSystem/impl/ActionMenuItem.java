@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
@@ -15,7 +14,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -51,14 +53,14 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private boolean myToggled;
   private final boolean myUseDarkIcons;
 
-  public ActionMenuItem(final AnAction action,
-                        final Presentation presentation,
-                        @NotNull final String place,
+  public ActionMenuItem(@NotNull AnAction action,
+                        @NotNull Presentation presentation,
+                        @NotNull String place,
                         @NotNull DataContext context,
-                        final boolean enableMnemonics,
-                        final boolean prepareNow,
-                        final boolean insideCheckedGroup,
-                        final boolean useDarkIcons) {
+                        boolean enableMnemonics,
+                        boolean unused,
+                        boolean insideCheckedGroup,
+                        boolean useDarkIcons) {
     myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
@@ -72,13 +74,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     setBorderPainted(false);
 
     updateUI();
-
-    if (prepareNow) {
-      init();
-    }
-    else {
-      setText(IdeBundle.message("menu.item.loading"));
-    }
+    init();
   }
 
   public AnAction getAnAction() {
@@ -91,11 +87,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
-  }
-
-  public void prepare() {
-    init();
-    installSynchronizer();
   }
 
   @Override

@@ -409,7 +409,8 @@ internal open class UpdateIdeFromSourcesAction
       "org.apache.tools.ant.BuildException",   //ant
       "org.apache.tools.ant.launch.AntMain",   //ant-launcher
       "org.apache.commons.cli.ParseException", //commons-cli
-      "groovy.util.CliBuilder"                 //groovy-cli-commons
+      "groovy.util.CliBuilder",                //groovy-cli-commons
+      "org.codehaus.groovy.runtime.NioGroovyMethods", //groovy-nio
     )
     val coreClassPath = classpath.rootDirs.filter { root ->
       classesFromCoreJars.any { LibraryUtil.isClassAvailableInLibrary(listOf(root), it) }

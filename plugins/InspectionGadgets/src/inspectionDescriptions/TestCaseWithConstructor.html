@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports on JUnit test cases with initialization logic in their constructors.
-If the constructor fails then the <code>@After</code> annotated or <code>tearDown()</code> method won't be called.
+Reports JUnit test cases with initialization logic in their constructors.
+If a constructor fails, the <code>@After</code> annotated or <code>tearDown()</code> method won't be called.
 This can leave the test environment partially initialized, which can adversely affect other tests.
-Initialization of JUnit test cases should be done in a <code>setUp()</code> or <code>@Before</code> annotated method instead.
+Instead, initialization of JUnit test cases should be done in a <code>setUp()</code> or <code>@Before</code> annotated method.
 <p>Bad example:</p>
 <pre><code>
   <b>public class</b> ImportantTest {

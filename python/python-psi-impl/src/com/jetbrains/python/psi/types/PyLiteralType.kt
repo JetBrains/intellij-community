@@ -8,6 +8,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 
 
@@ -30,12 +31,52 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     /**
      * Tries to construct literal type for index passed to `typing.Literal[...]`
      */
-    fun fromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? = newInstance(expression, context, true)
+    fun fromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? =
+      when (expression) {
+        is PyTupleExpression -> {
+          val elements = expression.elements
+          val classes = elements.mapNotNull { toLiteralType(it, context, true) }
+          if (elements.size == classes.size) PyUnionType.union(classes) else null
+        }
+        else -> toLiteralType(expression, context, true)
+      }
 
     /**
-     * Tries to construct literal type for a value that could be considered as literal and downcasted to `typing.Literal[...]` type.
+     * Tries to construct literal type or collection of literal types for a value that could be downcasted to `typing.Literal[...] type
+     * or its collection.
      */
-    fun fromLiteralValue(expression: PyExpression, context: TypeEvalContext): PyType? = newInstance(expression, context, false)
+    fun fromLiteralValue(expression: PyExpression, context: TypeEvalContext): PyType? {
+      val value =
+        when (expression) {
+          is PyKeywordArgument -> expression.valueExpression
+          is PyParenthesizedExpression -> PyPsiUtils.flattenParens(expression)
+          else -> expression
+        } ?: return null
+      return when (value) {
+        is PySequenceExpression -> {
+          val classes = if (value is PyDictLiteralExpression) {
+            val keyTypes = value.elements.map { fromLiteralValue(it.key, context) }
+            val valueTypes = value.elements.map { type -> type.value?.let { fromLiteralValue(it, context) } }
+            listOf(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
+          }
+          else value.elements.map { fromLiteralValue(it, context) }
+
+          if (value is PyTupleExpression) {
+            PyTupleType.create(value, classes)
+          }
+          else {
+            val name = when (value) {
+              is PyListLiteralExpression -> "list"
+              is PySetLiteralExpression -> "set"
+              is PyDictLiteralExpression -> "dict"
+              else -> null
+            }
+            name?.let { PyCollectionTypeImpl.createTypeByQName(value, name, false, classes) }
+          }
+        }
+        else -> toLiteralType(value, context, false) ?: context.getType(value)
+      }
+    }
 
     /**
      * [actual] matches [expected] if it has the same type and its expression evaluates to the same value
@@ -52,28 +93,16 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
      * otherwise returns type inferred by [context].
      */
     fun promoteToLiteral(expression: PyExpression, expected: PyType?, context: TypeEvalContext): PyType? {
-      if (PyTypeUtil.toStream(if (expected is PyGenericType) expected.bound else expected).any { it is PyLiteralType }) {
-        val value = if (expression is PyKeywordArgument) expression.valueExpression else expression
-        if (value != null) {
-          val literalType = fromLiteralValue(value, context)
-          if (literalType != null) {
-            return literalType
-          }
-        }
+      if (PyTypeUtil.toStream(if (expected is PyGenericType) expected.bound else expected).any { containsLiteral(it) }) {
+        return fromLiteralValue(expression, context)
       }
-
-      return context.getType(expression)
+      return null
     }
 
-    private fun newInstance(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
-      return when (expression) {
-        is PyTupleExpression -> {
-          val elements = expression.elements
-          val classes = elements.mapNotNull { toLiteralType(it, context, index) }
-          if (elements.size == classes.size) PyUnionType.union(classes) else null
-        }
-        else -> toLiteralType(expression, context, index)
-      }
+    private fun containsLiteral(type: PyType?): Boolean {
+      return type is PyLiteralType ||
+             type is PyUnionType && type.members.any { containsLiteral(it) } ||
+             type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
     }
 
     private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
@@ -89,7 +118,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
       if (expression is PyReferenceExpression && expression.isQualified) {
         PyUtil
-          .multiResolveTopPriority(expression, PyResolveContext.defaultContext().withTypeEvalContext(context))
+          .multiResolveTopPriority(expression, PyResolveContext.defaultContext(context))
           .asSequence()
           .filterIsInstance<PyTargetExpression>()
           .mapNotNull { ScopeUtil.getScopeOwner(it) as? PyClass }

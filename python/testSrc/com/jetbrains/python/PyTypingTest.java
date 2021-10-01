@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testUnionType() {
-    doTest("Union[int, str]",
+    doTest("int | str",
            "from typing import Union\n" +
            "\n" +
            "def f(expr: Union[int, str]):\n" +
@@ -212,7 +213,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("Union[Union[str, bytes], Any]",
+    doTest("str | bytes | Any",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
@@ -248,7 +249,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testOptionalType() {
-    doTest("Optional[int]",
+    doTest("int | None",
            "from typing import Optional\n" +
            "\n" +
            "def foo(expr: Optional[int]):\n" +
@@ -257,7 +258,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-28032
   public void testOptionalOfAny() {
-    doTest("Optional[Any]",
+    doTest("Any | None",
            "from typing import Optional, Any\n" +
            "\n" +
            "x = None  # type: Optional[Any]\n" +
@@ -265,13 +266,13 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testOptionalFromDefaultNone() {
-    doTest("Optional[int]",
+    doTest("int | None",
            "def foo(expr: int = None):\n" +
            "    pass\n");
   }
 
   public void testFlattenUnions() {
-    doTest("Union[int, str, list]",
+    doTest("int | str | list",
            "from typing import Union\n" +
            "\n" +
            "def foo(expr: Union[int, Union[str, list]]):\n" +
@@ -518,7 +519,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18427
   public void testConditionalType() {
-    doTest("Union[int, str]",
+    doTest("int | str",
            "if something:\n" +
            "    Type = int\n" +
            "else:\n" +
@@ -692,7 +693,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18386
   public void testRecursiveType() {
-    doTest("Union[int, Any]",
+    doTest("int | Any",
            "from typing import Union\n" +
            "\n" +
            "Type = Union[int, 'Type']\n" +
@@ -701,7 +702,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18386
   public void testRecursiveType2() {
-    doTest("dict[str, Union[Union[str, int, float], Any]]",
+    doTest("dict[str, str | int | float | Any]",
            "from typing import Dict, Union\n" +
            "\n" +
            "JsonDict = Dict[str, Union[str, int, float, 'JsonDict']]\n" +
@@ -712,7 +713,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18386
   public void testRecursiveType3() {
-    doTest("Union[Union[str, int], Any]",
+    doTest("str | int | Any",
            "from typing import Union\n" +
            "\n" +
            "Type1 = Union[str, 'Type2']\n" +
@@ -761,7 +762,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-19858
   public void testGetListItemByUnknown() {
-    doTest("Union[list, list[list]]",
+    doTest("list | list[list]",
            "from typing import List\n" +
            "\n" +
            "def foo(x: List[List]):\n" +
@@ -1052,7 +1053,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testUnionOfClassObjectTypes() {
-    doTest("Type[Union[int, str]]",
+    doTest("Type[int | str]",
            "from typing import Type, Union\n" +
            "\n" +
            "def f(x: Type[Union[int, str]]):\n" +
@@ -1251,7 +1252,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-24990
   public void testSelfAnnotationReceiverUnionType() {
-    doTest("Union[A, B]",
+    doTest("A | B",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T')\n" +
@@ -1395,7 +1396,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-31004
   public void testRecursiveTypeAliasInAnotherFile() {
-    doMultiFileStubAwareTest("Union[list, int]",
+    doMultiFileStubAwareTest("list | int",
                              "from other import MyType\n" +
                              "\n" +
                              "expr: MyType = ...");
@@ -1520,6 +1521,100 @@ public class PyTypingTest extends PyTestCase {
            "from typing import TypeAlias\n" +
            "\n" +
            "expr: TypeAlias = int\n");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionIsInstance() {
+    doTest("str | dict | int",
+           "a = [42]\n" +
+           "if isinstance(a, str | dict | int):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionIsSubclass() {
+    doTest("Type[str | dict | int]",
+           "a = list\n" +
+           "if issubclass(a, str | dict | int):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionIsInstanceIntNone() {
+    doTest("int | None",
+           "a = [42]\n" +
+           "if isinstance(a, int | None):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionIsInstanceNoneInt() {
+    doTest("int | None",
+           "a = [42]\n" +
+           "if isinstance(a, None | int):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionIsInstanceUnionInTuple() {
+    doTest("str | list | dict | bool | None",
+           "a = 42\n" +
+           "if isinstance(a, (str, (list | dict), bool | None)):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOfUnionsIsInstance() {
+    doTest("dict | str | bool | list",
+           "from typing import Union\n" +
+           "a = 42\n" +
+           "if isinstance(a, Union[dict, Union[str, Union[bool, list]]]):\n" +
+           "    expr = a");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionWithFromFutureImport() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTest("int | str",
+             "from __future__ import annotations" + "\n" +
+             "if something:\n" +
+             "    Type = int\n" +
+             "else:\n" +
+             "    Type = str\n" +
+             "\n" +
+             "def f(expr: Type):\n" +
+             "    pass\n");
+    });
+  }
+
+  // PY-44974
+  public void testWithoutFromFutureImport() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTest("Union[int, str]",
+             "if something:\n" +
+             "    Type = int\n" +
+             "else:\n" +
+             "    Type = str\n" +
+             "\n" +
+             "def f(expr: Type):\n" +
+             "    pass\n");
+    });
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionParenthesizedUnionOfUnions() {
+    doTest("int | list | dict | float | str",
+           "bar: int | ((list | dict) | (float | str)) = \"\"\n" +
+           "expr = bar\n");
+  }
+
+  // PY-44974
+  public void testBitwiseOrOperatorOverload() {
+    doTest("int",
+           "class A:\n" +
+           "  def __or__(self, other) -> int: return 5\n" +
+           "  \n" +
+           "expr = A() | A()");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

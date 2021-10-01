@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,14 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean DISABLE_MANAGE_IGNORE_FILES = false;
   public boolean MARK_EXCLUDED_AS_IGNORED = true;
   public boolean COMMIT_FROM_LOCAL_CHANGES = false;
+  /**
+   * Option to show editor diff preview in non-modal commit interface with Commit toolwindow.
+   */
   public boolean SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = true;
+  /**
+   * Option to show editor diff preview in modal commit interface with Local Changes toolwindow tab.
+   */
+  public boolean SHOW_DIFF_ON_DOUBLE_CLICK = false;
 
   public static VcsApplicationSettings getInstance() {
     return ApplicationManager.getApplication().getService(VcsApplicationSettings.class);

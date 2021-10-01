@@ -57,12 +57,12 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
     }
 
     protected fun doTest(path: String, action: (VirtualFile) -> Unit) {
-        val beforeDir = path.removePrefix(testDataPath).substringBeforeLast('/') + "/before"
+        val beforeDir = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(testDataDirectory, File(path).parentFile)!!) + "/before"
         val beforeVFile = myFixture.copyDirectoryToProject(beforeDir, "")
         PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
 
         val afterDir = beforeDir.substringBeforeLast("/") + "/after"
-        val afterDirIOFile = File(testDataPath, afterDir)
+        val afterDirIOFile = File(testDataDirectory, afterDir)
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
         UsefulTestCase.refreshRecursively(afterVFile)
 

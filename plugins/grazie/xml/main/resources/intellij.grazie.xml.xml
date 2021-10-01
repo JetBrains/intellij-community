@@ -6,5 +6,7 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlTextExtractor$Xml"/>
     <textExtractor language="HTML" implementationClass="com.intellij.grazie.ide.language.xml.XmlTextExtractor$Html"/>
+
+    <problemFilter language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlProblemFilter"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -1570,7 +1570,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return myPositionPsiClass != null ? myPositionPsiClass : myContextPsiClass;
     }
 
-    protected ExpressionEvaluator buildElement(final PsiElement element) throws EvaluateException {
+    private ExpressionEvaluator buildElement(final PsiElement element) throws EvaluateException {
       LOG.assertTrue(element.isValid());
 
       setNewCodeFragmentEvaluator(); // in case element is not a code fragment

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -66,12 +67,13 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.WrappedTypeFactory
 import org.jetbrains.kotlin.utils.sure
 
-
 class IDELightClassConstructionContext(
-    bindingContext: BindingContext, module: ModuleDescriptor,
+    bindingContext: BindingContext,
+    module: ModuleDescriptor,
     languageVersionSettings: LanguageVersionSettings,
+    jvmTarget: JvmTarget,
     val mode: Mode
-) : LightClassConstructionContext(bindingContext, module, languageVersionSettings) {
+) : LightClassConstructionContext(bindingContext, module, languageVersionSettings, jvmTarget) {
     enum class Mode {
         LIGHT,
         EXACT
@@ -103,6 +105,7 @@ internal object IDELightClassContexts {
             bindingContext,
             resolutionFacade.moduleDescriptor,
             classOrObject.languageVersionSettings,
+            resolutionFacade.jvmTarget,
             EXACT
         )
     }
@@ -119,6 +122,7 @@ internal object IDELightClassContexts {
                 bindingContext,
                 resolutionFacade.moduleDescriptor,
                 classOrObject.languageVersionSettings,
+                resolutionFacade.jvmTarget,
                 EXACT
             )
         }
@@ -129,20 +133,24 @@ internal object IDELightClassContexts {
             bindingContext,
             resolutionFacade.moduleDescriptor,
             classOrObject.languageVersionSettings,
+            resolutionFacade.jvmTarget,
             EXACT
         )
     }
 
 
     fun contextForFacade(files: List<KtFile>): LightClassConstructionContext {
+        val resolutionFacade = files.first().getResolutionFacade()
+
         @OptIn(FrontendInternals::class)
-        val resolveSession = files.first().getResolutionFacade().getFrontendService(ResolveSession::class.java)
+        val resolveSession = resolutionFacade.getFrontendService(ResolveSession::class.java)
 
         forceResolvePackageDeclarations(files, resolveSession)
         return IDELightClassConstructionContext(
             resolveSession.bindingContext,
             resolveSession.moduleDescriptor,
             files.first().languageVersionSettings,
+            resolutionFacade.jvmTarget,
             EXACT
         )
     }
@@ -158,21 +166,26 @@ internal object IDELightClassContexts {
                 bindingContext,
                 resolutionFacade.moduleDescriptor,
                 script.languageVersionSettings,
+                resolutionFacade.jvmTarget,
                 EXACT
             )
         }
 
         ForceResolveUtil.forceResolveAllContents(descriptor)
 
-        return IDELightClassConstructionContext(bindingContext, resolutionFacade.moduleDescriptor, script.languageVersionSettings, EXACT)
+        return IDELightClassConstructionContext(
+            bindingContext, resolutionFacade.moduleDescriptor, script.languageVersionSettings, resolutionFacade.jvmTarget,
+            EXACT
+        )
     }
 
     fun lightContextForClassOrObject(classOrObject: KtClassOrObject): LightClassConstructionContext? {
         if (!isDummyResolveApplicable(classOrObject)) return null
 
+        val resolutionFacade = classOrObject.getResolutionFacade()
         val resolveSession = setupAdHocResolve(
             classOrObject.project,
-            classOrObject.getResolutionFacade().moduleDescriptor,
+            resolutionFacade.moduleDescriptor,
             listOf(classOrObject.containingKtFile)
         )
 
@@ -185,13 +198,15 @@ internal object IDELightClassContexts {
             resolveSession.bindingContext,
             resolveSession.moduleDescriptor,
             classOrObject.languageVersionSettings,
+            resolutionFacade.jvmTarget,
             LIGHT
         )
     }
 
     fun lightContextForFacade(files: List<KtFile>): LightClassConstructionContext {
         val representativeFile = files.first()
-        val resolveSession = setupAdHocResolve(representativeFile.project, representativeFile.getResolutionFacade().moduleDescriptor, files)
+        val resolutionFacade = representativeFile.getResolutionFacade()
+        val resolveSession = setupAdHocResolve(representativeFile.project, resolutionFacade.moduleDescriptor, files)
 
         forceResolvePackageDeclarations(files, resolveSession)
 
@@ -199,9 +214,14 @@ internal object IDELightClassContexts {
             resolveSession.bindingContext,
             resolveSession.moduleDescriptor,
             files.first().languageVersionSettings,
+            resolutionFacade.jvmTarget,
             LIGHT
         )
     }
+
+    @OptIn(FrontendInternals::class)
+    private val ResolutionFacade.jvmTarget: JvmTarget
+        get() = getFrontendService(JvmTarget::class.java)
 
     private fun isDummyResolveApplicable(classOrObject: KtClassOrObject): Boolean {
         if (classOrObject.hasModifier(KtTokens.INLINE_KEYWORD)) return false
@@ -444,4 +464,3 @@ internal object IDELightClassContexts {
         }
     }
 }
-

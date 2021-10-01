@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -787,6 +788,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     /**
      * @deprecated Use {@link #MyDeleteAction(Predicate)}
      */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated
     public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
       this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);

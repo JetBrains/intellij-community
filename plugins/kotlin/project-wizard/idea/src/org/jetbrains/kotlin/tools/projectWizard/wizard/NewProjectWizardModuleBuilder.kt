@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.NewProjectAction
-import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
@@ -13,6 +12,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardStepComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
+import java.io.File
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -89,7 +90,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         modulesProvider: ModulesProvider?
     ): List<IdeaModule>? {
         runWriteAction {
-            wizard.jdk?.let { jdk -> NewProjectUtil.applyJdkToProject(project, jdk) }
+            wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
         }
         val modulesModel = model ?: ModuleManager.getInstance(project).modifiableModel
         val success = wizard.apply(

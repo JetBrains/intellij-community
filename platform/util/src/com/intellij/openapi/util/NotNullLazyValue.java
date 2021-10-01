@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,6 +18,7 @@ public abstract class NotNullLazyValue<T> {
    * @deprecated Use {@link NotNullLazyValue#lazy(Supplier)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   protected NotNullLazyValue() {
   }
@@ -76,7 +77,7 @@ public abstract class NotNullLazyValue<T> {
       private volatile T value;
 
       @Override
-      public final @NotNull T getValue() {
+      public @NotNull T getValue() {
         T value = this.value;
         if (value == null) {
           RecursionGuard.StackStamp stamp = RecursionManager.markStack();

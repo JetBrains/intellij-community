@@ -19,10 +19,10 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Base component to be associated with (bound to) DOM controls (see {@link com.intellij.util.xml.ui.DomUIControl})
+ * Base component to be associated with (bound to) DOM controls (see {@link DomUIControl})
  * that have {@link com.intellij.openapi.editor.Editor}
  * as their part. This includes simple text, PSI class, PSI type editing, etc. The controls themselves
- * can be created in {@link com.intellij.util.xml.ui.DomUIFactory}.
+ * can be created in {@link DomUIFactory}.
  *
  * Adds an empty disable JTextField to itself to be visible if unbound (or in UI designer), which
  * should be removed on binding.

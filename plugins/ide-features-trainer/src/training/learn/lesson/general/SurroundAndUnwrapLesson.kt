@@ -84,7 +84,7 @@ abstract class SurroundAndUnwrapLesson
       index = text.indexOf(word, startIndex = index)
       if (index != -1) {
         if ((index == 0 || !text[index - 1].isLetterOrDigit()) &&
-            (index + word.length == text.length || !text[index + word.length + 1].isLetterOrDigit()))
+            (index + word.length == text.length || !text[index + word.length].isLetterOrDigit()))
           return true
         index += word.length
       }

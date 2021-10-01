@@ -1011,6 +1011,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/traitFunction.kt");
             }
 
+            @TestMetadata("unnecessaryNullabilityAnnotation.kt")
+            public void testUnnecessaryNullabilityAnnotation() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/unnecessaryNullabilityAnnotation.kt");
+            }
+
             @TestMetadata("unresolvedWrongReceiver.kt")
             public void testUnresolvedWrongReceiver() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/unresolvedWrongReceiver.kt");

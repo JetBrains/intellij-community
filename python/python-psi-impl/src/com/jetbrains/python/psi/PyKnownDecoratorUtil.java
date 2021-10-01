@@ -157,8 +157,7 @@ public final class PyKnownDecoratorUtil {
         resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (ScopeOwner)containingFile, context);
       }
       else {
-        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()),
-                                                  PyResolveContext.defaultContext().withTypeEvalContext(context));
+        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()), PyResolveContext.defaultContext(context));
       }
       return StreamEx.of(resolved)
         .select(PyQualifiedNameOwner.class)

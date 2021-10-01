@@ -11,6 +11,7 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -186,7 +188,14 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
           Disposer.dispose(session);
           return Boolean.TRUE;
         });
-      
+      WindowMoveListener listener = new WindowMoveListener();
+      listener.installTo(component);
+      Disposer.register(session, new Disposable() {
+        @Override
+        public void dispose() {
+          listener.uninstallFrom(component);
+        }
+      });
       popup = popupBuilder.createPopup();
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);

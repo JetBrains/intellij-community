@@ -1,8 +1,9 @@
 <html>
 <body>
-Reports instance variables which are read prior to initialization. Equality checks with <code>null</code> are ignored by this inspection.
-<p>Example:</p>
-<pre>
+Reports instance variables that are read before initialization.
+<p>The inspection ignores equality checks with <code>null</code>.</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Foo {
     int bar;
 
@@ -10,12 +11,12 @@ Reports instance variables which are read prior to initialization. Equality chec
       System.out.println(bar);
     }
   }
-</pre>
-<p>
-Note: this inspection uses a very conservative dataflow algorithm, and may report instance variables as uninitialized incorrectly. Variables
+</code></pre>
+<p>Note that this inspection uses a very conservative dataflow algorithm and may incorrectly report instance variables as uninitialized. Variables
   reported as initialized will always be initialized.
 <!-- tooltip end -->
-<p>Use the list below to specify special annotations. Fields annotated with one of these annotations will be ignored by this inspection.</p>
-<p>Use the checkbox below to indicate whether you want uninitialized primitive fields to be reported.</p>
+<p>Use the <b>Ignore if annotated by</b> option to specify special annotations. The inspection will ignore fields
+  annotated with one of these annotations.</p>
+<p>Use the <b>Ignore primitive fields</b> option to ignore uninitialized primitive fields.</p>
 </body>
 </html>

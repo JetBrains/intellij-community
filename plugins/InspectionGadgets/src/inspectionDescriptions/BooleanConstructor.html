@@ -1,16 +1,17 @@
 <html>
 <body>
-Reports any attempt to instantiate a new <code>Boolean</code>
-object. Constructing new <code>Boolean</code> objects is rarely necessary,
-and may cause performance problems if done often enough. Also, <code>Boolean</code>
-constructors are deprecated since Java 9 and could be removed or made 
-inaccessible in future Java versions.
-<p>Example:</p>
+Reports creation of <code>Boolean</code> objects.
+<p>
+  Constructing new <code>Boolean</code> objects is rarely necessary,
+  and may cause performance problems if done often enough. Also, <code>Boolean</code>
+  constructors are deprecated since Java 9 and could be removed or made
+  inaccessible in future Java versions.</p>
+<p><b>Example:</b></p>
 <pre>
   Boolean b1 = new Boolean(true);
   Boolean b2 = new Boolean(str);
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   Boolean b1 = Boolean.TRUE;
   Boolean b2 = Boolean.valueOf(str);

@@ -68,6 +68,8 @@ public abstract class AbstractCommand<T> {
   public static final int CMD_DATAVIEWER_ACTION = 210;
   public static final int CMD_TABLE_EXEC = 211;
 
+  public static final int INTERRUPT_DEBUG_CONSOLE = 212;
+
   /**
    * The code of the message that means that IDE received
    * {@link #PROCESS_CREATED} message from the Python debugger script.

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -128,6 +128,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setRootColumnSize();
     myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
+    VcsLogColumnManager.getInstance().addColumnModelListener(this, (column, index) -> {
+      getModel().fireTableStructureChanged();
+    });
 
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
@@ -153,6 +156,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
       }
     };
+  }
+
+  public @NotNull @NonNls String getId() {
+    return myId;
   }
 
   @Override
@@ -668,21 +675,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (column != Commit.INSTANCE) return;
     GraphCommitCellController controller = (GraphCommitCellController)Objects.requireNonNull(getController(column));
     controller.showTooltip(row);
-  }
-
-  public void setCompactReferencesView(boolean compact) {
-    myGraphCommitCellRenderer.setCompactReferencesView(compact);
-    repaint();
-  }
-
-  public void setShowTagNames(boolean showTagsNames) {
-    myGraphCommitCellRenderer.setShowTagsNames(showTagsNames);
-    repaint();
-  }
-
-  public void setLabelsLeftAligned(boolean leftAligned) {
-    myGraphCommitCellRenderer.setLeftAligned(leftAligned);
-    repaint();
   }
 
   @NotNull

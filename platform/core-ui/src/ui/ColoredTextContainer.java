@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts.Label;
@@ -19,4 +19,10 @@ public interface ColoredTextContainer {
   default void setIcon(@Nullable Icon icon) {}
 
   default void setToolTipText(@Nullable @Tooltip String text) {}
+
+  default void append(@NotNull ColoredText coloredText) {
+    for (ColoredText.Fragment fragment : coloredText.fragments()) {
+      append(fragment.fragmentText(), fragment.fragmentAttributes());
+    }
+  }
 }

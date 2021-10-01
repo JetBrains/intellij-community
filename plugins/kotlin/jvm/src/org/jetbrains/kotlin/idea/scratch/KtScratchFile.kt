@@ -9,11 +9,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -64,13 +65,14 @@ class KtScratchFile(project: Project, file: VirtualFile) : ScratchFile(project, 
         return result
     }
 
+    @RequiresBackgroundThread
     override fun hasErrors(): Boolean {
-        val psiFile = getPsiFile() as? KtFile ?: return false
+        val psiFile = ktScratchFile ?: return false
         try {
             AnalyzingUtils.checkForSyntacticErrors(psiFile)
         } catch (e: IllegalArgumentException) {
             return true
         }
-        return psiFile.analyzeWithContent().diagnostics.any { it.severity == Severity.ERROR }
+        return project.runReadActionInSmartMode { psiFile.analyzeWithContent().diagnostics.any { it.severity == Severity.ERROR } }
     }
 }

@@ -19,7 +19,7 @@ public final class FileFinder {
   public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
                                                boolean lookForNested,
                                                @NotNull MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-    List<Pair<String, VirtualFile>> result = new ArrayList<>();
+    List<Pair<VirtualFile, VirtualFile>> result = new ArrayList<>();
     // TODO locate pom files using maven embedder?
     for (VirtualFile f : roots) {
       VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
@@ -39,7 +39,7 @@ public final class FileFinder {
             }
             else {
               if (MavenUtil.isPomFile(f)) {
-                result.add(Pair.create(f.getParent().getCanonicalPath(), f));
+                result.add(Pair.create(f.getParent(), f));
               }
             }
           }
@@ -54,7 +54,7 @@ public final class FileFinder {
         }
       }, MavenProcessCanceledException.class);
     }
-    Map<String, List<VirtualFile>> pomFilesByParent = result.stream()
+    Map<VirtualFile, List<VirtualFile>> pomFilesByParent = result.stream()
       .collect(groupingBy(p -> p.getFirst(), mapping(p -> p.getSecond(), toList())));
     return pomFilesByParent.entrySet().stream()
       .flatMap(pomsByParent -> getOriginalPoms(pomsByParent.getValue()).stream())

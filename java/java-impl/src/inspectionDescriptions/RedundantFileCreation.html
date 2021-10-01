@@ -1,13 +1,12 @@
 <html>
 <body>
-Reports redundant <code>File</code> creation in one of the constructor <code>FileInputStream</code>, <code>FileOutputStream</code>,
-<code>FileReader</code>, <code>FileWriter</code>, <code>PrintStream</code>, <code>PrintWriter</code>, <code>Formatter</code>
-when only <code>String</code> path can be used.
+Reports redundant <code>File</code> creation in one of the following constructors when only <code>String</code> path can be used: <code>FileInputStream</code>, <code>FileOutputStream</code>,
+<code>FileReader</code>, <code>FileWriter</code>, <code>PrintStream</code>, <code>PrintWriter</code>, <code>Formatter</code>.
 <p>Example:</p>
 <pre>
 InputStream is = new FileInputStream(new File("in.txt"));
 </pre>
-<p>After quick-fix is applied, the result will be:</p>
+<p>After quick-fix is applied:</p>
 <pre>
 InputStream is = new FileInputStream("in.txt");
 </pre>

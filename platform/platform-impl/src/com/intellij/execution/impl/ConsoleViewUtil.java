@@ -79,6 +79,17 @@ public final class ConsoleViewUtil {
     });
   }
 
+  public static void setupLanguageConsoleEditor(final @NotNull EditorEx editor) {
+    setupConsoleEditor(editor, false, false);
+
+    editor.getContentComponent().setFocusCycleRoot(false);
+    editor.setBorder(null);
+
+    EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(1);
+    editorSettings.setAdditionalColumnsCount(1);
+  }
+
   private static class NullEditorHighlighter extends EmptyEditorHighlighter {
     private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
@@ -87,7 +98,7 @@ public final class ConsoleViewUtil {
     }
 
     @Override
-    public void setAttributes(TextAttributes attributes) {}
+    public void setAttributes(TextAttributes attributes) { }
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}

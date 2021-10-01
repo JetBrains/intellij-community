@@ -530,18 +530,19 @@ public abstract class LongRangeSet {
   }
 
   private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo, BitString globalMask) {
-    if (leftFrom == leftTo && rightFrom == rightTo) {
-      return point(leftFrom & rightFrom & (globalMask.myBits | ~globalMask.myMask));
-    }
-    if (leftFrom == leftTo && Long.bitCount(leftFrom+1) == 1) {
-      return bitwiseMask(rightFrom, rightTo, leftFrom);
-    }
-    if (rightFrom == rightTo && Long.bitCount(rightFrom+1) == 1) {
-      return bitwiseMask(leftFrom, leftTo, rightFrom);
-    }
     BitString leftBits = BitString.fromRange(leftFrom, leftTo);
     BitString rightBits = BitString.fromRange(rightFrom, rightTo);
-    return fromBits(leftBits.and(rightBits).and(globalMask));
+    LongRangeSet fromBits = fromBits(leftBits.and(rightBits).and(globalMask));
+    if (leftFrom == leftTo && rightFrom == rightTo) {
+      return point(leftFrom & rightFrom & (globalMask.myBits | ~globalMask.myMask)).meet(fromBits);
+    }
+    if (leftFrom == leftTo && Long.bitCount(leftFrom + 1) == 1) {
+      return bitwiseMask(rightFrom, rightTo, leftFrom).meet(fromBits);
+    }
+    if (rightFrom == rightTo && Long.bitCount(rightFrom + 1) == 1) {
+      return bitwiseMask(leftFrom, leftTo, rightFrom).meet(fromBits);
+    }
+    return fromBits;
   }
 
   /**

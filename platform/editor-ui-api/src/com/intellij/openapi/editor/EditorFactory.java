@@ -142,6 +142,7 @@ public abstract class EditorFactory {
    * </p>
    */
   @ApiStatus.Internal
+  @ApiStatus.Experimental
   public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
     return editors(document, project);
   }

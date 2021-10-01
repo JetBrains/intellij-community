@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,24 +33,24 @@ public class ConsentsTest extends TestCase{
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
-    final Map.Entry<List<Consent>, Boolean> beforeConfirm = options.getConsents();
-    assertTrue("Consents should require confirmation", beforeConfirm.getValue());
-    assertEquals(2, beforeConfirm.getKey().size());
+    final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+    assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
+    assertEquals(2, beforeConfirm.getFirst().size());
     checkStorage(storage, JSON_CONSENTS_DATA, "", "");
 
-    final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_1, beforeConfirm.getKey());
+    final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_1, beforeConfirm.getFirst());
     assertNotNull(consentBeforeUpgrade);
     assertEquals(Version.fromString("1.0"), consentBeforeUpgrade.getVersion());
 
     final boolean initialAcceptedState = consentBeforeUpgrade.isAccepted();
 
     // confirm
-    options.setConsents(beforeConfirm.getKey());
+    options.setConsents(beforeConfirm.getFirst());
 
     {
-      final Map.Entry<List<Consent>, Boolean> afterConfirm = options.getConsents();
-      assertFalse("Consents should NOT require confirmation", afterConfirm.getValue());
-      final Consent consentAfterCorfirm = lookupConsent(CONSENT_ID_1, afterConfirm.getKey());
+      final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
+      assertFalse("Consents should NOT require confirmation", afterConfirm.getSecond());
+      final Consent consentAfterCorfirm = lookupConsent(CONSENT_ID_1, afterConfirm.getFirst());
       assertNotNull(consentAfterCorfirm);
       assertEquals(Version.fromString("1.0"), consentAfterCorfirm.getVersion());
       assertEquals(initialAcceptedState, consentAfterCorfirm.isAccepted());
@@ -62,9 +61,9 @@ public class ConsentsTest extends TestCase{
     Thread.sleep(1L);// ensure timestamp changes
     options.applyServerUpdates(createUpgradeJson(CONSENT_ID_1, newAcceptedState));
     {
-      final Map.Entry<List<Consent>, Boolean> afterUpgrade = options.getConsents();
-      assertFalse("Consents should NOT require confirmation", afterUpgrade.getValue());  // no confirmation on minor updates required
-      final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_1, afterUpgrade.getKey());
+      final Pair<List<Consent>, Boolean> afterUpgrade = options.getConsents();
+      assertFalse("Consents should NOT require confirmation", afterUpgrade.getSecond());  // no confirmation on minor updates required
+      final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_1, afterUpgrade.getFirst());
       assertNotNull(consentAfterUpgrade);
       assertEquals(Version.fromString("1.5"), consentAfterUpgrade.getVersion());
       assertEquals(newAcceptedState, consentAfterUpgrade.isAccepted());
@@ -76,31 +75,31 @@ public class ConsentsTest extends TestCase{
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
-    final Map.Entry<List<Consent>, Boolean> beforeConfirm = options.getConsents();
-    assertTrue("Consents should require confirmation", beforeConfirm.getValue());
-    assertEquals(2, beforeConfirm.getKey().size());
+    final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+    assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
+    assertEquals(2, beforeConfirm.getFirst().size());
     checkStorage(storage, JSON_CONSENTS_DATA, "", "");
-    final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_1, beforeConfirm.getKey());
+    final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_1, beforeConfirm.getFirst());
     assertNotNull(consentBeforeUpgrade);
     assertEquals(Version.fromString("1.0"), consentBeforeUpgrade.getVersion());
 
-    options.setConsents(beforeConfirm.getKey());
-    final Map.Entry<List<Consent>, Boolean> afterConfirm = options.getConsents();
-    assertFalse("Consents should NOT require confirmation", afterConfirm.getValue());
-    assertEquals(2, afterConfirm.getKey().size());
+    options.setConsents(beforeConfirm.getFirst());
+    final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
+    assertFalse("Consents should NOT require confirmation", afterConfirm.getSecond());
+    assertEquals(2, afterConfirm.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals("", storage.myDefaults);
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
 
     options.applyServerUpdates(JSON_MINOR_UPGRADE_CONSENTS_DATA);
 
-    final Map.Entry<List<Consent>, Boolean> afterUpdate = options.getConsents();
-    assertFalse("Consents should NOT require confirmation", afterUpdate.getValue());
-    assertEquals(2, afterUpdate.getKey().size());
+    final Pair<List<Consent>, Boolean> afterUpdate = options.getConsents();
+    assertFalse("Consents should NOT require confirmation", afterUpdate.getSecond());
+    assertEquals(2, afterUpdate.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertFalse("The storage should contain non-empty default consents", StringUtil.isEmpty(storage.myDefaults));
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
-    final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_1, afterUpdate.getKey());
+    final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_1, afterUpdate.getFirst());
     assertNotNull(consentAfterUpgrade);
     assertEquals(Version.fromString("1.5"), consentAfterUpgrade.getVersion());
   }
@@ -111,25 +110,25 @@ public class ConsentsTest extends TestCase{
     final MemoryIOBackend storage = data.second;
 
     {
-      final Map.Entry<List<Consent>, Boolean> beforeConfirm = options.getConsents();
-      assertTrue("Consents should require confirmation", beforeConfirm.getValue());
-      assertEquals(2, beforeConfirm.getKey().size());
+      final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+      assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
+      assertEquals(2, beforeConfirm.getFirst().size());
       checkStorage(storage, JSON_CONSENTS_DATA, "", "");
-      final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_USAGE_STATS, beforeConfirm.getKey());
+      final Consent consentBeforeUpgrade = lookupConsent(CONSENT_ID_USAGE_STATS, beforeConfirm.getFirst());
       assertNotNull(consentBeforeUpgrade);
       assertEquals(Version.fromString("1.0"), consentBeforeUpgrade.getVersion());
       assertFalse(consentBeforeUpgrade.isAccepted());
       assertEquals(ConsentOptions.Permission.UNDEFINED, options.isSendingUsageStatsAllowed());
 
       // confirm
-      options.setConsents(beforeConfirm.getKey());
+      options.setConsents(beforeConfirm.getFirst());
     }
 
     // after-confirmation state
     {
-      final Map.Entry<List<Consent>, Boolean> afterConfirm = options.getConsents();
-      assertFalse("Consents should NOT require confirmation", afterConfirm.getValue());
-      assertEquals(2, afterConfirm.getKey().size());
+      final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
+      assertFalse("Consents should NOT require confirmation", afterConfirm.getSecond());
+      assertEquals(2, afterConfirm.getFirst().size());
       assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
       assertEquals("", storage.myDefaults);
       assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
@@ -139,13 +138,13 @@ public class ConsentsTest extends TestCase{
     // updates from server
     {
       options.applyServerUpdates(JSON_MAJOR_UPGRADE_CONSENTS_DATA);
-      final Map.Entry<List<Consent>, Boolean> afterUpdate = options.getConsents();
-      assertTrue("Consents should require confirmation", afterUpdate.getValue());
-      assertEquals(2, afterUpdate.getKey().size());
+      final Pair<List<Consent>, Boolean> afterUpdate = options.getConsents();
+      assertTrue("Consents should require confirmation", afterUpdate.getSecond());
+      assertEquals(2, afterUpdate.getFirst().size());
       assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
       assertFalse("The storage should contain non-empty default consents", StringUtil.isEmpty(storage.myDefaults));
       assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
-      final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_USAGE_STATS, afterUpdate.getKey());
+      final Consent consentAfterUpgrade = lookupConsent(CONSENT_ID_USAGE_STATS, afterUpdate.getFirst());
       assertNotNull(consentAfterUpgrade);
       assertEquals(Version.fromString("2.0"), consentAfterUpgrade.getVersion());
       assertFalse(consentAfterUpgrade.isAccepted()); // although default value is now 'true', the last accepted value should be returned
@@ -153,7 +152,7 @@ public class ConsentsTest extends TestCase{
 
       // second confirmation
       final List<Consent> toAccept = new ArrayList<>();
-      for (Consent consent : afterUpdate.getKey()) {
+      for (Consent consent : afterUpdate.getFirst()) {
         if (CONSENT_ID_USAGE_STATS.equals(consent.getId())) {
           toAccept.add(consent.derive(true));
         }
@@ -165,13 +164,13 @@ public class ConsentsTest extends TestCase{
     }
 
     {
-      final Map.Entry<List<Consent>, Boolean> afterSecondConfirm = options.getConsents();
-      assertFalse("Consents should NOT require confirmation", afterSecondConfirm.getValue());
-      assertEquals(2, afterSecondConfirm.getKey().size());
+      final Pair<List<Consent>, Boolean> afterSecondConfirm = options.getConsents();
+      assertFalse("Consents should NOT require confirmation", afterSecondConfirm.getSecond());
+      assertEquals(2, afterSecondConfirm.getFirst().size());
       assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
       assertFalse("The storage should contain non-empty default consents", StringUtil.isEmpty(storage.myDefaults));
       assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
-      final Consent consentAfterSecondConfirm = lookupConsent(CONSENT_ID_USAGE_STATS, afterSecondConfirm.getKey());
+      final Consent consentAfterSecondConfirm = lookupConsent(CONSENT_ID_USAGE_STATS, afterSecondConfirm.getFirst());
       assertNotNull(consentAfterSecondConfirm);
       assertEquals(Version.fromString("2.0"), consentAfterSecondConfirm.getVersion());
       assertTrue(consentAfterSecondConfirm.isAccepted());
@@ -184,19 +183,19 @@ public class ConsentsTest extends TestCase{
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
-    final Map.Entry<List<Consent>, Boolean> beforeConfirm = options.getConsents();
-    assertTrue("Consents should require confirmation", beforeConfirm.getValue());
-    assertEquals(2, beforeConfirm.getKey().size());
+    final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+    assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
+    assertEquals(2, beforeConfirm.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertEquals("", storage.myConfirmed);
 
-    assertNotNull(lookupConsent(CONSENT_ID_USAGE_STATS, beforeConfirm.getKey()));
+    assertNotNull(lookupConsent(CONSENT_ID_USAGE_STATS, beforeConfirm.getFirst()));
     assertEquals(ConsentOptions.Permission.UNDEFINED, options.isSendingUsageStatsAllowed());
 
-    options.setConsents(beforeConfirm.getKey());
-    final Map.Entry<List<Consent>, Boolean> afterConfirm = options.getConsents();
-    assertFalse("Consents should NOT require confirmation", afterConfirm.getValue());
-    assertEquals(2, afterConfirm.getKey().size());
+    options.setConsents(beforeConfirm.getFirst());
+    final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
+    assertFalse("Consents should NOT require confirmation", afterConfirm.getSecond());
+    assertEquals(2, afterConfirm.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
@@ -208,28 +207,28 @@ public class ConsentsTest extends TestCase{
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
-    final Map.Entry<List<Consent>, Boolean> beforeConfirm = options.getConsents();
-    assertTrue("Consents should require confirmation", beforeConfirm.getValue());
-    assertEquals(2, beforeConfirm.getKey().size());
+    final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
+    assertTrue("Consents should require confirmation", beforeConfirm.getSecond());
+    assertEquals(2, beforeConfirm.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertEquals("", storage.myConfirmed);
 
     final List<Consent> changedByUser = new ArrayList<>();
-    for (Consent consent : beforeConfirm.getKey()) {
+    for (Consent consent : beforeConfirm.getFirst()) {
       changedByUser.add(consent.derive(!consent.isAccepted()));
     }
     options.setConsents(changedByUser);
 
-    final Map.Entry<List<Consent>, Boolean> afterConfirm = options.getConsents();
-    assertFalse("Consents should NOT require confirmation", afterConfirm.getValue());
-    assertEquals(2, afterConfirm.getKey().size());
+    final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
+    assertFalse("Consents should NOT require confirmation", afterConfirm.getSecond());
+    assertEquals(2, afterConfirm.getFirst().size());
     assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
 
     for (Consent userConsent : changedByUser) {
-      final Consent loaded = lookupConsent(userConsent, afterConfirm.getKey());
+      final Consent loaded = lookupConsent(userConsent, afterConfirm.getFirst());
       assertEquals(userConsent, loaded);
       assertEquals(userConsent.isAccepted(), loaded.isAccepted());
     }

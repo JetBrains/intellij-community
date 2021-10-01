@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports an assignment being used as the condition of an <code>if</code>, <code>while</code>, <code>for</code> or
-<code>do</code> statement, or in any other context. While occasionally intended, this usage is confusing,
-and may indicate a typo (<code>=</code> used instead of <code>==</code>).
-<p>Example:</p>
+Reports an assignment that is used as a condition of an <code>if</code>, <code>while</code>, <code>for</code>, or
+<code>do</code> statement, or in any other context.
+<p>Although occasionally intended, this usage is confusing and may indicate a typo, for example, <code>=</code> instead of <code>==</code>.</p>
+<p>The quick-fix replaces <code>=</code> with <code>==</code>.</p>
+<p><b>Example:</b></p>
 <pre><code>
   void update(String str, boolean empty) {
     // Warning: 'empty' is reassigned,
@@ -13,7 +14,7 @@ and may indicate a typo (<code>=</code> used instead of <code>==</code>).
     }
   }
 </code></pre>
-<p>A quick-fix is suggested to replace <code>=</code> with <code>==</code>:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   void update(String str, boolean empty) {
     if (empty == str.isEmpty()) {

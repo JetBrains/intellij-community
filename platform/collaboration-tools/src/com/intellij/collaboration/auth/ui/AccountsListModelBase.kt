@@ -2,7 +2,7 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
-import com.intellij.collaboration.ui.codereview.SingleValueModelImpl
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.ui.CollectionListModel
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -17,7 +17,7 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
   override val newCredentials = mutableMapOf<A, Cred>()
 
   override val accountsListModel = CollectionListModel<A>()
-  override val busyStateModel = SingleValueModelImpl(false)
+  override val busyStateModel = SingleValueModel(false)
 
   private val credentialsChangesListeners = CopyOnWriteArrayList<(A) -> Unit>()
 

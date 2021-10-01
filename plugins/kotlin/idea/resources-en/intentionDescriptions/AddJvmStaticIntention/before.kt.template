@@ -1,4 +1,3 @@
-object Test {
-    fun main(args: Array<String>) {
-    }
+object Example {
+    fun main(args: Array<String>) {}
 }

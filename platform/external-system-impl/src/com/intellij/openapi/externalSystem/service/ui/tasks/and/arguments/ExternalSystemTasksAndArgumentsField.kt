@@ -19,10 +19,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
+@ApiStatus.Experimental
 class ExternalSystemTasksAndArgumentsField(
   project: Project,
   externalSystemId: ProjectSystemId,

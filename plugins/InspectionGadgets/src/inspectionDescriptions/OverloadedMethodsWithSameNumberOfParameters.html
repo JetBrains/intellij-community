@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports same named methods in the same class when they also have the same number of parameters. 
-Such overloads may be very confusing, as it can be not clear which overload gets called.
-<p><b>Example:</b>
-  <pre><code>
+Reports methods that are declared in the same class, have the same name, and the same number of parameters.
+Such overloads cam be very confusing because it can be unclear which overload gets called.
+<p><b>Example:</b></p>
+<pre><code>
   class Main {
     public static void execute(Runnable r) {}
     public static &lt;T&gt; void execute(RunnableFuture&lt;T&gt; c) {}
@@ -11,8 +11,7 @@ Such overloads may be very confusing, as it can be not clear which overload gets
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore overloaded methods whose parameter types are definitely incompatible.
-<p>
-
+  Use the option to ignore overloaded methods whose parameter types are definitely incompatible.
+</p>
 </body>
 </html>

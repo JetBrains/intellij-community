@@ -5,16 +5,14 @@ package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.java.languageLevel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
@@ -22,7 +20,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
                                                              private val diff: WorkspaceEntityStorageDiffBuilder?) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
   private var changed = false
   private val moduleEntity
-    get() = entityStorage.current.moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
+    get() = entityStorage.current.findModuleEntity(module)
 
   override fun setLanguageLevel(languageLevel: LanguageLevel?) {
     if (diff == null) error("Cannot modify data via read-only extensions")
@@ -54,10 +52,6 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
   override fun dispose() = Unit
 
   companion object : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
-    //todo move corresponding fields from ModuleManagerComponentBridge to projectModel.impl module
-    private val WorkspaceEntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
-      get() = getExternalMapping("intellij.modules.bridge")
-
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: WorkspaceEntityStorageDiffBuilder?): LanguageLevelModuleExtensionBridge {

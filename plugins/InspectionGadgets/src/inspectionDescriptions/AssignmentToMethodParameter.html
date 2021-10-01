@@ -1,26 +1,27 @@
 <html>
 <body>
-Reports assignment to a variable declared as a method parameter.
-It also reports any attempt to increment or decrement the variable.
-While occasionally intended, this construct can be confusing,
-and disallowed in some Java projects.
-<p>Example:</p>
-<pre>
+Reports an assignment to a variable that is declared as a method parameter.
+Also reports any attempt to increment or decrement the variable.
+<p>Although occasionally intended, this construct may be confusing
+  and is therefore prohibited in some Java projects.</p>
+<p>The quick-fix adds a declaration of a new variable.</p>
+<p><b>Example:</b></p>
+<pre><code>
   void printTrimmed(String s) {
     s = s.trim();
     System.out.println(s);
   }
-</pre>
-<p>A quick-fix is suggested to declare a new variable:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   void printTrimmed(String s) {
     String trimmed = s.trim();
     System.out.println(trimmed);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore assignments that modify
+  Use the <b>Ignore if assignment is a transformation of the original parameter</b> option to ignore assignments that modify
   the parameter value based on its previous value.
 </p>
 </body>

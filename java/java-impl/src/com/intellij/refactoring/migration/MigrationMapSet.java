@@ -38,6 +38,7 @@ public class MigrationMapSet {
   @NonNls private static final String OLD_NAME = "oldName";
   @NonNls private static final String NEW_NAME = "newName";
   @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String ORDER = "order";
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String TYPE = "type";
   @NonNls private static final String PACKAGE_TYPE = "package";
@@ -152,7 +153,6 @@ public class MigrationMapSet {
   private void loadMaps() {
     myMaps = new ArrayList<>();
 
-
     File dir = getMapDirectory();
     copyPredefinedMaps(dir);
 
@@ -172,6 +172,8 @@ public class MigrationMapSet {
         LOG.error(e);
       }
     }
+
+    myMaps.sort((o1, o2) -> Integer.compare(o2.getOrder(), o1.getOrder()));
   }
 
   private static MigrationMap readMap(File file) throws JDOMException, InvalidDataException, IOException {
@@ -202,6 +204,13 @@ public class MigrationMapSet {
       if (map.getDescription() == null && DESCRIPTION.equals(node.getName())) {
         @NlsSafe String description = node.getAttributeValue(VALUE);
         map.setDescription(description);
+      }
+
+      if (ORDER.equals(node.getName())) {
+        String orderValue = node.getAttributeValue(VALUE);
+        if (orderValue != null && !orderValue.isBlank()) {
+          map.setOrder(Integer.valueOf(orderValue));
+        }
       }
 
       if (ENTRY.equals(node.getName())) {
@@ -266,6 +275,10 @@ public class MigrationMapSet {
     Element nameElement = new Element(NAME);
     nameElement.setAttribute(VALUE, map.getName());
     root.addContent(nameElement);
+
+    Element orderElement = new Element(ORDER);
+    nameElement.setAttribute(VALUE, String.valueOf(map.getOrder()));
+    root.addContent(orderElement);
 
     Element descriptionElement = new Element(DESCRIPTION);
     descriptionElement.setAttribute(VALUE, map.getDescription());

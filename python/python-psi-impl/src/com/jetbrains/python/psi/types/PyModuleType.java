@@ -419,7 +419,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
     final Set<String> namesAlready = context.get(CTX_NAMES);
     final PointInImport point = ResolveImportUtil.getPointInImport(location);
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
 
     for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       for (PyCustomMember member : provider.getMembers(myModule, point, typeEvalContext)) {

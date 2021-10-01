@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -283,17 +284,10 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  @NotNull
-  public List<ListPluginComponent> getSelection() {
-    List<ListPluginComponent> selection = new ArrayList<>();
-
-    for (ListPluginComponent component : myComponents) {
-      if (component.getSelection() == SelectionType.SELECTION) {
-        selection.add(component);
-      }
-    }
-
-    return selection;
+  public final @NotNull List<? extends ListPluginComponent> getSelection() {
+    return myComponents.stream()
+      .filter(component -> component.getSelection() == SelectionType.SELECTION)
+      .collect(Collectors.toUnmodifiableList());
   }
 
   @Override

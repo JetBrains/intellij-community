@@ -23,6 +23,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public final class PyTestCreatorTest extends PyTestCase {
   public void testCreateUnitTest() {
     final PyTestCreationModel model = prepareAndCreateModel();
     TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
-    testRunnerService.setProjectConfiguration(new PyUnitTestFactory().getName());
+    testRunnerService.setProjectConfiguration(PythonTestConfigurationType.getInstance().getUnitTestFactory().getName());
     checkResult(model, "create_tst_class.expected_unittest.py");
   }
 

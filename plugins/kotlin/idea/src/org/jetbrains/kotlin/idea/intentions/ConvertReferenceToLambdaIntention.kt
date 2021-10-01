@@ -27,7 +27,10 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 
 @Suppress("DEPRECATION")
-class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableReferenceExpression>(ConvertReferenceToLambdaIntention::class)
+class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableReferenceExpression>(
+    ConvertReferenceToLambdaIntention::class,
+    problemText = KotlinBundle.message("convert.reference.to.lambda.before.text")
+)
 
 class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntention<KtCallableReferenceExpression>(
     KtCallableReferenceExpression::class.java, KotlinBundle.lazyMessage("convert.reference.to.lambda")

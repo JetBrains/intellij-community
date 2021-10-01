@@ -23,7 +23,8 @@ public enum IntelliJPlatformProduct {
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio"),
-  CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX);
+  CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX),
+  GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX);
 
   private final String myProductCode;
   private final String myName;

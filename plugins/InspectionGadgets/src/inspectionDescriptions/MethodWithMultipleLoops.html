@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports methods that contain more than one loop statement.
-<p>For example, this method contains two loops so it will be reported:</p>
+Reports a method that contains more than one loop statement.
+<p><b>Example:</b></p>
+<p>The method below will be reported because it contains two loops:</p>
 <pre><code>
   void methodWithTwoLoops(int n1, int n2) {
     for (int i = 0; i &lt; n1; i++) {
@@ -15,7 +16,7 @@ Reports methods that contain more than one loop statement.
     }
   }
 </code></pre>
-<p>This method will also be reported, since it contains a nested loop:</p>
+<p>The following method will also be reported because it contains a nested loop:</p>
 <pre><code>
   void methodWithNestedLoop(int n1, int n2) {
     for (int i = 0; i &lt; n1; i++) {

@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test-js"))
+    testImplementation(kotlin("test"))
 }
 
 kotlin {

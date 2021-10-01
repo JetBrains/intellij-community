@@ -1,16 +1,17 @@
 <html>
 <body>
-Reports <code>String.equals()</code> calls on a <code>CharSequence</code> argument
-as <code>String.equals()</code> can only return <code>true</code> for <code>String</code> arguments.
-To compare the contents of a <code>String</code> for equality with a non-<code>String</code> <code>CharSequence</code> argument,
-use the <code>contentEquals()</code> method.
-<p>Example:</p>
+Reports calls to <code>String.equals()</code> with a <code>CharSequence</code> as the argument.
+<p>
+  <code>String.equals()</code> can only return <code>true</code> for <code>String</code> arguments.
+  To compare the contents of a <code>String</code> with a non-<code>String</code> <code>CharSequence</code> argument,
+  use the <code>contentEquals()</code> method.</p>
+<p><b>Example:</b></p>
 <pre>
   boolean equals(String s, CharSequence ch) {
     return s.equals(ch);
   }
 </pre>
-<p>After quick-fix is applied, the result will be:</p>
+<p>After quick-fix is applied:</p>
 <pre>
   boolean equals(String s, CharSequence ch) {
     return s.contentEquals(ch);

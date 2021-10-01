@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
@@ -14,6 +14,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -35,23 +36,20 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
   companion object {
-    @JvmStatic
-    private var filesToLoad: List<Path> = emptyList()
-    @JvmStatic
+    private var filesToLoad: List<Path> = Collections.emptyList()
     private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
-    @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    @JvmStatic
     fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
       wizardStepProvider = provider
     }
@@ -68,7 +66,7 @@ open class IdeStarter : ApplicationStarter {
     assert(!app.isDispatchThread)
 
     if (app.isLightEditMode && !app.isHeadlessEnvironment) {
-      // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
+      // In a light mode UI is shown very quickly, tab layout requires ActionManager, but it is forbidden to init ActionManager in EDT,
       // so, preload
       ForkJoinPool.commonPool().execute {
         ActionManager.getInstance()
@@ -108,6 +106,10 @@ open class IdeStarter : ApplicationStarter {
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
       return CompletableFuture.completedFuture(null)
+    }
+
+    if (ApplicationManager.getApplication().isInternal) {
+      UiInspectorAction.initGlobalInspector()
     }
 
     if (JetBrainsProtocolHandler.appStartedWithCommand()) {

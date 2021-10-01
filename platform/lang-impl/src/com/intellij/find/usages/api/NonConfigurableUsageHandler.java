@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.api;
 
 import com.intellij.util.Query;
@@ -17,22 +17,22 @@ final class NonConfigurableUsageHandler implements UsageHandler<@Nullable Void> 
   }
 
   @Override
-  public final @Nullable Void getCustomOptions(@NotNull UsageAction action) {
+  public @Nullable Void getCustomOptions(@NotNull UsageAction action) {
     return null;
   }
 
   @Override
-  public final boolean hasAnythingToSearch(@Nullable Void customOptions) {
+  public boolean hasAnythingToSearch(@Nullable Void customOptions) {
     return false;
   }
 
   @Override
-  public final @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options, @Nullable Void customOptions) {
+  public @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options, @Nullable Void customOptions) {
     return myHandler.getSearchString(options);
   }
 
   @Override
-  public final @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, @Nullable Void customOptions) {
+  public @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, @Nullable Void customOptions) {
     return myHandler.buildSearchQuery(options);
   }
 }

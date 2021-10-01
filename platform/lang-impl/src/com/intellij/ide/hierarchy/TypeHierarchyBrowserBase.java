@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.hierarchy;
 
@@ -118,7 +118,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   private final class MyDeleteProvider implements DeleteProvider {
     @Override
-    public final void deleteElement(@NotNull DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
@@ -132,7 +132,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final boolean canDeleteElement(@NotNull DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) {
         return false;

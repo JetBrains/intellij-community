@@ -7,7 +7,6 @@
   ]]>
   </description>
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>

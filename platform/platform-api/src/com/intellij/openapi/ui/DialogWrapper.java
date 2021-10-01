@@ -481,6 +481,10 @@ public abstract class DialogWrapper {
   @Nullable
   protected Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
+      if ((SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance"))
+          || (SystemInfo.isWindows && SystemInfo.isJetBrainsJvm)) {
+        return JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      }
       return JBUI.Borders.empty();
     }
     return createDefaultBorder();
@@ -1488,8 +1492,9 @@ public abstract class DialogWrapper {
   /**
    * @deprecated Dialog action buttons should be right-aligned.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
-protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
+  protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
     }

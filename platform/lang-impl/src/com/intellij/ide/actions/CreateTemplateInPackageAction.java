@@ -20,21 +20,31 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.GeneralModuleType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -83,6 +93,30 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     return isAvailable(dataContext, mySourceRootTypes, this::checkPackageExists);
   }
 
+  @Override
+  protected @Nullable PsiDirectory adjustDirectory(@NotNull PsiDirectory directory) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
+    if (!index.isUnderSourceRootOfType(directory.getVirtualFile(), mySourceRootTypes)) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(directory);
+      if (module == null) return null;
+      ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      ContentEntry contentEntry =
+        ContainerUtil.find(modifiableModel.getContentEntries(), entry -> entry.getFile() != null && VfsUtilCore.isAncestor(entry.getFile(), directory.getVirtualFile(), false));
+      if (contentEntry == null) return null;
+      try {
+        VirtualFile src = WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(contentEntry.getFile(), "src"));
+        contentEntry.addSourceFolder(src, false);
+        WriteAction.run(() -> modifiableModel.commit());
+        return PsiManager.getInstance(module.getProject()).findDirectory(src);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+    return directory;
+  }
+
   public static boolean isAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes,
                                     Predicate<? super PsiDirectory> checkPackageExists) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -98,6 +132,10 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
       if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), sourceRootTypes) && checkPackageExists.test(dir)) {
+        return true;
+      }
+      Module module = ModuleUtilCore.findModuleForPsiElement(dir);
+      if (module != null && ModuleType.is(module, GeneralModuleType.INSTANCE)) {
         return true;
       }
     }

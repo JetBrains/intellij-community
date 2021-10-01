@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +39,11 @@ public final class DocumentMarkupModel {
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.Editor#getMarkupModel()
    */
+  @Contract("_,_,true -> !null")
   public static MarkupModel forDocument(@NotNull Document document, @Nullable Project project, boolean create) {
     if (document instanceof DocumentWindow) {
-      final Document delegate = ((DocumentWindow)document).getDelegate();
-      final MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
+      Document delegate = ((DocumentWindow)document).getDelegate();
+      MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
       return new MarkupModelWindow(baseMarkupModel, (DocumentWindow) document);
     }
 
@@ -56,7 +58,7 @@ public final class DocumentMarkupModel {
       return markupModel;
     }
 
-    final DocumentMarkupModelManager documentMarkupModelManager =
+    DocumentMarkupModelManager documentMarkupModelManager =
       project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
     if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
       return new EmptyMarkupModel(document);
@@ -78,7 +80,7 @@ public final class DocumentMarkupModel {
     return model;
   }
 
-  private static ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
+  private static @NotNull ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
     if (markupModelMap == null) {
       ConcurrentMap<Project, MarkupModelImpl> newMap = new ConcurrentHashMap<>();

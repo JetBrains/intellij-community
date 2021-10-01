@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports any implementations of the <code>Object.finalize()</code> method which are
+Reports any implementations of the <code>Object.finalize()</code> method that are
 declared <code>public</code>.
 <p>
   According to the contract of the <code>Object.finalize()</code>, only the garbage
   collector calls this method. Making this method public may be confusing, because it
-  means that this method can be used by users.
+  means that the method can be used by users.
 </p>
 <p>
   The quick-fix makes the method protected to prevent it from being explicitly invoked
   by other classes.
 </p>
 <!-- tooltip end -->
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   <b>class</b> X {
     <b>public void</b> finalize() {

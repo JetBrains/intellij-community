@@ -245,6 +245,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
       if (registry instanceof ProductivityFeaturesRegistryImpl) {
         var registryImpl = (ProductivityFeaturesRegistryImpl)registry;

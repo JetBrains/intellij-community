@@ -13,6 +13,7 @@ import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -202,10 +203,15 @@ public class RunDashboardServiceViewContributor
     @Override
     public JComponent getContentComponent() {
       Content content = myNode.getContent();
-      if (content == null) return createEmptyContent();
+      if (content == null) return new RunDashboardComponentWrapper(createEmptyContent(), null);
 
       ContentManager contentManager = content.getManager();
-      return contentManager == null ? null : contentManager.getComponent();
+      if (contentManager == null) return null;
+
+      RunContentDescriptor descriptor = myNode.getDescriptor();
+      ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
+      Integer contentId = handler == null ? null : handler.hashCode();
+      return new RunDashboardComponentWrapper(contentManager.getComponent(), contentId);
     }
 
     @NotNull

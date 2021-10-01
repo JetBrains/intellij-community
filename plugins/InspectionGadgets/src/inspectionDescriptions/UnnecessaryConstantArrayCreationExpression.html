@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports constant new array expressions which can be replaced with an array initializer. Array initializers omit the type declaration because
-that is already specified by the declaration of the variable the expression is assigned to.
-<p>Example:</p>
+Reports constant new array expressions that can be replaced with an array initializer. Array initializers omit the type declaration because
+it is already specified by the left side of the assignment.
+<p><b>Example:</b></p>
 <pre>
   int[] foo = new int[] {42};
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   int[] foo = {42};
 </pre>

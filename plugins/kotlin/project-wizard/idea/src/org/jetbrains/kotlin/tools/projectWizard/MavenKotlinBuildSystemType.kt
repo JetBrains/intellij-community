@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
@@ -9,7 +10,7 @@ import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 class MavenKotlinBuildSystemType : KotlinBuildSystemType<MavenKotlinBuildSystemSettings>("Maven") {
     override var settingsFactory = { MavenKotlinBuildSystemSettings() }
 
-    override fun setupProject(languageSettings: KotlinSettings, settings: MavenKotlinBuildSystemSettings) {
+    override fun setupProject(project: Project, languageSettings: KotlinSettings, settings: MavenKotlinBuildSystemSettings) {
         TODO("Not yet implemented")
     }
 

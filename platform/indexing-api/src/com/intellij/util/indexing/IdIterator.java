@@ -15,6 +15,16 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndexKey;
+
+/**
+ * @deprecated please don't use file ids directly,
+ * use {@link com.intellij.psi.stubs.StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)} instead.
+ * It lazily will restore files from its ids.
+ */
+@Deprecated
 public interface IdIterator {
   IdIterator EMPTY = new IdIterator() {
     @Override

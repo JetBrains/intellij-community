@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -12,18 +13,20 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 class JavaDependencyCollector : DependencyCollector {
   override fun collectDependencies(project: Project): List<String> {
-    val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     val result = mutableSetOf<String>()
-    for (library in projectLibraryTable.libraries) {
-      val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
-      result.add(properties.groupId + ":" + properties.artifactId)
-    }
-    for (module in ModuleManager.getInstance(project).modules) {
-      for (orderEntry in module.rootManager.orderEntries) {
-        if (orderEntry is LibraryOrderEntry && orderEntry.isModuleLevel) {
-          val library = orderEntry.library
-          val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
-          result.add(properties.groupId + ":" + properties.artifactId)
+    runReadAction {
+      val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+      for (library in projectLibraryTable.libraries) {
+        val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
+        result.add(properties.groupId + ":" + properties.artifactId)
+      }
+      for (module in ModuleManager.getInstance(project).modules) {
+        for (orderEntry in module.rootManager.orderEntries) {
+          if (orderEntry is LibraryOrderEntry && orderEntry.isModuleLevel) {
+            val library = orderEntry.library
+            val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
+            result.add(properties.groupId + ":" + properties.artifactId)
+          }
         }
       }
     }

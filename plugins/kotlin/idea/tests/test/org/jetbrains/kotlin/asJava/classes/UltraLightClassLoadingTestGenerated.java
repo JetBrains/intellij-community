@@ -23,6 +23,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationTargets_1_6.kt")
+    public void testAnnotationTargets_1_6() throws Exception {
+        runTest("testData/compiler/asJava/ultraLightClasses/annotationTargets_1_6.kt");
+    }
+
     @TestMetadata("annotationWithSetParamPropertyModifier.kt")
     public void testAnnotationWithSetParamPropertyModifier() throws Exception {
         runTest("testData/compiler/asJava/ultraLightClasses/annotationWithSetParamPropertyModifier.kt");
@@ -51,6 +56,16 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
     @TestMetadata("dataClasses.kt")
     public void testDataClasses() throws Exception {
         runTest("testData/compiler/asJava/ultraLightClasses/dataClasses.kt");
+    }
+
+    @TestMetadata("defaultMethodInKotlinWithSettingAll.kt")
+    public void testDefaultMethodInKotlinWithSettingAll() throws Exception {
+        runTest("testData/compiler/asJava/ultraLightClasses/defaultMethodInKotlinWithSettingAll.kt");
+    }
+
+    @TestMetadata("defaultMethodInKotlinWithSettingAllCompatibility.kt")
+    public void testDefaultMethodInKotlinWithSettingAllCompatibility() throws Exception {
+        runTest("testData/compiler/asJava/ultraLightClasses/defaultMethodInKotlinWithSettingAllCompatibility.kt");
     }
 
     @TestMetadata("delegatesWithAnnotations.kt")

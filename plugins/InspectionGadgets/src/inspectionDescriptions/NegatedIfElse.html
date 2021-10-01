@@ -1,12 +1,12 @@
 <html>
 <body>
 Reports <code>if</code> statements
-which contain <code>else</code> branches and whose conditions are negated.
-Flipping the order of the <code>if</code> and <code>else</code>
-branches will usually increase the clarity of such statements.
-<p>There is a fix that allows to invert current if statement</p>
+that contain <code>else</code> branches and whose conditions are negated.
+<p>Flipping the order of the <code>if</code> and <code>else</code>
+  branches usually increases the clarity of such statements.</p>
+<p>There is a fix that inverts the current <code>if</code> statement.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
     void m(Object o1, Object o2) {
         if (o1 != o2) {
             System.out.println(1);
@@ -15,8 +15,8 @@ branches will usually increase the clarity of such statements.
             System.out.println(2);
         }
     }
-</pre>
-<p>After applying the fix:</p>
+</code></pre>
+<p>After applying the quick-fix:</p>
 <pre>
     void m(Object o1, Object o2) {
         if (o1 == o2) {
@@ -27,8 +27,8 @@ branches will usually increase the clarity of such statements.
     }
 </pre>
 <!-- tooltip end -->
-<p>Use the first checkbox below to ignore comparisons of the form <code>!= null</code>.</p>
-<p>Use the second checkbox below to ignore comparisons of the form <code>!= 0</code>.</p>
+<p>Use the <b>Ignore '!= null' comparisons</b> option to ignore comparisons of the <code>!= null</code> form.</p>
+<p>Use the <b>Ignore '!= 0' comparisons</b> option to ignore comparisons of the <code>!= 0</code> form.</p>
 
 </body>
 </html>

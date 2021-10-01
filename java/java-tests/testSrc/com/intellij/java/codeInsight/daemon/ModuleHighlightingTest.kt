@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.ProjectScope
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -478,6 +482,17 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           uses <error descr="Class 'X' is in the default package">X</error>;
           provides <error descr="Class 'X' is in the default package">X</error> with <error descr="Class 'X' is in the default package">X</error>.XX;
         }""".trimIndent())
+  }
+
+  fun testLightModuleDescriptorCaching() {
+    val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
+    val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!
+
+    PsiManager.getInstance(project).dropPsiCaches()
+    assertSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+
+    ProjectRootManager.getInstance(project).incModificationCount()
+    assertNotSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
   }
 
   //<editor-fold desc="Helpers.">

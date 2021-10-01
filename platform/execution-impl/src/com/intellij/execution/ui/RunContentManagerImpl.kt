@@ -73,7 +73,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         if (contentToReuse.isReuseToolWindowActivation) {
           descriptor.isActivateToolWindowWhenAdded = contentToReuse.isActivateToolWindowWhenAdded
         }
-        descriptor.contentToolWindowId = contentToReuse.contentToolWindowId
+        if (descriptor.processHandler?.getUserData(RunContentDescriptor.CONTENT_TOOL_WINDOW_ID_KEY) == null) {
+          descriptor.contentToolWindowId = contentToReuse.contentToolWindowId
+        }
         descriptor.isSelectContentWhenAdded = contentToReuse.isSelectContentWhenAdded
       }
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -46,7 +47,7 @@ internal class ClassLoaderConfiguratorTest {
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
     val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature").getEnabledPlugins().get(1)
-    assertThat(plugin.content.modules.get(0).requireDescriptor().classLoader).isInstanceOf(PluginClassLoader::class.java)
+    assertThat(plugin.content.modules.get(0).requireDescriptor().classLoader).isInstanceOf(PluginAwareClassLoader::class.java)
   }
 
   @Suppress("PluginXmlValidity")

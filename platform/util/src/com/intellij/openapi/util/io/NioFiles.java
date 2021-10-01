@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
- * A utility class providing pieces missing from {@link Files java.nio.file.Files}.
+ * A utility class that provides pieces missing from {@link Files java.nio.file.Files}.
  */
 public final class NioFiles {
   private NioFiles() { }
@@ -24,16 +24,23 @@ public final class NioFiles {
    * I.e. this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */
   public static @NotNull Path createDirectories(@NotNull Path path) throws IOException {
-    if (!Files.isDirectory(path)) {
-      if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-        throw new FileAlreadyExistsException(path.toString(), null, "already exists");
-      }
-      else {
-        Path parent = path.getParent();
-        if (parent != null) {
-          createDirectories(parent);
+    try {
+      if (!Files.isDirectory(path)) {
+        if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+          throw new FileAlreadyExistsException(path.toString(), null, "already exists");
         }
-        Files.createDirectory(path);
+        else {
+          Path parent = path.getParent();
+          if (parent != null) {
+            createDirectories(parent);
+          }
+          Files.createDirectory(path);
+        }
+      }
+    }
+    catch (FileAlreadyExistsException err) {
+      if (!Files.isDirectory(path)) {
+        throw err;
       }
     }
     return path;
@@ -65,7 +72,7 @@ public final class NioFiles {
   }
 
   /**
-   * On POSIX file systems, sets "owner-exec" permission (if not already set); on others, does nothing.
+   * On POSIX file systems, sets "owner-exec" permission (if not yet set); on others, does nothing.
    */
   public static void setExecutable(@NotNull Path file) throws IOException {
     PosixFileAttributeView view = Files.getFileAttributeView(file, PosixFileAttributeView.class);

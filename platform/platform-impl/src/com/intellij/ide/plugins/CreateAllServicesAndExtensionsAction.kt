@@ -29,7 +29,6 @@ import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
-import java.util.function.BiConsumer
 import kotlin.properties.Delegates.notNull
 
 @Suppress("HardCodedStringLiteral")
@@ -111,7 +110,7 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
   ComponentManagerImpl.createAllServices(container, badServices)
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
-    // requires read action
+    // requires a read action
     if (extensionPoint.name == "com.intellij.favoritesListProvider" ||
         extensionPoint.name == "org.jetbrains.kotlin.defaultErrorMessages") {
       return@processExtensionPoints
@@ -122,27 +121,26 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
 }
 
 private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecutor: (task: () -> Unit) -> Unit) {
-  extensionPoint.processImplementations(false, BiConsumer { supplier, pluginDescriptor ->
-    var extensionClass: Class<out Any> by notNull()
-    taskExecutor {
-      extensionClass = extensionPoint.extensionClass
-    }
-
-    taskExecutor {
-      try {
-        val extension = supplier.get() ?: return@taskExecutor
-        if (!extensionClass.isInstance(extension)) {
-          throw PluginException("Extension ${extension.javaClass.name} does not implement $extensionClass",
-                                pluginDescriptor.pluginId)
-        }
-      }
-      catch (ignore: ExtensionNotApplicableException) {
-      }
-    }
-  })
-
+  var extensionClass: Class<out Any> by notNull()
   taskExecutor {
-    extensionPoint.extensionList
+    extensionClass = extensionPoint.extensionClass
+  }
+  
+  extensionPoint.checkImplementations { extension ->
+    taskExecutor {
+      val extensionInstance: Any
+      try {
+        extensionInstance = (extension.createInstance(extensionPoint.componentManager) ?: return@taskExecutor)
+      }
+      catch (e: Exception) {
+        throw PluginException("Failed to instantiate extension (extension=$extension, pointName=${extensionPoint.name})",
+                              e, extension.pluginDescriptor.pluginId)
+      }
+
+      if (!extensionClass.isInstance(extensionInstance)) {
+        throw PluginException("$extension does not implement $extensionClass", extension.pluginDescriptor.pluginId)
+      }
+    }
   }
 }
 
@@ -161,7 +159,8 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
-          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole") {
+          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
             // wants EDT in constructor
              continue
           }

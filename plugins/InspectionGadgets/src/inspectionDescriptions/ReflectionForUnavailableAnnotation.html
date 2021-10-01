@@ -1,10 +1,9 @@
 <html>
 <body>
-Reports any attempts to reflectively check for the presence of an
-annotation which is not defined as being retained at runtime.
-Using <code>Class.isAnnotationPresent()</code> to test for an annotation
-which has source retention or class-file retention (the default) will always result in a negative result,
-but is easy to do inadvertently.
+Reports attempts to reflectively check for the presence of a non-runtime annotation.
+<p>Using <code>Class.isAnnotationPresent()</code> to test for an annotation
+  whose retention policy is set to <code>SOURCE</code> or <code>CLASS</code>
+  (the default) will always have a negative result. This mistake is easy to overlook.</p>
 <p><b>Example:</b></p>
 <pre>
   { 

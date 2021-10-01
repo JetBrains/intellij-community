@@ -51,13 +51,18 @@ public final class LightEditUtil {
 
   private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
 
+  public static final Key<Boolean> SUGGEST_SWITCH_TO_PROJECT = Key.create("light.edit.suggest.project.switch");
+
   private LightEditUtil() {
   }
 
   @Nullable
-  public static Project openFile(@NotNull Path path) {
+  public static Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
+      if (suggestSwitchToProject) {
+        virtualFile.putUserData(SUGGEST_SWITCH_TO_PROJECT, true);
+      }
       Project project = LightEditService.getInstance().openFile(virtualFile);
       LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
       return project;

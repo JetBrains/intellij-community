@@ -67,7 +67,7 @@ import java.util.Map;
 public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private final JBTabsEx myTabs;
+  private final @NotNull JBTabsEx myTabs;
 
   @NonNls
   public static final String HELP_ID = "ideaInterface.editor";
@@ -315,9 +315,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   public void requestFocus(boolean forced) {
-    if (myTabs != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myTabs.getComponent(), forced);
-    }
+    IdeFocusManager.getInstance(myProject).requestFocus(myTabs.getComponent(), forced);
   }
 
   private static class MyQueryable implements Queryable {

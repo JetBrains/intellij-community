@@ -418,7 +418,9 @@ public final class IndexUpdateRunner {
     if (actualFile.getFileSystem() instanceof ArchiveFileSystem) {
       actualFile = VfsUtil.getLocalFile(actualFile);
     }
-    return FileUtil.toSystemDependentName(getProjectRelativeOrAbsolutePath(project, actualFile));
+    String path = getProjectRelativeOrAbsolutePath(project, actualFile);
+    path = "/".equals(path) ? actualFile.getName() : path;
+    return FileUtil.toSystemDependentName(path);
   }
 
   @NotNull

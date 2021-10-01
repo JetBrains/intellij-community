@@ -243,6 +243,6 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public String toString() {
-    return "BranchedVFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
+    return "BranchedVirtualFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
   }
 }

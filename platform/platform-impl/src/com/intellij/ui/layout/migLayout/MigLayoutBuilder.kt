@@ -171,13 +171,18 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     }
     else {
       for ((rowIndex, row) in physicalRows.withIndex()) {
+        val isLastRow = rowIndex == physicalRows.size - 1
         row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex];
         if (row.noGrid) {
           rowConstraints.noGrid(rowIndex)
         }
         else {
-          row.gapAfter?.let {
-            rowConstraints.gap(it, rowIndex)
+          if (row.gapAfter != null) {
+            rowConstraints.gap(row.gapAfter, rowIndex)
+          }
+          else if (isLastRow) {
+            // Do not append default gap to the last row
+            rowConstraints.gap("0px!", rowIndex)
           }
         }
         // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)

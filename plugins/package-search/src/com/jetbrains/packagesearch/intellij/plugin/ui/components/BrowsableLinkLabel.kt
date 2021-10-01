@@ -5,6 +5,12 @@ import org.jetbrains.annotations.Nls
 
 internal class BrowsableLinkLabel : HyperlinkLabel() {
 
+    var urlClickedListener: (() -> Unit)? = null
+
+    init {
+        addHyperlinkListener { urlClickedListener?.invoke() }
+    }
+
     var url: String? = null
         set(value) {
             if (value.isBrowsableUrl) {

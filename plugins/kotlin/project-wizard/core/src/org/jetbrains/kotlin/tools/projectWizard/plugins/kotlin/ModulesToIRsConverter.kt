@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import java.nio.file.Path
+import java.util.*
 
 data class ModulesToIrConversionData(
     val rootModules: List<Module>,
@@ -277,7 +278,7 @@ class ModulesToIRsConverter(
         val (moduleDependencies) = createModuleDependencies(target)
         mutateProjectStructureByModuleConfigurator(target, modulePath)
         val sourcesetss = target.sourcesets.map { sourceset ->
-            val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize()
+            val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize(Locale.US)
             val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourcesetName else null
             MultiplatformSourcesetIR(
                 sourceset.sourcesetType,

@@ -538,7 +538,7 @@ private fun getFirstContentRootUrl(module: JpsModule) = module.contentRootsList.
 
 private fun className(name: String): CharSequence {
   val result = StringBuilder(name.length)
-  name.removePrefix("intellij.").split('-', '_', '.').forEach {
+  name.removePrefix("intellij.vcs.").removePrefix("intellij.").split('-', '_', '.').forEach {
     result.append(capitalize(it))
   }
   return toJavaIdentifier(result, result.length)

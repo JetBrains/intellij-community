@@ -112,8 +112,16 @@ public class ViewImpl implements View {
       return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid, 0);
     }
 
+    public int getTabID() {
+      return myTabID;
+    }
+
     public PlaceInGrid getPlaceInGrid() {
       return myPlaceInGrid;
+    }
+
+    public boolean isMinimizedInGrid() {
+      return myMinimizedInGrid;
     }
   }
 

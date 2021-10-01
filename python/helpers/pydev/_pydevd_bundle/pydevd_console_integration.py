@@ -213,7 +213,8 @@ def console_exec(thread_id, frame_id, expression, dbg):
         code = expression
 
     # Case 3
-
+    code_executor = get_code_executor()
+    code_executor.interruptable = True
     try:
         # It is important that globals and locals we pass to the exec function are the same object.
         # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
@@ -226,7 +227,14 @@ def console_exec(thread_id, frame_id, expression, dbg):
         interpreter.showtraceback()
     else:
         update_frame_local_variables_and_save(frame, updated_globals)
+    finally:
+        code_executor.interruptable = False
     return False
+
+
+def interrupt_debug_console():
+    code_executor = get_code_executor()
+    code_executor.interrupt()
 
 
 def update_frame_local_variables_and_save(frame, values):

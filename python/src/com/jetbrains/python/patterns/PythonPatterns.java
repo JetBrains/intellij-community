@@ -110,11 +110,9 @@ public class PythonPatterns extends PlatformPatterns {
     final PyCallExpression call = (PyCallExpression)((PyExpression)expression).getParent().getParent();
 
     // TODO is it better or worse to allow implicits here?
-    final PyResolveContext context = PyResolveContext
-      .defaultContext()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
+    final var context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
 
-    return call.multiResolveCalleeFunction(context);
+    return call.multiResolveCalleeFunction(PyResolveContext.defaultContext(context));
   }
 
   private static boolean isCallArgument(@Nullable Object expression, @Nullable String functionName, int index) {

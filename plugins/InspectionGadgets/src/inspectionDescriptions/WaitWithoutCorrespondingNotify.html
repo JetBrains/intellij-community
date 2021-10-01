@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports on any call to <code>Object.wait()</code> for which no call to a corresponding <code>Object.notify()</code> or
+Reports calls to <code>Object.wait()</code>, for which no call to the corresponding <code>Object.notify()</code> or
 <code>Object.notifyAll()</code> can be found.
 <p>This inspection only reports calls with qualifiers referencing fields of the current class.</p>
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   public class Foo {
     public Object foo = new Object();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.rt.execution;
 
 import java.io.DataOutputStream;
@@ -78,7 +78,7 @@ public final class ForkedDebuggerHelper {
   }
 
   // copied from NetUtils
-  protected static int findAvailableSocketPort() throws IOException {
+  private static int findAvailableSocketPort() throws IOException {
     final ServerSocket serverSocket = new ServerSocket(0);
     try {
       int port = serverSocket.getLocalPort();

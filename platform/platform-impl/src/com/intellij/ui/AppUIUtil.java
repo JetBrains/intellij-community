@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.google.common.base.Predicates;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -43,8 +44,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
@@ -297,7 +299,15 @@ public final class AppUIUtil {
     return iconPath;
   }
 
+  public static boolean needToShowUsageStatsConsent() {
+    return ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).getSecond();
+  }
+
   public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
+    return showConsentsAgreementIfNeeded(log, Predicates.alwaysTrue());
+  }
+  
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, final Predicate<Consent> filter) {
     return showConsentsAgreementIfNeeded(command -> {
       if (EventQueue.isDispatchThread()) {
         command.run();
@@ -310,18 +320,15 @@ public final class AppUIUtil {
           log.warn(e);
         }
       }
-    });
+    }, filter);
   }
 
-  public static boolean needToShowConsentsAgreement() {
-    return ConsentOptions.getInstance().getConsents().getValue();
-  }
-
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
-    final Map.Entry<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+  private static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor, final Predicate<Consent> filter) {
+    final ConsentOptions options = ConsentOptions.getInstance();
+    final Pair<List<Consent>, Boolean> consentsToShow = options.getConsents(filter);
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.getValue()) {
-      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getKey())));
+    if (consentsToShow.getSecond()) {
+      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
     }
     return result.get();
   }
@@ -410,9 +417,9 @@ public final class AppUIUtil {
 
   public static List<Consent> loadConsentsForEditing() {
     final ConsentOptions options = ConsentOptions.getInstance();
-    List<Consent> result = options.getConsents().getKey();
+    List<Consent> result = options.getConsents().getFirst();
     if (options.isEAP()) {
-      final Consent statConsent = options.getUsageStatsConsent();
+      final Consent statConsent = options.getDefaultUsageStatsConsent();
       if (statConsent != null) {
         // init stats consent for EAP from the dedicated location
         final List<Consent> consents = result;
@@ -425,28 +432,26 @@ public final class AppUIUtil {
   }
 
   public static void saveConsents(List<Consent> consents) {
+    if (consents.isEmpty()) {
+      return;
+    }
     final ConsentOptions options = ConsentOptions.getInstance();
-    final Application app = ApplicationManager.getApplication();
 
-    List<Consent> toSave = consents;
-
-    if (app != null && options.isEAP()) {
-      final Consent defaultStatsConsent = options.getUsageStatsConsent();
-      if (defaultStatsConsent != null) {
-        toSave = new ArrayList<>();
-        for (Consent consent : consents) {
-          if (defaultStatsConsent.getId().equals(consent.getId())) {
-            UsageStatisticsPersistenceComponent.getInstance().setAllowed(consent.isAccepted());
-          }
-          else {
-            toSave.add(consent);
-          }
+    if (ApplicationManager.getApplication() != null && options.isEAP()) {
+      final Predicate<Consent> isUsageStats = ConsentOptions.condUsageStatsConsent();
+      int saved = 0;
+      for (Consent consent : consents) {
+        if (isUsageStats.test(consent)) {
+          UsageStatisticsPersistenceComponent.getInstance().setAllowed(consent.isAccepted());
+          saved++;
         }
       }
+      if (consents.size() - saved > 0) {
+        options.setConsents(consents.stream().filter(Predicate.not(isUsageStats)).collect(Collectors.toList()));
+      }
     }
-
-    if (!toSave.isEmpty()) {
-      options.setConsents(toSave);
+    else {
+      options.setConsents(consents);
     }
   }
 

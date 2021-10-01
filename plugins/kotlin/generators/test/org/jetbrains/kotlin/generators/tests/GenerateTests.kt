@@ -5,16 +5,10 @@ package org.jetbrains.kotlin.testGenerator
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
+import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
-import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
-import org.jetbrains.kotlin.findUsages.AbstractFindUsagesWithDisableComponentSearchTest
-import org.jetbrains.kotlin.findUsages.AbstractKotlinFindUsagesWithLibraryTest
-import org.jetbrains.kotlin.findUsages.AbstractKotlinFindUsagesWithStdlibTest
+import org.jetbrains.kotlin.findUsages.*
 import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
@@ -196,13 +190,23 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest")
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest")
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
+        }
+
+        testClass<AbstractKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
+        }
+
+        testClass<AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractSelectExpressionForDebuggerTest> {
@@ -957,11 +961,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractSymbolsByFqNameBuildingTest> {
-            model("symbolsByFqName", extension = "txt")
+            model("symbolsByFqName", pattern = TXT)
         }
 
         testClass<AbstractMemberScopeByFqNameTest> {
-            model("memberScopeByFqName", extension = "txt")
+            model("memberScopeByFqName", pattern = TXT)
+        }
+
+        testClass<AbstractFileScopeTest> {
+            model("fileScopeTest", pattern = KT)
         }
 
         testClass<AbstractSymbolFromSourcePointerRestoreTest> {
@@ -969,25 +977,33 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractSymbolFromLibraryPointerRestoreTest> {
-            model("resoreSymbolFromLibrary", extension = "txt")
+            model("resoreSymbolFromLibrary", pattern = TXT)
         }
 
         testClass<AbstractMemoryLeakInSymbolsTest> {
             model("symbolMemoryLeak")
         }
+
+        testClass<AbstractReturnExpressionTargetTest> {
+            model("components/returnExpressionTarget")
+        }
+
+        testClass<AbstractExpectedExpressionTypeTest> {
+            model("components/expectedExpressionType")
+        }
     }
 
-    testGroup("idea/idea-fir/tests", "compiler/testData") {
+    testGroup("fir", testDataPath = "../compiler/testData") {
         testClass<AbstractFirLightClassTest> {
-            model("asJava/lightClasses", excludeDirs = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS_IN_NAME)
+            model("compiler/asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractFirClassLoadingTest> {
-            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
+            model("compiler/asJava//ultraLightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFirLightFacadeClassTest> {
-            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
+            model("compiler/asJava//ultraLightFacades", pattern = KT_OR_KTS)
         }
     }
 
@@ -997,39 +1013,33 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirLazyResolveTest> {
-            model("fir/lazyResolve", pattern = TEST, filenameStartsLowerCase = true)
+            model("fir/lazyResolve", pattern = TEST, isRecursive = false)
         }
     }
 
-        testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "idea/idea-frontend-fir/idea-fir-low-level-api/testdata") {
-            testClass<AbstractFirMultiModuleLazyResolveTest> {
-                model("multiModuleLazyResolve", recursive = false, extension = null)
-            }
-            testClass<AbstractFirLazyDeclarationResolveTest> {
-                model("lazyResolve")
-            }
-            testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
-                model("outOfBlockProjectWide")
-            }
-            testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
-                model("outOfBlockProjectWide")
-            }
-            testClass<AbstractFileStructureTest> {
-                model("fileStructure")
-            }
-            testClass<AbstractSessionsInvalidationTest> {
-                model("sessionInvalidation", recursive = false, extension = null)
-            }
+    testGroup("fir-low-level-api", testDataPath = "testdata") {
+        testClass<AbstractFirMultiModuleLazyResolveTest> {
+            model("multiModuleLazyResolve", pattern = DIRECTORY, isRecursive = false)
         }
-
-    testGroup("idea/idea-fir/tests", "idea") {
-        testClass<AbstractFirHighlightingTest> {
-            model("testData/highlighter")
-            model("idea-fir/testData/highlighterFir", pattern = KT_WITHOUT_DOTS_IN_NAME)
+        testClass<AbstractFirLazyDeclarationResolveTest> {
+            model("lazyResolve")
+        }
+        testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
+            model("outOfBlockProjectWide")
+        }
+        testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
+            model("outOfBlockProjectWide")
+        }
+        testClass<AbstractFileStructureTest> {
+            model("fileStructure")
+        }
+        testClass<AbstractSessionsInvalidationTest> {
+            model("sessionInvalidation", isRecursive = false, pattern = DIRECTORY)
         }
     }
 
-    testGroup("idea/idea-fir-performance-tests/tests", "idea") {
+
+   /* testGroup("idea/idea-fir-performance-tests/tests", "idea") {
         testClass<AbstractFirHighlightingPerformanceTest> {
             model("testData/highlighter")
         }
@@ -1039,9 +1049,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
             model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS_IN_NAME)
         }
-    }
+    }*/
 
-    testGroup("idea/idea-fir/tests", "idea/tests/testData") {
+    testGroup("fir", testDataPath = "../idea/testData") {
+        testClass<AbstractFirHighlightingTest> {
+            model("highlighter")
+            model("../../../fir/testData/highlighterFir", pattern = KT_WITHOUT_DOTS)
+        }
+
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
@@ -1056,35 +1071,38 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/idea-fir/tests", "idea/idea-completion/testData") {
+    testGroup("fir", testDataPath = "../completion/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
             model("basic/common")
             model("basic/java")
         }
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS_IN_NAME)
+            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractHighLevelWeigherTest> {
+            model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 
-    testGroup("idea/idea-fir/tests", "idea/tests/testData/findUsages") {
-
+    testGroup("fir", testDataPath = "../idea/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
-            model("kotlin", pattern = """^(.+)\.0\.(kt|kts)$""")
-            model("java", pattern = """^(.+)\.0\.java$""")
-            model("propertyFiles", pattern = """^(.+)\.0\.properties$""")
+            model("kotlin", pattern = """^(.+)\.0\.(kt|kts)$""".toRegex())
+            model("java", pattern = """^(.+)\.0\.java$""".toRegex())
+            model("propertyFiles", pattern = """^(.+)\.0\.properties$""".toRegex())
         }
 
         testClass<AbstractFindUsagesWithDisableComponentSearchFirTest> {
-            model("kotlin/conventions/components", pattern = """^(.+)\.0\.(kt|kts)$""")
+            model("kotlin/conventions/components", pattern = """^(.+)\.0\.(kt|kts)$""".toRegex())
         }
 
         testClass<AbstractKotlinFindUsagesWithLibraryFirTest> {
-            model("libraryUsages", pattern = """^(.+)\.0\.kt$""")
+            model("libraryUsages", pattern = """^(.+)\.0\.kt$""".toRegex())
         }
 
         testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {
-            model("stdlibUsages", pattern = """^(.+)\.0\.kt$""")
+            model("stdlibUsages", pattern = """^(.+)\.0\.kt$""".toRegex())
         }
     }
     */
@@ -1109,7 +1127,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("maven") {
+    testGroup("maven/tests") {
         testClass<AbstractMavenConfigureProjectByChangingFileTest> {
             model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
             model("configurator/js", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithJSMaven")
@@ -1158,11 +1176,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
-            model("compiler/asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression"), pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("compiler/asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 
-    testGroup("compiler-plugins/parcelize") {
+    testGroup("compiler-plugins/parcelize/tests") {
         testClass<AbstractParcelizeQuickFixTest> {
             model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$".toRegex())
         }
@@ -1334,13 +1352,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("jps/jps-plugin") {
         testClass<AbstractIncrementalJvmJpsTest> {
-            model("incremental/multiModule/common", pattern = DIRECTORY)
+            model("incremental/multiModule/common", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
             model("incremental/multiModule/jvm", pattern = DIRECTORY)
-            model("incremental/multiModule/multiplatform/custom", pattern = DIRECTORY)
-            model("incremental/pureKotlin", pattern = DIRECTORY, isRecursive = false)
-            model("incremental/withJava", pattern = DIRECTORY)
-            model("incremental/inlineFunCallSite", pattern = DIRECTORY)
-            model("incremental/classHierarchyAffected", pattern = DIRECTORY)
+            model(
+                "incremental/multiModule/multiplatform/custom", pattern = DIRECTORY, 
+                targetBackend = TargetBackend.JVM_IR
+            )
+            model("incremental/pureKotlin", pattern = DIRECTORY, isRecursive = false, targetBackend = TargetBackend.JVM_IR)
+            model("incremental/withJava", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
+            model("incremental/inlineFunCallSite", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
+            model(
+                "incremental/classHierarchyAffected", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR
+            )
         }
 
         //actualizeMppJpsIncTestCaseDirs(testDataAbsoluteRoot, "incremental/multiModule/multiplatform/withGeneratedContent")

@@ -431,7 +431,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-22005
   public void testWithSpecifiedType() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
-    final String expectedInfo = "a1: str, a2: Optional[str] = None, a3: Union[str, int, None] = None, a4: int, *args: int, **kwargs: int";
+    final String expectedInfo = "a1: str, a2: str | None = None, a3: str | int | None = None, a4: int, *args: int, **kwargs: int";
 
     feignCtrlP(offset).check(expectedInfo, new String[]{"a1: str, "});
   }
@@ -887,7 +887,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints: type, bound: Union[None, type, str] = ..., " +
+    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints: type, bound: None | type | str = ..., " +
                              "covariant: bool = ..., contravariant: bool = ...",
                              new String[]{"name: str, "},
                              new String[]{"self: TypeVar, "});

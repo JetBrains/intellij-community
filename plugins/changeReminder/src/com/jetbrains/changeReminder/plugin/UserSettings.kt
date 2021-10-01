@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.plugin
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.EventDispatcher
 import java.util.*
 
-@State(name = "ChangeReminder", storages = [Storage(file = "changeReminder.xml")])
+@State(name = "ChangeReminder", storages = [Storage("changeReminder.xml")])
 internal class UserSettings : SimplePersistentStateComponent<UserSettingsState>(UserSettingsState()) {
   private val eventDispatcher = EventDispatcher.create(PluginStatusListener::class.java)
 

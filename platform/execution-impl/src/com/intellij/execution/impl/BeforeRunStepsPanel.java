@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
@@ -92,10 +93,12 @@ public final class BeforeRunStepsPanel extends JPanel {
           clonedTasks.add(task);
           myModel.setElementAt(task, selection.getIndex());
         }
-
+        final BeforeRunTaskProvider<BeforeRunTask<?>> providerForUpdate = selection.getProvider();
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
+              RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), providerForUpdate.getClass());
               updateText();
             }
           });
@@ -120,6 +123,18 @@ public final class BeforeRunStepsPanel extends JPanel {
       @Override
       public boolean isEnabled(@NotNull AnActionEvent e) {
         return checkBeforeRunTasksAbility(true);
+      }
+    });
+
+    myDecorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        BeforeRunTaskAndProvider selection = getSelection();
+        if (selection != null) {
+          RunConfigurationOptionUsagesCollector.logRemoveBeforeRunTask(
+            myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), selection.getProvider().getClass());
+          ListUtil.removeSelectedItems(myList);
+        }
       }
     });
 
@@ -266,6 +281,8 @@ public final class BeforeRunStepsPanel extends JPanel {
                                               ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
                 return;
               }
+              RunConfigurationOptionUsagesCollector.logAddBeforeRunTask(
+                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), provider.getClass());
               addTask(task);
               myListener.fireStepsBeforeRunChanged();
             });

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.*
 
 object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
@@ -91,7 +92,7 @@ object ConversionsRunner {
 
     private fun Conversion.description(): String {
         val conversionName = this::class.simpleName
-        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.decapitalize() }.toList() }
+        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.decapitalize(Locale.US) }.toList() }
         return when {
             conversionName == null -> "Converting..."
             conversionName.endsWith("Conversion") -> "Converting ${words!!.dropLast(1).joinToString(" ")}"

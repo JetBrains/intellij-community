@@ -26,6 +26,8 @@ class GradleStructureWizardStep(
 
   override fun getHelpId() = "Gradle_Archetype_Dialog"
 
+  override fun getBuilderId(): String? = builder.builderId
+
   override fun createView(data: ProjectData) = GradleDataView(data)
 
   override fun findAllParents(): List<ProjectData> {

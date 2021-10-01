@@ -1297,4 +1297,24 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionAgainstCallbackProtocol() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
+
+  // PY-38065
+  public void testTupleLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41268
+  public void testListLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41268
+  public void testSetLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41578
+  public void testDictLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
 }

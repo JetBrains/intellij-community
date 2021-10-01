@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,6 +109,15 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   <T> T getService(@NotNull Class<T> serviceClass);
+
+  /**
+   * Collects all services registered with client="..." attribute. Take a look at {@link com.intellij.openapi.client.ClientSession}
+   */
+  @ApiStatus.Experimental
+  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, boolean includeLocal) {
+    T service = getService(serviceClass);
+    return service != null ? Collections.singletonList(service) : Collections.emptyList();
+  }
 
   default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass);

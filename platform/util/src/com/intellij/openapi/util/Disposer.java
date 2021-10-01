@@ -66,8 +66,8 @@ public final class Disposer {
    * This overrides parent disposable for {@code child}, i.e. if {@code child} is already registered with {@code oldParent},
    * it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
-   * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                                       if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
+   *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     RuntimeException e = ourTree.register(parent, child);
@@ -85,6 +85,7 @@ public final class Disposer {
   /**
    * @deprecated Use {@link #register(Disposable, Disposable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
     register(parent, child);
@@ -132,6 +133,7 @@ public final class Disposer {
   /**
    * @deprecated Store and use your own Disposable instead. Instead of {@code Disposer.get("ui")} use {@link com.intellij.openapi.application.ApplicationManager#getApplication()}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static Disposable get(@NotNull String key) {
     return ourKeyDisposables.get(key);
@@ -194,6 +196,15 @@ public final class Disposer {
 
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
     return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
+  }
+
+  /**
+   * Returns stacktrace of the place where {@code disposable} was registered in {@code Disposer} or {@code null} if it's unknown. Works only
+   * if {@link #setDebugMode debug mode} was enabled when {@code disposable} was registered.
+   */
+  @TestOnly
+  public static @Nullable Throwable getRegistrationTrace(@NotNull Disposable disposable) {
+    return getTree().getRegistrationTrace(disposable);
   }
 
   @ApiStatus.Internal

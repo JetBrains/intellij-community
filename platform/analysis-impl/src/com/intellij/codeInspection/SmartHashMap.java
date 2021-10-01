@@ -7,13 +7,15 @@ import gnu.trove.THashMap;
 import gnu.trove.TObjectFunction;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
- * @deprecated Use {@link java.util.HashMap}
+ * @deprecated Use {@link HashMap}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public class SmartHashMap<K,V> extends THashMap<K,V> {
   private K theKey;   // contains the only element if size() == 1

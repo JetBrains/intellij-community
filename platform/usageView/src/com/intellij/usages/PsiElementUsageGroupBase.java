@@ -45,7 +45,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
 
   @Override
   @NotNull
-  public String getText(UsageView view) {
+  public String getPresentableGroupText() {
     return myName;
   }
 
@@ -83,7 +83,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
     if (o instanceof NamedPresentably) {
       name = ((NamedPresentably)o).getPresentableName();
     } else {
-      name = o.getText(null);
+      name = o.getPresentableGroupText();
     }
     return myName.compareToIgnoreCase(name);
   }

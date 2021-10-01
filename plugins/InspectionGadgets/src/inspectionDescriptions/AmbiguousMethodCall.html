@@ -1,10 +1,15 @@
 <html>
 <body>
-Reports calls to any super method from inner or anonymous class if a method with the identical signature exists in the surrounding class.
-In this case it's easy to miss the super method and suggest that the call is referenced to method in the surrounding class.
-To clarify the intent it is recommended to add an explicit <code>super</code> qualifier to the method call.
-<p>Example:</p>
-<pre>
+Reports calls to any super method from an inner or anonymous class
+if a method with the same signature exists in the containing class.
+<p>
+  In this case it's easy to miss the super method and suggest that the call
+  is referenced to the method in the containing class.
+  To clarify the intent it is recommended to add an explicit
+  <code>super</code> qualifier to the method call.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Parent {
     void ambiguous(){}
   }
@@ -18,11 +23,23 @@ To clarify the intent it is recommended to add an explicit <code>super</code> qu
       }
     }
   }
-</pre>
-<p>The quick-fix adds an explicit <code>super</code> qualifier to the method call:</p>
-<pre>
-  super.ambiguous();
-</pre>
+  </code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Parent {
+    void ambiguous(){}
+  }
+
+  class Example {
+    void ambiguous(){}
+
+    class Inner extends Parent {
+      void example(){
+        super.ambiguous();
+      }
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -131,7 +133,7 @@ public class AboutDialog extends DialogWrapper {
     if (la != null) {
       final String licensedTo = la.getLicensedToMessage(); //NON-NLS
       if (licensedTo != null) {
-        addLine(lines, licensedTo, getDefaultTextFont().asBold());
+        addLine(lines, licensedTo);
       }
 
       la.getLicenseRestrictionsMessages()
@@ -151,6 +153,17 @@ public class AboutDialog extends DialogWrapper {
     addLine(lines, vmVendorInfo);
     addEmptyLine(lines);
 
+    //Print extra information from plugins
+    ExtensionPointName<AboutPopupDescriptionProvider> ep = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
+    for (AboutPopupDescriptionProvider aboutInfoProvider : ep.getExtensions()) {
+      String description = aboutInfoProvider.getDescription(); //NON-NLS
+      if (description != null) {
+        addLineWithoutLog(lines, description);
+        addEmptyLine(lines);
+      }
+    }
+
+    //Link to open-source projects
     HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
     //noinspection DialogTitleCapitalization
     openSourceSoftware.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
@@ -166,6 +179,7 @@ public class AboutDialog extends DialogWrapper {
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
     lines.add(panel);
 
+    //Copyright
     addLineWithoutLog(lines, AboutPopup.getCopyrightText());
     addEmptyLine(lines);
 

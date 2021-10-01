@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
@@ -92,6 +92,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +107,7 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -432,11 +432,11 @@ public final class BuildManager implements Disposable {
     }, listenerTimeout);
   }
 
-  public final void postponeBackgroundTasks() {
+  public void postponeBackgroundTasks() {
     mySuspendBackgroundTasksCounter.incrementAndGet();
   }
 
-  public final void allowBackgroundTasks() {
+  public void allowBackgroundTasks() {
     mySuspendBackgroundTasksCounter.decrementAndGet();
   }
 
@@ -1571,8 +1571,9 @@ public final class BuildManager implements Disposable {
   }
 
   /**
-   * @deprecated use getBuildSystemDirectory(Project)
+   * @deprecated use {@link #getBuildSystemDirectory(Project)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @NotNull
   public Path getBuildSystemDirectory() {
@@ -1846,7 +1847,7 @@ public final class BuildManager implements Disposable {
   static final class BuildManagerStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
 

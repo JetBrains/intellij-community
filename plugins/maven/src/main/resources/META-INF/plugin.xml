@@ -284,6 +284,9 @@
     <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
                  description="Deleted maven modules will not be marked as ignored"/>
 
+    <registryKey key="maven.consumer.pom.support" defaultValue="false"
+                 description="Enable Maven consumer pom support"/>
+
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
     </intentionAction>
@@ -291,6 +294,7 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
+    <toolWindowExtractorMode id="Maven" mode="mirror"/>
     <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersionQuickFix" />
     <untrustedModeProvider implementation="org.jetbrains.idea.maven.project.MavenUntrustedModeProvider" />
 

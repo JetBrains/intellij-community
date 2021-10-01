@@ -693,7 +693,7 @@ public final class PsiImplUtil {
   @Nullable
   public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionList) {
+    if (parent instanceof PsiCaseLabelElementList) {
       PsiElement grand = parent.getParent();
       if (grand instanceof PsiSwitchLabelStatementBase) {
         return (PsiSwitchLabelStatementBase)grand;
@@ -788,8 +788,15 @@ public final class PsiImplUtil {
   }
 
   public static @NotNull VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
-    VirtualFile file = module instanceof LightJavaModule ? ((LightJavaModule)module).getRootVirtualFile() : module.getContainingFile().getVirtualFile();
-    if (file == null) throw new IllegalArgumentException("Module '" + module + "' has lost its VF");
-    return file;
+    if (module instanceof LightJavaModule) {
+      return ((LightJavaModule)module).getRootVirtualFile();
+    }
+    else {
+      VirtualFile file = module.getContainingFile().getVirtualFile();
+      if (file == null) {
+        throw new IllegalArgumentException("Module '" + module + "' lost its VF; file=" + module.getContainingFile() + "; valid=" + module.isValid());
+      }
+      return file;
+    }
   }
 }

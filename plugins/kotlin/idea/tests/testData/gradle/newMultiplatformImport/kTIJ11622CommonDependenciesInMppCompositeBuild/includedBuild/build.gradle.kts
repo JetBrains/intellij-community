@@ -7,8 +7,7 @@ plugins {
 
 allprojects {
     repositories {
-        mavenCentral()
-        mavenLocal()
+        { { kts_kotlin_plugin_repositories } }
     }
 
     pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {

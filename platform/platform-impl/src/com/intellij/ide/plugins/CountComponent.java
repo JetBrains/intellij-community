@@ -24,9 +24,13 @@ public class CountComponent extends JLabel {
     setFont(UIUtil.getLabelFont(SystemInfo.isMac || (SystemInfo.isLinux && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula()))
                                 ? UIUtil.FontSize.SMALL
                                 : UIUtil.FontSize.NORMAL));
-    setForeground(JBColor.namedColor("Counter.foreground", new JBColor(0xFFFFFF, 0x3E434D)));
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(CENTER);
+  }
+
+  @Override
+  public Color getForeground() {
+    return JBColor.namedColor("Counter.foreground", new JBColor(0xFFFFFF, 0x3E434D));
   }
 
   public void setSelected(boolean selected) {

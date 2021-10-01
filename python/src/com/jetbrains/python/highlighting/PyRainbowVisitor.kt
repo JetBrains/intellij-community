@@ -12,6 +12,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyRainbowVisitor : RainbowVisitor() {
 
@@ -83,7 +84,8 @@ class PyRainbowVisitor : RainbowVisitor() {
       return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
     }
 
-    val resolveResults = targetExpression.getReference(PyResolveContext.defaultContext()).multiResolve(false)
+    val context = TypeEvalContext.codeInsightFallback(targetExpression.project)
+    val resolveResults = targetExpression.getReference(PyResolveContext.defaultContext(context)).multiResolve(false)
 
     val resolvesToGlobal = resolveResults
       .asSequence()

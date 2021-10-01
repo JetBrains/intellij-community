@@ -306,7 +306,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     val appendFileName = alwaysAppendFileName || usageFiles.size > 1
 
     val convertToString: (UsageInfo2UsageAdapter) -> String = { usageAdapter ->
-        var groupAsString = groupingRules.joinToString(", ") { it.groupUsage(usageAdapter)?.getText(null) ?: "" }
+        var groupAsString = groupingRules.joinToString(", ") { it.groupUsage(usageAdapter)?.presentableGroupText ?: "" }
         if (groupAsString.isNotEmpty()) {
             groupAsString = "($groupAsString) "
         }

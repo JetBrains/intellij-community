@@ -181,7 +181,7 @@ final class UpdateCheckerService {
   private static void showWhatsNew(Project project, @Nullable BuildNumber previous, BuildNumber current) {
     if (!WhatsNewAction.isAvailable() || !UpdateSettings.getInstance().isShowWhatsNewEditor()) return;
 
-    if (previous != null && previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a downgrade
+    if (previous == null || previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a new install or a downgrade
 
     int shownFor = PropertiesComponent.getInstance().getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
     if (shownFor == current.getBaselineVersion()) return;  // already shown for this release

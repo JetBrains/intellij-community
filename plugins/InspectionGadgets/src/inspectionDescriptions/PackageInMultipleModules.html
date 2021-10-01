@@ -1,13 +1,10 @@
 <html>
 <body>
-Reports any non-empty packages which are present in multiple modules.
-<p>
-For example, you may have modules <code>first</code> and <code>second</code> in your project with same package <code>foo</code>.
-Such modules cannot be used together because of a package conflict.
-  <!-- tooltip end -->
-<p>
-  Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
-  <em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
-</p>
+Reports a non-empty package that is present in several modules.
+<p>Suppose, your project has modules <code>first</code> and <code>second</code> that both have the same package <code>foo</code>.
+  These modules cannot be used together because of a package conflict.</p>
+<!-- tooltip end -->
+<p>Available only from <b>Analyze | Inspect Code</b> or
+  <b>Analyze | Run Inspection by Name</b> and isn't reported in the editor.</p>
 </body>
 </html>

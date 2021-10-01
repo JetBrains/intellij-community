@@ -1,9 +1,9 @@
 <html>
 <body>
 Reports methods whose return values are never used when called.
-The return type of such methods can be made <code>void</code>.
+<p>The return type of such methods can be made <code>void</code>.
 Methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.
-The quick-fix updates the method signature and removes <code>return</code> statements from inside the method.
+  The quick-fix updates the method signature and removes <code>return</code> statements from inside the method.</p>
 <p><b>Example:</b></p>
 <pre>
   // reported if visibility setting is Protected or Public
@@ -22,7 +22,7 @@ The quick-fix updates the method signature and removes <code>return</code> state
     myToUpperCase("result");  // return value is unused
   }
 </pre>
-<p>After the quickfix is applied to both methods the result looks like:</p>
+<p>After the quick-fix is applied to both methods:</p>
 <pre>
     protected void myToUpperCase(String s) {
       // 'return' removed completely
@@ -36,11 +36,11 @@ The quick-fix updates the method signature and removes <code>return</code> state
   ...
 </pre>
 <p>
-  <b>NOTE:</b> Some methods might not be reported during in-editor highlighting, due to performance reasons.
-  To see all results, please run the inspection using Analyze | Inspect Code... or Analyze | Run Inspection by Name...
+  <b>NOTE:</b> Some methods might not be reported during in-editor highlighting due to performance reasons.
+  To see all results, run the inspection using <b>Analyze | Inspect Code...</b> or <b>Analyze | Run Inspection by Name...</b>
 </p>
 <!-- tooltip end -->
-<p>Use the checkbox below to ignore unused return values from simple setter calls.</p>
-<p>Use second option to control the maximum visibility of methods to be reported.</p>
+<p>Use the <b>Ignore simple setters</b> option to ignore unused return values from simple setter calls.</p>
+<p>Use the <b>Maximal reported method visibility</b> option to control the maximum visibility of methods to be reported.</p>
 </body>
 </html>

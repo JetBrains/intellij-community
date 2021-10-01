@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
@@ -55,6 +56,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
     westPanel.add(contentUi.tabComponent, CC().growY())
+    MouseDragHelper.setComponentDraggable(westPanel, true);
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)

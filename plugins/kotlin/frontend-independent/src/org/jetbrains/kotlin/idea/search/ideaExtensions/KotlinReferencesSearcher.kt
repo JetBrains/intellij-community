@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.ifTrue
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 data class KotlinReferencesSearchOptions(
     val acceptCallableOverrides: Boolean = false,
@@ -153,7 +154,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
     private class QueryProcessor(val queryParameters: ReferencesSearch.SearchParameters, val consumer: Processor<in PsiReference>) {
 
-        private val kotlinOptions = (queryParameters as? KotlinAwareReferencesSearchParameters)?.kotlinOptions ?: Empty
+        private val kotlinOptions = queryParameters.safeAs<KotlinAwareReferencesSearchParameters>()?.kotlinOptions ?: Empty
 
         private val longTasks = mutableListOf<() -> Unit>()
 

@@ -13,7 +13,7 @@ interface NewProjectWizard<T> {
 
   fun enabled(): Boolean = true
   fun settingsList(settings: T): List<LabelAndComponent> = emptyList()
-  fun setupProject(project: Project?, settings: T, context: WizardContext) { }
+  fun setupProject(project: Project, settings: T, context: WizardContext) { }
 
   companion object {
     var EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
@@ -24,7 +24,7 @@ class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectW
   var settings : T = settingsFactory.invoke()
 
   fun settingsList() = settingsList(settings)
-  fun setupProject(project: Project?, context: WizardContext) = setupProject(project, settings, context)
+  fun setupProject(project: Project, context: WizardContext) = setupProject(project, settings, context)
 }
 
 data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)

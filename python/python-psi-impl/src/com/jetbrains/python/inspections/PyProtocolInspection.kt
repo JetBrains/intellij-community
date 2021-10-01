@@ -111,7 +111,7 @@ class PyProtocolInspection : PyInspection() {
     }
 
     private fun checkNewTypeWithProtocols(node: PyCallExpression) {
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
 
       node
         .multiResolveCalleeFunction(resolveContext)

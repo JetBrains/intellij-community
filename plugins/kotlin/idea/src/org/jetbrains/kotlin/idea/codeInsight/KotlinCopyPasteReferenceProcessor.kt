@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.ErrorUtils
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -168,30 +167,43 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 indicator?.checkCanceled()
                 file.elementsInRange(textRange).filter { it is KtElement || it is KDocElement }
             }
-        }
+        }.takeIf { it.isNotEmpty() } ?: return emptyList()
 
-        val allElementsToResolve = runReadAction {
-            elements.flatMap { it.collectDescendantsOfType<KtElement>() }
-        }
+        val smartPointerManager = SmartPointerManager.getInstance(file.project)
+        val allElementRefsToResolve = runReadAction {
+            elements.flatMap { it.collectDescendantsOfType<KtElement>() }.map {
+                smartPointerManager.createSmartPsiElementPointer(it, file)
+            }
+        }.takeIf { it.isNotEmpty() } ?: return emptyList()
 
         val project = file.project
 
-        // TODO: allowResolveInDispatchThread could be dropped as soon as
-        //  ConvertJavaCopyPasteProcessor will perform it on non UI thread
-        val bindingContext = project.runReadActionInSmartMode {
-            allowResolveInDispatchThread {
-                file.getResolutionFacade().analyze(allElementsToResolve, BodyResolveMode.PARTIAL)
+        val bindingContext =
+            ReadAction.nonBlocking<BindingContext> {
+                return@nonBlocking allowResolveInDispatchThread {
+                    file.getResolutionFacade().analyze(allElementRefsToResolve.mapNotNull { it.element }, BodyResolveMode.PARTIAL)
+                }
             }
-        }
+                .inSmartMode(project)
+                .expireWhen { val none = allElementRefsToResolve.none { it.element != null }
+                    none
+                }
+                .run {
+                    indicator?.let { this.wrapProgress(indicator) } ?: this
+                }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
+                .executeSynchronously()
 
         val result = mutableListOf<KotlinReferenceData>()
-        for (ktElement in allElementsToResolve) {
+        for (ktElementRef in allElementRefsToResolve) {
             project.runReadActionInSmartMode {
                 indicator?.checkCanceled()
-                result.addReferenceDataInsideElement(
-                    ktElement, file, ranges, bindingContext, fakePackageName = fakePackageName,
-                    sourcePackageName = sourcePackageName, targetPackageName = targetPackageName
-                )
+                ktElementRef.element?.let {
+                    result.addReferenceDataInsideElement(
+                        it, file, ranges, bindingContext, fakePackageName = fakePackageName,
+                        sourcePackageName = sourcePackageName, targetPackageName = targetPackageName
+                    )
+                }
             }
         }
         return result
@@ -259,7 +271,11 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
     }
 
-    private data class ReferenceToRestoreData(val reference: KtReference, val refData: KotlinReferenceData)
+    private data class ReferenceToRestoreData(
+        val reference: KtReference,
+        val refData: KotlinReferenceData,
+        val declarationDescriptors: Collection<DeclarationDescriptor>
+    )
     private data class PsiElementByTextRange(val originalTextRange: TextRange, val element: SmartPsiElementPointer<KtElement>)
 
     override fun processTransferableData(
@@ -682,7 +698,19 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             return null
         }
 
-        return ReferenceToRestoreData(reference, refData)
+        val fqName = FqName(refData.fqName)
+        val declarationDescriptors: Collection<DeclarationDescriptor> =
+            if (refData.isQualifiable) {
+                if (reference is KDocReference) {
+                    findImportableDescriptors(fqName, file)
+                } else {
+                    emptyList()
+                }
+            } else {
+                listOfNotNull(findCallableToImport(fqName, file))
+            }
+
+        return ReferenceToRestoreData(reference, refData, declarationDescriptors)
     }
 
     private fun resolveReference(reference: KtReference, bindingContext: BindingContext): List<DeclarationDescriptor> {
@@ -714,20 +742,17 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         val bindingRequests = ArrayList<BindingRequest>()
         val descriptorsToImport = ArrayList<DeclarationDescriptor>()
 
-        for ((reference, refData) in referencesToRestore) {
+        for (referenceToRestore in referencesToRestore) {
+            val reference = referenceToRestore.reference
+            val refData = referenceToRestore.refData
             if (!reference.element.isValid) continue
+            descriptorsToImport.addAll(referenceToRestore.declarationDescriptors)
             val fqName = FqName(refData.fqName)
 
-            if (refData.isQualifiable) {
-                if (reference is KtSimpleNameReference) {
-                    val pointer =
-                        smartPointerManager.createSmartPsiElementPointer(reference.element, file)
-                    bindingRequests.add(BindingRequest(pointer, fqName))
-                } else if (reference is KDocReference) {
-                    descriptorsToImport.addAll(findImportableDescriptors(fqName, file))
-                }
-            } else {
-                descriptorsToImport.addIfNotNull(findCallableToImport(fqName, file))
+            if (refData.isQualifiable && reference is KtSimpleNameReference) {
+                val pointer =
+                    smartPointerManager.createSmartPsiElementPointer(reference.element, file)
+                bindingRequests.add(BindingRequest(pointer, fqName))
             }
         }
 

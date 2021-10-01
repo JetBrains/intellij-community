@@ -2,6 +2,7 @@
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
@@ -43,15 +44,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="One" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="One" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -76,15 +77,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="AnotherName" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="AnotherName" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -109,15 +110,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="Custom" name="One" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="Custom" name="One" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -142,15 +143,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="module" name="One" module-name="AnotherModuleName" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="module" name="One" module-name="AnotherModuleName" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -178,15 +179,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="extracted-dir" path="${'$'}PROJECT_DIR${'$'}/MyPath.jar" path-in-jar="AnotherPath" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="extracted-dir" path="${'$'}PROJECT_DIR${'$'}/MyPath.jar" path-in-jar="AnotherPath" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -212,15 +213,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="file-copy" path="myPath" output-file-name="Rename" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="file-copy" path="myPath" output-file-name="Rename" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -246,15 +247,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="file-copy" path="myPath" output-file-name="Rename" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="file-copy" path="myPath" output-file-name="Rename" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -280,15 +281,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="file-copy" path="AnotherFilePath" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="file-copy" path="AnotherFilePath" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -312,15 +313,15 @@ class ElementsModificationTest {
     }
 
     PlatformTestUtil.saveProject(project)
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="Two" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="Two" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
 
     PlatformTestUtil.saveProject(project)
     WriteAction.runAndWait<RuntimeException> {
@@ -333,15 +334,15 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="Three" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="Three" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
   }
 
   @Test
@@ -369,15 +370,15 @@ class ElementsModificationTest {
     }
 
     PlatformTestUtil.saveProject(project)
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="One" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="One" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
 
     PlatformTestUtil.saveProject(project)
     WriteAction.runAndWait<RuntimeException> {
@@ -390,15 +391,20 @@ class ElementsModificationTest {
 
     PlatformTestUtil.saveProject(project)
 
-    assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="library" level="project" name="Three" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals("""
+      |<component name="ArtifactManager">
+      |  <artifact name="Artifact">
+      |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+      |    <root id="root">
+      |      <element id="library" level="project" name="Three" />
+      |    </root>
+      |  </artifact>
+      |</component>""".trimMargin())
+  }
+
+  private fun assertArtifactFileTextEquals(expectedText: String) {
+    assertEquals(StringUtil.convertLineSeparators(expectedText),
+                 StringUtil.convertLineSeparators(File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText()))
   }
 
   companion object {

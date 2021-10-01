@@ -1,1 +1,1 @@
-if (b) println(1) else println(2)
+if (flag) return true else println("Flag is disabled")

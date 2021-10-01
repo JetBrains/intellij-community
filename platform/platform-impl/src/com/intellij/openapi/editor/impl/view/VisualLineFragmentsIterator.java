@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -188,7 +185,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   }
 
   private float getFoldRegionWidthInPixels() {
-    return myView.getFoldRegionLayout(myFoldRegion).getWidth();
+    return myFoldRegion instanceof CustomFoldRegion ? ((CustomFoldRegion)myFoldRegion).getWidthInPixels()
+                                                    : myView.getFoldRegionLayout(myFoldRegion).getWidth();
   }
 
   private int getFoldRegionWidthInColumns() {
@@ -226,7 +224,8 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   @Override
   public boolean hasNext() {
-    return mySegmentStartOffset == getCurrentFoldRegionStartOffset() || myFragmentIterator == null || myFragmentIterator.hasNext();
+    return !(myFoldRegion instanceof CustomFoldRegion) &&
+           (mySegmentStartOffset == getCurrentFoldRegionStartOffset() || myFragmentIterator == null || myFragmentIterator.hasNext());
   }
 
   @Override
@@ -288,10 +287,6 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   class Fragment {
     int getVisualLineStartOffset() {
       return myVisualLineStartOffset;
-    }
-
-    boolean isCollapsedFoldRegion() {
-      return myFoldRegion != null;
     }
 
     int getMinLogicalColumn() {

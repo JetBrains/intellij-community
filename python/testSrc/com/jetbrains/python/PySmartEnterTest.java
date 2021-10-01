@@ -358,4 +358,110 @@ public class PySmartEnterTest extends PyTestCase {
   public void testColonAfterReturnTypeAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCaretOnSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCaretOnMatch() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectLookingLikeBinaryExpression() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectLookingLikeCallExpression() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testNothingAfterUnambiguousExpressionStartingWithMatch() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCustomIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterEmptyMatchStatementWithoutSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterMatchStatementWithColonWithoutSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testFirstClauseAfterEmptyMatchStatementWithSubjectAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testLineBreakAndIndentAfterNonEmptyMatchStatementWithSubjectAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testNoFirstClauseInMatchStatementWithIncompleteStatementInside() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndIndentAfterCaseClauseWithPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithColonWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testIndentAfterCaseClauseWithPatternAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndIndentAfterCaseClauseWithPatternAndGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithPatternWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithGuardWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithPatternAndColonWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPatternWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPatternWithGuardCondition() {
+    doTest();
+  }
 }

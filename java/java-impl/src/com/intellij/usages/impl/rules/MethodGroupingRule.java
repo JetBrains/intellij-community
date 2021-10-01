@@ -116,7 +116,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myName;
     }
 

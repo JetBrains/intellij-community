@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn
 
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +23,7 @@ import training.util.WeakReferenceDelegator
 import training.util.courseCanBeUsed
 import training.util.switchOnExperimentalLessons
 
+@Service(Service.Level.APP)
 class CourseManager internal constructor() : Disposable {
   val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
@@ -45,12 +47,14 @@ class CourseManager internal constructor() : Disposable {
   }
 
   init {
-    COURSE_MODULES_EP.addChangeListener(Runnable {
-      clearModules()
-      for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
-        toolWindow.reinitViews()
-      }
-    }, this)
+    for (ep in listOf(COMMON_COURSE_MODULES_EP, COURSE_MODULES_EP)) {
+      ep.addChangeListener(Runnable {
+        clearModules()
+        for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+          toolWindow.reinitViews()
+        }
+      }, this)
+    }
   }
 
   fun clearModules() {
@@ -91,7 +95,7 @@ class CourseManager internal constructor() : Disposable {
     for (e in extensions) {
       val langSupport = LangManager.getInstance().getLangSupportById(e.language)
       if (langSupport != null) {
-        languageCourses.put(langSupport, e.instance.modules())
+        languageCourses.putValues(langSupport, e.instance.modules())
       }
     }
   }

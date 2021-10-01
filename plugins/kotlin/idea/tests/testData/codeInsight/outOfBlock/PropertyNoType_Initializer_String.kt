@@ -1,5 +1,4 @@
-// OUT_OF_CODE_BLOCK: TRUE
-
-// TODO: Investigate
-
-val test = "so<caret>me"
+// OUT_OF_CODE_BLOCK: FALSE
+// SKIP_ANALYZE_CHECK
+val a = 42
+val test = "so${<caret>}me"

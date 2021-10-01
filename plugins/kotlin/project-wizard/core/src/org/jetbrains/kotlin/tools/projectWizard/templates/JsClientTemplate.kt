@@ -5,15 +5,20 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
+import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.plugins.projectName
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptor
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.interceptTemplate
 
@@ -51,11 +56,12 @@ abstract class JsClientTemplate : Template() {
         }
     }
 
-    override fun createInterceptors(module: ModuleIR): List<TemplateInterceptor> = buildList {
+    override fun Reader.createInterceptors(module: ModuleIR): List<TemplateInterceptor> = buildList {
         +interceptTemplate(KtorServerTemplate()) {
             applicableIf { buildFileIR ->
-                val tasks = buildFileIR.irsOfTypeOrNull<GradleConfigureTaskIR>() ?: return@applicableIf false
-                tasks.none { it.taskAccess.safeAs<GradleByNameTaskAccessIR>()?.name?.endsWith("Jar") == true }
+                if (module !is MultiplatformModuleIR) return@applicableIf false
+                val tasks = buildFileIR.irsOfTypeOrNull<GradleConfigureTaskIR>() ?: return@applicableIf true
+                tasks.none { it.taskAccess.safeAs<GradleNamedTaskAccessIR>()?.name?.endsWith("Jar") == true }
             }
 
             interceptAtPoint(template.routes) { value ->
@@ -88,48 +94,51 @@ abstract class JsClientTemplate : Template() {
                         id = "root"
                      }
                     """.trimIndent()
-                    +"""script(src = "/static/${module.name}.js") {}"""
+                    +"""script(src = "/static/${indexFileName(module.originalModule)}.js") {}"""
                 }
             }
 
             transformBuildFile { buildFileIR ->
-                val jsSourcesetName = module.safeAs<MultiplatformModuleIR>()?.name ?: return@transformBuildFile null
+                val jsSourceSetName = module.safeAs<MultiplatformModuleIR>()?.name ?: return@transformBuildFile null
                 val jvmTarget = buildFileIR.targets.firstOrNull { target ->
                     target.safeAs<DefaultTargetConfigurationIR>()?.targetAccess?.type == ModuleSubType.jvm
                 } as? DefaultTargetConfigurationIR ?: return@transformBuildFile null
                 val jvmTargetName = jvmTarget.targetName
-                val webPackTaskName = "$jsSourcesetName$WEBPACK_TASK_SUFFIX"
-                val jvmJarTaskAccess = GradleByNameTaskAccessIR("${jvmTargetName}Jar", "Jar")
 
-                val jvmJarTaskConfiguration = run {
-                    val webPackTaskVariable = CreateGradleValueIR(
-                        webPackTaskName,
-                        GradleByNameTaskAccessIR(webPackTaskName, WEBPACK_TASK_CLASS)
+                val distributionTaskName = "$jsSourceSetName$BROWSER_DISTRIBUTION_TASK_SUFFIX"
+
+                val jvmProcessResourcesTaskAccess = GradleNamedTaskAccessIR(
+                    "${jvmTargetName}ProcessResources",
+                    "Copy"
+                )
+
+                val jvmProcessResourcesTaskConfiguration = run {
+                    val distributionTaskVariable = CreateGradleValueIR(
+                        distributionTaskName,
+                        GradleNamedTaskAccessIR(distributionTaskName)
                     )
                     val from = GradleCallIr(
                         "from",
                         listOf(
-                            GradleNewInstanceCall(
-                                "File",
-                                listOf(
-                                    GradlePropertyAccessIR("$webPackTaskName.destinationDirectory"),
-                                    GradlePropertyAccessIR("$webPackTaskName.outputFileName")
-                                )
-                            )
+                            GradlePropertyAccessIR(distributionTaskName)
                         )
                     )
                     GradleConfigureTaskIR(
-                        jvmJarTaskAccess,
-                        dependsOn = listOf(GradleByNameTaskAccessIR(webPackTaskName)),
+                        jvmProcessResourcesTaskAccess,
                         irs = listOf(
-                            webPackTaskVariable,
+                            distributionTaskVariable,
                             from
                         )
                     )
                 }
 
+                val jvmJarTaskAccess = GradleNamedTaskAccessIR(
+                    "${jvmTargetName}Jar",
+                    "Jar"
+                )
+
                 val runTaskConfiguration = run {
-                    val taskAccess = GradleByNameTaskAccessIR("run", "JavaExec")
+                    val taskAccess = GradleNamedTaskAccessIR("run", "JavaExec")
                     val classpath = GradleCallIr("classpath", listOf(jvmJarTaskAccess))
                     GradleConfigureTaskIR(
                         taskAccess,
@@ -138,29 +147,24 @@ abstract class JsClientTemplate : Template() {
                     )
                 }
 
-                buildFileIR.withIrs(jvmJarTaskConfiguration, runTaskConfiguration)
+                buildFileIR.withIrs(jvmProcessResourcesTaskConfiguration, runTaskConfiguration)
             }
         }
     }
 
-    override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = buildList {
-        +RepositoryIR(DefaultRepository.JCENTER)
-        if (module is MultiplatformModuleIR) {
-            +GradleImportIR("org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack")
-            val taskAccessIR = GradleByNameTaskAccessIR(
-                "${module.name}$WEBPACK_TASK_SUFFIX",
-                WEBPACK_TASK_CLASS
-            )
+    override fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = withSettingsOf(module) {
+        jsSettings(module)
+    }
 
-            +GradleConfigureTaskIR(
-                taskAccessIR,
-                irs = listOf(
-                    GradleAssignmentIR(
-                        "outputFileName", GradleStringConstIR("${module.name}.js")
-                    )
-                )
-            )
-        }
+    protected fun Reader.jsSettings(module: Module): Map<String, String> {
+        return mapOf("indexFile" to indexFileName(module))
+    }
+
+    private fun Reader.indexFileName(
+        module: Module
+    ): String {
+        val buildFiles = BuildSystemPlugin.buildFiles.propertyValue
+        return if (buildFiles.size == 1) projectName else module.parent?.name ?: module.name
     }
 
     protected fun hasKtorServNeighbourTarget(module: ModuleIR) =
@@ -171,9 +175,6 @@ abstract class JsClientTemplate : Template() {
 
     companion object {
         @NonNls
-        private const val WEBPACK_TASK_CLASS = "KotlinWebpack"
-
-        @NonNls
-        private const val WEBPACK_TASK_SUFFIX = "BrowserProductionWebpack"
+        private const val BROWSER_DISTRIBUTION_TASK_SUFFIX = "BrowserDistribution"
     }
 }

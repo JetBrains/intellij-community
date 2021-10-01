@@ -1,21 +1,21 @@
 <html>
 <body>
-Reports annotations with <code>SOURCE</code> or <code>CLASS</code> retention policy when they are supposed to be used by JUnit 5.
-Note, that if retention policy is not specified, then the default retention policy <code>CLASS</code> is used.
-Such annotations are not available at runtime and most probably their retention policy should be fixed to be accessible via reflection. 
+<p>Reports annotations with the <code>SOURCE</code> or <code>CLASS</code> retention policy when they are supposed to be used by JUnit 5.</p>
+<p>Note that if the retention policy is not specified, then the default retention policy <code>CLASS</code> is used.
+  Such annotations are not available at runtime and most probably their retention policy should be fixed to be accessible through reflection. </p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   @Testable
   public @interface UnitTest {}
-</pre>
-<p>After the quickfix is applied the result looks like:</p>
+</code></pre>
+<p>After the quick-fix is applied:</p>
 <pre>
+<code>
   @Retention(RetentionPolicy.RUNTIME)
   @Testable
   public @interface UnitTest {}
-</pre>
-
+</code></pre>
 <!-- tooltip end -->
-<p><small>New in 2017.2</small></p>
+<!--<p><small>New in 2017.2</small></p>-->
 </body>
 </html>

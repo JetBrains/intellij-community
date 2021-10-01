@@ -12,6 +12,21 @@ import java.lang.ref.WeakReference;
  * Null values are NOT allowed
  */
 final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
+  ConcurrentWeakHashMap(float loadFactor) {
+    super(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, HashingStrategy.canonical());
+  }
+
+  ConcurrentWeakHashMap(int initialCapacity,
+                        float loadFactor,
+                        int concurrencyLevel,
+                        @NotNull HashingStrategy<? super K> hashingStrategy) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  ConcurrentWeakHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
+    super(hashingStrategy);
+  }
+
   private static final class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     @NotNull private final HashingStrategy<? super K> myStrategy;
@@ -46,20 +61,5 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   protected @NotNull KeyReference<K> createKeyReference(@NotNull K key,
                                                         @NotNull HashingStrategy<? super K> hashingStrategy) {
     return new WeakKey<>(key, hashingStrategy.hashCode(key), hashingStrategy, myReferenceQueue);
-  }
-
-  ConcurrentWeakHashMap(float loadFactor) {
-    super(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, HashingStrategy.canonical());
-  }
-
-  ConcurrentWeakHashMap(int initialCapacity,
-                        float loadFactor,
-                        int concurrencyLevel,
-                        @NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
-  ConcurrentWeakHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(hashingStrategy);
   }
 }

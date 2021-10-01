@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports <code>getClass()</code> methods that is called on a <code>java.lang.Class</code> instance.
+Reports <code>getClass()</code> methods that are called on a <code>java.lang.Class</code> instance.
 <p>This is usually a mistake as the result is always equivalent to <code>Class.class</code>.
 If it's a mistake, then it's better to remove the <code>getClass()</code> call and use the qualifier directly.
   If the behavior is intended, then it's better to write <code>Class.class</code> explicitly to avoid confusion.</p>

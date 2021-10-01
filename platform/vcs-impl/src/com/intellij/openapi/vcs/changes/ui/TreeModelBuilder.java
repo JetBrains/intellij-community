@@ -275,6 +275,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
     return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));

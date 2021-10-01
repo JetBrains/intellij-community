@@ -1,15 +1,14 @@
 <html>
 <body>
-Reports the assignment of a variable to <code>null</code>, outside of declarations.
-The main purpose of <code>null</code> in Java is to denote uninitialized
-reference variable. In rare cases, it's also useful to explicitly assign the variable to null
-to aid the garbage collection. However using <code>null</code> as a sentinel to denote
-'absent value', 'not specified value', 'invalid value' or 'not found element' could be
-considered as a bad practice and may make the code more prone to NullPointerExceptions.
-Instead, consider properly defining the sentinel object with the intended semantics,
-or use library types like <code>Optional</code> to denote the absence of the value.
-<p>Example:</p>
-<pre>
+Reports a variable that is assigned to <code>null</code> outside a declaration.
+<p>The main purpose of <code>null</code> in Java is to denote uninitialized
+  reference variables. In rare cases, assigning a variable explicitly to <code>null</code>
+  is useful to aid garbage collection. However, using <code>null</code> to denote a missing, not specified, or invalid value or a not
+  found element is considered bad practice and may make your code more prone to <code>NullPointerExceptions</code>.
+  Instead, consider defining a sentinel object with the intended semantics
+  or use library types like <code>Optional</code> to denote the absence of a value.</p>
+<p><b>Example:</b></p>
+<pre><code>
   Integer convert(String s) {
     Integer value;
     try {
@@ -20,10 +19,10 @@ or use library types like <code>Optional</code> to denote the absence of the val
     }
     return value;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore assignments to fields.
+Use the <b>Ignore assignments to fields</b> option to ignore assignments to fields.
 </p>
 
 </body>

@@ -17,9 +17,12 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -107,7 +110,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   }
 
   public void testAutoCloseable() {
-    ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.setSdk(IdeaTestUtil.getMockJdk14()));
+    Sdk mockJdk14 = IdeaTestUtil.getMockJdk14();
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk14, model.getProject()));
+      model.setSdk(mockJdk14);
+    });
     addDependencies_37_78();
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {

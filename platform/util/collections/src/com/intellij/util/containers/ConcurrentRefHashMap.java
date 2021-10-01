@@ -19,6 +19,10 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   private final @NotNull HashingStrategy<? super K> myHashingStrategy;
 
+  private static final float LOAD_FACTOR = 0.75f;
+  static final int DEFAULT_CAPACITY = 16;
+  static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+
   @FunctionalInterface
   interface KeyReference<K> {
     K get();
@@ -64,10 +68,6 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
     return processed;
   }
-  private static final float LOAD_FACTOR = 0.75f;
-  static final int DEFAULT_CAPACITY = 16;
-  static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
-
   ConcurrentRefHashMap() {
     this(DEFAULT_CAPACITY);
   }

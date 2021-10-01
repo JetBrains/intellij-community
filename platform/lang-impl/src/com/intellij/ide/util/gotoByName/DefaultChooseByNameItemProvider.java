@@ -40,15 +40,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
-                                boolean everywhere,
-                                @NotNull ProgressIndicator cancelled,
-                                @NotNull Processor<Object> consumer) {
-    return filterElements((ChooseByNameViewModel)base, pattern, everywhere, cancelled, consumer);
-  }
-
-  @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull String pattern,
                                 boolean everywhere,
@@ -338,11 +329,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
     return matchName(fullMatcher, fullName);
-  }
-
-  @Override
-  public @NotNull List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
-    return filterNames((ChooseByNameViewModel)base, names, pattern);
   }
 
   @NotNull

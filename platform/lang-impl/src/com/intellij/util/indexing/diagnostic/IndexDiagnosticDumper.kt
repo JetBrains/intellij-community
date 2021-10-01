@@ -148,7 +148,7 @@ class IndexDiagnosticDumper : Disposable {
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
-      indexDiagnosticDirectory.resolve("report.html").writeText(
+      indexDiagnosticDirectory.resolve("report.html").write(
         createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents)
       )
     }

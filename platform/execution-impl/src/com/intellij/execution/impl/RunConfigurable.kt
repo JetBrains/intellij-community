@@ -1063,6 +1063,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val configurable = createNewConfiguration(settings, node, selectedNode)
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length
+        RunConfigurationOptionUsagesCollector.logCopy(project, configurable.configuration.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
       }
       catch (e: ConfigurationException) {
         Messages.showErrorDialog(toolbarDecorator!!.actionsPanel, e.message, e.title)

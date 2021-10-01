@@ -32,7 +32,7 @@ kotlin {
         }
         jvmTest {
             dependencies {
-                implementation kotlin('test-junit')
+                implementation kotlin('test')
             }
         }
         aMain {
@@ -40,7 +40,7 @@ kotlin {
         }
         aTest {
             dependencies {
-                implementation kotlin('test-js')
+                implementation kotlin('test')
             }
         }
     }

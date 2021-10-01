@@ -675,10 +675,9 @@ public final class EditorUtil {
   /**
    * First value returned is the range of {@code y} coordinates in editor coordinate space (relative to
    * {@code editor.getContentComponent()}), corresponding to a given logical line in a document. Most often, a logical line corresponds to a
-   * single visual line, in that case the returned range has a height of {@code editor.getLineHeight()}. This will be not the case, if the
-   * line is soft-wrapped. Then the vertical range will be larger, as it will include several visual lines. Also, the range's height can
-   * differ from {@code editor.getLineHeight()}, if the target visual line is part of the comment, which is currently displayed in a
-   * rendered form (using inlay). In that case returned range will be that of the corresponding inlay. Other block inlays displayed on
+   * single visual line, in that case the returned range has a height of {@code editor.getLineHeight()} (or a height of fold region
+   * placeholder, if the line is collapsed in a {@link CustomFoldRegion}). This will be not the case, if the
+   * line is soft-wrapped. Then the vertical range will be larger, as it will include several visual lines. Block inlays displayed on
    * either side of the calculated range, are not included in the result.
    * <p>
    * The second value is a sub-range no other logical line maps to (or {@code null} if there's no such sub-range).
@@ -703,6 +702,12 @@ public final class EditorUtil {
       int lineEndOffset = document.getLineEndOffset(logicalLine);
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
       if (foldRegion != null) {
+        if (foldRegion instanceof CustomFoldRegion) {
+          int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
+          OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+          return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
+                                       foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
+        }
         Inlay<?> inlay = EditorInlayFoldingMapper.getInstance().getAssociatedInlay(foldRegion);
         if (inlay != null) {
           // special case of rendered doc comment
@@ -735,9 +740,8 @@ public final class EditorUtil {
   /**
    * Returns the range of logical lines corresponding to a given {@code y} coordinate in editor coordinate space (relative to
    * {@code editor.getContentComponent()}), with both ends of the interval inclusive. Most often, a given {@code y} coordinate corresponds
-   * to only one logical line. This might be not the case due to the presence of folded regions in editor, or when comment is shown in a
-   * rendered form. In the former case, all logical lines corresponding to the visual line will be returned, in the latter case - all
-   * logical lines of the rendered comment.
+   * to only one logical line. This might be not the case due to the presence of folded regions in editor. In that case, all logical lines
+   * corresponding to the visual line will be returned.
    *
    * @return INCLUSIVE interval [startLogicalLine, endLogicalLine]
    * @see #logicalLineToYRange(Editor, int)
@@ -745,12 +749,11 @@ public final class EditorUtil {
   @NotNull
   public static Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
     int visualLine = editor.yToVisualLine(y);
-    int visualLineStartY = editor.visualLineToY(visualLine);
-    int visualLineEndY = visualLineStartY + editor.getLineHeight();
+    int[] visualLineYRange = editor.visualLineToYRange(visualLine);
     Inlay<?> blockInlay = null;
-    if (y < visualLineStartY) {
+    if (y < visualLineYRange[0]) {
       List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
-      int yDiff = visualLineStartY - y;
+      int yDiff = visualLineYRange[0] - y;
       for (int i = inlays.size() - 1; i >= 0; i--) {
         Inlay<?> inlay = inlays.get(i);
         int height = inlay.getHeightInPixels();
@@ -761,9 +764,9 @@ public final class EditorUtil {
         yDiff -= height;
       }
     }
-    else if (y >= visualLineEndY) {
+    else if (y >= visualLineYRange[1]) {
       List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, false);
-      int yDiff = y - visualLineEndY;
+      int yDiff = y - visualLineYRange[1];
       for (Inlay<?> inlay : inlays) {
         int height = inlay.getHeightInPixels();
         if (yDiff < height) {
@@ -807,13 +810,22 @@ public final class EditorUtil {
 
   /**
    * Maps {@code y} to a logical line in editor (in the same way as {@link #yPositionToLogicalLine(Editor, int)} does), except that for
-   * coordinates, corresponding to block inlay locations, {@code -1} is returned.
+   * coordinates, corresponding to block inlay or custom fold region locations, {@code -1} is returned.
    */
-  public static int yToLogicalLineNoBlockInlays(@NotNull Editor editor, int y) {
+  public static int yToLogicalLineNoCustomRenderers(@NotNull Editor editor, int y) {
     int visualLine = editor.yToVisualLine(y);
     int visualLineStartY = editor.visualLineToY(visualLine);
     if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
-    return editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
+    int line = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
+    Document document = editor.getDocument();
+    if (line < document.getLineCount()) {
+      int lineStartOffset = document.getLineStartOffset(line);
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
+      if (foldRegion instanceof CustomFoldRegion) {
+        return -1;
+      }
+    }
+    return line;
   }
 
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
@@ -1021,7 +1033,10 @@ public final class EditorUtil {
     else if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
       offset--;
     }
-    return editor.getFoldingModel().isOffsetCollapsed(offset);
+    FoldingModel foldingModel = editor.getFoldingModel();
+    return foldingModel.isOffsetCollapsed(offset) ||
+           ((placement == Inlay.Placement.INLINE || placement == Inlay.Placement.AFTER_LINE_END) &&
+            foldingModel.getCollapsedRegionAtOffset(offset - 1) instanceof CustomFoldRegion);
   }
 
   /**
@@ -1035,7 +1050,7 @@ public final class EditorUtil {
    * Returns bottom Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
    */
   public static int getVisualLineAreaEndY(@NotNull Editor editor, int visualLine) {
-    return editor.visualLineToY(visualLine) + editor.getLineHeight() + getInlaysHeight(editor, visualLine, false);
+    return editor.visualLineToYRange(visualLine)[1] + getInlaysHeight(editor, visualLine, false);
   }
 
   /**
@@ -1108,8 +1123,8 @@ public final class EditorUtil {
   }
 
   /**
-   * Virtual space (after line end, and after end of text), inlays and space between visual lines (where block inlays are located) is
-   * excluded
+   * Virtual space (after line end, and after end of text), inlays and space between visual lines (where block inlays are located),
+   * as well as custom fold regions, are excluded.
    */
   public static boolean isPointOverText(@NotNull Editor editor, @NotNull Point point) {
     VisualPosition visualPosition = editor.xyToVisualPosition(point);
@@ -1118,6 +1133,7 @@ public final class EditorUtil {
     if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visualPosition)) return false; // soft wrap
     LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
     int offset = editor.logicalPositionToOffset(logicalPosition);
+    if (editor.getFoldingModel().getCollapsedRegionAtOffset(offset) instanceof CustomFoldRegion) return false;
     if (!logicalPosition.equals(editor.offsetToLogicalPosition(offset))) return false; // virtual space
     List<Inlay<?>> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
     if (!inlays.isEmpty()) {

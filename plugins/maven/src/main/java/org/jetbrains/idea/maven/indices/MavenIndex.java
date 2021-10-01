@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -42,7 +42,7 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
 public final class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
-  protected static final String INDEX_INFO_FILE = "index.properties";
+  private static final String INDEX_INFO_FILE = "index.properties";
 
   private static final String INDEX_VERSION_KEY = "version";
   private static final String KIND_KEY = "kind";
@@ -503,7 +503,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   @TestOnly
-  protected synchronized File getCurrentDataDir() {
+  private synchronized File getCurrentDataDir() {
     return new File(myDir, myDataDirName);
   }
 

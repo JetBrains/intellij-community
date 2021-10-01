@@ -296,6 +296,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/*.sh",
       "bin/*.py",
       "bin/fsnotifier",
+      "bin/printenv",
       "bin/restarter",
       "MacOS/*"
     ] + customizer.extraExecutables
@@ -310,28 +311,26 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def targetPath = "${buildContext.paths.artifacts}/${baseName}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
-/* TODO(b/118034991): generate product-info.json files (or not)
       Path productJsonDir = buildContext.paths.tempDir.resolve("mac.dist.product-info.json.zip")
       generateProductJson(buildContext, productJsonDir, null)
       allPaths.add(productJsonDir.toString())
-TODO(b/118034991): generate product-info.json files (or not) */
 
       def executableFilePatterns = generateExecutableFilesPatterns(false)
       buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
-        allPaths.each {
-          zipfileset(dir: it, prefix: zipRoot) {
-            executableFilePatterns.each {
-              exclude(name: it)
+        allPaths.each {path ->
+          zipfileset(dir: path, prefix: zipRoot) {
+            executableFilePatterns.each { pattern ->
+              exclude(name: pattern)
             }
             exclude(name: "*.txt")
             exclude(name: "lib/dbus-java-*.jar") // Android Studio: don't include dbus-java (b/148288696)
           }
         }
 
-        allPaths.each {
-          zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
-            executableFilePatterns.each {
-              include(name: it)
+        allPaths.each { path ->
+          zipfileset(dir: path, filemode: "755", prefix: zipRoot) {
+            executableFilePatterns.each { pattern ->
+              include(name: pattern)
             }
           }
         }
@@ -344,9 +343,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
         }
       }
 
-/* TODO(b/118034991): generate product-info.json files (or not)
       ProductInfoValidator.checkInArchive(buildContext, targetPath, "$zipRoot/Resources")
-TODO(b/118034991): generate product-info.json files (or not) */
       return targetPath
     }
   }

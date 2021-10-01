@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.completion.ml">
   <id>com.intellij.completion.ml.ranking</id>
   <name>Machine Learning Code Completion</name>
   <vendor>JetBrains</vendor>
@@ -13,8 +13,9 @@
       Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
     ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.platform</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint name="features.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

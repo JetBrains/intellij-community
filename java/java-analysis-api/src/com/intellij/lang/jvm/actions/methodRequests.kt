@@ -3,7 +3,6 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.project.Project
@@ -40,10 +39,10 @@ private class SimpleConstructorRequest(
   override fun getExpectedParameters() = expectedParameters
 }
 
-fun methodRequest(project: Project, methodName: String, modifier: JvmModifier, returnType: JvmType): CreateMethodRequest {
+fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
   return SimpleMethodRequest(
     methodName = methodName,
-    modifiers = listOf(modifier),
+    modifiers = modifiers,
     returnType = listOf(expectedType(returnType)),
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )

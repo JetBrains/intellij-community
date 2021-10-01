@@ -5,21 +5,22 @@ import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import training.dsl.*
+import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LearnBundle
 import training.ui.LearningUiHighlightingManager
 import java.awt.Component
@@ -29,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JEditorPane
 
 class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
-  override val existedFile = "src/git/martian_cat.yml"
+  override val existedFile = "git/martian_cat.yml"
   private val branchName = "main"
   private val propertyName = "ears_number"
   private val editedPropertyName = "ear_number"
@@ -89,7 +90,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       before { LearningUiHighlightingManager.clearHighlights() }
       openFirstDiffTaskId = taskId
-      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong("Jonny Catsville")))
+      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName),strong("Johnny Catsville")))
       highlightAnnotation(null, firstStateText, highlightRight = true)
       highlightShowDiffMenuItem()
     }
@@ -112,10 +113,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
 
     prepareRuntimeTask l@{
-      val window = UIUtil.getWindow(previous.ui) ?: return@l
-      val oldWindowLocation = WindowStateService.getInstance(project).getLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
-      if (LessonUtil.adjustPopupPosition(project, window)) {
-        backupDiffLocation = oldWindowLocation
+      if (backupDiffLocation == null) {
+        backupDiffLocation = adjustPopupPosition(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
       }
     }
 
@@ -184,8 +183,9 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
     }
 
-    task {
-      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName)))
+    task("EditorEscape") {
+      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName),
+                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
       stateCheck {
         previous.ui?.isShowing != true && firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }
@@ -201,7 +201,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       task("Annotate") {
         val closeAnnotationsText = EditorBundle.message("close.editor.annotations.action.name")
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
-             + GitLessonsBundle.message("git.annotate.invoke.manually", strong(closeAnnotationsText)))
+             + GitLessonsBundle.message("git.annotate.invoke.manually.2", strong(closeAnnotationsText)))
         triggerByPartOfComponent { ui: EditorGutterComponentEx ->
           Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
         }
@@ -218,12 +218,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (backupDiffLocation != null) {
-      invokeLater {
-        WindowStateService.getInstance(project).putLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
-        backupDiffLocation = null
-      }
-    }
+    restorePopupPosition(project, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
+    backupDiffLocation = null
   }
 
   private fun TaskContext.highlightGutterComponent(splitter: DiffSplitter?, partOfEditorText: String, highlightRight: Boolean) {

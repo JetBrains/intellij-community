@@ -3,11 +3,13 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 
-internal class TextPlaceholderPresentation(
+@ApiStatus.Internal
+class TextPlaceholderPresentation(
   val length: Int,
-  val textMetricsStorage: InlayTextMetricsStorage,
+  private val textMetricsStorage: InlayTextMetricsStorage,
   val small: Boolean
 ) : BasePresentation() {
   override val width: Int

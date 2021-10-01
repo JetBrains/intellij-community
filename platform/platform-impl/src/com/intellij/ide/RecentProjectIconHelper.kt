@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -14,6 +15,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.exists
+import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
@@ -34,6 +36,21 @@ private val LOG = logger<RecentProjectIconHelper>()
 
 internal class RecentProjectIconHelper {
   companion object {
+    private const val ideaDir = Project.DIRECTORY_STORE_FOLDER
+
+    fun getDotIdeaPath(path: Path): Path {
+      if (path.isDirectory()) return path.resolve(ideaDir)
+
+      val fileName = path.fileName.toString()
+
+      val dotIndex = fileName.lastIndexOf('.')
+      val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.substring(0, dotIndex)
+
+      return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
+    }
+
+    fun getDotIdeaPath(path: String) = getDotIdeaPath(Paths.get(path))
+
     @JvmStatic
     fun createIcon(file: Path): Icon? {
       try {
@@ -101,10 +118,9 @@ internal class RecentProjectIconHelper {
   private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
     val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
                  else listOf("icon.svg", "icon.png")
-    val iconName = lookup.firstOrNull { Paths.get(path, ".idea", it).exists() }
+    val iconName = lookup.firstOrNull { getDotIdeaPath(path).resolve(it).exists() } ?: return null
 
-    if (iconName == null) return null
-    val file = Paths.get(path, ".idea", iconName)
+    val file = getDotIdeaPath(path).resolve(iconName)
 
     val fileInfo = file.basicAttributesIfExists() ?: return null
     val timestamp = fileInfo.lastModifiedTime().toMillis()

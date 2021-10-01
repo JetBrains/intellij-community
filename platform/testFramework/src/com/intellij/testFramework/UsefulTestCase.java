@@ -1071,6 +1071,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionCase Block annotated with some exception type
    * @deprecated Use {@link #assertThrows(Class, ThrowableRunnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
     assertThrows(exceptionCase.getExpectedExceptionClass(), null, ()-> exceptionCase.tryClosure());
@@ -1084,6 +1085,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param expectedErrorMsg expected error message
    * @deprecated Use {@link #assertThrows(Class, String, ThrowableRunnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase, @Nullable String expectedErrorMsg) {
     assertThrows(exceptionCase.getExpectedExceptionClass(), expectedErrorMsg, ()->exceptionCase.tryClosure());
@@ -1142,6 +1144,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionCase Block annotated with some exception type
    * @deprecated Use {@link #assertNoException(Class, ThrowableRunnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected <T extends Throwable> void assertNoException(@NotNull AbstractExceptionCase<T> exceptionCase) throws T {
     try {

@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTrack
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.util.projectStructure.getModule
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
-import org.jetbrains.kotlin.psi.KtFile
 
 class ScratchFileModuleInfoProvider() : ScratchFileListener {
     companion object {
@@ -17,7 +16,7 @@ class ScratchFileModuleInfoProvider() : ScratchFileListener {
     }
 
     override fun fileCreated(file: ScratchFile) {
-        val ktFile = file.getPsiFile() as? KtFile ?: return
+        val ktFile = file.ktScratchFile ?: return
         val virtualFile = ktFile.virtualFile ?: return
         val project = ktFile.project
 

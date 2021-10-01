@@ -2,14 +2,14 @@
 <body>
 Reports enum <code>switch</code> statements or expression with <code>default</code> branches which can never be taken,
 because all possible values are covered by a <code>case</code> branch.
-These are unnecessary, especially for <code>switch</code> expressions, because they don't compile when all
-enum constants are not covered by a <code>case</code> branch.
+<p>Such elements are redundant, especially for <code>switch</code> expressions, because they don't compile when all
+  enum constants are not covered by a <code>case</code> branch.</p>
 <p>
   The language level needs to be configured to 14 to report <code>switch</code> expressions.
 </p>
-Quick fix removes default branch.
+<p>The provided quick-fix removes <code>default</code> branches.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   enum E { A, B }
   int foo(E e) {
     return switch (e) {
@@ -18,9 +18,9 @@ Quick fix removes default branch.
       default -&gt; 3;
     };
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   enum E { A, B }
   int foo(E e) {
     return switch (e) {
@@ -28,9 +28,9 @@ Quick fix removes default branch.
       case B -&gt; 2;
     };
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>Use option to report only unnecessary default branches in switch expressions</p>
+<p>Use the <b>Only report switch expressions</b> option to report only redundant <code>default</code> branches in switch expressions.</p>
 
 </body>
 </html>

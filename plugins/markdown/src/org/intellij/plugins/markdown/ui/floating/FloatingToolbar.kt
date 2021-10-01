@@ -3,26 +3,33 @@ package org.intellij.plugins.markdown.ui.floating
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import kotlin.properties.Delegates
 
-internal class FloatingToolbar(val editor: Editor) {
+internal class FloatingToolbar(val editor: Editor) : Disposable {
   companion object {
     private const val verticalGap = 2
   }
 
-  private val selectionListener = SelectionListener()
+  private val mouseListener = MouseListener()
+  private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
 
   private var hint: LightweightHint? = null
+  private var buttonSize: Int by Delegates.notNull()
+  private var lastSelection: String? = null
 
 
   init {
@@ -42,6 +49,7 @@ internal class FloatingToolbar(val editor: Editor) {
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
     toolbar.setTargetComponent(editor.contentComponent)
     toolbar.setReservePlaceAutoPopupIcon(false)
+    buttonSize = toolbar.maxButtonHeight
 
     val newHint = LightweightHint(toolbar.component)
     newHint.setForceShowAsPopup(true)
@@ -65,38 +73,69 @@ internal class FloatingToolbar(val editor: Editor) {
     hint.setLocation(RelativePoint(layeredPane, hintPos))
   }
 
+  override fun dispose() {
+    unregisterListeners()
+  }
 
-  internal fun registerListeners() {
-    editor.selectionModel.addSelectionListener(selectionListener)
+  private fun registerListeners() {
+    editor.addEditorMouseListener(mouseListener)
     editor.addEditorMouseMotionListener(mouseMotionListener)
+    editor.contentComponent.addKeyListener(keyboardListener)
   }
 
-
-  internal fun unregisterListeners() {
-    editor.selectionModel.removeSelectionListener(selectionListener)
+  private fun unregisterListeners() {
+    editor.removeEditorMouseListener(mouseListener)
     editor.removeEditorMouseMotionListener(mouseMotionListener)
+    editor.contentComponent.removeKeyListener(keyboardListener)
   }
-
 
   private fun getHintPosition(hint: LightweightHint): Point {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
     // because of `hint.setForceShowAsPopup(true)`, HintManager.ABOVE does not place the hint above
     // the hint remains on the line, so we need to move it up ourselves
-    hintPos.translate(0, -(hint.component.preferredSize.height + verticalGap))
+    val dy = -(hint.component.preferredSize.height + verticalGap)
+    val dx = buttonSize * -2
+    hintPos.translate(dx, dy)
     return hintPos
   }
 
+  private fun updateOnProbablyChangedSelection(onSelectionChanged: (String) -> Unit) {
+    val newSelection = editor.selectionModel.selectedText
 
-  private inner class SelectionListener : com.intellij.openapi.editor.event.SelectionListener {
-    override fun selectionChanged(e: SelectionEvent) {
-      if (e.newRange.length == 0) {
-        hideIfShown()
-        return
+    when (newSelection) {
+      null -> hideIfShown()
+      lastSelection -> Unit
+      else -> onSelectionChanged(newSelection)
+    }
+
+    lastSelection = newSelection
+  }
+
+
+  private inner class MouseListener : EditorMouseListener {
+    override fun mouseReleased(e: EditorMouseEvent) {
+      updateOnProbablyChangedSelection {
+        if (isShown())
+          updateLocationIfShown()
+        else showIfHidden()
       }
+    }
+  }
 
-      if (isShown())
-        updateLocationIfShown()
-      else showIfHidden()
+
+  private inner class KeyboardListener : KeyAdapter() {
+    override fun keyReleased(e: KeyEvent) {
+      super.keyReleased(e)
+      if (e.source != editor.contentComponent) return
+
+      updateOnProbablyChangedSelection { selection ->
+        if ('\n' in selection)
+          hideIfShown()
+        else if (isShown())
+          updateLocationIfShown()
+        else
+          showIfHidden()
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-// "Change to val" "false"
+// "Change to 'val'" "false"
 // ACTION: Add initializer
 // ACTION: Convert member to extension
 // ACTION: Initialize with constructor parameter

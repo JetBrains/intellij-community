@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -964,31 +963,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  static boolean showUninstallDialog(@NotNull Component uiParent, @Nullable String singleName, int count) {
-    String message;
-    if (singleName == null) {
-      message = IdeBundle.message("prompt.uninstall.several.plugins", count);
-    }
-    else {
-      message = IdeBundle.message("prompt.uninstall.plugin", singleName);
-    }
-    return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall"), message).ask(uiParent);
-  }
-
-  void uninstallAndUpdateUi(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
-    List<IdeaPluginDescriptor> deps = dependent(descriptor);
-    if (!deps.isEmpty()) {
-      String listOfDeps = StringUtil.join(deps,
-                                          plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName(),
-                                          "<br>");
-      String message = XmlStringUtil
-        .wrapInHtml(IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps));
-      String title = IdeBundle.message("title.plugin.uninstall");
-      if (!MessageDialogBuilder.yesNo(title, message).ask(uiParent)) {
-        return;
-      }
-    }
-
+  void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
     myInstallsRequiringRestart |= needRestartForUninstall;
@@ -1114,7 +1089,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
-  private @NotNull List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  // todo remove code duplication
+  @NotNull List<? extends IdeaPluginDescriptor> getDependents(@NotNull IdeaPluginDescriptor rootDescriptor) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     PluginId rootId = rootDescriptor.getPluginId();
 

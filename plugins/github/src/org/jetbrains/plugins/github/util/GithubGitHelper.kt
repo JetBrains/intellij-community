@@ -5,10 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.GitLocalBranch
 import git4idea.GitUtil
-import git4idea.branch.GitBranchUtil
-import git4idea.push.GitPushTarget
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHRepositoryPath
@@ -75,12 +72,6 @@ class GithubGitHelper {
       }
       return manager.getRepositoryForFileQuick(project.baseDir)
     }
-
-    fun findPushTarget(repository: GitRepository, remote: GitRemote, branch: GitLocalBranch) =
-      GitPushTarget.getFromPushSpec(repository, remote, branch)
-      ?: GitBranchUtil.getTrackInfoForBranch(repository, branch)
-        ?.takeIf { it.remote == remote }
-        ?.let { GitPushTarget(it.remoteBranch, false) }
 
     @JvmStatic
     fun getInstance(): GithubGitHelper {

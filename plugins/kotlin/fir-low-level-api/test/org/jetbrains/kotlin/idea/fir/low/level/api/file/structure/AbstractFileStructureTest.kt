@@ -8,8 +8,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.file.structure
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
-import com.intellij.psi.util.collectDescendantsOfType
-import com.intellij.psi.util.forEachDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirModuleResolveStateImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getResolveState
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -28,9 +27,9 @@ abstract class AbstractFileStructureTest : KotlinLightCodeInsightFixtureTestCase
         val allStructureElements = fileStructure.getAllStructureElements(ktFile)
         val declarationToStructureElement = allStructureElements.associateBy { it.psi }
         runUndoTransparentWriteAction {
-            ktFile.collectDescendantsOfType<PsiComment>().forEach { it.delete() }
-            ktFile.forEachDescendantOfType<KtDeclaration> { ktDeclaration ->
-                val structureElement = declarationToStructureElement[ktDeclaration] ?: return@forEachDescendantOfType
+            ktFile.descendantsOfType<PsiComment>().forEach { it.delete() }
+            ktFile.descendantsOfType<KtDeclaration>().forEach { ktDeclaration ->
+                val structureElement = declarationToStructureElement[ktDeclaration] ?: return@forEach
                 val comment = structureElement.createComment()
                 when (ktDeclaration) {
                     is KtClassOrObject -> {
@@ -79,7 +78,7 @@ abstract class AbstractFileStructureTest : KotlinLightCodeInsightFixtureTestCase
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun FileStructure.getAllStructureElements(ktFile: KtFile): Collection<FileStructureElement> = buildSet {
-        ktFile.forEachDescendantOfType<KtElement> { ktElement ->
+        ktFile.descendantsOfType<KtElement>().forEach { ktElement ->
             add(getStructureElementFor(ktElement))
         }
     }

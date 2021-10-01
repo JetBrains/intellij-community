@@ -6,12 +6,11 @@ group = "me.user"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    jcenter()
     mavenCentral()
 }
 
 dependencies {
-    testImplementation(kotlin("test-js"))
+    testImplementation(kotlin("test"))
 }
 
 kotlin {

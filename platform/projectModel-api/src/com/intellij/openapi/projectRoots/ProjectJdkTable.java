@@ -4,8 +4,6 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,6 +36,8 @@ public abstract class ProjectJdkTable {
 
   @TestOnly
   public void addJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
+    Sdk existingJdk = findJdk(jdk.getName(), jdk.getSdkType().getName());
+    if (existingJdk != null && existingJdk.getSdkAdditionalData() == jdk.getSdkAdditionalData()) return;
     addJdk(jdk);
     Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }

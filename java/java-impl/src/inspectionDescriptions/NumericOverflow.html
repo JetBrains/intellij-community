@@ -1,14 +1,12 @@
 <html>
 <body>
-Reports expressions which overflow during computation.
-Usually it happens by accident (for example wrong type is used or shift should be done in opposite direction) and indicates a bug.
-
-<p>Examples:</p>
+<p>Reports expressions that overflow during computation.</p>
+<p>Usually, this happens by accident and indicates a bug. For example, a wrong type is used or a shift should be done in an opposite direction .</p>
+<p><b>Examples:</b></p>
 <pre><code>
   float a = 1.0f/0.0f;
   long b = 30 * 24 * 60 * 60 * 1000;
   long c = 1000L &lt;&lt; 62;
 </code></pre>
-
 </body>
 </html>

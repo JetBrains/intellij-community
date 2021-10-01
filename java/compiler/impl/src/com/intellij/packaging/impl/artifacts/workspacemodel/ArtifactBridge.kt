@@ -124,7 +124,7 @@ open class ArtifactBridge(
 
   override fun getOutputPath(): String? {
     val artifactEntity = entityStorage.current.get(artifactId)
-    return artifactEntity.outputUrl?.url?.let { JpsPathUtil.urlToOsPath(it) }
+    return artifactEntity.outputUrl?.url?.let { JpsPathUtil.urlToPath(it) }
   }
 
   override fun getPropertiesProviders(): MutableCollection<out ArtifactPropertiesProvider> {

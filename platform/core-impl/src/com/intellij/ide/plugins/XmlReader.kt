@@ -155,11 +155,12 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
 /**
  * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
  */
-private val KNOWN_KOTLIN_PLUGIN_IDS = setOf(
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SSBasedInspection")
+private val KNOWN_KOTLIN_PLUGIN_IDS = HashSet(Arrays.asList(
   "org.jetbrains.kotlin",
   "com.intellij.appcode.kmm",
   "org.jetbrains.kotlin.native.appcode"
-)
+))
 
 private fun readRootElementChild(reader: XMLStreamReader2,
                                  descriptor: RawPluginDescriptor,
@@ -175,7 +176,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       }
       else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         // no warn and no redefinition for kotlin - compiler.xml is a known issue
-        LOG.warn("id redefinition (${reader.locationInfo})")
+        LOG.warn("id redefinition (${reader.locationInfo.location})")
         descriptor.id = getNullifiedContent(reader)
       }
       else {
@@ -542,6 +543,7 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
   var configurationSchemaKey: String? = null
   var overrides = false
   var preload = ServiceDescriptor.PreloadMode.FALSE
+  var client: ServiceDescriptor.ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       "serviceInterface" -> serviceInterface = getNullifiedAttributeValue(reader, i)
@@ -559,10 +561,18 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
+      "client" -> {
+        when (reader.getAttributeValue(i)) {
+          "all" -> client = ServiceDescriptor.ClientKind.ALL
+          "local" -> client = ServiceDescriptor.ClientKind.LOCAL
+          "guest" -> client = ServiceDescriptor.ClientKind.GUEST
+          else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
+        }
+      }
     }
   }
   return ServiceDescriptor(serviceInterface, serviceImplementation, testServiceImplementation, headlessImplementation,
-                           overrides, configurationSchemaKey, preload, os)
+                           overrides, configurationSchemaKey, preload, client, os)
 }
 
 private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
@@ -675,8 +685,7 @@ private fun readContent(reader: XMLStreamReader2,
           configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
         }
 
-        items.add(PluginContentDescriptor.ModuleItem(name = name,
-                                                     configFile = configFile))
+        items.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }

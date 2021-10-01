@@ -258,18 +258,21 @@ public abstract class NullableNotNullManager {
       memberAnno = null;
     }
     if (memberAnno != null) {
-      if (type != null) {
-        for (PsiAnnotation typeAnno : type.getApplicableAnnotations()) {
-          if (areDifferentNullityAnnotations(memberAnno.annotation, typeAnno)) {
-            if (typeAnno != memberAnno.annotation) return null;
-            Nullability nullability = annotations.getNullability(typeAnno.getQualifiedName());
-            if (nullability == null) return null;
-            return new NullabilityAnnotationInfo(typeAnno, nullability, false);
-          }
-        }
-      }
       Nullability nullability = annotations.getNullability(memberAnno.annotation.getQualifiedName());
       if (nullability == null) return null;
+      if (type != null) {
+        for (PsiAnnotation typeAnno : type.getApplicableAnnotations()) {
+          if (typeAnno == memberAnno.annotation) continue;
+          Nullability typeNullability = annotations.getNullability(typeAnno.getQualifiedName());
+          if (typeNullability == null) continue;
+          if (typeNullability != nullability) {
+            return null;
+          }
+          // Prefer type annotation over inherited annotation; necessary for Nullable/NotNull inspection
+          memberAnno = new AnnotationAndOwner(owner, typeAnno);
+          break;
+        }
+      }
       return new NullabilityAnnotationInfo(memberAnno.annotation, nullability, memberAnno.owner == owner ? null : memberAnno.owner, false);
     }
     if (type instanceof PsiPrimitiveType) return null;

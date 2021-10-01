@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
+import org.jetbrains.kotlin.codeMetaInfo.CodeMetaInfoRenderer
 import org.jetbrains.kotlin.daemon.common.OSKind
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
@@ -68,7 +69,7 @@ class CodeMetaInfoTestCase(
     ): List<CodeMetaInfo> {
         val tempSourceKtFile = PsiManager.getInstance(project).findFile(file.virtualFile) as KtFile
         val resolutionFacade = tempSourceKtFile.getResolutionFacade()
-        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(listOf(tempSourceKtFile))
+        val (bindingContext, moduleDescriptor, _) = resolutionFacade.analyzeWithAllCompilerChecks(listOf(tempSourceKtFile))
         val directives = KotlinTestUtils.parseDirectives(file.text)
         val diagnosticsFilter = AbstractMultiModuleIdeResolveTest.parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)
         val diagnostics = CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(
@@ -174,13 +175,13 @@ class CodeMetaInfoTestCase(
             val correspondingParsed = parsedMetaInfo.firstOrNull { it == codeMetaInfo }
             if (correspondingParsed != null) {
                 parsedMetaInfo.remove(correspondingParsed)
-                codeMetaInfo.platforms.addAll(correspondingParsed.platforms)
-                if (correspondingParsed.platforms.isNotEmpty() && OSKind.current.toString() !in correspondingParsed.platforms)
-                    codeMetaInfo.platforms.add(OSKind.current.toString())
+                codeMetaInfo.attributes.addAll(correspondingParsed.attributes)
+                if (correspondingParsed.attributes.isNotEmpty() && OSKind.current.toString() !in correspondingParsed.attributes)
+                    codeMetaInfo.attributes.add(OSKind.current.toString())
             }
         }
         parsedMetaInfo.forEach {
-            if (it.platforms.isNotEmpty() && OSKind.current.toString() !in it.platforms)
+            if (it.attributes.isNotEmpty() && OSKind.current.toString() !in it.attributes)
                 codeMetaInfoForCheck.add(it)
         }
         val textWithCodeMetaInfo = CodeMetaInfoRenderer.renderTagsToText(codeMetaInfoForCheck, myEditor.document.text)
@@ -233,7 +234,8 @@ class CodeMetaInfoTestCase(
 
 abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoConfiguration()
+        DiagnosticCodeMetaInfoConfiguration(),
+        LineMarkerConfiguration()
     )
 }
 

@@ -13,7 +13,7 @@ public final class UsageNodePresentation {
   private final @Nullable Icon myIcon;
   private final @NotNull TextChunk @NotNull [] myText;
 
-  UsageNodePresentation(
+  public UsageNodePresentation(
     @Nullable Icon icon,
     @NotNull TextChunk @NotNull [] text
   ) {

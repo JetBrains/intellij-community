@@ -326,6 +326,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyPattern(node);
   }
 
+  public void visitWildcardPattern(@NotNull PyWildcardPattern node) {
+    visitPyPattern(node);
+  }
+
   public void visitPyClassPattern(@NotNull PyClassPattern node) {
     visitPyPattern(node);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry
 
 import com.intellij.application.options.RegistryManager
@@ -9,10 +9,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false)
-private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager {
+@ApiStatus.Internal
+internal class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager {
   init {
     runActivity("registry keys adding") {
       RegistryKeyBean.addKeysFromPlugins()
@@ -61,5 +63,9 @@ private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryM
       builder.append(key).append(" = ").append(userProperties[key]).append(", ")
     }
     logger<RegistryManager>().info(builder.substring(0, builder.length - 2))
+  }
+
+  fun getAll(): List<RegistryValue> {
+    return Registry.getAll()
   }
 }

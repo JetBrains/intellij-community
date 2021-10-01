@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -83,7 +82,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private WindowResizeListener myResizeListener;
   private WindowMoveListener myMoveListener;
   private JPanel myHeaderPanel;
-  private JPanel myBottomPanel;
   private CaptionPanel myCaption;
   private JComponent myComponent;
   private SpeedSearch mySpeedSearchFoundInRootComponent;
@@ -124,7 +122,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private boolean myHeaderAlwaysFocusable;
   private boolean myMovable;
   private JComponent myHeaderComponent;
-  private JComponent myBottomComponent;
 
   InputEvent myDisposeEvent;
 
@@ -274,7 +271,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
 
     myHeaderPanel = new JPanel(new BorderLayout());
-    myBottomPanel = new JPanel(new BorderLayout());
 
     if (caption != null) {
       if (!caption.isEmpty()) {
@@ -310,7 +306,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     myHeaderPanel.add(myCaption, BorderLayout.NORTH);
     myContent.add(myHeaderPanel, BorderLayout.NORTH);
-    myContent.add(myBottomPanel, BorderLayout.SOUTH);
 
     myForcedHeavyweight = true;
     myResizable = resizable;
@@ -601,7 +596,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public void showInBestPositionFor(@NotNull Editor editor) {
     // Intercept before the following assert; otherwise assertion may fail
     if (UiInterceptors.tryIntercept(this)) return;
-    assert EditorActivityManager.getInstance().isVisible(editor) : "Editor must be showing on the screen";
+    assert UIUtil.isShowing(editor.getContentComponent()) : "Editor must be showing on the screen";
 
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
@@ -746,6 +741,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myState = State.CANCEL;
 
     if (isDisposed()) return;
+
+    if (LOG.isTraceEnabled()) LOG.trace(new Exception("cancel popup stack trace"));
 
     if (myPopup != null) {
       if (!canClose()) {
@@ -1545,17 +1542,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
   }
 
+  private @Nullable Project getProjectDependingOnKey(String key) {
+    return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ? myProject : null;
+  }
+
   public void storeDimensionSize() {
     if (myDimensionServiceKey != null) {
       Dimension size = myContent.getSize();
       JBInsets.removeFrom(size, myContent.getInsets());
-      getWindowStateService(myProject).putSize(myDimensionServiceKey, size);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, size);
     }
   }
 
   private void storeLocation(final Point xy) {
     if (myDimensionServiceKey != null) {
-      getWindowStateService(myProject).putLocation(myDimensionServiceKey, xy);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putLocation(myDimensionServiceKey, xy);
     }
   }
 
@@ -2081,12 +2082,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private @Nullable Point getStoredLocation() {
     if (myDimensionServiceKey == null) return null;
-    return getWindowStateService(myProject).getLocation(myDimensionServiceKey);
+    return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getLocation(myDimensionServiceKey);
   }
 
   private @Nullable Dimension getStoredSize() {
     if (myDimensionServiceKey == null) return null;
-    return getWindowStateService(myProject).getSize(myDimensionServiceKey);
+    return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getSize(myDimensionServiceKey);
   }
 
   private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {

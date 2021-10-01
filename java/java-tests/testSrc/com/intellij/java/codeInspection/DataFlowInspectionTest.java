@@ -707,4 +707,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testDereferenceInThrowMessage() { doTest(); }
   public void testArrayInitializerElementRewritten() { doTest(); }
   public void testFinallyEphemeralNpe() { doTest(); }
+  public void testTypeParameterAsSuperClass() { doTest(); }
 }

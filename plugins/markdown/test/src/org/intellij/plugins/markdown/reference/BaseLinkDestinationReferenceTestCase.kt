@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiUtilCore
@@ -23,8 +24,9 @@ abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
-  private fun findFile(path: Path): PsiFileSystemItem? = PsiUtilCore.findFileSystemItem(project,
-                                                                                        myFixture.findFileInTempDir(path.toString()))
+  private fun findFile(path: Path): PsiFileSystemItem? {
+    return PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir(FileUtil.toSystemIndependentName(path.toString())))
+  }
 
   protected open fun getLinksFilePath(): String? = null
 

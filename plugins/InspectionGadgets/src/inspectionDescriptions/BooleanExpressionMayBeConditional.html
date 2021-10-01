@@ -1,12 +1,11 @@
 <html>
 <body>
-Reports any <code>boolean</code> expressions which can be expressed more compactly, and arguably more clearly, as a conditional expression.
-Take for example the following expression:
-<pre>a &amp;&amp; b || !a &amp;&amp; c;</pre>
-which may be expressed as:
+Reports any <code>boolean</code> expressions which can be formulated in a more compact and, arguably, clear way than by using a conditional expression.
+<p>Example:</p>
+<pre><code>a &amp;&amp; b || !a &amp;&amp; c;</code></pre>
+<p>This expression can be expressed as:</p>
 <pre>a ? b : c;</pre>
 <!-- tooltip end -->
 <p>
-<small>New in 15</small>
 </body>
 </html>

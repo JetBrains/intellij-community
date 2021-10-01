@@ -44,7 +44,7 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
       }
     }
 
-    private fun attachProject(virtualFile: VirtualFile, project: Project) {
+    fun attachProject(virtualFile: VirtualFile, project: Project) {
       var baseDir: VirtualFile? = virtualFile
       if (!virtualFile.isDirectory) {
         baseDir = virtualFile.parent

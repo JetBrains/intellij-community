@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -1325,6 +1325,16 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
+    if (myChild1.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myChild2.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+  }
+
   private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
     PsiExpression[] expressions = list.getExpressions();
     int length = expressions.length;
@@ -1487,7 +1497,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  protected void processLoopBody() {
+  private void processLoopBody() {
     if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_FOR_LBRACE, null);
     }

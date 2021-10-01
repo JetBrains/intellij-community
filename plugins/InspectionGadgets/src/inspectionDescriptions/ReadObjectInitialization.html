@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports fields which are not guaranteed to be initialized after the object is
+Reports fields that are not guaranteed to be initialized after the object is
 deserialized by the <code>readObject()</code> method.
-Inspection doesn't report transient fields.
+<p>The inspection doesn't report transient fields.</p>
 <p>
-  Note: This inspection uses a very conservative control flow algorithm, and may report fields
-  as uninitialized incorrectly.
+  Note: This inspection uses a very conservative control flow algorithm, and may incorrectly report fields
+  as uninitialized.
 </p>
-<p>Example of the reported code:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
 class DataObject implements Serializable {
   String s; // s is not initialized in readObject
   int i;
@@ -17,9 +17,8 @@ class DataObject implements Serializable {
     i = stream.readInt();
   }
 }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

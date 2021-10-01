@@ -5,12 +5,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class DeprecatedMethodException extends RuntimeException {
-  private static final Set<String> BEAT_DEAD_HORSE = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
   private static final LoggerRt LOG = LoggerRt.getInstance(DeprecatedMethodException.class);
   private DeprecatedMethodException(@NotNull String message) {
     super(message);
@@ -20,7 +15,6 @@ public final class DeprecatedMethodException extends RuntimeException {
    * This method reports the error only once for every same {@param message}
    */
   public static void report(@NotNull @NonNls String message) {
-    if (!BEAT_DEAD_HORSE.add(message)) return;
     Class<?> superClass = ReflectionUtilRt.findCallerClass(2);
     @NonNls String superClassName = superClass != null ? superClass.getName() : "<no class>";
     String text = "This method in '" + superClassName +
@@ -32,7 +26,6 @@ public final class DeprecatedMethodException extends RuntimeException {
    * This method reports the error only for every same parameters
    */
   public static void reportDefaultImplementation(@NotNull Class<?> thisClass, @NotNull String methodName, @NotNull String message) {
-    if (!BEAT_DEAD_HORSE.add(methodName + "###" + message + "###" + thisClass)) return;
     Class<?> superClass = ReflectionUtilRt.findCallerClass(2);
     @NonNls String superClassName = superClass != null ? superClass.getName() : "<no class>";
     String text = "The default implementation of method '" + superClassName + "." + methodName + "' is deprecated, you need to override it in '" +

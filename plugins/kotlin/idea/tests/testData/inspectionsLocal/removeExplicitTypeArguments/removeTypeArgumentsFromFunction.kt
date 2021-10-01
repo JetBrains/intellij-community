@@ -1,0 +1,3 @@
+// FIX: Remove explicit type arguments
+// WITH_RUNTIME
+fun bar(): MutableList<String> = mutableListOf<String<caret>>()

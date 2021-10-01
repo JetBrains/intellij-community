@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -155,7 +155,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
     doUpdateComponent(element, getByteCode(element));
   }
 
-  protected void doUpdateComponent(@NotNull PsiElement element, final String newText) {
+  void doUpdateComponent(@NotNull PsiElement element, final String newText) {
     Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
       updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);

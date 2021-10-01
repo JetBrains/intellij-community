@@ -1,4 +1,6 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="parcelize-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <testTasksProvider implementation="org.jetbrains.kotlin.idea.run.KotlinMPPGradleTestTasksProvider"/>
         <frameworkSupport implementation="org.jetbrains.kotlin.idea.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>
@@ -16,9 +18,9 @@
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectResolverExtension" order="first"/>
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
         <projectResolve implementation="org.jetbrains.kotlin.kapt.idea.KaptProjectResolverExtension" order="last"/>
-        <projectResolve implementation="org.jetbrains.kotlin.allopen.ide.AllOpenProjectResolverExtension" order="last"/>
-        <projectResolve implementation="org.jetbrains.kotlin.noarg.ide.NoArgProjectResolverExtension" order="last"/>
-        <projectResolve implementation="org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverProjectResolverExtension" order="last"/>
+        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.allopen.AllOpenProjectResolverExtension" order="last"/>
+        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg.NoArgProjectResolverExtension" order="last"/>
+        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverProjectResolverExtension" order="last"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -44,12 +46,12 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.allopen.ide.AllOpenGradleProjectImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.allopen.AllOpenGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.scripting.idea.plugin.ScriptingGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.kapt.idea.KaptGradleProjectImportHandler"/>
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.noarg.ide.NoArgGradleProjectImportHandler"/>
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverGradleProjectImportHandler"/>
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlinx.serialization.idea.KotlinSerializationGradleImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg.NoArgGradleProjectImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverGradleProjectImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
 
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator"/>
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsGradleModuleConfigurator"/>

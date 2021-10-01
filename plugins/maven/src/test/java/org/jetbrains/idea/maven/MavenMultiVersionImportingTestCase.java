@@ -40,7 +40,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   protected void assumeVersionLessThan(String version) {
-    Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
+    Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) < 0);
   }
 
   protected void assumeVersionNot(String version) {

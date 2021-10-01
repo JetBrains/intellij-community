@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -42,7 +42,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
     myElement = element;
   }
 
-  public final void appendProblems(final DomElementAnnotationHolderImpl holder, final Class<? extends DomElementsInspection> inspectionClass) {
+  public void appendProblems(final DomElementAnnotationHolderImpl holder, final Class<? extends DomElementsInspection> inspectionClass) {
     if (isInspectionCompleted(inspectionClass)) return;
 
     for (final DomElementProblemDescriptor descriptor : holder) {
@@ -53,21 +53,21 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
-  public final boolean isInspectionCompleted(final @NotNull DomElementsInspection inspection) {
+  public boolean isInspectionCompleted(final @NotNull DomElementsInspection inspection) {
     return isInspectionCompleted(inspection.getClass());
   }
 
-  public final boolean isInspectionCompleted(final Class<? extends DomElementsInspection> inspectionClass) {
+  public boolean isInspectionCompleted(final Class<? extends DomElementsInspection> inspectionClass) {
     synchronized (DomElementAnnotationsManagerImpl.LOCK) {
       return myPassedInspections.contains(inspectionClass);
     }
   }
 
-  public final List<Annotation> getAnnotations() {
+  public List<Annotation> getAnnotations() {
     return myAnnotations;
   }
 
-  public final void addProblem(final DomElementProblemDescriptor descriptor, final Class<? extends DomElementsInspection> inspection) {
+  public void addProblem(final DomElementProblemDescriptor descriptor, final Class<? extends DomElementsInspection> inspection) {
     ContainerUtil.getOrCreate(ContainerUtil.getOrCreate(myCachedErrors, descriptor.getDomElement(), CONCURRENT_HASH_MAP_FACTORY), inspection,
                               SMART_LIST_FACTORY).add(descriptor);
     myCachedChildrenErrors.clear();

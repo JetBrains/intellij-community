@@ -1,9 +1,9 @@
-fun foo(f: () -> Int) {
+fun calculate(f: () -> Int) {
     f()
 }
 
 fun main(args: String) {
-    foo(fun(): Int {
+    calculate(fun(): Int {
         return 1
     })
 }

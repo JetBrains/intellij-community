@@ -15,10 +15,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.List;
@@ -298,7 +295,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)result;
   }
 
-  public int getHeightOfBlockElementsBeforeVisualLine(int visualLine) {
+  @ApiStatus.Internal
+  public int getHeightOfBlockElementsBeforeVisualLine(int visualLine, int startOffset, int prevFoldRegionIndex) {
     if (visualLine < 0 || !hasBlockElements()) return 0;
     int visibleLineCount = myEditor.getVisibleLineCount();
     if (visualLine >= visibleLineCount) {
@@ -306,12 +304,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
              myEditor.getFoldingModel().getTotalHeightOfFoldedBlockInlays();
     }
     int[] result = {0};
-    int startOffset = myEditor.visualLineStartOffset(visualLine);
     int endOffset = visualLine >= visibleLineCount - 1 ? myEditor.getDocument().getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
     if (visualLine > 0) {
       result[0] += myBlockElementsTree.getSumOfValuesUpToOffset(startOffset - 1) -
-                   myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(startOffset);
+                   myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(prevFoldRegionIndex);
     }
     myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
       if (inlay.myShowAbove && !EditorUtil.isInlayFolded(inlay)) {
@@ -385,7 +382,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     VisualPosition visualPosition = location.getVisualPosition();
     if (hasBlockElements) {
       int visualLine = visualPosition.line;
-      int baseY = location.getVisualLineBaseY();
+      int baseY = location.getVisualLineStartY();
       if (point.y < baseY) {
         List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
         int yDiff = baseY - point.y;
@@ -401,7 +398,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
         return null;
       }
       else {
-        int lineBottom = baseY + myEditor.getLineHeight();
+        int lineBottom = location.getVisualLineEndY();
         if (point.y >= lineBottom) {
           List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
           int yDiff = point.y - lineBottom;
@@ -418,20 +415,22 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
       }
     }
     if (hasInlineElements) {
-      int offset = location.getOffset();
-      List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
-      if (!inlays.isEmpty()) {
-        VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-        Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
-        if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
-        Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
-        if (inlay != null) return inlay;
+      if (location.getCollapsedRegion() == null) {
+        int offset = location.getOffset();
+        List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
+        if (!inlays.isEmpty()) {
+          VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+          Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+          if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+          Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
+          if (inlay != null) return inlay;
+        }
       }
     }
     if (hasAfterLineEndElements) {
       int offset = location.getOffset();
       int logicalLine = myEditor.getDocument().getLineNumber(offset);
-      if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
+      if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
         List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
         if (!inlays.isEmpty()) {
           Rectangle bounds = inlays.get(0).getBounds();

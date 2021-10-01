@@ -1,4 +1,4 @@
 @file:JvmName("renamedFile")
 
 // SEARCH_TEXT: renamed
-// REF: @file:JvmName("renamedFile")
+// REF: jvmNameAnnotatedFile.kt in <root>.renamedFile

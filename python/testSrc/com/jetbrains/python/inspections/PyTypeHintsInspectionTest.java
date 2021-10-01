@@ -270,6 +270,57 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-28249
+  public void testInstanceAndClassChecksOnUnionBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTestByText("from typing import Union\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union</error>)\n" +
+                   "B = Union\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B</error>)\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[int, str]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B[int, str]</error>)\n" +
+                   "C = B[int, str]\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">C</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[str, Union[str, Union[list, dict]]]</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[str, Union[str, Union[list[int], dict]]]</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | str</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | list[str]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | str</error>)\n" +
+                   "assert issubclass(A, <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | list[str]</error>)");
+    });
+  }
+
+  // PY-44974
+  public void testInstanceAndClassChecksOnUnionFromFutureAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTestByText("from typing import Union\n" +
+                   "from __future__ import annotations\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union</error>)\n" +
+                   "B = Union\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B</error>)\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[int, str]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B[int, str]</error>)\n" +
+                   "C = B[int, str]\n" +
+                   "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">C</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[str, Union[str, Union[list, dict]]]</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[str, Union[str, Union[list[int], dict]]]</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | str</error>)\n" +
+                   "assert isinstance(A(), <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | list[str]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | str</error>)\n" +
+                   "assert issubclass(A, <error descr=\"Python version 3.9 does not allow writing union types as X | Y\">int | list[str]</error>)");
+    });
+  }
+
+  // PY-44974
   public void testInstanceAndClassChecksOnUnion() {
     doTestByText("from typing import Union\n" +
                  "\n" +
@@ -280,10 +331,55 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "B = Union\n" +
                  "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B</error>)\n" +
                  "\n" +
-                 "assert isinstance(A(), <error descr=\"'Union' cannot be used with instance and class checks\">Union[int, str]</error>)\n" +
-                 "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">B[int, str]</error>)\n" +
+                 "assert isinstance(A(), Union[int, str])\n" +
+                 "assert issubclass(A, B[int, str])\n" +
                  "C = B[int, str]\n" +
-                 "assert issubclass(A, <error descr=\"'Union' cannot be used with instance and class checks\">C</error>)");
+                 "assert issubclass(A, C)\n" +
+                 "assert isinstance(A(), Union[str, Union[str, Union[list, dict]]])\n" +
+                 "assert isinstance(A(), Union[str, Union[str, Union[<error descr=\"Parameterized generics cannot be used with instance and class checks\">list[int]</error>, dict]]])\n" +
+                 "assert isinstance(A(), int | str)\n" +
+                 "assert isinstance(A(), int | <error descr=\"Parameterized generics cannot be used with instance and class checks\">list[str]</error>)\n" +
+                 "assert issubclass(A, int | str)\n" +
+                 "assert issubclass(A, int | <error descr=\"Parameterized generics cannot be used with instance and class checks\">list[str]</error>)\n");
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnOptionalBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTestByText("from typing import Optional\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional</error>)\n" +
+                   "B = Optional\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B</error>)\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional[int]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B[int]</error>)\n" +
+                   "C = B[int]\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">C</error>)");
+    });
+  }
+
+  // PY-28249
+  public void testInstanceAndClassChecksOnOptionalFromFutureAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTestByText("from typing import Optional\n" +
+                   "from __future__ import annotations\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional</error>)\n" +
+                   "B = Optional\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B</error>)\n" +
+                   "\n" +
+                   "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional[int]</error>)\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B[int]</error>)\n" +
+                   "C = B[int]\n" +
+                   "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">C</error>)");
+    });
   }
 
   // PY-28249
@@ -297,10 +393,10 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "B = Optional\n" +
                  "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B</error>)\n" +
                  "\n" +
-                 "assert isinstance(A(), <error descr=\"'Optional' cannot be used with instance and class checks\">Optional[int]</error>)\n" +
-                 "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">B[int]</error>)\n" +
+                 "assert isinstance(A(), Optional[int])\n" +
+                 "assert issubclass(A, B[int])\n" +
                  "C = B[int]\n" +
-                 "assert issubclass(A, <error descr=\"'Optional' cannot be used with instance and class checks\">C</error>)");
+                 "assert issubclass(A, C)");
   }
 
   // PY-28249

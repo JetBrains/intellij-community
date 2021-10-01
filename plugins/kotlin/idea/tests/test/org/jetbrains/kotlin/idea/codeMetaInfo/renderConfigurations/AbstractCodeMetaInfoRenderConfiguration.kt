@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
 
 abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean = true) {
-    private val clickOrPressRegex = "(Click or press|Press).*(to navigate)".toRegex() //We have different hotkeys on different platforms
-    open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.getTag() + getPlatformsString(codeMetaInfo)
+    private val clickOrPressRegex = "(Click or press|Press).*(to navigate)".toRegex() // We have different hotkeys on different platforms
+    open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.tag + getPlatformsString(codeMetaInfo)
 
     open fun getAdditionalParams(codeMetaInfo: CodeMetaInfo) = ""
 
@@ -38,8 +38,8 @@ abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean
     }
 
     protected fun getPlatformsString(codeMetaInfo: CodeMetaInfo): String {
-        if (codeMetaInfo.platforms.isEmpty()) return ""
-        return "{${codeMetaInfo.platforms.joinToString(";")}}"
+        if (codeMetaInfo.attributes.isEmpty()) return ""
+        return "{${codeMetaInfo.attributes.joinToString(";")}}"
     }
 }
 
@@ -60,6 +60,8 @@ open class DiagnosticCodeMetaInfoConfiguration(
     private fun getParamsString(codeMetaInfo: DiagnosticCodeMetaInfo): String {
         if (!renderParams) return ""
         val params = mutableListOf<String>()
+
+        @Suppress("UNCHECKED_CAST")
         val renderer = when (codeMetaInfo.diagnostic.factory) {
             is DebugInfoDiagnosticFactory1 -> DiagnosticWithParameters1Renderer(
                 "{0}",
@@ -141,7 +143,7 @@ open class HighlightingConfiguration(
             highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
                 params.add("textAttributesKey='${this}'")
             }
-        params.add(getAdditionalParams(highlightingCodeMetaInfo))
+            params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")
 
         return if (paramsString.isEmpty()) "" else "(\"$paramsString\")"

@@ -73,6 +73,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     assertEchoOutput(".*");
     assertEchoOutput("*");
     assertEchoOutput("\\\\\\\"");
+    assertEchoOutput("  ");
     assertEchoOutput("_ \"  ' ) \\");
     assertEchoOutput("' ''' '' '");
     assertEchoOutput("$ ]&<>:\"|'(*)[$PATH");
@@ -154,6 +155,18 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     command.add(echoExecutableLinuxPath);
     command.addAll(echoParams);
     assertWslCommandOutput(expectedOut, null, Collections.emptyMap(), command);
+
+    List<String> execEchoParams = ContainerUtil.filter(echoParams, (param) -> {
+      // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
+      return !param.isEmpty() && !param.contains("\\");
+    });
+    if (execEchoParams.size() > 0) {
+      List<String> execCommand = new ArrayList<>(execEchoParams.size() + 1);
+      execCommand.add(echoExecutableLinuxPath);
+      execCommand.addAll(execEchoParams);
+      String execExpectedOut = String.join(" ", execEchoParams) + "\n";
+      assertWslCommandOutput(execExpectedOut, Collections.emptyMap(), execCommand, new WSLCommandLineOptions().setExecuteCommandInShell(false));
+    }
   }
 
   @Test
@@ -279,8 +292,10 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
       .setExecuteCommandInInteractiveShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    if (!ContainerUtil.exists(command, String::isEmpty) && remoteWorkingDirectory == null) {
+    if (remoteWorkingDirectory == null && ContainerUtil.all(command, (param) -> {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
+      return !param.isEmpty() && !param.contains("\\");
+    })) {
       assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setExecuteCommandInShell(false));
     }
   }

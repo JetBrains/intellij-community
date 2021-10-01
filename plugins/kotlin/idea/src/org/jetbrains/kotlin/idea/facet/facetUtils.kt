@@ -20,14 +20,15 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.coerceAtMostVersion
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.defaultSubstitutors
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.platform.*
-import org.jetbrains.kotlin.platform.compat.toNewPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -89,14 +90,13 @@ fun KotlinFacetSettings.initializeIfNeeded(
         apiLevel = if (useProjectSettings) {
             LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
         } else {
-            languageLevel?.coerceAtMost(
-                getLibraryLanguageLevel(
-                    module,
-                    rootModel,
-                    this.targetPlatform?.idePlatformKind,
-                    coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-                )
+            val maximumValue = getLibraryVersion(
+                module,
+                rootModel,
+                this.targetPlatform?.idePlatformKind,
+                coerceRuntimeLibraryVersionToReleased = compilerVersion == null
             )
+            languageLevel?.coerceAtMostVersion(maximumValue)
         }
     }
 }
@@ -150,16 +150,14 @@ fun Module.removeKotlinFacet(
 //method used for non-mpp modules
 fun KotlinFacet.configureFacet(
     compilerVersion: String?,
-    coroutineSupport: LanguageFeature.State,
     platform: TargetPlatform?,
     modelsProvider: IdeModifiableModelsProvider
 ) {
-    configureFacet(compilerVersion, coroutineSupport, platform, modelsProvider, false, emptyList(), emptyList())
+    configureFacet(compilerVersion, platform, modelsProvider, false, emptyList(), emptyList())
 }
 
 fun KotlinFacet.configureFacet(
     compilerVersion: String?,
-    coroutineSupport: LanguageFeature.State,
     platform: TargetPlatform?, // if null, detect by module dependencies
     modelsProvider: IdeModifiableModelsProvider,
     hmppEnabled: Boolean,
@@ -184,7 +182,6 @@ fun KotlinFacet.configureFacet(
         if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
             this.apiLevel = languageLevel
         }
-        this.coroutineSupport = if (languageLevel != null && languageLevel < LanguageVersion.KOTLIN_1_3) coroutineSupport else null
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 
@@ -199,21 +196,6 @@ private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {
 fun Module.externalSystemTestRunTasks() = externalSystemRunTasks().filterIsInstance<ExternalSystemTestRunTask>()
 fun Module.externalSystemNativeMainRunTasks() = externalSystemRunTasks().filterIsInstance<ExternalSystemNativeMainRunTask>()
 
-@Suppress("DEPRECATION_ERROR", "DeprecatedCallableAddReplaceWith")
-@Deprecated(
-    message = "IdePlatform is deprecated and will be removed soon, please, migrate to org.jetbrains.kotlin.platform.TargetPlatform",
-    level = DeprecationLevel.ERROR
-)
-fun KotlinFacet.configureFacet(
-    compilerVersion: String?,
-    coroutineSupport: LanguageFeature.State,
-    platform: IdePlatform<*, *>,
-    modelsProvider: IdeModifiableModelsProvider
-) {
-    configureFacet(compilerVersion, coroutineSupport, platform.toNewPlatform(), modelsProvider)
-}
-
-
 fun KotlinFacet.noVersionAutoAdvance() {
     configuration.settings.compilerArguments?.let {
         it.autoAdvanceLanguageVersion = false
@@ -226,8 +208,7 @@ fun KotlinFacet.noVersionAutoAdvance() {
 val commonUIExposedFields = listOf(
     CommonCompilerArguments::languageVersion.name,
     CommonCompilerArguments::apiVersion.name,
-    CommonCompilerArguments::suppressWarnings.name,
-    CommonCompilerArguments::coroutinesState.name
+    CommonCompilerArguments::suppressWarnings.name
 )
 private val commonUIHiddenFields = listOf(
     CommonCompilerArguments::pluginClasspaths.name,
@@ -314,6 +295,9 @@ private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArgum
 private fun Module.hasNonOverriddenExternalSdkConfiguration(compilerArguments: CommonCompilerArguments): Boolean =
     hasExternalSdkConfiguration && (compilerArguments !is K2JVMCompilerArguments || compilerArguments.jdkHome == null)
 
+private fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
+    args + defaultSubstitutors[compilerArguments::class]?.filter { it.isSubstitutable(args) }?.flatMap { it.oldSubstitution }.orEmpty()
+
 fun parseCompilerArgumentsToFacet(
     arguments: List<String>,
     defaultArguments: List<String>,
@@ -323,8 +307,10 @@ fun parseCompilerArgumentsToFacet(
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.newInstance()
     val defaultArgumentsBean = compilerArgumentsClass.newInstance()
-    parseCommandLineArguments(defaultArguments, defaultArgumentsBean)
-    parseCommandLineArguments(arguments, currentArgumentsBean)
+    val defaultArgumentWithDefaults = substituteDefaults(defaultArguments, defaultArgumentsBean)
+    val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
+    parseCommandLineArguments(defaultArgumentWithDefaults, defaultArgumentsBean)
+    parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
     applyCompilerArgumentsToFacet(currentArgumentsBean, defaultArgumentsBean, kotlinFacet, modelsProvider)
 }
 
@@ -368,7 +354,7 @@ fun applyCompilerArgumentsToFacet(
 
         val additionalArgumentsString = with(compilerArguments::class.java.newInstance()) {
             copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) && it.name !in ignoredFields }
-            ArgumentUtils.convertArgumentsToStringList(this).joinToString(separator = " ") {
+            ArgumentUtils.convertArgumentsToStringListNoDefaults(this).joinToString(separator = " ") {
                 if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
                     StringUtil.wrapWithDoubleQuote(StringUtil.escapeQuotes(it))
                 } else it

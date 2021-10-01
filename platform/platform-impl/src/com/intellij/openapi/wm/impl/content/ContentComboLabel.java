@@ -23,13 +23,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-final class ContentComboLabel extends BaseLabel {
+final class ContentComboLabel extends ContentLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth() - 3, 0, getIconWidth(), getHeight());
+      return new Rectangle(getWidth() - getIconWidth() - ICONS_GAP, 0, getIconWidth(), getHeight());
     }
 
     @Override
@@ -59,18 +59,31 @@ final class ContentComboLabel extends BaseLabel {
   }
 
   @Override
-  protected void processMouseEvent(MouseEvent e) {
-    super.processMouseEvent(e);
+  protected @Nullable String getOriginalText() {
+    Content content = getContent();
+    //noinspection DialogTitleCapitalization
+    return content != null ? content.getDisplayName() : null;
+  }
 
-    if (UIUtil.isActionClick(e)) {
-      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager(), myPopupState);
+  @Override
+  protected void handleMouseClick(@NotNull MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      handleActionsClick(e);
+    }
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+      if (findHoveredIcon() != null) return;
+
+      if (UIUtil.isActionClick(e)) {
+        if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager(), myPopupState);
+      }
     }
   }
 
   void update() {
     setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
     updateTextAndIcon(getContent(), true);
+    updateAdditionalActions();
   }
 
   @Override
@@ -95,6 +108,7 @@ final class ContentComboLabel extends BaseLabel {
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (!isPreferredSizeSet() && isToDrawCombo()) {
+      if (hasActiveIcons()) size.width -= ICONS_GAP;
       size.width += myComboIcon.getIconWidth();
     }
     return size;

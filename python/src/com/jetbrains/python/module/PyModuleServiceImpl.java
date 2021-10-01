@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.module;
 
 import com.intellij.facet.Facet;
@@ -15,8 +15,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
-public class PyModuleServiceImpl extends PyModuleServiceEx {
+final class PyModuleServiceImpl extends PyModuleServiceEx {
   @Override
   public ModuleBuilder createPythonModuleBuilder(DirectoryProjectGenerator generator) {
     return new PythonModuleBuilderBase(generator);
@@ -24,15 +23,13 @@ public class PyModuleServiceImpl extends PyModuleServiceEx {
 
   @Override
   public boolean isFileIgnored(@NotNull VirtualFile file) {
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    return fileTypeManager.isFileIgnored(file);
+    return FileTypeManager.getInstance().isFileIgnored(file);
   }
 
   @Nullable
   @Override
   public Sdk findPythonSdk(@NotNull Module module) {
-    final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet facet : facets) {
+    for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
       final FacetConfiguration configuration = facet.getConfiguration();
       if (configuration instanceof PythonFacetSettings) {
         return ((PythonFacetSettings)configuration).getSdk();
@@ -43,7 +40,7 @@ public class PyModuleServiceImpl extends PyModuleServiceEx {
 
   @Override
   public void forAllFacets(@NotNull Module module, @NotNull Consumer<Object> facetConsumer) {
-    for(Facet f: FacetManager.getInstance(module).getAllFacets()) {
+    for (Facet<?> f : FacetManager.getInstance(module).getAllFacets()) {
       facetConsumer.consume(f);
     }
   }

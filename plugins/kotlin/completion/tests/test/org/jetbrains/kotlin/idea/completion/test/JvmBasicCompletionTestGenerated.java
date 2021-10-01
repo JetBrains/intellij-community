@@ -85,11 +85,6 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             runTest("testData/basic/common/ConsiderExtensionType.kt");
         }
 
-        @TestMetadata("CoroutineContext.kt")
-        public void testCoroutineContext() throws Exception {
-            runTest("testData/basic/common/CoroutineContext.kt");
-        }
-
         @TestMetadata("CoroutineContextReleaseCoroutines.kt")
         public void testCoroutineContextReleaseCoroutines() throws Exception {
             runTest("testData/basic/common/CoroutineContextReleaseCoroutines.kt");
@@ -1456,6 +1451,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("testData/basic/common/fromSmart/ArrayLiteralAnnotationUseForVararg.kt");
             }
 
+            @TestMetadata("CustomAnnotation.kt")
+            public void testCustomAnnotation() throws Exception {
+                runTest("testData/basic/common/fromSmart/CustomAnnotation.kt");
+            }
+
             @TestMetadata("EnumEntries.kt")
             public void testEnumEntries() throws Exception {
                 runTest("testData/basic/common/fromSmart/EnumEntries.kt");
@@ -2805,6 +2805,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             runTest("testData/basic/java/JavaPackage.kt");
         }
 
+        @TestMetadata("JavaSyntheticProperty.kt")
+        public void testJavaSyntheticProperty() throws Exception {
+            runTest("testData/basic/java/JavaSyntheticProperty.kt");
+        }
+
         @TestMetadata("KProperty.kt")
         public void testKProperty() throws Exception {
             runTest("testData/basic/java/KProperty.kt");
@@ -2838,6 +2843,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
         @TestMetadata("NonImportedPrefixMatching2.kt")
         public void testNonImportedPrefixMatching2() throws Exception {
             runTest("testData/basic/java/NonImportedPrefixMatching2.kt");
+        }
+
+        @TestMetadata("NullableAnnotation.kt")
+        public void testNullableAnnotation() throws Exception {
+            runTest("testData/basic/java/NullableAnnotation.kt");
         }
 
         @TestMetadata("Number.kt")

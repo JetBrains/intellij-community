@@ -29,7 +29,11 @@ kotlin {
                 api(compose.material)
             }
         }
-        val commonTest by getting
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
         val androidMain by getting {
             dependencies {
                 api("androidx.appcompat:appcompat:1.2.0")

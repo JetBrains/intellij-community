@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports calls to <code>Assert.assertEquals()</code>, <code>Assert.assertTrue()</code> etc. methods
+Reports calls to <code>Assert.assertEquals()</code>, <code>Assert.assertTrue()</code>, etc. methods
 which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</code> calls.
 <p>For example:</p>
 <pre><code>
@@ -15,7 +15,7 @@ which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</c
     }
   }
 </code></pre>
-<p>A quick fix is provided to perform the migration:</p>
+<p>A quick-fix is provided to perform the migration:</p>
 <pre><code>
   <b>public class</b> SubstantialTest {
     @Test
@@ -30,6 +30,6 @@ which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</c
 </code></pre>
 <!-- tooltip end -->
 <p>This inspection requires that the Hamcrest library is available on the classpath.
-<p>Use the check box below to specify if you want the quick fix to statically import the Hamcrest matcher methods.
+<p>Use the <b>Statically import matcher's methods</b> option to specify if you want the quick-fix to statically import the Hamcrest matcher methods.
 </body>
 </html>

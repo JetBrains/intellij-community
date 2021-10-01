@@ -105,6 +105,18 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     return super.getData(dataId);
   }
 
+  protected void processDroppedDirectories(@NotNull List<VirtualFile> dirs) {
+    if (dirs.isEmpty()) return;
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    if (modules.length == 0) return;
+    final Module module = modules[0];
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      for (VirtualFile file : dirs) {
+        model.addContentEntry(file);
+      }
+    });
+  }
+
   private class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
     private JComponent myWrappee;
     private final JPanel myDropArea = new JPanel(new BorderLayout());
@@ -162,20 +174,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     @Override
     public void drop(@NotNull final DnDEvent event) {
       hideDropArea();
-      doDrop(event);
-    }
-
-    private void doDrop(@NotNull DnDEvent event) {
-      final List<VirtualFile> dirs = getDirectories(event);
-      if (dirs.isEmpty()) return;
-      Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      if (modules.length == 0) return;
-      final Module module = modules[0];
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        for (VirtualFile file : dirs) {
-          model.addContentEntry(file);
-        }
-      });
+      processDroppedDirectories(getDirectories(event));
     }
 
     @Override

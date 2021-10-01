@@ -12,7 +12,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineComponent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.ListModel
@@ -31,7 +31,7 @@ class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullReq
   init {
     border = JBUI.Borders.emptyTop(6)
 
-    detailsModel.addValueChangedListener {
+    detailsModel.addListener {
       remove(0)
       add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
     }

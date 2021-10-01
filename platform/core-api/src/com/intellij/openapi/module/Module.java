@@ -39,9 +39,9 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
    * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
-   * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
+   * from external project system (e.g., Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
    * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
-   * If you need to get just some directory near to module files (e.g. to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(com.intellij.openapi.module.Module)}.
+   * If you need to get just some directory near to module files (e.g., to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(Module)}.
    */
   @ApiStatus.Internal
   @Nullable VirtualFile getModuleFile();

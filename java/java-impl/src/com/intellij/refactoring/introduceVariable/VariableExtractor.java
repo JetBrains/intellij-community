@@ -154,7 +154,7 @@ final class VariableExtractor {
       PsiElement[] occurrences =
         ContainerUtil.map2Array(ReferencesSearch.search(var, new LocalSearchScope(myContainingFile)).findAll(), 
                                 PsiElement.class,
-                                ref -> ref.resolve());
+                                ref -> ref.getElement());
       IntroduceVariableBase.highlightReplacedOccurrences(myProject, myEditor, occurrences);
     }
   }

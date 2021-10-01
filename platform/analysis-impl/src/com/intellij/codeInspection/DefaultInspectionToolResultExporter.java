@@ -457,7 +457,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         VirtualFile file = ((ProblemDescriptorBase)d).getContainingFile();
         if (file != null) {
           LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
-                         "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+                         "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate() + 
+                         ", entityFile: " + entityFile.getName());
         }
       }
     }

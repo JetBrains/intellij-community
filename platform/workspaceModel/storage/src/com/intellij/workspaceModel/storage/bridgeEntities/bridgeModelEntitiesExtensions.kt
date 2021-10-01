@@ -14,8 +14,6 @@ fun SourceRootEntity.equalsAsOrderEntry(other: SourceRootEntity): Boolean {
   val afterPackagePrefix = other.asJavaSourceRoot()?.packagePrefix ?: other.asJavaResourceRoot()?.relativeOutputPath
   if (beforePackagePrefix != afterPackagePrefix) return false
 
-  if (this.tests != other.tests) return false
-
   val beforeGenerated = this.asJavaSourceRoot()?.generated ?: this.asJavaResourceRoot()?.generated
   val afterGenerated = other.asJavaSourceRoot()?.generated ?: other.asJavaResourceRoot()?.generated
   if (beforeGenerated != afterGenerated) return false
@@ -29,7 +27,7 @@ fun SourceRootEntity.hashCodeAsOrderEntry(): Int {
   val packagePrefix = this.asJavaSourceRoot()?.packagePrefix ?: this.asJavaResourceRoot()?.relativeOutputPath
   val generated = this.asJavaSourceRoot()?.generated ?: this.asJavaResourceRoot()?.generated
 
-  return Objects.hash(packagePrefix, tests, generated, url)
+  return Objects.hash(packagePrefix, generated, url)
 }
 
 fun ContentRootEntity.equalsAsOrderEntry(other: ContentRootEntity): Boolean {

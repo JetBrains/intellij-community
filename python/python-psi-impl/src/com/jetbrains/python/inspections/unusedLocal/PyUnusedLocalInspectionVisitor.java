@@ -460,7 +460,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     final PyCallExpression expr = (PyCallExpression)source;
     if (expr.isCalleeText("range", "xrange")) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(forStatement);
 
       return ContainerUtil.exists(expr.multiResolveCalleeFunction(resolveContext), builtinCache::isBuiltin);

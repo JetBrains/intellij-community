@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -12,10 +16,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -41,7 +43,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingMod
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
@@ -49,7 +50,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
 import javax.swing.JList
@@ -155,7 +155,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
     private fun findCommitsList(parent: JComponent): JList<VcsCommitMetadata>? {
-      UIUtil.getClientProperty(parent, GHPRCommitsBrowserComponentFactory.COMMITS_LIST_KEY)?.run {
+      UIUtil.getClientProperty(parent, CommitsBrowserComponentFactory.COMMITS_LIST_KEY)?.run {
         return this
       }
 
@@ -197,7 +197,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     detailsLoadingErrorHandler).createWithUpdatesStripe(uiDisposable) { _, model ->
       val branchesModel = GHPRBranchesModelImpl(model,
                                                 dataProvider.detailsData,
-                                                dataContext.repositoryDataService.repositoryMapping.gitRemote.repository,
+                                                dataContext.repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates.repository,
                                                 disposable)
 
       val detailsModel = GHPRDetailsModelImpl(model)
@@ -235,7 +235,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponentFactory(project).create(model.map { list ->
+        val (commitBrowser, commitList) = CommitsBrowserComponentFactory(project).create(model.map { list ->
           val logObjectsFactory = project.service<VcsLogObjectsFactory>()
           list.map { commit ->
             logObjectsFactory.createCommitMetadata(
@@ -253,6 +253,15 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
             )
           }
         }, commitSelectionListener)
+
+        commitList.emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
+
+        PopupHandler.installSelectionListPopup(
+          commitList,
+          DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
+          "GHPRCommitsPopup")
+
+        commitBrowser
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
@@ -329,7 +338,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
     border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       isVisible = !model.value.linearHistory
     }
   }
@@ -342,7 +351,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       model.value = changesModel.value.changesByCommits[commit?.id?.asString()].orEmpty()
     }
     commitSelectionListener.delegate = ::update
-    changesModel.addAndInvokeValueChangedListener(::update)
+    changesModel.addAndInvokeListener { update() }
     return model
   }
 
@@ -350,6 +359,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                 model: SingleValueModel<List<Change>>,
                                 emptyTextText: String): JComponent {
     val editorDiffPreview = object : DiffPreview {
+      override fun updateAvailability(event: AnActionEvent) {
+        GHPRShowDiffActionProvider.updateAvailability(event)
+      }
+
       override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
         if (isPreviewVisible) {
           viewController.openPullRequestDiff(dataProvider.id, focus)

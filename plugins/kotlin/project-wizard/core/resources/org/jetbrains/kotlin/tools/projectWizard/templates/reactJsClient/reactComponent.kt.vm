@@ -5,6 +5,7 @@ import react.RBuilder
 import react.RComponent
 import react.RProps
 import react.RState
+import react.dom.attrs
 #if($useStyledComponents)
 import styled.css
 import styled.styledDiv

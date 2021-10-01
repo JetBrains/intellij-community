@@ -4,6 +4,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
+import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
@@ -15,8 +16,8 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
 import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.ui.DialogPanel
@@ -121,6 +122,13 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
+
+        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
+          val nameGeneratorUi = nameGenerator.getUi(moduleBuilder.builderId) { entityNameProperty.set(it) }
+          if (nameGeneratorUi != null) {
+            component(nameGeneratorUi).constraints(pushX)
+          }
+        }
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.location.label")) {

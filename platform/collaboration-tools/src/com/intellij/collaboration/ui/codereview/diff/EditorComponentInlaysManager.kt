@@ -110,7 +110,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
     private fun calcWidth(): Int {
       val visibleEditorTextWidth = editor.scrollPane.viewport.width - getVerticalScrollbarWidth() - getGutterTextGap()
-      return min(max(visibleEditorTextWidth, 0), maximumEditorTextWidth)
+      return min(max(visibleEditorTextWidth, 0), max(maximumEditorTextWidth, MINIMAL_TEXT_WIDTH))
     }
 
     private fun getVerticalScrollbarWidth(): Int {
@@ -125,5 +125,9 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
       }
       else 0
     }
+  }
+
+  companion object {
+    private const val MINIMAL_TEXT_WIDTH = 300
   }
 }

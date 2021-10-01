@@ -39,7 +39,7 @@ object AccountsPanelFactory {
 
       selectionMode = ListSelectionModel.SINGLE_SELECTION
     }
-    model.busyStateModel.addInvokeListener {
+    model.busyStateModel.addListener {
       accountsList.setPaintBusy(it)
     }
 
@@ -83,7 +83,7 @@ object AccountsPanelFactory {
                                             defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
-    detailsProvider.loadingStateModel.addInvokeListener {
+    detailsProvider.loadingStateModel.addListener {
       accountsModel.busyStateModel.value = it
     }
 

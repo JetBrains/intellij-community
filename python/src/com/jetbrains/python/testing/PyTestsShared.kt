@@ -10,12 +10,15 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -26,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -53,25 +57,15 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.util.regex.Matcher
-
-/**
- * New configuration factories
- */
-internal val pythonFactories: Array<PyAbstractTestFactory<*>>
-  get() = arrayOf(
-    PyTestFactory(),
-    PyNoseTestFactory(),
-    PyTrialTestFactory(),
-    PyUnitTestFactory())
-
-internal val defaultFactory: PyAbstractTestFactory<*> get() = PyUnitTestFactory()
 
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
   // user may have "pytest" because it was used instead of py.test (old id) for some time
-  pythonFactories.firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
+  PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
 
-fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
+fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id)
+                                                                    ?: PythonTestConfigurationType.getInstance().autoDetectFactory
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -94,15 +88,32 @@ internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::add
  */
 fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
   is PyFile -> PythonUnitTestDetectorsBasedOnSettings.isTestFile(element, testCaseClassRequired, typeEvalContext)
-  is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
-  }
+  is PsiDirectory -> isTestFolder(element, testCaseClassRequired, typeEvalContext)
   is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
                                                                          testCaseClassRequired, typeEvalContext)
   is com.jetbrains.python.psi.PyClass -> {
     PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
+}
+
+/**
+ * If element is a subelement of the folder excplicitly marked as test root -- use it
+ */
+private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem): VirtualFile? {
+  val vfDirectory = element.virtualFile
+  val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
+  return ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).firstOrNull {
+    VfsUtil.isAncestor(it, vfDirectory, false)
+  }
+}
+
+private fun isTestFolder(element: PsiDirectory,
+                         testCaseClassRequired: ThreeState,
+                         typeEvalContext: TypeEvalContext): Boolean {
+  return (getExplicitlyConfiguredTestRoot(element) != null) || element.name.contains("test", true) || element.children.any {
+    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
+  }
 }
 
 
@@ -433,15 +444,17 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   val testFrameworkName: String = testFactory.name
 
-  /**
-   * @see [RunnersThatRequireTestCaseClass]
-   */
-  fun isTestClassRequired(): ThreeState = if (testFactory.onlyClassesSupported) {
-    ThreeState.YES
+
+  fun isTestClassRequired(): ThreeState {
+    val sdk = sdk ?: return ThreeState.UNSURE
+    return if (testFactory.onlyClassesAreSupported(sdk)) {
+      ThreeState.YES
+    }
+    else {
+      ThreeState.NO
+    }
   }
-  else {
-    ThreeState.NO
-  }
+
 
   /**
    * For real launch use [getWorkingDirectorySafe] instead
@@ -459,7 +472,9 @@ abstract class PyAbstractTestConfiguration(project: Project,
       return dirProvidedByUser
     }
 
-    return target.getElementDirectory(this)?.path ?: super.getWorkingDirectorySafe()
+    return ApplicationManager.getApplication().runReadAction<String> {
+      target.getElementDirectory(this)?.path ?: super.getWorkingDirectorySafe()
+    }
   }
 
   override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
@@ -545,8 +560,14 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return emptyList()
   }
 
-  override fun suggestedName(): String =
-    when (target.targetType) {
+  /**
+   * If true, then framework name must be used as part of the run configuration name i.e "pytest: spam.eggs"
+   */
+  protected open val useFrameworkNameInConfiguration = true
+
+  override fun suggestedName(): String {
+    val testFrameworkName = if (useFrameworkNameInConfiguration) testFrameworkName else PyBundle.message("runcfg.test.display_name")
+    return when (target.targetType) {
       PyRunTargetVariant.PATH -> {
         val name = target.asVirtualFile()?.name
         PyBundle.message("runcfg.test.suggest.name.in.path", testFrameworkName, (name ?: target.target))
@@ -558,6 +579,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
         testFrameworkName
       }
     }
+  }
 
 
   /**
@@ -648,8 +670,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
   open fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean = target == this.target
 }
 
-abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
-  PythonTestConfigurationType.getInstance()) {
+abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(type: PythonTestConfigurationType)
+  : PythonConfigurationFactoryBase(type) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
 
   // Several insances of the same class point to the same factory
@@ -659,7 +681,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
   /**
    * Only UnitTest inheritors are supported
    */
-  abstract val onlyClassesSupported: Boolean
+  abstract fun onlyClassesAreSupported(sdk: Sdk): Boolean
 
   /**
    * Test framework needs package to be installed
@@ -734,9 +756,14 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     }
 
     /**
-     * Inspects file relative imports, finds farthest and returns folder with imported file
+     * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
+     * Inspect file relative imports, find farthest and return folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+      getExplicitlyConfiguredTestRoot(file)?.let {
+        return PsiManager.getInstance(file.project).findDirectory(it)
+      }
+
       val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
       var elementFolder = file.parent ?: return null
       for (i in 1..maxRelativeLevel) {
@@ -794,8 +821,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       location.metainfo?.let { configuration.setMetaInfo(it) }
     }
     else {
-      val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                            element) ?: return false
+      val targetForConfig = getTargetForConfig(configuration, element) ?: return false
       targetForConfig.configurationTarget.copyTo(configuration.target)
       // Directory may be set in Default configuration. In that case no need to rewrite it.
       if (configuration.workingDirectory.isNullOrEmpty()) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.util.io.Base62
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import it.unimi.dsi.fastutil.bytes.ByteArrays
@@ -41,7 +42,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   fun writeTo(out: Writer, prettyPrint: Boolean = true) {
     val writer = JsonFactory().createGenerator(out)
     if (prettyPrint) {
-      writer.useDefaultPrettyPrinter()
+      writer.prettyPrinter = IntelliJPrettyPrinter()
     }
     writer.use {
       writeGraph(writer)
@@ -76,6 +77,10 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
   private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, parentId: String?) {
     assert(!nodeInfoToId.containsKey(item))
+
+    if (isNodeSkipped(item)) {
+      return
+    }
 
     val nodeName = item.name ?: item.sourceModuleName
     val id = idGenerator.getId(nodeName)
@@ -127,6 +132,10 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: String) {
     for (ref in dependentInfo.dependencies) {
       val dep = ref.moduleInfo
+      if (isNodeSkipped(dep)) {
+        continue
+      }
+
       if (!nodeInfoToId.containsKey(dep)) {
         writeModuleInfo(writer = writer, item = dep, parentId = null)
       }
@@ -162,6 +171,9 @@ private fun writeLinks(writer: JsonGenerator, links: Map<String, List<String>>, 
     }
   })
 }
+
+// skip to simplify graph
+private fun isNodeSkipped(dep: ModuleInfo) = dep.name == "com.intellij.modules.ultimate" || dep.name == "com.intellij.modules.lang"
 
 private fun getItemNodeType(item: ModuleInfo): Int {
   if (item.isPlugin) {

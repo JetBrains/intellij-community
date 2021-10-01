@@ -24,10 +24,6 @@ final class FileBasedIndexFileTypeListener implements FileTypeListener {
       .map(ex -> ex.getName())
       .collect(Collectors.toList());
 
-    String rebuiltIndexesLog = indexesToRebuild.isEmpty()
-                               ? ""
-                               : "; indexes " + indexesToRebuild + " will be rebuild completely due to version change";
-    FileBasedIndexImpl.LOG.info(rebuiltIndexesLog);
     fileBasedIndex.scheduleFullIndexesRescan(indexesToRebuild, "File type change: " +
                                                                "added - " + event.getAddedFileType() + ", " +
                                                                "removed - " + event.getRemovedFileType());

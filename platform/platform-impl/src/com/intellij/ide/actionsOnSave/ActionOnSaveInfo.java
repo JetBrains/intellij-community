@@ -2,32 +2,73 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
 /**
+ * <code>ActionOnSave</code> object lifecycle is described in {@link ActionOnSaveInfoProvider#getActionOnSaveInfos(ActionOnSaveContext)}.
+ * <br/><br/>
  * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in
  * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) must be
  * the same on both pages at any time. Consider extending {@link ActionOnSaveBackedByOwnConfigurable} in this case.
  *
  * @see ActionOnSaveBackedByOwnConfigurable
+ * @see ActionOnSaveInfo#ActionOnSaveInfo(ActionOnSaveContext)
  */
+@ApiStatus.Experimental
 public abstract class ActionOnSaveInfo {
 
-  protected void onActionsOnSaveConfigurableReset(@NotNull Settings settings) { }
+  private final @NotNull ActionOnSaveContext myContext;
+
+  /**
+   * Implementations should get understanding about their current state based on the provided {@link ActionOnSaveContext}. The current state
+   * may be already modified. See {@link ActionOnSaveContext} and {@link ActionOnSaveInfo} objects lifecycle.
+   * {@link ActionOnSaveInfo#isModified()} and all getters (like {@link #isActionOnSaveEnabled()} should be implemented accordingly.
+   * <br/><br/>
+   * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), as well as handlers of {@link #getActivatedOnDropDownLink()},
+   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()} should store their state in {@link ActionOnSaveContext}.
+   * This way, new instances of <code>ActionOnSaveInfo</code> will be able to restore their state when they are re-created next time.
+   */
+  protected ActionOnSaveInfo(@NotNull ActionOnSaveContext context) {
+    myContext = context;
+  }
+
+  protected final @NotNull Project getProject() {
+    return myContext.getProject();
+  }
+
+  protected final @NotNull Settings getSettings() {
+    return myContext.getSettings();
+  }
+
+  protected final @NotNull ActionOnSaveContext getContext() {
+    return myContext;
+  }
+
+  /**
+   * Called when OK or Apply button is pressed in the Settings (Preferences) dialog.
+   */
+  protected abstract void apply();
+
+  protected abstract boolean isModified();
 
   /**
    * Text for the corresponding checkbox (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
@@ -64,17 +105,32 @@ public abstract class ActionOnSaveInfo {
 
   /**
    * {@link ActionLink}s which are visible only when the corresponding table row is hovered. One of the standard use cases is to return a
-   * <code>Configure...</code> link that leads to the corresponding page in Settings (Preferences).
+   * <code>Configure...</code> link that leads to the corresponding page in Settings (Preferences). See {@link #createGoToPageInSettingsLink(String)}.
    * <br/><br/>
    * <b>Note:</b> do not return {@link DropDownLink}s. The problem with them is that they show a popup on click, and the popup is higher
    * than the current table row. When user clicks something in this popup - the original {@link DropDownLink} is not visible anymore
    * because the mouse pointer hovers a different table row at this moment. Implement {@link #getInPlaceConfigDropDownLink()} if needed - it is visible
    * always, not ony on hover.
    *
-   * @see ActionsOnSaveConfigurable#createGoToPageInSettingsLink(String)
+   * @see #createGoToPageInSettingsLink(String)
+   * @see #createGoToPageInSettingsLink(String, String)
    * @see #getInPlaceConfigDropDownLink()
    */
   public @NotNull List<? extends ActionLink> getActionLinks() { return Collections.emptyList(); }
+
+  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NonNls String configurableId) {
+    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
+  }
+
+  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,
+                                                                   @NotNull @NonNls String configurableId) {
+    return new ActionLink(linkText, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        getSettings().select(getSettings().find(configurableId));
+      }
+    });
+  }
 
   /**
    * Implementations may return a {@link DropDownLink} for quick in-place configuration of the corresponding 'action on save'.
@@ -95,7 +151,7 @@ public abstract class ActionOnSaveInfo {
     }
 
     JBLabel label = new JBLabel(getActivatedOnDefaultText());
-    label.setEnabled(false);
+    label.setForeground(UIUtil.getLabelDisabledForeground());
     return label;
   }
 
@@ -127,7 +183,15 @@ public abstract class ActionOnSaveInfo {
   }
 
   public static @NotNull @NlsContexts.Label String getAnySaveTextForDropDownOption() {
-    return IdeBundle.message("actions.on.save.label.activated.on.any.save.including.autosave");
+    return IdeBundle.message("actions.on.save.option.activated.on.any.save.including.autosave");
+  }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveAndExternalChangeText() {
+    return IdeBundle.message("actions.on.save.label.activated.on.any.save.and.external.change");
+  }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveAndExternalChangeTextForDropDownOption() {
+    return IdeBundle.message("actions.on.save.option.activated.on.any.save.and.external.change");
   }
 
   public static @NotNull @NlsContexts.Label String getExplicitSaveText() {

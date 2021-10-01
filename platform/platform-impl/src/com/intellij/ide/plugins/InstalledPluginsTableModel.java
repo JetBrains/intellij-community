@@ -156,7 +156,7 @@ public class InstalledPluginsTableModel {
                   });
 
     boolean enabled = action.isEnable();
-    Set<Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> dependencies =
+    Set<Pair<? extends IdeaPluginDescriptor, @NotNull String>> dependencies =
       getDependenciesToUpdateState(descriptors,
                                    tempEnabled,
                                    enabled);
@@ -176,7 +176,7 @@ public class InstalledPluginsTableModel {
     updatePluginDependencies();
   }
 
-  private void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
+  private void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                              @NotNull PluginEnableDisableAction action) {
     setNewEnabled(descriptors,
                   myEnabled,
@@ -184,10 +184,10 @@ public class InstalledPluginsTableModel {
                   this::handleBeforeChangeEnableState);
   }
 
-  private static void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
+  private static void setNewEnabled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap,
                                     @NotNull PluginEnableDisableAction action,
-                                    @NotNull BiConsumer<@NotNull ? super IdeaPluginDescriptor, @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
+                                    @NotNull BiConsumer<? super IdeaPluginDescriptor, @NotNull Pair<PluginEnableDisableAction, PluginEnabledState>> beforeHandler) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginId pluginId = descriptor.getPluginId();
       PluginEnabledState oldState = enabledMap.get(pluginId);
@@ -215,9 +215,9 @@ public class InstalledPluginsTableModel {
   }
 
   // todo to be defined static
-  private @NotNull Set<@NotNull Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> getDependenciesToUpdateState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
-                                                                                                                              @NotNull Map<PluginId, PluginEnabledState> enabledMap,
-                                                                                                                              boolean enabled) {
+  private @NotNull Set<@NotNull Pair<? extends IdeaPluginDescriptor, @NotNull String>> getDependenciesToUpdateState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
+                                                                                                                    @NotNull Map<PluginId, PluginEnabledState> enabledMap,
+                                                                                                                    boolean enabled) {
     List<IdeaPluginDescriptor> descriptorsToCheckDependencies =
       new ArrayList<>(enabled ? descriptorsWithChangedEnabledState : getAllPlugins());
     if (!enabled) {

@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports any non-final field in a class with <code>@Immutable</code> annotation.
+Reports any non-final field in a class with the <code>@Immutable</code> annotation.
 This violates the contract of the <code>@Immutable</code> annotation.
 <p>Example:</p>
-<pre>
+<pre><code>
   import javax.annotation.concurrent.Immutable;
   @Immutable
   class Foo {
     String bar = "foo";
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-Supported <code>@GuardedBy</code> annotations are:
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
   <li><code>net.jcip.annotations.GuardedBy</code></li>
   <li><code>javax.annotation.concurrent.GuardedBy</code></li>

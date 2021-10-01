@@ -169,7 +169,7 @@ public class MavenDistributionsCache {
 
   private boolean useWrapper() {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    return MavenServerManager.WRAPPED_MAVEN.equals(settings.generalSettings.getMavenHome()) ||
-           StringUtil.equals(settings.generalSettings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
+    return MavenServerManager.WRAPPED_MAVEN.equals(settings.getGeneralSettings().getMavenHome()) ||
+           StringUtil.equals(settings.getGeneralSettings().getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
   }
 }

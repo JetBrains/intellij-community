@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -50,7 +50,8 @@ abstract class Root(val panel: ProblemsViewPanel)
     !is FileProblem -> structureChanged()
     else -> {
       val file = problem.file
-      when (1 == getFileProblemCount(file)) {
+      // add new file node if it does not exist
+      when (null == synchronized(nodes) { nodes[file] }) {
         true -> fileAppeared(file)
         else -> fileUpdated(file)
       }
@@ -61,6 +62,7 @@ abstract class Root(val panel: ProblemsViewPanel)
     !is FileProblem -> structureChanged()
     else -> {
       val file = problem.file
+      // remove old file node if no more corresponding problems
       when (0 == getFileProblemCount(file)) {
         true -> fileDisappeared(file)
         else -> fileUpdated(file)
@@ -81,8 +83,8 @@ abstract class Root(val panel: ProblemsViewPanel)
   }
 
   private fun fileDisappeared(file: VirtualFile) {
-    synchronized(nodes) { nodes.remove(file) }
-    structureChanged()
+    val node = synchronized(nodes) { nodes.remove(file) }
+    if (node != null) structureChanged()
   }
 
   private fun fileUpdated(file: VirtualFile) {

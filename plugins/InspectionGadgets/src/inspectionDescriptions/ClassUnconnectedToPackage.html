@@ -1,16 +1,9 @@
 <html>
 <body>
-Reports any class which:
-<ul>
-  <li>doesn't depend on any other class in its package</li>
-  <li>is not a dependency for any other class in its package</li>
-</ul>
-Such classes are an indication of ad-hoc or incoherent packaging strategies,
-and may often profitably be moved.
-<!-- tooltip end -->
-<p>
-  Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
-  <em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
-</p>
+Reports a class that doesn't depend on any other class in its package and is not a dependency for any other class in its package.
+<p>Such classes indicate ad-hoc or incoherent packaging strategies and often may be profitably moved.
+  <!-- tooltip end -->
+<p>Available only from <b>Analyze | Inspect Code</b> or
+  <b>Analyze | Run Inspection by Name</b> and isn't reported in the editor.</p>
 </body>
 </html>

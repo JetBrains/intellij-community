@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.TestData;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -29,15 +30,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleData;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
@@ -132,6 +136,12 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Nullable
   protected String resolveProjectPath(@NotNull Module module) {
+    GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+    if (gradleModuleData == null) return null;
+    boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
+    if (!isGradleProjectDirUsedToRunTasks) {
+      return gradleModuleData.getDirectoryToRunTask();
+    }
     return GradleRunnerUtil.resolveProjectPath(module);
   }
 
@@ -190,18 +200,16 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
         testTasks.add(new TasksToRun.Impl(testName, tasks));
       }
     }
-    DataNode<ModuleData> moduleDataNode = GradleUtil.findGradleModuleData(module);
-    if (moduleDataNode == null) return testTasks;
-    Collection<DataNode<TestData>> testsData = ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TEST);
-    for (DataNode<TestData> testDataNode : testsData) {
-      TestData testData = testDataNode.getData();
+    GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+    if (gradleModuleData == null) return testTasks;
+
+    for (TestData testData : gradleModuleData.findAll(ProjectKeys.TEST)) {
       Set<String> sourceFolders = testData.getSourceFolders();
       for (String sourceFolder : sourceFolders) {
         if (FileUtil.isAncestor(sourceFolder, sourcePath, false)) {
-          String testName = testData.getTestName();
-          String testTaskName = testData.getTestTaskName();
-          List<String> tasks = new SmartList<>(testTaskName);
-          testTasks.add(new TasksToRun.Impl(testName, tasks));
+          String testTaskSimpleName = testData.getTestName();
+          List<String> tasks = new SmartList<>(gradleModuleData.getTaskPath(testTaskSimpleName, true));
+          testTasks.add(new TasksToRun.Impl(testTaskSimpleName, tasks));
         }
       }
     }

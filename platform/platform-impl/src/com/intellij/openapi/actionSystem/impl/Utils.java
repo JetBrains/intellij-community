@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -64,7 +62,7 @@ public final class Utils {
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (dataContext instanceof DataManagerImpl.MyDataContext) {
+    if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {
@@ -187,13 +185,12 @@ public final class Utils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
-    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() && event.getID() == FocusEvent.FOCUS_GAINED &&
-          focusOwner != null && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
+      if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
-        promise.cancel();
+        ActionUpdater.cancelPromise(promise, event);
       }
       return null;
     });
@@ -209,14 +206,14 @@ public final class Utils {
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
-      ActionUpdater.cancelAllUpdates();
+      ActionUpdater.cancelAllUpdates("fast-track requested");
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
       return runLoopAndWaitForFuture(promise, null, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > maxTime) {
-          promise.cancel();
+          ActionUpdater.cancelPromise(promise, "fast-track timed out");
         }
       });
     }
@@ -281,7 +278,6 @@ public final class Utils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
-    final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -311,8 +307,7 @@ public final class Utils {
         children.add(menu);
       }
       else {
-        final ActionMenuItem each =
-          new ActionMenuItem(action, presentation, place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }
@@ -320,20 +315,11 @@ public final class Utils {
 
     if (list.isEmpty()) {
       ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER),
-                                               place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+                                               place, context, enableMnemonics, true, checked, useDarkIcons);
       component.add(each);
       children.add(each);
     }
 
-    if (fixMacScreenMenu) {
-      SwingUtilities.invokeLater(() -> {
-        for (Component each : children) {
-          if (each.getParent() != null && each instanceof ActionMenuItem) {
-            ((ActionMenuItem)each).prepare();
-          }
-        }
-      });
-    }
     if (SystemInfo.isMacSystemMenu && isWindowMenu) {
       if (ActionMenu.isAligned()) {
         Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
@@ -460,36 +446,37 @@ public final class Utils {
 
     T result;
     if (async) {
-      ActionUpdater.cancelAllUpdates();
-      AsyncPromise<T> promise = new AsyncPromise<>();
+      ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
+      AsyncPromise<T> promise = ActionUpdater.newPromise(place);
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
           Ref<UpdateSession> sessionRef = Ref.create();
+          Runnable runnable = () -> {
+            Set<String> missedKeys = ContainerUtil.newConcurrentSet();
+            UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+            T fastResult = function.apply(fastSession);
+            sessionRef.set(fastSession);
+            if (fastResult != null) {
+              ref.set(fastResult);
+            }
+            else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+              UpdateSession slowSession = actionUpdater.asUpdateSession();
+              T slowResult = function.apply(slowSession);
+              ref.set(slowResult);
+              sessionRef.set(slowSession);
+            }
+          };
+          boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              Set<String> missedKeys = ContainerUtil.newConcurrentSet();
-              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              T fastResult = function.apply(fastSession);
-              sessionRef.set(fastSession);
-              if (fastResult != null) {
-                ref.set(fastResult);
-              }
-              else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
-                UpdateSession slowSession = actionUpdater.asUpdateSession();
-                T slowResult = function.apply(slowSession);
-                ref.set(slowResult);
-                sessionRef.set(slowSession);
-              }
-            }, new EmptyProgressIndicator());
+            ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
+              ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable), new EmptyProgressIndicator());
             return ref.get();
           });
-          queue.offer(() -> {
-            ActionUpdater.getActionUpdater(sessionRef.get()).applyPresentationChanges();
-            promise.setResult(ref.get());
-          });
+          queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
+          queue.offer(() -> promise.setResult(ref.get()));
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           promise.setError(e);
         }
       });
@@ -523,7 +510,7 @@ public final class Utils {
     try {
       return promise.isCancelled() ? defValue : promise.get();
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       Throwable cause = ExceptionUtil.getRootCause(ex);
       if (!(cause instanceof ProcessCanceledException)) {
         LOG.error(cause);

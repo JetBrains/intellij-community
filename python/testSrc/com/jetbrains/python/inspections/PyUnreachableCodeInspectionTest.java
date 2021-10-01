@@ -170,6 +170,31 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-48760
+  public void testContinueInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testBreakInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testReturnInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnreachablePatternAfterIrrefutableCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnreachablePatternAfterIrrefutableOrPatternAlternative() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

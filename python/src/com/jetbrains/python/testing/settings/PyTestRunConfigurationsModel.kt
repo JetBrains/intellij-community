@@ -4,8 +4,8 @@ package com.jetbrains.python.testing.settings
 import com.intellij.openapi.module.Module
 import com.intellij.ui.CollectionComboBoxModel
 import com.jetbrains.python.testing.PyAbstractTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.TestRunnerService
-import com.jetbrains.python.testing.pythonFactories
 
 
 internal class PyTestRunConfigurationsModel private constructor(private val module: Module?,
@@ -14,7 +14,7 @@ internal class PyTestRunConfigurationsModel private constructor(private val modu
   CollectionComboBoxModel<PyAbstractTestFactory<*>>(items, selection) {
   companion object {
     fun create(module: Module?): PyTestRunConfigurationsModel =
-      PyTestRunConfigurationsModel(module, pythonFactories.toList(),
+      PyTestRunConfigurationsModel(module, PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().toList(),
                                    TestRunnerService.getInstance(module).selectedFactory)
   }
 

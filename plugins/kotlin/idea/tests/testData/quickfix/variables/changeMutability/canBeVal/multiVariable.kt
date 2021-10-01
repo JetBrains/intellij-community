@@ -1,4 +1,4 @@
-// "Change to val" "true"
+// "Change to 'val'" "true"
 fun foo(p: Int) {
     <caret>var (v1, v2) = getPair()!!
     v1

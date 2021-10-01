@@ -47,16 +47,14 @@ class ImaginarySelectionModel implements SelectionModel {
     throw myEditor.notImplemented();
   }
 
-  @NotNull
   @Override
-  public int[] getBlockSelectionStarts() {
-    throw myEditor.notImplemented();
+  public int @NotNull [] getBlockSelectionStarts() {
+    return new int[]{myEditor.getSelectionModel().getSelectionStart()};
   }
 
-  @NotNull
   @Override
-  public int[] getBlockSelectionEnds() {
-    throw myEditor.notImplemented();
+  public int @NotNull [] getBlockSelectionEnds() {
+    return new int[]{myEditor.getSelectionModel().getSelectionEnd()};
   }
 
   @Override

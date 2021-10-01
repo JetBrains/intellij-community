@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.rules.ActiveRules;
 import com.intellij.usages.impl.rules.DirectoryGroupingRule;
@@ -31,18 +32,23 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
   }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
-    return getActiveRules(project, UsageViewSettings.getInstance());
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(
+    @NotNull Project project,
+    @NotNull UsageViewSettings usageViewSettings,
+    @Nullable UsageViewPresentation presentation
+  ) {
+    return ActiveRules.getActiveRules(
+      project, usageViewSettings, presentation, supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule()
+    );
   }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
-    return ActiveRules.getActiveRules(project, usageViewSettings, supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule());
-  }
-
-  @Override
-  public @NotNull UsageGroupingRule[] getAllRules(@NotNull Project project, @Nullable UsageView usageView) {
-    return ActiveRules.getAllRules(project, UsageViewSettings.getInstance(), supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule());
+  public @NotNull UsageGroupingRule @NotNull [] getAllRules(@NotNull Project project, @Nullable UsageView usageView) {
+    return ActiveRules.getAllRules(
+      project, UsageViewSettings.getInstance(),
+      usageView == null ? null: usageView.getPresentation(),
+      supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule()
+    );
   }
 
   @Override

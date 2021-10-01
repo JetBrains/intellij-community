@@ -191,7 +191,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, CoroutineSupport.byCompilerArguments(arguments));
         assertEquals("1.7", arguments.getJvmTarget());
         assertEquals("-version -Xallow-kotlin-package -Xskip-metadata-version-check",
                      settings.getCompilerSettings().getAdditionalArguments());
@@ -206,7 +205,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertEquals(JsPlatforms.INSTANCE.getDefaultJsPlatform(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, CoroutineSupport.byCompilerArguments(arguments));
         assertEquals("amd", arguments.getModuleKind());
         assertEquals("-version -meta-info", settings.getCompilerSettings().getAdditionalArguments());
     }
@@ -220,7 +218,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
-        assertEquals(LanguageFeature.State.ENABLED, CoroutineSupport.byCompilerArguments(arguments));
         assertEquals("1.7", arguments.getJvmTarget());
         assertEquals("-version -Xallow-kotlin-package -Xskip-metadata-version-check",
                      settings.getCompilerSettings().getAdditionalArguments());
@@ -235,7 +232,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertEquals(JsPlatforms.INSTANCE.getDefaultJsPlatform(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
-        assertEquals(LanguageFeature.State.ENABLED_WITH_ERROR, CoroutineSupport.byCompilerArguments(arguments));
         assertEquals("amd", arguments.getModuleKind());
         assertEquals("-version -meta-info", settings.getCompilerSettings().getAdditionalArguments());
     }
@@ -249,10 +245,23 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
         assertEquals("1.1", arguments.getLanguageVersion());
         assertEquals("1.0", arguments.getApiVersion());
-        assertEquals(LanguageFeature.State.ENABLED, CoroutineSupport.byCompilerArguments(arguments));
         assertEquals("1.7", arguments.getJvmTarget());
         assertEquals("-version -Xallow-kotlin-package -Xskip-metadata-version-check",
                      settings.getCompilerSettings().getAdditionalArguments());
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void testJvmProjectWithV4FacetConfig() {
+        KotlinFacetSettings settings = KotlinFacetSettingsProvider.Companion.getInstance(myProject).getInitializedSettings(getModule());
+        K2JVMCompilerArguments arguments = (K2JVMCompilerArguments) settings.getCompilerArguments();
+        assertFalse(settings.getUseProjectSettings());
+        assertEquals(LanguageVersion.KOTLIN_1_4, settings.getLanguageLevel());
+        assertEquals(LanguageVersion.KOTLIN_1_2, settings.getApiLevel());
+        assertEquals(JvmPlatforms.INSTANCE.getJvm18(), settings.getTargetPlatform());
+        assertEquals("1.4", arguments.getLanguageVersion());
+        assertEquals("1.2", arguments.getApiVersion());
+        assertEquals("1.8", arguments.getJvmTarget());
+        assertEquals("-version -Xallow-kotlin-package -Xskip-metadata-version-check", settings.getCompilerSettings().getAdditionalArguments());
     }
 
     public void testJvmProjectWithJvmTarget11() {
@@ -326,7 +335,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             FacetUtilsKt.configureFacet(
                     facet,
                     "1.4",
-                    LanguageFeature.State.ENABLED,
                     platform,
                     modelsProvider
             );

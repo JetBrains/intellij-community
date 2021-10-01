@@ -1,8 +1,25 @@
 <html>
 <body>
-Reports <code>final</code> methods in the <code>final</code> classes.
-As the <code>final</code> classes are closed to inheritance marking the method as <code>final</code>
-is unnecessary and confusing.
+Reports <code>final</code> methods in <code>final</code> classes.
+<p>Since <code>final</code> classes cannot be inherited, marking a method as <code>final</code>
+  may be unnecessary and confusing.</p>
+<p><b>Example:</b></p>
+<pre><code>record Bar(int a, int b) {
+  public final sum() { 
+     return a + b;
+  }
+}
+</code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>record Bar(int a, int b) {
+  public sum() { 
+     return a + b;
+  }
+}
+</code></pre>
+
+<p>As shown in the example, a class can be marked as <code>final</code> explicitly or implicitly.</p>
 <!-- tooltip end -->
 <p>
 </body>

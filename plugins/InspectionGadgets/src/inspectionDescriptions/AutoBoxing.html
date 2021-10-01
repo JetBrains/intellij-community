@@ -1,16 +1,12 @@
 <html>
 <body>
-Reports expressions which are affected by autoboxing conversion, the automatic wrapping of primitive values as objects.
-Don't use objects instead of primitives in hot code when possible. It may significantly affect the performance.
-<p>Example:</p>
-<pre>
-  Integer x = 42;
-</pre>
+Reports expressions that are affected by autoboxing conversion (automatic wrapping of primitive values as objects).
+Try not to use objects instead of primitives. It might significantly affect performance.
+<p><b>Example:</b></p>
+<pre><code>Integer x = 42;</code></pre>
 <p>The quick-fix makes the conversion explicit:</p>
-<pre>
-  Integer x = Integer.valueOf(42);
-</pre>
+<pre><code>Integer x = Integer.valueOf(42);</code></pre>
 <!-- tooltip end -->
-<p>Autoboxing conversion is not supported under Java 1.4 or earlier JVMs.</p>
+<p>Autoboxing conversion is not supported in Java 1.4 and earlier JVM.</p>
 </body>
 </html>

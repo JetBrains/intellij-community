@@ -581,7 +581,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiFile context = myFixture.configureByText("a.py", "");
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
 
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);

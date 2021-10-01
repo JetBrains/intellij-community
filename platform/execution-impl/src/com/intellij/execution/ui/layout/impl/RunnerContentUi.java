@@ -1668,7 +1668,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
       if (Disposer.isDisposed(RunnerContentUi.this)) return;
 
-      saveUiState();
+      if (myWasEverAdded) {
+        saveUiState();
+      }
     }
   }
 

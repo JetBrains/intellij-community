@@ -102,8 +102,7 @@ fun Module.getStableName(): Name {
 @JvmOverloads
 fun Project.getLanguageVersionSettings(
     contextModule: Module? = null,
-    javaTypeEnhancementState: JavaTypeEnhancementState? = null,
-    isReleaseCoroutines: Boolean? = null
+    javaTypeEnhancementState: JavaTypeEnhancementState? = null
 ): LanguageVersionSettings {
     val kotlinFacetSettings = contextModule?.let {
         KotlinFacetSettingsProvider.getInstance(this)?.getInitializedSettings(it)
@@ -122,18 +121,7 @@ fun Project.getLanguageVersionSettings(
         compilerSettings.additionalArgumentsAsList
     )
 
-    val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE).apply {
-        configureCoroutinesSupport(
-            CoroutineSupport.byCompilerArguments(KotlinCommonCompilerArgumentsHolder.getInstance(this@getLanguageVersionSettings).settings),
-            languageVersion
-        )
-        if (isReleaseCoroutines != null) {
-            put(
-                LanguageFeature.ReleaseCoroutines,
-                if (isReleaseCoroutines) LanguageFeature.State.ENABLED else LanguageFeature.State.DISABLED
-            )
-        }
-    }
+    val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE)
 
     val extraAnalysisFlags = additionalArguments.configureAnalysisFlags(MessageCollector.NONE).apply {
         if (javaTypeEnhancementState != null) put(JvmAnalysisFlags.javaTypeEnhancementState, javaTypeEnhancementState)
@@ -214,7 +202,6 @@ private fun Module.computeLanguageVersionSettings(): LanguageVersionSettings {
     }
 
     val languageFeatures = facetSettings?.mergedCompilerArguments?.configureLanguageFeatures(MessageCollector.NONE)?.apply {
-        configureCoroutinesSupport(facetSettings.coroutineSupport, languageVersion)
         configureMultiplatformSupport(facetSettings.targetPlatform?.idePlatformKind, this@computeLanguageVersionSettings)
     }.orEmpty()
 
@@ -265,18 +252,6 @@ private fun parseArguments(
     additionalArguments: List<String>
 ): CommonCompilerArguments {
     return platformKind.createArguments { parseCommandLineArguments(additionalArguments, this) }
-}
-
-fun MutableMap<LanguageFeature, LanguageFeature.State>.configureCoroutinesSupport(
-    coroutineSupport: LanguageFeature.State?,
-    languageVersion: LanguageVersion
-) {
-    val state = if (languageVersion >= LanguageVersion.KOTLIN_1_3) {
-        LanguageFeature.State.ENABLED
-    } else {
-        coroutineSupport ?: LanguageFeature.Coroutines.defaultState
-    }
-    put(LanguageFeature.Coroutines, state)
 }
 
 fun MutableMap<LanguageFeature, LanguageFeature.State>.configureMultiplatformSupport(

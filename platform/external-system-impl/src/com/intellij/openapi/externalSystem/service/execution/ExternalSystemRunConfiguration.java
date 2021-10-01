@@ -50,6 +50,7 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,10 +232,12 @@ public class ExternalSystemRunConfiguration
     return mySettings.getExternalProjectPath();
   }
 
+  @ApiStatus.Experimental
   public void setTasksAndArguments(@NotNull String tasksAndArguments) {
     mySettings.setTasksAndArguments(tasksAndArguments);
   }
 
+  @ApiStatus.Experimental
   public @NotNull String getTasksAndArguments() {
     return mySettings.getTasksAndArguments();
   }

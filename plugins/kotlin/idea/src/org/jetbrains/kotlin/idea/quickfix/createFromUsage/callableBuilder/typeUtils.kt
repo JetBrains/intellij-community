@@ -6,15 +6,13 @@ import com.intellij.refactoring.psi.SearchUtils
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
+import org.jetbrains.kotlin.idea.util.withoutRedundantAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.load.java.MUTABLE_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
-import org.jetbrains.kotlin.load.java.READ_ONLY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -304,33 +302,6 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
         }
         KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, newArguments, isMarkedNullable, memberScope)
     }
-}
-
-internal fun KotlinType.withoutRedundantAnnotations(): KotlinType {
-    var argumentsWasChanged = false
-    val newArguments = arguments.map(fun(typeProjection: TypeProjection): TypeProjection {
-        if (typeProjection.isStarProjection) return typeProjection
-
-        val newType = typeProjection.type.withoutRedundantAnnotations()
-        if (typeProjection.type === newType) return typeProjection
-
-        argumentsWasChanged = true
-        return typeProjection.replaceType(newType)
-    })
-
-    val newAnnotations = FilteredAnnotations(
-        annotations,
-        isDefinitelyNewInference = true,
-        fqNameFilter = { it !in NULLABILITY_ANNOTATIONS && it !in MUTABLE_ANNOTATIONS && it !in READ_ONLY_ANNOTATIONS },
-    )
-
-    val annotationsWasChanged = newAnnotations.count() != annotations.count()
-    if (!argumentsWasChanged && !annotationsWasChanged) return this
-
-    return replace(
-        newArguments = newArguments.takeIf { argumentsWasChanged } ?: arguments,
-        newAnnotations = newAnnotations.takeIf { annotationsWasChanged } ?: annotations,
-    )
 }
 
 fun KtExpression.getExpressionForTypeGuess() = getAssignmentByLHS()?.right ?: this

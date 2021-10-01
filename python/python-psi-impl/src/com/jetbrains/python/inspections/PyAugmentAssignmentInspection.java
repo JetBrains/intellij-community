@@ -148,7 +148,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         return SEQUENCE_METHODS.stream().anyMatch(attributeNames::contains);
       }
 
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       return !SEQUENCE_METHODS
         .stream()

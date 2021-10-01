@@ -25,12 +25,13 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.*
 
 internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
     if (this == null) return DfType.TOP
-    if (isMarkedNullable) {
-        var notNullableType = makeNotNullable().toDfType(context)
+    if (canBeNull()) {
+        var notNullableType = makeNotNullable().toDfTypeNotNull(context)
         if (notNullableType is DfPrimitiveType) {
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
                 .meet(DfTypes.typedObject(toPsiType(context), Nullability.UNKNOWN))
@@ -41,6 +42,10 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
             notNullableType
         }
     }
+    return toDfTypeNotNull(context)
+}
+
+private fun KotlinType.toDfTypeNotNull(context: PsiElement): DfType {
     return when {
         isBoolean() -> DfTypes.BOOLEAN
         isByte() -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
@@ -53,6 +58,8 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
         else -> DfTypes.typedObject(toPsiType(context), Nullability.NOT_NULL)
     }
 }
+
+internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val bindingContext = expr.analyze(BodyResolveMode.PARTIAL)

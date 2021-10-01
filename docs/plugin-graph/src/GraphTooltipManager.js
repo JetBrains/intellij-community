@@ -113,7 +113,7 @@ function shortenPath(p) {
     .replace("/src/main/resources/", " ")
     .replace("/META-INF/", " ")
     .replace("/resources/", " ")
-    .replace("/java/src/main/", " ")
+    .replace("/src/main/java", " ")
     .replace("/src/main/", " ")
     .replace("/src/", " ")
 }

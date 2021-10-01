@@ -8,13 +8,15 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.FontMetrics
 import java.awt.font.FontRenderContext
 import kotlin.math.ceil
 import kotlin.math.max
 
-internal class InlayTextMetricsStorage(val editor: EditorImpl) {
+@ApiStatus.Internal
+class InlayTextMetricsStorage(val editor: EditorImpl) {
   private var smallTextMetrics : InlayTextMetrics? = null
   private var normalTextMetrics : InlayTextMetrics? = null
 
@@ -49,7 +51,7 @@ internal class InlayTextMetricsStorage(val editor: EditorImpl) {
   }
 }
 
-internal class InlayTextMetrics(
+class InlayTextMetrics(
   private val editor: EditorImpl,
   val fontHeight: Int,
   val fontBaseline: Int,

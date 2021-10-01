@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import java.awt.Dimension
 import java.awt.Insets
+import java.util.function.Supplier
 import kotlin.math.max
 
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
@@ -23,9 +24,16 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
 
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
-                                                        @NlsActions.ActionText optionText: String,
-                                                        @NlsActions.ActionDescription optionDescription: String? = null)
-  : ToggleAction(optionText, optionDescription, null), DumbAware {
+                                                        optionText: Supplier<@NlsActions.ActionText String>,
+                                                        optionDescription: Supplier<@NlsActions.ActionText String>? = null)
+  : ToggleAction(optionText, optionDescription ?: Supplier { null }, null), DumbAware {
+
+  @JvmOverloads
+  constructor(option: T,
+              property: GraphProperty<T>,
+              @NlsActions.ActionText optionText: String,
+              @NlsActions.ActionDescription optionDescription: String? = null) :
+    this(option, property, Supplier { optionText }, optionDescription?.let { Supplier { optionDescription } })
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return property.get() == option
@@ -46,7 +54,8 @@ private class ButtonSelector(
   action: ButtonSelectorAction<*>,
   presentation: Presentation,
   place: String?,
-  minimumSize: Dimension
+  minimumSize: Dimension,
+  private val forceFieldHeight: Boolean
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {
   init {
     isFocusable = true
@@ -59,14 +68,17 @@ private class ButtonSelector(
 
   override fun getPreferredSize(): Dimension {
     val old = super.getPreferredSize()
-    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, old.height + TOP_BOTTOM_PADDING * 2)
+    val proposedHeight = old.height + TOP_BOTTOM_PADDING * 2
+    val height = if (forceFieldHeight) max(30, proposedHeight) else proposedHeight
+    return Dimension(old.width + LEFT_RIGHT_PADDING * 2, height)
   }
 }
 
-class ButtonSelectorToolbar(
+class ButtonSelectorToolbar @JvmOverloads constructor(
   place: String,
   actionGroup: ActionGroup,
-  horizontal: Boolean
+  horizontal: Boolean,
+  private val forceFieldHeight: Boolean = false
 ) : ActionToolbarImpl(place, actionGroup, horizontal, true) {
 
   init {
@@ -94,5 +106,5 @@ class ButtonSelectorToolbar(
     place: String,
     presentation: Presentation,
     minimumSize: Dimension
-  ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize)
+  ): ActionButton = ButtonSelector(action as ButtonSelectorAction<*>, presentation, place, minimumSize, forceFieldHeight)
 }

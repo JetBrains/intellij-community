@@ -45,10 +45,13 @@ fun loadExtensionWithText(
   ns: String = "com.intellij"
 ): Disposable {
   val builder = PluginBuilder().extensions(extensionTag, ns)
-  return loadPluginWithText(builder, loader, FileSystems.getDefault())
+  return loadPluginWithText(builder, FileSystems.getDefault())
 }
 
-internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
+internal fun loadPluginWithText(
+  pluginBuilder: PluginBuilder,
+  fs: FileSystem,
+): Disposable {
   val directory = if (fs == FileSystems.getDefault()) {
     FileUtil.createTempDirectory("test", "test", true).toPath()
   }
@@ -56,10 +59,10 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
     fs.getPath("/").resolve(Ksuid.generate())
   }
 
-  val pluginDirectory = directory.resolve("plugin")
-
-  pluginBuilder.build(pluginDirectory)
-  val descriptor = loadDescriptorInTest(pluginDirectory)
+  val descriptor = loadDescriptorInTest(
+    pluginBuilder,
+    directory,
+  )
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
@@ -74,6 +77,15 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
     DynamicPlugins.unloadPlugin(descriptor)
     assertThat(reason).isNull()
   }
+}
+
+internal fun loadDescriptorInTest(
+  pluginBuilder: PluginBuilder,
+  directory: Path,
+): IdeaPluginDescriptorImpl {
+  val pluginDirectory = directory.resolve("plugin")
+  pluginBuilder.build(pluginDirectory)
+  return loadDescriptorInTest(pluginDirectory)
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {

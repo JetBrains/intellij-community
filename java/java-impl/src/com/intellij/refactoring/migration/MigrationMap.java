@@ -27,9 +27,9 @@ public class MigrationMap {
   private @Nls String myDescription;
   private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<>();
   private String myFileName;
+  private int order = 0;
 
   public MigrationMap() {
-
   }
 
   public MigrationMap(MigrationMapEntry[] entries) {
@@ -56,6 +56,14 @@ public class MigrationMap {
 
   public void setName(@Nls String name) {
     myName = name;
+  }
+
+  public int getOrder() {
+    return order;
+  }
+
+  public void setOrder(int order) {
+    this.order = order;
   }
 
   public @Nls String getDescription() {

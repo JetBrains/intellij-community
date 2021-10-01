@@ -414,7 +414,7 @@ public final class CtrlMouseHandler {
 
     private boolean isTaskOutdated(@NotNull Editor editor) {
       return myDisposed || myProject.isDisposed() || editor.isDisposed() ||
-             !ApplicationManager.getApplication().isUnitTestMode() && !EditorActivityManager.getInstance().isVisible(editor);
+             !ApplicationManager.getApplication().isUnitTestMode() && !UIUtil.isShowing(editor.getContentComponent());
     }
 
     private int getOffset(@NotNull Editor editor) {

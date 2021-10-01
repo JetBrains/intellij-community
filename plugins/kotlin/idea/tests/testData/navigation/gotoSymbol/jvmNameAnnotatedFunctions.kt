@@ -10,6 +10,6 @@ fun bar() = 2
 private fun renamed() = 2
 
 // SEARCH_TEXT: renamed
+// REF: (foo.bar).renamedBarFunctionTest()
+// REF: (for Int in jvmNameAnnotatedFunctions.kt in foo.bar).renamedFooExtensionTest()
 // REF: (jvmNameAnnotatedFunctions.kt in foo.bar).renamed()
-// REF: @JvmName("renamedBarFunctionTest")
-// REF: @JvmName("renamedFooExtensionTest")

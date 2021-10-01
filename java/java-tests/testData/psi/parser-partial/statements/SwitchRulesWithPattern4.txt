@@ -7,7 +7,7 @@ PsiJavaFile:SwitchRulesWithPattern4.java
         PsiJavaToken:NULL_KEYWORD('null')
       PsiJavaToken:COMMA(',')
       PsiWhiteSpace(' ')
-      PsiDefaultElement
+      PsiDefaultLabelElement
         PsiKeyword:default('default')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')

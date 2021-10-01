@@ -18,6 +18,7 @@ package com.jetbrains.env.ut;
 import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyNoseTestProcessRunner extends PyScriptTestProcessRunner<PyNoseTestConfiguration> {
   public PyNoseTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(new PyNoseTestFactory(),
+    super(new PyNoseTestFactory(PythonTestConfigurationType.getInstance()),
           PyNoseTestConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

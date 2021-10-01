@@ -58,6 +58,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,9 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
+  @ApiStatus.Internal
+  public static final String DIMENSION_SERVICE_KEY = "vcs.ApplyPatchDifferentiatedDialog";
+
   private static final Logger LOG = Logger.getInstance(ApplyPatchDifferentiatedDialog.class);
   private final ZipperUpdater myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
@@ -356,7 +360,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
-    return "vcs.ApplyPatchDifferentiatedDialog";
+    return DIMENSION_SERVICE_KEY;
   }
 
   @Override

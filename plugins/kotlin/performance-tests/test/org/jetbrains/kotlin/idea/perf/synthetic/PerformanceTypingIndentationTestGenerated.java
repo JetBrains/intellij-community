@@ -100,6 +100,16 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
         }
 
+        @TestMetadata("EOFCommentAfterFor.after.kt")
+        public void testEOFCommentAfterFor() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/EOFCommentAfterFor.after.kt");
+        }
+
+        @TestMetadata("EOFCommentAfterIf.after.kt")
+        public void testEOFCommentAfterIf() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/EOFCommentAfterIf.after.kt");
+        }
+
         @TestMetadata("FunctionBlock.after.kt")
         public void testFunctionBlock() throws Exception {
             runTest("../idea/tests/testData/indentationOnNewline/FunctionBlock.after.kt");

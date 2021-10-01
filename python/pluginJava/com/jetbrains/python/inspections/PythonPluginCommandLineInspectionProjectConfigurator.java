@@ -64,10 +64,10 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
     logger.reportMessage(3, "Python environment configuration...");
 
     final List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    logSdks(logger, sdks, "Previously used Python interpreters:");
+    logSdks(logger, sdks, "Already configured Python interpreters:");
 
     if (sdks.isEmpty()) {
-      logger.reportMessage(3, "No previously used Python interpreters, detecting...");
+      logger.reportMessage(3, "No previously configured Python interpreters, detecting...");
 
       final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks(context.getProjectPath());
       logSdks(logger, detectedSdks, "Python interpreters detected:");
@@ -112,17 +112,15 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
     final CommandLineInspectionProgressReporter logger = context.getLogger();
 
     if (PythonSdkUtil.getAllSdks().isEmpty()) {
-      logger.reportMessage(1, "Python sdks are empty");
+      logger.reportMessage(1, "No configured python interpreters");
       return;
     }
 
     final PythonFacetType facetType = PythonFacetType.getInstance();
+    int skippedModules = 0;
     for (Module m : ModuleManager.getInstance(project).getModules()) {
       if (ReadAction.compute(() -> !FileTypeIndex.containsFileOfType(PythonFileType.INSTANCE, m.getModuleContentScope()))) {
-        logger.reportMessage(
-          3,
-          "Skipping Python interpreter configuration for " + m.getName() + " because the module doesn't contain any Python files"
-        );
+        skippedModules++;
         continue;
       }
 
@@ -141,5 +139,10 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
         logger.reportMessage(3, "Python facet already here: " + m.getName());
       }
     }
+
+    logger.reportMessage(
+      3,
+      "Skipped Python interpreter configuration for " + skippedModules + " module(s) because they don't contain any Python files"
+    );
   }
 }

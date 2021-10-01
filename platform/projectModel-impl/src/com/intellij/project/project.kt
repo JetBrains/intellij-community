@@ -2,6 +2,7 @@
 package com.intellij.project
 
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
@@ -13,8 +14,8 @@ val Project.stateStore: IProjectStore
   get() = (this as ProjectStoreOwner).componentStore
 
 @ApiStatus.Internal
-interface ProjectStoreOwner {
-  val componentStore: IProjectStore
+interface ProjectStoreOwner : IComponentStoreOwner {
+  override val componentStore: IProjectStore
 }
 
 val Project.isDirectoryBased: Boolean

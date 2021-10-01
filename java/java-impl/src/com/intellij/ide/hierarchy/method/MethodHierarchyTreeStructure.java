@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
@@ -87,12 +87,12 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   @Nullable
-  public final PsiMethod getBaseMethod() {
+  public PsiMethod getBaseMethod() {
     return myMethod.getElement();
   }
 
   @Override
-  protected final Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiElement psiElement = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (!(psiElement instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     PsiClass psiClass = (PsiClass)psiElement;

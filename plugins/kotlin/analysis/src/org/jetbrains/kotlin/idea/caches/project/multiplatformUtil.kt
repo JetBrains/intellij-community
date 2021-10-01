@@ -183,6 +183,15 @@ fun ModuleSourceInfo.toDescriptor() = KotlinCacheService.getInstance(module.proj
 fun PsiElement.getPlatformModuleInfo(desiredPlatform: TargetPlatform): PlatformModuleInfo? {
     assert(!desiredPlatform.isCommon()) { "Platform module cannot have Common platform" }
     val moduleInfo = getNullableModuleInfo() as? ModuleSourceInfo ?: return null
+    return doGetPlatformModuleInfo(moduleInfo, desiredPlatform)
+}
+
+fun getPlatformModuleInfo(moduleInfo: ModuleSourceInfo, desiredPlatform: TargetPlatform): PlatformModuleInfo? {
+    assert(!desiredPlatform.isCommon()) { "Platform module cannot have Common platform" }
+    return doGetPlatformModuleInfo(moduleInfo, desiredPlatform)
+}
+
+private fun doGetPlatformModuleInfo(moduleInfo: ModuleSourceInfo, desiredPlatform: TargetPlatform): PlatformModuleInfo? {
     val platform = moduleInfo.platform
     return when {
         platform.isCommon() -> {

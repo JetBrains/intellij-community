@@ -1,29 +1,27 @@
 <html>
 <body>
-Reports any JUnit test methods which are declared <code>static</code>, not declared
-<code>public</code>, do not return
-<code>void</code>, or have parameters.
-Such test methods are easy to create inadvertently, but will not be executed by
-JUnit test runners.
-<p>Example:</p>
-<pre>
+<p>Reports any JUnit test methods that are declared <code>static</code>, not declared
+  <code>public</code>, do not return <code>void</code>, or have parameters.</p>
+<p>Such test methods are easy to create inadvertently, but they will not be executed by
+  JUnit test runners.</p>
+<p><b>Example:</b></p>
+<pre><code>
   @Test
   void test() {
     assertEquals(1, 1);
   }
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   @Test
   public void test() {
     assertEquals(1, 1);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the table below to specify special annotations.
-Any parameter annotated with one of these annotations will not be reported.
-<p>
 
+<p>Use the inspection options to specify annotations.
+  Any parameter annotated with one of these annotations will not be reported.
+<p>
 </body>
 </html>

@@ -1,1 +1,2 @@
-def foo(@Anno(<spot>TheClass</spot>) param) {}
+@Anno(<spot>TheClass</spot>)
+def foo(param) {}

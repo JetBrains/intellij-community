@@ -12,14 +12,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageActionsTableCellRendererAndEditor
 import org.jetbrains.annotations.Nls
-import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class ActionsColumn(
     private val operationExecutor: (List<PackageSearchOperation<*>>) -> Unit,
-    private val operationFactory: PackageSearchOperationFactory,
-    table: JTable
+    private val operationFactory: PackageSearchOperationFactory
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
 
     var hoverItem: PackagesTableItem<*>? = null
@@ -29,7 +27,7 @@ internal class ActionsColumn(
     private var allKnownRepositories = KnownRepositories.All.EMPTY
     private var onlyStable = false
 
-    private val cellRendererAndEditor = PackageActionsTableCellRendererAndEditor(table) {
+    private val cellRendererAndEditor = PackageActionsTableCellRendererAndEditor {
         operationExecutor(it.operations)
     }
 

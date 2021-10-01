@@ -1,12 +1,13 @@
-enum class Entry {
-    FOO, BAR, BAZ
+enum class Direction {
+    NORTH, EAST, SOUTH, WEST
 }
 
-fun test(e: Entry): Int {
-    return when (e) {
-        <spot>Entry.FOO -> 1
-        Entry.BAR -> TODO()
-        Entry.BAZ -> TODO()
+fun usage(direction: Direction): Int {
+    return when (direction) {
+        <spot>Direction.NORTH -> 1
+        Direction.EAST -> 2
+        Direction.SOUTH -> 3
+        Direction.WEST -> 4
         else -> 0</spot>
     }
 }

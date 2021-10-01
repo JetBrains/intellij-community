@@ -2,6 +2,7 @@
 package training.learn.course
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -24,6 +25,8 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
   open val lessonType: LessonType get() = module.moduleType
+
+  open fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor = module.preferredLearnWindowAnchor(project)
 
   /** Relative path to existed file in the learning project */
   open val existedFile: String? = null

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  protected final String mySignature;
-  protected final String myBody;
+  private final String mySignature;
+  private final String myBody;
 
   private CreateMethodQuickFix(final PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
     super(targetClass);

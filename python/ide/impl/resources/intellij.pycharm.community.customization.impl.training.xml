@@ -1,0 +1,8 @@
+<idea-plugin package="com.jetbrains.python.training">
+  <dependencies>
+    <plugin id="training"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <startPagePromoter id="PyOnboardingTourPromoter" implementation="com.jetbrains.python.training.PyOnboardingTourPromoter"/>
+  </extensions>
+</idea-plugin>

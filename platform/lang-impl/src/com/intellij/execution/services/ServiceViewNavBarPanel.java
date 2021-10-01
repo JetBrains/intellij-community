@@ -91,7 +91,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     }
 
     @Override
-    public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
+    public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
     }
 
     @Override

@@ -2,9 +2,12 @@
 package com.intellij.openapi.externalSystem.service.ui.completetion
 
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
+
+@ApiStatus.Experimental
 abstract class AbstractTextCompletionContributor<C : JComponent> : TextCompletionContributor<C> {
 
   private val chooseListeners = CopyOnWriteArrayList<(C, TextCompletionInfo) -> Unit>()

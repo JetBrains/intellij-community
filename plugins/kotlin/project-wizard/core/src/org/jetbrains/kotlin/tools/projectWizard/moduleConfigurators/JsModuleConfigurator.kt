@@ -110,8 +110,9 @@ interface JsBrowserBasedConfigurator {
             }
             "browser" {
                 if (
-                    reader.isApplication(module) && reader.hasCssSupport(module) ||
-                    reader.settingValue(module, ModuleConfiguratorWithTests.testFramework) != KotlinTestFramework.NONE
+                    (reader.isApplication(module) ||
+                            reader.settingValue(module, ModuleConfiguratorWithTests.testFramework) != KotlinTestFramework.NONE) &&
+                    reader.hasCssSupport(module)
                 ) {
                     commonCssSupport()
                 }

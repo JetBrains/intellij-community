@@ -1113,7 +1113,50 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   // extracted to separate method to avoid re-compilation on hot path taking unpredictable time, blowing timeouts
   private static void doReadAction() {
     ReadAction.run(() -> {
-      //`
+      //
     });
+  }
+
+  public void testStopAlreadyStoppedIndicatorMustThrow() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    assertThrows(IllegalStateException.class, () -> new StandardProgressIndicatorBase().stop());
+
+    ProgressIndicator indicator = new StandardProgressIndicatorBase();
+    indicator.start();
+    indicator.stop();
+    assertThrows(IllegalStateException.class, () -> indicator.stop());
+  }
+
+  public void testStartAlreadyRunningIndicatorMustThrow() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    assertThrows(IllegalStateException.class, () -> {
+      ProgressIndicator indicator = new StandardProgressIndicatorBase();
+      assertFalse(indicator.isRunning());
+      indicator.start();
+      assertTrue(indicator.isRunning());
+      indicator.start();
+    });
+
+    assertThrows(IllegalStateException.class, () -> {
+      ProgressIndicator indicator = new StandardProgressIndicatorBase();
+      assertFalse(indicator.isRunning());
+      indicator.start();
+      assertTrue(indicator.isRunning());
+      indicator.cancel();
+      indicator.start();
+    });
+
+    ProgressIndicator indicator = new AbstractProgressIndicatorBase(){
+      @Override
+      protected boolean isReuseable() {
+        return true;
+      }
+    };
+    indicator.start();
+    assertTrue(indicator.isRunning());
+    indicator.stop();
+    assertFalse(indicator.isRunning());
+    indicator.start();
+    assertTrue(indicator.isRunning());
   }
 }

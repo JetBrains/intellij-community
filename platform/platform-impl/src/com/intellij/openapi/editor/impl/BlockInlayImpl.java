@@ -58,9 +58,11 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   @Override
   Point getPosition() {
     int visualLine = myEditor.offsetToVisualLine(getOffset());
-    int y = myEditor.visualLineToY(visualLine);
+    int[] yRange = myEditor.visualLineToYRange(visualLine);
     List<Inlay<?>> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);
+    int y;
     if (myShowAbove) {
+      y = yRange[0];
       boolean found = false;
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) found = true;
@@ -68,7 +70,7 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
       }
     }
     else {
-      y += myEditor.getLineHeight();
+      y = yRange[1];
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) break;
         y += inlay.getHeightInPixels();

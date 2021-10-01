@@ -22,10 +22,16 @@ public @interface Storage {
   String file() default "";
 
   /**
-   * Relative to component container configuration root path.
+   * The configuration root path relative to component container.
    * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
    * <p>
-   * Consider reusing existing storage files instead of a new one to avoid creating new ones. Related components should reuse the same storage file.
+   * Consider reusing existing storage files instead of a new one to avoid creating too many of them.
+   * Related components should reuse the same storage file.
+   * But don't mix components with different RoamingTypes in a single file, it is prohibited.
+   * <p>
+   * The actual path to the storage file on disk is not strictly defined as relative to the container path,
+   * in fact it can be different, e.g. application-wide {@link RoamingType#PER_OS os-dependent} settings are stored in the subfolder
+   * correspondent to the current OS, e.g. in {@code APP_CONFIG/options/mac/}.
    *
    * @see StoragePathMacros
    */

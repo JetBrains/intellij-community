@@ -6,10 +6,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.problems.ProblemImpl
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.problems.Problem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -21,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
@@ -95,24 +100,22 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             candidate is DeclarationDescriptor || candidate is Collection<*> && candidate.any(::checkIfDescriptor)
 
         val analysisResult =
-        // TODO: [VD] following code has to be uncommented with 1.5M1 migration
-            //   relates to original commit 913c298be858b63e472cfd6c58af11702b3a101d
-            file.analyzeWithAllCompilerChecks(/*{
-                                                      val element = it.psiElement
-                                                      if (element in elements &&
-                                                          it !in highlightInfoByDiagnostic &&
-                                                          !RenderingContext.parameters(it).any(::checkIfDescriptor)
-                                                      ) {
-                                                          annotateDiagnostic(
-                                                              file,
-                                                              element,
-                                                              holder,
-                                                              it,
-                                                              highlightInfoByDiagnostic,
-                                                              highlightInfoByTextRange
-                                                          )
-                                                      }
-                                                  }*/
+            file.analyzeWithAllCompilerChecks(
+                {
+                    val element = it.psiElement
+                    if (element in elements &&
+                        it !in highlightInfoByDiagnostic &&
+                        !RenderingContext.parameters(it).any(::checkIfDescriptor)
+                    ) {
+                        annotateDiagnostic(
+                            element,
+                            holder,
+                            it,
+                            highlightInfoByDiagnostic,
+                            highlightInfoByTextRange
+                        )
+                    }
+                }
             ).also { it.throwIfError() }
         // resolve is done!
 
@@ -233,6 +236,13 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             annotateDiagnostics(element, holder, diagnosticsForElement)
         }
     }
+
+    private fun convertToProblems(
+        infos: Collection<HighlightInfo>,
+        file: VirtualFile,
+        hasErrorElement: Boolean = true
+    ): List<Problem> =
+        infos.filter { it.severity == HighlightSeverity.ERROR }.map { ProblemImpl(file, it, hasErrorElement) }
 
     companion object {
         private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)

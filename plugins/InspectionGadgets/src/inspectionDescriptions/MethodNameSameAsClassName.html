@@ -1,11 +1,10 @@
 <html>
 <body>
-Reports methods being named identically to their class.
-While such a naming is allowed by Java language, it's usually a mistake 
-and it was intended to create a constructor. If it was intentionally named like this,
-it's almost always a bad practice.
-<p>Example:</p>
-<pre>
+<p>Reports methods that are named identically to their class.</p>
+<p>While such naming is allowed by the Java language, it's usually a mistake, as it was intended to create a constructor.
+Such naming is bad practice.</p>
+<p><b>Example:</b></p>
+<pre><code>
   class MyClass {
     int val;
 
@@ -15,9 +14,9 @@ it's almost always a bad practice.
       this.val = val;
     }
   }
-</pre>
-<p>When possible, a quick-fix is provided to convert the method to a constructor:</p>
-<pre>
+</code></pre>
+<p>When appropriate, a quick-fix converts the method to a constructor:</p>
+<pre><code>
   class MyClass {
     int val;
 
@@ -25,8 +24,8 @@ it's almost always a bad practice.
       this.val = val;
     }
   }
-</pre>
-<p>Another quick-fix is provided to rename the method.</p>
+</code></pre>
+<p>Another quick-fix renames the method.</p>
 <!-- tooltip end -->
 </body>
 </html>

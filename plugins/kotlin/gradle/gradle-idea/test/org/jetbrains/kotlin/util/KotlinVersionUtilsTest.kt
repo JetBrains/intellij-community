@@ -135,4 +135,51 @@ class KotlinVersionUtilsTest {
             parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20-dev10")
         )
     }
+
+    @Test
+    fun wildcard() {
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() > parseKotlinVersion("1.5.22")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() > parseKotlinVersion("1.5")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.31").toWildcard() > parseKotlinVersion("1.5.30")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-rc")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-alpha1")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-M1")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-dev-42")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-dev-1")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-snapshot")
+        )
+
+        assertTrue(
+            parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-unknown")
+        )
+    }
 }

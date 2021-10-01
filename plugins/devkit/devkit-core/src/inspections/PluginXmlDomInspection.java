@@ -199,9 +199,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     else if (element instanceof ContentDescriptor) {
       annotateContentDescriptor((ContentDescriptor)element, holder);
     }
-    else if (element instanceof ContentDescriptor.ModuleDescriptor) {
-      annotateModuleDescriptor((ContentDescriptor.ModuleDescriptor)element, holder);
-    }
     else if (element instanceof Extensions) {
       annotateExtensions((Extensions)element, holder);
     }
@@ -226,7 +223,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else //noinspection deprecation
+    else
       if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
@@ -269,11 +266,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       holder.createProblem(descriptor, HighlightSeverity.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
     }
-  }
-
-  private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
-    final IdeaPlugin ideaPlugin = descriptor.getName().getValue();
-    if (ideaPlugin == null) return;
   }
 
   private static boolean isIdeaProjectOrJetBrains(DomElement element) {
@@ -680,7 +672,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
-    //noinspection deprecation
     final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
     if (DomUtil.hasXml(xmlnsAttribute)) {
       highlightDeprecated(xmlnsAttribute, DevKitBundle.message("inspections.plugin.xml.use.defaultExtensionNs"), holder, false, true);

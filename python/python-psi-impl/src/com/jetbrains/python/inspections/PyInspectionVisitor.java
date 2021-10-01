@@ -61,7 +61,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   }
 
   protected PyResolveContext getResolveContext() {
-    return PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+    return PyResolveContext.defaultContext(myTypeEvalContext);
   }
 
   @Nullable

@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports any Java ME <code>javax.microedition.io.Connection</code> resource which is not opened in front of a <code>try</code> block and
+Reports Java ME <code>javax.microedition.io.Connection</code> resources that are not opened in front of a <code>try</code> block and
 closed in the corresponding <code>finally</code> block. Such resources may be inadvertently leaked if an exception is thrown before the
 resource is closed.
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   void example() throws IOException {
     Connection c = Connector.open("foo");
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

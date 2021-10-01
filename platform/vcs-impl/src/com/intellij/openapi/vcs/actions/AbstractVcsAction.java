@@ -18,6 +18,7 @@ import static java.util.Collections.emptySet;
 /**
  * @deprecated Use {@link DumbAwareAction} instead.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public abstract class AbstractVcsAction extends DumbAwareAction {
 

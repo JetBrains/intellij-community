@@ -25,4 +25,13 @@ public class BadOddness {
         throw new IllegalArgumentException("Odd intervals!");
       }
     }
+
+    public static boolean badOddnessTest(int number) {
+      int counter = 0;
+      while (number > 0) {
+        counter++;
+        number--;
+      }
+      return (counter % 2) == 1;
+    }
 }

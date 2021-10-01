@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
@@ -30,8 +31,6 @@ import java.util.function.Consumer;
 import static java.util.Collections.emptyMap;
 
 public final class EnvironmentUtil {
-  public static final String READER_FILE_NAME = "printenv.py";
-
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
   /**
@@ -98,7 +97,7 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Boolean loadEnvironment(@NotNull Path reader, @NotNull Activity activity) {
+  public static @Nullable Boolean loadEnvironment(@NotNull Activity activity) {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       return null;
@@ -108,7 +107,7 @@ public final class EnvironmentUtil {
     ourEnvGetter.set(envFuture);
     Boolean result = Boolean.TRUE;
     try {
-      Map<String, String> env = getShellEnv(reader);
+      Map<String, String> env = getShellEnv();
       setCharsetVar(env);
       envFuture.complete(Collections.unmodifiableMap(env));
     }
@@ -211,8 +210,8 @@ public final class EnvironmentUtil {
   public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
-  private static @NotNull Map<String, String> getShellEnv(@NotNull Path reader) throws IOException {
-    return new ShellEnvReader().doReadShellEnv(null, reader, null);
+  private static @NotNull Map<String, String> getShellEnv() throws IOException {
+    return new ShellEnvReader().readShellEnv(null, null);
   }
 
   public static class ShellEnvReader {
@@ -235,9 +234,10 @@ public final class EnvironmentUtil {
       myTimeoutMillis = timeoutMillis;
     }
 
-    public final @NotNull Map<String, String> doReadShellEnv(@Nullable Path file,
-                                                             @NotNull Path reader,
-                                                             @Nullable Map<String, String> additionalEnvironment) throws IOException {
+    public final @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
+      String loader = SystemInfoRt.isMac ? "printenv" : "printenv.py";
+      Path reader = PathManager.findBinFileWithException(loader);
+
       Path envFile = Files.createTempFile("intellij-shell-env.", ".tmp");
       StringBuilder readerCmd = new StringBuilder();
       if (file != null) {
@@ -532,8 +532,8 @@ public final class EnvironmentUtil {
   }
 
   @TestOnly
-  static Map<String, String> testLoader(@NotNull Path reader) throws IOException {
-    return getShellEnv(reader);
+  static Map<String, String> testLoader() throws IOException {
+    return getShellEnv();
   }
 
   @TestOnly

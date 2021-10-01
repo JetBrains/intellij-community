@@ -1,11 +1,10 @@
 <html>
 <body>
 Reports singleton classes.
-Singleton classes are declared so that only one instance of the
-class may ever be instantiated. Singleton classes complicate testing,
-and their presence may indicate a lack of object-oriented design.
-<p>Example:</p>
-<pre>
+<p>Singleton classes are declared in a way that only one instance of the class can ever be instantiated. Singleton classes complicate testing,
+  and their presence may indicate a lack of object-oriented design.</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Singleton {
     private static final Singleton ourInstance = new Singleton();
 
@@ -16,8 +15,7 @@ and their presence may indicate a lack of object-oriented design.
         return ourInstance;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

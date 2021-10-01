@@ -142,7 +142,6 @@ Includes the following features:</p>
     <editorActionHandler action="EditorIndentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
-    <editorFactoryListener implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarListenersManager"/>
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
 
     <!--Formatting-->
@@ -186,6 +185,14 @@ Includes the following features:</p>
     <registryKey key="markdown.structure.view.list.visibility"
                  defaultValue="false"
                  description="Determines whether lists are visible in the document structure view"/>
+
+    <registryKey key="markdown.google.docs.import.paste.link.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the ability to import documents from Google by inserting a link"/>
+
+    <registryKey key="markdown.google.docs.import.action.enable"
+                 defaultValue="false"
+                 description="Temporarily disable the action of the import docs from google"/>
   </extensions>
 
   <applicationListeners>
@@ -245,7 +252,8 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
               icon="MarkdownIcons.EditorActions.Link">
-        <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
 
       <separator/>
@@ -259,6 +267,15 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
+
+      <separator/>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              icon="AllIcons.General.LayoutPreviewOnly">
+        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
     </group>
 
     <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
@@ -267,10 +284,6 @@ Includes the following features:</p>
     </action>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              icon="AllIcons.General.LayoutPreviewOnly">
-      </action>
     </group>
 
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
@@ -284,6 +297,8 @@ Includes the following features:</p>
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
       <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"/>
       <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
               class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
       <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"

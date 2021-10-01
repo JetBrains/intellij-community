@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.SerializationManagerEx
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
@@ -78,6 +79,12 @@ internal object CorruptionMarker {
       Files.createDirectories(indexRoot)
     }
 
+    val indexingDiagnosticDir = IndexDiagnosticDumper.indexingDiagnosticDir
+    if (indexingDiagnosticDir.exists()) {
+      indexingDiagnosticDir.directoryStreamIfExists { dirStream ->
+        dirStream.forEach { FileUtil.deleteWithRenaming(it) }
+      }
+    }
 
     // serialization manager is initialized before and use removed index root so we need to reinitialize it
     SerializationManagerEx.getInstanceEx().reinitializeNameStorage()

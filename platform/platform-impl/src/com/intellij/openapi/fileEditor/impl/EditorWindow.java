@@ -36,7 +36,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
@@ -792,7 +791,7 @@ public final class EditorWindow {
   }
 
   private final class MySplitPainter extends AbstractPainter {
-    private Shape myRectangle = TabsUtil.getDropArea(EditorWindow.this.getTabbedPane().getTabs());
+    private Shape myRectangle = getTabbedPane().getTabs().getDropArea();
     private boolean myShowInfoPanel;
     RelativePosition myPosition = RelativePosition.CENTER;
 
@@ -882,7 +881,7 @@ public final class EditorWindow {
       myRectangle = null;
       setNeedsRepaint(true);
 
-      Rectangle r = TabsUtil.getDropArea(EditorWindow.this.getTabbedPane().getTabs());
+      Rectangle r = getTabbedPane().getTabs().getDropArea();
       switch (myPosition) {
         case CENTER:
           break;

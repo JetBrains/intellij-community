@@ -422,6 +422,15 @@ public final class EditorPainter implements TextDrawingCallback {
           public void paintAfterLineEnd(IterationState it, int columnStart, float x, int y) {
             if (dryRun) return;
             TextAttributes backgroundAttributes = it.getPastLineEndBackgroundAttributes().clone();
+            CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
+            if (cfr != null) {
+              paintBackground(backgroundAttributes, startX, y, endX - startX, cfr.getHeightInPixels());
+              myTextDrawingTasks.add(g -> {
+                cfr.getRenderer().paint(cfr, g, new Rectangle2D.Double(x, y, cfr.getWidthInPixels(), cfr.getHeightInPixels()),
+                                        backgroundAttributes);
+              });
+              return;
+            }
             paintBackground(backgroundAttributes, x, y, endX - x);
             int offset = it.getEndOffset();
             SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
@@ -457,7 +466,7 @@ public final class EditorPainter implements TextDrawingCallback {
           }
         }, calculateMarginWidths && !visLinesIterator.endsWithSoftWrap() && !visLinesIterator.startsWithSoftWrap()
            ? width -> myMarginPositions.x[visualLine - myStartVisualLine] = width : null);
-        prevY = y + myLineHeight;
+        prevY = y + visLinesIterator.getLineHeight();
         visLinesIterator.advance();
       }
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
@@ -550,8 +559,12 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintBackground(TextAttributes attributes, float x, int y, float width) {
+      paintBackground(attributes, x, y, width, myLineHeight);
+    }
+
+    private void paintBackground(TextAttributes attributes, float x, int y, float width, int height) {
       if (attributes == null) return;
-      paintBackground(attributes.getBackgroundColor(), x, y, width);
+      paintBackground(attributes.getBackgroundColor(), x, y, width, height);
     }
 
     private void paintBackground(Color color, float x, int y, float width) {
@@ -1499,6 +1512,9 @@ public final class EditorPainter implements TextDrawingCallback {
               marginReached = true;
             }
           }
+        }
+        else if (foldRegion instanceof CustomFoldRegion) {
+          break; // real painting happens in paintAfterLineEnd
         }
         else {
           float xNew = fragment.getEndX();

@@ -7,6 +7,7 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.SystemProperties;
@@ -18,8 +19,8 @@ import java.time.Month;
 public class MigrateToCloudToolsNotification implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);
-    if (facetManager.hasFacets(AppEngineFacet.ID) && isAppEngineSdkDeprecated()) {
+    boolean hasFacets = ReadAction.compute(() -> ProjectFacetManager.getInstance(project).hasFacets(AppEngineFacet.ID));
+    if (hasFacets && isAppEngineSdkDeprecated()) {
       String text = JavaGoogleAppEngineBundle.message("migrate.to.google.cloud.notification.text");
       Notification notification = new Notification("Migrate to Google Cloud SDK",
                                                    JavaGoogleAppEngineBundle.message("notification.title.app.engine.sdk.detected"),

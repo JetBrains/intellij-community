@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -35,7 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import java.util.function.Predicate
 
 
-class ShowSettingsWithAddedPattern : AnAction() {
+class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   init {
     templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
     templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
@@ -64,7 +65,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
-class ShowParameterHintsSettings : AnAction() {
+class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
   }
@@ -259,7 +260,7 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction() {
+class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.content
 
 import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Point
@@ -11,39 +12,45 @@ import java.awt.Rectangle
 /**
  * @author graann on 08/02/2018
  */
+abstract class AdditionalIcon(val action: ContentTabAction) {
+  val icon: ActiveIcon get() = action.icon
+  val afterText: Boolean get() = action.afterText
 
-abstract class AdditionalIcon(val myIcon: ActiveIcon) {
+  val available: Boolean get() = action.available
+  fun runAction() = action.runAction()
+
   @get:NlsContexts.Tooltip
-  open val tooltip: String? = null
+  val tooltip: String?
+    get() = action.tooltip
+
+
+  abstract val active: Boolean
+  abstract val height: Int
   var x: Int = 0
+
+
   val centerPoint: Point
     get() = Point(x + (getIconWidth() / 2), getIconY())
 
   fun paintIcon(c: Component, g: Graphics) {
-    myIcon.setActive(active)
+    icon.setActive(active)
 
-    myIcon.paintIcon(c, g, x, getIconY())
+    icon.paintIcon(c, g, x, getIconY())
   }
 
   fun getIconWidth(): Int {
-    return myIcon.iconWidth
+    return icon.iconWidth
   }
 
   fun getIconHeight(): Int {
-    return myIcon.iconHeight
+    return icon.iconHeight
   }
 
-  abstract val rectangle: Rectangle
-  abstract val active: Boolean
-  abstract val available: Boolean
-  abstract val action: Runnable
-  open val afterText: Boolean = true
-
   private fun getIconY(): Int {
-    return rectangle.y + rectangle.height / 2 - getIconHeight() / 2 + 1
+    return (height - getIconHeight()) / 2 + 1
   }
 
   fun contains(point: Point): Boolean {
-    return rectangle.contains(point)
+    return Rectangle(x, 0, getIconWidth(), height).contains(point)
   }
 }

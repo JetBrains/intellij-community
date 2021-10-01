@@ -33,7 +33,8 @@ fun getTopologicallySorted(descriptors: Collection<IdeaPluginDescriptorImpl>,
   val comparator = requiredOnlyGraph.comparator()
   // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
   // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
-  sortedRequired.sortWith(Comparator { o1, o2 ->
+  // don't use sortWith here - avoid loading kotlin stdlib
+  Collections.sort(sortedRequired, Comparator { o1, o2 ->
     when (PluginManagerCore.CORE_ID) {
       o1.pluginId -> -1
       o2.pluginId -> 1
@@ -108,8 +109,10 @@ private fun collectDirectDependencies(rootDescriptor: IdeaPluginDescriptorImpl,
   directDependenciesOfModule(rootDescriptor, pluginSet, uniqueCheck, result)
 
   // graph for plugins, not for modules - so, dependency of content must be taken into account
-  for (module in rootDescriptor.content.modules) {
-    directDependenciesOfModule(module.requireDescriptor(), pluginSet, uniqueCheck, result)
+  if (rootDescriptor.id != PluginManagerCore.CORE_ID) {
+    for (module in rootDescriptor.content.modules) {
+      directDependenciesOfModule(module.requireDescriptor(), pluginSet, uniqueCheck, result)
+    }
   }
   for (moduleId in rootDescriptor.incompatibilities) {
     val dep = pluginSet.findEnabledPlugin(moduleId)

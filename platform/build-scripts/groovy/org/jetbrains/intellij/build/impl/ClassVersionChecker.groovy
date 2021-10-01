@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -83,8 +83,7 @@ final class ClassVersionChecker {
       List<Rule> unusedRules = myRules - myUsedRules
       if (!unusedRules.isEmpty()) {
         buildContext.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
-                                    "ProductProperties::versionCheckerConfig are incorrect:\n" +
-                                    "${unusedRules.collect {it.path}.join("\n")}")
+                                    "ProductProperties::versionCheckerConfig are out of date:\n${unusedRules.collect { it.path }.join("\n")}")
       }
     }
   }

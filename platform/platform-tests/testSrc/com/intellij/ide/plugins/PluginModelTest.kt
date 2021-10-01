@@ -34,7 +34,8 @@ class PluginModelTest {
     }
 
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      val out = Path.of(PlatformTestUtil.getCommunityPath(), "docs/plugin-graph/plugin-graph.local.json")
+      val communityPath = Path.of(PlatformTestUtil.getCommunityPath())
+      val out = communityPath.resolve(System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
       validator.writeGraph(out)
       println("\nGraph is written to $out")
       println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")

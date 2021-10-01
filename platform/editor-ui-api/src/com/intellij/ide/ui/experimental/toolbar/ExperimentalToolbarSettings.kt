@@ -15,8 +15,12 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                           PersistentStateComponent<ExperimentalToolbarStateWrapper> {
   val logger = Logger.getInstance(ExperimentalToolbarSettings::class.java)
+  companion object {
+    @kotlin.jvm.JvmField
+    public var newToolbarRegistryKey: String = "ide.new.navbar"
+  }
   val newToolbarEnabled: Boolean
-    get() = Registry.`is`("ide.new.navbar", false)
+    get() = Registry.`is`(newToolbarRegistryKey, false)
 
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
@@ -40,7 +44,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                             UISettings.instance.state.showNavigationBar)
     }
     Disposer.register(ApplicationManager.getApplication(), disposable)
-    Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
+    Registry.get(newToolbarRegistryKey).addListener(ToolbarRegistryListener(), disposable)
   }
 
   override fun getState(): ExperimentalToolbarStateWrapper {
@@ -150,6 +154,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
       updateSettingsState()
       UISettings.instance.fireUISettingsChanged()
     }
+
 }
 
 

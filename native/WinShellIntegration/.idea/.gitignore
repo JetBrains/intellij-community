@@ -1,0 +1,8 @@
+*
+
+!.gitignore
+
+!codeStyles/
+codeStyles/*
+!codeStyles/codeStyleConfig.xml
+!codeStyles/Project.xml

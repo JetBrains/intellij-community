@@ -3,14 +3,16 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
+import com.intellij.refactoring.util.RefactoringChangeUtil
 
-class CallBuilder(project: Project, private val context: PsiElement?) {
+class CallBuilder(project: Project, private val context: PsiElement) {
 
   private val factory: PsiElementFactory = PsiElementFactory.getInstance(project)
 
@@ -87,5 +89,22 @@ class CallBuilder(project: Project, private val context: PsiElement?) {
     require(dataOutput is ExpressionOutput)
     val expression = if (dataOutput.name != null) "${dataOutput.name} = $methodCall" else methodCall
     return listOf(factory.createExpressionFromText(expression, context))
+  }
+
+  fun createMethodCall(method: PsiMethod, parameters: List<PsiExpression>): PsiMethodCallExpression {
+    val name = if (method.isConstructor) "this" else method.name
+    val callText = name + "(" + parameters.joinToString { it.text } + ")"
+    val factory = PsiElementFactory.getInstance(method.project)
+    val callElement = factory.createExpressionFromText(callText, context) as PsiMethodCallExpression
+    val methodClass = findParentClass(method)!!
+    if (methodClass != findParentClass(context) && callElement.resolveMethod() != null && callElement.resolveMethod() != method && !method.isConstructor) {
+      val ref = if (method.hasModifierProperty(PsiModifier.STATIC)) factory.createReferenceExpression(methodClass) else RefactoringChangeUtil.createThisExpression(PsiManager.getInstance(method.project), methodClass)
+      callElement.methodExpression.qualifierExpression = ref
+    }
+    return callElement
+  }
+
+  private fun findParentClass(context: PsiElement): PsiClass? {
+    return JavaResolveUtil.findParentContextOfClass(context, PsiClass::class.java, false) as? PsiClass
   }
 }

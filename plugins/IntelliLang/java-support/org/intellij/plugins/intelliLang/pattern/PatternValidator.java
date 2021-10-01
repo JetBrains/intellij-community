@@ -78,7 +78,7 @@ public class PatternValidator extends LocalInspectionTool {
     return new JavaElementVisitor() {
 
       @Override
-      public final void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 

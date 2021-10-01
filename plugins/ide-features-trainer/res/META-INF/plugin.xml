@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="training">
   <id>training</id>
   <name>IDE Features Trainer</name>
   <vendor>JetBrains</vendor>
@@ -13,7 +13,9 @@
     <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
     ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
 
@@ -61,24 +63,19 @@
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
 
-    <applicationService
-      serviceImplementation="training.learn.CourseManager"/>
-    <applicationService
-      serviceImplementation="training.lang.LangManager"/>
-    <applicationService
-      serviceImplementation="training.ui.UISettings"/>
-    <applicationService
-      serviceImplementation="training.learn.lesson.LessonStateBase"/>
+    <applicationService serviceImplementation="training.lang.LangManager"/>
+    <applicationService serviceImplementation="training.ui.UISettings"/>
+    <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
-                icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
+                icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
                 factoryClass="training.ui.LearnToolWindowFactory"
     />
 
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
-    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="FeaturesTrainerIcons.Img.FeatureTrainer"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="training.FeaturesTrainerIcons.Img.FeatureTrainer"/>
   </extensions>
 
   <actions>
@@ -96,7 +93,7 @@
     <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
 
     <!-- Help -->
-    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow">
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow">
       <add-to-group group-id="HelpMenu" relative-to-action="ShowTips" anchor="after"/>
     </action>
   </actions>

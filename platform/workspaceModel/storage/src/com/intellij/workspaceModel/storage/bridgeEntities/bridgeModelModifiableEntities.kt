@@ -92,18 +92,15 @@ fun WorkspaceEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String
 class ModifiableSourceRootEntity : ModifiableWorkspaceEntityBase<SourceRootEntity>() {
   var contentRoot: ContentRootEntity by MutableManyToOne.NotNull(SourceRootEntity::class.java, ContentRootEntity::class.java)
   var url: VirtualFileUrl by VirtualFileUrlProperty()
-  var tests: Boolean by EntityDataDelegation()
   var rootType: String by EntityDataDelegation()
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addSourceRootEntity(contentRoot: ContentRootEntity,
                                                           url: VirtualFileUrl,
-                                                          tests: Boolean,
                                                           rootType: String, source: EntitySource) = addEntity(
   ModifiableSourceRootEntity::class.java, source) {
   this.contentRoot = contentRoot
   this.url = url
-  this.tests = tests
   this.rootType = rootType
 }
 
@@ -256,7 +253,7 @@ class ModifiableFacetEntity : ModifiableWorkspaceEntityBase<FacetEntity>() {
   var moduleId: ModuleId by EntityDataDelegation()
 
   var module: ModuleEntity by MutableManyToOne.NotNull(FacetEntity::class.java, ModuleEntity::class.java)
-  var underlyingFacet: FacetEntity? by MutableOneToOneChild.Nullable(FacetEntity::class.java, FacetEntity::class.java, true)
+  var underlyingFacet: FacetEntity? by MutableManyToOne.Nullable(FacetEntity::class.java, FacetEntity::class.java)
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: String, configurationXmlTag: String?, module: ModuleEntity,

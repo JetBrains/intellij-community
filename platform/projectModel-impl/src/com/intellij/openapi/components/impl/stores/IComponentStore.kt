@@ -49,4 +49,9 @@ interface IComponentStore {
   fun release() {}
 }
 
+@ApiStatus.Internal
+interface IComponentStoreOwner {
+  val componentStore: IComponentStore
+}
+
 data class SaveSessionAndFile(val session: SaveSession, val file: VirtualFile)

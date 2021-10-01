@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.light.LightClass;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +30,15 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package p; public class P extends A {}");
     doTest(); 
   }
+  
+  public void testPermitsListInLibrarySources() {
+    PsiJavaFile file =
+      (PsiJavaFile)myFixture.addFileToProject("p1/P1.java", "package p1; public sealed interface P1 permits P2 {} final class P2 implements P1 {}");
+    PsiClass[] classes = file.getClasses();
+    LightClass permittedInheritorInCls = new LightClass(classes[1]);
+    assertNull(HighlightClassUtil.checkExtendsSealedClass(permittedInheritorInCls, classes[0], classes[0].getPermitsList().getReferenceElements()[0]));
+  }
+  
   public void testSealedClassCast() { doTest(); }
   
   private void doTest() {

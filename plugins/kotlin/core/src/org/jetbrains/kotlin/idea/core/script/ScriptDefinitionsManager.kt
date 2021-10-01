@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.caches.project.getScriptRelatedModuleInfo
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.core.util.withCheckCanceledLock
+import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -45,6 +45,7 @@ import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.SourceCode
@@ -76,6 +77,7 @@ class LoadScriptDefinitionsStartupActivity : StartupActivity {
 }
 
 class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
+    private val definitionsLock = ReentrantReadWriteLock()
     private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
     @Volatile
@@ -84,7 +86,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     private val failedContributorsHashes = HashSet<Int>()
 
-    private val scriptDefinitionsCacheLock = ReentrantLock()
+    private val scriptDefinitionsCacheLock = CheckCanceledLock()
     private val scriptDefinitionsCache = SLRUMap<String, ScriptDefinition>(10, 10)
 
     // cache service as it's getter is on the hot path
@@ -101,7 +103,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         if (!isReady()) return null
 
-        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
         val definition =
             if (isScratchFile(script)) {
@@ -111,7 +113,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 super.findDefinition(script) ?: return null
             }
 
-        scriptDefinitionsCacheLock.withCheckCanceledLock {
+        scriptDefinitionsCacheLock.withLock {
             scriptDefinitionsCache.put(locationId, definition)
         }
 
@@ -129,7 +131,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         findDefinition(File(fileName).toScriptSource())?.legacyDefinition
 
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
-        lock.writeWithCheckCanceled {
+        definitionsLock.writeWithCheckCanceled {
             if (definitions == null) {
                 sourcesToReload.add(source)
                 return // not loaded yet
@@ -138,7 +140,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
 
         val safeGetDefinitions = source.safeGetDefinitions()
-        val updateDefinitionsResult = lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitionsBySource[source] = safeGetDefinitions
 
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
@@ -177,7 +179,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        val updateDefinitionsResult = lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitionsBySource.putAll(newDefinitionsBySource)
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
 
@@ -185,7 +187,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
         updateDefinitionsResult?.apply()
 
-        lock.writeWithCheckCanceled {
+        definitionsLock.writeWithCheckCanceled {
             sourcesToReload.takeIf { it.isNotEmpty() }?.let {
                 val copy = ArrayList<ScriptDefinitionsSource>(it)
                 it.clear()
@@ -196,7 +198,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        val updateDefinitionsResult = lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitions?.let { list ->
                 list.forEach {
                     it.order = scriptingSettings.getScriptDefinitionOrder(it)
@@ -220,7 +222,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun isReady(): Boolean {
         if (definitions == null) return false
-        val keys = lock.writeWithCheckCanceled { definitionsBySource.keys }
+        val keys = definitionsLock.writeWithCheckCanceled { definitionsBySource.keys }
         return keys.all { source ->
             // TODO: implement another API for readiness checking
             (source as? ScriptDefinitionContributor)?.isReady() != false
@@ -234,17 +236,22 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun updateDefinitions(): UpdateDefinitionsResult? {
-        assert(lock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
+        assert(definitionsLock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
         if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()
 
-        val newExtensions = getKnownFilenameExtensions().filter {
-            fileTypeManager.getFileTypeByExtension(it) != KotlinFileType.INSTANCE
+        val newExtensions = getKnownFilenameExtensions().toSet().filter {
+            val fileTypeByExtension = fileTypeManager.getFileTypeByExtension(it)
+            val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
+            if (notKnown) {
+                scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
+            }
+            notKnown
         }.toSet()
 
         clearCache()
-        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.clear() }
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.clear() }
 
         return UpdateDefinitionsResult(project, newExtensions)
     }
@@ -252,6 +259,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     private data class UpdateDefinitionsResult(val project: Project, val newExtensions: Set<String>) {
         fun apply() {
             if (newExtensions.isNotEmpty()) {
+                scriptingWarnLog("extensions ${newExtensions} is about to be registered as ${KotlinFileType.INSTANCE.name}")
                 // Register new file extensions
                 ApplicationManager.getApplication().invokeLater {
                     val fileTypeManager = FileTypeManager.getInstance()
@@ -287,6 +295,8 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     override fun dispose() {
+        super.dispose()
+
         clearCache()
 
         definitionsBySource.clear()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -38,7 +38,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
     return results;
   }
 
-  protected Pair<String, Query> preparePatternAndQuery(String pattern) {
+  private Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
       return new Pair<>(pattern, new MatchAllDocsQuery());
@@ -64,7 +64,7 @@ public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResu
     return new Pair<>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
   }
 
-  protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
+  private Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.length() == 0 || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }

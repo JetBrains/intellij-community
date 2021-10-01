@@ -1,15 +1,18 @@
 <html>
 <body>
-Reports abstract methods which override abstract methods.
-<p>They don't make sense because any concrete child class will have to implement the abstract method anyway.</p>
+Reports the abstract methods that override abstract methods.
+<p>Such methods don't make sense because any concrete child class will have to implement the abstract method anyway.</p>
 <p>
-  Methods with different return types, exception declarations, annotations or modifiers than the method they override
-  are not reported by this inspection.
+  The methods whose return types, exception declarations, annotations, or modifiers differ from the overridden method are not reported by this inspection.
 </p>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore any abstract methods that have a different JavaDoc comment than their super method.
-<p>
-
+  Configure the inspection:
+</p>
+<ul>
+  <li>
+    Use the <b>Ignore methods with different Javadoc than their super methods</b> option to ignore any abstract methods whose JavaDoc comment differs from their super method.
+  </li>
+</ul>
 </body>
 </html>

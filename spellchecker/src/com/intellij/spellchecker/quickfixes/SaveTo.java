@@ -1,14 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.quickfixes;
 
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -67,7 +70,6 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     DataManager.getInstance()
       .getDataContextFromFocusAsync()
       .onSuccess(context -> {
-        final SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
         final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
         final VirtualFile file = descriptor.getPsiElement().getContainingFile().getVirtualFile();
         if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
@@ -81,7 +83,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
               () ->
                 CommandProcessor.getInstance().executeCommand(
                   project,
-                  () -> manager.acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue())),
+                  () -> acceptWord(wordToSave, getLevelByName(dictList.getSelectedValue()), descriptor),
                   getName(),
                   null
                 )
@@ -90,9 +92,19 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
             .showInBestPositionFor(context);
         }
         else {
-          manager.acceptWordAsCorrect(wordToSave, file, project, myLevel);
+          acceptWord(wordToSave, myLevel, descriptor);
         }
       });
+  }
+
+  private static void acceptWord(String word, DictionaryLevel level, ProblemDescriptor descriptor) {
+    PsiElement psi = descriptor.getPsiElement();
+    PsiFile file = psi.getContainingFile();
+    Project project = file.getProject();
+    SpellCheckerManager.getInstance(project).acceptWordAsCorrect(word, file.getViewProvider().getVirtualFile(), project, level);
+
+    TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
+    UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);
   }
 
   public static SaveTo getSaveToLevelFix(DictionaryLevel level) {

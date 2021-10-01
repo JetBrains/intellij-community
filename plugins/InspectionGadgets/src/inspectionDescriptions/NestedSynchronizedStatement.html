@@ -1,9 +1,9 @@
 <html>
 <body>
 Reports nested <code>synchronized</code> statements.
-When possible, it's better to avoid nested synchronization, since in some cases it may lead to a deadlock.
-<p>Example:</p>
-<pre>
+It is recommended to avoid nested synchronization if possible, because in some cases it may lead to a deadlock.
+<p><b>Example:</b></p>
+<pre><code>
   synchronized (lockA){
     //thread 1 is waiting for lockB
     synchronized (lockB){ //warning
@@ -15,7 +15,7 @@ When possible, it's better to avoid nested synchronization, since in some cases 
     synchronized (lockA) { //warning
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

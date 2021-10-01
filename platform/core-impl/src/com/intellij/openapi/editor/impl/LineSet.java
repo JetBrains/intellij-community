@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -177,7 +177,7 @@ public final class LineSet {
     return new LineIteratorImpl(this);
   }
 
-  public final int getLineStart(int index) {
+  public int getLineStart(int index) {
     checkLineIndex(index);
     return isLastEmptyLine(index) ? myLength : myStarts[index];
   }
@@ -190,7 +190,7 @@ public final class LineSet {
     return lineIndex >= 0 && getSeparatorLengthUnsafe(lineIndex) > 0;
   }
 
-  public final int getLineEnd(int index) {
+  public int getLineEnd(int index) {
     checkLineIndex(index);
     return index >= myStarts.length - 1 ? myLength : myStarts[index + 1];
   }
@@ -201,13 +201,12 @@ public final class LineSet {
     }
   }
 
-  final boolean isModified(int index) {
+  boolean isModified(int index) {
     checkLineIndex(index);
     return !isLastEmptyLine(index) && BitUtil.isSet(myFlags[index], MODIFIED_MASK);
   }
 
-  @NotNull
-  final LineSet setModified(@NotNull IntList indices) {
+  @NotNull LineSet setModified(@NotNull IntList indices) {
     if (indices.isEmpty()) {
       return this;
     }
@@ -247,7 +246,7 @@ public final class LineSet {
     return getLineCount() == 0 ? this : clearModificationFlags(0, getLineCount());
   }
 
-  final int getSeparatorLength(int index) {
+  int getSeparatorLength(int index) {
     checkLineIndex(index);
     return getSeparatorLengthUnsafe(index);
   }
@@ -256,7 +255,7 @@ public final class LineSet {
     return index < myFlags.length ? myFlags[index] & SEPARATOR_MASK : 0;
   }
 
-  public final int getLineCount() {
+  public int getLineCount() {
     return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
 

@@ -107,12 +107,21 @@ internal inline fun executeRegisterTaskForContent(mainPluginDescriptor: IdeaPlug
   }
 }
 
+inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
+                               crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+  task(mainPluginDescriptor)
+  executeRegisterTaskForContent(mainPluginDescriptor) {
+    task(it)
+  }
+}
+
 internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
   return descriptor.isRequireRestart ||
          descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }
 
-internal fun throwAlreadyDisposedError(serviceDescription: String, componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
+@ApiStatus.Internal
+fun throwAlreadyDisposedError(serviceDescription: String, componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
   val error = AlreadyDisposedException("Cannot create $serviceDescription because container is already disposed (container=${componentManager})")
   if (indicator == null) {
     throw error

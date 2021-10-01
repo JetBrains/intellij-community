@@ -37,7 +37,8 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       }
 
       val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
-          .apply { minimumSize = Dimension(0, 0) }.also { it.addItemListener(ItemListener { settings.sdk = it.item as Sdk? }) }
+          .apply { minimumSize = Dimension(0, 0) }
+          .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
 
       settings.buildSystemProperty.set(settings.buildSystems.value.first())
 
@@ -47,8 +48,8 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       ).plus(settings.buildSystems.value.map { LabelAndComponent(component = it.advancedSettings()) })
   }
 
-  override fun setupProject(project: Project?, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(settings)
+  override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
+    settings.buildSystemProperty.get().setupProject(project, settings)
   }
 }
 

@@ -386,7 +386,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected Map<VirtualFile, T> getNewMappings() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myModel == null) {
-      throw new AssertionError("createComponent() was not called first");
+      throw new AssertionError("createComponent() was not called first on " + getClass().getName());
     }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
@@ -875,18 +875,18 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
 
     @Override
-    public final void update(@NotNull AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       updateText(getTemplatePresentation());
     }
 
     @NotNull
     @Override
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected final @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+    protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
       return new ComboBoxButton(presentation) {
         @Override
         protected @NotNull JBPopup createPopup(Runnable onDispose) {

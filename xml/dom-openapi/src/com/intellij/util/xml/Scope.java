@@ -19,8 +19,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * {@link com.intellij.util.xml.DomFileDescription#getIdentityScope(DomElement)} and
- * {@link com.intellij.util.xml.DomFileDescription#getResolveScope(GenericDomValue)}
+ * {@link DomFileDescription#getIdentityScope(DomElement)} and
+ * {@link DomFileDescription#getResolveScope(GenericDomValue)}
  * use this annotation first to get the corresponding scopes.
  *
  * @author peter

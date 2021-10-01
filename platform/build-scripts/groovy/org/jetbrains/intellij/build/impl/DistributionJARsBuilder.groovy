@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
@@ -251,49 +252,64 @@ final class DistributionJARsBuilder {
   }
 
   /**
-   * Build index which is used to search options in the Settings dialog.
+   * @see {@link org.jetbrains.intellij.build.impl.DistributionJARsBuilder#buildSearchableOptions}
    */
   static BuildTaskRunnable<Void> createBuildSearchableOptionsTask(@NotNull List<String> modulesForPluginsToPublish) {
     BuildTaskRunnable.task(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, "Build searchable options index", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext buildContext) {
-        ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-        List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
-        modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
-        Path targetDirectory = getSearchableOptionsDir(buildContext)
-        buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
-        buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
-        FileUtil.delete(targetDirectory)
-        // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-        // It'll process all UI elements in Settings dialog and build index for them.
-        BuildTasksImpl.runApplicationStarter(buildContext,
-                                             buildContext.paths.tempDir.resolve("searchableOptions"),
-                                             modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
-                                             Collections.emptyMap(),
-                                             List.of("-ea", "-Xmx1024m"))
-        String[] modules = targetDirectory.toFile().list()
-        if (modules == null || modules.length == 0) {
-          buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
-        }
-        else {
-          buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
-          buildContext.messages.debug("The following modules contain searchable options: $modules")
-        }
+        buildSearchableOptions(buildContext, modulesForPluginsToPublish)
       }
     })
   }
 
-  static List<String> getModulesToCompile(BuildContext buildContext) {
-    def productLayout = buildContext.productProperties.productLayout
-    def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-                           PlatformModules.PLATFORM_API_MODULES +
-                           PlatformModules.PLATFORM_IMPLEMENTATION_MODULES +
-                           productLayout.productApiModules +
-                           productLayout.productImplementationModules +
-                           productLayout.additionalPlatformJars.values() +
-                           toolModules + buildContext.productProperties.additionalModulesToCompile +
-                           ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
-    modulesToInclude - productLayout.excludedModuleNames
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  static Path buildSearchableOptions(BuildContext buildContext,
+                                     @NotNull List<String> modulesForPluginsToPublish,
+                                     BuildTasksImpl.ApplicationStarterClasspathCustomizer classpathCustomizer = new BuildTasksImpl.ApplicationStarterClasspathCustomizer(buildContext)) {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+    modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
+    Path targetDirectory = getSearchableOptionsDir(buildContext)
+    buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
+    buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
+    FileUtil.delete(targetDirectory)
+    // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+    // It'll process all UI elements in Settings dialog and build index for them.
+    BuildTasksImpl.runApplicationStarter(buildContext,
+                                         buildContext.paths.tempDir.resolve("searchableOptions"),
+                                         modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                         Collections.emptyMap(),
+                                         List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"),
+                                         [], TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
+    String[] modules = targetDirectory.toFile().list()
+    if (modules == null || modules.length == 0) {
+      buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
+    }
+    else {
+      buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+      buildContext.messages.debug("The following modules contain searchable options: $modules")
+    }
+    return targetDirectory
+  }
+
+  static Set<String> getModulesToCompile(BuildContext buildContext) {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> modulesToInclude = new LinkedHashSet<>()
+    modulesToInclude.addAll(productLayout.getIncludedPluginModules(Set.copyOf(productLayout.bundledPluginModules)))
+    modulesToInclude.addAll(PlatformModules.PLATFORM_API_MODULES)
+    modulesToInclude.addAll(PlatformModules.PLATFORM_IMPLEMENTATION_MODULES)
+    modulesToInclude.addAll(productLayout.productApiModules)
+    modulesToInclude.addAll(productLayout.productImplementationModules)
+    modulesToInclude.addAll(productLayout.additionalPlatformJars.values())
+    modulesToInclude.addAll(toolModules)
+    modulesToInclude.addAll(buildContext.productProperties.additionalModulesToCompile)
+    modulesToInclude.add("intellij.idea.community.build.tasks")
+    modulesToInclude.add("intellij.platform.images.build")
+    modulesToInclude.removeAll(productLayout.excludedModuleNames)
+    return modulesToInclude
   }
 
   List<String> getModulesForPluginsToPublish() {
@@ -491,7 +507,7 @@ final class DistributionJARsBuilder {
   }
 
   /**
-   * @return predicate to test if a given plugin should ne auto-published
+   * @return predicate to test if a given plugin should be auto-published
    */
   @NotNull
   private Predicate<PluginLayout> loadPluginsAutoPublishList() {
@@ -651,7 +667,7 @@ final class DistributionJARsBuilder {
       @Override
       Object get() {
         buildPlugins(layoutBuilder, List.of(helpPlugin), pluginsToPublishDir, null)
-        BuildHelper.zip(buildContext, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory)
+        BuildHelper.zipWithPrefix(buildContext, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory)
         return null
       }
     })
@@ -985,7 +1001,7 @@ final class DistributionJARsBuilder {
     "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
-    "winp", "junixsocket-core", "pty4j", // contains native library
+    "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
     "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
   )
 
@@ -1038,6 +1054,7 @@ final class DistributionJARsBuilder {
               !lowerCasedLibName.startsWith("cucumber-") &&
               !lowerCasedLibName.contains("groovy")) {
             key = "3rd-party"
+            buildContext.messages.debug("  pack $libName into $key")
           }
           else {
             key = null
@@ -1087,7 +1104,9 @@ Android Studio: work around commit 1052a20b */ Files.createDirectories(libOutput
       for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
         List<Path> list = entry.value
         list.sort(null)
-        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key + ".jar"), list)
+        String fileName = entry.key + ".jar"
+        buildContext.messages.debug(" merge $list to $fileName")
+        mergeJarsMethod.invokeWithArguments(outputDir.resolve(fileName), list)
       }
     }
   }

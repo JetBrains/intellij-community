@@ -73,6 +73,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
           UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
         }
         else {
+          project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
           ApplicationManager.getApplication().invokeAndWait {
             linkAndRefreshProject(nioPath, project)

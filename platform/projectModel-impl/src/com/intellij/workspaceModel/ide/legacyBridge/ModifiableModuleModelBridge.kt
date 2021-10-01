@@ -2,7 +2,9 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
 interface ModifiableModuleModelBridge : ModifiableModuleModel {
   fun prepareForCommit()
+  fun collectChanges(): WorkspaceEntityStorageBuilder
 }

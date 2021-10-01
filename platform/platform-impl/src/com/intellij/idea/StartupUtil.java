@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -12,7 +12,6 @@ import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.gdpr.Agreements;
-import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -79,6 +78,7 @@ import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+@SuppressWarnings("LoggerInitializedWithForeignClass")
 @ApiStatus.Internal
 public final class StartupUtil {
   @SuppressWarnings("StaticNonFinalField")
@@ -87,6 +87,7 @@ public final class StartupUtil {
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
   private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
+  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -107,10 +108,6 @@ public final class StartupUtil {
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
     Main.setFlags(args);
-
-    if (!Main.isHeadless() && !checkGraphics()) {
-      System.exit(Main.NO_GRAPHICS);
-    }
 
     CommandLineArgs.parse(args);
 
@@ -142,8 +139,24 @@ public final class StartupUtil {
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    activity = activity.endAndStart("LaF init scheduling");
+    if (args.length > 0 && Main.CWM_HOST_COMMAND.equals(args[0])) {
+      activity = activity.endAndStart("Cwm Host init");
+      try {
+        Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
+        MethodHandles.lookup().findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }
 
+    activity = activity.endAndStart("Check graphics environment");
+    if (!Main.isHeadless() && !checkGraphics()) {
+      System.exit(Main.NO_GRAPHICS);
+    }
+
+    activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
     CompletableFuture<?> initUiTask = scheduleInitUi(busyThread);
@@ -213,12 +226,8 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    // don't load EnvironmentUtil class in main thread
-    shellEnvLoadFuture = forkJoinPool.submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("environment loading");
-      Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
-      return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
-    });
+    // don't load EnvironmentUtil class in the main thread
+    shellEnvLoadFuture = forkJoinPool.submit(() -> EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading")));
 
     Thread.currentThread().setUncaughtExceptionHandler((__, e) -> {
       StartupAbortedException.processException(e);
@@ -364,7 +373,7 @@ public final class StartupUtil {
     default void importFinished(@NotNull Path newConfigDir) {}
   }
 
-  private static void runPreAppClass(@NotNull Logger log, @NotNull String[] args) {
+  private static void runPreAppClass(@NotNull Logger log, String @NotNull [] args) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       Activity activity = StartUpMeasurer.startActivity("pre app class running");
@@ -537,7 +546,7 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
+    // this forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
     // This caches available font family names (for the default locale) to make corresponding call
     // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
@@ -558,7 +567,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (ConsentOptions.getInstance().getConsents().getValue()) {
+    else if (AppUIUtil.needToShowUsageStatsConsent()){
       /* Android Studio: b/200625563
       Agreements.showDataSharingAgreement();
       Android Studio: b/200625563 */
@@ -798,7 +807,7 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
-      // Disabling output to System.err seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
+      // Disabling output to `System.err` seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
       // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
       // Should be revisited in case of migration to Log4j 2.
       LogLog.setQuietMode(true);

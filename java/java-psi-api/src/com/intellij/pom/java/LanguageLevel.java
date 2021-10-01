@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -40,8 +40,9 @@ public enum LanguageLevel {
   JDK_15_PREVIEW(JavaPsiBundle.messagePointer("jdk.15.preview.language.level.description"), 15),
   JDK_16(JavaPsiBundle.messagePointer("jdk.16.language.level.description"), 16),
   JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
-  
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 17);
+  JDK_17(JavaPsiBundle.messagePointer("jdk.17.language.level.description"), 17),
+  JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 18);
 
   public static final LanguageLevel HIGHEST = JDK_16;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");

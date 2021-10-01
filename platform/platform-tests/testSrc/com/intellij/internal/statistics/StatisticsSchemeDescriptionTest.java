@@ -37,7 +37,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   public <T> void doTestField(@NotNull EventField<T> field, @NotNull T value, @NotNull String expected) {
     doTestField(field, value, obj -> {
       TestCase.assertNotNull(obj);
-      TestCase.assertEquals(obj.toString(), expected);
+      TestCase.assertEquals(expected, obj.toString());
     });
   }
 
@@ -135,8 +135,32 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     doTestField(EventFields.Int("count"), 123, "123");
   }
 
+  public void testPrimitiveRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 123, "128");
+  }
+
+  public void testPrimitiveNegativeAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), -1, "1");
+  }
+
+  public void testPrimitiveZeroAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 0, "1");
+  }
+
   public void testPrimitiveLongField() {
     doTestField(EventFields.Long("duration_ms"), 123L, "123");
+  }
+
+  public void testPrimitiveRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 60L, "64");
+  }
+
+  public void testPrimitiveNegativeAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), -1424612L, "1");
+  }
+
+  public void testPrimitiveZeroAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 0L, "1");
   }
 
   public void testPrimitiveDoubleField() {

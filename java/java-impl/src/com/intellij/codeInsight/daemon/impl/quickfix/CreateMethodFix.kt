@@ -13,7 +13,7 @@ import com.intellij.psi.PsiType
 
 fun createVoidMethodFixes(psiClass: @JvmCommon PsiClass, methodName: String, modifier: JvmModifier): Array<LocalQuickFix> {
   if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return LocalQuickFix.EMPTY_ARRAY
-  val request = methodRequest(psiClass.project, methodName, modifier, PsiType.VOID)
+  val request = methodRequest(psiClass.project, methodName, listOf(modifier), PsiType.VOID)
   val actions = createMethodActions(psiClass, request)
   if (actions.isEmpty()) return LocalQuickFix.EMPTY_ARRAY
   return wrapToQuickFixes(

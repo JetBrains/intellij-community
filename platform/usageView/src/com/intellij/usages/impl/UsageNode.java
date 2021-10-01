@@ -4,8 +4,9 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageNodePresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   public UsageNode(Node parent, @NotNull Usage usage) {
@@ -68,8 +69,13 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
 
   @NotNull
   @Override
-  protected String getText(@NotNull final UsageView view) {
+  protected String getNodeText() {
     return getUsage().getPresentation().getPlainText();
+  }
+
+  @Override
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return getUsage().getPresentation().getCachedPresentation();
   }
 
   @Override

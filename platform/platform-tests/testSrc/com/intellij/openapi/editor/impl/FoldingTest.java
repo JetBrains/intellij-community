@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class FoldingTest extends AbstractEditorTest {
@@ -457,5 +458,41 @@ public class FoldingTest extends AbstractEditorTest {
                       "    bar\n" +
                       "  ]\n" +
                       ")");
+  }
+
+  public void testDisposalListenerMethodCalledOnExplicitRemoval() {
+    AtomicInteger invocationCount = new AtomicInteger();
+    myModel.addListener(new FoldingListener() {
+      @Override
+      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+        invocationCount.incrementAndGet();
+      }
+    }, getTestRootDisposable());
+    Ref<FoldRegion> regionRef = new Ref<>();
+    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+    assertNotNull(regionRef.get());
+    assertTrue(regionRef.get().isValid());
+    assertEquals(0, invocationCount.get());
+    myModel.runBatchFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
+    assertFalse(regionRef.get().isValid());
+    assertEquals(1, invocationCount.get());
+  }
+
+  public void testDisposalListenerMethodCalledOnImplicitRemoval() {
+    AtomicInteger invocationCount = new AtomicInteger();
+    myModel.addListener(new FoldingListener() {
+      @Override
+      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+        invocationCount.incrementAndGet();
+      }
+    }, getTestRootDisposable());
+    Ref<FoldRegion> regionRef = new Ref<>();
+    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+    assertNotNull(regionRef.get());
+    assertTrue(regionRef.get().isValid());
+    assertEquals(0, invocationCount.get());
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 3));
+    assertFalse(regionRef.get().isValid());
+    assertEquals(1, invocationCount.get());
   }
 }

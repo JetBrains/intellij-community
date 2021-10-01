@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 class GradleJavaBuildSystemType : JavaBuildSystemType<GradleJavaBuildSystemSettings>("Gradle") {
   override var settingsFactory = { GradleJavaBuildSystemSettings() }
 
-  override fun setupProject(languageSettings: JavaSettings, settings: GradleJavaBuildSystemSettings) {
+  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: GradleJavaBuildSystemSettings) {
     TODO("Not yet implemented")
   }
 

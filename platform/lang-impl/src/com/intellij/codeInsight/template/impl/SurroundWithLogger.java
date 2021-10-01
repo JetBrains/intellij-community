@@ -1,42 +1,61 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.ClassEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class SurroundWithLogger {
-  private final static String USAGE_GROUP = "surround.with";
+import java.util.ArrayList;
+import java.util.List;
 
-  public static void logSurrounder(Surrounder surrounder, @NotNull Language language, @NotNull Project project) {
-    log("surrounder", surrounder.getClass(), language, project);
+import static com.intellij.codeInsight.template.impl.LiveTemplateRunLogger.registerLiveTemplateEvent;
+
+public final class SurroundWithLogger extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("surround.with", 3);
+  private static final VarargEventId LIVE_TEMPLATE_EXECUTED = registerLiveTemplateEvent(GROUP, "live.template.executed");
+  private static final ClassEventField CLASS = EventFields.Class("class");
+  private static final VarargEventId SURROUNDER_EXECUTED =
+    GROUP.registerVarargEvent("surrounder.executed", EventFields.PluginInfo, EventFields.Language, CLASS);
+  private static final VarargEventId CUSTOM_TEMPLATE_EXECUTED =
+    GROUP.registerVarargEvent("custom.template.executed", EventFields.PluginInfo, EventFields.Language, CLASS);
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
-  private static void log(@NotNull @NonNls String type,
-                          @NotNull Class<?> elementClass,
-                          @NotNull Language language,
-                          @NotNull Project project) {
+  public static void logSurrounder(Surrounder surrounder, @NotNull Language language, @NotNull Project project) {
+    SURROUNDER_EXECUTED.log(project, buildEventData(surrounder.getClass(), language));
+  }
+
+  private static List<EventPair<?>> buildEventData(@NotNull Class<?> elementClass,
+                                                   @NotNull Language language) {
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(elementClass);
-    FeatureUsageData data = new FeatureUsageData().addPluginInfo(pluginInfo).addLanguage(language);
-    data.addData("class", pluginInfo.getType().isDevelopedByJetBrains() ? elementClass.getName() : "third.party");
-    FUCounterUsageLogger.getInstance().logEvent(project, USAGE_GROUP, type + ".executed", data);
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(EventFields.PluginInfo.with(pluginInfo));
+    data.add(EventFields.Language.with(language));
+    data.add(CLASS.with(elementClass));
+    return data;
   }
 
   static void logTemplate(@NotNull TemplateImpl template, @NotNull Language language, @NotNull Project project) {
-    final FeatureUsageData data = LiveTemplateRunLogger.createTemplateData(template, language);
+    final List<EventPair<?>> data = LiveTemplateRunLogger.createTemplateData(template, language);
     if (data != null) {
-      FUCounterUsageLogger.getInstance().logEvent(project, USAGE_GROUP, "live.template.executed", data);
+      LIVE_TEMPLATE_EXECUTED.log(project, data);
     }
   }
 
   static void logCustomTemplate(@NotNull CustomLiveTemplate template, @NotNull Language language, @NotNull Project project) {
-    log("custom.template", template.getClass(), language, project);
+    CUSTOM_TEMPLATE_EXECUTED.log(project, buildEventData(template.getClass(), language));
   }
 }

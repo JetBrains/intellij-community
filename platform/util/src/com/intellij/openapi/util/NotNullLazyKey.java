@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.NotNullFunction;
@@ -17,7 +17,7 @@ public final class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   }
 
   @NotNull
-  public final T getValue(@NotNull H h) {
+  public T getValue(@NotNull H h) {
     T data = h.getUserData(this);
     if (data == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();

@@ -9,6 +9,7 @@ import com.intellij.execution.target.java.TargetPaths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -20,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +100,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       targetParameters.add(request -> {
         return JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true");
       });
+      if (collectLineInfo && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
+        targetParameters.add(request -> {
+          return JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false");
+        });
+      }
     }
     if (project != null) {
       final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
@@ -129,12 +134,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         builder
           .download(sessionDataFilePath,
                          __ -> {
-                           try {
-                             Files.createFile(Paths.get(sessionDataFilePath));
-                           }
-                           catch (IOException e) {
-                             throw new RuntimeException(e);
-                           }
+                           createFileOrClearExisting(sessionDataFilePath);
                            return Unit.INSTANCE;
                          },
                          targetSessionDataPath -> {
@@ -167,6 +167,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     catch (IOException e) {
       LOG.info("Coverage was not enabled", e);
       return null;
+    }
+  }
+
+  private static void createFileOrClearExisting(@NotNull String sessionDataFilePath) {
+    File file = new File(sessionDataFilePath);
+    FileUtil.createIfDoesntExist(file);
+    try {
+      new FileOutputStream(file).close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 

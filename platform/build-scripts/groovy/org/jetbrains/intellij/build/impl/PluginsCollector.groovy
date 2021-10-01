@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -28,8 +28,9 @@ final class PluginsCollector {
     availableModulesAndPlugins.addAll(parse['plugins'] as Collection)
 
     def descriptorsMap = collectPluginDescriptors(true, true, true)
+    def descriptorsMapWithBundled = collectPluginDescriptors(true, false, true)
     def pluginDescriptors = new HashSet<PluginDescriptor>(descriptorsMap.values())
-    return pluginDescriptors.findAll { isPluginCompatible(it, availableModulesAndPlugins, descriptorsMap) }.collect { it.pluginLayout }
+    return pluginDescriptors.findAll { isPluginCompatible(it, availableModulesAndPlugins, descriptorsMapWithBundled) }.collect { it.pluginLayout }
   }
 
   private boolean isPluginCompatible(@NotNull PluginDescriptor plugin,
@@ -49,20 +50,25 @@ final class PluginsCollector {
       }
       return false
     }
+    for (incompatiblePlugin in plugin.incompatiblePlugins) {
+      if (availableModulesAndPlugins.contains(incompatiblePlugin)) {
+        return false
+      }
+    }
     availableModulesAndPlugins.add(plugin.id)
     availableModulesAndPlugins.addAll(plugin.declaredModules)
     return true
   }
 
   @NotNull Map<String, PluginDescriptor> collectPluginDescriptors(boolean skipImplementationDetailPlugins, boolean skipBundledPlugins,
-                                                                  boolean honorCompatiplePluginsToIgnore) {
+                                                                  boolean honorCompatiblePluginsToIgnore) {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
     def allBundledPlugins = productLayout.bundledPluginModules as Set<String>
     for (JpsModule  jpsModule : myBuildContext.project.modules) {
       if (skipBundledPlugins && allBundledPlugins.contains(jpsModule.name) ||
-          honorCompatiplePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
+          honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
         continue
       }
 
@@ -121,6 +127,16 @@ final class PluginsCollector {
           declaredModules.add(value)
         }
       }
+      def content = xml.getChild('content')
+      if (content) {
+        for (module in content.getChildren('module')) {
+          def moduleName = module.getAttributeValue('name')
+          if (moduleName) {
+            declaredModules += moduleName
+          }
+        }
+      }
+
       def requiredDependencies = new HashSet<String>()
       def optionalDependencies = new ArrayList<Pair<String, String>>()
       for (dependency in xml.getChildren('depends')) {
@@ -131,8 +147,28 @@ final class PluginsCollector {
           optionalDependencies += new Pair(dependency.getTextTrim(), dependency.getAttributeValue("config-file"))
         }
       }
+      def dependencies = xml.getChild('dependencies')
+      if (dependencies != null) {
+        for (plugin in dependencies.getChildren('plugin')) {
+          def pluginId = plugin.getAttributeValue('id')
+          if (pluginId) {
+            requiredDependencies += pluginId
+          }
+        }
+        for (module in dependencies.getChildren('module')) {
+          def moduleName = module.getAttributeValue('name')
+          if (moduleName) {
+            requiredDependencies += moduleName
+          }
+        }
+      }
 
-      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, optionalDependencies, pluginLayout)
+      def incompatiblePlugins = new HashSet<String>()
+      for (pluginId in xml.getChildren('incompatible-with')) {
+        incompatiblePlugins += pluginId.getTextTrim()
+      }
+
+      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout)
       pluginDescriptors[id] = pluginDescriptor
       for (module in declaredModules) {
         pluginDescriptors[module] = pluginDescriptor
@@ -145,14 +181,17 @@ final class PluginsCollector {
     final String id
     final Set<String> declaredModules
     final Set<String> requiredDependencies
+    final Set<String> incompatiblePlugins
     final List<Pair<String, String>> optionalDependencies
     final PluginLayout pluginLayout
 
-    PluginDescriptor(String id, Set<String> declaredModules, Set<String> requiredDependencies,
+    PluginDescriptor(String id, Set<String> declaredModules,
+                     Set<String> requiredDependencies, Set<String> incompatiblePlugins,
                      List<Pair<String, String>> optionalDependencies, PluginLayout pluginLayout) {
       this.id = id
       this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
+      this.incompatiblePlugins = incompatiblePlugins
       this.optionalDependencies = optionalDependencies
       this.pluginLayout = pluginLayout
     }

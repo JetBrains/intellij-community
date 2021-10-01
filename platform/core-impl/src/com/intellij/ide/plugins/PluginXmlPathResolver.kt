@@ -142,10 +142,9 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
     val input = dataLoader.load(path)
     if (input == null) {
-      // todo (deal with different plugin content for ultimate and community)
-      if (path == "intellij.profiler.ultimate.xml") {
+      if (path == "intellij.profiler.clion") {
         val descriptor = RawPluginDescriptor()
-        descriptor.`package` = "com.intellij.profiler.ultimate"
+        descriptor.`package` = "com.intellij.profiler.clion"
         return descriptor
       }
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")

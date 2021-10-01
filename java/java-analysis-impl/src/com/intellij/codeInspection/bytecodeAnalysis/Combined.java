@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -150,7 +150,7 @@ final class CombinedAnalysis {
     interpreter = new CombinedInterpreter(methodNode.instructions, Type.getArgumentTypes(methodNode.desc).length, staticFields);
   }
 
-  final void analyze() throws AnalyzerException {
+  void analyze() throws AnalyzerException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
@@ -185,7 +185,7 @@ final class CombinedAnalysis {
     }
   }
 
-  final Equation notNullParamEquation(int i, boolean stable) {
+  Equation notNullParamEquation(int i, boolean stable) {
     final EKey key = new EKey(method, new In(i, false), stable);
     final Result result;
     if (interpreter.dereferencedParams[i]) {
@@ -207,7 +207,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  final Equation nullableParamEquation(int i, boolean stable) {
+  Equation nullableParamEquation(int i, boolean stable) {
     final EKey key = new EKey(method, new In(i, true), stable);
     final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
@@ -229,8 +229,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation contractEquation(int i, Value inValue, boolean stable) {
+  @Nullable Equation contractEquation(int i, Value inValue, boolean stable) {
     final InOut direction = new InOut(i, inValue);
     final EKey key = new EKey(method, direction, stable);
     final Result result;
@@ -270,8 +269,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation failEquation(boolean stable) {
+  @Nullable Equation failEquation(boolean stable) {
     final EKey key = new EKey(method, Throw, stable);
     final Result result;
     if (exception) {
@@ -290,8 +288,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation failEquation(int i, Value inValue, boolean stable) {
+  @Nullable Equation failEquation(int i, Value inValue, boolean stable) {
     final InThrow direction = new InThrow(i, inValue);
     final EKey key = new EKey(method, direction, stable);
     final Result result;
@@ -312,12 +309,11 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation outContractEquation(boolean stable) {
+  @Nullable Equation outContractEquation(boolean stable) {
     return outEquation(exception, method, returnValue, stable);
   }
 
-  final List<Equation> staticFieldEquations() {
+  List<Equation> staticFieldEquations() {
     return EntryStream.of(interpreter.staticFields)
       .removeValues(v -> v == BasicValue.UNINITIALIZED_VALUE)
       .mapKeyValue((field, value) -> outEquation(exception, field, value, true))
@@ -356,7 +352,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  final Equation nullableResultEquation(boolean stable) {
+  Equation nullableResultEquation(boolean stable) {
     final EKey key = new EKey(method, NullableOut, stable);
     final Result result;
     if (exception ||
@@ -378,7 +374,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  final Frame<BasicValue> createStartFrame() {
+  Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
@@ -679,7 +675,7 @@ final class NegationAnalysis {
     }
   }
 
-  final void analyze() throws AnalyzerException, NegationAnalysisFailedException {
+  void analyze() throws AnalyzerException, NegationAnalysisFailedException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
@@ -748,7 +744,7 @@ final class NegationAnalysis {
     }
   }
 
-  final Equation contractEquation(int i, Value inValue, boolean stable) {
+  Equation contractEquation(int i, Value inValue, boolean stable) {
     final EKey key = new EKey(method, new InOut(i, inValue), stable);
     final Result result;
     HashSet<EKey> keys = new HashSet<>();
@@ -769,7 +765,7 @@ final class NegationAnalysis {
     return new Equation(key, result);
   }
 
-  final Frame<BasicValue> createStartFrame() {
+  Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);

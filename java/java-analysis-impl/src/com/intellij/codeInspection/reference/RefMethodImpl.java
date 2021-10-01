@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -11,6 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,7 +232,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (getRefManager().isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
-        RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
+        PsiElement sourceElement = psiSuperMethod instanceof LightElement ? psiSuperMethod.getNavigationElement() : psiSuperMethod;
+        RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(sourceElement);
         if (refSuperMethod != null) {
           addSuperMethod(refSuperMethod);
           refSuperMethod.markExtended(this);
@@ -372,9 +374,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isReferenced() {
-    // Directly called from somewhere..
+    // Directly called from somewhere...
     for (RefElement refCaller : getInReferences()) {
-      //noinspection SuspiciousMethodCalls
       if (!getDerivedMethods().contains(refCaller)) return true;
     }
 
@@ -384,9 +385,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean hasSuspiciousCallers() {
-    // Directly called from somewhere..
+    // Directly called from somewhere...
     for (RefElement refCaller : getInReferences()) {
-      //noinspection SuspiciousMethodCalls
       if (((RefElementImpl)refCaller).isSuspicious() && !getDerivedMethods().contains(refCaller)) return true;
     }
 
@@ -458,11 +458,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       String methodSignature = externalName.substring(spaceIdx + 1);
       MethodSignature patternSignature = factory.createMethodFromText(methodSignature, psiClass).getSignature(PsiSubstitutor.EMPTY);
-      return Arrays.stream(psiClass.findMethodsByName(patternSignature.getName(), false)).filter(m -> {
+      return ContainerUtil.find(psiClass.findMethodsByName(patternSignature.getName(), false), m -> {
         MethodSignature s = m.getSignature(PsiSubstitutor.EMPTY);
         MethodSignature refinedPatternSignature = factory.createMethodFromText(methodSignature, m).getSignature(s.getSubstitutor());
         return MethodSignatureUtil.areErasedParametersEqual(s, refinedPatternSignature);
-      }).findFirst().orElse(null);
+      });
     } catch (IncorrectOperationException e) {
       // Do nothing. Returning null is acceptable in this case.
       return null;

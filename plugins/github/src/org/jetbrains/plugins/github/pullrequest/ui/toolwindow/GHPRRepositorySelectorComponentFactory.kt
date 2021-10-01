@@ -68,7 +68,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     }
     val gheLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val server = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath ?: return
+        val server = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath ?: return
         authManager.requestNewAccountForServer(server, project)?.run {
           applyAction.actionPerformed(e)
         }
@@ -157,12 +157,12 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     }
 
     private fun updateRepositories() {
-      repositoriesModel.items = repositoryManager.knownRepositories.sortedBy { it.gitRemote.remote.name }
+      repositoriesModel.items = repositoryManager.knownRepositories.sortedBy { it.gitRemoteUrlCoordinates.remote.name }
       repositoriesModel.preSelect()
     }
 
     private fun updateAccounts() {
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath
+      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
       if (serverPath == null) {
         accountsModel.items = emptyList()
         accountsModel.actions = emptyList()
@@ -229,7 +229,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     private fun updateActions() {
       val hasAccounts = accountsModel.items.isNotEmpty()
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath
+      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
       val isGithubServer = serverPath?.isGithubDotCom ?: false
 
       applyAction.isEnabled = accountsModel.selectedItem != null

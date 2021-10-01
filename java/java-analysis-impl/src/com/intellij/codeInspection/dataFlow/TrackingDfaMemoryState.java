@@ -188,7 +188,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
         break;
       }
     }
-    if (changeMap != null && !changeMap.isEmpty()) {
+    if (changeMap != null && !changeMap.isEmpty() && myHistory != null) {
       myHistory = myHistory.withBridge(instruction, changeMap);
     }
   }

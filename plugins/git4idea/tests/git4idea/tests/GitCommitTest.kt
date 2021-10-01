@@ -3,10 +3,8 @@ package git4idea.tests
 
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import git4idea.checkin.GitCheckinEnvironment
@@ -16,12 +14,8 @@ import git4idea.config.GitVersion
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 import java.io.File
-import java.util.*
 
-class GitStagingCommitTest : GitCommitTest(true)
-class GitWithOnlyCommitTest : GitCommitTest(false)
-
-abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRepoTest() {
+class GitStagingCommitTest : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -31,18 +25,8 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider, testRootDisposable)
-    Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
     commitContext.isCommitRenamesSeparately = true
-  }
-
-  override fun tearDown() {
-    try {
-      Registry.get("git.force.commit.using.staging.area").resetToDefault()
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   // IDEA-50318
@@ -399,16 +383,10 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
       modified("c.java")
     }
 
-    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive && !Registry.`is`("git.force.commit.using.staging.area")) {
-      STAGED_CONTENT
-    }
-    else {
-      // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
-      // so we are not doing it, at least until IDEA supports Git index
-      // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
-      UNSTAGED_CONTENT
-    }
-    assertEquals(expectedIndexContent, git("show :c.java"))
+    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
+    // so we are not doing it, at least until IDEA supports Git index
+    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
+    assertEquals(UNSTAGED_CONTENT, git("show :c.java"))
     assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
@@ -515,7 +493,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
   fun `test commit rename with conflicting staged rename`() {
     `assume version where git reset returns 0 exit code on success `()
-    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
 
     tac("a.txt", "file content")
 
@@ -621,10 +598,8 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     assertChangesWithRefresh {
       added("c.txt")
     }
-    if (Registry.`is`("git.force.commit.using.staging.area")) { // known bug in "--only" implementation
-      repo.assertStagedChanges {
-        added("c.txt")
-      }
+    repo.assertStagedChanges {
+      added("c.txt")
     }
     assertMessage("comment", repo.message("HEAD"))
     repo.assertCommitted {
@@ -655,23 +630,14 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     assertMessage("comment", repo.message("HEAD"))
 
     // bad case, but committing "deletion" seems logical (as it is shown in commit dialog)
-    if (Registry.`is`("git.force.commit.using.staging.area")) {
-      repo.assertCommitted {
-        modified("a.txt")
-        deleted("b.txt")
-      }
-    }
-    else {
-      repo.assertCommitted {
-        modified("a.txt")
-        modified("b.txt")
-      }
+    repo.assertCommitted {
+      modified("a.txt")
+      deleted("b.txt")
     }
   }
 
   fun `test commit during unresolved merge conflict`() {
     `assume version where git reset returns 0 exit code on success `()
-    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
 
     createFileStructure(projectRoot, "a.txt")
     addCommit("created some file structure")
@@ -838,8 +804,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test file to directory renames`() {
-    assumeTrue("git.force.commit.using.staging.area only", Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
-
     tac("a_path", "file content 1")
     tac("b_path", "file content 2")
 

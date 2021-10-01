@@ -18,10 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProject
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -166,6 +163,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getJdkConfig()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static JdkListConfigurable getInstance(Project project) {
     return ProjectStructureConfigurable.getInstance(project).getJdkConfig();

@@ -5,15 +5,26 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting-ide-services" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
@@ -29,12 +40,14 @@
     <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />
     <orderEntry type="module" module-name="kotlin.jps-common" exported="" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.i18n" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" exported="" />
+    <orderEntry type="module" module-name="kotlin.injection" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="kotlin.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.native" exported="" />

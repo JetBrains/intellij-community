@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -51,13 +53,28 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     installSelectionChangedHandler(tree) { updatePreview(false) }
   }
 
-  fun openWithSingleClick(tree: ChangesTree) {
-    //do not open file aggressively on start up, do it later
-    DumbService.getInstance(project).smartInvokeLater {
-      if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
+  fun installListeners(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
+    installDoubleClickHandler(tree)
+    installEnterKeyHandler(tree)
+    if (isOpenEditorDiffPreviewWithSingleClick) {
+      //do not open file aggressively on start up, do it later
+      DumbService.getInstance(project).smartInvokeLater {
+        if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
+        installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+      }
+    }
+    else {
+      installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+    }
+  }
 
-      installSelectionChangedHandler(tree) {
+  private fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
+    installSelectionChangedHandler(tree) {
+      if (isOpenEditorDiffPreviewWithSingleClick) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
+      }
+      else {
+        updatePreview(false)
       }
     }
   }
@@ -124,7 +141,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
-  private fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
+  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
 
   fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)
@@ -153,7 +170,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   companion object {
     fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-      return VcsEditorTabFilesManager.getInstance().openFile(project, file, focusEditor)
+      return DiffEditorTabFilesManager.getInstance(project).showDiffFile(file, focusEditor)
     }
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
@@ -181,11 +198,10 @@ private class EditorTabDiffPreviewProvider(
 
   override fun createDiffRequestChain(): DiffRequestChain? {
     if (diffProcessor is ChangeViewDiffRequestProcessor) {
-      val selection = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange)
-      val producers = selection.map { it!!.createProducer(diffProcessor.project) }
-      val chain = SimpleDiffRequestChain.fromProducers(producers.list)
-      chain.index = producers.selectedIndex
-      return chain
+      val producers = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange).map {
+        it.createProducer(diffProcessor.project)
+      }
+      return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
     }
     return null
   }

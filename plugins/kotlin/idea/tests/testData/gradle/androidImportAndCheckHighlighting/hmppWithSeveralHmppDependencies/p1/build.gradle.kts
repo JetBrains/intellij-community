@@ -12,17 +12,24 @@ android {
 
 kotlin {
     jvm()
-    ios()
     android()
+    iosArm64()
+    iosX64()
 
     val commonMain by sourceSets.getting
     val jvmAndAndroidMain by sourceSets.creating
     val jvmMain by sourceSets.getting
     val androidMain by sourceSets.getting
+    val iosMain by sourceSets.creating
+    val iosX64Main by sourceSets.getting
+    val iosArm64Main by sourceSets.getting
 
     jvmAndAndroidMain.dependsOn(commonMain)
     jvmMain.dependsOn(jvmAndAndroidMain)
     androidMain.dependsOn(jvmAndAndroidMain)
+    iosMain.dependsOn(commonMain)
+    iosX64Main.dependsOn(iosMain)
+    iosArm64Main.dependsOn(iosMain)
 
     commonMain.dependencies {
         api("org.jetbrains.kotlinx:atomicfu:0.15.1")

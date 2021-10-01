@@ -39,19 +39,24 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     }
 
     try {
-      if (extensions == null) {
+      if (extensions == null || extensions.outdated) {
         @Suppress("DEPRECATION")
         val extensionsMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(),
                                                          FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
-        extensionsService.extensions = PluginFeatureMap(extensionsMap)
+        extensionsService.extensions?.update(extensionsMap) ?: run {
+          extensionsService.extensions = PluginFeatureMap(extensionsMap)
+        }
         if (project.isDisposed) {
           return
         }
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
-      if (extensionsService.dependencies == null) {
+
+      if (extensionsService.dependencies == null || extensionsService.dependencies!!.outdated) {
         val dependencyMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(), DEPENDENCY_SUPPORT_FEATURE)
-        extensionsService.dependencies = PluginFeatureMap(dependencyMap)
+        extensionsService.dependencies?.update(dependencyMap) ?: run {
+          extensionsService.dependencies = PluginFeatureMap(dependencyMap)
+        }
       }
       PluginAdvertiserService.instance.run(
         project,

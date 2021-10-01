@@ -75,6 +75,14 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testThreeDuplicates(){
+    doTest(changedName = "sayHello")
+  }
+
+  fun testParameterGrouping(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

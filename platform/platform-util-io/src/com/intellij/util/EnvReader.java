@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -27,10 +27,6 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
 
   public EnvReader(long timeoutMillis) {
     super(timeoutMillis);
-  }
-
-  public @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
-    return doReadShellEnv(file, PathManager.findBinFileWithException(EnvironmentUtil.READER_FILE_NAME), additionalEnvironment);
   }
 
   public @NotNull Map<String, String> readBatEnv(@Nullable Path batchFile, List<String> args) throws IOException {

@@ -45,7 +45,7 @@ public interface LogEventDetector {
 
     @Override
     final public @NotNull String eventId() {
-      return "action.invoked";
+      return "action.finished";
     }
 
     @Override

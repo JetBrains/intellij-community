@@ -1,4 +1,4 @@
-// FIX: Remove var
+// FIX: Remove 'var'
 interface A {
     fun foo()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
@@ -82,7 +83,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
     MyCache.cache.cleanUp();
   }
 
-  private boolean isTooFrequentException(@Nullable Throwable t) {
+  private boolean isTooFrequentException(@Nullable Throwable t, @NotNull Level level) {
     if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
       return false;
     }
@@ -94,10 +95,8 @@ public final class IdeaLogger extends Log4jBasedLogger {
       return false;
     }
 
-    reportToFus(t);
-
-    if (occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0 && occurrences > 1) {
-      doLogError(getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
+    if (occurrences > 1 && occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0) {
+      myLogger.log(level, getExceptionWasAlreadyReportedNTimesMessage(t, occurrences));
     }
 
     return true;
@@ -109,11 +108,18 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   private static void reportToFus(@NotNull Throwable t) {
-    Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode() && !application.isDisposed()) {
-      PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
-      VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
+      PluginUtil pluginUtil = PluginUtil.getInstance();
+      if (pluginUtil != null) {
+        PluginId pluginId = pluginUtil.findPluginId(t);
+        VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+        LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+      }
     }
   }
 
@@ -164,21 +170,27 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (isTooFrequentException(t)) return;
+    if (isTooFrequentException(t, Level.ERROR)) return;
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
+    if (isTooFrequentException(t, Level.WARN)) return;
     super.warn(message, ensureNotControlFlow(t));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (isTooFrequentException(t)) return;
+    if (isTooFrequentException(t, Level.ERROR)) return;
     doLogError(message, t, details);
     logErrorHeader(t);
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {

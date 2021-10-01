@@ -27,8 +27,8 @@ public class InstructionTransfer implements DfaControlTransferValue.TransferTarg
   }
   
   @Override
-  public @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state,
-                                                     DataFlowInterpreter interpreter) {
+  public @NotNull List<@NotNull DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                              @NotNull DataFlowInterpreter interpreter) {
     var varFactory = interpreter.getFactory().getVarFactory();
     myVarsToFlush.forEach(desc -> state.flushVariable(varFactory.createVariableValue(desc)));
     return List.of(new DfaInstructionState(interpreter.getInstruction(myOffset.getInstructionOffset()), state));

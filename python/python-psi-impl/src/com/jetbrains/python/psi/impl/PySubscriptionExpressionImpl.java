@@ -94,7 +94,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

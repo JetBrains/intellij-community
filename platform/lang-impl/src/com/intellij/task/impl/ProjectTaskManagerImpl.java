@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -260,7 +260,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
   }
 
-  public final void addListener(@NotNull ProjectTaskManagerListener listener) {
+  public void addListener(@NotNull ProjectTaskManagerListener listener) {
     myListeners.add(listener);
   }
 
@@ -346,7 +346,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     private void notify(@NotNull Result result) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         if (!myProject.isDisposed()) {
           myEventPublisher.finished(result);
         }

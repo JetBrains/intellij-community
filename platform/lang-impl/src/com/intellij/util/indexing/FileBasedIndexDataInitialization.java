@@ -60,13 +60,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.DEFAULT);
-    Iterator<FileBasedIndexExtension<?, ?>> extensions;
-    if (IndexInfrastructure.hasIndices()) {
-      extensions = ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator();
-    }
-    else {
-      extensions = Collections.emptyIterator();
-    }
+    ExtensionPointImpl<FileBasedIndexExtension<?, ?>> extPoint =
+      (ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
+    Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>();
 
     // todo: init contentless indices first ?

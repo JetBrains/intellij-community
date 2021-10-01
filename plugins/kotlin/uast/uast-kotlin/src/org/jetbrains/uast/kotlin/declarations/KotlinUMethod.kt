@@ -40,7 +40,7 @@ open class KotlinUMethod(
 
     override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin as? KtDeclaration)
 
-    override val annotations: List<UAnnotation> by lz {
+    override val uAnnotations: List<UAnnotation> by lz {
         psi.annotations
             .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
             .map { KotlinUAnnotation(it, this) }
@@ -159,7 +159,7 @@ class KotlinUMethodWithFakeLightDelegate internal constructor(
     constructor(original: KtFunction, containingLightClass: PsiClass, givenParent: UElement?)
             : this(original, UastFakeLightMethod(original, containingLightClass), givenParent)
 
-    override val annotations: List<UAnnotation>
+    override val uAnnotations: List<UAnnotation>
         get() = original.annotationEntries.mapNotNull { it.toUElementOfType<UAnnotation>() }
 
     override fun equals(other: Any?): Boolean {

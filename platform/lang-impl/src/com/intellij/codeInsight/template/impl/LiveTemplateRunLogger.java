@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
@@ -14,13 +15,34 @@ import kotlin.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LiveTemplateRunLogger {
-  private static final String GROUP = "live.templates";
+import java.util.ArrayList;
+import java.util.List;
+
+final class LiveTemplateRunLogger extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("live.templates", 47);
+  private static final StringEventField TEMPLATE_GROUP = EventFields.StringValidatedByCustomRule("group", "live_template_group");
+  private static final StringEventField KEY = EventFields.StringValidatedByCustomRule("key", "live_template");
+  private static final BooleanEventField CHANGED_BY_USER = EventFields.Boolean("changedByUser");
+  private static final VarargEventId STARTED = registerLiveTemplateEvent(GROUP, "started");
+
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
+  public static VarargEventId registerLiveTemplateEvent(EventLogGroup group, String event) {
+    return group.registerVarargEvent(event, EventFields.Language,
+                                     TEMPLATE_GROUP,
+                                     EventFields.PluginInfo,
+                                     KEY,
+                                     CHANGED_BY_USER);
+  }
 
   static void log(@NotNull Project project, @NotNull TemplateImpl template, @NotNull Language language) {
-    final FeatureUsageData data = createTemplateData(template, language);
+    final List<EventPair<?>> data = createTemplateData(template, language);
     if (data != null) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, "started", data);
+      STARTED.log(project, data);
     }
   }
 
@@ -43,19 +65,21 @@ final class LiveTemplateRunLogger {
   }
 
   @Nullable
-  static FeatureUsageData createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
+  static List<EventPair<?>> createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
     Triple<String, String, PluginInfo> keyGroupPluginToLog = getKeyGroupPluginToLog(template);
     if (keyGroupPluginToLog == null) {
       return null;
     }
 
-    FeatureUsageData data = new FeatureUsageData().addLanguage(language).addData("group", keyGroupPluginToLog.getSecond());
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(EventFields.Language.with(language));
+    data.add(TEMPLATE_GROUP.with(keyGroupPluginToLog.getSecond()));
     PluginInfo plugin = keyGroupPluginToLog.getThird();
     if (plugin != null) {
-      data.addPluginInfo(plugin);
+      data.add(EventFields.PluginInfo.with(plugin));
     }
-    data.addData("key", keyGroupPluginToLog.getFirst());
-    data.addData("changedByUser", TemplateSettings.getInstance().differsFromDefault(template));
+    data.add(KEY.with(keyGroupPluginToLog.getFirst()));
+    data.add(CHANGED_BY_USER.with(TemplateSettings.getInstance().differsFromDefault(template)));
     return data;
   }
 

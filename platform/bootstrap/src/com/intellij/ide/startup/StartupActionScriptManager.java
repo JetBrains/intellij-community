@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -87,8 +87,13 @@ public final class StartupActionScriptManager {
 
   @ApiStatus.Internal
   public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
-    try (ObjectInput ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
-      Object data = ois.readObject();
+    try (InputStream inputStream = Files.newInputStream(scriptFile)) {
+      // don't load ObjectInputStream if file doesn't exist
+      Object data;
+      try (ObjectInputStream stream = new ObjectInputStream(inputStream)) {
+        data = stream.readObject();
+      }
+
       if (data instanceof ActionCommand[]) {
         return Arrays.asList((ActionCommand[])data);
       }

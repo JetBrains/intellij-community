@@ -20,6 +20,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -108,6 +109,7 @@ public final class MavenIndicesManager implements Disposable {
   /**
    * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public static MavenIndicesManager getInstance() {
     // should not be used as it lead to plugin classloader leak on the plugin unload

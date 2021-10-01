@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.BitUtil;
@@ -409,7 +409,7 @@ public final class IntToIntBtree {
       return ObjectUtils.binarySearch(0, getChildrenCount(), mid -> Integer.compare(keyAt(mid), value));
     }
 
-    final int addressAt(int i) {
+    int addressAt(int i) {
       if (doSanityCheck) {
         short childrenCount = getChildrenCount();
         if (isHashedLeaf()) myAssert(i < btree.hashPageCapacity);
@@ -471,7 +471,7 @@ public final class IntToIntBtree {
     static final int INDEX_LEAF_MASK = 0x1;
     static final int HASHED_LEAF_MASK = 0x2;
 
-    final boolean isIndexLeaf() {
+    boolean isIndexLeaf() {
       return isIndexLeaf;
     }
 
@@ -497,11 +497,11 @@ public final class IntToIntBtree {
       setFlag(HASHED_LEAF_MASK, true);
     }
 
-    final short getMaxChildrenCount() {
+    short getMaxChildrenCount() {
       return isIndexLeaf() ? isHashedLeaf() ? btree.maxLeafNodesInHash:btree.maxLeafNodes:btree.maxInteriorNodes;
     }
 
-    final boolean isFull() {
+    boolean isFull() {
       short childrenCount = getChildrenCount();
       if (!isIndexLeaf()) {
         ++childrenCount;

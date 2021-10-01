@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.jetbrains.packagesearch">
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
@@ -16,11 +16,6 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider"
-                        area="IDEA_PROJECT"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.configurableContributor"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
@@ -30,13 +25,22 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
     </extensionPoints>
 
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.externalSystem.dependencyUpdater</depends>
-    <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
-    <depends optional="true" config-file="plugin-withMaven.xml">org.jetbrains.idea.maven</depends>
+
+    <content>
+        <module name="intellij.packageSearch/gradle"/>
+        <module name="intellij.packageSearch/kotlin"/>
+        <module name="intellij.packageSearch/maven"/>
+    </content>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
@@ -51,16 +55,17 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowService"/>
-
-        <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService"/>
 
-        <toolWindow id="Packages" anchor="bottom" secondary="false"
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
+
+        <toolWindow id="Dependencies" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"
                     canCloseContents="true"
                     factoryClass="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
@@ -76,6 +81,19 @@ Supports Maven and Gradle projects.
                      defaultValue="false"
                      description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
                      restartRequired="true"/>
+
+        <statistics.counterUsagesCollector
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
+
+        <statistics.validation.customValidationRule
+                implementation="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsValidationRule"/>
+
+        <!--suppress PluginXmlCapitalization -->
+        <notificationGroup displayType="BALLOON"
+                           id="packagesearch.notification"
+                           icon="/icons/artifactSmall.svg"
+                           bundle="messages.packageSearchBundle"
+                           key="packagesearch.title"/>
     </extensions>
 
     <actions>

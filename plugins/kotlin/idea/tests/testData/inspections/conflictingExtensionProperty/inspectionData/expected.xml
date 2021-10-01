@@ -5,7 +5,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="File.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Extension property conflicts with automatically produced one</problem_class>
-        <description>This property conflicts with synthetic extension and should be removed to avoid breaking code by future changes in the compiler</description>
+        <description>Property conflicts with a synthetic extension and should be removed or renamed to avoid breaking code by future versions of the Kotlin compiler</description>
     </problem>
 
     <problem>
@@ -14,7 +14,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="File.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Extension property conflicts with automatically produced one</problem_class>
-        <description>This property conflicts with synthetic extension and should be removed to avoid breaking code by future changes in the compiler</description>
+        <description>Property conflicts with a synthetic extension and should be removed or renamed to avoid breaking code by future versions of the Kotlin compiler</description>
     </problem>
 
     <problem>
@@ -23,6 +23,6 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="File.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Extension property conflicts with automatically produced one</problem_class>
-        <description>This property conflicts with synthetic extension and should be removed to avoid breaking code by future changes in the compiler</description>
+        <description>Property conflicts with a synthetic extension and should be removed or renamed to avoid breaking code by future versions of the Kotlin compiler</description>
     </problem>
 </problems>

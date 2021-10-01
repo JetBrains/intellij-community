@@ -1,12 +1,15 @@
 <html>
 <body>
-Reports classes which implement <code>java.io.Serializable</code> interface where the <code>readResolve()</code>
+Reports classes that implement <code>java.io.Serializable</code> where the <code>readResolve()</code>
 or <code>writeReplace()</code> methods are not declared <code>protected</code>.
-Declaring <code>readResolve()</code> and <code>writeReplace()</code> methods <code>private</code>
-can force subclasses to silently ignore them, while declaring them
-<code>public</code> allows them to be invoked by untrusted code. Note: in the case
-of classes declared <code>final</code>, these methods may be
-declared <code>private</code>, instead.
+<p>
+  Declaring <code>readResolve()</code> and <code>writeReplace()</code> methods <code>private</code>
+  can force subclasses to silently ignore them, while declaring them
+  <code>public</code> allows them to be invoked by untrusted code.
+</p>
+<p>
+  If the containing class is declared <code>final</code>, these methods can be declared <code>private</code>.
+</p>
 <p><b>Example:</b></p>
 <pre><code>
   class ClassWithSerialization implements Serializable {
@@ -17,7 +20,6 @@ declared <code>private</code>, instead.
   </code>
 </pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

@@ -194,6 +194,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (USE_TABBED_WELCOME_SCREEN) {
       JBDimension defaultSize = JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight);
       setPreferredSize(chooseNotNull(WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY), defaultSize));
+      setMinimumSize(defaultSize);
     }
     else {
       int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;

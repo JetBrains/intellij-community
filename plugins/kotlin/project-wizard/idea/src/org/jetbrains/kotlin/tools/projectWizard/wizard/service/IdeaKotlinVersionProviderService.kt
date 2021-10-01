@@ -4,15 +4,14 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.VersionComparatorUtil
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
 import org.jetbrains.kotlin.tools.projectWizard.core.service.EapVersionDownloader
-import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService.Companion.SNAPSHOT_TAG
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
@@ -37,18 +36,10 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
             null
         }
 
-    private fun getKotlinVersionFromCompiler() =
-        KotlinCompilerVersion.getVersion()
-            ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
-            ?.let { Version.fromString(it.substringBefore("-release")) }
-
     companion object {
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
     }
 }
-
-@NonNls
-private const val SNAPSHOT_TAG = "snapshot"
 
 private object VersionsDownloader {
     fun downloadLatestEapOrStableKotlinVersion(): Version? =

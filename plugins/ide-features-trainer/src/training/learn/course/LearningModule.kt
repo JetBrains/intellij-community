@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.course
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowAnchor
 import org.jetbrains.annotations.Nls
 import training.lang.LangSupport
 
@@ -13,4 +15,6 @@ class LearningModule(@Nls name: String,
 
   override val sanitizedName: String
     get() = sampleFileName ?: error("Module $name for ${primaryLanguage?.primaryLanguage} does not define its default name for samples.")
+
+  override fun preferredLearnWindowAnchor(project: Project) = ToolWindowAnchor.LEFT
 }

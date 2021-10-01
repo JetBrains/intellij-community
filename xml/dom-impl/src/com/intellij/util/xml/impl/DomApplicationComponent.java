@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -175,14 +175,13 @@ public final class DomApplicationComponent {
     return myClass2Annotator.get(rootElementClass);
   }
 
-  @Nullable
-  final Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
+  @Nullable Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
     return (Class<? extends DomElement>)myCachedImplementationClasses.get(concreteInterface);
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           @Nullable final Disposable parentDisposable) {
+  public void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+                                     @Nullable final Disposable parentDisposable) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
@@ -190,15 +189,15 @@ public final class DomApplicationComponent {
     return myTypeChooserManager;
   }
 
-  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
+  public StaticGenericInfo getStaticGenericInfo(final Type type) {
     return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
   }
 
-  final InvocationCache getInvocationCache(Class<?> type) {
+  InvocationCache getInvocationCache(Class<?> type) {
     return myInvocationCaches.computeIfAbsent(type, InvocationCache::new);
   }
 
-  public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
+  public VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
     return myVisitorDescriptions.computeIfAbsent(aClass, VisitorDescription::new);
   }
 }

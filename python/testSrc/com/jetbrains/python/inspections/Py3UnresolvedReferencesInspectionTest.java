@@ -283,6 +283,31 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doTest();
   }
 
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionNoneInt() {
+    doTestByText("print(None | int)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionIntNone() {
+    doTestByText("print(int | None)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionIntStrNone() {
+    doTestByText("print(int | str | None)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionNoneParIntStr() {
+    doTestByText("print(None | (int | str))");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionWithParentheses() {
+    doTestByText("bar: int | ((list | dict) | (float | str)) = \"\"");
+  }
+
   public void testClassLevelDunderAll() {
     doMultiFileTest("a.py");
   }

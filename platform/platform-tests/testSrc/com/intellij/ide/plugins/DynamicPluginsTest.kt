@@ -70,7 +70,7 @@ class DynamicPluginsTest {
   val runInEdt = EdtRule()
 
   private fun loadPluginWithText(pluginBuilder: PluginBuilder): Disposable {
-    return loadPluginWithText(pluginBuilder, DynamicPluginsTest::class.java.classLoader, inMemoryFs.fs)
+    return loadPluginWithText(pluginBuilder, inMemoryFs.fs)
   }
 
   @Test
@@ -185,6 +185,22 @@ class DynamicPluginsTest {
     assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
     Disposer.dispose(disposable)
     assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
+  fun loadNonDynamicEP() {
+    val epName = "one.foo"
+    val pluginBuilder = PluginBuilder()
+      .randomId("nonDynamic")
+      .extensionPoints("""<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>""")
+      .extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
+
+    val descriptor = loadDescriptorInTest(
+      pluginBuilder,
+      Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
+    )
+    assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
+      .isEqualTo("Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName")
   }
 
   @Test
@@ -583,9 +599,10 @@ class DynamicPluginsTest {
     try {
       val quuxDisposable = loadPluginWithText(quuxBuilder)
       try {
-        val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin")
-        mainDescriptor.build(directory)
-        val descriptor = loadDescriptorInTest(directory)
+        val descriptor = loadDescriptorInTest(
+          mainDescriptor,
+          Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
+        )
         setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")

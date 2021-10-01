@@ -106,6 +106,7 @@ object EmptyEventLogFilesProvider: EventLogFilesProvider {
   override fun getLogFiles(): List<EventLogFile> = emptyList()
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use StatisticsEventLogProviderUtil.getEventLogProvider(String)",
             ReplaceWith("StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)"))
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {

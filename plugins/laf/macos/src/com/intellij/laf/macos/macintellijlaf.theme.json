@@ -43,6 +43,7 @@
     "CellEditor.border.width": 2,
 
     "CheckBox": {
+      "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "4,4,4,0",
       "UI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI"
@@ -55,6 +56,8 @@
       "padding": "1,6,1,6",
       "UI": "com.intellij.laf.macos.MacIntelliJComboBoxUI"
     },
+
+    "CompletionPopup.selectionBackground": "#c5dffc",
 
     "Component": {
       "errorFocusColor": "#f53b3b80",
@@ -78,6 +81,8 @@
       "xOffset": 1,
       "yOffset": 1
     },
+
+    "Label.background": "#ececec",
 
     "Link": {
       "activeForeground": "#2470B3",
@@ -150,6 +155,7 @@
     },
 
     "RadioButton": {
+      "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "3,3,3,0",
       "UI": "com.intellij.laf.macos.MacIntelliJRadioButtonUI"
@@ -172,6 +178,7 @@
     },
 
     "TabbedPane": {
+      "background": "#ececec",
       "contentAreaColor": "#bfbfbf",
       "disabledUnderlineColor": "#ababab",
       "focusColor": "#dae4ed",
@@ -203,10 +210,6 @@
     },
 
     "Tree": {
-      "collapsedIcon": "/icons/treeCollapsed.svg",
-      "collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
-      "expandedIcon": "/icons/treeExpanded.svg",
-      "expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
       "hash": "#E6E6E6",
       "paintLines": false
     },

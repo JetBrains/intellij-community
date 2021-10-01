@@ -2,7 +2,7 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
-import com.intellij.internal.statistic.eventLog.GroupEndpointSubstitutor
+import com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
@@ -13,7 +13,7 @@ class ConfigEndpointSubstitutorTest : BasePlatformTestCase() {
     private const val URL = "https://localhost/"
   }
 
-  private class TestEndpointSubstitutor: GroupEndpointSubstitutor {
+  private class TestEndpointSubstitutor: EventLogEndpointSubstitutor {
     override fun getTemplateUrl(recorderId: String): String = URL
   }
 
@@ -23,7 +23,7 @@ class ConfigEndpointSubstitutorTest : BasePlatformTestCase() {
   }
 
   fun installEP() {
-    val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint(GroupEndpointSubstitutor.EP_NAME)
+    val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint(EventLogEndpointSubstitutor.EP_NAME)
     ep.registerExtension(TestEndpointSubstitutor(), project)
   }
 
