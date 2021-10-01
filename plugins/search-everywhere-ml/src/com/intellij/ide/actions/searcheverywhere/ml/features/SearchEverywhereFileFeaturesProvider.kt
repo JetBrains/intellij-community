@@ -233,10 +233,9 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-      val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
 
-      val openedFilePackageName = openedFile.parent?.let { fileIndex.getPackageNameByDirectory(it) }
-      val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
+      val openedFilePackageName = getVirtualFileDirectory(openedFile)?.let { fileIndex.getPackageNameByDirectory(it) }
+      val foundFilePackageName = getVirtualFileDirectory(item.virtualFile)?.let { fileIndex.getPackageNameByDirectory(it) }
 
       Pair(openedFilePackageName, foundFilePackageName)
     }.run {
@@ -270,6 +269,19 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val distance = maxDistance - 2 * common
     val normalizedDistance = roundDouble(if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0)
     return Pair(distance, normalizedDistance)
+  }
+
+  private fun getVirtualFileDirectory(file: VirtualFile): VirtualFile? {
+    if (file.isDirectory) {
+      return file
+    }
+
+    val parent = file.parent ?: return null
+    if (parent.isDirectory) {
+      return parent
+    } else {
+      return parent.parent
+    }
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
