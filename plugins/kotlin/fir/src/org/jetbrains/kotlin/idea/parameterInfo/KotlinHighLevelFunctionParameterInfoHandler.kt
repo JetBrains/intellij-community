@@ -12,9 +12,7 @@ import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -107,10 +105,17 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callElement = argumentList.parent as? KtElement ?: return null
         return analyse(callElement) {
+            // findElementForParameterInfo() is only called once before the UI is shown. updateParameterInfo() is called once before the UI
+            // is shown, and is also called every time the cursor moves or the call arguments change (i.e., user types something) while the
+            // UI is shown, hence the need to resolve the call again in updateParameterInfo() (e.g., argument mappings can change).
+            //
+            // However, the candidates in findElementForParameterInfo() and updateParameterInfo() are the exact same because the name of the
+            // function call CANNOT change while the UI is shown. Because of how ParameterInfoHandler works, we have to store _something_ in
+            // `context.itemsToShow` array which becomes `context.objectsToView` array in updateParameterInfo(). Unfortunately
+            // `objectsToView` is read-only so we can't change the size of the array. So we have to store an array here of the correct size,
+            // which does mean we have to resolve here to know the number of candidates.
             val candidatesWithMapping = resolveCallCandidates(callElement)
-            context.itemsToShow = candidatesWithMapping.map { (candidateSymbol, _) ->
-                CandidateInfo(candidateSymbol.createPointer(), candidateSymbol.deprecationStatus != null)
-            }.toTypedArray()
+            context.itemsToShow = Array(candidatesWithMapping.size) { CandidateInfo() }
 
             argumentList
         }
@@ -141,15 +146,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
             val candidatesWithMapping = resolveCallCandidates(callElement)
 
-            for (objectToView in context.objectsToView) {
+            for ((index, objectToView) in context.objectsToView.withIndex()) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
-                // Find candidate matching the one in CandidateInfo
-                // TODO: restoreSymbol does not work for static members (see Nullability.kt test),
-                // functional values (see FunctionalValue*.kt tests), and Java functions (see useJava*FromLib.kt tests).
-                // HL API gets a different symbol because a new ScopeSession() is used, and therefore a new enhanced FirFunction is created.
-                val candidateToMatch = candidateInfo.candidate.restoreSymbol() ?: return@analyse
-                val (candidate, argumentMapping, substitutor) = candidatesWithMapping.firstOrNull { it.candidate == candidateToMatch }
-                    ?: return@analyse
+
+                if (index >= candidatesWithMapping.size) {
+                    // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
+                    return
+                }
+                val (candidate, argumentMapping, substitutor) = candidatesWithMapping[index]
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
                 val isArraySetCall = candidate.callableIdIfNonLocal?.let {
@@ -214,6 +218,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     isCallResolvedToCandidate,
                     hasTypeMismatchBeforeCurrent,
                     highlightParameterIndex,
+                    candidate.deprecationStatus != null,
                 )
             }
         }
@@ -493,7 +498,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             val backgroundColor = if (isCallResolvedToCandidate) GREEN_BACKGROUND else context.defaultParameterColor
-            val strikeout = itemToShow.isDeprecated
 
             // Disabled when there are too many arguments.
             val allParametersUsed = usedParameterIndices.size == valueParameterCount
@@ -509,7 +513,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 highlightStartOffset,
                 highlightEndOffset,
                 isDisabled,
-                strikeout,
+                /*strikeout=*/ isDeprecated,
                 isDisabledBeforeHighlight,
                 backgroundColor
             )
@@ -528,11 +532,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val isCallResolvedToCandidate: Boolean,
         val hasTypeMismatchBeforeCurrent: Boolean,
         val highlightParameterIndex: Int?,
+        val isDeprecated: Boolean,
     )
 
     data class CandidateInfo(
-        val candidate: KtSymbolPointer<KtFunctionLikeSymbol>,
-        val isDeprecated: Boolean,
         var callInfo: CallInfo? = null  // Populated in updateParameterInfo()
     )
 }
