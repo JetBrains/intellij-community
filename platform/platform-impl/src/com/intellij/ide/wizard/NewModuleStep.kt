@@ -12,7 +12,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
 
-class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factory) : ModuleWizardStep() {
+class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.RootStepFactory) : ModuleWizardStep() {
 
   private val step by lazy { factory.createStep(context) }
 

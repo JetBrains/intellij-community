@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.ide.projectWizard.generators.NewProjectWizardSdkData
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
@@ -13,9 +14,11 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import javax.swing.Icon
 
-abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep)
-  : MavenizedNewProjectWizardStep<MavenProject, ParentStep>(parent)
-  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
+abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
+  MavenizedNewProjectWizardStep<MavenProject, ParentStep>(parent)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData,
+        ParentStep : NewProjectWizardSdkData {
 
   override fun createView(data: MavenProject) = MavenDataView(data)
 

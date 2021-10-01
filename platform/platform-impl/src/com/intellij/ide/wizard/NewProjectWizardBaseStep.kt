@@ -30,7 +30,7 @@ import java.nio.file.Path
 
 class NewProjectWizardBaseStep(
   override val context: WizardContext,
-  factory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>?
+  factory: NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep>?
 ) : NewProjectWizardStep, NewProjectWizardBaseData {
 
   private val childStep by lazy { factory?.createStep(this) }
@@ -163,8 +163,8 @@ class NewProjectWizardBaseStep(
   }
 
   class Factory(
-    private val childFactory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>? = null
-  ) : NewProjectWizardStep.Factory {
+    private val childFactory: NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep>? = null
+  ) : NewProjectWizardStep.RootStepFactory {
     override fun createStep(context: WizardContext) = NewProjectWizardBaseStep(context, childFactory)
   }
 }
