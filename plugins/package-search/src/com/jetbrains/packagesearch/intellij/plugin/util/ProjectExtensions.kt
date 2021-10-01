@@ -17,9 +17,7 @@ import com.intellij.util.ThreeState
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
-import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
@@ -108,9 +106,3 @@ internal val Project.lookAndFeelFlow
 
 internal val Project.toolWindowManager
     get() = service<ToolWindowManager>()
-
-internal val Project.packageSearchMavenConfiguration
-    get() = service<PackageSearchMavenConfiguration>()
-
-internal val Project.packageSearchGradleConfiguration
-    get() = service<PackageSearchGradleConfiguration>()

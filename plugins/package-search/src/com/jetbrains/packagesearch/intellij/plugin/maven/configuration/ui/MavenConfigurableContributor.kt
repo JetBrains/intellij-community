@@ -10,7 +10,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableCon
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.logPreferencesChanged
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultMavenScopeChangedField
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -23,7 +23,8 @@ internal class MavenConfigurableContributor(private val project: Project) : Conf
 internal class MavenConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
 
     private var modified: Boolean = false
-    private val configuration = project.packageSearchMavenConfiguration
+    private val configuration
+        get() = PackageSearchMavenConfiguration.getInstance(project)
 
     private val textFieldChangeListener = object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -65,7 +66,7 @@ internal class MavenConfigurableContributorDriver(private val project: Project) 
     }
 
     override fun restoreDefaults() {
-        mavenScopeEditor.text = project.packageSearchMavenConfiguration.determineDefaultMavenScope()
+        mavenScopeEditor.text = configuration.determineDefaultMavenScope()
         modified = true
     }
 
@@ -73,9 +74,8 @@ internal class MavenConfigurableContributorDriver(private val project: Project) 
         configuration.defaultMavenScope = mavenScopeEditor.text
 
         logPreferencesChanged(
-            preferencesDefaultMavenScopeChangedField.with(
-                configuration.defaultMavenScope != project.packageSearchMavenConfiguration.determineDefaultMavenScope()
-            ),
+            preferencesDefaultMavenScopeChangedField
+                .with(configuration.defaultMavenScope != configuration.determineDefaultMavenScope()),
         )
     }
 }
