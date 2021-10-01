@@ -11,36 +11,36 @@ import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFix.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.RepeatedModifier::class, RemoveModifierFix.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantOpenInInterface::class, RemoveModifierFix.removeRedundantOpenModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RepeatedModifier::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantOpenInInterface::class, RemoveModifierFixBase.removeRedundantOpenModifier)
         registerPsiQuickFixes(KtFirDiagnostic.NonAbstractFunctionWithNoBody::class, AddFunctionBodyFix, AddModifierFix.addAbstractModifier)
         registerPsiQuickFixes(
             KtFirDiagnostic.AbstractPropertyInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
-            RemoveModifierFix.removeAbstractModifier
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.AbstractFunctionInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
-            RemoveModifierFix.removeAbstractModifier
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.NonFinalMemberInFinalClass::class,
             AddModifierFix.addOpenToContainingClass,
-            RemoveModifierFix.removeOpenModifier
+            RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForOpenProperty::class,
             AddModifierFix.addFinalToProperty,
-            RemoveModifierFix.removePrivateModifier
+            RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForAbstractProperty::class,
-            RemoveModifierFix.removePrivateModifier
+            RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.NestedClassNotAllowed::class,
@@ -48,7 +48,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.WrongModifierTarget::class,
-            RemoveModifierFix.removeNonRedundantModifier,
+            RemoveModifierFixBase.removeNonRedundantModifier,
             ChangeVariableMutabilityFix.CONST_VAL_FACTORY
         )
         registerPsiQuickFixes(

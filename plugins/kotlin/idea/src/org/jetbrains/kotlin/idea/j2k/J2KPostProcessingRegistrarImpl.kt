@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -101,9 +101,9 @@ object J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
         }
 
         registerDiagnosticBasedProcessing<KtTypeProjection>(Errors.REDUNDANT_PROJECTION) { _, diagnostic ->
-            val fix = RemoveModifierFix.createRemoveProjectionFactory(true)
+            val fix = RemoveModifierFixBase.createRemoveProjectionFactory(true)
                 .asKotlinIntentionActionsFactory()
-                .createActions(diagnostic).single() as RemoveModifierFix
+                .createActions(diagnostic).single() as RemoveModifierFixBase
             fix.invoke()
         }
 
