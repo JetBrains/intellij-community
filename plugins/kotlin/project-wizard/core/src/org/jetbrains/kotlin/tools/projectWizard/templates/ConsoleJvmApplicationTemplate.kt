@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
+import java.nio.file.Path
 
 object ConsoleJvmApplicationTemplate : Template() {
     @NonNls
@@ -23,9 +24,8 @@ object ConsoleJvmApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.description")
 
-    private val fileToCreate = "Main.kt".asPath()
-    val fileWithMain = fileToCreate
-
+    private const val fileToCreate = "Main.kt"
+    override val filesToOpenInEditor = listOf(fileToCreate)
 
     override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm
@@ -38,6 +38,6 @@ object ConsoleJvmApplicationTemplate : Template() {
 
     override fun Reader.getFileTemplates(module: ModuleIR) =
         buildList<FileTemplateDescriptorWithPath> {
-            +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate) asSrcOf SourcesetType.main)
+            +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate.asPath()) asSrcOf SourcesetType.main)
         }
 }

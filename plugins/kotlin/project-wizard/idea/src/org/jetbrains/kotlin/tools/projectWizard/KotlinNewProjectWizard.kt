@@ -62,9 +62,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                     applyProjectTemplate(ConsoleApplicationProjectTemplate)
                 }
             }.commit(project, null, null)
-
-            val module = modules?.get(0) ?: return
-            openSourceFileInEditor(module, ConsoleApplicationProjectTemplate.fileToOpenInEditor)
         }
 
         private fun suggestGroupId(): String {
@@ -72,25 +69,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
             val usernameAsGroupId = username.trim().lowercase(Locale.getDefault()).split("\\s+".toRegex()).joinToString(separator = ".")
             return "me.$usernameAsGroupId"
-        }
-
-        private fun openSourceFileInEditor(module: Module, path: Path) {
-            val newProject = module.project
-            StartupManager.getInstance(newProject).runAfterOpened {
-                val sourceRoots = module.rootManager.getSourceRoots(false)
-                var fileToOpen: VirtualFile? = null
-
-                for (root in sourceRoots) {
-                    fileToOpen = root.findFileByRelativePath(path.systemIndependentPath)
-                    if (fileToOpen != null) break
-                }
-
-                if (fileToOpen != null) {
-                    ApplicationManager.getApplication().invokeLater {
-                        FileEditorManager.getInstance(newProject).openFile(fileToOpen, true)
-                    }
-                }
-            }
         }
     }
 

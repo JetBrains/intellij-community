@@ -115,8 +115,6 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val suggestedProjectName = "myConsoleApplication"
     override val projectKind = ProjectKind.Singleplatform
 
-    val fileToOpenInEditor = ConsoleJvmApplicationTemplate.fileWithMain
-
     override val setsPluginSettings: List<SettingWithValue<*, *>>
         get() = listOf(
             KotlinPlugin.modules.reference withValue listOf(
