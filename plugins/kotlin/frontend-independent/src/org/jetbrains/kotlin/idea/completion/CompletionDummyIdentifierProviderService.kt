@@ -63,7 +63,7 @@ abstract class CompletionDummyIdentifierProviderService {
                 ?: specialInTypeArgsDummyIdentifier(tokenBefore)
                 ?: specialInArgumentListDummyIdentifier(tokenBefore)
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
-                ?: isInTypeParametersList(tokenBefore)
+                ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
                 ?: DEFAULT_DUMMY_IDENTIFIER
         }
@@ -71,9 +71,9 @@ abstract class CompletionDummyIdentifierProviderService {
 
     protected open fun handleDefaultCase(context: CompletionInitializationContext): String? = null
 
-    private fun isInTypeParametersList(tokenBefore: PsiElement?): String? {
+    private fun isInValueOrTypeParametersList(tokenBefore: PsiElement?): String? {
         if (tokenBefore == null) return null
-        if (tokenBefore.parents.any { it is KtTypeParameterList }) {
+        if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList }) {
             return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
         }
         return null
