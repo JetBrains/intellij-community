@@ -1,4 +1,3 @@
-// IGNORE_FIR
 enum class MyEnum
 
 fun usage() {
