@@ -578,6 +578,9 @@ public class RefManagerImpl extends RefManager {
         String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
         myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
       }
+      if (file instanceof PsiBinaryFile || file.getFileType().isBinary()) {
+        return;
+      }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
