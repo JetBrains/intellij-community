@@ -73,7 +73,7 @@ class NewInlayProviderSettingsModel<T : Any>(
     return inSettings != stored
   }
 
-  override fun toString(): String = name
+  override fun toString(): String = language.displayName + ": " + name
 
   override fun reset() {
     // Workaround for deep copy
