@@ -5,25 +5,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
-import org.jetbrains.jps.api.GlobalOptions
 
 @CompileStatic
 class BuildOptions {
-  static {
-    if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION) == null) {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
-    }
-    def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
-    if (System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION) == null) {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
-    }
-    // TODO: replace with org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder#RESOLUTION_PARALLELISM_PROPERTY
-    def resolutionParallelismKey = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism"
-    if (System.getProperty(resolutionParallelismKey) == null) {
-      System.setProperty(resolutionParallelismKey, availableProcessors)
-    }
-  }
-
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
