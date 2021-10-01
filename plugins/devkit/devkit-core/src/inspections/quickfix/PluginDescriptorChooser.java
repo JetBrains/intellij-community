@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -51,6 +51,7 @@ public final class PluginDescriptorChooser {
       .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
       .put("intellij.java", "IdeaPlugin.xml")
       .put("intellij.java.impl", "IdeaPlugin.xml")
+      .put("intellij.java.impl.inspections", "IdeaPlugin.xml")
       .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
       .build();
 
