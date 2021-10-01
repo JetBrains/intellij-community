@@ -12,8 +12,8 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultGradleScopeChangedField
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesGradleScopeCountField
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesUpdateScopesOnUsageField
+import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfigurationDefaults
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchGradleConfiguration
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -25,10 +25,11 @@ internal class GradleConfigurableContributor(private val project: Project) : Con
     override fun createDriver() = GradleConfigurableContributorDriver(project)
 }
 
-internal class GradleConfigurableContributorDriver(project: Project) : ConfigurableContributorDriver {
+internal class GradleConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
 
     private var modified: Boolean = false
-    private val configuration = project.packageSearchGradleConfiguration
+    private val configuration
+        get() = PackageSearchGradleConfiguration.getInstance(project)
 
     private val textFieldChangeListener = object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {

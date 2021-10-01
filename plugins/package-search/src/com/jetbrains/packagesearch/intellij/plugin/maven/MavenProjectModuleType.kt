@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleTypeTerm
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import icons.OpenapiIcons
 import javax.swing.Icon
 
@@ -20,8 +20,8 @@ internal object MavenProjectModuleType : ProjectModuleType {
         PackageSearchBundle.message("packagesearch.terminology.dependency.scope")
 
     override fun defaultScope(project: Project): String =
-        project.packageSearchMavenConfiguration.determineDefaultMavenScope()
+        PackageSearchMavenConfiguration.getInstance(project).determineDefaultMavenScope()
 
     override fun userDefinedScopes(project: Project): List<String> =
-        project.packageSearchMavenConfiguration.getMavenScopes()
+        PackageSearchMavenConfiguration.getInstance(project).getMavenScopes()
 }
