@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression.BoundaryType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -89,7 +90,34 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
 
     private fun checkEnum(clazz: PsiClass, existingPatterns: List<PsiElement>): List<PsiElement> {
       val constants = clazz.allFields.filterIsInstance<PsiEnumConstant>()
-      return constants - existingPatterns
+      val unwrappedPatterns = existingPatterns.flatMap { if (it is GrRangeExpression) unwrapEnumRange(constants, it) else listOf(it) }
+      return constants - unwrappedPatterns
+    }
+
+    private fun unwrapEnumRange(allConstants : List<PsiEnumConstant>, range : GrRangeExpression) : List<PsiEnumConstant> {
+      val leftBound = (range.from as? GrReferenceExpression)?.resolve() as? PsiEnumConstant ?: return emptyList()
+      val rightBound = (range.to as? GrReferenceExpression)?.resolve() as? PsiEnumConstant ?: return emptyList()
+      val boundaryType = range.boundaryType ?: return emptyList()
+      val coveredConstants = mutableListOf<PsiEnumConstant>()
+      var startCollecting = false
+      for (constant in allConstants) {
+        if (constant == rightBound) {
+          if (boundaryType == BoundaryType.CLOSED || boundaryType == BoundaryType.LEFT_OPEN) {
+            coveredConstants.add(constant)
+          }
+          break
+        }
+        if (startCollecting) {
+          coveredConstants.add(constant)
+        }
+        if (constant == leftBound) {
+          startCollecting = true
+          if (boundaryType == BoundaryType.CLOSED || boundaryType == BoundaryType.RIGHT_OPEN) {
+            coveredConstants.add(constant)
+          }
+        }
+      }
+      return coveredConstants
     }
 
     private fun checkPatternMatchingOnType(clazz: PsiClass, resolvedClasses: List<PsiClass>): List<PsiElement> {
@@ -152,8 +180,10 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
           val left = evaluator.computeConstantExpression(pattern.from) as? Number
           val right = evaluator.computeConstantExpression(pattern.to) as? Number
           if (left != null && right != null) {
-            // todo: proper ranges, fix with IDEA-278456
-            ranges.add(Range(left.toLong(), right.toLong()))
+            val boundaryType = pattern.boundaryType
+            val leftDelta = if (boundaryType == BoundaryType.LEFT_OPEN || boundaryType == BoundaryType.BOTH_OPEN) 1 else 0
+            val rightDelta = if (boundaryType == BoundaryType.RIGHT_OPEN || boundaryType == BoundaryType.BOTH_OPEN) 1 else 0
+            ranges.add(Range(left.toLong() + leftDelta, right.toLong() - rightDelta))
           }
         }
       }
