@@ -71,7 +71,10 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -637,6 +640,11 @@ public final class ExternalSystemUtil {
         title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
         new Task.Modal(project, title, true) {
           @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
           }
@@ -646,6 +654,11 @@ public final class ExternalSystemUtil {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title) {
           @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
           }
@@ -654,6 +667,11 @@ public final class ExternalSystemUtil {
       case START_IN_FOREGROUND_ASYNC:
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+          @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
