@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -57,7 +57,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision,
-                       @NotNull VirtualFile root) {
+                       @NotNull VirtualFile root,
+                       @NotNull VcsLogDiffHandler vcsLogDiffHandler) {
     super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
 
     assert !path.isDirectory();
@@ -68,7 +69,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myUiProperties = uiProperties;
 
-    myFileHistoryModel = new FileHistoryModel(logData, Objects.requireNonNull(logData.getLogProvider(root).getDiffHandler()), root) {
+    myFileHistoryModel = new FileHistoryModel(logData, vcsLogDiffHandler, root) {
       @NotNull
       @Override
       protected VisiblePack getVisiblePack() {
