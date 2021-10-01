@@ -271,16 +271,17 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return Pair(distance, normalizedDistance)
   }
 
-  private fun getVirtualFileDirectory(file: VirtualFile): VirtualFile? {
+  private fun getVirtualFileDirectory(file: VirtualFile, maxChecksUp: Int = 3): VirtualFile? {
     if (file.isDirectory) {
       return file
     }
 
     val parent = file.parent ?: return null
-    if (parent.isDirectory) {
-      return parent
+
+    if (maxChecksUp > 1) {
+      return getVirtualFileDirectory(parent, maxChecksUp - 1)
     } else {
-      return parent.parent
+      return null
     }
   }
 
