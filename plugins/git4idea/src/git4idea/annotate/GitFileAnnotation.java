@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GitFileAnnotation extends FileAnnotation {
+public final class GitFileAnnotation extends FileAnnotation {
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   @NotNull private final FilePath myFilePath;
@@ -205,7 +205,7 @@ public class GitFileAnnotation extends FileAnnotation {
   public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
     if (myRevisions != null && myRevisionMap != null &&
         myRevisionMap.containsKey(revisionNumber)) {
-      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.getInt(revisionNumber));
       return fileRevision.getCommitMessage();
     }
     return myCommitMessageMap.get(revisionNumber);
@@ -448,7 +448,7 @@ public class GitFileAnnotation extends FileAnnotation {
         GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
         if (myRevisions != null && myRevisionMap != null &&
             myRevisionMap.containsKey(revisionNumber)) {
-          int index = myRevisionMap.get(revisionNumber);
+          int index = myRevisionMap.getInt(revisionNumber);
           if (index + 1 < myRevisions.size()) {
             return myRevisions.get(index + 1);
           }
