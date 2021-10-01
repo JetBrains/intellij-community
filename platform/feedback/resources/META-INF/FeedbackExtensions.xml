@@ -14,10 +14,12 @@
   </extensions>
 
   <actions>
-    <action id="com.intellij.feedback.TestShowDialogAction"
-            class="com.intellij.feedback.TestShowDialogAction"
-            text="Show Feedback Dialog">
-      <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
-    </action>
+    <group id="FeedbackDialogGroup" internal="true">
+      <separator/>
+      <action id="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
+              class="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
+              text="Show New Project Feedback Dialog" internal="true"/>
+      <add-to-group group-id="Internal.UI" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>

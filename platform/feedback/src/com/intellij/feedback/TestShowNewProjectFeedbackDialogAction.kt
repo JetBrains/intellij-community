@@ -9,7 +9,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class TestShowDialogAction : AnAction() {
+class TestShowNewProjectFeedbackDialogAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val notification = RequestFeedbackNotification()
     notification.addAction(
