@@ -615,6 +615,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             runTest("../completion/tests/testData/basic/common/OverloadFunctions.kt");
         }
 
+        @TestMetadata("parameterDefaultValueInFunction.kt")
+        public void testParameterDefaultValueInFunction() throws Exception {
+            runTest("../completion/tests/testData/basic/common/parameterDefaultValueInFunction.kt");
+        }
+
         @TestMetadata("PreferLessParameters.kt")
         public void testPreferLessParameters() throws Exception {
             runTest("../completion/tests/testData/basic/common/PreferLessParameters.kt");

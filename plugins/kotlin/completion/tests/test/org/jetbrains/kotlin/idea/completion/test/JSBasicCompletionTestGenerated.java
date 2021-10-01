@@ -615,6 +615,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             runTest("testData/basic/common/OverloadFunctions.kt");
         }
 
+        @TestMetadata("parameterDefaultValueInFunction.kt")
+        public void testParameterDefaultValueInFunction() throws Exception {
+            runTest("testData/basic/common/parameterDefaultValueInFunction.kt");
+        }
+
         @TestMetadata("PreferLessParameters.kt")
         public void testPreferLessParameters() throws Exception {
             runTest("testData/basic/common/PreferLessParameters.kt");
