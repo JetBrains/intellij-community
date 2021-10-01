@@ -10,8 +10,14 @@ class KotlinJpsClasspathProvider : BuildProcessParametersProvider() {
             // kotlin-reflect.jar
             getJarPathForClass(kotlin.reflect.full.IllegalCallableAccessException::class.java),
 
-            // kotlin-plugin.jar (aka kotlin-compiler-for-ide.jar)
+            // kotlin-compiler-common-for-ide.jar
             getJarPathForClass(org.jetbrains.kotlin.idea.KotlinFileType::class.java),
+
+            // kotlin-compiler-fe10-for-ide.jar
+            getJarPathForClass(org.jetbrains.kotlin.descriptors.ClassDescriptor::class.java),
+
+            // kotlin-compiler-ir-for-ide.jar
+            getJarPathForClass(org.jetbrains.kotlin.ir.IrElement::class.java)
         )
     }
 }
