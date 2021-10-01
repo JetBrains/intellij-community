@@ -134,7 +134,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     PsiFile file = ((RefElementImpl)element).getContainingFile();
     if (file == null) return null;
 
-    return getDeadCodeTool(file.getContainingFile());
+    return getDeadCodeTool(file);
   }
 
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
@@ -201,7 +201,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
     PsiElement sourcePsi = param.getSourcePsi();
-    LOG.assertTrue(sourcePsi != null, "UParameter param has null sourcePsi");
+    LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
     RefElement refElement = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refMethod);
       ref.initialize();
@@ -517,7 +517,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
             if (value instanceof ULiteralExpression) {
               Object val = ((ULiteralExpression)value).getValue();
               if (val instanceof String) {
-                buf.append(",").append(String.valueOf(val).replaceAll("[{}\"\"]", ""));
+                buf.append(",").append(String.valueOf(val).replaceAll("[{}\"]", ""));
               }
             }
             else if (value instanceof UCallExpression && ((UCallExpression)value).getKind() == UastCallKind.NESTED_ARRAY_INITIALIZER) {

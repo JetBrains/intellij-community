@@ -43,7 +43,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private RefMethodImpl myDefaultConstructor; //guarded by this
   private List<RefMethod> myOverridingMethods; //guarded by this
   private Set<RefElement> myInTypeReferences; //guarded by this
-  private List<RefJavaElement> myClassExporters;//guarded by this
+  private List<RefJavaElement> myClassExporters; //guarded by this
   private final RefModule myRefModule;
 
   RefClassImpl(UClass uClass, PsiElement psi, RefManager manager) {
@@ -58,7 +58,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
 
     UClass uClass = getUastElement();
-
     LOG.assertTrue(uClass != null);
 
     UDeclaration parent = UDeclarationKt.getContainingDeclaration(uClass);
@@ -71,7 +70,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     RefElement refParent = parent != null ? getRefManager().getReference(parent.getSourcePsi()) : null;
     if (refParent != null) {
       ((RefElementImpl)refParent).add(this);
-    } else {
+    }
+    else {
       PsiFile containingFile = getContainingFile();
       if (isSyntheticJSP()) {
         final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(getPsiElement());
@@ -87,7 +87,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         else {
           ((RefPackageImpl)getRefJavaManager().getDefaultPackage()).add(this);
         }
-      } else {
+      }
+      else {
         ((WritableRefEntity)myRefModule).add(this);
       }
     }
@@ -336,7 +337,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return mySubClasses;
   }
 
-  private synchronized void addSubClass(@NotNull RefClass refClass){
+  private synchronized void addSubClass(@NotNull RefClass refClass) {
     if (mySubClasses == null) {
       mySubClasses = Collections.singleton(refClass);
       return;
@@ -347,7 +348,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     mySubClasses.add(refClass);
   }
-  private synchronized void removeSubClass(RefClass refClass){
+
+  private synchronized void removeSubClass(RefClass refClass) {
     if (mySubClasses == null) return;
     if (mySubClasses.size() == 1) {
       mySubClasses = null;
