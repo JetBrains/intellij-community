@@ -14,7 +14,14 @@ class KotlinJpsClasspathProvider : BuildProcessParametersProvider() {
             // kotlin-plugin.jar (aka kotlin-compiler-for-ide.jar)
             // TODO: note it has to be compiler-components-for-jps.jar rather than kotlin-compiler-for-ide.jar
             //  as kotlin-compiler-for-ide.jar includes kotlin-jps-common.jar as well (+maybe smth else)
+            // kotlin-compiler-common-for-ide.jar
             getJarPathForClass(org.jetbrains.kotlin.idea.KotlinFileType::class.java),
+
+            // kotlin-compiler-fe10-for-ide.jar
+            getJarPathForClass(org.jetbrains.kotlin.descriptors.ClassDescriptor::class.java),
+
+            // kotlin-compiler-ir-for-ide.jar
+            getJarPathForClass(org.jetbrains.kotlin.ir.IrElement::class.java),
 
             // Base of i18n
             getJarPathForClass(DynamicBundle::class.java),
