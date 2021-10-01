@@ -20,14 +20,9 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
     }
 
     @get:OptionTag("MAVEN_SCOPES_DEFAULT")
-    var defaultMavenScope by string(PackageSearchMavenConfigurationDefaults.MavenDefaultScope)
+    var defaultMavenScope by string("compile")
 
-    fun determineDefaultMavenScope(): String =
-        if (!defaultMavenScope.isNullOrEmpty()) {
-            defaultMavenScope!!
-        } else {
-            PackageSearchMavenConfigurationDefaults.MavenDefaultScope
-        }
+    fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else "compile"
 
-    fun getMavenScopes() = PackageSearchMavenConfigurationDefaults.MavenScopes
+    fun getMavenScopes() = listOf("compile", "provided", "runtime", "test", "system", "import")
 }
