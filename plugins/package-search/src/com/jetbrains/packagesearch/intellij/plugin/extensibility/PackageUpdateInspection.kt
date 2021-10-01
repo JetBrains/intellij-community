@@ -6,7 +6,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
@@ -64,7 +63,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         val fileModule = ModuleUtil.findModuleForFile(file)
         if (fileModule == null) {
-            thisLogger().error("Inspecting file belonging to an unknown module")
+            thisLogger().warn("Inspecting file belonging to an unknown module")
             return null
         }
 
@@ -72,7 +71,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             .find { fileModule.isTheSameAs(it.projectModule.nativeModule) }
 
         if (moduleModel == null) {
-            thisLogger().error("Trying to upgrade something for an unknown module")
+            thisLogger().warn("Trying to upgrade something for an unknown module")
             return null
         }
 
@@ -108,7 +107,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     }
 
     private fun shouldCheckFile(file: PsiFile): Boolean {
-        if (!file.project.isTrusted()) return false
+        if (!file.project.packageSearchProjectService.isAvailable) return false
 
         // This is a workaround for IDEA-274152; a proper fix requires breaking API changes and is slated for 2021.3
         val isScala = file.language.displayName.contains("scala", ignoreCase = true)

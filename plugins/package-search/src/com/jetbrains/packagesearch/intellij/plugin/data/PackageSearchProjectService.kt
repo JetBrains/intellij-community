@@ -85,6 +85,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     val projectModulesStateFlow = projectModulesSharedFlow.stateIn(this, SharingStarted.Eagerly, emptyList())
 
+    val isAvailable
+        get() = projectModulesStateFlow.value.isNotEmpty()
+
     private val knownRepositoriesFlow = flow {
         val traceInfo = TraceInfo(TraceInfo.TraceSource.INIT)
         while (true) {

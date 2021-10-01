@@ -5,7 +5,8 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfigurationDefaults
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchMavenConfiguration
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -40,7 +41,11 @@ internal class MavenModuleTransformer : ModuleTransformer {
                 }
             },
             // TODO, it should use project.packageSearchMavenConfiguration.getMavenScopes(), see PKGS-846
-            availableScopes = PackageSearchMavenConfigurationDefaults.MavenScopes
+            availableScopes = runCatching { project.packageSearchMavenConfiguration.getMavenScopes() }
+                .getOrElse {
+                    logWarn(this::class.qualifiedName!!, it) { "Error while retrieving available scopes for Maven" }
+                    listOf("compile", "provided", "runtime", "test", "system", "import")
+                }
         )
     }
 }
