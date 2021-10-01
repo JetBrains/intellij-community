@@ -119,7 +119,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     if (runConfiguration instanceof RunConfigurationBase) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;
-      Object state = ((RunConfigurationBase)runConfiguration).getState();
+      Object state = ((RunConfigurationBase<?>)runConfiguration).getState();
       if (state instanceof RunConfigurationOptions) {
         RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
         List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
@@ -135,10 +135,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             featureUsed = StringUtil.isNotEmpty((String)value);
           }
           else if (value instanceof Collection) {
-            featureUsed = ((Collection)value).size() > 0;
+            featureUsed = ((Collection<?>)value).size() > 0;
           }
           else if (value instanceof Map) {
-            featureUsed = ((Map)value).size() > 0;
+            featureUsed = ((Map<?, ?>)value).size() > 0;
           }
           else {
             continue;

@@ -232,9 +232,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     }
     else if (c instanceof JList) {
-      int row = ((JList)c).locationToIndex(me.getPoint());
+      int row = ((JList<?>)c).locationToIndex(me.getPoint());
       if (row > -1) {
-        rowBounds = ((JList)c).getCellBounds(row, row);
+        rowBounds = ((JList<?>)c).getCellBounds(row, row);
       }
     }
     if (rowBounds != null && rowBounds.y + 4 < me.getY()) {

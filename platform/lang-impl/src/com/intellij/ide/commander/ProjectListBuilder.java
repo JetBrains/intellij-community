@@ -56,7 +56,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
 
     AbstractTreeNode node = getParentNode();
     if (node instanceof ProjectViewNode) {
-      myParentTitle.setText(((ProjectViewNode)node).getTitle());
+      myParentTitle.setText(((ProjectViewNode<?>)node).getTitle());
     }
     else {
       myParentTitle.setText(null);

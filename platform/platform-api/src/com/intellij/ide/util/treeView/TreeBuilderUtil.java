@@ -28,10 +28,10 @@ public final class TreeBuilderUtil {
   public static void storePaths(@NotNull JTree tree, @NotNull DefaultMutableTreeNode root, @NotNull List<Object> pathsToExpand, @NotNull List<Object> selectionPaths, boolean storeElementsOnly) {
     TreePath path = new TreePath(root.getPath());
     if (tree.isPathSelected(path)){
-      selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)root.getUserObject()).getElement() : path);
+      selectionPaths.add(storeElementsOnly ? ((NodeDescriptor<?>)root.getUserObject()).getElement() : path);
     }
     if (tree.isExpanded(path) || root.getChildCount() == 0){
-      pathsToExpand.add(storeElementsOnly ? ((NodeDescriptor)root.getUserObject()).getElement() : path);
+      pathsToExpand.add(storeElementsOnly ? ((NodeDescriptor<?>)root.getUserObject()).getElement() : path);
       _storePaths(tree, root, pathsToExpand, selectionPaths, storeElementsOnly);
     }
   }
@@ -47,11 +47,11 @@ public final class TreeBuilderUtil {
           LOG.error("Node: " + childNode + "; userObject: " + userObject + " of class " + userObject.getClass());
           return;
         }
-        selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)userObject).getElement() : path);
+        selectionPaths.add(storeElementsOnly ? ((NodeDescriptor<?>)userObject).getElement() : path);
       }
       if (tree.isExpanded(path) || childNode.getChildCount() == 0) {
         pathsToExpand.add(storeElementsOnly && userObject instanceof NodeDescriptor
-                          ? ((NodeDescriptor)userObject).getElement()
+                          ? ((NodeDescriptor<?>)userObject).getElement()
                           : path);
         _storePaths(tree, childNode, pathsToExpand, selectionPaths, storeElementsOnly);
       }

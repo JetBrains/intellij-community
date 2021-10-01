@@ -878,7 +878,7 @@ public final class ResolveUtil {
 
   public static boolean resolvesToClass(@Nullable PsiElement expression) {
     if (!(expression instanceof GrQualifiedReference)) return false;
-    return isClassReference(expression) || ((GrQualifiedReference)expression).resolve() instanceof PsiClass;
+    return isClassReference(expression) || ((GrQualifiedReference<?>)expression).resolve() instanceof PsiClass;
   }
 
   public static boolean isClassReference(@NotNull PsiElement expression) {

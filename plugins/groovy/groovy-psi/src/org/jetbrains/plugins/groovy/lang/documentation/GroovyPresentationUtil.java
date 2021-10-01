@@ -93,7 +93,7 @@ public final class GroovyPresentationUtil {
           }
 
           StringBuilder builder1 = new StringBuilder();
-          builder1.append(((GrReferenceElement)parent).getReferenceName());
+          builder1.append(((GrReferenceElement<?>)parent).getReferenceName());
           PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
           if (argTypes != null) {
             builder1.append("(");

@@ -159,7 +159,7 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
         changed = properties.setInstanceFilters(myInstanceFilters) || changed;
         if (changed) {
-            ((XBreakpointBase) breakpoint).fireBreakpointChanged();
+            ((XBreakpointBase<?, ?, ?>) breakpoint).fireBreakpointChanged();
         }
     }
 

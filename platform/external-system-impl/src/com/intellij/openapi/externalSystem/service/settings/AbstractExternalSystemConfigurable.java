@@ -141,7 +141,7 @@ public abstract class AbstractExternalSystemConfigurable<
       myProjectsModel.addElement(getProjectName(setting.getExternalProjectPath()));
       myProjectSettingsControls.add(control);
       if (control instanceof AbstractExternalProjectSettingsControl<?>) {
-        ((AbstractExternalProjectSettingsControl)control).setCurrentProject(myProject);
+        ((AbstractExternalProjectSettingsControl<?>)control).setCurrentProject(myProject);
       }
       control.showUi(false);
     }
@@ -242,7 +242,7 @@ public abstract class AbstractExternalSystemConfigurable<
       systemSettings.setLinkedProjectsSettings(projectSettings);
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         if(control instanceof AbstractExternalProjectSettingsControl) {
-          ((AbstractExternalProjectSettingsControl)control).updateInitialSettings();
+          ((AbstractExternalProjectSettingsControl<?>)control).updateInitialSettings();
         }
       }
       if (mySystemSettingsControl != null) {

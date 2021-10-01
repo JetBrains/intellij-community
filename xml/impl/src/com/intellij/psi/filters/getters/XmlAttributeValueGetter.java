@@ -21,7 +21,7 @@ public class XmlAttributeValueGetter {
       result = ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute);
     }
     else if (descriptor instanceof XmlEnumerationDescriptor) {
-      result = ((XmlEnumerationDescriptor)descriptor).getValuesForCompletion();
+      result = ((XmlEnumerationDescriptor<?>)descriptor).getValuesForCompletion();
     }
     else {
       result = descriptor.getEnumeratedValues();

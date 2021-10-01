@@ -82,7 +82,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof FacetBasedSourceItem && myFacet.equals(((FacetBasedSourceItem)obj).myFacet)
+      return obj instanceof FacetBasedSourceItem && myFacet.equals(((FacetBasedSourceItem<?>)obj).myFacet)
              && myProvider.equals(((FacetBasedSourceItem)obj).myProvider);
     }
 

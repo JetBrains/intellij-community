@@ -42,7 +42,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     myRenderer = renderer;
     myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
 
-    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode)node.getParent()).getValueContainer()).getDescriptor();
+    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode<?>)node.getParent()).getValueContainer()).getDescriptor();
     ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject()).first)
       .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
         if (context != null) {

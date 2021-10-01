@@ -51,7 +51,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
         return (WebReference)reference;
       }
       else if (reference instanceof PsiDynaReference) {
-        final WebReference webReference = lookForWebReference(((PsiDynaReference)reference).getReferences());
+        final WebReference webReference = lookForWebReference(((PsiDynaReference<?>)reference).getReferences());
         if (webReference != null) {
           return webReference;
         }

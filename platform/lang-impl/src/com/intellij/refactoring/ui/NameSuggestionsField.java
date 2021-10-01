@@ -155,7 +155,7 @@ public class NameSuggestionsField extends JPanel {
 
   public JComponent getFocusableComponent() {
     if(myComponent instanceof JComboBox) {
-      return (JComponent) ((JComboBox) myComponent).getEditor().getEditorComponent();
+      return (JComponent) ((JComboBox<?>) myComponent).getEditor().getEditorComponent();
     } else {
       return myComponent;
     }
@@ -163,7 +163,7 @@ public class NameSuggestionsField extends JPanel {
 
   public String getEnteredName() {
     if (myComponent instanceof JComboBox) {
-      return (String)((JComboBox)myComponent).getEditor().getItem();
+      return (String)((JComboBox<?>)myComponent).getEditor().getItem();
     } else {
       return ((EditorTextField) myComponent).getText();
     }
@@ -237,7 +237,7 @@ public class NameSuggestionsField extends JPanel {
       return ((EditorTextField)myComponent).getEditor();
     }
     else {
-      return ((EditorTextField)((JComboBox)myComponent).getEditor().getEditorComponent()).getEditor();
+      return ((EditorTextField)((JComboBox<?>)myComponent).getEditor().getEditorComponent()).getEditor();
     }
   }
 
@@ -265,7 +265,7 @@ public class NameSuggestionsField extends JPanel {
     }
     if (myComboBoxItemListener == null && myComponent instanceof JComboBox) {
       myComboBoxItemListener = new MyComboBoxItemListener();
-      ((JComboBox) myComponent).addItemListener(myComboBoxItemListener);
+      ((JComboBox<?>) myComponent).addItemListener(myComboBoxItemListener);
     }
   }
 
@@ -275,7 +275,7 @@ public class NameSuggestionsField extends JPanel {
       myDocumentListener = null;
     }
     if (myComboBoxItemListener != null) {
-      ((JComboBox) myComponent).removeItemListener(myComboBoxItemListener);
+      ((JComboBox<?>) myComponent).removeItemListener(myComboBoxItemListener);
       myComboBoxItemListener = null;
     }
   }
@@ -293,7 +293,7 @@ public class NameSuggestionsField extends JPanel {
   @Override
   public boolean requestFocusInWindow() {
     if(myComponent instanceof JComboBox) {
-      return ((JComboBox) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
+      return ((JComboBox<?>) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
     }
     else {
       return myComponent.requestFocusInWindow();
@@ -308,8 +308,8 @@ public class NameSuggestionsField extends JPanel {
   private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox)myComponent).isPopupVisible()) {
-        ((JComboBox)myComponent).hidePopup();
+      if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox<?>)myComponent).isPopupVisible()) {
+        ((JComboBox<?>)myComponent).hidePopup();
       }
       myNonHumanChange = false;
 

@@ -49,7 +49,7 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   @Override
   public boolean isAlwaysLeaf(@NotNull Object element) {
     if (element instanceof ProjectViewNode) {
-      return ((ProjectViewNode)element).isAlwaysLeaf();
+      return ((ProjectViewNode<?>)element).isAlwaysLeaf();
     }
     return super.isAlwaysLeaf(element);
   }

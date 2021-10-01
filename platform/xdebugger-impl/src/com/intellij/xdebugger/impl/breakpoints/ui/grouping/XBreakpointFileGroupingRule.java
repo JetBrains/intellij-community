@@ -43,7 +43,7 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
     if (!(breakpoint instanceof XLineBreakpoint)) {
       return null;
     }
-    XSourcePosition position = ((XLineBreakpoint)breakpoint).getSourcePosition();
+    XSourcePosition position = ((XLineBreakpoint<?>)breakpoint).getSourcePosition();
 
     if (position == null) return null;
 

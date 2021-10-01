@@ -83,7 +83,7 @@ public final class XsltValidator {
             }
 
           final String message = XPathBundle.message("inspection.message.never.used",
-                                                     ((DeleteUnusedElementBase)fixes[0]).getType(), name);
+                                                     ((DeleteUnusedElementBase<?>)fixes[0]).getType(), name);
           holder.registerProblem(token, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes);
         }
     }

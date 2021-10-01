@@ -28,7 +28,7 @@ public abstract class AbstractFrame<F extends Frame> implements Frame<F> {
     myPrev = prev;
 
     if (prev != null) {
-      ((AbstractFrame)prev).myNext = this;
+      ((AbstractFrame<?>)prev).myNext = this;
     }
   }
 
@@ -36,7 +36,7 @@ public abstract class AbstractFrame<F extends Frame> implements Frame<F> {
     assert myValid;
     assert myNext == null;
     if (myPrev != null) {
-      ((AbstractFrame)myPrev).myNext = null;
+      ((AbstractFrame<?>)myPrev).myNext = null;
     }
     myValid = false;
   }

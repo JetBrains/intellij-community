@@ -43,7 +43,7 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
     Sdk sdk = settingsStep.getSdk();
 
     if (generator instanceof PythonProjectGenerator) {
-      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated(sdk);
+      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator<?>)generator).beforeProjectGenerated(sdk);
       if (beforeProjectGenerated != null) {
         final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
         if (!result) {
@@ -60,14 +60,14 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
     }
 
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
-      final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
-      ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, newSettings);
+      final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator<?>)generator).getProjectSettings();
+      ((PythonProjectGenerator<?>)generator).createAndAddVirtualEnv(newProject, newSettings);
       sdk = newSettings.getSdk();
     }
 
     if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
-      ((PythonProjectGenerator)generator).afterProjectGenerated(newProject);
+      ((PythonProjectGenerator<?>)generator).afterProjectGenerated(newProject);
     }
   }
 

@@ -87,7 +87,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask ||
-           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
+           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask<?>)projectTask).getBuildableElement() instanceof Artifact);
   }
 
   @Override

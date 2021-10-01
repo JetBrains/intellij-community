@@ -68,7 +68,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
                                 parameters.getInvocationCount() >= 1);
       for (final LookupElement item : lookupSet) {
         if (item instanceof LookupItem) {
-          ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+          ((LookupItem<?>)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
       }
     }

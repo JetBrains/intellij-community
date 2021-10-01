@@ -188,9 +188,9 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   private static void gcPointerCache(SmartPsiElementPointer<?>... pointers) {
-    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx) p).getCachedElement())).ensureCollected();
+    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx<?>) p).getCachedElement())).ensureCollected();
     for (SmartPsiElementPointer<?> pointer : pointers) {
-      assertNull(((SmartPointerEx)pointer).getCachedElement());
+      assertNull(((SmartPointerEx<?>)pointer).getCachedElement());
     }
   }
 
