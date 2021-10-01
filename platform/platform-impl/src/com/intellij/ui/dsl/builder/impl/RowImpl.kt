@@ -94,11 +94,6 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
-
-    if (component is JRadioButton) {
-      dialogPanelConfig.context.getButtonGroup()?.add(component)
-    }
-
     return result
   }
 
@@ -182,19 +177,30 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun radioButton(text: String): Cell<JBRadioButton> {
-    return cell(JBRadioButton(text))
+    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
+      "Button group must be defined before using radio button")
+    if (group is BindButtonGroup<*>) {
+      throw UiDslException("Parent button group provides binding but value for radioButton is not provided")
+    }
+    val result = cell(JBRadioButton(text))
+    group.add(result.component)
+    return result
   }
 
   override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
     val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button with value")
+    if (group !is BindButtonGroup<*>) {
+      throw UiDslException("Parent button group doesn't provide binding for $value")
+    }
     if (value::class.java != group.type) {
       throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
     }
     val binding = group.binding
-    val result = radioButton(text)
-    result.component.isSelected = binding.get() == value
+    val result = cell(JBRadioButton(text))
     val component = result.component
+    group.add(component)
+    component.isSelected = binding.get() == value
     result.onApply { if (component.isSelected) group.set(value) }
     result.onReset { component.isSelected = binding.get() == value }
     result.onIsModified { component.isSelected != (binding.get() == value) }
