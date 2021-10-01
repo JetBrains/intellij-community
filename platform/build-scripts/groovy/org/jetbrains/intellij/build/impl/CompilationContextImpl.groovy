@@ -66,7 +66,7 @@ final class CompilationContextImpl implements CompilationContext {
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '11', null, "JDK_11_x64"))
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options, gradleJdk)
     projectHome = toCanonicalPath(projectHome)
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
