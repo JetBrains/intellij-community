@@ -674,8 +674,12 @@ public class SwitchBlockHighlightingModel {
           }
         }
       }
-      alreadyDominatedLabels.forEach((overWhom, who) -> results.add(
-        createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()))));
+      alreadyDominatedLabels.forEach((overWhom, who) -> {
+        HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
+        results.add(
+          info);
+      });
     }
 
     /**
