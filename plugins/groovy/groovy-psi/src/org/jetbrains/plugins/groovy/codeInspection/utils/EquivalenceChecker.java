@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -713,16 +712,7 @@ public final class EquivalenceChecker {
                                                        @NotNull GrRangeExpression rangeExp2) {
     return expressionsAreEquivalent(rangeExp1.getFrom(), rangeExp2.getFrom()) &&
            expressionsAreEquivalent(rangeExp1.getTo(), rangeExp2.getTo()) &&
-           isInclusive(rangeExp1) == isInclusive(rangeExp2);
-  }
-
-  private static boolean isInclusive(GrRangeExpression range) {
-    for (PsiElement child : range.getChildren()) {
-      if ("..".equals(child.getText())) {
-        return true;
-      }
-    }
-    return false;
+           rangeExp1.getBoundaryType() == rangeExp2.getBoundaryType();
   }
 
   private static boolean assignmentExpressionsAreEquivalent(@NotNull GrAssignmentExpression assignExp1,

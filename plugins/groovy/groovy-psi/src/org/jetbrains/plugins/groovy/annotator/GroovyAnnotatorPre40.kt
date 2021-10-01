@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
@@ -51,15 +52,37 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
 
   override fun visitCaseSection(caseSection: GrCaseSection) : Unit = with(caseSection) {
     arrow?.let { holder.newAnnotation(HighlightSeverity.ERROR,
-      GroovyBundle.message("inspection.message.arrows.in.case.expressions.are.available.with.groovy.4.or.later")).range(it).create() }
-    expressions?.takeIf { it.size > 1 }?.let { holder.newAnnotation(HighlightSeverity.ERROR,
-      GroovyBundle.message("inspection.message.multiple.expressions.in.case.section.are.available.with.groovy.4.or.later")).range(it.first()?.parent ?: this).create() }
+      GroovyBundle.message("inspection.message.arrows.in.case.expressions.are.available.with.groovy.4.or.later")).range(it).create()
+    }
+    expressions?.takeIf { it.size > 1 }?.let {
+      holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.multiple.expressions.in.case.section.are.available.with.groovy.4.or.later")).range(
+        it.first()?.parent ?: this).create()
+    }
     super.visitCaseSection(caseSection)
   }
 
   override fun visitYieldStatement(yieldStatement: GrYieldStatement) {
-    yieldStatement.yieldKeyword.let { holder.newAnnotation(HighlightSeverity.ERROR,
-      GroovyBundle.message("inspection.message.keyword.yield.available.with.groovy.4.or.later")).range(it).create() }
+    yieldStatement.yieldKeyword.let {
+      holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.keyword.yield.available.with.groovy.4.or.later")).range(it).create()
+    }
     super.visitYieldStatement(yieldStatement)
+  }
+
+  override fun visitRangeExpression(range: GrRangeExpression) {
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (range.boundaryType) {
+      GrRangeExpression.BoundaryType.LEFT_OPEN -> holder
+        .newAnnotation(HighlightSeverity.ERROR,
+          GroovyBundle.message("inspection.message.left.open.ranges.are.available.in.groovy.4.or.later"))
+        .range(range)
+        .create()
+      GrRangeExpression.BoundaryType.BOTH_OPEN -> holder
+        .newAnnotation(HighlightSeverity.ERROR,
+          GroovyBundle.message("inspection.message.both.open.ranges.are.available.in.groovy.4.or.later"))
+        .range(range)
+        .create()
+    }
   }
 }

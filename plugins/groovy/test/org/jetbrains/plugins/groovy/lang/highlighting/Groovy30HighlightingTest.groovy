@@ -196,4 +196,10 @@ switch (10) {
     break
 }"""
   }
+
+  void 'test enhanced range'() {
+    highlightingTest """
+<error>1<..<2</error>
+"""
+  }
 }
