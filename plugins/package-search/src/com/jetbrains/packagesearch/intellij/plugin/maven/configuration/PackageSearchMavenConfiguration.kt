@@ -29,8 +29,5 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
             PackageSearchMavenConfigurationDefaults.MavenDefaultScope
         }
 
-    fun getMavenScopes(): List<String> = PackageSearchMavenConfigurationDefaults.MavenScopes
-        .split(",", ";", "\n")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
+    fun getMavenScopes() = PackageSearchMavenConfigurationDefaults.MavenScopes
 }
