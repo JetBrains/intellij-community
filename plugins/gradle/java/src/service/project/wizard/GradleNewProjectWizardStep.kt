@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
@@ -34,8 +35,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ParentStep : NewProjectWizardBaseData {
 
   private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
+  private val useKotlinDslProperty = propertyGraph.graphProperty { false }
 
   val sdk by sdkProperty
+  var useKotlinDsl by useKotlinDslProperty
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 
@@ -46,7 +49,15 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .validationOnApply { validateGradleVersion() }
           .columns(COLUMNS_MEDIUM)
-      }
+      }.bottomGap(BottomGap.SMALL)
+      row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
+        segmentedButton(listOf(false, true), useKotlinDslProperty) {
+          when (it) {
+            true -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
+            else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
+          }
+        }
+      }.bottomGap(BottomGap.SMALL)
     }
     super.setupUI(builder)
   }

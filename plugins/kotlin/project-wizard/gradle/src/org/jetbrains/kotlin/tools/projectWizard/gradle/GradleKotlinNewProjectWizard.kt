@@ -2,13 +2,11 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.buttonGroup
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
-import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -16,18 +14,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     override val name = "Gradle"
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = object : GradleNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent) {
-        var buildSystemType: BuildSystemType = BuildSystemType.GradleKotlinDsl
-
-        override fun setupUI(builder: Panel) {
-            super.setupUI(builder)
-            with(builder) {
-                buttonGroup(::buildSystemType) {
-                    row(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl")) {
-                        radioButton(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl.kotlin"), BuildSystemType.GradleKotlinDsl)
-                        radioButton(KotlinNewProjectWizardBundle.message("buildsystem.gradle.dsl.groovy"), BuildSystemType.GradleGroovyDsl)
-                    }
-                }
-            }
+        init {
+            useKotlinDsl = true
         }
 
         override fun setupProject(project: Project) = KotlinNewProjectWizard.generateProject(
@@ -35,7 +23,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             projectPath = parent.projectPath.systemIndependentPath,
             projectName = parent.name,
             sdk = sdk,
-            buildSystemType = buildSystemType,
+            buildSystemType = if (useKotlinDsl) GradleKotlinDsl else GradleGroovyDsl,
             projectGroupId = groupId,
             artifactId = artifactId,
             version = version,
