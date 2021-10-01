@@ -106,9 +106,9 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
     override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
     class Step(parent: NewProjectWizardLanguageStep) :
-        AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep, Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
-        NewProjectWizardBuildSystemData,
+        AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         NewProjectWizardLanguageData by parent,
+        NewProjectWizardBuildSystemData,
         NewProjectWizardSdkData {
 
         override val self = this

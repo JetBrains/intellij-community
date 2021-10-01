@@ -19,9 +19,11 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.*
 import javax.swing.Icon
 
-abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep)
-  : MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
-  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardSdkData, ParentStep : NewProjectWizardStep {
+abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
+  MavenizedNewProjectWizardStep<ProjectData, ParentStep>(parent)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData,
+        ParentStep : NewProjectWizardSdkData {
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 

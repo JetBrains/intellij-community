@@ -7,7 +7,7 @@ import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
-import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.LanguageNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.openapi.application.ApplicationManager
@@ -45,7 +45,7 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
+  class Step(private val parentStep: NewProjectWizardLanguageStep) : AbstractNewProjectWizardStep(parentStep) {
     val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
     val distributionsProperty = propertyGraph.graphProperty<DistributionInfo?> { null }
 

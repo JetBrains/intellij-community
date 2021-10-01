@@ -14,7 +14,7 @@ class HTMLNewProjectWizard : LanguageNewProjectWizard {
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardChildStep<NewProjectWizardLanguageStep>(parent) {
+  class Step(parent: NewProjectWizardLanguageStep) : AbstractNewProjectWizardStep(parent) {
     override fun setupUI(builder: Panel) {}
 
     override fun setupProject(project: Project) {

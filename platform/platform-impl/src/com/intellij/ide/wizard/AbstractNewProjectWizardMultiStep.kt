@@ -13,10 +13,10 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.DefaultComboBoxModel
 
 
-abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : NewProjectWizardStep>(
-  parent: P,
+abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
+  parent: NewProjectWizardStep,
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory<S>>
-) : AbstractNewProjectWizardChildStep<P>(parent) {
+) : AbstractNewProjectWizardStep(parent) {
 
   protected abstract val self: S
 
@@ -40,7 +40,7 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
       comment?.let {
         row("") {
           commentHtml(it) {
-            commentLink?.let {  parentStep.context.requestSwitchTo(it) }
+            commentLink?.let { context.requestSwitchTo(it) }
           }
         }.bottomGap(BottomGap.SMALL)
       }

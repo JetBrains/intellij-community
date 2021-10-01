@@ -22,10 +22,10 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.io.File
 
-abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
-  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
-  where ParentStep : NewProjectWizardStep, ParentStep : NewProjectWizardBaseData
-{
+abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep) :
+  AbstractNewProjectWizardStep(parent)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData {
 
   private val defaultBaseDir: String
     get() = when (context.isCreatingNewProject) {
@@ -150,18 +150,4 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
       return error(JavaUiBundle.message("module.name.location.dialog.message.error.module.file.location", moduleFileLocation))
     return null
   }
-
-  /*
-  override fun setupProject(project: Project) {
-    val builder = JavaModuleBuilder()
-    val moduleFile = Paths.get(getCanonicalPath(moduleFileLocation.trim()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
-
-    builder.name = moduleName
-    builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
-    builder.contentEntryPath = FileUtil.toSystemDependentName(getCanonicalPath(contentRoot.trim()))
-    builder.moduleJdk = parentStep.sdk
-
-    builder.commit(project)
-  }
-  */
 }

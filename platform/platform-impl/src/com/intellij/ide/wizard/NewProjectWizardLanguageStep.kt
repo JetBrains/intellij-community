@@ -5,7 +5,7 @@ import com.intellij.ui.UIBundle
 
 class NewProjectWizardLanguageStep(
   parent: NewProjectWizardBaseStep
-) : AbstractNewProjectWizardMultiStep<NewProjectWizardBaseStep, NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
+) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
     NewProjectWizardLanguageData,
     NewProjectWizardBaseData by parent {
 
@@ -16,7 +16,7 @@ class NewProjectWizardLanguageStep(
   override val languageProperty by ::stepProperty
   override val language by ::step
 
-  class Factory : NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep> {
+  class Factory : NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep> {
     override fun createStep(parent: NewProjectWizardBaseStep) = NewProjectWizardLanguageStep(parent)
   }
 }

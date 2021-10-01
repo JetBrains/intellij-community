@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.project.Project
 
-abstract class AbstractNewProjectWizardBuilder(private val factory: NewProjectWizardStep.Factory) : ModuleBuilder() {
+abstract class AbstractNewProjectWizardBuilder(private val factory: NewProjectWizardStep.RootStepFactory) : ModuleBuilder() {
   private var step: NewModuleStep? = null
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
