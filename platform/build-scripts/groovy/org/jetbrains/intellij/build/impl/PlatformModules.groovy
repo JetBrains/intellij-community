@@ -103,7 +103,6 @@ final class PlatformModules {
     "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl",
-    "intellij.platform.tracing.rt",
   )
 
   private static final String UTIL_JAR = "util.jar"
@@ -176,6 +175,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
+      "intellij.platform.tracing.rt"
       ), productLayout, layout)
 
     jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
