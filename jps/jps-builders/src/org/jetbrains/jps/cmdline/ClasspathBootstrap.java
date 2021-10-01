@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
@@ -82,7 +83,13 @@ public final class ClasspathBootstrap {
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
-  private static final String IDE_LIB_UBER_JAR = PathManager.getLibPath() + "/3rd-party.jar";
+  private static final Set<String> BANNED_JARS = new HashSet<>(2);
+
+  static {
+    String libPath = PathManager.getLibPath();
+    BANNED_JARS.add(libPath + "/3rd-party.jar");
+    BANNED_JARS.add(libPath + "/platform-impl.jar");
+  }
 
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
     String path = PathManager.getJarPathForClass(aClass);
@@ -90,8 +97,8 @@ public final class ClasspathBootstrap {
       return;
     }
 
-    if (result.add(path) && path.equals(IDE_LIB_UBER_JAR)) {
-      LOG.error("Due to " + aClass.getName() + " requirement, inappropriate 3rd-party.jar is added to build process classpath");
+    if (result.add(path) && BANNED_JARS.contains(path)) {
+      LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + PathUtilRt.getFileName(path) + " is added to build process classpath");
     }
   }
 
