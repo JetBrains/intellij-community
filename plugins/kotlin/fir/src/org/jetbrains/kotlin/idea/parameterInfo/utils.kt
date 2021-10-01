@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.psi.*
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
-internal fun KtAnalysisSession.resolveCallCandidates(callElement: KtElement): Collection<CandidateWithMapping> {
+internal fun KtAnalysisSession.resolveCallCandidates(callElement: KtElement): List<CandidateWithMapping> {
     // TODO: FE 1.0 plugin collects all candidates (i.e., all overloads), even if arguments do not match. Not just resolved call.
     // See Call.resolveCandidates() in core/src/org/jetbrains/kotlin/idea/core/Utils.kt. Note `replaceCollectAllCandidates(true)`.
 
