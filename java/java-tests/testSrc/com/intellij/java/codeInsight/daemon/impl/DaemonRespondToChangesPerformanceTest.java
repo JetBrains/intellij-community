@@ -76,7 +76,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
     PlatformTestUtil.maskExtensions(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, getProject(), Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
-    ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(((ExtensionPointImpl)LanguageAnnotators.INSTANCE.getPoint()).getName()), Collections.emptyList(), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(((ExtensionPointImpl<?>)LanguageAnnotators.INSTANCE.getPoint()).getName()), Collections.emptyList(), getTestRootDisposable());
     PlatformTestUtil.startPerformanceTest("highlighting many string literals", 11_000, () -> {
       assertEmpty(highlightErrors());
 

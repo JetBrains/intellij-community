@@ -145,9 +145,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     Map<String, Object> gradleSettings = configs.get("gr1");
 
     assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
-    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertTrue(((List<?>)gradleSettings.get("taskNames")).contains(":cleanTest"));
     assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
-    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
+    assertTrue(((Map<?, ?>)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {

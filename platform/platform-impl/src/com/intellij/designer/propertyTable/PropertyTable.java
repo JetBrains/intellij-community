@@ -95,7 +95,7 @@ public abstract class PropertyTable extends JBTable {
     mySpeedSearch = new TableSpeedSearch(this, (object, cell) -> {
       if (cell.column != 0) return null;
       if (object instanceof GroupProperty) return null;
-      return ((Property)object).getName();
+      return ((Property<?>)object).getName();
     }) {
       @Override
       protected void selectElement(Object element, String selectedText) {

@@ -109,7 +109,7 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
         Class<? extends Enum> mirroredEnum = (Class<? extends Enum>)mirrorClassLoader.loadClass(type.getName());
         myMirrorType = mirroredEnum;
         //noinspection unchecked
-        myMirrorValue = value == null ? null : Enum.valueOf(mirroredEnum, ((Enum)value).name());
+        myMirrorValue = value == null ? null : Enum.valueOf(mirroredEnum, ((Enum<?>)value).name());
       }
       else if (type.isInterface()) {
         myMirrorType = mirrorClassLoader.loadClass(type.getName());

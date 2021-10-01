@@ -90,7 +90,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
       final PsiFileStub[] rootsArray = roots.toArray(PsiFileStub.EMPTY_ARRAY);
       for (PsiFileStub root : rootsArray) {
         if (root instanceof PsiFileStubImpl) {
-          ((PsiFileStubImpl)root).setStubRoots(rootsArray);
+          ((PsiFileStubImpl<?>)root).setStubRoots(rootsArray);
         }
       }
 

@@ -866,7 +866,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       ElementsChooser.ElementsMarkListener<RunAnythingGroup> listener = (element, isMarked) -> {
         RunAnythingCache.getInstance(myProject)
           .saveGroupVisibilityKey(element instanceof RunAnythingCompletionGroup
-                                  ? ((RunAnythingCompletionGroup)element).getProvider().getClass().getCanonicalName()
+                                  ? ((RunAnythingCompletionGroup<?, ?>)element).getProvider().getClass().getCanonicalName()
                                   : element.getTitle(), isMarked);
         rebuildList();
       };

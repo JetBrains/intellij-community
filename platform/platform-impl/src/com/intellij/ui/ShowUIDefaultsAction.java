@@ -175,7 +175,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
-            value = column == 0 ? ((Pair)value).first : ((Pair)value).second;
+            value = column == 0 ? ((Pair<?, ?>)value).first : ((Pair<?, ?>)value).second;
             if (value instanceof Boolean) {
               TableCellRenderer renderer = table.getDefaultRenderer(Boolean.class);
               if (renderer != null) {
@@ -327,7 +327,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
         model.setFilter(pair -> {
-          Object obj = ((Pair)pair).second;
+          Object obj = ((Pair<?, ?>)pair).second;
           String value;
           if (obj == null) {
             value = "null";
@@ -337,7 +337,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             value = obj.toString();
           }
 
-          value = ((Pair)pair).first.toString() + " " + value;
+          value = ((Pair<?, ?>)pair).first.toString() + " " + value;
           return (!myColorsOnly.isSelected() || obj instanceof Color) && matcher.matches(value);
         });
 
@@ -483,7 +483,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       i++;
     }
 
-    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair)o1[0]).first.toString(), ((Pair)o2[0]).first.toString()));
+    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair<?, ?>)o1[0]).first.toString(), ((Pair<?, ?>)o2[0]).first.toString()));
     return data;
   }
 
@@ -493,7 +493,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       @Override
       public boolean isCellEditable(int row, int column) {
         if (column != 1) return false;
-        Object value = ((Pair)getValueAt(row, column)).second;
+        Object value = ((Pair<?, ?>)getValueAt(row, column)).second;
         return (value instanceof Color ||
                 value instanceof Boolean ||
                 value instanceof Integer ||

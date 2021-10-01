@@ -55,27 +55,27 @@ public class VSCBundle extends Bundle {
     try {
       Object json = new Gson().fromJson(new FileReader(packageJson), Object.class);
       if (json instanceof Map) {
-        Object contributes = ((Map)json).get("contributes");
+        Object contributes = ((Map<?, ?>)json).get("contributes");
         if (contributes instanceof Map) {
-          Object languages = ((Map)contributes).get("languages");
-          Object grammars = ((Map)contributes).get("grammars");
+          Object languages = ((Map<?, ?>)contributes).get("languages");
+          Object grammars = ((Map<?, ?>)contributes).get("grammars");
           if (languages instanceof ArrayList && grammars instanceof ArrayList) {
             Map<String, Collection<String>> idToExtension = new HashMap<>();
             Map<String, String> idToConfig = new HashMap<>();
             for (Object language : (ArrayList)languages) {
               if (language instanceof Map) {
-                Object id = ((Map)language).get("id");
+                Object id = ((Map<?, ?>)language).get("id");
                 if (id instanceof String) {
-                  Object extensions = ((Map)language).get("extensions");
+                  Object extensions = ((Map<?, ?>)language).get("extensions");
                   if (extensions instanceof ArrayList) {
                     Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> Strings.trimStart((String)ext, "."));
                     idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll(stream.collect(Collectors.toList()));
                   }
-                  Object filenames = ((Map)language).get("filenames");
+                  Object filenames = ((Map<?, ?>)language).get("filenames");
                   if (filenames instanceof ArrayList) {
                     idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll((ArrayList)filenames);
                   }
-                  Object configuration = ((Map)language).get("configuration");
+                  Object configuration = ((Map<?, ?>)language).get("configuration");
                   if (configuration instanceof String) {
                     idToConfig.put((String)id, FileUtilRt.toSystemIndependentName((String)configuration));
                   }
@@ -86,21 +86,21 @@ public class VSCBundle extends Bundle {
             Map<String, Collection<String>> scopeConfig = new HashMap<>();
             for (Object grammar : (ArrayList)grammars) {
               if (grammar instanceof Map) {
-                Object path = ((Map)grammar).get("path");
-                Object language = ((Map)grammar).get("language");
+                Object path = ((Map<?, ?>)grammar).get("path");
+                Object language = ((Map<?, ?>)grammar).get("language");
                 Collection<String> extensions = idToExtension.getOrDefault(language, emptyList());
                 if (path instanceof String) {
                   grammarExtensions.put((String)path, extensions);
                 }
-                Object scopeName = ((Map)grammar).get("scopeName");
+                Object scopeName = ((Map<?, ?>)grammar).get("scopeName");
                 String config = idToConfig.get(language);
                 if (scopeName instanceof String && config != null) {
                   scopeConfig.computeIfAbsent(config, (key) -> new ArrayList<>()).add((String)scopeName);
                 }
-                Object embedded = ((Map)grammar).get("embeddedLanguages");
+                Object embedded = ((Map<?, ?>)grammar).get("embeddedLanguages");
                 if (embedded instanceof Map) {
                   for (Object embeddedScope : ((Map)embedded).keySet()) {
-                    Object embeddedLanguage = ((Map)embedded).get(embeddedScope);
+                    Object embeddedLanguage = ((Map<?, ?>)embedded).get(embeddedScope);
                     if (embeddedScope instanceof String && embeddedLanguage instanceof String) {
                       String embeddedConfig = idToConfig.get(embeddedLanguage);
                       if (embeddedConfig != null) {
@@ -163,8 +163,8 @@ public class VSCBundle extends Bundle {
     }
     List<PListValue> pairs = new ArrayList<>();
     for (Object bracket : (ArrayList)brackets) {
-      if (bracket instanceof ArrayList && ((ArrayList)bracket).size() == 2) {
-        pairs.add(array(string(((ArrayList)bracket).get(0).toString()), string(((ArrayList)bracket).get(1).toString())));
+      if (bracket instanceof ArrayList && ((ArrayList<?>)bracket).size() == 2) {
+        pairs.add(array(string(((ArrayList<?>)bracket).get(0).toString()), string(((ArrayList<?>)bracket).get(1).toString())));
       }
     }
     return array(pairs);
@@ -174,16 +174,16 @@ public class VSCBundle extends Bundle {
     List<PListValue> variables = new ArrayList<>();
     Object comments = json.get("comments");
     if (comments instanceof Map) {
-      Object line = ((Map)comments).get("lineComment");
+      Object line = ((Map<?, ?>)comments).get("lineComment");
       boolean hasLine = line instanceof String;
       if (hasLine) {
         variables.add(variable(COMMENT_START_VARIABLE, ((String)line).trim() + " "));
       }
-      Object block = ((Map)comments).get("blockComment");
-      if (block instanceof ArrayList && ((ArrayList)block).size() == 2) {
+      Object block = ((Map<?, ?>)comments).get("blockComment");
+      if (block instanceof ArrayList && ((ArrayList<?>)block).size() == 2) {
         String suffix = hasLine ? "_2" : "";
-        variables.add(variable(COMMENT_START_VARIABLE + suffix, ((ArrayList)block).get(0).toString().trim() + " "));
-        variables.add(variable(COMMENT_END_VARIABLE + suffix, " " + ((ArrayList)block).get(1).toString().trim()));
+        variables.add(variable(COMMENT_START_VARIABLE + suffix, ((ArrayList<?>)block).get(0).toString().trim() + " "));
+        variables.add(variable(COMMENT_END_VARIABLE + suffix, " " + ((ArrayList<?>)block).get(1).toString().trim()));
       }
     }
     return variables;

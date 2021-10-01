@@ -19,7 +19,7 @@ public final class TodoFileDirAndModuleComparator implements Comparator<NodeDesc
     final int weight2 = obj2.getWeight();
     if (weight1 != weight2) return weight1 - weight2;
     if (obj1 instanceof ProjectViewNode && obj2 instanceof ProjectViewNode) {
-      return ((ProjectViewNode)obj1).getTitle().compareToIgnoreCase(((ProjectViewNode)obj2).getTitle());
+      return ((ProjectViewNode<?>)obj1).getTitle().compareToIgnoreCase(((ProjectViewNode<?>)obj2).getTitle());
     }
     if (obj1 instanceof ModuleToDoNode && obj2 instanceof ModuleToDoNode){
       return ((ModuleToDoNode)obj1).getValue().getName().compareToIgnoreCase(((ModuleToDoNode)obj2).getValue().getName());

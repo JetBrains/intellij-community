@@ -271,7 +271,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
     myPopup = builder.createPopup();
 
     builder.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
-    mySpeedSearch = ((ListWithFilter)builder.getPreferableFocusComponent()).getSpeedSearch();
+    mySpeedSearch = ((ListWithFilter<?>)builder.getPreferableFocusComponent()).getSpeedSearch();
 
     myPopup.addListener(new JBPopupListener() {
       @Override
@@ -307,7 +307,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
     Object[] values = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     if (myChooserComponent instanceof JList) {
       //noinspection deprecation
-      values = ((JList)myChooserComponent).getSelectedValues();
+      values = ((JList<?>)myChooserComponent).getSelectedValues();
     }
     else if (myChooserComponent instanceof JTree) {
       values = myDelegate.getSelectedItemsInTree();

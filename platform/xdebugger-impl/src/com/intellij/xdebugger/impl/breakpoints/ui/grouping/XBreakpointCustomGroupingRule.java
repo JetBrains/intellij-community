@@ -35,11 +35,11 @@ public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B,
     if (!(breakpoint instanceof XBreakpointBase)) {
       return null;
     }
-    String name = ((XBreakpointBase)breakpoint).getGroup();
+    String name = ((XBreakpointBase<?, ?, ?>)breakpoint).getGroup();
     if (StringUtil.isEmpty(name)) {
       return null;
     }
-    return new XBreakpointCustomGroup(name, ((XBreakpointBase)breakpoint).getProject());
+    return new XBreakpointCustomGroup(name, ((XBreakpointBase<?, ?, ?>)breakpoint).getProject());
   }
 
   @Nullable

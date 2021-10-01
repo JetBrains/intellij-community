@@ -67,12 +67,12 @@ class XBreakpointItem extends BreakpointItem {
   @Nullable
   @Nls
   private String getUserDescription() {
-    return ((XBreakpointBase)myBreakpoint).getUserDescription();
+    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getUserDescription();
   }
 
   @Override
   public Icon getIcon() {
-    return ((XBreakpointBase)myBreakpoint).getIcon();
+    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getIcon();
   }
 
   @Override
@@ -193,7 +193,7 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   private XBreakpointManagerImpl getManager() {
-    return ((XBreakpointBase)myBreakpoint).getBreakpointManager();
+    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getBreakpointManager();
   }
 
   @Override

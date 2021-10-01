@@ -95,7 +95,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
 
         PsiClass initialClass = null;
         if (domElement instanceof GenericDomValue) {
-          final Object value = ((GenericDomValue)domElement).getValue();
+          final Object value = ((GenericDomValue<?>)domElement).getValue();
           if (value instanceof PsiClass)
             initialClass = (PsiClass)value;
         }

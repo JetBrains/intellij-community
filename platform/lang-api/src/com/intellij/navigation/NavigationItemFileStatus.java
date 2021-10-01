@@ -19,7 +19,7 @@ public final class NavigationItemFileStatus {
       return getPsiElementFileStatus((PsiElement)item);
     }
     if (item instanceof AbstractTreeNode) {
-      return ((AbstractTreeNode) item).getFileStatus();
+      return ((AbstractTreeNode<?>) item).getFileStatus();
     }
     if (item instanceof PsiElementNavigationItem) {
       PsiElement target = ((PsiElementNavigationItem) item).getTargetElement();

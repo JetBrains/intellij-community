@@ -857,7 +857,7 @@ public final class ExternalSystemUtil {
     }
     else if (progressEvent instanceof ExternalSystemFinishEvent) {
       final EventResult eventResult;
-      final OperationResult operationResult = ((ExternalSystemFinishEvent)progressEvent).getOperationResult();
+      final OperationResult operationResult = ((ExternalSystemFinishEvent<?>)progressEvent).getOperationResult();
       if (operationResult instanceof FailureResult) {
         List<com.intellij.build.events.Failure> failures = new SmartList<>();
         for (Failure failure : ((FailureResult)operationResult).getFailures()) {

@@ -72,7 +72,7 @@ public class JavaParserDefinition implements ParserDefinition {
   public PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
-      return ((JavaStubElementType)type).createPsi(node);
+      return ((JavaStubElementType<?, ?>)type).createPsi(node);
     }
 
     throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ", " + type.getLanguage() + ")");

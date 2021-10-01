@@ -906,7 +906,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     ListCellRenderer cellRenderer = myList.getCellRenderer();
     if (cellRenderer instanceof ExpandedItemListCellRendererWrapper) {
-      cellRenderer = ((ExpandedItemListCellRendererWrapper)cellRenderer).getWrappee();
+      cellRenderer = ((ExpandedItemListCellRendererWrapper<?>)cellRenderer).getWrappee();
     }
     final String pattern = patternToLowerCase(transformPattern(text));
     final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);

@@ -84,7 +84,7 @@ public final class ScopeUtil {
       return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
     }
     if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         StubElement parentStub = stub.getParentStub();
         while (parentStub != null) {

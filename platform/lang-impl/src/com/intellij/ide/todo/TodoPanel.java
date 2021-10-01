@@ -245,7 +245,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        Object element = ((NodeDescriptor)userObject).getElement();
+        Object element = ((NodeDescriptor<?>)userObject).getElement();
         TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
         if (pointer != null) {
           final SmartTodoItemPointer value = pointer.getValue();
@@ -480,7 +480,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (userObject == null) {
         return false;
       }
-      if (userObject instanceof NodeDescriptor && ((NodeDescriptor)userObject).getElement() instanceof TodoItemNode) {
+      if (userObject instanceof NodeDescriptor && ((NodeDescriptor<?>)userObject).getElement() instanceof TodoItemNode) {
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
@@ -552,7 +552,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = ((NodeDescriptor<?>)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getNextPointer((TodoItemNode)element);
@@ -574,7 +574,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (!(userObject instanceof NodeDescriptor)) {
         return null;
       }
-      Object element = ((NodeDescriptor)userObject).getElement();
+      Object element = ((NodeDescriptor<?>)userObject).getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
         pointer = myTodoTreeBuilder.getPreviousPointer((TodoItemNode)element);
