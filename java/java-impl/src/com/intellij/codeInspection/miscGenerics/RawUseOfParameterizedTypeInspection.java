@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -92,7 +90,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Nullable
-  private InspectionGadgetsFix createFix(PsiElement target) {
+  private static InspectionGadgetsFix createFix(PsiElement target) {
     if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)target.getParent();
       final PsiType type = getSuggestedType(variable);
@@ -133,7 +131,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (target instanceof PsiField) {
         PsiType type = substitutor.substitute(((PsiField)target).getType());
         PsiClass varType = PsiUtil.resolveClassInClassTypeOnly(type);
-        return varType instanceof PsiTypeParameter && parameters.contains(varType) ||
+        return (varType instanceof PsiTypeParameter && parameters.contains(varType) && !PsiUtil.isAccessedForWriting(ref)) ||
                !PsiTypesUtil.mentionsTypeParameters(type, parameters);
       }
       if (target instanceof PsiMethod) {
