@@ -71,7 +71,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     companion object {
         val ALL = listOf(
             ConsoleApplicationProjectTemplate,
-            MultiplatformMobileApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
@@ -107,27 +106,6 @@ private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTe
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
 
-object EmptySingleModuleProjectTemplate : ProjectTemplate() {
-    override val title = ""
-    override val description = ""
-    override val id = "emptyProject"
-
-    @NonNls
-    override val suggestedProjectName = "myEmptyProject"
-    override val projectKind = ProjectKind.Singleplatform
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            KotlinPlugin.modules.reference withValue listOf(
-                SinglePlatformModule(
-                    "moduleName",
-                    createDefaultSourceSets(),
-                    permittedTemplateIds = setOf()
-                )
-            )
-        )
-}
-
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")
@@ -136,6 +114,8 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     @NonNls
     override val suggestedProjectName = "myConsoleApplication"
     override val projectKind = ProjectKind.Singleplatform
+
+    val fileToOpenInEditor = ConsoleJvmApplicationTemplate.fileWithMain
 
     override val setsPluginSettings: List<SettingWithValue<*, *>>
         get() = listOf(
@@ -290,28 +270,6 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
                 )
             )
         )
-}
-
-object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplicationProjectTemplateBase() {
-    override val id = "multiplatformMobileApplication"
-
-    override fun androidAppModule(shared: Module) = Module(
-        "androidApp",
-        AndroidSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
-
-    override fun iosAppModule(shared: Module) = Module(
-        "iosApp",
-        IOSSinglePlatformModuleConfigurator,
-        template = null,
-        sourceSets = createDefaultSourceSets(),
-        subModules = emptyList(),
-        dependencies = mutableListOf(ModuleReference.ByModule(shared))
-    )
 }
 
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.sdk.add.target.ProjectSync
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,6 +31,11 @@ interface PythonInterpreterTargetEnvironmentFactory {
    */
   fun getDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String?
 
+  /**
+   * Enables additional UI options and target-specific mechanics for project synchronization.
+   */
+  fun getProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync?
+
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
 
@@ -47,6 +53,10 @@ interface PythonInterpreterTargetEnvironmentFactory {
     @JvmStatic
     fun findDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultSdkName(project, data, version) } ?: getFallbackSdkName(data, version)
+
+    @JvmStatic
+    fun findProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync? =
+      EP_NAME.extensionList.mapNotNull { it.getProjectSync(project, configuration) }.firstOrNull()
 
     private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
       "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"

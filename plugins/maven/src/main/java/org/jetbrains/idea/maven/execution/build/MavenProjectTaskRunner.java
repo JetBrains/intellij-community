@@ -106,7 +106,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       ExecuteRunConfigurationTask task = (ExecuteRunConfigurationTask)projectTask;
       RunProfile runProfile = task.getRunProfile();
       if (runProfile instanceof ModuleBasedConfiguration) {
-        RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
+        RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isMavenModule(module.getModule())) {
           return false;
         }

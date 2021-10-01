@@ -457,7 +457,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (isEditorPreview) {
         myEditorChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, true);
         Disposer.register(this, myEditorChangeProcessor);
-        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor);
+        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
         myEditorDiffPreview = null;
@@ -476,7 +476,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     @NotNull
-    private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
+    private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
         public void updateAvailability(@NotNull AnActionEvent e) {
@@ -524,7 +524,7 @@ public class ChangesViewManager implements ChangesViewEx,
         if (toolWindow != null) toolWindow.activate(null);
       });
 
-      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview);
       editorPreview.installNextDiffActionOn(myContentPanel);
 
       UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);

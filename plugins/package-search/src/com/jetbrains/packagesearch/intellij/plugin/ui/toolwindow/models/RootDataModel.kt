@@ -6,7 +6,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 internal data class RootDataModel(
     val moduleModels: List<ModuleModel>,
     val packageModels: List<UiPackageModel<*>>,
-    val packagesToUpdate: PackagesToUpdate,
+    val packagesToUpdate: PackagesToUpgrade,
     val headerData: PackagesHeaderData,
     val targetModules: TargetModules,
     val allKnownRepositories: KnownRepositories.All,
@@ -22,7 +22,7 @@ internal data class RootDataModel(
         val EMPTY = RootDataModel(
             moduleModels = emptyList(),
             packageModels = emptyList(),
-            packagesToUpdate = PackagesToUpdate.EMPTY,
+            packagesToUpdate = PackagesToUpgrade.EMPTY,
             headerData = PackagesHeaderData.EMPTY,
             targetModules = TargetModules.None,
             allKnownRepositories = KnownRepositories.All.EMPTY,

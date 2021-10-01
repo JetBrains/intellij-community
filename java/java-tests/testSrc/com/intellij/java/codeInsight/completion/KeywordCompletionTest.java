@@ -200,12 +200,20 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testLocalEnum() {
     setLanguageLevel(LanguageLevel.JDK_16);  doTest();
   }
-  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);  doTest(1, "sealed"); }
+  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed"); }
   public void testNoSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "final"); }
-  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);  doTest(1, "permits"); }
-  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);  doTest(0, "permits"); }
-  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);  doTest(1, "sealed");}
-  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);  doTest(1, "sealed");}
+  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "permits"); }
+  public void testPermitsListFinal() {
+    setLanguageLevel(LanguageLevel.JDK_17);
+    configureByTestName();
+    testByCount(0, "permits");
+    complete(2);
+    testByCount(1, "permits");
+  }
+  public void testPermitsListNoSealed() { setLanguageLevel(LanguageLevel.JDK_17); doTest(); }
+  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(0, "permits"); }
+  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
+  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
 
   public void testOverwriteCatch() {
     configureByTestName();

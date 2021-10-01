@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -144,7 +145,16 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
+      final String name;
+      if (isLikeUpdate) {
+        name = SlowOperations.ACTION_UPDATE;
+      }
+      else {
+        name = ModalityState.current() == ModalityState.NON_MODAL
+               ? SlowOperations.ACTION_PERFORM
+               : SlowOperations.MODAL_ACTION_PERFORM;
+      }
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(name)) {
         runnable.run();
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
@@ -263,8 +273,13 @@ public final class ActionUtil {
       manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
       return;
     }
+
+    final String activityName = ModalityState.current() == ModalityState.NON_MODAL
+                              ? SlowOperations.ACTION_PERFORM
+                              : SlowOperations.MODAL_ACTION_PERFORM;
+
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(activityName)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }

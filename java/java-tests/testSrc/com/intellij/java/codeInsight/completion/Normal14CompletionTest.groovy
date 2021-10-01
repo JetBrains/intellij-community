@@ -54,4 +54,7 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
   void testSecondPermitsReference() { doTest() }
+
+  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
+  void testSealedPermitsInner() { doTest('\n') }
 }

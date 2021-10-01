@@ -242,8 +242,8 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
           List<Navigatable> navigatables = getNavigatables();
           if (navigatables.isEmpty()) return;
           for (Navigatable navigatable : navigatables) {
-            if (navigatable instanceof AbstractTreeNode && ((AbstractTreeNode)navigatable).getValue() instanceof Usage) {
-              navigatable = (Usage)((AbstractTreeNode)navigatable).getValue();
+            if (navigatable instanceof AbstractTreeNode && ((AbstractTreeNode<?>)navigatable).getValue() instanceof Usage) {
+              navigatable = (Usage)((AbstractTreeNode<?>)navigatable).getValue();
             }
             if (navigatable.canNavigateToSource()) {
               navigatable.navigate(false);

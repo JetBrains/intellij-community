@@ -49,6 +49,11 @@ enum class RowLayout {
 
 enum class TopGap {
   /**
+   * No gap
+   */
+  NONE,
+
+  /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
   SMALL,
@@ -60,6 +65,11 @@ enum class TopGap {
 }
 
 enum class BottomGap {
+  /**
+   * No gap
+   */
+  NONE,
+
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
@@ -119,13 +129,13 @@ interface Row {
 
   /**
    * Adds gap before current row. It is visible together with the row.
-   * Note: top gap should not be set with bottom gap of previous row simultaneously
+   * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun topGap(topGap: TopGap): Row
 
   /**
    * Adds gap after current row. It is visible together with the row.
-   * Note: bottom gap should not be set with top gap of next row simultaneously
+   * Only greatest gap of top and bottom gaps is used between two rows (or top gap if equal)
    */
   fun bottomGap(bottomGap: BottomGap): Row
 

@@ -968,7 +968,7 @@ public abstract class UsefulTestCase extends TestCase {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
-        VfsTestUtil.overwriteTestData(filePath, actualText);
+        VfsTestUtil.overwriteTestData(filePath, actualText, trimBeforeComparing);
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("File " + filePath + " created.");
       }

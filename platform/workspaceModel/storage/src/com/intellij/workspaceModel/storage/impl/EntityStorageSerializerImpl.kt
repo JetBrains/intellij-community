@@ -13,12 +13,10 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MostlySingularMultiMap
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -44,10 +42,12 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v25"
+    const val SERIALIZER_VERSION = "v26"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
+
+  private val interner = HashSetInterner<SerializableEntityId>()
 
   @set:TestOnly
   override var serializerDataFormatVersion: String = SERIALIZER_VERSION
@@ -377,11 +377,11 @@ class EntityStorageSerializerImpl(
       storage.indexes.softLinks.writeSoftLinks(output, kryo)
 
       storage.indexes.virtualFileIndex.entityId2VirtualFileUrl.writeEntityIdToVfu(kryo, output)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2EntityId)
-      kryo.writeObject(output, storage.indexes.virtualFileIndex.entityId2JarDir)
+      storage.indexes.virtualFileIndex.vfu2EntityId.write(kryo, output)
+      storage.indexes.virtualFileIndex.entityId2JarDir.write(kryo, output)
 
-      kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
-      kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
+      storage.indexes.entitySourceIndex.write(kryo, output)
+      storage.indexes.persistentIdIndex.write(kryo, output)
 
       SerializationResult.Success
     }
@@ -393,6 +393,94 @@ class EntityStorageSerializerImpl(
     finally {
       flush(output)
     }
+  }
+
+  private fun PersistentIdInternalIndex.write(kryo: Kryo, output: Output) {
+    output.writeInt(this.index.keys.size)
+    this.index.forEach { key, value ->
+      kryo.writeObject(output, key.toSerializableEntityId())
+      kryo.writeClassAndObject(output, value)
+    }
+  }
+
+  private fun readPersistentIdIndex(kryo: Kryo, input: Input): PersistentIdInternalIndex {
+    val res = PersistentIdInternalIndex.MutablePersistentIdInternalIndex.from(PersistentIdInternalIndex())
+    repeat(input.readInt()) {
+      val key = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
+      val value = kryo.readClassAndObject(input) as PersistentEntityId<*>
+      res.index(key, value)
+    }
+    return res.toImmutable()
+  }
+
+  private fun EntityStorageInternalIndex<EntitySource>.write(kryo: Kryo, output: Output) {
+    output.writeInt(this.index.keys.size)
+    this.index.forEach { key: EntityId, value: EntitySource ->
+      kryo.writeObject(output, key.toSerializableEntityId())
+      kryo.writeClassAndObject(output, value)
+    }
+  }
+
+  private fun readEntitySourceIndex(kryo: Kryo, input: Input): EntityStorageInternalIndex<EntitySource> {
+    val res = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(EntityStorageInternalIndex<EntitySource>(false))
+    repeat(input.readInt()) {
+      val key = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
+      val value = kryo.readClassAndObject(input) as EntitySource
+      res.index(key, value)
+    }
+    return res.toImmutable()
+  }
+
+  private fun BidirectionalMultiMap<EntityId, VirtualFileUrl>.write(kryo: Kryo, output: Output) {
+    output.writeInt(this.keys.size)
+    this.keys.forEach { key ->
+      val values: Set<VirtualFileUrl> = this.getValues(key)
+      kryo.writeObject(output, key.toSerializableEntityId())
+      output.writeInt(values.size)
+      for (value in values) {
+        kryo.writeObject(output, value)
+      }
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun readBimap(kryo: Kryo, input: Input):BidirectionalMultiMap<EntityId, VirtualFileUrl> {
+    val res = BidirectionalMultiMap<EntityId, VirtualFileUrl>()
+    repeat(input.readInt()) {
+      val key = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
+      repeat(input.readInt()) {
+        res.put(key, kryo.readObject(input, VirtualFileUrl::class.java))
+      }
+    }
+    return res
+  }
+
+  private fun Vfu2EntityId.write(kryo: Kryo, output: Output) {
+    output.writeInt(this.keys.size)
+    this.forEach { (key: VirtualFileUrl, value) ->
+      kryo.writeObject(output, key)
+      output.writeInt(value.keys.size)
+      value.forEach { (internalKey: String, internalValue) ->
+        output.writeString(internalKey)
+        kryo.writeObject(output, internalValue.toSerializableEntityId())
+      }
+    }
+  }
+
+  private fun read(kryo: Kryo, input: Input): Vfu2EntityId {
+    val vfu2EntityId = Vfu2EntityId()
+    repeat(input.readInt()) {
+      val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
+      @Suppress("SSBasedInspection")
+      val data = Object2ObjectOpenHashMap<String, EntityId>()
+      repeat(input.readInt()) {
+        val internalKey = input.readString()
+        val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId()
+        data[internalKey] = entityId
+      }
+      vfu2EntityId[file] = data
+    }
+    return vfu2EntityId
   }
 
   private fun EntityId2Vfu.writeEntityIdToVfu(kryo: Kryo, output: Output) {
@@ -546,12 +634,12 @@ class EntityStorageSerializerImpl(
         val softLinks = readSoftLinks(input, kryo)
 
         val entityId2VirtualFileUrlInfo = readEntityIdToVfu(kryo, input)
-        val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as Vfu2EntityId
-        val entityId2JarDir = kryo.readObject(input, BidirectionalMultiMap::class.java) as BidirectionalMultiMap<EntityId, VirtualFileUrl>
+        val vfu2VirtualFileUrlInfo = read(kryo, input)
+        val entityId2JarDir = readBimap(kryo, input)
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
-        val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
-        val persistentIdIndex = kryo.readClassAndObject(input) as PersistentIdInternalIndex
+        val entitySourceIndex = readEntitySourceIndex(kryo, input)
+        val persistentIdIndex = readPersistentIdIndex(kryo, input)
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
@@ -675,7 +763,7 @@ class EntityStorageSerializerImpl(
   private fun EntityId.toSerializableEntityId(): SerializableEntityId {
     val arrayId = this.arrayId
     val clazz = this.clazz.findEntityClass<WorkspaceEntity>()
-    return SerializableEntityId(arrayId, TypeInfo(clazz.name, typesResolver.getPluginId(clazz)))
+    return interner.intern(SerializableEntityId(arrayId, TypeInfo(clazz.name, typesResolver.getPluginId(clazz))))
   }
 
   private fun SerializableEntityId.toEntityId(): EntityId {

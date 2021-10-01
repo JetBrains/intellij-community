@@ -30,7 +30,8 @@ import javax.swing.JComponent
 internal class VcsCodeAuthorInlayHintsCollector(
   editor: Editor,
   private val authorAspect: LineAnnotationAspect,
-  private val filter: (PsiElement) -> Boolean
+  private val filter: (PsiElement) -> Boolean,
+  private val getClickHandler: (PsiElement) -> (() -> Unit)
 ) : FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
@@ -39,7 +40,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
     val info = getCodeAuthorInfo(element.project, range, editor)
-    val presentation = buildPresentation(info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
+    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
 
     sink.addBlockElement(range.startOffset, false, true, BlockInlayPriority.CODE_VISION, presentation)
     return true
@@ -70,12 +71,16 @@ internal class VcsCodeAuthorInlayHintsCollector(
     )
   }
 
-  private fun buildPresentation(info: VcsCodeAuthorInfo, editor: Editor): InlayPresentation =
+  private fun buildPresentation(element: PsiElement, info: VcsCodeAuthorInfo, editor: Editor): InlayPresentation =
     factory.run {
       val text = smallTextWithoutBackground(info.getText())
       val withIcon = if (info.mainAuthor != null) text.withUserIcon() else text
+      val clickHandler = getClickHandler(element)
 
-      referenceOnHover(withIcon) { event, _ -> invokeAnnotateAction(event, editor.component) }
+      referenceOnHover(withIcon) { event, _ ->
+        clickHandler()
+        invokeAnnotateAction(event, editor.component)
+      }
     }
 
   private fun invokeAnnotateAction(event: MouseEvent, contextComponent: JComponent) {

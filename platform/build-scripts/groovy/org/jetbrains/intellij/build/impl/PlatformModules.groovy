@@ -175,6 +175,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
       "intellij.platform.extensions",
+      "intellij.platform.tracing.rt"
       ), productLayout, layout)
 
     jar(BaseLayout.PLATFORM_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
@@ -193,6 +194,7 @@ final class PlatformModules {
       "intellij.platform.vcs.log.impl",
 
       "intellij.platform.collaborationTools",
+      "intellij.platform.collaborationTools.auth",
 
       "intellij.platform.icons",
       "intellij.platform.resources",

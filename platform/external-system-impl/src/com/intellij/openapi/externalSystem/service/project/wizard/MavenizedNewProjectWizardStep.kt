@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
-import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -21,9 +21,10 @@ import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
 
-abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: ParentStep)
-  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
-  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
+abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentStep: ParentStep) :
+  AbstractNewProjectWizardStep(parentStep)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData {
 
   abstract fun createView(data: Data): DataView<Data>
 
@@ -69,7 +70,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: Par
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
+      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title"), topGroupGap = true) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
           textField()
             .bindText(groupIdProperty)

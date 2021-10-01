@@ -118,8 +118,6 @@ abstract class EntityReference<out E : WorkspaceEntity> {
  * * sealed abstract class where all implementations satisfy these requirements.
  */
 abstract class PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
-  abstract val parentId: PersistentEntityId<*>?
-
   /** Text which can be shown in an error message if id cannot be resolved */
   abstract val presentableName: String
 

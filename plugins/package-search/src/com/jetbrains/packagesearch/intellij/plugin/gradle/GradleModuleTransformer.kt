@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -19,6 +20,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
@@ -29,7 +31,7 @@ private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
 private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
     PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
 
-class GradleModuleTransformer : ModuleTransformer {
+internal class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
@@ -55,6 +57,9 @@ class GradleModuleTransformer : ModuleTransformer {
                     } else {
                         BuildSystemType.GRADLE_GROOVY
                     }
+                val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
+                    .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
+
                 ProjectModule(
                     name = externalProject.name,
                     nativeModule = nativeModule,
@@ -62,7 +67,8 @@ class GradleModuleTransformer : ModuleTransformer {
                     buildFile = buildVirtualFile,
                     buildSystemType = buildSystemType,
                     moduleType = GradleProjectModuleType,
-                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
+                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile),
+                    availableScopes = scopes
                 )
             }
             .flatMap { getAllSubmodules(project, it) }
@@ -177,9 +183,11 @@ class GradleModuleTransformer : ModuleTransformer {
 
     private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) =
         { groupId: String, artifactId: String, _: PackageVersion ->
-            PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
-                val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
-                return@let dependencyElement as Navigatable
+            runReadAction {
+                PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
+                    val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
+                    return@let dependencyElement as Navigatable
+                }
             }
         }
 }

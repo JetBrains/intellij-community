@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
@@ -29,9 +30,10 @@ class XmlAttributesSplitJoinContext : DefaultListSplitJoinContext() {
       JoinOrSplit.SPLIT -> CodeStyleManager.getInstance(file.project).reformatText(file, rangeToAdjust.startOffset, rangeToAdjust.endOffset)
     }
   }
-  
+
   override fun isSeparator(element: PsiElement): Boolean = false
-  override fun getHeadBreakJoinReplacement(): String = " "
+  override fun getHeadBreakJoinReplacement(firstElement: PsiElement): String = " "
+  override fun getTailBreakJoinReplacement(lastElement: PsiElement): String = if (PsiTreeUtil.skipWhitespacesForward(lastElement) is LeafElement) "" else " "
   override fun getSplitText(data: ListWithElements): String = XmlBundle.message("intention.name.split.attributes")
   override fun getJoinText(data: ListWithElements): String = XmlBundle.message("intention.name.join.attributes")
 }

@@ -68,7 +68,7 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   private static void enumerateStubsInto(@NotNull Stub root, @NotNull List<? super Stub> result) {
-    ((ObjectStubBase)root).id = result.size();
+    ((ObjectStubBase<?>)root).id = result.size();
     result.add(root);
     List<? extends Stub> childrenStubs = root.getChildrenStubs();
     //noinspection ForLoopReplaceableByForEach

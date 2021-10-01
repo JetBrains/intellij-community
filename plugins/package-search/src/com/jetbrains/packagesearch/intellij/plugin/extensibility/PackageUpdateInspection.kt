@@ -6,14 +6,21 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.addSelectionChangedListener
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
+import java.awt.BorderLayout
+import javax.swing.JPanel
 
 /**
  * An inspection that flags out-of-date dependencies in supported files, supplying a quick-fix to
@@ -25,12 +32,24 @@ import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
  * implementation of this abstract class that provides an appropriate [getVersionPsiElement] and
  * register it in the plugin.xml manifest.
  *
- * Note that this inspection follows the "only stable" setting from the toolwindow UI.
+ * Note that this inspection follows the "only stable" inspection settings.
  *
  * @see ProjectModuleOperationProvider.usesSharedPackageUpdateInspection
- * @see PackageSearchDependencyUpdateQuickFix
+ * @see PackageSearchDependencyUpgradeQuickFix
  */
 abstract class PackageUpdateInspection : LocalInspectionTool() {
+
+    var onlyStable: Boolean = true
+
+    override fun createOptionsPanel() = object : JPanel() {
+        init {
+            layout = BorderLayout()
+            val checkBox = PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"))
+            checkBox.isSelected = onlyStable
+            checkBox.addSelectionChangedListener { onlyStable = it }
+            add(checkBox, BorderLayout.NORTH)
+        }
+    }
 
     protected abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
 
@@ -40,12 +59,25 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
         }
 
         val project = file.project
-        val dataModel = project.packageSearchDataService.dataModelFlow.value
+        val service = project.packageSearchProjectService
 
-        if (dataModel.packageModels.isEmpty()) return null
+        val fileModule = ModuleUtil.findModuleForFile(file)
+        if (fileModule == null) {
+            thisLogger().warn("Inspecting file belonging to an unknown module")
+            return null
+        }
 
-        val module = ModuleUtil.findModuleForFile(file)
-        val availableUpdates = dataModel.packagesToUpdate.updatesByModule[module] ?: return null
+        val moduleModel = service.moduleModelsStateFlow.value
+            .find { fileModule.isTheSameAs(it.projectModule.nativeModule) }
+
+        if (moduleModel == null) {
+            thisLogger().warn("Trying to upgrade something for an unknown module")
+            return null
+        }
+
+        val availableUpdates = service.packageUpgradesStateFlow.value
+            .getPackagesToUpgrade(onlyStable)
+            .upgradesByModule[fileModule] ?: return null
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
         for (packageUpdateInfo in availableUpdates) {
@@ -55,16 +87,19 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: continue
             if (versionElement.containingFile != file) continue
 
+            val targetModules = TargetModules.One(moduleModel)
+            val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
+            val uiPackageModel = packageUpdateInfo.packageModel.toUiPackageModel(
+                targetModules,
+                project,
+                allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
+                onlyStable
+            )
+
             problemsHolder.registerProblem(
                 versionElement,
                 PackageSearchBundle.message("packagesearch.inspection.upgrade.description", packageUpdateInfo.targetVersion),
-                PackageSearchDependencyUpdateQuickFix(
-                    element = versionElement,
-                    packageModel = packageUpdateInfo.packageModel,
-                    unifiedDependency = unifiedDependency,
-                    projectModule = packageUpdateInfo.usageInfo.projectModule,
-                    targetVersion = packageUpdateInfo.targetVersion
-                )
+                PackageSearchDependencyUpgradeQuickFix(versionElement, uiPackageModel)
             )
         }
 
@@ -72,9 +107,11 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     }
 
     private fun shouldCheckFile(file: PsiFile): Boolean {
+        if (!file.project.packageSearchProjectService.isAvailable) return false
+
         val provider = ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
             ?.takeIf { it.usesSharedPackageUpdateInspection() }
-            ?:  return false
+            ?: return false
 
         return provider.hasSupportFor(file.project, file)
     }

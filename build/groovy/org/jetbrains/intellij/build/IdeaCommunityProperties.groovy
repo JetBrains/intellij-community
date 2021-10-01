@@ -48,7 +48,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     ]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
-    addRemoteDevelopmentLibraries = false
   }
 
   @Override

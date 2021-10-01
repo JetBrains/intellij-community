@@ -463,7 +463,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       final PyType collection = getCollection(target, context);
       if (collection instanceof PyInstantiableType) {
-        return Ref.create(((PyInstantiableType)collection).toClass());
+        return Ref.create(((PyInstantiableType<?>)collection).toClass());
       }
 
       final PyType typedDictType = getTypedDictTypeForTarget(target, context);

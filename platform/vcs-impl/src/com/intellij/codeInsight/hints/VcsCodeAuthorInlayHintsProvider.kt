@@ -59,6 +59,9 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
 }
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
+  override val groupId: String
+    get() = CODE_AUTHOR_GROUP
+
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
 
@@ -66,10 +69,12 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
     val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
 
-    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted)
+    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
   }
 
   protected abstract fun isAccepted(element: PsiElement): Boolean
+
+  protected open fun getClickHandler(element: PsiElement): () -> Unit = {}
 
   override fun createSettings(): NoSettings = NoSettings()
   override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledForApplication()

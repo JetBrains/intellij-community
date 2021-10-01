@@ -47,7 +47,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   @Nullable("null means the file is clean")
-  // used in scala
   public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
 
@@ -221,9 +220,9 @@ public final class FileStatusMap implements Disposable {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
 
-    synchronized(myDocumentToStatusMap){
+    synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
+      if (status == null) {
         return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {

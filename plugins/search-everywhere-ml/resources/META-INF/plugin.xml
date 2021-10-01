@@ -29,6 +29,9 @@
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="search.everywhere.ml.experiment.group"/>
   </extensions>
 
   <extensionPoints>
@@ -38,6 +41,10 @@
 
     <extensionPoint name="elementKeyForIdProvider"
                     interface="com.intellij.ide.actions.searcheverywhere.ml.id.ElementKeyForIdProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="rankingModelProvider"
+                    interface="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -51,6 +58,9 @@
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider"/>
+
+    <rankingModelProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
   </extensions>
 
   <applicationListeners>

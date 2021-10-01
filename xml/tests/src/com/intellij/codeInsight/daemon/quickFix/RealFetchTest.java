@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
+import org.junit.Assume;
 
 import java.util.List;
 
@@ -20,6 +21,12 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class RealFetchTest extends BasePlatformTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Assume.assumeFalse(IS_UNDER_SAFE_PUSH);
+  }
 
   public void testFetchDtd() {
     final String url = "http://java.sun.com/dtd/preferences.dtd";

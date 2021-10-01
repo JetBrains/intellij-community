@@ -57,10 +57,8 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
 
       @Override
       public void extensionRemoved(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myActions.removeIf((wrapper) -> {
-          return wrapper instanceof IntentionActionWrapper &&
-                 ((IntentionActionWrapper)wrapper).getImplementationClassName().equals(extension.className);
-        });
+        myActions.removeIf(wrapper -> wrapper instanceof IntentionActionWrapper &&
+                                    ((IntentionActionWrapper)wrapper).getImplementationClassName().equals(extension.className));
       }
     }, this);
   }
@@ -85,8 +83,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
 
   @Override
   @NotNull
-  public List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
-                                                           @NotNull PsiElement context) {
+  public List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
     checkForDuplicates();
     List<IntentionAction> options = new ArrayList<>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
@@ -125,8 +122,8 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   public void dispose() {
   }
 
-  private static IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
-                                                               @NotNull IntentionAction action) {
+  private static @NotNull IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                                        @NotNull IntentionAction action) {
     PsiFile file = null;
     FileModifier fix = action;
     if (action instanceof QuickFixWrapper) {
@@ -248,7 +245,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @TestOnly
-  public <T extends Throwable> void withDisabledIntentions(ThrowableRunnable<T> runnable) throws T {
+  public <T extends Throwable> void withDisabledIntentions(@NotNull ThrowableRunnable<T> runnable) throws T {
     boolean oldIntentionsDisabled = myIntentionsDisabled;
     myIntentionsDisabled = true;
     try {

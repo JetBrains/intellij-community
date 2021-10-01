@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN
@@ -17,8 +18,9 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
-import com.intellij.openapi.wm.StatusBarWidgetProvider
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.Consumer
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -26,8 +28,32 @@ import kotlin.properties.Delegates.observable
 
 private val LOG = logger<IncomingChangesIndicator>()
 
-class IncomingChangesIndicatorProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
+class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
+  companion object {
+    const val ID = "IncomingChanges"
+  }
+
+  override fun getId(): String = ID
+
+  override fun getDisplayName(): String = message("incoming.changes.indicator.name")
+
+  override fun isAvailable(project: Project): Boolean {
+    return IncomingChangesViewProvider.VisibilityPredicate().test(project)
+  }
+
+  override fun createWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
+
+  override fun disposeWidget(widget: StatusBarWidget) {
+    Disposer.dispose(widget)
+  }
+
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
+
+  class Listener(private val project: Project) : VcsListener {
+    override fun directoryMappingChanged() {
+      project.getService(StatusBarWidgetsManager::class.java).updateWidget(IncomingChangesIndicatorFactory::class.java)
+    }
+  }
 }
 
 private class IncomingChangesIndicator(private val project: Project) : StatusBarWidget, StatusBarWidget.IconPresentation {
@@ -39,7 +65,7 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     statusBar?.updateWidget(ID())
   }
 
-  override fun ID(): String = "IncomingChanges"
+  override fun ID(): String = IncomingChangesIndicatorFactory.ID
 
   override fun getPresentation(): WidgetPresentation = this
 
@@ -72,6 +98,7 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     })
     busConnection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refresh() })
     busConnection.subscribe(VCS_CONFIGURATION_CHANGED_IN_PLUGIN, VcsListener { refresh() })
+    refresh()
   }
 
   override fun dispose() {

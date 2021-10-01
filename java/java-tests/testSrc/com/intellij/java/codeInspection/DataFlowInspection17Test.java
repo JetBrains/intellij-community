@@ -28,4 +28,6 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   public void testDuplicateLabels() {
     doTest();
   }
+
+  public void testPredicateNot() { doTest(); }
 }

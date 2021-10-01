@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.stream.Collector;
 
-enum TaintValue implements RestrictionInfo {
+public enum TaintValue implements RestrictionInfo {
   UNTAINTED(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION, RestrictionInfoKind.KNOWN) {
     @Override
     @NotNull
-    TaintValue join(@NotNull TaintValue other) {
+    public TaintValue join(@NotNull TaintValue other) {
       return other;
     }
 
@@ -28,7 +28,7 @@ enum TaintValue implements RestrictionInfo {
   TAINTED(UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION, RestrictionInfoKind.KNOWN) {
     @Override
     @NotNull
-    TaintValue join(@NotNull TaintValue other) {
+    public TaintValue join(@NotNull TaintValue other) {
       return this;
     }
 
@@ -42,7 +42,7 @@ enum TaintValue implements RestrictionInfo {
   UNKNOWN(UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION, RestrictionInfoKind.UNKNOWN) {
     @Override
     @NotNull
-    TaintValue join(@NotNull TaintValue other) {
+    public TaintValue join(@NotNull TaintValue other) {
       return other == TAINTED ? other : this;
     }
 
@@ -64,7 +64,7 @@ enum TaintValue implements RestrictionInfo {
     this.myKind = kind;
   }
 
-  abstract @NotNull TaintValue join(@NotNull TaintValue other);
+  public abstract @NotNull TaintValue join(@NotNull TaintValue other);
 
   @NotNull String getAnnotationName() {
     return myName;

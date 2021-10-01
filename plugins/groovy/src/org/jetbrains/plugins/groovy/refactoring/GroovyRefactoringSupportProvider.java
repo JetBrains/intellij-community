@@ -97,7 +97,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
     //don't try to inplace rename aliased imported references
     if (parent instanceof GrReferenceElement) {
-      GroovyResolveResult result = ((GrReferenceElement)parent).advancedResolve();
+      GroovyResolveResult result = ((GrReferenceElement<?>)parent).advancedResolve();
       PsiElement fileResolveContext = result.getCurrentFileResolveContext();
       if (fileResolveContext instanceof GrImportStatement && ((GrImportStatement)fileResolveContext).isAliasedImport()) {
         return false;

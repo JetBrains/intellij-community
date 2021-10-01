@@ -129,10 +129,10 @@ final class DomCreator {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
-        .of(findSubTagsWithoutIncludes(parentTag, tag.getName(), tag.getNamespace()))
+        .of(findSubTagsWithoutIncludes(parentTag, tag.getLocalName(), tag.getNamespace()))
         .filter(t -> !(t instanceof IncludedXmlTag))
         .indexOf(t -> t == tag);
-      ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+      ElementStub stub = parentStub.getElementStub(tag.getName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();
         EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);

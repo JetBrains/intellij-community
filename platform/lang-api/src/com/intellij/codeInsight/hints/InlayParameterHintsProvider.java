@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,4 +125,7 @@ public interface InlayParameterHintsProvider {
   default SyntaxTraverser<PsiElement> createTraversal(@NotNull PsiElement root) {
     return SyntaxTraverser.psiTraverser(root);
   }
+
+  @Nls
+  default String getProperty(String key) { return null; }
 }

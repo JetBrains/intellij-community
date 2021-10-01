@@ -214,7 +214,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     @Override
     public void update(@NotNull AnActionEvent e) {
       InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-      e.getPresentation().setEnabledAndVisible(decorator != null && !decorator.getMode().isTopLevel());
+      e.getPresentation().setEnabledAndVisible(decorator != null && decorator.canUnsplit());
       e.getPresentation().setText(ActionsBundle.actionText("Unsplit"));
     }
   }

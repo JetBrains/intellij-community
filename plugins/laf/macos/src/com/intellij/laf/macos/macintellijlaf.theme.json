@@ -104,7 +104,7 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder"
     },
 
-    "MnemonicIcon": {
+    "BookmarkMnemonicIcon": {
       "background": "#FEF7EC",
       "borderColor": "#F4AF3D",
       "foreground": "#000000"

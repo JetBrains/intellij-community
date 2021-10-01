@@ -88,6 +88,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.vcs.git.featuresTrainer",
     "intellij.lombok",
     "intellij.searchEverywhereMl",
+    "intellij.platform.tracing.ide",
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 

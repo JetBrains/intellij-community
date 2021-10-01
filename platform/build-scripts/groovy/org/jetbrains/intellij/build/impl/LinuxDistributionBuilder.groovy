@@ -46,7 +46,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
     BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
     List<String> extraJars = BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
-    if (buildContext.productProperties.addRemoteDevelopmentLibraries) {
+    if (buildContext.productProperties.addRemoteDevelopmentLibraries()) {
       extraJars.addAll(BuildTasksImpl.addProjectorServer(buildContext, unixDistPath))
     }
     BuildTasksImpl.appendLibsToClasspathJar(buildContext, unixDistPath, extraJars)

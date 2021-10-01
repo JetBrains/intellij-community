@@ -122,7 +122,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof List) || size() != ((List)o).size()) {
+    if (!(o instanceof List) || size() != ((List<?>)o).size()) {
       return false;
     }
     if (size() == 0) {

@@ -873,8 +873,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myFilesModCount.get();
   }
 
-  void filesUpdateStarted(Project project) {
-    myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+  void filesUpdateStarted(Project project, boolean isFullUpdate) {
+    if (isFullUpdate) {
+      myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
+    }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
@@ -955,7 +957,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void scheduleIndexRebuild(String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, reason));
+      new UnindexedFilesUpdater(project, reason).queue(project);
     }
   }
 
@@ -1951,6 +1953,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
     boolean dumb = ActionUtil.isDumbMode(project);
     if (!dumb) return f -> true;
+
+    if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+      return f -> true;
+    }
 
     DumbModeAccessType dumbModeAccessType = getCurrentDumbModeAccessType();
     if (dumbModeAccessType == null) {

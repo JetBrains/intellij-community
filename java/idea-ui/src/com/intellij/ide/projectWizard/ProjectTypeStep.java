@@ -108,6 +108,16 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
+    myContext.addContextListener(new WizardContext.Listener() {
+      @Override
+      public void switchToRequested(@NotNull String placeId) {
+        TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
+        if (groupToSelect != null) {
+          myProjectTypeList.setSelectedValue(groupToSelect, true);
+        }
+      }
+    });
+
     myWizard = wizard;
 
     myTemplatesMap = isNewWizard() ? MultiMap.createLinked() : MultiMap.createConcurrent();

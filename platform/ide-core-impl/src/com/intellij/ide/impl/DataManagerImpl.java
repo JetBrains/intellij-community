@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.UserDataHolder;
@@ -105,33 +106,38 @@ public class DataManagerImpl extends DataManager {
     if (rules1 == null && rules2 == null) return slowRule;
     return dataProvider -> {
       Object data = slowRule.getData(dataProvider);
-      if (data != null) return data;
-      if (rules1 != null) {
-        for (GetDataRule rule : rules1) {
-          data = rule.getData(dataProvider);
-          if (data != null) return DataValidators.validOrNull(data, dataId, rule);
-        }
-      }
-      if (rules2 != null) {
-        for (GetDataRule rule : rules2) {
-          data = rule.getData(id -> {
-            String injectedId = InjectedDataKeys.injectedId(id);
-            return injectedId != null ? dataProvider.getData(injectedId) : null;
-          });
-          if (data != null) return DataValidators.validOrNull(data, dataId, rule);
-        }
-      }
-      return null;
+      data = data != null ? data : rules1 == null ? null : getRulesData(dataId, rules1, dataProvider);
+      data = data != null ? data : rules2 == null ? null : getRulesData(dataId, rules2, id -> {
+        String injectedId = InjectedDataKeys.injectedId(id);
+        return injectedId != null ? dataProvider.getData(injectedId) : null;
+      });
+      return data;
     };
+  }
+
+  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<GetDataRule> rules, @NotNull DataProvider provider) {
+    for (GetDataRule rule : rules) {
+      try {
+        Object data = rule.getData(provider);
+        if (data != null) return DataValidators.validOrNull(data, dataId, rule);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+    }
+    return null;
   }
 
   private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
     Iterable<DataProvider> asyncProviders = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
     if (asyncProviders == null) return null;
     for (DataProvider provider : asyncProviders) {
-      Object data = provider.getData(dataId);
-      if (data != null) {
-        return DataValidators.validOrNull(data, dataId, provider);
+      try {
+        Object data = provider.getData(dataId);
+        if (data != null) {
+          return DataValidators.validOrNull(data, dataId, provider);
+        }
+      }
+      catch (IndexNotReadyException ignore) {
       }
     }
     return null;

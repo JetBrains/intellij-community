@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -22,7 +21,18 @@ import kotlin.reflect.KMutableProperty0
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
 const val CODE_VISION_GROUP = "code.vision"
+const val PARAMETERS_GROUP = "parameters"
 const val TYPES_GROUP = "types"
+const val VALUES_GROUP = "values"
+const val ANNOTATIONS_GROUP = "annotations"
+const val METHOD_CHAINS_GROUP = "method.chains"
+const val LAMBDAS_GROUP = "lambdas"
+const val CODE_AUTHOR_GROUP = "code.author"
+const val URL_PATH_GROUP = "url.path"
+const val OTHER_GROUP = "other"
+
+val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, VALUES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP,
+  LAMBDAS_GROUP, CODE_AUTHOR_GROUP, URL_PATH_GROUP, OTHER_GROUP)
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -75,7 +85,7 @@ interface InlayHintsProvider<T : Any> {
   val name: String
 
   @JvmDefault
-  val groupId: String get() = CODE_VISION_GROUP
+  val groupId: String get() = OTHER_GROUP
 
   /**
    * Used for persisting settings.
@@ -85,9 +95,7 @@ interface InlayHintsProvider<T : Any> {
   @JvmDefault
   val description: String?
     get() {
-      val path = "inlayProviders/" + key.id + "/description.html"
-      val stream = javaClass.classLoader.getResourceAsStream(path)
-      return if (stream != null) ResourceUtil.loadText(stream) else null
+      return getProperty("inlay." + key.id + ".description")
     }
 
   /**
@@ -110,6 +118,10 @@ interface InlayHintsProvider<T : Any> {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
+
+  @Nls
+  @JvmDefault
+  fun getProperty(key: String): String? = null
 
   val isVisibleInSettings: Boolean
     get() = true

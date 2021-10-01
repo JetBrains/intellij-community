@@ -318,4 +318,6 @@ private fun String.escape() =
   replace("\"", "<U+0022>")
     .replace("(", "<U+0028>")
     .replace(")", "<U+0029>")
+    .replace("{", "<U+007B>")
+    .replace("}", "<U+007D>")
 //endregion

@@ -55,7 +55,7 @@ Kotlin plugin descriptor (`community/plugins/kotlin/plugin/resources/META-INF/co
 <!-- Project Wizard -->
 <extensions defaultExtensionNs="com.intellij">
   <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>
-  <newProjectWizard implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
+  <newProjectWizard.language implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
   <moduleBuilder builderClass="org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder"/>
 </extensions>
 ```

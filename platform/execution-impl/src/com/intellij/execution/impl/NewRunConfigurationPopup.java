@@ -267,7 +267,7 @@ public final class NewRunConfigurationPopup {
 
       @Override
       public boolean shouldBeShowing(Object value) {
-        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor)value).getParentDescriptor() : null;
+        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor<?>)value).getParentDescriptor() : null;
         return super.shouldBeShowing(value) || (parent != null && super.shouldBeShowing(parent));
       }
     };

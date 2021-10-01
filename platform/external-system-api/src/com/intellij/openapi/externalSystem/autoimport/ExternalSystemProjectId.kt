@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 data class ExternalSystemProjectId(val systemId: ProjectSystemId, val externalProjectPath: String) {
-  val readableName = "${systemId.readableName} (${PathUtil.getFileName(externalProjectPath)})"
+  val debugName = "${systemId.readableName} (${PathUtil.getFileName(externalProjectPath)})"
 }

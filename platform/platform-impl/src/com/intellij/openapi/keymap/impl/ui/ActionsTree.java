@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -519,7 +520,8 @@ public final class ActionsTree {
       Icon icon = null;
       String text;
       @NlsSafe String actionId = null;
-      boolean bound = false;
+      String boundId = null;
+      String boundText = null;
       setToolTipText(null);
 
       if (value instanceof DefaultMutableTreeNode) {
@@ -539,22 +541,18 @@ public final class ActionsTree {
         }
         else if (userObject instanceof String) {
           actionId = (String)userObject;
-          bound = myShowBoundActions && ((KeymapImpl)myKeymap).isActionBound(actionId);
-          AnAction action = ActionManager.getInstance().getAction(actionId);
+          boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
+          ActionManager manager = ActionManager.getInstance();
+          AnAction action = manager.getAction(actionId);
+          text = getActionText(action, actionId);
           if (action != null) {
-            text = action.getTemplatePresentation().getText();
-            if (text == null || text.length() == 0) { //fill dynamic presentation gaps
-              text = actionId;
-            }
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {
               icon = actionIcon;
             }
             setToolTipText(action.getTemplatePresentation().getDescription());
           }
-          else {
-            text = actionId;
-          }
+          boundText = boundId == null ? null : getActionText(manager.getAction(boundId), boundId);
           changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
         }
         else if (userObject instanceof QuickList) {
@@ -602,14 +600,17 @@ public final class ActionsTree {
           else {
             foreground = UIUtil.getTreeForeground();
           }
-
-          if (bound) {
-            foreground = JBColor.MAGENTA;
-          }
         }
         if (!myHaveLink) {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
+          if (boundId != null) {
+            append(" ");
+            append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+            append(" ");
+            ActionHyperlink link = new ActionHyperlink(boundId, boundText);
+            append(link.getLinkText(), link.getTextAttributes(), link);
+          }
           if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
             @NlsSafe String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
@@ -624,6 +625,14 @@ public final class ActionsTree {
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
+    private String getActionText(@Nullable AnAction action, String actionId) {
+      String text = action == null ? null : action.getTemplatePresentation().getText();
+      if (text == null || text.length() == 0) { //fill dynamic presentation gaps
+        text = actionId;
+      }
+      return text;
+    }
+
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
       Dimension linkSize = myLink.getPreferredSize();
       myLinkWidth = linkSize.width;
@@ -632,7 +641,7 @@ public final class ActionsTree {
 
     @Override
     public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      if (tag instanceof Hyperlink) {
+      if (tag instanceof Hyperlink && !(tag instanceof ActionHyperlink)) {
         myHaveLink = true;
         myLink.append(fragment, attributes, tag);
       }
@@ -713,6 +722,20 @@ public final class ActionsTree {
         }
 
         return AccessibleContextUtil.combineAccessibleStrings(name, ", ", shortcutName);
+      }
+    }
+
+    private class ActionHyperlink extends Hyperlink {
+      private final String myActionId;
+
+      public ActionHyperlink(String actionId, String actionText) {
+        super(actionText);
+        myActionId = actionId;
+      }
+
+      @Override
+      public void onClick(MouseEvent event) {
+        selectAction(myActionId);
       }
     }
   }

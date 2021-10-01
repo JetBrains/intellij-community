@@ -116,10 +116,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   }
 
   @Override
-  public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
-    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
-    if (result == null) return null;
-    ProblemDescriptor descriptor = myDescriptor.getDescriptorForPreview(target);
-    return new QuickFixWrapper(descriptor, result);
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return myFix.applyFixForPreview(project, myDescriptor.getDescriptorForPreview(file));
   }
 }

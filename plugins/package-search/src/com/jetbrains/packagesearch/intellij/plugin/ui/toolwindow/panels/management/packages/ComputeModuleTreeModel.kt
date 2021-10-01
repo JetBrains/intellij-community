@@ -2,8 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
@@ -15,33 +13,25 @@ internal data class ModulesTreeData(
 )
 
 internal fun computeModuleTreeModel(
-    modules: List<ModuleModel>,
-    currentTargetModules: TargetModules,
-    traceInfo: TraceInfo?
-): ModulesTreeData {
+    modules: List<ModuleModel>
+): TreeModel {
     if (modules.isEmpty()) {
-        logDebug(traceInfo, "computeModuleTreeModel()") { "No modules to display, setting target to None" }
         val rootNode = DefaultMutableTreeNode(TargetModules.None)
-        return ModulesTreeData(treeModel = DefaultTreeModel(rootNode), selectedPath = TreePath(rootNode))
+        return DefaultTreeModel(rootNode)
     }
 
-    logDebug(traceInfo, "computeModuleTreeModel()") { "Calculating tree" }
     val sortedModules = modules.sortedBy { it.projectModule.name }
         .toMutableList()
 
     val rootTargetModules = TargetModules.all(modules)
     val rootNode = DefaultMutableTreeNode(rootTargetModules)
-        .appendChildren(sortedModules, currentTargetModules)
+        .appendChildren(sortedModules)
 
-    logDebug(traceInfo, "computeModuleTreeModel()") { "Calculating selection path" }
-    val selectionPath = rootNode.findPathWithData(currentTargetModules) ?: TreePath(rootNode)
-
-    return ModulesTreeData(DefaultTreeModel(rootNode), selectionPath)
+    return DefaultTreeModel(rootNode)
 }
 
 private fun DefaultMutableTreeNode.appendChildren(
-    sortedModules: List<ModuleModel>,
-    currentTargetModules: TargetModules
+    sortedModules: List<ModuleModel>
 ): DefaultMutableTreeNode {
     val childModules = when (val nodeTargetModules = userObject as TargetModules) {
         is TargetModules.None -> emptyList()
@@ -58,7 +48,7 @@ private fun DefaultMutableTreeNode.appendChildren(
         val childNode = DefaultMutableTreeNode(nodeTargetModules)
         add(childNode)
 
-        childNode.appendChildren(sortedModules, currentTargetModules)
+        childNode.appendChildren(sortedModules)
     }
 
     return this

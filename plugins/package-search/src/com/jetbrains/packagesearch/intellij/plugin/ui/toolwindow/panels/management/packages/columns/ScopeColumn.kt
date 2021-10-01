@@ -12,7 +12,7 @@ import javax.swing.table.TableCellRenderer
 
 internal class ScopeColumn(
     private val scopeSetter: (uiPackageModel: UiPackageModel<*>, newScope: PackageScope) -> Unit
-) : ColumnInfo<PackagesTableItem<*>, UiPackageModel<*>>(
+) : ColumnInfo<PackagesTableItem<*>, PackagesTableItem<*>>(
     PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.scope")
 ) {
 
@@ -22,15 +22,12 @@ internal class ScopeColumn(
 
     override fun isCellEditable(item: PackagesTableItem<*>?) = true
 
-    override fun valueOf(item: PackagesTableItem<*>): UiPackageModel<*> = when (item) {
-        is PackagesTableItem.InstalledPackage -> item.uiPackageModel
-        is PackagesTableItem.InstallablePackage -> item.uiPackageModel
-    }
+    override fun valueOf(item: PackagesTableItem<*>) = item
 
-    override fun setValue(item: PackagesTableItem<*>?, value: UiPackageModel<*>?) {
+    override fun setValue(item: PackagesTableItem<*>?, value: PackagesTableItem<*>?) {
         if (value == null) return
-        if (value.selectedScope == item?.uiPackageModel?.selectedScope) return
+        if (value.uiPackageModel.selectedScope == item?.uiPackageModel?.selectedScope) return
 
-        scopeSetter(value, value.selectedScope)
+        scopeSetter(value.uiPackageModel, value.uiPackageModel.selectedScope)
     }
 }

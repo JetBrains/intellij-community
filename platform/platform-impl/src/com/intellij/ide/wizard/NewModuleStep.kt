@@ -12,7 +12,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
 
-class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factory) : ModuleWizardStep() {
+class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.RootStepFactory) : ModuleWizardStep() {
 
   private val step by lazy { factory.createStep(context) }
 
@@ -32,7 +32,7 @@ class NewModuleStep(context: WizardContext, factory: NewProjectWizardStep.Factor
 
   override fun getComponent() =
     panelBuilder.panel { step.setupUI(this) }
-      .apply { withBorder(JBUI.Borders.empty(20, 20)) }
+      .apply { withBorder(JBUI.Borders.empty(14, 20)) }
       .also { fixUiShiftingWhenChoosingMultiStep(it) }
 
   private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {

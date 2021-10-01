@@ -9,7 +9,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProject
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
-import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.packageSearchGradleConfigurationForProject
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchGradleConfiguration
 
 private const val FILE_TYPE_GROOVY = "groovy"
 private const val FILE_TYPE_KOTLIN = "kotlin"
@@ -57,7 +57,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
     }
 
     private fun saveAdditionalScopeToConfigurationIfNeeded(project: Project, scopeName: String) {
-        val configuration = packageSearchGradleConfigurationForProject(project)
+        val configuration = project.packageSearchGradleConfiguration
 
         if (!configuration.updateScopesOnUsage) return
 

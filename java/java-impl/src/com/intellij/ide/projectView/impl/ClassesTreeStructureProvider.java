@@ -52,7 +52,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
+        ViewSettings settings1 = ((ProjectViewNode<?>)parent).getSettings();
         PsiClassOwner classOwner = (PsiClassOwner)o;
         VirtualFile file = classOwner.getVirtualFile();
 

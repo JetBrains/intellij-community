@@ -267,6 +267,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     Set<PsiElement> skipParentsSet = new HashSet<>();
 
     HighlightInfoHolder holder = createInfoHolder(getFile());
+    holder.getAnnotationSession().setVR(myPriorityRange);
 
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 

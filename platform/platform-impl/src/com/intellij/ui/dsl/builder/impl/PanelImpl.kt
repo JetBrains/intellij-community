@@ -121,6 +121,14 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     }.layout(RowLayout.PARENT_GRID)
   }
 
+  override fun separator(@NlsContexts.Separator title: String?): Row {
+    val separator = createSeparator(title)
+    return row {
+      cell(separator)
+        .horizontalAlign(HorizontalAlign.FILL)
+    }
+  }
+
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     lateinit var result: PanelImpl
     row {
@@ -136,16 +144,16 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean, init: Panel.() -> Unit): PanelImpl {
-    val component = createSeparator(title)
-    val groupTopGap = dialogPanelConfig.spacing.groupTopGap
-    val result = panel {
-      val row = row {
-        cell(component)
-          .horizontalAlign(HorizontalAlign.FILL)
-      } as RowImpl
-      if (topGroupGap) {
-        row.internalTopGap = groupTopGap
+  override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
+                     init: Panel.() -> Unit): Panel {
+    lateinit var result: Panel
+    val separator = createSeparator(title)
+    val row = row {
+      result = panel {
+        row {
+          cell(separator)
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
       }
     }
 
@@ -154,18 +162,20 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
     } else {
       result.init()
     }
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
+
     return result
   }
 
-  override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean, init: Panel.() -> Unit): RowsRangeImpl {
+  override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
+                              init: Panel.() -> Unit): RowsRangeImpl {
     val result = RowsRangeImpl(this, _rows.size)
-    val component = createSeparator(title)
-    val row = row {
-      cell(component)
+    val separator = createSeparator(title)
+    row {
+      cell(separator)
         .horizontalAlign(HorizontalAlign.FILL)
-    }
-    if (topGroupGap) {
-      row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
     }
     if (indent) {
       indent(init)
@@ -174,10 +184,15 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
       init()
     }
     result.endIndex = _rows.size - 1
+
+    setTopGroupGap(rows[result.startIndex], topGroupGap)
+    setBottomGroupGap(rows[result.endIndex], bottomGroupGap)
+
     return result
   }
 
-  override fun collapsibleGroup(title: String, indent: Boolean, init: Panel.() -> Unit): CollapsiblePanelImpl {
+  override fun collapsibleGroup(title: String, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
+                                init: Panel.() -> Unit): CollapsiblePanelImpl {
     val row = row { }
     val result = CollapsiblePanelImpl(dialogPanelConfig, row, title) {
       if (indent) {
@@ -190,10 +205,14 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
 
     result.expanded = false
     row.cell(result)
+
+    setTopGroupGap(row, topGroupGap)
+    setBottomGroupGap(row, bottomGroupGap)
+
     return result
   }
 
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, init: Panel.() -> Unit) {
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?, init: Panel.() -> Unit) {
     dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
     try {
       if (title == null) {
@@ -341,6 +360,22 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
   private fun doVisible(isVisible: Boolean, range: IntRange) {
     for (i in range) {
       _rows[i].visibleFromParent(isVisible)
+    }
+  }
+
+  private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
+    if (topGap == null) {
+      row.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
+    } else {
+      row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
+    }
+  }
+
+  private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
+    if (bottomGap == null) {
+      row.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
+    } else {
+      row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
   }
 }

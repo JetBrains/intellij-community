@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -55,13 +54,13 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   }
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
-    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, Collections.singletonList(path), revisionNumber);
+    VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
+    historyProvider.showFileHistory(Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
-    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, Collections.singletonList(path), revisionNumber);
+    VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
+    return historyProvider != null && historyProvider.canShowFileHistory(Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {

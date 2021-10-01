@@ -58,52 +58,58 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
   }
 
   private fun buildPanel() {
-    myPanel = panel {
+    myPanel = headerlessPanel()
+  }
 
-      if (myProject.isDirectoryBased) {
-        row {
-          label(JavaUiBundle.message("project.structure.title"))
-            .bold()
-            .comment(JavaUiBundle.message("project.structure.comment"),
-              120)
-        }
-          .bottomGap(BottomGap.SMALL)
-
-        row {
-          label(JavaUiBundle.message("project.structure.name"))
-          textField()
-            .bindText(nameProperty)
-            .columns(28)
-        }
+  fun Panel.titleAndNameField() {
+    if (myProject.isDirectoryBased) {
+      row {
+        label(JavaUiBundle.message("project.structure.title"))
+          .bold()
+          .comment(JavaUiBundle.message("project.structure.comment"),
+            120)
       }
+        .bottomGap(BottomGap.SMALL)
 
-      group(JavaUiBundle.message("project.structure.sdks")) {
-        row(JavaUiBundle.message("project.structure.java.sdk")) {
-          cell(myProjectJdkConfigurable.createComponent())
-        }
+      row(JavaUiBundle.message("project.structure.name")) {
+        textField()
+          .bindText(nameProperty)
+          .columns(28)
       }
-
-      group(JavaUiBundle.message("project.structure.java")) {
-        row(JavaUiBundle.message("module.module.language.level")) {
-          cell(myLanguageLevelCombo)
-          cell()
-        }.layout(RowLayout.PARENT_GRID)
-        row(JavaUiBundle.message("project.structure.compiler.output")) {
-          textFieldWithBrowseButton()
-            .bindText(compilerOutputProperty.transform(::getPresentablePath, ::getCanonicalPath))
-            .onIsModified {
-              if (!myProjectConfigurable.isFrozen)
-                LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).currentLevel = myLanguageLevelCombo.selectedLevel
-              return@onIsModified true
-            }
-            .horizontalAlign(HorizontalAlign.FILL)
-            .comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 84)
-          cell()
-        }.layout(RowLayout.PARENT_GRID)
-      }
-    }.apply {
-      withBorder(JBUI.Borders.empty(20, 20))
+        .bottomGap(BottomGap.SMALL)
     }
+  }
+
+  fun headerlessPanel(): JPanel = panel {
+    titleAndNameField()
+
+    row(JavaUiBundle.message("project.structure.sdk")) {
+      cell(myProjectJdkConfigurable.createComponent())
+    }
+      .bottomGap(BottomGap.SMALL)
+
+    row(JavaUiBundle.message("module.module.language.level")) {
+      cell(myLanguageLevelCombo)
+      cell()
+    }
+      .layout(RowLayout.PARENT_GRID)
+      .bottomGap(BottomGap.SMALL)
+
+    row(JavaUiBundle.message("project.structure.compiler.output")) {
+      textFieldWithBrowseButton()
+        .bindText(compilerOutputProperty.transform(::getPresentablePath, ::getCanonicalPath))
+        .onIsModified {
+          if (!myProjectConfigurable.isFrozen)
+            LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).currentLevel = myLanguageLevelCombo.selectedLevel
+          return@onIsModified true
+        }
+        .horizontalAlign(HorizontalAlign.FILL)
+        .comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 100)
+      cell()
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }.apply {
+    withBorder(JBUI.Borders.empty(20, 20))
   }
 
   fun getPanel(): JPanel = myPanel

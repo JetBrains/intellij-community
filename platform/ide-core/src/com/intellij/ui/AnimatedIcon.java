@@ -29,9 +29,14 @@ public class AnimatedIcon implements Icon {
    *
    * @see UIUtil#putClientProperty
    */
-  @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
-  @ApiStatus.Internal
+  /**
+   * This key can be used to increase performance of animated icons in lists, tables and trees.
+   * A renderer should provide a {@code Runnable} that repaints only a part of a corresponding component.
+   *
+   * @see UIUtil#putClientProperty
+   */
+  @ApiStatus.Experimental
   public static final Key<Runnable> REFRESH_DELEGATE = Key.create("REFRESH_DELEGATE");
 
   public interface Frame {

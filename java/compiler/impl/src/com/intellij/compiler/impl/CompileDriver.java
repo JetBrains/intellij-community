@@ -45,6 +45,7 @@ import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -414,6 +415,7 @@ public final class CompileDriver {
     final String name = JavaCompilerBundle
       .message(
         isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    Tracer.Span span = Tracer.start(name + " preparation");
     final CompilerTask compileTask = new CompilerTask(
       myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
     );
@@ -428,8 +430,9 @@ public final class CompileDriver {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
-
+    span.complete();
     final Runnable compileWork = () -> {
+      Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
       if (indicator.isCanceled() || myProject.isDisposed()) {
         if (callback != null) {
@@ -461,11 +464,13 @@ public final class CompileDriver {
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         if (future != null) {
+          Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
             if (indicator.isCanceled()) {
               future.cancel(false);
             }
           }
+          compileInExternalProcessSpan.complete();
           if (!executeCompileTasks(compileContext, false)) {
             COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
           }
@@ -481,8 +486,11 @@ public final class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
+        compileWorkSpan.complete();
         buildManager.allowBackgroundTasks();
+        Tracer.Span flushCompilerCaches = Tracer.start("flush compiler caches");
         compilerCacheManager.flushCaches();
+        flushCompilerCaches.complete();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         CompilerUtil.logDuration(

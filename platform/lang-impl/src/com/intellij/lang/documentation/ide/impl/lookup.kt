@@ -2,16 +2,16 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.openapi.application.readAction
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,16 +45,15 @@ internal fun autoShowRequestFlow(lookup: Lookup): Flow<DocumentationRequest>? {
 private fun Flow<LookupElement>.asRequestFlow(lookup: Lookup): Flow<DocumentationRequest?> {
   val project = lookup.project
   val editor = lookup.editor
-  val file = lookup.psiFile
+  val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
   return map { lookupElement ->
     readAction {
       if (!lookupElement.isValid) {
         return@readAction null
       }
-      val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
-                          ?: return@readAction null
-      val sourceElement = file?.findElementAt(editor.caretModel.offset)
-      PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null).documentationRequest()
+      val file = PsiUtilBase.getPsiFileInEditor(editor, project)
+                 ?: return@readAction null
+      ideTargetProvider.documentationTarget(editor, file, lookupElement)?.documentationRequest()
     }
   }.flowOn(Dispatchers.Default)
 }

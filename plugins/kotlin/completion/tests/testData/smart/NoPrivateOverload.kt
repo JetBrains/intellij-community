@@ -1,4 +1,4 @@
-fun f(p1: Any, p2: String, p3: Int) {
+fun f(expr1: Any, expr2: String, expr3: Int) {
     C().foo(<caret>)
 }
 
@@ -10,6 +10,6 @@ class C {
     }
 }
 
-// ABSENT: p1
-// EXIST: p2
-// ABSENT: p3
+// ABSENT: expr1
+// EXIST: expr2
+// ABSENT: expr3

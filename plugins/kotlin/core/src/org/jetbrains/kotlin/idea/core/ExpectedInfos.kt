@@ -157,12 +157,12 @@ class ExpectedInfos(
     private val useOuterCallsExpectedTypeCount: Int = 0
 ) {
     fun calculate(expressionWithType: KtExpression): Collection<ExpectedInfo> {
-        val expectedInfos = calculateForArgument(expressionWithType)
+        val expectedInfos = calculateForElvis(expressionWithType)
+            ?: calculateForArgument(expressionWithType)
             ?: calculateForFunctionLiteralArgument(expressionWithType)
             ?: calculateForIndexingArgument(expressionWithType)
             ?: calculateForEqAndAssignment(expressionWithType)
             ?: calculateForIf(expressionWithType)
-            ?: calculateForElvis(expressionWithType)
             ?: calculateForBlockExpression(expressionWithType)
             ?: calculateForWhenEntryValue(expressionWithType)
             ?: calculateForExclOperand(expressionWithType)
@@ -178,7 +178,11 @@ class ExpectedInfos(
     }
 
     private fun calculateForArgument(expressionWithType: KtExpression): Collection<ExpectedInfo>? {
-        val argument = expressionWithType.parent as? KtValueArgument ?: return null
+        var valueArgumentCandidate = expressionWithType.parent
+        if (valueArgumentCandidate !is KtValueArgument) { // Avoid parsing errors like KTIJ-18231
+            valueArgumentCandidate = valueArgumentCandidate.parent
+        }
+        val argument = valueArgumentCandidate as? KtValueArgument ?: return null
         val argumentList = argument.parent as? KtValueArgumentList ?: return null
         val callElement = argumentList.parent as? KtCallElement ?: return null
         return calculateForArgument(callElement, argument)
@@ -293,6 +297,8 @@ class ExpectedInfos(
         var parameterType = parameter?.type
 
         if (parameterType != null && parameterType.containsError()) {
+            // Type inference for parameter is failed (because we are in the middle
+            // of completing some argument and not yet all arguments may be passed)
             val originalParameter = descriptor.original.valueParameters[parameter!!.index]
             parameter = originalParameter
             descriptor = descriptor.original
@@ -310,8 +316,17 @@ class ExpectedInfos(
             ArgumentPositionData.Named(descriptor, callType, argumentName)
         } else {
             val namedArgumentCandidates = if (!isFunctionLiteralArgument && !isArrayAccess && descriptor.hasStableParameterNames()) {
-                val usedParameters = argumentToParameter.filter { it.key != argument }.map { it.value }.toSet()
-                descriptor.valueParameters.filter { it !in usedParameters }
+                val alreadyPassedParameters =
+                    // Suggest only parameter names which are not used yet
+                    call.valueArguments.mapNotNullTo(mutableSetOf()) { it.getArgumentName()?.asName } +
+                            // plus not parameter names which are already successfully mapped
+                            // (everything that goes after argumentIndex may be incorrectly parsed)
+                            argumentToParameter
+                                .filter { (arg, _) ->
+                                    call.valueArguments.indexOf(arg).takeIf { it != -1 }?.let { it < argumentIndex } == true
+                                }
+                                .map { (_, param) -> param.name }
+                descriptor.valueParameters.filter { it.name !in alreadyPassedParameters }
             } else {
                 emptyList()
             }

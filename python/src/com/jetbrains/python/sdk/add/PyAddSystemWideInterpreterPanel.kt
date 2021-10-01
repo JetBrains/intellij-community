@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolderBase
@@ -26,17 +27,22 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
+import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 
 /**
  * @author vlan
  */
-open class PyAddSystemWideInterpreterPanel(private val module: Module?,
+open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
+                                           private val module: Module?,
                                            private val existingSdks: List<Sdk>,
                                            private val context: UserDataHolderBase,
                                            private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
-                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel() {
+                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel(), PyAddTargetBasedSdkView {
+  private val project: Project?
+    get() = _project ?: module?.project
+
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
   protected val sdkComboBox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
   protected val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
@@ -85,14 +91,16 @@ open class PyAddSystemWideInterpreterPanel(private val module: Module?,
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
+
+  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
     if (targetEnvironmentConfiguration == null) {
       // this is the local machine case
       return installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)
     }
     else {
       val interpreterPath = sdkComboBox.selectedSdk?.homePath!!
-      return createSdkForTarget(module?.project, targetEnvironmentConfiguration, interpreterPath, existingSdks)
+      return createSdkForTarget(project, targetEnvironmentConfiguration, interpreterPath, existingSdks)
     }
   }
 

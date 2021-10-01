@@ -56,8 +56,8 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.ge
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.util.jvmName
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -347,10 +347,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                         JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.mainClass))
                     }?.let { mainModule ->
                         params.moduleName = mainModule.name
-                        val classPath = params.classPath
-                        val modulePath = params.modulePath
-                        modulePath.addAll(classPath.pathList)
-                        classPath.clear()
+                        JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false)
                     }
                 }
             }

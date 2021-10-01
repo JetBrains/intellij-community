@@ -23,6 +23,9 @@ object ConsoleJvmApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.description")
 
+    private val fileToCreate = "Main.kt".asPath()
+    val fileWithMain = fileToCreate
+
 
     override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm
@@ -35,6 +38,6 @@ object ConsoleJvmApplicationTemplate : Template() {
 
     override fun Reader.getFileTemplates(module: ModuleIR) =
         buildList<FileTemplateDescriptorWithPath> {
-            +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
+            +(FileTemplateDescriptor("$id/main.kt.vm", fileToCreate) asSrcOf SourcesetType.main)
         }
 }

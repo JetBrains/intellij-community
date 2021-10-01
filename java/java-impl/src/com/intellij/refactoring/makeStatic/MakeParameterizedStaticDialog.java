@@ -80,7 +80,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
         return ((JTextField)myClassParameterNameInputField).getText();
       }
       else if(myClassParameterNameInputField instanceof JComboBox) {
-        return (String)(((JComboBox)myClassParameterNameInputField).getEditor().getItem());
+        return (String)(((JComboBox<?>)myClassParameterNameInputField).getEditor().getItem());
       }
       else
         return null;

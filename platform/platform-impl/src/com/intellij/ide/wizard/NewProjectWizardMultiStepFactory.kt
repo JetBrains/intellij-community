@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsContexts
  *
  * @see NewProjectWizardStep
  */
-interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> : NewProjectWizardChildStep.Factory<P> {
+interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> : NewProjectWizardStep.ChildStepFactory<P> {
   /**
    * Name of step and label that should be used in multistep switcher.
    */

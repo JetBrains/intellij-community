@@ -36,7 +36,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   void nodeAdded() {
-    dropProblemCountCaches();
+    super.dropProblemCountCaches();
     ReadAction.run(() -> myValid = calculateIsValid());
     //force calculation
     getProblemLevels();
@@ -61,23 +61,24 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public abstract boolean isQuickFixAppliedFromView();
 
   @Override
-  protected boolean isProblemCountCacheValid() {
+  void dropProblemCountCaches() {
+    super.dropProblemCountCaches();
     NodeState currentState = calculateState();
     if (!currentState.equals(myPreviousState)) {
       myPreviousState = currentState;
-      return false;
     }
-    return true;
   }
 
   @NotNull
   public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
-    if (actions == null) {
-      actions = calculateAvailableSuppressActions();
-      myAvailableSuppressActions = actions;
+    if (myAvailableSuppressActions == null) {
+      updateAvailableSuppressActions();
     }
-    return actions;
+    return myAvailableSuppressActions;
+  }
+
+  public void updateAvailableSuppressActions() {
+    myAvailableSuppressActions = calculateAvailableSuppressActions();
   }
 
   public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
@@ -105,18 +106,6 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       myPresentableName = name;
     }
     return name;
-  }
-
-  @Override
-  void uiRequested() {
-    nodeAdded();
-    ReadAction.run(() -> {
-      if (myPresentableName == null) {
-        myPresentableName = calculatePresentableName();
-        myValid = calculateIsValid();
-        myAvailableSuppressActions = calculateAvailableSuppressActions();
-      }
-    });
   }
 
   @Nullable
@@ -162,8 +151,11 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   protected abstract boolean calculateIsValid();
 
-  protected void dropCache() {
-    ReadAction.run(() -> doDropCache());
+  protected void dropCaches() {
+    ReadAction.run(() -> {
+      doDropCache();
+      dropProblemCountCaches();
+    });
   }
 
   private void doDropCache() {

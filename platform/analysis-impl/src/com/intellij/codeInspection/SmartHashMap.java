@@ -55,7 +55,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public boolean equals(@NotNull Object other) {
     K theKey = this.theKey;
     if (theKey != null) {
-      if (!(other instanceof Map) || ((Map)other).size() != 1 ) return false;
+      if (!(other instanceof Map) || ((Map<?, ?>)other).size() != 1 ) return false;
       Map.Entry<K, V> entry = ((Map<K, V>)other).entrySet().iterator().next();
       return eq(theKey, entry.getKey()) && Comparing.equal(theValue, entry.getValue());
     }

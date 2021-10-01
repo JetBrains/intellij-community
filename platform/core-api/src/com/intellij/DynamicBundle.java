@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -102,18 +101,6 @@ public class DynamicBundle extends AbstractBundle {
       LOG.error(e);
       return null;
     }
-  }
-
-  @Nullable
-  public static InputStream getLanguageStream(String resource) {
-    DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) return null;
-
-    PluginDescriptor descriptor = langBundle.pluginDescriptor;
-    if (descriptor == null) return null;
-
-    ClassLoader classLoader = descriptor.getPluginClassLoader();
-    return classLoader != null ? classLoader.getResourceAsStream(resource) : null;
   }
 
   public static final DynamicBundle INSTANCE = new DynamicBundle("") { };

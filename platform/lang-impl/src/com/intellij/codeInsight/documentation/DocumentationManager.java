@@ -32,12 +32,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -55,8 +52,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -881,6 +876,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private @Nullable PsiElement findTargetElementFromContext(@NotNull Editor editor, int offset, @Nullable PsiFile file) {
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+      try {
+        return assertSameProject(getElementFromLookup(editor, file));
+      }
+      catch (IndexNotReadyException e) {
+        return null;
+      }
+    }
     var elementAndContext = findTargetElementAndContext(editor, offset, file);
     return elementAndContext == null ? null : elementAndContext.first;
   }
@@ -892,10 +895,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nullable PsiFile file
   ) {
     PsiElement originalElement = getContextElement(file, offset);
-    PsiElement element = assertSameProject(findTargetElement(editor, offset, file, originalElement));
+    PsiElement element = findTargetElementAtOffset(editor, offset, file, originalElement);
     if (element == null) {
       PsiElement list = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
-      if (list != null && LookupManager.getInstance(myProject).getActiveLookup() == null) {
+      if (list != null) {
         element = list;
       }
     }
@@ -940,39 +943,79 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return assertSameProject(getElementFromLookup(editor, file));
     }
 
-    TargetElementUtil util = TargetElementUtil.getInstance();
-    PsiElement element = null;
-    if (file != null) {
-      DocumentationProvider documentationProvider = getProviderFromElement(file);
-      element = assertSameProject(documentationProvider.getCustomDocumentationElement(editor, file, contextElement, offset));
-    }
+    return findTargetElementAtOffset(editor, offset, file, contextElement);
+  }
 
-    if (element == null) {
-      TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-      element = assertSameProject(util.findTargetElement(editor, targetElementUtil.getAllAccepted(), offset));
-
-      // Allow context doc over xml tag content
-      if (element != null || contextElement != null) {
-        PsiElement adjusted = assertSameProject(util.adjustElement(editor, targetElementUtil.getAllAccepted(), element, contextElement));
-        if (adjusted != null) {
-          element = adjusted;
-        }
-      }
-    }
-
-    if (element == null) {
-      PsiReference ref = TargetElementUtil.findReference(editor, offset);
-      if (ref != null) {
-        element = assertSameProject(util.adjustReference(ref));
-        if (ref instanceof PsiPolyVariantReference) {
-          element = assertSameProject(ref.getElement());
-        }
-      }
-    }
-
+  @Internal
+  public @Nullable PsiElement findTargetElementAtOffset(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiFile file,
+    @Nullable PsiElement contextElement
+  ) {
+    PsiElement element = assertSameProject(doFindTargetElementAtOffset(editor, offset, file, contextElement));
     storeOriginalElement(myProject, contextElement, element);
     storeIsFromLookup(element, false);
     return element;
+  }
+
+  private static @Nullable PsiElement doFindTargetElementAtOffset(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiFile file,
+    @Nullable PsiElement contextElement
+  ) {
+    PsiElement element;
+
+    element = customElement(editor, file, offset, contextElement);
+    if (element != null) {
+      return element;
+    }
+
+    element = fromTargetUtil(editor, offset, contextElement);
+    if (element != null) {
+      return element;
+    }
+
+    return fromReference(editor, offset);
+  }
+
+  private static @Nullable PsiElement customElement(
+    @NotNull Editor editor,
+    @Nullable PsiFile file,
+    int offset,
+    @Nullable PsiElement contextElement
+  ) {
+    if (file == null) {
+      return null;
+    }
+    return getProviderFromElement(file).getCustomDocumentationElement(editor, file, contextElement, offset);
+  }
+
+  private static @Nullable PsiElement fromTargetUtil(
+    @NotNull Editor editor,
+    int offset,
+    @Nullable PsiElement contextElement
+  ) {
+    TargetElementUtil util = TargetElementUtil.getInstance();
+    PsiElement element = util.findTargetElement(editor, util.getAllAccepted(), offset);
+    if (element == null && contextElement == null) {
+      return null;
+    }
+    // Allow context doc over xml tag content
+    PsiElement adjusted = util.adjustElement(editor, util.getAllAccepted(), element, contextElement);
+    return adjusted != null ? adjusted : element;
+  }
+
+  private static @Nullable PsiElement fromReference(@NotNull Editor editor, int offset) {
+    PsiReference ref = TargetElementUtil.findReference(editor, offset);
+    if (ref == null) {
+      return null;
+    }
+    if (ref instanceof PsiPolyVariantReference) {
+      return ref.getElement();
+    }
+    return TargetElementUtil.getInstance().adjustReference(ref);
   }
 
   private static void storeIsFromLookup(@Nullable PsiElement element, boolean value) {

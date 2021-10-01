@@ -32,7 +32,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
       final RunnerAndConfigurationSettings template =
         ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
       final Module contextModule = context.getModule();
-      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+      final Module predefinedModule = ((ModuleBasedConfiguration<?, ?>)template.getConfiguration()).getConfigurationModule().getModule();
       if (predefinedModule != null) {
         configuration.setModule(predefinedModule);
         return true;

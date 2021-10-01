@@ -73,6 +73,7 @@ final class CommunityRepositoryModules {
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
       withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
     },
+    plugin("intellij.platform.tracing.ide"),
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
       withModule("intellij.maven.server", "maven-server-api.jar")
@@ -193,7 +194,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.grazie.yaml")
     },
     plugin("intellij.java.rareRefactorings"),
-    plugin("intellij.toml")
+    plugin("intellij.toml") {
+      withModule("intellij.toml.core")
+    }
   ]
 
   static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [

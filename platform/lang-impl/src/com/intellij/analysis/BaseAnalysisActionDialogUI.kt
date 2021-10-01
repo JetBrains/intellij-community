@@ -20,7 +20,7 @@ internal class BaseAnalysisActionDialogUI {
             disposable: Disposable): JPanel {
 
     return panel {
-      group(scopeTitle, topGroupGap = false) {
+      group(scopeTitle) {
         for (item in viewItems) {
           row {
             buttons.add(item.button)

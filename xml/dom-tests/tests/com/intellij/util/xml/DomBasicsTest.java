@@ -445,7 +445,7 @@ public class DomBasicsTest extends DomTestCase {
       }
     });
     assertNotNull(element[0]);
-    assertSame(element[0], ((StableElement)stable).getWrappedElement());
+    assertSame(element[0], ((StableElement<?>)stable).getWrappedElement());
     assertEquals(element[0], stable);
     assertEquals(stable, element[0]);
     MyElement oldElement = element[0];
@@ -477,25 +477,25 @@ public class DomBasicsTest extends DomTestCase {
 
     oldElement = element[0];
     oldChild1 = oldElement.getChild();
-    ((StableElement)stable).invalidate();
+    ((StableElement<?>)stable).invalidate();
     assertTrue(oldElement.isValid());
     assertTrue(oldChild1.isValid());
-    assertFalse(oldElement.equals(((StableElement)stable).getWrappedElement()));
+    assertFalse(oldElement.equals(((StableElement<?>)stable).getWrappedElement()));
   }
 
   public void testStable_Revalidate() {
     final MyElement[] element = new MyElement[]{createElement("")};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     MyElement oldElement = element[0];
-    ((StableElement) stable).revalidate();
-    assertSame(oldElement, ((StableElement) stable).getWrappedElement());
+    ((StableElement<?>) stable).revalidate();
+    assertSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
     
     element[0] = createElement("");
     assertTrue(oldElement.isValid());
-    ((StableElement) stable).revalidate();
+    ((StableElement<?>) stable).revalidate();
     assertTrue(oldElement.isValid());
-    assertNotSame(oldElement, ((StableElement) stable).getWrappedElement());
-    assertSame(element[0], ((StableElement) stable).getWrappedElement());
+    assertNotSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
+    assertSame(element[0], ((StableElement<?>) stable).getWrappedElement());
   }
 
   public void testStable_Invalidate() {
@@ -503,7 +503,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement[] element = new MyElement[]{oldElement};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
-    ((StableElement) stable).invalidate();
+    ((StableElement<?>) stable).invalidate();
     assertEquals(stable, stable);
     assertEquals(oldElement.toString(), stable.toString());
   }

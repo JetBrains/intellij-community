@@ -13,14 +13,16 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.DefaultComboBoxModel
 
 
-abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : NewProjectWizardStep>(
-  parent: P,
+abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
+  parent: NewProjectWizardStep,
   epName: ExtensionPointName<out NewProjectWizardMultiStepFactory<S>>
-) : AbstractNewProjectWizardChildStep<P>(parent) {
+) : AbstractNewProjectWizardStep(parent) {
 
   protected abstract val self: S
 
   protected abstract val label: @NlsContexts.Label String
+  protected open val comment: @NlsContexts.Label String? = null
+  protected open val commentLink: @NlsContexts.Label String? = null
 
   val stepProperty = propertyGraph.graphProperty { "" }
   var step by stepProperty
@@ -35,6 +37,14 @@ abstract class AbstractNewProjectWizardMultiStep<P : NewProjectWizardStep, S : N
 
   final override fun setupUI(builder: Panel) {
     with(builder) {
+      comment?.let {
+        row("") {
+          commentHtml(it) {
+            commentLink?.let { context.requestSwitchTo(it) }
+          }
+        }.bottomGap(BottomGap.SMALL)
+      }
+
       row(label) {
         if (steps.size > 4) {
           comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))

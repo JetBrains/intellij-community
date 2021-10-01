@@ -105,7 +105,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
       return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
     });
 
-    if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
+    if (((DialogItemEditor<?>)itemEditor).isUseDialogToAdd()) {
       toolbarDecorator.setAddAction(button -> {
         T item = createElement();
         ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {

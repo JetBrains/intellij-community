@@ -103,5 +103,38 @@ private fun markScrollingPositionBeforeOutputCollapseToggle(e: AnActionEvent) {
   val editor = e.notebookCellInlayManager?.editor ?: return
   val notebookCellEditorScrollingPositionKeeper = editor.notebookCellEditorScrollingPositionKeeper ?: return
 
+  val outputsCellVisible = isLineVisible(editor, cell.lines.last)
+  if (!outputsCellVisible) {
+    val cellOutputInlays = editor.inlayModel.getBlockElementsInRange(editor.document.getLineEndOffset(cell.lines.last), editor.document.getLineEndOffset(cell.lines.last))
+    val visibleArea = editor.scrollingModel.visibleAreaOnScrollingFinished
+
+    for (i in (cellOutputInlays.size - 1) downTo 1) {
+      val inlay = cellOutputInlays[i]
+      val bounds = inlay.bounds ?: continue
+      val outputTopIsAboveScreen = bounds.y < visibleArea.y
+      val outputBottomIsOnOrBelowScreen = bounds.y + bounds.height > visibleArea.y
+      if (outputTopIsAboveScreen) {
+        if ((outputBottomIsOnOrBelowScreen)) {
+          val inputEvent = e.inputEvent
+          val additionalShift: Int
+          if (inputEvent is MouseEvent) {
+            // Adjust scrolling so, that the collapsed output is under the mouse pointer
+            additionalShift = inputEvent.y - bounds.y - editor.lineHeight
+          } else {
+            // Adjust scrolling so, that the collapsed output is visible on the screen
+            additionalShift = visibleArea.y - bounds.y + editor.lineHeight
+          }
+
+          notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.last, additionalShift)
+          return
+        }
+        else {
+          val topVisibleLine: Int = editor.xyToLogicalPosition(visibleArea.location).line
+          notebookCellEditorScrollingPositionKeeper.savePosition(topVisibleLine)
+          return
+        }
+      }
+    }
+  }
   notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.first)
 }

@@ -578,7 +578,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         DeploymentImpl deployment = orderedDeployments.get(remoteDeployment);
         if (deployment != null) {
           if (deployment instanceof LocalDeploymentImpl) {
-            ((LocalDeploymentImpl)deployment).setRemoteDeployment(remoteDeployment);
+            ((LocalDeploymentImpl<?>)deployment).setRemoteDeployment(remoteDeployment);
           }
         }
         else {

@@ -10,8 +10,8 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -22,10 +22,10 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.io.File
 
-abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
-  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
-  where ParentStep : NewProjectWizardStep, ParentStep : NewProjectWizardBaseData
-{
+abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep) :
+  AbstractNewProjectWizardStep(parent)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData {
 
   private val defaultBaseDir: String
     get() = when (context.isCreatingNewProject) {
@@ -64,18 +64,13 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
     contentRootProperty.dependsOn(moduleNameProperty, pathFromModuleName)
     moduleFileLocationProperty.dependsOn(moduleNameProperty, pathFromModuleName)
 
-    moduleNameProperty.dependsOn(contentRootProperty) {
-      when (val i = contentRoot.lastIndexOf(File.separator)) {
-        -1, contentRoot.lastIndex -> ""
-        else -> contentRoot.substring(i + 1)
-      }
-    }
+    moduleNameProperty.dependsOn(contentRootProperty) { File(contentRoot).name }
     moduleFileLocationProperty.dependsOn(contentRootProperty) { contentRoot }
   }
 
   override fun setupUI(builder: Panel) {
     with(builder) {
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
+      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
             textField()
@@ -86,7 +81,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
           }.bottomGap(BottomGap.SMALL)
           row(UIBundle.message("label.project.wizard.new.project.content.root")) {
             textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.content.root.title"), context.project,
-              FileChooserDescriptorFactory.createSingleFolderDescriptor())
+              FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
               .bindText(contentRootProperty.transform(::getPresentablePath, ::getCanonicalPath))
               .horizontalAlign(HorizontalAlign.FILL)
               .validationOnApply { validateContentRoot() }
@@ -104,7 +99,7 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
         }
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           textFieldWithBrowseButton(UIBundle.message("label.project.wizard.new.project.module.file.location.title"), context.project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+            FileChooserDescriptorFactory.createSingleFolderDescriptor()) { file: VirtualFile -> getPresentablePath(file.path) }
             .bindText(moduleFileLocationProperty.transform(::getPresentablePath, ::getCanonicalPath))
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
@@ -155,18 +150,4 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep)
       return error(JavaUiBundle.message("module.name.location.dialog.message.error.module.file.location", moduleFileLocation))
     return null
   }
-
-  /*
-  override fun setupProject(project: Project) {
-    val builder = JavaModuleBuilder()
-    val moduleFile = Paths.get(getCanonicalPath(moduleFileLocation.trim()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
-
-    builder.name = moduleName
-    builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
-    builder.contentEntryPath = FileUtil.toSystemDependentName(getCanonicalPath(contentRoot.trim()))
-    builder.moduleJdk = parentStep.sdk
-
-    builder.commit(project)
-  }
-  */
 }

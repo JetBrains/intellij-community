@@ -47,6 +47,12 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     }
   }
 
+  /**
+   * Allows a plugin to replace GradleOrderEnumeration handler with own implementation.
+   * <br/><br/>
+   * Can be used if a Gradle-specific module should have non-default OrderEnumerationHandler implementation
+   * (e.g., Android module)
+   */
   public static class FactoryImpl extends Factory {
     private static final ExtensionPointName<FactoryImpl> EP_NAME =
       ExtensionPointName.create("org.jetbrains.plugins.gradle.orderEnumerationHandlerFactory");

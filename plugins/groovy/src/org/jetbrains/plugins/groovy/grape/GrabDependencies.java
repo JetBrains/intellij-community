@@ -126,7 +126,7 @@ public class GrabDependencies implements IntentionAction {
 
   private static boolean isUnresolvedRefName(@NotNull PsiElement at) {
     PsiElement parent = at.getParent();
-    return parent instanceof GrReferenceElement && ((GrReferenceElement)parent).getReferenceNameElement() == at && ((GrReferenceElement)parent).resolve() == null;
+    return parent instanceof GrReferenceElement && ((GrReferenceElement<?>)parent).getReferenceNameElement() == at && ((GrReferenceElement<?>)parent).resolve() == null;
   }
 
   private static boolean isGrabAnnotation(@NotNull GrAnnotation anno) {

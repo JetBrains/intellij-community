@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
@@ -24,7 +29,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final int myLogicalLine;
   private final int myLogicalColumn;
   private final int myOffset;
-  private final RangeMarker myRangeMarker;
+  private final @Nullable RangeMarkerSupplier myRangeMarkerSupplier;
 
   private boolean myUseCurrentWindow;
   private boolean myUsePreviewTab;
@@ -53,13 +58,18 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     myLogicalColumn = logicalColumn;
     myOffset = offset;
     if (offset >= 0) {
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
+      myRangeMarkerSupplier = new RangeMarkerSupplier(
+        atomicLazy(() -> LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset))
+      );
     }
-    else if (logicalLine >= 0 ){
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, logicalLine, Math.max(0, logicalColumn), persistent);
+    else if (logicalLine >= 0) {
+      myRangeMarkerSupplier = new RangeMarkerSupplier(
+        atomicLazy(
+          () -> LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, logicalLine, Math.max(0, logicalColumn), persistent))
+      );
     }
     else {
-      myRangeMarker = null;
+      myRangeMarkerSupplier = null;
     }
   }
 
@@ -71,11 +81,16 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   @Nullable
   public RangeMarker getRangeMarker() {
-    return myRangeMarker;
+    return getOrComputeRangeMarker();
+  }
+
+  private @Nullable RangeMarker getOrComputeRangeMarker() {
+    return myRangeMarkerSupplier == null ? null : myRangeMarkerSupplier.get();
   }
 
   public int getOffset() {
-    return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;
+    RangeMarker rangeMarker = getOrComputeRangeMarker();
+    return rangeMarker != null && rangeMarker.isValid() ? rangeMarker.getStartOffset() : myOffset;
   }
 
   public int getLine() {
@@ -192,8 +207,8 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   public void dispose() {
-    if (myRangeMarker != null) {
-      myRangeMarker.dispose();
+    if (myRangeMarkerSupplier != null) {
+      myRangeMarkerSupplier.dispose();
     }
   }
 
@@ -203,12 +218,35 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     if (i != 0) return i;
     i = myFile.getName().compareTo(o.myFile.getName());
     if (i != 0) return i;
-    if (myRangeMarker != null) {
-      if (o.myRangeMarker == null) return 1;
-      i = myRangeMarker.getStartOffset() - o.myRangeMarker.getStartOffset();
+    RangeMarker rangeMarker = getOrComputeRangeMarker();
+    RangeMarker otherRangeMarker = o.getOrComputeRangeMarker();
+    if (rangeMarker != null) {
+      if (otherRangeMarker == null) return 1;
+      i = rangeMarker.getStartOffset() - otherRangeMarker.getStartOffset();
       if (i != 0) return i;
-      return myRangeMarker.getEndOffset() - o.myRangeMarker.getEndOffset();
+      return rangeMarker.getEndOffset() - otherRangeMarker.getEndOffset();
     }
-    return o.myRangeMarker == null ? 0 : -1;
+    return otherRangeMarker == null ? 0 : -1;
+  }
+
+  private static class RangeMarkerSupplier implements Supplier<RangeMarker> {
+    private volatile boolean disposed;
+    private final @NotNull NotNullLazyValue<@NotNull RangeMarker> value;
+
+    private RangeMarkerSupplier(@NotNull NotNullLazyValue<@NotNull RangeMarker> value) {
+      this.value = value;
+    }
+
+    @Override
+    public RangeMarker get() {
+      return disposed ? null : value.getValue();
+    }
+
+    private void dispose() {
+      disposed = true;
+      if (value.isComputed()) {
+        value.getValue().dispose();
+      }
+    }
   }
 }

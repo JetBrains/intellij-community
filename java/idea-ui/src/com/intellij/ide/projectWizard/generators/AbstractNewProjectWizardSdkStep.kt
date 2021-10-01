@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
@@ -20,8 +20,8 @@ import com.intellij.ui.dsl.builder.columns
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-abstract class AbstractNewProjectWizardSdkStep<P : NewProjectWizardStep>(parent: P)
-  : AbstractNewProjectWizardChildStep<P>(parent), NewProjectWizardSdkData {
+abstract class AbstractNewProjectWizardSdkStep(parent: NewProjectWizardStep)
+  : AbstractNewProjectWizardStep(parent), NewProjectWizardSdkData {
 
   final override lateinit var sdkComboBox: Cell<JdkComboBox>
 

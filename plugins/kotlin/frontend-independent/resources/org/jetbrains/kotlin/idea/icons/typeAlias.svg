@@ -1,15 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 24.1.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#B99BF8;fill-opacity:0.6;}
-	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:#231F20;fill-opacity:0.7;}
-	.st2{fill:#7F52FF;}
-</style>
-<g>
-	<path class="st0" d="M8,15c-3.9,0-7-3.1-7-7s3.1-7,7-7s7,3.1,7,7H8V15z"/>
-	<path class="st1" d="M8.5,8H8v3H7.5V6h-2V5h5v1h-2V8z"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="typeAlias">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1C11.866 1 15 4.134 15 8H8V15Z" fill="#B99BF8" fill-opacity="0.6"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M8.5 8H8V11H7.5V6H5.5V5H10.5V6H8.5V8Z" fill="#231F20" fill-opacity="0.7"/>
+<g id="&#226;&#140;&#152;/modifier/kotlin">
+<path id="&#226;&#140;&#152;/modifier/kotlin_2" d="M16 16H9V9H16L12.4 12.4L16 16Z" fill="#B99BF8"/>
 </g>
-<polygon class="st2" points="16,16 9,16 9,9 16,9 12.5,12.5 "/>
+</g>
 </svg>

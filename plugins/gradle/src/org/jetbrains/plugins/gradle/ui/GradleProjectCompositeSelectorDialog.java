@@ -127,7 +127,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       }
 
       ContainerUtil.sort(nodes, (o1, o2) ->
-        StringUtil.naturalCompare((String)((Pair)o1.getUserObject()).first, (String)((Pair)o2.getUserObject()).first));
+        StringUtil.naturalCompare((String)((Pair<?, ?>)o1.getUserObject()).first, (String)((Pair<?, ?>)o2.getUserObject()).first));
       TreeUtil.addChildrenTo(root, nodes);
     }
 
