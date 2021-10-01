@@ -58,7 +58,9 @@
     T_LE = '<='
     T_GE = '>='
     T_RANGE = '..'
-    T_RANGE_EX = '..<'
+    T_RANGE_RIGHT_OPEN = '..<'
+    T_RANGE_LEFT_OPEN = '<..'
+    T_RANGE_BOTH_OPEN = '<..<'
     T_DOT = '.'
     T_SAFE_DOT = '?.'
     T_SPREAD_DOT = '*.'
@@ -1122,7 +1124,7 @@ private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression mb_nl ('..' | '..<') mb_nl <<disableNlBeforeClosure>> expression
+range_expression ::= expression mb_nl ('<..' | '<..<' | '..' | '..<') mb_nl <<disableNlBeforeClosure>> expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNlBeforeClosure>> expression

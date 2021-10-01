@@ -307,7 +307,9 @@ public interface GroovyElementTypes {
   IElementType T_POW_ASSIGN = new GroovyElementType("**=");
   IElementType T_Q = new GroovyElementType("?");
   IElementType T_RANGE = new GroovyElementType("..");
-  IElementType T_RANGE_EX = new GroovyElementType("..<");
+  IElementType T_RANGE_BOTH_OPEN = new GroovyElementType("<..<");
+  IElementType T_RANGE_LEFT_OPEN = new GroovyElementType("<..");
+  IElementType T_RANGE_RIGHT_OPEN = new GroovyElementType("..<");
   IElementType T_RBRACE = new GroovyElementType("}");
   IElementType T_RBRACK = new GroovyElementType("]");
   IElementType T_REGEX_FIND = new GroovyElementType("=~");
