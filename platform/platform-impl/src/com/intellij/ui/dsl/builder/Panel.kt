@@ -97,10 +97,16 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsiblePanel
 
   /**
+   * See documentation of overloaded buttonGroup method
+   */
+  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit)
+
+  /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
    */
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit)
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, indent: Boolean = true,
+                      init: Panel.() -> Unit)
 
   fun onApply(callback: () -> Unit): Panel
 

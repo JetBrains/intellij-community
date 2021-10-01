@@ -3,7 +3,10 @@ package com.intellij.openapi.options
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
+@Deprecated(message = "Use new UI DSL com.intellij.ui.dsl and UiDslUnnamedConfigurable instead")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 interface UiDslConfigurable : UnnamedConfigurable {
   fun RowBuilder.createComponentRow()
 
