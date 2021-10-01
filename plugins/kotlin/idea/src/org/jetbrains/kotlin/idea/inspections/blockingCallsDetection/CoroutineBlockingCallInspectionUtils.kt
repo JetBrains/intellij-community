@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -24,6 +28,14 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal object CoroutineBlockingCallInspectionUtils {
+
+    fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
+        val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false
+        val searchScope = GlobalSearchScope.moduleWithLibrariesScope(module)
+        return module.project
+            .service<JavaPsiFacade>()
+            .findClass(IO_DISPATCHER_FQN, searchScope) != null
+    }
 
     fun isInsideFlowChain(resolvedCall: ResolvedCall<*>): Boolean {
         val descriptor = resolvedCall.resultingDescriptor
