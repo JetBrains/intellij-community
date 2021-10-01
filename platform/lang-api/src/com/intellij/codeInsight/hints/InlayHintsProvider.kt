@@ -23,14 +23,16 @@ private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider
 const val CODE_VISION_GROUP = "code.vision"
 const val PARAMETERS_GROUP = "parameters"
 const val TYPES_GROUP = "types"
+const val VALUES_GROUP = "values"
 const val ANNOTATIONS_GROUP = "annotations"
 const val METHOD_CHAINS_GROUP = "method.chains"
 const val LAMBDAS_GROUP = "lambdas"
 const val CODE_AUTHOR_GROUP = "code.author"
+const val URL_PATH_GROUP = "url.path"
 const val OTHER_GROUP = "other"
 
-val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP, LAMBDAS_GROUP,
-  CODE_AUTHOR_GROUP, OTHER_GROUP)
+val sortedGroups = arrayOf(CODE_VISION_GROUP, PARAMETERS_GROUP, TYPES_GROUP, VALUES_GROUP, ANNOTATIONS_GROUP, METHOD_CHAINS_GROUP,
+  LAMBDAS_GROUP, CODE_AUTHOR_GROUP, URL_PATH_GROUP, OTHER_GROUP)
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
