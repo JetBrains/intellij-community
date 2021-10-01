@@ -88,7 +88,11 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    PsiElement target = (PsiElement)infos[0];
+    return (InspectionGadgetsFix)infos[0];
+  }
+
+  @Nullable
+  private InspectionGadgetsFix createFix(PsiElement target) {
     if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)target.getParent();
       final PsiType type = getSuggestedType(variable);
@@ -171,9 +175,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
-      if (ignoreWhenQuickFixNotAvailable) {
-        return;
-      }
       if (ignoreUncompilable && expression.isArrayCreation()) {
         //array creation can (almost) never be generic
         return;
@@ -188,12 +189,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (directParent instanceof PsiVariable) {
         if (directParent instanceof PsiPatternVariable) return;
         if (getSuggestedType((PsiVariable)directParent) != null) {
-          registerError(typeElement, typeElement);
+          reportProblem(typeElement);
           return;
         }
-      }
-      if (ignoreWhenQuickFixNotAvailable) {
-        return;
       }
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiClassType)) {
@@ -246,12 +244,15 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       checkReferenceElement(referenceElement);
     }
 
+    private void reportProblem(@NotNull PsiElement element) {
+      InspectionGadgetsFix fix = createFix(element);
+      if (fix == null && ignoreWhenQuickFixNotAvailable) return;
+      registerError(element, fix);
+    }
+
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
-      if (ignoreWhenQuickFixNotAvailable) {
-        return;
-      }
       final PsiElement referenceParent = reference.getParent();
       if (!(referenceParent instanceof PsiReferenceList)) {
         return;
@@ -290,7 +291,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!aClass.hasTypeParameters()) {
         return;
       }
-      registerError(reference, reference);
+      reportProblem(reference);
     }
   }
 
