@@ -42,13 +42,11 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Async;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -58,9 +56,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
     = new ExtensionPointName<>("com.intellij.requiredForSmartModeStartupActivity");
+
+  public static final boolean ALWAYS_SMART = SystemProperties.getBooleanProperty("idea.no.dumb.mode", false);
 
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private final AtomicReference<State> myState;
@@ -204,6 +205,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isDumb() {
+    if (ALWAYS_SMART) return true;
     if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
         Registry.is("ide.check.is.dumb.contract")) {
       LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
@@ -242,11 +244,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void doUnsafeRunWhenSmart(@NotNull Runnable runnable) {
-    synchronized (myRunWhenSmartQueue) {
-      if (isDumb()) {
-        Runnable executor = ClientId.decorateRunnable(runnable);
-        myRunWhenSmartQueue.addLast(executor == runnable ? runnable : new RunnableDelegate(runnable, it -> executor.run()));
-        return;
+    if (!ALWAYS_SMART) {
+      synchronized (myRunWhenSmartQueue) {
+        if (isDumb()) {
+          Runnable executor = ClientId.decorateRunnable(runnable);
+          myRunWhenSmartQueue.addLast(executor == runnable ? runnable : new RunnableDelegate(runnable, it -> executor.run()));
+          return;
+        }
       }
     }
 
@@ -261,10 +265,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
-    synchronized (myRunWhenSmartQueue) {
-      if (isDumb()) {
-        myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
-        return;
+    if (!ALWAYS_SMART) {
+      synchronized (myRunWhenSmartQueue) {
+        if (isDumb()) {
+          myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
+          return;
+        }
       }
     }
 
@@ -437,6 +443,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void waitForSmartMode() {
+    if (ALWAYS_SMART) return;
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");

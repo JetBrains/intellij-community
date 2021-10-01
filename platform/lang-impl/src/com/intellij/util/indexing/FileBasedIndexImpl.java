@@ -1954,6 +1954,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     boolean dumb = ActionUtil.isDumbMode(project);
     if (!dumb) return f -> true;
 
+    if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+      return f -> true;
+    }
+
     DumbModeAccessType dumbModeAccessType = getCurrentDumbModeAccessType();
     if (dumbModeAccessType == null) {
       //throw new IllegalStateException("index access is not allowed in dumb mode");
