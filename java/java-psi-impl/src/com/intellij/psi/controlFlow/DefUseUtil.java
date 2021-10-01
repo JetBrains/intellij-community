@@ -266,11 +266,11 @@ public final class DefUseUtil {
    */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
-      final PsiElement defContainer = PsiTreeUtil.getParentOfType(def, PsiClass.class, PsiLambdaExpression.class);
-      PsiElement refContainer = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      final PsiElement defContainer = getContainingClassOrLambda(def);
+      PsiElement refContainer = getContainingClassOrLambda(ref);
       while (defContainer != refContainer && refContainer != null) {
         ref = refContainer;
-        refContainer = PsiTreeUtil.getParentOfType(refContainer.getParent(), PsiClass.class, PsiLambdaExpression.class);
+        refContainer = getContainingClassOrLambda(refContainer.getParent());
       }
     }
 
@@ -326,6 +326,21 @@ public final class DefUseUtil {
         ExceptionUtil.rethrowAllAsUnchecked(e);
       }
       return PsiElement.EMPTY_ARRAY;
+    }
+  }
+  
+  @Nullable
+  public static PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
+    PsiElement currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
+        element = currentClass;
+      }
+      else {
+        return currentClass;
+      }
     }
   }
 
