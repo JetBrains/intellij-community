@@ -123,7 +123,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
         ),
 
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveProjectionFactory(true),
+            RemoveModifierFixBase.createRemoveProjectionFactory(true),
             Errors.REDUNDANT_PROJECTION
         ),
         diagnosticBasedProcessing(
@@ -131,7 +131,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.VIRTUAL_MEMBER_HIDDEN
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
             Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
         ),
         diagnosticBasedProcessing(
@@ -139,7 +139,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.INVISIBLE_MEMBER
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.removeNonRedundantModifier,
+            RemoveModifierFixBase.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
         diagnosticBasedProcessing(

@@ -59,11 +59,11 @@ class QuickFixRegistrar : QuickFixContributor {
 
         val addAbstractModifierFactory = AddModifierFixMpp.createFactory(ABSTRACT_KEYWORD)
 
-        ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.registerFactory(RemoveModifierFix.removeAbstractModifier)
+        ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.registerFactory(RemoveModifierFixBase.removeAbstractModifier)
 
-        ABSTRACT_PROPERTY_WITH_INITIALIZER.registerFactory(RemoveModifierFix.removeAbstractModifier, RemovePartsFromPropertyFix)
-        ABSTRACT_PROPERTY_WITH_GETTER.registerFactory(RemoveModifierFix.removeAbstractModifier, RemovePartsFromPropertyFix)
-        ABSTRACT_PROPERTY_WITH_SETTER.registerFactory(RemoveModifierFix.removeAbstractModifier, RemovePartsFromPropertyFix)
+        ABSTRACT_PROPERTY_WITH_INITIALIZER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
+        ABSTRACT_PROPERTY_WITH_GETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
+        ABSTRACT_PROPERTY_WITH_SETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
 
         PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention)
 
@@ -76,11 +76,11 @@ class QuickFixRegistrar : QuickFixContributor {
         MUST_BE_INITIALIZED.registerFactory(InitializePropertyQuickFixFactory)
 
         val addAbstractToClassFactory = AddModifierFixMpp.createFactory(ABSTRACT_KEYWORD, KtClassOrObject::class.java)
-        ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFix.removeAbstractModifier, addAbstractToClassFactory)
+        ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
 
-        ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFix.removeAbstractModifier, addAbstractToClassFactory)
+        ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
 
-        ABSTRACT_FUNCTION_WITH_BODY.registerFactory(RemoveModifierFix.removeAbstractModifier, RemoveFunctionBodyFix)
+        ABSTRACT_FUNCTION_WITH_BODY.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemoveFunctionBodyFix)
 
         NON_ABSTRACT_FUNCTION_WITH_NO_BODY.registerFactory(addAbstractModifierFactory, AddFunctionBodyFix)
 
@@ -91,7 +91,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NON_MEMBER_FUNCTION_NO_BODY.registerFactory(AddFunctionBodyFix)
 
         NOTHING_TO_OVERRIDE.registerFactory(
-            RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(OVERRIDE_KEYWORD),
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OVERRIDE_KEYWORD),
             ChangeMemberFunctionSignatureFix,
             AddFunctionToSupertypeFix,
             AddPropertyToSupertypeFix
@@ -108,41 +108,41 @@ class QuickFixRegistrar : QuickFixContributor {
         USELESS_ELVIS.registerFactory(RemoveUselessElvisFix)
         USELESS_ELVIS_RIGHT_IS_NULL.registerFactory(RemoveUselessElvisFix)
 
-        REDUNDANT_MODIFIER.registerFactory(RemoveModifierFix.removeRedundantModifier)
-        REDUNDANT_OPEN_IN_INTERFACE.registerFactory(RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(OPEN_KEYWORD, true))
-        REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE.registerFactory(RemoveModifierFix.createRemoveSuspendFactory())
-        UNNECESSARY_LATEINIT.registerFactory(RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
+        REDUNDANT_MODIFIER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
+        REDUNDANT_OPEN_IN_INTERFACE.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPEN_KEYWORD, true))
+        REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE.registerFactory(RemoveModifierFixBase.createRemoveSuspendFactory())
+        UNNECESSARY_LATEINIT.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
 
-        REDUNDANT_PROJECTION.registerFactory(RemoveModifierFix.createRemoveProjectionFactory(true))
-        INCOMPATIBLE_MODIFIERS.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED.registerFactory(RemoveModifierFix.createRemoveVarianceFactory())
+        REDUNDANT_PROJECTION.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(true))
+        INCOMPATIBLE_MODIFIERS.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED.registerFactory(RemoveModifierFixBase.createRemoveVarianceFactory())
 
         NON_FINAL_MEMBER_IN_FINAL_CLASS.registerFactory(
             AddModifierFixMpp.createFactory(OPEN_KEYWORD, KtClass::class.java),
-            RemoveModifierFix.removeOpenModifier
+            RemoveModifierFixBase.removeOpenModifier
         )
-        NON_FINAL_MEMBER_IN_OBJECT.registerFactory(RemoveModifierFix.removeOpenModifier)
+        NON_FINAL_MEMBER_IN_OBJECT.registerFactory(RemoveModifierFixBase.removeOpenModifier)
 
-        GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
+        GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         PRIVATE_SETTER_FOR_OPEN_PROPERTY.registerFactory(
             AddModifierFixMpp.createFactory(FINAL_KEYWORD, KtProperty::class.java),
-            RemoveModifierFix.removeNonRedundantModifier
+            RemoveModifierFixBase.removeNonRedundantModifier
         )
-        REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFix.removeRedundantModifier)
-        WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFix.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
+        REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
+        WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
         DEPRECATED_MODIFIER.registerFactory(ReplaceModifierFix)
-        REDUNDANT_MODIFIER_FOR_TARGET.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        WRONG_MODIFIER_CONTAINING_DECLARATION.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        REPEATED_MODIFIER.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        NON_PRIVATE_CONSTRUCTOR_IN_ENUM.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        NON_PRIVATE_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        TYPE_CANT_BE_USED_FOR_CONST_VAL.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
-        DEPRECATED_BINARY_MOD.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
+        REDUNDANT_MODIFIER_FOR_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        WRONG_MODIFIER_CONTAINING_DECLARATION.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        REPEATED_MODIFIER.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_CONSTRUCTOR_IN_ENUM.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        TYPE_CANT_BE_USED_FOR_CONST_VAL.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        DEPRECATED_BINARY_MOD.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         DEPRECATED_BINARY_MOD.registerFactory(RenameModToRemFix.Factory)
-        FORBIDDEN_BINARY_MOD.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
+        FORBIDDEN_BINARY_MOD.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         FORBIDDEN_BINARY_MOD.registerFactory(RenameModToRemFix.Factory)
 
         NO_EXPLICIT_VISIBILITY_IN_API_MODE.registerFactory(ChangeVisibilityFix.SetExplicitVisibilityFactory)
@@ -296,9 +296,9 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NESTED_CLASS_NOT_ALLOWED.registerFactory(AddModifierFixMpp.createFactory(INNER_KEYWORD))
 
-        CONFLICTING_PROJECTION.registerFactory(RemoveModifierFix.createRemoveProjectionFactory(false))
-        PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.registerFactory(RemoveModifierFix.createRemoveProjectionFactory(false))
-        PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE.registerFactory(RemoveModifierFix.createRemoveProjectionFactory(false))
+        CONFLICTING_PROJECTION.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
 
         NOT_AN_ANNOTATION_CLASS.registerFactory(MakeClassAnAnnotationClassFix)
 
@@ -522,7 +522,7 @@ class QuickFixRegistrar : QuickFixContributor {
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveNullableFix.removeForLateInitProperty)
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemovePartsFromPropertyFix.LateInitFactory)
-        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveModifierFix.createRemoveLateinitFactory())
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveModifierFixBase.createRemoveLateinitFactory())
         INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ConvertLateinitPropertyToNotNullDelegateFix)
 
         VARIABLE_WITH_REDUNDANT_INITIALIZER.registerFactory(RemoveRedundantInitializerFix)
@@ -534,7 +534,7 @@ class QuickFixRegistrar : QuickFixContributor {
         OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS.registerFactory(RemoveAnnotationFix.JvmOverloads)
         OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.registerFactory(RemoveAnnotationFix.JvmOverloads)
 
-        ACTUAL_WITHOUT_EXPECT.registerFactory(RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(ACTUAL_KEYWORD))
+        ACTUAL_WITHOUT_EXPECT.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(ACTUAL_KEYWORD))
         ACTUAL_WITHOUT_EXPECT.registerFactory(CreateExpectedFix)
         NO_ACTUAL_FOR_EXPECT.registerFactory(CreateActualFix)
         NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS.registerFactory(AddActualFix)
@@ -603,7 +603,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT.registerFactory(
             MoveMemberToCompanionObjectIntention,
-            RemoveModifierFix.removeNonRedundantModifier
+            RemoveModifierFixBase.removeNonRedundantModifier
         )
 
         NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFix)
@@ -613,7 +613,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix)
 
-        NOTHING_TO_INLINE.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
+        NOTHING_TO_INLINE.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
 
         DECLARATION_CANT_BE_INLINED.registerFactory(DeclarationCantBeInlinedFactory)
 
@@ -652,7 +652,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         AMBIGUOUS_SUPER.registerFactory(SpecifySuperTypeFix)
 
-        FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS.registerFactory(RemoveModifierFix.createRemoveFunFromInterfaceFactory())
+        FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS.registerFactory(RemoveModifierFixBase.createRemoveFunFromInterfaceFactory())
 
         TOPLEVEL_TYPEALIASES_ONLY.registerFactory(MoveTypeAliasToTopLevelFix)
 
