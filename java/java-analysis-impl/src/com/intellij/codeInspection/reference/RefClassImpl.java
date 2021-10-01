@@ -114,6 +114,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       getRefManager().getReference(uField.getSourcePsi());
     }
 
+    setApplet(getRefJavaManager().getApplet() != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
     if (!isApplet()) {
       setServlet(JvmInheritanceUtil.isInheritor(javaPsi, getRefJavaManager().getServletQName()));
     }
@@ -182,9 +183,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
 
     setUtilityClass(utilityClass);
-
-    final PsiClass applet = getRefJavaManager().getApplet();
-    setApplet(applet != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
   }
 
   private void initializeSuperReferences(UClass uClass) {
