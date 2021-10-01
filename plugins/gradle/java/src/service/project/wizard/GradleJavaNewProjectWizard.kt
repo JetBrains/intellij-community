@@ -19,7 +19,7 @@ class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     object : GradleNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
       override fun setupProject(project: Project) {
         val builder = InternalGradleModuleBuilder().apply {
-          moduleJdk = parentStep.sdk
+          moduleJdk = sdk
           name = parentStep.name
           contentEntryPath = parentStep.projectPath.systemIndependentPath
 

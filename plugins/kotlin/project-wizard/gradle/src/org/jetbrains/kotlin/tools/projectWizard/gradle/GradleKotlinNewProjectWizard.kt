@@ -34,7 +34,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             project = project,
             projectPath = parent.projectPath.systemIndependentPath,
             projectName = parent.name,
-            sdk = parent.sdk,
+            sdk = sdk,
             buildSystemType = buildSystemType,
             projectGroupId = groupId,
             artifactId = artifactId,
