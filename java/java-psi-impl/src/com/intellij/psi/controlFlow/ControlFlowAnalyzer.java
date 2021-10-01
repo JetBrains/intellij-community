@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -1809,13 +1809,21 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitClass(PsiClass aClass) {
     startElement(aClass);
+    List<PsiVariable> array = new ArrayList<>();
     // anonymous or local class
     if (aClass instanceof PsiAnonymousClass) {
       final PsiElement arguments = PsiTreeUtil.getChildOfType(aClass, PsiExpressionList.class);
       if (arguments != null) arguments.accept(this);
+      PsiElement next = arguments != null ? arguments.getNextSibling() : aClass.getFirstChild();
+      while (next != null) {
+        addUsedVariables(array, next);
+        next = next.getNextSibling();
+      }
     }
-    List<PsiVariable> array = new ArrayList<>();
-    addUsedVariables(array, aClass);
+    else {
+      addUsedVariables(array, aClass);
+    }
+    
     for (PsiVariable var : array) {
       ProgressManager.checkCanceled();
       generateReadInstruction(var);
