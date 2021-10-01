@@ -35,12 +35,15 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     val settings = InlayHintsSettings.instance()
     val root = CheckedTreeNode()
     var nodeToSelect: CheckedTreeNode? = null
-    val groups = InlayHintsProviderExtension.findProviders().groupBy { it.provider.groupId }.mapValues { entry ->
-      entry.value.map {
-        NewInlayProviderSettingsModel(it.provider.withSettings(it.language, settings), settings) as InlayProviderSettingsModel
+    val groups = InlayHintsProviderExtension.inlayProviderName.extensionList.groupBy { it.instance.groupId }.mapValues {
+      it.value.map { point ->
+        NewInlayProviderSettingsModel(point.instance.withSettings(Language.findLanguageByID(point.language)!!, settings),
+          settings) as InlayProviderSettingsModel
       }
     }.toMutableMap()
-    val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull { ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!) }
+    val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull {
+      ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
+    }
     groups[PARAMETERS_GROUP] = paramLanguages
     val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
     for (group in sortedMap) {
@@ -85,7 +88,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         }
       }
     }, root)
-    tree.addTreeSelectionListener(TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
+    tree.addTreeSelectionListener(
+      TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
       TreeUtil.expand(tree, 1)
     }
