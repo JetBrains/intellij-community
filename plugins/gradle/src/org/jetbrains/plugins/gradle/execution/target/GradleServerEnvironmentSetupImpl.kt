@@ -9,7 +9,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredLocalTargetValue
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.lang.LangBundle
+import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -371,7 +371,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         }
         catch (t: Throwable) {
           targetProgressIndicator.stopWithErrorMessage(
-            LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot, t.localizedMessage))
+            LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot, t.localizedMessage))
           result.resolveFailure(t)
         }
       }
