@@ -18,9 +18,6 @@ class BuildScriptDataBuilder(
 
   override fun apply(action: BuildScriptDataBuilder.() -> Unit) = applyKt(action)
 
-  override fun addImport(import: String) =
-    super.addImport(import.trim().removePrefix("import "))
-
   fun addBuildscriptPropertyDefinition(definition: String) =
     addPrefix(definition.trim())
 
