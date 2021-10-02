@@ -7,6 +7,7 @@ import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
               }
             }
             NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, myNotificationId, myNotificationDisplayId, myDisplayGroupId);
-            myBalloon.hide();
+            myBalloon.hide(Registry.is("ide.notification.action.center", false));
           }
         });
       }) {
