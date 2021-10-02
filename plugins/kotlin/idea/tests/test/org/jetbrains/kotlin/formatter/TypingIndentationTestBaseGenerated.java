@@ -307,6 +307,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 runTest("testData/indentationOnNewline/afterUnmatchedBrace/NotApplicableOnInitializer.after.kt");
             }
 
+            @TestMetadata("NotApplicableOnInitializer2.after.kt")
+            public void testNotApplicableOnInitializer2() throws Exception {
+                runTest("testData/indentationOnNewline/afterUnmatchedBrace/NotApplicableOnInitializer2.after.kt");
+            }
+
             @TestMetadata("WhenBeforeLocalPropertyInitializer.after.kt")
             public void testWhenBeforeLocalPropertyInitializer() throws Exception {
                 runTest("testData/indentationOnNewline/afterUnmatchedBrace/WhenBeforeLocalPropertyInitializer.after.kt");
