@@ -858,8 +858,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           boolean modal,
                           @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     String title = LangBundle.message("progress.title.inspect.code");
-    if (LOG.isDebugEnabled())
+    if (LOG.isDebugEnabled()) {
       LOG.debug("Starting code cleanup");
+    }
 
     Task task = modal ? new Task.Modal(getProject(), title, true) {
       private CleanupProblems problems;
@@ -873,6 +874,28 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       public void onSuccess() {
         applyFixes(scope, problems, commandName, postRunnable, profile, true, shouldApplyFix);
       }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: an exception during findProblems");
+        }
+        super.onThrowable(error);
+      }
+
+      @Override
+      public void onCancel() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: cancelled");
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: finished searching for problems");
+        }
+      }
     } : new Task.Backgroundable(getProject(), title, true) {
       private CleanupProblems problems;
 
@@ -885,6 +908,28 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       public void onSuccess() {
         applyFixes(scope, problems, commandName, postRunnable, profile, false, shouldApplyFix);
       }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: an exception during findProblems");
+        }
+        super.onThrowable(error);
+      }
+
+      @Override
+      public void onCancel() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: cancelled");
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Code cleanup: finished searching for problems");
+        }
+      }
     };
     ProgressManager.getInstance().run(task);
   }
@@ -893,8 +938,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                                @NotNull InspectionProfile profile,
                                                @NotNull ProgressIndicator progressIndicator,
                                                @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    if (LOG.isDebugEnabled())
-      LOG.debug("Finding problems for code cleanup");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Code cleanup: searching for problems in code");
+    }
 
     setCurrentScope(scope);
     int fileCount = scope.getFileCount();
@@ -922,8 +968,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         private int myCount;
         @Override
         public void visitFile(@NotNull PsiFile file) {
-          if (LOG.isDebugEnabled())
-            LOG.debug("Finding problems in file" + file.toString());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Code cleanup: searching for problems in file " + file.toString());
+          }
 
           progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), file));
           progressIndicator.setFraction((double)++myCount / fileCount);
@@ -1001,8 +1048,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           boolean modal,
                           @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     if (problems.getFiles().isEmpty()) {
-      if (LOG.isDebugEnabled())
+      if (LOG.isDebugEnabled()) {
         LOG.debug("No problems found during code inspection, nothing to cleanup");
+      }
+
       if (commandName != null) {
         var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
                                                                                            scope.getFileCount(),
@@ -1016,9 +1065,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       return;
     }
 
-    if (LOG.isDebugEnabled())
+    if (LOG.isDebugEnabled()) {
       LOG.debug("Applying fixes");
-    
+    }
+
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.getFiles())) return;
     CleanupInspectionUtil.getInstance().applyFixesNoSort(
       getProject(), LangBundle.message("code.cleanup"), problems.getProblemDescriptors(), null, false, problems.isGlobalScope());
