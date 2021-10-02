@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -20,7 +18,7 @@ public final class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Iterable<Object2IntMap.Entry<? extends JavacRef>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString,
@@ -70,8 +68,7 @@ public final class BackwardReferenceIndexUtil {
           CompilerRef.JavaCompilerFunExprDef result = new CompilerRef.JavaCompilerFunExprDef(id);
           definitions.put(result, null);
 
-          ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
-                                    (Factory<Collection<CompilerRef>>)() -> new SmartList<>()).add(result);
+          backwardHierarchyMap.computeIfAbsent(functionalType, __ -> new SmartList<>()).add(result);
         }
         else if (def instanceof JavacDef.JavacMemberDef) {
           final CompilerRef
@@ -85,24 +82,13 @@ public final class BackwardReferenceIndexUtil {
       }
 
       Map<CompilerRef, Integer> convertedRefs = new HashMap<>();
-      IOException[] exception = new IOException[]{null};
-      refs.forEachEntry((ref, count) -> {
-        final CompilerRef compilerRef;
-        try {
-          compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
-          if (compilerRef != null) {
-            Integer old = convertedRefs.get(compilerRef);
-            convertedRefs.put(compilerRef, old == null ? count : (old + count));
-          }
+      for (Object2IntMap.Entry<? extends JavacRef> entry : refs) {
+        JavacRef ref = entry.getKey();
+        int count = entry.getIntValue();
+        CompilerRef compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+        if (compilerRef != null) {
+          convertedRefs.merge(compilerRef, count, (oldValue, value) -> oldValue + value);
         }
-        catch (IOException e) {
-          exception[0] = e;
-          return false;
-        }
-        return true;
-      });
-      if (exception[0] != null) {
-        throw exception[0];
       }
 
       for (JavacTypeCast cast : casts) {

@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -18,7 +18,7 @@ import java.util.*;
  * - references caused  by import statements
  * - references to fields initialized with compile-time constant values. Such values can be inlined into referencing bytecode
  */
-public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesRegistrar {
+public final class JpsReferenceDependenciesRegistrar implements JavacFileReferencesRegistrar {
   @Override
   public void initialize() {
   }
@@ -31,7 +31,7 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
   @Override
   public void registerFile(CompileContext context,
                            String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Iterable<Object2IntMap.Entry<? extends JavacRef>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString) {
@@ -47,11 +47,15 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
     if (definedClasses.isEmpty()) {
       return;
     }
-    if (!refs.isEmpty()) {
+
+    Iterator<Object2IntMap.Entry<? extends JavacRef>> iterator = refs.iterator();
+    if (iterator.hasNext()) {
       final Set<String> classImports = new HashSet<>();
       final Set<String> staticImports = new HashSet<>();
       final Map<String, List<Callbacks.ConstantRef>> cRefs = new HashMap<>();
-      refs.forEachKey(ref -> {
+
+      while (iterator.hasNext()) {
+        JavacRef ref = iterator.next().getKey();
         final JavacRef.ImportProperties importProps = ref.getImportProperties();
         if (importProps != null) { // the reference comes from import list
           if (ref instanceof JavacRef.JavacClass) {
@@ -78,8 +82,8 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
             refsList.add(Callbacks.createConstantReference(fieldRef.getOwnerName(), fieldRef.getName(), descriptor));
           }
         }
-        return true;
-      });
+      }
+
       if (!classImports.isEmpty() || !staticImports.isEmpty()) {
         final Callbacks.Backend reg = JavaBuilderUtil.getDependenciesRegistrar(context);
         for (String aClass : definedClasses) {
