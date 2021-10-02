@@ -44,9 +44,9 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     FileEditorManager.getInstance(project).openFile(file, true)
   }
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.icon = AllIcons.Actions.Find
-    e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
-    e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
+  init {
+    templatePresentation.icon = AllIcons.Actions.Find
+    templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
+    templatePresentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
   }
 }
