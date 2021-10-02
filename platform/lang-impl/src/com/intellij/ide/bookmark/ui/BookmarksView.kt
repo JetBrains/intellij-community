@@ -10,11 +10,13 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.ui.OnePixelSplitter
@@ -158,6 +160,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
   }
 
+  /**
+   * Creates an action that navigates to a bookmark by a digit or a letter.
+   */
+  private fun registerActionFor(type: BookmarkType) = LightEditActionFactory
+    .create { BookmarksManager.getInstance(project)?.getBookmark(type)?.run { if (canNavigate()) navigate(true) } }
+    .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, this)
+
   init {
     panel.addToCenter(createScrollPane(tree, true))
     panel.putClientProperty(OPEN_IN_PREVIEW_TAB, true)
@@ -166,7 +175,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
-    if (!isPopup) {
+    if (isPopup) {
+      BookmarkType.values().forEach { if (it != BookmarkType.DEFAULT) registerActionFor(it) }
+    }
+    else {
+      TreeSpeedSearch(tree)
       val handler = DragAndDropHandler(this)
       DnDSupport.createBuilder(tree)
         .setDisposableParent(this)
@@ -180,7 +193,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { selectionAlarm.cancelAndRequest() }
 
-    TreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
