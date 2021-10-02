@@ -18,4 +18,8 @@ internal class GroupCreateAction : DumbAwareAction(messagePointer("bookmark.grou
     val view = event.bookmarksView ?: return
     GroupCreateDialog(event.project, view, manager).showAndGetGroup(false)
   }
+
+  init {
+    isEnabledInModalContext = true
+  }
 }

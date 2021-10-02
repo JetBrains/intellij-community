@@ -3,7 +3,6 @@ package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkGroup
-import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
@@ -26,15 +25,7 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
   val bookmarkDescription
     get() = bookmarkGroup?.getDescription(value)?.ifBlank { null }
 
-  val bookmarkOccurrence: BookmarkOccurrence?
-    get() = bookmarkGroup?.let { BookmarkOccurrence(it, value) }
-
-  val bookmarkGroup: BookmarkGroup?
-    get() = when (val node = parent) {
-      is GroupNode -> node.value
-      is BookmarkNode -> node.bookmarkGroup
-      else -> null
-    }
+  var bookmarkGroup: BookmarkGroup? = null
 
   public override fun getVirtualFile(): VirtualFile? = null
 
