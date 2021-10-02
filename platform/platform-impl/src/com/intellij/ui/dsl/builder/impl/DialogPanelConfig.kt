@@ -6,6 +6,7 @@ import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -48,13 +49,13 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
 
 internal class Context {
 
-  private val buttonGroupsStack: MutableList<BindButtonGroup<*>> = mutableListOf()
+  private val buttonGroupsStack: MutableList<ButtonGroup> = mutableListOf()
 
-  fun addButtonGroup(buttonGroup: BindButtonGroup<*>) {
+  fun addButtonGroup(buttonGroup: ButtonGroup) {
     buttonGroupsStack.add(buttonGroup)
   }
 
-  fun getButtonGroup(): BindButtonGroup<*>? {
+  fun getButtonGroup(): ButtonGroup? {
     return buttonGroupsStack.lastOrNull()
   }
 

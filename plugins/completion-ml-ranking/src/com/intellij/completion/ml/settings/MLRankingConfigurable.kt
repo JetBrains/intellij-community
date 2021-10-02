@@ -1,23 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.settings
 
-import com.intellij.internal.ml.completion.RankingModelProvider
+import com.intellij.completion.ml.CompletionMlRankingIcons
 import com.intellij.completion.ml.MLCompletionBundle
-import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.ContextHelpLabel
+import com.intellij.internal.ml.completion.RankingModelProvider
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.IconManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.icons.RowIcon
-import com.intellij.ui.layout.*
 import com.intellij.util.IconUtil
-import com.intellij.completion.ml.CompletionMlRankingIcons
 import java.awt.Rectangle
 import javax.swing.Icon
 
 class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
-  BoundConfigurable(MLCompletionBundle.message("ml.completion.settings.group")) {
+  UiDslUnnamedConfigurable.Simple(), Configurable {
+
   private val settings = CompletionMLRankingSettings.getInstance()
 
   companion object {
@@ -34,47 +33,42 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
     private fun cropIcon(icon: Icon): Icon = IconUtil.cropIcon(icon, Rectangle(4, 0, 8, 16))
   }
 
-  override fun createPanel(): DialogPanel {
+  override fun getDisplayName(): String {
+    return MLCompletionBundle.message("ml.completion.settings.group")
+  }
+
+  override fun Panel.createContent() {
     val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
-    return panel {
-      var enableRankingCheckbox: CellBuilder<JBCheckBox>? = null
-      titledRow(displayName) {
-        row {
-          cell {
-            enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"), settings::isRankingEnabled,
-                                         { settings.isRankingEnabled = it })
-            ContextHelpLabel.create(MLCompletionBundle.message("ml.completion.enable.help"))()
-          }
-          for (ranker in providers) {
-            row {
-              enableRankingCheckbox?.let { enableRanking ->
-                checkBox(ranker.displayNameInSettings, { settings.isLanguageEnabled(ranker.id) },
-                         { settings.setLanguageEnabled(ranker.id, it) })
-                  .enableIf(enableRanking.selected)
-              }
-            }.apply { if (ranker === providers.last()) largeGapAfter() }
-          }
+    lateinit var enableRankingCheckbox: Cell<JBCheckBox>
+    group(displayName) {
+      row {
+        enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))
+          .bindSelected({ settings.isRankingEnabled }, { settings.isRankingEnabled = it })
+          .gap(RightGap.SMALL)
+        contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
+      }
+      indent {
+        for (ranker in providers) {
+          row {
+            checkBox(ranker.displayNameInSettings)
+              .bindSelected({ settings.isLanguageEnabled(ranker.id) }, { settings.setLanguageEnabled(ranker.id, it) })
+              .enabledIf(enableRankingCheckbox.selected)
+          }.apply { if (ranker === providers.last()) bottomGap(BottomGap.SMALL) }
         }
-        row {
-          cell {
-            enableRankingCheckbox?.let { enableRanking ->
-              checkBox(MLCompletionBundle.message("ml.completion.show.diff"),
-                       { settings.isShowDiffEnabled },
-                       { settings.isShowDiffEnabled = it }).enableIf(enableRanking.selected)
-              JBLabel(UP_DOWN_ICON)()
-            }
-          }
-        }
-        row {
-          cell {
-            enableRankingCheckbox?.let { enableRanking ->
-              checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"),
-                       { settings.isDecorateRelevantEnabled },
-                       { settings.isDecorateRelevantEnabled = it }).enableIf(enableRanking.selected)
-              JBLabel(RELEVANT_ICON)()
-            }
-          }
-        }
+      }
+      row {
+        checkBox(MLCompletionBundle.message("ml.completion.show.diff"))
+          .bindSelected({ settings.isShowDiffEnabled }, { settings.isShowDiffEnabled = it })
+          .enabledIf(enableRankingCheckbox.selected)
+          .gap(RightGap.SMALL)
+        icon(UP_DOWN_ICON)
+      }
+      row {
+        checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"))
+          .bindSelected({ settings.isDecorateRelevantEnabled }, { settings.isDecorateRelevantEnabled = it })
+          .enabledIf(enableRankingCheckbox.selected)
+          .gap(RightGap.SMALL)
+        icon(RELEVANT_ICON)
       }
     }
   }

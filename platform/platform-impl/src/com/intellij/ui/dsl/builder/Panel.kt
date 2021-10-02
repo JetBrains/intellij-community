@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
@@ -47,7 +48,7 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
-  fun separator(@NlsContexts.Separator title: String? = null): Row
+  fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
 
   /**
    * Creates sub-panel that occupies whole width and uses own grid inside
@@ -97,10 +98,16 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsiblePanel
 
   /**
+   * See documentation of overloaded buttonGroup method
+   */
+  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit)
+
+  /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
    */
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit)
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, indent: Boolean = true,
+                      init: Panel.() -> Unit)
 
   fun onApply(callback: () -> Unit): Panel
 

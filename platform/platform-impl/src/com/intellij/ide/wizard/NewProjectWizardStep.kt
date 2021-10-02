@@ -44,24 +44,4 @@ interface NewProjectWizardStep {
    * Applies data from UI into project model or settings.
    */
   fun setupProject(project: Project)
-
-  /**
-   * Factory for root new project wizard step.
-   * It is needed to initialize root step's context, property graph and
-   * other wizard data that needed to configure and create new project.
-   * @see ChildStepFactory
-   */
-  interface RootStepFactory {
-
-    fun createStep(context: WizardContext): NewProjectWizardStep
-  }
-
-  /**
-   * Factory for new project wizard step with parent step.
-   * It is needed to transfer data from parents into children steps.
-   */
-  interface ChildStepFactory<P : NewProjectWizardStep> {
-
-    fun createStep(parent: P): NewProjectWizardStep
-  }
 }

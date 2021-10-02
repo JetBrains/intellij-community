@@ -28,12 +28,7 @@ import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-class NewProjectWizardBaseStep(
-  override val context: WizardContext,
-  factory: NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep>?
-) : NewProjectWizardStep, NewProjectWizardBaseData {
-
-  private val childStep by lazy { factory?.createStep(this) }
+class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
   override val propertyGraph = PropertyGraph("New project wizard")
 
@@ -88,8 +83,6 @@ class NewProjectWizardBaseStep(
             .bindSelected(gitProperty)
         }.bottomGap(BottomGap.SMALL)
       }
-
-      childStep?.setupUI(this)
 
       onApply {
         context.projectName = name
@@ -152,19 +145,11 @@ class NewProjectWizardBaseStep(
   }
 
   override fun setupProject(project: Project) {
-    childStep?.setupProject(project)
-
     if (git) {
       val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
       if (projectBaseDirectory != null) {
         GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
       }
     }
-  }
-
-  class Factory(
-    private val childFactory: NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep>? = null
-  ) : NewProjectWizardStep.RootStepFactory {
-    override fun createStep(context: WizardContext) = NewProjectWizardBaseStep(context, childFactory)
   }
 }

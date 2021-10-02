@@ -53,7 +53,8 @@ object IndexableIteratorBuilders {
       buildersToProceed = partition.second
     }
     if (buildersToProceed.isNotEmpty()) {
-      logger.error("Failed to find handlers for IndexableIteratorBuilders: ${buildersToProceed}")
+      logger.error("Failed to find handlers for IndexableIteratorBuilders: ${buildersToProceed};\n" +
+                   "available builders: ${IndexableIteratorBuilderHandler.EP_NAME.extensionList}")
     }
     return result
   }

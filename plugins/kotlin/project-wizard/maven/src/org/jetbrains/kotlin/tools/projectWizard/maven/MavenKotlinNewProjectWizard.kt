@@ -19,7 +19,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                     project = project,
                     projectPath = parent.projectPath.systemIndependentPath,
                     projectName = parent.name,
-                    sdk = parent.sdk,
+                    sdk = sdk,
                     buildSystemType = BuildSystemType.Maven,
                     projectGroupId = groupId,
                     artifactId = artifactId,

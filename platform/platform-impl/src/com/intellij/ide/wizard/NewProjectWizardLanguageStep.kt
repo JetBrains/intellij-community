@@ -15,8 +15,4 @@ class NewProjectWizardLanguageStep(
 
   override val languageProperty by ::stepProperty
   override val language by ::step
-
-  class Factory : NewProjectWizardStep.ChildStepFactory<NewProjectWizardBaseStep> {
-    override fun createStep(parent: NewProjectWizardBaseStep) = NewProjectWizardLanguageStep(parent)
-  }
 }

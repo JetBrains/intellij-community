@@ -6,23 +6,27 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import java.io.File
 
-abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep) :
+abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
   AbstractNewProjectWizardStep(parent)
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
@@ -42,10 +46,12 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep) :
     }
   }
 
+  private val sdkProperty = propertyGraph.graphProperty<Sdk?> { null }
   private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
   private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
   private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
 
+  protected val sdk by sdkProperty
   protected var moduleName by moduleNameProperty
   protected var contentRoot by contentRootProperty
   protected var moduleFileLocation by moduleFileLocationProperty
@@ -70,6 +76,11 @@ abstract class IntellijBuildSystemStep<ParentStep>(val parent: ParentStep) :
 
   override fun setupUI(builder: Panel) {
     with(builder) {
+      row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+        val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+        sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+          .columns(COLUMNS_MEDIUM)
+      }
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), topGroupGap = true) {
         if (context.isCreatingNewProject) {
           row(UIBundle.message("label.project.wizard.new.project.module.name")) {
