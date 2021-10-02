@@ -287,4 +287,9 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     public void testUrlRender() throws Exception {
         runTest("testData/diagnosticMessage/urlRender.kt");
     }
+
+    @TestMetadata("upperBoundViolatedInTypeAliasConstructorCall.kt")
+    public void testUpperBoundViolatedInTypeAliasConstructorCall() throws Exception {
+        runTest("testData/diagnosticMessage/upperBoundViolatedInTypeAliasConstructorCall.kt");
+    }
 }
