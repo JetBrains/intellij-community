@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package language_injection
 
 import org.intellij.lang.annotations.Language
