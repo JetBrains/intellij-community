@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -23,8 +23,6 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitLogParser.GitLogOption
 import org.jetbrains.annotations.NonNls
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * An implementation of file history algorithm with renames detection.
@@ -66,20 +64,28 @@ class GitFileHistory private constructor(private val project: Project,
                                                      GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
                                                      GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
                                                      GitLogOption.AUTHOR_TIME)
-    val recordConsumer = GitLogRecordConsumer(consumer)
     var firstCommitParent: String? = startingRevision.asString()
     var currentPath = path
     while (firstCommitParent != null) {
-      recordConsumer.reset(currentPath)
       val handler = createLogHandler(logParser, currentPath, firstCommitParent, *parameters)
-      val splitter = GitLogOutputSplitter(handler, logParser, recordConsumer)
+      var skipFurtherOutput = false
+      var firstCommit: String? = null
+      val splitter = GitLogOutputSplitter(handler, logParser) { record ->
+        if (skipFurtherOutput) return@GitLogOutputSplitter
+        if (record.statusInfos.firstOrNull()?.type == Change.Type.NEW && !path.isDirectory) {
+          skipFurtherOutput = true
+        }
+        val revision = createGitFileRevision(record, currentPath)
+        firstCommit = record.hash
+        consumer.consume(revision)
+      }
       Git.getInstance().runCommandWithoutCollectingOutput(handler)
       if (splitter.hasErrors()) {
         return
       }
       try {
-        val firstCommit = recordConsumer.firstCommit ?: return
-        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit, currentPath) ?: return
+        if (firstCommit == null) return
+        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit!!, currentPath) ?: return
         currentPath = firstCommitParentAndPath.second
         firstCommitParent = firstCommitParentAndPath.first
       }
@@ -122,6 +128,24 @@ class GitFileHistory private constructor(private val project: Project,
     return null
   }
 
+  private fun createGitFileRevision(record: GitLogFullRecord, lastPath: FilePath): GitFileRevision {
+    val revision = GitRevisionNumber(record.hash, record.date)
+    val authorPair = Couple.of(record.authorName, record.authorEmail)
+    val committerPair = Couple.of(record.committerName, record.committerEmail)
+    val parents = listOf(*record.parentsHashes)
+    val statusInfo = record.statusInfos.firstOrNull()
+    val revisionPath = if (statusInfo != null) {
+      VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)
+    }
+    else {
+      lastPath
+    }
+    val deleted = statusInfo?.type == Change.Type.DELETED
+    return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
+                           record.fullMessage,
+                           null, Date(record.authorTimeStamp), parents, deleted)
+  }
+
   private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
                                path: FilePath,
                                lastCommit: @NonNls String,
@@ -138,58 +162,6 @@ class GitFileHistory private constructor(private val project: Project,
     h.endOptions()
     h.addRelativePaths(path)
     return h
-  }
-
-  private inner class GitLogRecordConsumer(private val revisionConsumer: Consumer<in GitFileRevision>) : Consumer<GitLogFullRecord> {
-    private val skipFurtherOutput = AtomicBoolean()
-    private val _firstCommit = AtomicReference<String>()
-    private val currentPath = AtomicReference<FilePath>()
-
-    val firstCommit: String?
-      get() = _firstCommit.get()
-
-    fun reset(path: FilePath) {
-      currentPath.set(path)
-      skipFurtherOutput.set(false)
-    }
-
-    override fun consume(record: GitLogFullRecord) {
-      if (skipFurtherOutput.get()) {
-        return
-      }
-      _firstCommit.set(record.hash)
-      revisionConsumer.consume(createGitFileRevision(record))
-      val statusInfos = record.statusInfos
-      if (statusInfos.isEmpty()) {
-        // can safely be empty, for example, for simple merge commits that don't change anything.
-        return
-      }
-      if (statusInfos[0]!!.type == Change.Type.NEW && !path.isDirectory) {
-        skipFurtherOutput.set(true)
-      }
-    }
-
-    private fun createGitFileRevision(record: GitLogFullRecord): GitFileRevision {
-      val revision = GitRevisionNumber(record.hash, record.date)
-      val revisionPath = getRevisionPath(record)
-      val authorPair = Couple.of(record.authorName, record.authorEmail)
-      val committerPair = Couple.of(record.committerName, record.committerEmail)
-      val parents = listOf(*record.parentsHashes)
-      val statusInfos = record.statusInfos
-      val deleted = statusInfos.isNotEmpty() && statusInfos[0]!!.type == Change.Type.DELETED
-      return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
-                             record.fullMessage,
-                             null, Date(record.authorTimeStamp), parents, deleted)
-    }
-
-    private fun getRevisionPath(record: GitLogFullRecord): FilePath {
-      val paths = record.getFilePaths(root)
-      return if (paths.size > 0) {
-        paths[0]
-      }
-      else currentPath.get()
-      // no paths are shown for merge commits, so we're using the saved path we're inspecting now
-    }
   }
 
   companion object {
