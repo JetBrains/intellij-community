@@ -208,7 +208,7 @@ public final class NotificationCollector {
   }
 
   public enum NotificationPlace {
-    BALLOON, EVENT_LOG, TOOL_WINDOW,
+    BALLOON, ACTION_CENTER, EVENT_LOG, TOOL_WINDOW,
   }
 
   public enum NotificationSeverity {

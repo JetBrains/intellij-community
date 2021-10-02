@@ -217,6 +217,11 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "#450073",
+      "newNotification.hoverBackground": "#450073"
+    },
+
     "OptionButton" : {
       "default.separatorColor": "#000000",
       "separatorColor": "#FFFFFF"
