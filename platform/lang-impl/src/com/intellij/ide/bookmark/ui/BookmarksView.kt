@@ -4,7 +4,6 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
-import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.ui.UISettings
@@ -59,14 +58,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val leadSelectionNode
     get() = TreeUtil.getAbstractTreeNode(tree.leadSelectionPath)
 
-  private val selectedOccurrence
-    get() = (selectedNode as? BookmarkNode)?.bookmarkOccurrence
-
   private val previousOccurrence
-    get() = selectedOccurrence?.previous { it.bookmark is LineBookmark }
+    get() = selectedNode?.bookmarkOccurrence?.previous { it.bookmark is LineBookmark }
 
   private val nextOccurrence
-    get() = selectedOccurrence?.next { it.bookmark is LineBookmark }
+    get() = selectedNode?.bookmarkOccurrence?.next { it.bookmark is LineBookmark }
 
 
   override fun dispose() = preview.close()

@@ -23,4 +23,8 @@ internal class NodeEditAction : DumbAwareAction(messagePointer("button.edit")) {
     val node = view.selectedNode ?: return
     BookmarksListProvider.EP.findFirstSafe(project) { it.canEdit(node) }?.performEdit(node, view.tree)
   }
+
+  init {
+    isEnabledInModalContext = true
+  }
 }
