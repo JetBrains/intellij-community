@@ -1,6 +1,7 @@
+// FIR_IDENTICAL
 package language_injection
 
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.intellij.lang.annotations.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Language<!>
 
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Language<!>("kotlin")
-val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>test<!> = "<!HIGHLIGHTING("severity='INJECTED_FRAGMENT'; textAttributesKey='kotlin:INJECTED_LANGUAGE_FRAGMENT'")!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'"), HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>fun<!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!> <!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>test2<!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>(<!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>)<!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!> <!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>{<!><!HIGHLIGHTING("severity='INJECTED_FRAGMENT_SYNTAX'; textAttributesKey='null'")!>}<!><!>"
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>test<!> = "fun test2() {}"

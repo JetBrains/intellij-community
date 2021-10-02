@@ -6,7 +6,7 @@ fun <T: Any, E> T.foo(<warning descr="[UNUSED_PARAMETER] Parameter 'x' is never 
   y plus 1
   y + 1.0
 
-  this<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type T">?.</warning>minus<T>(this)
+  this<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type T. This expression will have nullable type in future releases">?.</warning>minus<T>(this)
 
   return this
 }
@@ -64,7 +64,7 @@ fun Int.foo() = this
             command?.equals1(null)
 
             val c = Command()
-            c<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type Command">?.</warning>equals2(null)
+            c<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type Command. This expression will have nullable type in future releases">?.</warning>equals2(null)
 
             if (command == null) <warning descr="[UNUSED_EXPRESSION] The expression is unused">1</warning>
         }
