@@ -10,13 +10,13 @@ fun foo(): Int {
     val x1 = when { else -> 1 }
 
     val x2 = <warning descr="SSR">when {
-        1 < 2 -> 3
+        <warning>1 < 2</warning> -> 3
         else -> 1
    }</warning>
 
     val x3 = when {
-        1 < 3 -> 1
-        2 > 1 -> 4
+        <warning>1 < 3</warning> -> 1
+        <warning>2 > 1</warning> -> 4
         else -> 1
     }
 
