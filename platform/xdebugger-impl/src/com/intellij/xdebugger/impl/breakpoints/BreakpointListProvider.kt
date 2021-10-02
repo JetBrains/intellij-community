@@ -11,6 +11,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SizedIcon
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -72,6 +74,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     private val map = mutableMapOf<Any, Any>()
     private val valid = AtomicBoolean()
     private val providers = XBreakpointUtil.collectPanelProviders().onEach { it.addListener(this, project, project) }
+    private val icon16x12 = JBUIScale.scaleIcon(SizedIcon(AllIcons.Debugger.Db_set_breakpoint, 16, 12))
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
       if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
     }
@@ -101,7 +104,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     override fun getChildren() = cache.getNodes(getKeys(value))
 
     override fun update(presentation: PresentationData) {
-      presentation.setIcon(AllIcons.Debugger.Db_set_breakpoint)
+      presentation.setIcon(icon16x12)
       presentation.presentableText = message(value)
     }
 
