@@ -14,7 +14,7 @@ suspend fun foo() {
     use(a)
     yield()
     // EXPRESSION: a
-    // RESULT: 1: I
+    // RESULT: This variable is inaccessible because it isn't used after the last suspension point
     //Breakpoint!
     println("")
 }

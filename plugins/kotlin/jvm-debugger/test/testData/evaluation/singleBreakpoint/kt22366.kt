@@ -3,7 +3,7 @@ package kt22366
 fun main(args: Array<String>) {
     val yy = (0 .. 10).map { a ->
         //Breakpoint! (lambdaOrdinal = -1)
-        (0 .. 10).map { b -> b }.max()
+        (0 .. 10).map { b -> b }.maxOrNull()
     }
 }
 

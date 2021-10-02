@@ -1,6 +1,6 @@
 // "Add initializer" "false"
 // ACTION: Add setter
-// ACTION: Change to val
+// ACTION: Change to 'val'
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Make protected
