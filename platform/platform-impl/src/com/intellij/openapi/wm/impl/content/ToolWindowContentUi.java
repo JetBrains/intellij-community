@@ -499,6 +499,13 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     group.add(closeAllAction);
     group.add(new TabbedContentAction.CloseAllButThisAction(content));
     group.addSeparator();
+    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)
+        && UIUtil.isClientPropertyTrue(window.getComponent(), ALLOW_DND_FOR_TABS)) {
+      group.add(splitRightTabAction);
+      group.add(splitDownTabAction);
+      group.add(unsplitTabAction);
+      group.addSeparator();
+    }
     if (content.isPinnable()) {
       group.add(PinToolwindowTabAction.getPinAction());
       group.addSeparator();
@@ -506,12 +513,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     group.add(nextTabAction);
     group.add(previousTabAction);
-    if (Registry.is("ide.allow.split.and.reorder.in.tool.window", false)
-        && UIUtil.isClientPropertyTrue(window.getComponent(), ALLOW_DND_FOR_TABS)) {
-      group.add(splitRightTabAction);
-      group.add(splitDownTabAction);
-      group.add(unsplitTabAction);
-    }
     group.add(showContent);
 
     if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
