@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActions;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -41,10 +40,12 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   private final CommittedChangesBrowser myChangesBrowser;
   private final JEditorPane myCommitMessageArea;
   private final JScrollPane myCommitMessageScrollPane;
-  private final JPanel myCommitMessagePanel;
 
   private CommittedChangeList myChangeList;
   private Collection<Change> myChanges;
+
+  private boolean myShowSideBorders = true; // borders look better in dialogs
+  private boolean myShowCommitMessage = true;
 
   public CommittedChangeListPanel(@NotNull Project project) {
     super(new BorderLayout());
@@ -58,23 +59,38 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
     myCommitMessageArea.setEditable(false);
-    myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
+    myCommitMessageArea.setBackground(UIUtil.getTreeBackground());
     myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     myCommitMessageScrollPane = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
 
-    TitledSeparator separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
-    separator.setBorder(JBUI.Borders.emptyLeft(3));
-    myCommitMessagePanel = JBUI.Panels.simplePanel(myCommitMessageScrollPane).addToTop(separator);
-
-    Splitter splitter = new Splitter(true, 0.8f);
+    Splitter splitter = new OnePixelSplitter(true, 0.8f);
     splitter.setFirstComponent(myChangesBrowser);
-    splitter.setSecondComponent(myCommitMessagePanel);
+    splitter.setSecondComponent(myCommitMessageScrollPane);
 
     add(splitter, BorderLayout.CENTER);
     add(myDescriptionLabel, BorderLayout.NORTH);
+    updatePresentation();
 
     setChangeList(createChangeList(Collections.emptyList()));
     setDescription(null);
+  }
+
+  private void updatePresentation() {
+    myCommitMessageScrollPane.setVisible(myShowCommitMessage);
+
+    if (myShowSideBorders) {
+      if (myShowCommitMessage) {
+        myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | SideBorder.RIGHT));
+        myCommitMessageScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.RIGHT | SideBorder.BOTTOM));
+      }
+      else {
+        myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      }
+    }
+    else {
+      myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      myCommitMessageScrollPane.setBorder(JBUI.Borders.empty());
+    }
   }
 
   public void setChangeList(@NotNull CommittedChangeList changeList) {
@@ -88,7 +104,13 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   }
 
   public void setShowCommitMessage(boolean value) {
-    myCommitMessagePanel.setVisible(value);
+    myShowCommitMessage = value;
+    updatePresentation();
+  }
+
+  public void setShowSideBorders(boolean value) {
+    myShowSideBorders = value;
+    updatePresentation();
   }
 
   public void setDescription(@Nullable @NlsContexts.Label String description) {
@@ -119,11 +141,6 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
       return new ChangeList[]{myChangeList};
     }
     return null;
-  }
-
-  public void hideSideBorders() {
-    myCommitMessageScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    myChangesBrowser.setViewerBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
   }
 
   @NotNull
