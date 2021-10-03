@@ -137,7 +137,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       String emptyCard = "emptyCard";
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
-        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> showCard(emptyCard));
+        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
+          showCard(emptyCard);
+          wizard.updateButtons(true, false, true);
+      });
 
       myProjectTypePanel.setMinimumSize(JBUI.size(160, -1));
       myProjectTypePanel.add(listWithFilter);
