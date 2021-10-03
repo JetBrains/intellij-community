@@ -11,8 +11,21 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 
 public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
 
-  public GroovyDocInfoGenerator(PsiElement element, boolean isGenerationForRenderedDoc, boolean doSyntaxHighlighting) {
-    super(element.getProject(), element, GroovyDocHighlightingManager.getInstance(), isGenerationForRenderedDoc, doSyntaxHighlighting);
+  public GroovyDocInfoGenerator(
+    PsiElement element,
+    boolean isGenerationForRenderedDoc,
+    boolean doSyntaxHighlighting,
+    boolean doHighlightInlineCodeBlocks,
+    boolean doHighlightLinks
+  ) {
+    super(
+      element.getProject(),
+      element,
+      GroovyDocHighlightingManager.getInstance(),
+      isGenerationForRenderedDoc,
+      doSyntaxHighlighting,
+      doHighlightInlineCodeBlocks,
+      doHighlightLinks);
   }
 
   @Override

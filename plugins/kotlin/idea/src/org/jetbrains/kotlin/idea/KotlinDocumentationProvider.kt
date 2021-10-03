@@ -8,18 +8,17 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup.*
-import com.intellij.lang.documentation.DocumentationProviderEx
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -65,7 +64,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.constant
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicy {
@@ -229,10 +227,13 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         private data class TextAttributesAdapter(val attributes: TextAttributes) :
             KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 
-        private fun createHighlightingManager(project: Project?) =
-            object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
+        private fun createHighlightingManager(project: Project?): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
+            if (!doSyntaxHighlighting) {
+                return KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING
+            }
+            return object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
                 override fun StringBuilder.appendHighlighted(value: String, attributes: TextAttributesAdapter) {
-                    HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes.attributes, value)
+                    HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes.attributes, value, highlightingSaturation)
                 }
 
                 override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
@@ -240,7 +241,8 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         this,
                         project!!,
                         KotlinLanguage.INSTANCE,
-                        codeSnippet
+                        codeSnippet,
+                        highlightingSaturation
                     )
                 }
 
@@ -278,6 +280,13 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                 override val asFunCall get() = resolveKey(KotlinHighlightingColors.FUNCTION_CALL)
             }
                 .eraseTypeParameter()
+        }
+
+        private val doSyntaxHighlighting : Boolean get() =
+            EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled
+
+        private val highlightingSaturation : Float get() =
+          EditorSettingsExternalizable.getInstance().docSyntaxHighlightingSaturation * 0.01f
 
         private fun StringBuilder.appendHighlighted(
             value: String,
@@ -292,16 +301,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
         private fun StringBuilder.appendCodeSnippetHighlightedByLexer(project: Project, codeSnippet: String) {
             with(createHighlightingManager(project)) {
                 appendCodeSnippetHighlightedByLexer(codeSnippet)
-            }
-        }
-
-        private fun highlight(
-            value: String,
-            attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
-            -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
-        ): String {
-            return with(createHighlightingManager(project = null)) {
-                buildString { appendHighlighted(value, attributesBuilder()) }
             }
         }
 

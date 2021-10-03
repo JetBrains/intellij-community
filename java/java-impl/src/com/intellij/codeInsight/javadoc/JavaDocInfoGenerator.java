@@ -15,8 +15,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.DumbService;
@@ -45,6 +49,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -56,7 +61,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -114,9 +118,11 @@ public class JavaDocInfoGenerator {
 
   private final boolean myIsRendered;
   private final boolean myDoSyntaxHighlighting;
+  private final boolean myDoHighlightInlineCodeBlocks;
+  private final boolean myDoHighlightLinks;
 
   public JavaDocInfoGenerator(@NotNull Project project, @Nullable PsiElement element) {
-    this(project, element, new JavaDocHighlightingManagerImpl(), false, true);
+    this(project, element, new JavaDocHighlightingManagerImpl(), false, true, true, true);
   }
 
   public JavaDocInfoGenerator(
@@ -124,13 +130,17 @@ public class JavaDocInfoGenerator {
     @Nullable PsiElement element,
     @NotNull JavaDocHighlightingManager highlightingManager,
     boolean isGenerationForRenderedDoc,
-    boolean doSyntaxHighlighting
+    boolean doSyntaxHighlighting,
+    boolean doHighlightInlineCodeBlocks,
+    boolean doHighlightLinks
   ) {
     myProject = project;
     myElement = element;
     myIsRendered = isGenerationForRenderedDoc;
-    myDoSyntaxHighlighting = doSyntaxHighlighting;
     myHighlightingManager = highlightingManager;
+    myDoSyntaxHighlighting = doSyntaxHighlighting;
+    myDoHighlightInlineCodeBlocks = doHighlightInlineCodeBlocks;
+    myDoHighlightLinks = doHighlightLinks;
 
     Sdk jdk = JavadocGeneratorRunProfile.getSdk(myProject);
     mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
@@ -144,6 +154,18 @@ public class JavaDocInfoGenerator {
     return myDoSyntaxHighlighting;
   }
 
+  public boolean doHighlightInlineCodeBlocks() {
+    return myDoHighlightInlineCodeBlocks;
+  }
+
+  public boolean doHighlightLinks() {
+    return myDoHighlightLinks;
+  }
+
+  public float getHighlightingSaturation() {
+    return EditorSettingsExternalizable.getInstance().getDocSyntaxHighlightingSaturation() * 0.01f;
+  }
+
   public @NotNull JavaDocHighlightingManager getHighlightingManager() {
     return myHighlightingManager;
   }
@@ -154,7 +176,7 @@ public class JavaDocInfoGenerator {
     @Nullable String value
   ) {
     if (doSyntaxHighlighting()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value);
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, getHighlightingSaturation());
     }
     else {
       buffer.append(value);
@@ -169,9 +191,13 @@ public class JavaDocInfoGenerator {
     @Nullable String codeSnippet
   ) {
     if (doSyntaxHighlighting()) {
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet);
+      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        buffer, project, language, codeSnippet, getHighlightingSaturation());
     }
-    else {
+    else if (codeSnippet != null) {
+      codeSnippet = StringsKt.trimIndent(codeSnippet);
+      codeSnippet = StringUtil.escapeXmlEntities(codeSnippet);
+      codeSnippet = codeSnippet.replace("\n", BR_TAG);
       buffer.append(codeSnippet);
     }
     return buffer;
@@ -1496,16 +1522,18 @@ public class JavaDocInfoGenerator {
     generateLiteralValue(codeSnippetBuilder, tag, false);
     String codeSnippet = codeSnippetBuilder.toString();
 
-    codeSnippetBuilder.setLength(0);
-    appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-      codeSnippetBuilder, tag.getProject(), tag.getLanguage(), codeSnippet);
-    codeSnippet = codeSnippetBuilder.toString();
+    if (isCodeBlock || doHighlightInlineCodeBlocks()) {
+      codeSnippetBuilder.setLength(0);
+      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        codeSnippetBuilder, tag.getProject(), tag.getLanguage(), codeSnippet);
+      codeSnippet = codeSnippetBuilder.toString();
 
-    codeSnippetBuilder.setLength(0);
-    TextAttributes codeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT).clone();
-    codeAttributes.setBackgroundColor(null);
-    appendStyledSpan(codeSnippetBuilder, codeAttributes, codeSnippet);
-    codeSnippet = codeSnippetBuilder.toString();
+      codeSnippetBuilder.setLength(0);
+      TextAttributes codeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT).clone();
+      codeAttributes.setBackgroundColor(null);
+      appendStyledSpan(codeSnippetBuilder, codeAttributes, codeSnippet);
+      codeSnippet = codeSnippetBuilder.toString();
+    }
 
     if (isCodeBlock) {
       // indent code block
@@ -2040,24 +2068,42 @@ public class JavaDocInfoGenerator {
       buffer.append("<font color=red>").append(label).append("</font>");
     }
     else {
-      generateLink(buffer, target, tryHighlightLinkLabel(target, label), plainLink);
+      generateLink(buffer, target, doHighlightLinks() ? tryHighlightLinkLabel(target, label) : label, plainLink);
     }
+  }
+
+  /**
+   * If highlighted links has the same color as highlighted inline code blocks they will be indistinguishable.
+   * In this case we should change link color to standard hyperlink color which we believe is apriori different.
+   */
+  private static @NotNull TextAttributes tuneAttributesForLink(@NotNull TextAttributes attributes) {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes defaultText = globalScheme.getAttributes(HighlighterColors.TEXT);
+    TextAttributes identifier = globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
+
+    if (Objects.equals(attributes.getForegroundColor(), defaultText.getForegroundColor())
+        || Objects.equals(attributes.getForegroundColor(), identifier.getForegroundColor())) {
+      TextAttributes tuned = attributes.clone();
+      tuned.setForegroundColor(globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor());
+      return tuned;
+    }
+    return attributes;
   }
 
   private @NotNull String tryHighlightLinkLabel(@NotNull PsiElement element, @NotNull String label) {
     if (element instanceof PsiClass) {
-      return getStyledSpan(getHighlightingManager().getClassDeclarationAttributes((PsiClass)element), label);
+      return getStyledSpan(tuneAttributesForLink(getHighlightingManager().getClassDeclarationAttributes((PsiClass)element)), label);
     }
     if (element instanceof PsiPackage) {
-      return getStyledSpan(getHighlightingManager().getClassNameAttributes(), label);
+      return getStyledSpan(tuneAttributesForLink(getHighlightingManager().getClassNameAttributes()), label);
     }
     else if (element instanceof PsiMethod) {
-      return tryHighlightLinkOnClassMember((PsiMember)element, getHighlightingManager().getMethodDeclarationAttributes((PsiMethod)element),
-                                           label);
+      return tryHighlightLinkOnClassMember(
+        (PsiMember)element, tuneAttributesForLink(getHighlightingManager().getMethodDeclarationAttributes((PsiMethod)element)), label);
     }
     else if (element instanceof PsiField) {
-      return tryHighlightLinkOnClassMember((PsiField)element, getHighlightingManager().getFieldDeclarationAttributes((PsiField)element),
-                                           label);
+      return tryHighlightLinkOnClassMember(
+        (PsiField)element, tuneAttributesForLink(getHighlightingManager().getFieldDeclarationAttributes((PsiField)element)), label);
     }
     else {
       return getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(element.getProject(), element.getLanguage(), label);
