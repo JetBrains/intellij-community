@@ -1,6 +1,7 @@
 package com.jetbrains.gateway.util
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets
 @Suppress("SpellCheckingInspection")
 const val jetbrains_gateway_protocol_name = "jetbrainsgateway"
 
+@ApiStatus.Experimental
 object RemoteDevProtocolUtil {
   const val gatewayPrefix = "$jetbrains_gateway_protocol_name://connect"
   const val httpPrefix = "https://code-with-me.jetbrains.com/remoteDev"

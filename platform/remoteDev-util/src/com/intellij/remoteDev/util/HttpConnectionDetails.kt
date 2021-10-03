@@ -1,9 +1,11 @@
 package com.intellij.remoteDev.util
 
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.Throws
 
 const val CONNECTION_TYPE_HTTP = "http"
 
+@ApiStatus.Experimental
 data class HttpConnectionDetails(
   val IDEPath: String,
   val projectPath: String,

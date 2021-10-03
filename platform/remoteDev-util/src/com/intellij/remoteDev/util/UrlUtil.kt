@@ -4,8 +4,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
+@ApiStatus.Experimental
 object UrlUtil {
   fun parseOrShowError(url: String, @NlsContexts.DialogTitle product: String): URI? {
     try {

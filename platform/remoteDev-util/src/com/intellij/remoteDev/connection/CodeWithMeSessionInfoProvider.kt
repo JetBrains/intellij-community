@@ -1,5 +1,8 @@
 package com.intellij.remoteDev.connection
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
 interface CodeWithMeSessionInfoProvider {
   val hostBuildNumber: String
 

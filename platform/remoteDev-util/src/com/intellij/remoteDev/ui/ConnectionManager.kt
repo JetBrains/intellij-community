@@ -1,8 +1,10 @@
 package com.intellij.remoteDev.ui
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.net.URI
 
+@ApiStatus.Experimental
 interface ConnectionManager {
 
   @Nls

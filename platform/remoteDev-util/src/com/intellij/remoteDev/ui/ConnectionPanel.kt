@@ -12,12 +12,14 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
 import javax.swing.*
 
 @Suppress("LeakingThis")
+@ApiStatus.Experimental
 open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel(
   MigLayout("wrap 2, ins 20 20 0 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", null)) {
 

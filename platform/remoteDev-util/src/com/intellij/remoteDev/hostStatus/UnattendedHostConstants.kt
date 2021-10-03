@@ -2,7 +2,9 @@ package com.intellij.remoteDev.hostStatus
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 data class UnattendedHostPerProjectStatus(
   val projectName: String,
   val projectPath: String,
@@ -20,6 +22,7 @@ data class UnattendedHostPerProjectStatus(
   val users: List<String>,
 )
 
+@ApiStatus.Experimental
 data class UnattendedHostStatus(
   val appPid: Long,
   val appVersion: String,
@@ -43,6 +46,7 @@ data class UnattendedHostStatus(
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
+@ApiStatus.Experimental
 object UnattendedHostConstants {
   val LOG = logger<UnattendedHostConstants>()
   const val STATUS_PREFIX = "STATUS:\n"

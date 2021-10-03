@@ -15,9 +15,11 @@ import com.intellij.remoteDev.util.UrlUtil
 import com.intellij.util.application
 import com.intellij.util.fragmentParameters
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Experimental
 object CodeWithMeGuestLauncher {
   private val LOG = logger<CodeWithMeGuestLauncher>()
 

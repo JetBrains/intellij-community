@@ -7,11 +7,13 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.execution.ParametersListUtil
 import com.sun.jna.platform.win32.*
 import com.sun.jna.ptr.IntByReference
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.nio.file.Path
 import java.time.Duration
 
+@ApiStatus.Experimental
 object WindowsFileUtil {
   private val LOG = Logger.getInstance(javaClass)
 

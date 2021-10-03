@@ -5,7 +5,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 object RemoteDevStatisticsCollector : CounterUsagesCollector() {
   private const val GROUP_ID = "cwm.gateway"
   private val EVENT_GROUP = EventLogGroup(GROUP_ID, 2)

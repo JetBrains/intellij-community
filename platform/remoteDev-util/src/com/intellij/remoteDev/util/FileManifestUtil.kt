@@ -8,6 +8,7 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -18,6 +19,7 @@ import java.util.function.BiConsumer
 import kotlin.io.path.*
 import com.intellij.util.io.Decompressor.Entry.Type as EntryType
 
+@ApiStatus.Experimental
 object FileManifestUtil {
   private val logger = Logger.getInstance(javaClass)
   const val ManifestFileName = ".manifest.txt"

@@ -1,5 +1,8 @@
 package com.intellij.remoteDev.util
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
 class UrlParameterKeys {
   companion object {
     const val projectPath = "projectPath"

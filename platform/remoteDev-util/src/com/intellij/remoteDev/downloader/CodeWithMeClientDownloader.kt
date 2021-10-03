@@ -37,7 +37,6 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -46,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
+@ApiStatus.Experimental
 object CodeWithMeClientDownloader {
 
   private val LOG = logger<CodeWithMeClientDownloader>()
