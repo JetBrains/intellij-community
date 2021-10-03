@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
@@ -29,8 +29,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +219,7 @@ public final class ArrangementEngine {
    */
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
-                                                             @NotNull List<? extends ArrangementSectionRule> sectionRules,
+                                                             @NotNull List<ArrangementSectionRule> sectionRules,
                                                              @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                                                              @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {
@@ -320,7 +322,7 @@ public final class ArrangementEngine {
     if (entries.size() < 2) {
       return;
     }
-    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<>();
+    final Object2IntMap<E> weights = new Object2IntOpenHashMap<>();
     int i = 0;
     for (E e : entries) {
       weights.put(e, ++i);
@@ -332,7 +334,7 @@ public final class ArrangementEngine {
         return name1.compareTo(name2);
       }
       else if (name1 == null && name2 == null) {
-        return weights.get(e1) - weights.get(e2);
+        return weights.getInt(e1) - weights.getInt(e2);
       }
       else if (name2 == null) {
         return -1;
@@ -640,7 +642,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
+  private static final class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
     @NotNull private String myParentText;
     private          int    myParentShift;
 
@@ -667,7 +669,7 @@ public final class ArrangementEngine {
     {
       // Calculate blank lines before the arrangement.
       int blankLinesBefore = 0;
-      TIntArrayList lineFeedOffsets = new TIntArrayList();
+      IntList lineFeedOffsets = new IntArrayList();
       int oldStartLine = context.document.getLineNumber(oldWrapper.getStartOffset());
       if (oldStartLine > 0) {
         int lastLineFeed = context.document.getLineStartOffset(oldStartLine) - 1;
@@ -708,7 +710,7 @@ public final class ArrangementEngine {
       }
       else {
         // Cut exceeding blank lines.
-        int replacementStartOffset = lineFeedOffsets.get(-lineFeedsDiff) + 1;
+        int replacementStartOffset = lineFeedOffsets.getInt(-lineFeedsDiff) + 1;
         context.document.replaceString(replacementStartOffset, oldWrapper.getEndOffset(), newEntryText);
       }
 

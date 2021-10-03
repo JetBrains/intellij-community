@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -15,7 +15,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -29,7 +28,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-
   public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
@@ -172,7 +170,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                       boolean allowEmptyPrefix) {
     if (!allowEmptyPrefix && StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
     CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
-    Set<CharSequence> words = new THashSet<>(chars.length()/8);
+    Set<CharSequence> words = new HashSet<>(chars.length()/8);
     IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
       if (start > offset || offset > end) {
         CharSequence sequence = charSeq.subSequence(start, end);
