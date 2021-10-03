@@ -1,21 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntIterator;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
-  private static final Comparator<IndentUsageInfo> DECREASING_ORDER =
-    (o1, o2) -> Integer.compare(o2.getTimesUsed(), o1.getTimesUsed());
-
-  private final List<? extends LineIndentInfo> myLineInfos;
+public final class IndentUsageStatisticsImpl implements IndentUsageStatistics {
+  private final List<LineIndentInfo> myLineInfos;
 
   private int myPreviousLineIndent;
   private int myPreviousRelativeIndent;
@@ -23,24 +18,26 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private int myTotalLinesWithTabs = 0;
   private int myTotalLinesWithWhiteSpaces = 0;
 
-  private final TIntIntHashMap myIndentToUsagesMap = new TIntIntHashMap();
-  private List<IndentUsageInfo> myIndentUsages = new ArrayList<>();
+  @SuppressWarnings("SSBasedInspection")
+  private final Int2IntOpenHashMap myIndentToUsagesMap = new Int2IntOpenHashMap();
+  private final List<IndentUsageInfo> myIndentUsages;
   private final Stack<IndentData> myParentIndents = new Stack<>(new IndentData(0, 0));
 
-  public IndentUsageStatisticsImpl(@NotNull List<? extends LineIndentInfo> lineInfos) {
+  public IndentUsageStatisticsImpl(@NotNull List<LineIndentInfo> lineInfos) {
     myLineInfos = lineInfos;
     buildIndentToUsagesMap();
     myIndentUsages = toIndentUsageList(myIndentToUsagesMap);
-    ContainerUtil.sort(myIndentUsages, DECREASING_ORDER);
+    myIndentUsages.sort((o1, o2) -> {
+      int diff = o2.getTimesUsed() - o1.getTimesUsed();
+      // indent 8 - 1 usage, indent 0 - 1 usage
+      return diff == 0 ? o2.getIndentSize() - o1.getIndentSize() : diff;
+    });
   }
 
-  @NotNull
-  private static List<IndentUsageInfo> toIndentUsageList(@NotNull TIntIntHashMap indentToUsages) {
-    List<IndentUsageInfo> indentUsageInfos = new ArrayList<>();
-    TIntIntIterator it = indentToUsages.iterator();
-    while (it.hasNext()) {
-      it.advance();
-      indentUsageInfos.add(new IndentUsageInfo(it.key(), it.value()));
+  private static @NotNull List<IndentUsageInfo> toIndentUsageList(@NotNull Int2IntMap indentToUsages) {
+    List<IndentUsageInfo> indentUsageInfos = new ArrayList<>(indentToUsages.size());
+    for (Int2IntMap.Entry entry : indentToUsages.int2IntEntrySet()) {
+      indentUsageInfos.add(new IndentUsageInfo(entry.getIntKey(), entry.getIntValue()));
     }
     return indentUsageInfos;
   }
@@ -59,8 +56,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
     }
   }
 
-  @NotNull
-  private IndentData findParentIndent(int indent) {
+  private @NotNull IndentData findParentIndent(int indent) {
     while (myParentIndents.size() != 1 && myParentIndents.peek().indent > indent) {
       myParentIndents.pop();
     }
@@ -83,7 +79,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
       myParentIndents.push(new IndentData(currentIndent, relativeIndent));
     }
 
-    increaseIndentUsage(relativeIndent);
+    myIndentToUsagesMap.addTo(relativeIndent, 1);
 
     myPreviousRelativeIndent = relativeIndent;
     myPreviousLineIndent = currentIndent;
@@ -91,11 +87,6 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
     if (currentIndent > 0) {
       myTotalLinesWithWhiteSpaces++;
     }
-  }
-
-  private void increaseIndentUsage(int relativeIndent) {
-    int timesUsed = myIndentToUsagesMap.get(relativeIndent);
-    myIndentToUsagesMap.put(relativeIndent, ++timesUsed);
   }
 
   @Override
@@ -123,7 +114,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
     return myIndentToUsagesMap.size();
   }
 
-  private static class IndentData {
+  private static final class IndentData {
     public final int indent;
     public final int relativeIndent;
 
