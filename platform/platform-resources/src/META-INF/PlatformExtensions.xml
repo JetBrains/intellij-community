@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
     <!-- must be first - adds activity listener (to track, when reporting should be stopped) -->
     <startupActivity id="performanceReporter" implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
@@ -1338,4 +1338,7 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
   </applicationListeners>
+
+  <xi:include href="/META-INF/RemoteDevUtil.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
 </idea-plugin>

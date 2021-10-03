@@ -103,6 +103,7 @@ final class PlatformModules {
     "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl",
+    "intellij.remoteDev.util",
   )
 
   private static final String UTIL_JAR = "util.jar"
