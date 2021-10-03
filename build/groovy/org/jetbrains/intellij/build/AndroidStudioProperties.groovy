@@ -36,6 +36,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     platformPrefix = "AndroidStudio"
     productCode = "AI"
     applicationInfoModule = "intellij.android.adt.branding"
+    useSplash = true
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     scrambleMainJar = false
