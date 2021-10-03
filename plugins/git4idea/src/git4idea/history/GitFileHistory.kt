@@ -56,9 +56,8 @@ class GitFileHistory private constructor(private val project: Project,
                                          private val startingRevision: VcsRevisionNumber) {
   private val path = VcsUtil.getLastCommitPath(project, path)
 
-  private fun load(consumer: Consumer<in GitFileRevision>,
-                   exceptionConsumer: Consumer<in VcsException>,
-                   vararg parameters: String) {
+  @Throws(VcsException::class)
+  private fun load(consumer: Consumer<in GitFileRevision>, vararg parameters: String) {
     val logParser = createLogParser()
     var startRevision: String? = startingRevision.asString()
     var startPath = path
@@ -76,20 +75,11 @@ class GitFileHistory private constructor(private val project: Project,
         consumer.consume(revision)
       }
       Git.getInstance().runCommandWithoutCollectingOutput(handler)
-      if (splitter.hasErrors()) {
-        return
-      }
+      splitter.reportErrors()
       if (lastCommit == null) return
-      try {
-        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(lastCommit!!, startPath) ?: return
-        startRevision = firstCommitParentAndPath.first
-        startPath = firstCommitParentAndPath.second
-      }
-      catch (e: VcsException) {
-        LOG.warn("Tried to get first commit rename path", e)
-        exceptionConsumer.consume(e)
-        return
-      }
+      val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(lastCommit!!, startPath) ?: return
+      startRevision = firstCommitParentAndPath.first
+      startPath = firstCommitParentAndPath.second
     }
   }
 
@@ -168,7 +158,15 @@ class GitFileHistory private constructor(private val project: Project,
   }
 
   companion object {
-    private val LOG = Logger.getInstance(GitFileHistory::class.java)
+    private fun loadHistory(project: Project,
+                            path: FilePath,
+                            startingFrom: VcsRevisionNumber?,
+                            consumer: Consumer<in GitFileRevision>,
+                            vararg parameters: String) {
+      val repositoryRoot = GitUtil.getRootForFile(project, path)
+      val revision = startingFrom ?: GitRevisionNumber.HEAD
+      GitFileHistory(project, repositoryRoot, path, revision).load(consumer, *parameters)
+    }
 
     /**
      * Get history for the file starting from specific revision and feed it to the consumer.
@@ -188,9 +186,7 @@ class GitFileHistory private constructor(private val project: Project,
                     exceptionConsumer: Consumer<in VcsException>,
                     vararg parameters: String) {
       try {
-        val repositoryRoot = GitUtil.getRootForFile(project, path)
-        val revision = startingFrom ?: GitRevisionNumber.HEAD
-        GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, *parameters)
+        loadHistory(project, path, startingFrom, consumer, *parameters)
       }
       catch (e: VcsException) {
         exceptionConsumer.consume(e)
@@ -214,11 +210,7 @@ class GitFileHistory private constructor(private val project: Project,
                                   startingFrom: VcsRevisionNumber,
                                   vararg parameters: String): List<VcsFileRevision> {
       val revisions = mutableListOf<VcsFileRevision>()
-      val exceptions = mutableListOf<VcsException>()
-      loadHistory(project, path, startingFrom, revisions::add, exceptions::add, *parameters)
-      if (exceptions.isNotEmpty()) {
-        throw exceptions[0]
-      }
+      loadHistory(project, path, startingFrom, revisions::add, *parameters)
       return revisions
     }
 
