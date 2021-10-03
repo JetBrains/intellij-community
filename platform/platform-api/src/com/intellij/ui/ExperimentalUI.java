@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -63,6 +64,14 @@ public final class ExperimentalUI {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         patchUIDefaults(value);
+        if (value.asBoolean()) {
+          int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
+          if (tabPlacement == SwingConstants.LEFT
+              || tabPlacement == SwingConstants.RIGHT
+              || tabPlacement == SwingConstants.BOTTOM) {
+            UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
+          }
+        }
       }
     }, app);
     app.getMessageBus().connect(app).subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
