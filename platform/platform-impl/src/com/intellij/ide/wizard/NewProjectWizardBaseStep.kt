@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
@@ -148,7 +149,9 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
     if (git) {
       val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
       if (projectBaseDirectory != null) {
-        GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project )  {
+          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+        }
       }
     }
   }
