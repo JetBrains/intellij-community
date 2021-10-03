@@ -29,7 +29,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 ) : FrameWrapper(project,
                  "ShowDiffWithBranchDialog", // NON-NLS
                  title = GitBundle.message("show.diff.between.dialog.title", branchName)) {
-  private var diffPanel : CompareBranchesDiffPanel
+  private val diffPanel: CompareBranchesDiffPanel
   private val loadingPanel: JBLoadingPanel
 
   init {
@@ -50,35 +50,28 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     component = rootPanel
   }
 
+  override var preferredFocusedComponent: JComponent?
+    get() = diffPanel.preferredFocusComponent
+    set(_) {}
+
   override fun show() {
     super.show()
 
+    loadDiffInBackground()
+  }
+
+  private fun loadDiffInBackground() {
     val modalityState = ModalityState.stateForComponent(diffPanel)
     ApplicationManager.getApplication().executeOnPooledThread {
       val result = loadDiff()
 
       runInEdt(modalityState) {
-        if (!isDisposed) {
-          loadingPanel.stopLoading()
-
-          when (result) {
-            is LoadingResult.Success -> {
-              diffPanel.setCompareInfo(result.compareInfo)
-              diffPanel.setEmptyText(GitBundle.message("show.diff.between.dialog.no.differences.empty.text"))
-              diffPanel.enableControls()
-            }
-            is LoadingResult.Error -> Messages.showErrorDialog(diffPanel, result.error)
-          }
-        }
+        showDiff(result)
       }
     }
   }
 
-  override var preferredFocusedComponent: JComponent?
-    get() = diffPanel.preferredFocusComponent
-    set(_) {}
-
-  private fun loadDiff() : LoadingResult {
+  private fun loadDiff(): LoadingResult {
     try {
       val compareInfo = GitLocalCommitCompareInfo(project, branchName)
       for (repository in repositories) {
@@ -92,8 +85,22 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     }
   }
 
+  private fun showDiff(result: LoadingResult) {
+    if (isDisposed) return
+    loadingPanel.stopLoading()
+
+    when (result) {
+      is LoadingResult.Success -> {
+        diffPanel.setCompareInfo(result.compareInfo)
+        diffPanel.setEmptyText(GitBundle.message("show.diff.between.dialog.no.differences.empty.text"))
+        diffPanel.enableControls()
+      }
+      is LoadingResult.Error -> Messages.showErrorDialog(diffPanel, result.error)
+    }
+  }
+
   private sealed class LoadingResult {
-    class Success(val compareInfo: GitLocalCommitCompareInfo): LoadingResult()
+    class Success(val compareInfo: GitLocalCommitCompareInfo) : LoadingResult()
     class Error(@Nls val error: String) : LoadingResult()
   }
 }
