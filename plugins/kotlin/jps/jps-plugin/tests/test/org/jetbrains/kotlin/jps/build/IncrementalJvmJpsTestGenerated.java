@@ -929,6 +929,11 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
                 runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignatureStatic/");
             }
 
+            @TestMetadata("constantChanged")
+            public void testConstantChanged() throws Exception {
+                runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
+            }
+
             @TestMetadata("constantUnchanged")
             public void testConstantUnchanged() throws Exception {
                 runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
@@ -982,23 +987,6 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             @TestMetadata("notChangeSignature")
             public void testNotChangeSignature() throws Exception {
                 runTest("testData/incremental/withJava/javaUsedInKotlin/notChangeSignature/");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/constantChanged")
-            public abstract static class ConstantChanged extends AbstractIncrementalJvmJpsTest {
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/constantChanged/org")
-                public static class Org extends AbstractIncrementalJvmJpsTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
-                    }
-
-                    @TestMetadata("jetbrains")
-                    public void testJetbrains() throws Exception {
-                        runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/org/jetbrains/");
-                    }
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
