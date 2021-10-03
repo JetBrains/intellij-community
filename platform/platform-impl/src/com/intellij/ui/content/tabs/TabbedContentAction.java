@@ -4,6 +4,7 @@ package com.intellij.ui.content.tabs;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.NlsActions;
@@ -195,6 +196,8 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      ObjectUtils.consumeIfNotNull(ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally"),
+                                   action -> e.getPresentation().setIcon(action.getTemplatePresentation().getIcon()));
       e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
     }
   }
