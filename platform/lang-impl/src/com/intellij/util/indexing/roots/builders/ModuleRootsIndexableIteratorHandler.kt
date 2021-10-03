@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PlatformUtils
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -20,9 +21,12 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                            project: Project,
                            entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
     val fullIndexedModules: Set<ModuleId> = builders.mapNotNull { (it as? FullModuleContentIteratorBuilder)?.moduleId }.toSet()
-    val partialIterators: Map<ModuleId, List<ModuleRootsIteratorBuilder>> = builders.filter {
+
+    @Suppress("UNCHECKED_CAST")
+    val partialIterators = builders.filter {
       it is ModuleRootsIteratorBuilder && !fullIndexedModules.contains(it.moduleId)
-    }.groupBy { builder -> (builder as ModuleRootsIteratorBuilder).moduleId } as Map<ModuleId, List<ModuleRootsIteratorBuilder>>
+    } as List<ModuleRootsIteratorBuilder>
+    val partialIteratorsMap = partialIterators.groupBy { builder -> builder.moduleId }
 
     val result = mutableListOf<IndexableFilesIterator>()
     fullIndexedModules.forEach { moduleId ->
@@ -31,7 +35,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       }
     }
 
-    partialIterators.forEach { pair ->
+    partialIteratorsMap.forEach { pair ->
       entityStorage.resolve(pair.key)?.also { entity ->
         result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), project))
       }
@@ -40,6 +44,9 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>): List<VirtualFile> {
+    if (PlatformUtils.isRider()) {
+      return builders.flatMap { builder -> builder.urls }.mapNotNull { url -> url.virtualFile }
+    }
     val roots = mutableListOf<VirtualFileUrl>()
     for (builder in builders) {
       for (root in builder.urls) {
