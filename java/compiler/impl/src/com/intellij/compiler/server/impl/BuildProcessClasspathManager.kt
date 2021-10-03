@@ -213,14 +213,6 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       "kotlin-jps-plugin" to "kotlin.jps-plugin",
       "kotlin-jps-common" to "kotlin.jps-common",
       "kotlin-common" to "kotlin.common",
-      "android-jps-plugin" to "intellij.android.jpsBuildPlugin.jps",
-      "android-jps-model" to "intellij.android.jps.model",
-      "build-common" to "intellij.android.buildCommon",
-      "sdk-common" to "android.sdktools.sdk-common",
-      "sdklib" to "android.sdktools.sdklib",
-      "layoutlib-api" to "android.sdktools.layoutlib-api",
-      "repository" to "android.sdktools.repository",
-      "manifest-merger" to "android.sdktools.manifest-merger",
     )
   }
 }
