@@ -28,6 +28,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FileColorManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
@@ -110,7 +111,9 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
     val north = JPanel(HorizontalLayout(10))
     north.border = Borders.emptyBottom(5)
     north.add(HorizontalLayout.LEFT, enabledFileColors.createComponent())
-    north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
+    if (!ExperimentalUI.isNewEditorTabs()) {
+      north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
+    }
     north.add(HorizontalLayout.LEFT, useInProjectView.createComponent())
 
     val south = JPanel(VerticalLayout(5))
