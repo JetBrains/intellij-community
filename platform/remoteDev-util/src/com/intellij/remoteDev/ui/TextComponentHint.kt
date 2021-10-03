@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.ui
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -13,6 +14,7 @@ import javax.swing.event.DocumentListener
 import javax.swing.text.Document
 import javax.swing.text.JTextComponent
 
+@ApiStatus.Experimental
 class TextComponentHint(val component: JTextComponent, @Nls text: String, var state: State = State.FOCUS_LOST) : JLabel(text) {
   enum class State {
     ALWAYS, FOCUS_GAINED, FOCUS_LOST

@@ -5,16 +5,17 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
-import com.intellij.util.fragmentParameters
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.withFragment
+import org.jetbrains.annotations.ApiStatus
 import java.net.HttpURLConnection
 import java.net.URI
 
 /**
  * Lightweight implementation of LobbyServerAPI to avoid obfuscation issues
  */
+@ApiStatus.Experimental
 object ThinClientSessionInfoFetcher {
 
   private val objectMapper = lazy { ObjectMapper() }
