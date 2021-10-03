@@ -55,7 +55,7 @@ public class LoadingCommittedChangeListPanel implements Disposable {
   }
 
   public void hideSideBorders() {
-    myChangesPanel.hideSideBorders();
+    myChangesPanel.setShowSideBorders(false);
   }
 
   /**
