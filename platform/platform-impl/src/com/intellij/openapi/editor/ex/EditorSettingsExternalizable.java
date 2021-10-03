@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Checks;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Disposer;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.util.MathUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,6 +71,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
     public boolean ENABLE_DOC_SYNTAX_HIGHLIGHTING = true;
+    public boolean ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_INLINE_CODE_BLOCKS = true;
+    public boolean ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_LINKS = true;
+    public int DOC_SYNTAX_HIGHLIGHTING_SATURATION = 65;
 
     public boolean SMART_HOME = true;
 
@@ -351,6 +356,31 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setDocSyntaxHighlightingEnabled(boolean value) {
     myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING = value;
+  }
+
+  public boolean isDocSyntaxHighlightingOfInlineCodeBlocksEnabled() {
+    return isDocSyntaxHighlightingEnabled() && myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_INLINE_CODE_BLOCKS;
+  }
+
+  public void setDocSyntaxHighlightingOfInlineCodeBlocksEnabled(boolean value) {
+    myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_INLINE_CODE_BLOCKS = value;
+  }
+
+  public boolean isDocSyntaxHighlightingOfLinksEnabled() {
+    return isDocSyntaxHighlightingEnabled() && myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_LINKS;
+  }
+
+  public void setDocSyntaxHighlightingOfLinksEnabled(boolean value) {
+    myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING_OF_LINKS = value;
+  }
+
+  public int getDocSyntaxHighlightingSaturation() {
+    return myOptions.DOC_SYNTAX_HIGHLIGHTING_SATURATION;
+  }
+
+  public void setDocSyntaxHighlightingSaturation(int value) {
+    Checks.require(0 <= value && value <= 100);
+    myOptions.DOC_SYNTAX_HIGHLIGHTING_SATURATION = value;
   }
 
   public boolean isBlockCursor() {

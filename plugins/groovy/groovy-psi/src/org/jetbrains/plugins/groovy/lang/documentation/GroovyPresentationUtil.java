@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -132,6 +133,10 @@ public final class GroovyPresentationUtil {
     return builder.toString();
   }
 
+  private static float getHighlightingSaturation() {
+    return EditorSettingsExternalizable.getInstance().getDocSyntaxHighlightingSaturation() * 0.01f;
+  }
+
   private static @NotNull StringBuilder appendStyledSpan(
     boolean doHighlighting,
     @NotNull StringBuilder buffer,
@@ -139,7 +144,7 @@ public final class GroovyPresentationUtil {
     @Nullable String value
   ) {
     if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value);
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, getHighlightingSaturation());
     }
     else {
       buffer.append(value);

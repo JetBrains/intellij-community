@@ -7,9 +7,11 @@ import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +75,10 @@ public final class AnnotationDocGenerator {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
 
+  private static float getHighlightingSaturation() {
+    return EditorSettingsExternalizable.getInstance().getDocSyntaxHighlightingSaturation() * 0.01f;
+  }
+
   private static void appendStyledSpan(
     boolean doSyntaxHighlighting,
     @NotNull StringBuilder buffer,
@@ -80,7 +86,7 @@ public final class AnnotationDocGenerator {
     @Nullable String value
   ) {
     if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value);
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, getHighlightingSaturation());
     }
     else {
       buffer.append(value);
@@ -95,10 +101,11 @@ public final class AnnotationDocGenerator {
     @Nullable String codeSnippet
   ) {
     if (doSyntaxHighlighting) {
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet);
+      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+        buffer, project, language, codeSnippet, getHighlightingSaturation());
     }
-    else {
-      buffer.append(codeSnippet);
+    else if (codeSnippet != null) {
+      buffer.append(StringUtil.escapeXmlEntities(codeSnippet));
     }
   }
 
@@ -135,13 +142,11 @@ public final class AnnotationDocGenerator {
       StringBuilder styledNameBuilder = new StringBuilder();
       appendStyledSpan(doSyntaxHighlighting, styledNameBuilder, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
       String styledName = styledNameBuilder.toString();
-      JavaDocInfoGeneratorFactory.create(
-        myContext.getProject(),
-        null,
-        JavaDocHighlightingManagerImpl.getInstance(),
-        isForRenderedDoc,
-        doSyntaxHighlighting
-      ).generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
+      JavaDocInfoGeneratorFactory.getBuilder(myContext.getProject())
+        .setIsGenerationForRenderedDoc(isForRenderedDoc)
+        .setDoSyntaxHighlighting(doSyntaxHighlighting)
+        .create()
+        .generateLink(buffer, myTargetClass, styledName, format == AnnotationFormat.JavaDocComplete);
     }
     else if (!red && name != null) {
       appendStyledSpan(doSyntaxHighlighting, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
@@ -233,8 +238,10 @@ public final class AnnotationDocGenerator {
           else {
             if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
           }
-          JavaDocInfoGeneratorFactory.create(
-              field.getProject(), null, JavaDocHighlightingManagerImpl.getInstance(), isForRenderedDoc, doSyntaxHighlighting)
+          JavaDocInfoGeneratorFactory.getBuilder(field.getProject())
+            .setIsGenerationForRenderedDoc(isForRenderedDoc)
+            .setDoSyntaxHighlighting(doSyntaxHighlighting)
+            .create()
             .generateLink(buffer, text, aClass != null ? aClass.getName() + '.' + field.getName() : null, memberValue, false);
         }
         else {
