@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.registry.Registry
@@ -62,25 +61,34 @@ class GitFileHistory private constructor(private val project: Project,
     var startRevision: String? = startingRevision.asString()
     var startPath = path
     while (startRevision != null) {
-      val handler = createLogHandler(logParser, startPath, startRevision, *parameters)
-      var skipFurtherOutput = false
-      var lastCommit: String? = null
-      val splitter = GitLogOutputSplitter(handler, logParser) { record ->
-        if (skipFurtherOutput) return@GitLogOutputSplitter
-        if (record.statusInfos.firstOrNull()?.type == Change.Type.NEW && !path.isDirectory) {
-          skipFurtherOutput = true
-        }
-        val revision = createGitFileRevision(record, startPath)
-        lastCommit = record.hash
-        consumer.consume(revision)
-      }
-      Git.getInstance().runCommandWithoutCollectingOutput(handler)
-      splitter.reportErrors()
-      if (lastCommit == null) return
-      val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(lastCommit!!, startPath) ?: return
+      val lastCommit = runGitLog(logParser, startPath, startRevision, consumer, *parameters) ?: return
+      val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(lastCommit, startPath) ?: return
       startRevision = firstCommitParentAndPath.first
       startPath = firstCommitParentAndPath.second
     }
+  }
+
+  @Throws(VcsException::class)
+  private fun runGitLog(logParser: GitLogParser<GitLogFullRecord>,
+                        startPath: FilePath,
+                        startRevision: String,
+                        consumer: Consumer<in GitFileRevision>,
+                        vararg parameters: String): String? {
+    val handler = createLogHandler(logParser, startPath, startRevision, *parameters)
+    var skipFurtherOutput = false
+    var lastCommit: String? = null
+    val splitter = GitLogOutputSplitter(handler, logParser) { record ->
+      if (skipFurtherOutput) return@GitLogOutputSplitter
+      if (record.statusInfos.firstOrNull()?.type == Change.Type.NEW && !path.isDirectory) {
+        skipFurtherOutput = true
+      }
+      val revision = createGitFileRevision(record, startPath)
+      lastCommit = record.hash
+      consumer.consume(revision)
+    }
+    Git.getInstance().runCommandWithoutCollectingOutput(handler)
+    splitter.reportErrors()
+    return lastCommit
   }
 
   /**
