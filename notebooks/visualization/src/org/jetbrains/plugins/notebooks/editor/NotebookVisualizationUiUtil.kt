@@ -122,6 +122,9 @@ fun Document.getText(interval: NotebookCellLines.Interval): String =
     getLineEndOffset(interval.lines.last)
   ))
 
+private fun Document.getLineText(line: Int): String =
+  getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
+
 fun Editor.getCell(line: Int): NotebookCellLines.Interval =
   NotebookCellLines.get(this).intervalsIterator(line).next()
 
@@ -133,6 +136,12 @@ fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
+
+fun NotebookCellLines.Interval.getTopMarker(document: Document): String? =
+  if (markers.hasTopLine) document.getLineText(lines.first) else null
+
+fun NotebookCellLines.Interval.getBottomMarker(document: Document): String? =
+  if (markers.hasBottomLine) document.getLineText(lines.last) else null
 
 val NotebookCellLines.Interval.firstContentLine: Int
   get() =
