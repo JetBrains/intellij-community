@@ -17,6 +17,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -25,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -98,19 +100,19 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   private static boolean doSyntaxHighlighting() {
-    return EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled();
+    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting");
   }
 
   private static boolean doHighlightingOfInlineCodeBlocksEnabled() {
-    return EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfInlineCodeBlocksEnabled();
+    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
   }
 
   private static boolean doHighlightingOfLinksEnabled() {
-    return EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfLinksEnabled();
+    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links");
   }
 
   private static float getHighlightingSaturation() {
-    return EditorSettingsExternalizable.getInstance().getDocSyntaxHighlightingSaturation() * 0.01f;
+    return MathUtil.clamp(AdvancedSettings.getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f;
   }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {

@@ -13,10 +13,14 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.util.MathUtil
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -43,15 +47,16 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
 object KDocRenderer {
 
-    private val doSyntaxHighlighting: Boolean get() = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled
+    private val doSyntaxHighlighting: Boolean get() = getBoolean("documentation.components.enable.doc.syntax.highlighting")
 
     private val doHighlightInlineCodeBlocks: Boolean
-        get() = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfInlineCodeBlocksEnabled
+        get() = getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks")
 
     private val doHighlightLinks: Boolean
-        get() = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfLinksEnabled
+        get() = getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links")
 
-    private val highlightingSaturation: Float get() = EditorSettingsExternalizable.getInstance().docSyntaxHighlightingSaturation * 0.01F
+    private val highlightingSaturation: Float get() =
+        MathUtil.clamp(getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f
 
     fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
         append(markdownToHtml(docComment, allowSingleParagraph = true))

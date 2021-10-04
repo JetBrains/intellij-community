@@ -1303,6 +1303,10 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.doc.syntax.highlighting.of.links" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.doc.syntax.highlighting.saturation" default="65" groupKey="group.advanced.settings.documentation.components"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
