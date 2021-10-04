@@ -306,19 +306,22 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun textField(): CellImpl<JBTextField> {
-    return cell(JBTextField())
+    val result = cell(JBTextField())
+    result.columns(COLUMNS_SHORT)
+    return result
   }
 
   override fun textFieldWithBrowseButton(browseDialogTitle: String?,
                                          project: Project?,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
-    val result = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    return cell(result)
+    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen))
+    result.columns(COLUMNS_SHORT)
+    return result
   }
 
   override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
-    val result = textField()
+    val result = cell(JBTextField())
       .validationOnInput {
         val value = it.text.toIntOrNull()
         when {
@@ -327,6 +330,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
           else -> null
         }
       }
+    result.columns(COLUMNS_TINY)
     result.component.putClientProperty(DSL_INT_TEXT_RANGE_PROPERTY, range)
 
     keyboardStep?.let {

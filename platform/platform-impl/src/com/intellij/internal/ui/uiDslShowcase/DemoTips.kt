@@ -20,7 +20,7 @@ fun demoTips(): DialogPanel {
 
     row {
       textField()
-        .columns(COLUMNS_SHORT)
+        .columns(COLUMNS_MEDIUM)
     }.rowComment("Configure width of textField, comboBox and textArea by columns method")
 
     row("intTextField(0..1000, 100):") {
