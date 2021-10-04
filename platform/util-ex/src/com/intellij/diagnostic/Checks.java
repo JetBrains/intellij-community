@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.diagnostic;
+package com.intellij.diagnostic;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -50,13 +52,6 @@ import java.util.function.Supplier;
  *     allInvariantsHoldFor(myRegistrar),
  *     "Registrar is in inconsistent state",
  *     AttachmentFactory.createAttachment(myFile));
- *   // ...
- *
- *   // ...
- *   if (isSomethingWentWrongWithGivenValue(index, value)) {
- *     Checks.logWarn(MyProcessor.class, "Unexpected situation");
- *     // doing some fallback scenario
- *   }
  *
  *   // ...
  *   if      (isVariant1()) { ... }
@@ -565,34 +560,6 @@ public class Checks {
   public static void logError(@NotNull Class<?> loggingClass, @NotNull Object message, Attachment @NotNull ... attachments) {
     String s = message.toString();
     Logger.getInstance(loggingClass).error(s, new IllegalStateException(s), attachments);
-  }
-
-  /**
-   * Logs {@link IllegalStateException} with the given {@code message} as a <i>warning</i>.
-   */
-  public static void logWarn(@NotNull Class<?> loggingClass, @NotNull Object message) {
-    Logger.getInstance(loggingClass).warn(new IllegalStateException(message.toString()));
-  }
-
-  /**
-   * Logs {@link IllegalStateException} with the given {@code message} as <i>debug info</i>.
-   */
-  public static void logDebug(@NotNull Class<?> loggingClass, @NotNull Object message) {
-    Logger.getInstance(loggingClass).debug(new IllegalStateException(message.toString()));
-  }
-
-  /**
-   * Logs {@link IllegalStateException} with the given {@code message} as <i>info</i>.
-   */
-  public static void logInfo(@NotNull Class<?> loggingClass, @NotNull Object message) {
-    Logger.getInstance(loggingClass).info(new IllegalStateException(message.toString()));
-  }
-
-  /**
-   * Logs {@link IllegalStateException} with the given {@code message} as <i>trace info</i>.
-   */
-  public static void logTrace(@NotNull Class<?> loggingClass, @NotNull Object message) {
-    Logger.getInstance(loggingClass).trace(new IllegalStateException(message.toString()));
   }
 
   //endregion
