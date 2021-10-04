@@ -59,7 +59,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String GROUPS = "groups";
   @NonNls private static final String INSPECTION = "inspection";
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
 
   @Override
   public String getFormatName() {
@@ -114,14 +114,18 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
     for (Element duplicates : problems.getRootElement().getChildren("duplicate")) {
-      jsonWriter.beginArray();
-      for (Element fragment : duplicates.getChildren("fragment")) {
-        convertDuplicateFragment(jsonWriter, fragment);
-      }
-      jsonWriter.endArray();
+      convertDuplicates(jsonWriter, duplicates);
     }
     jsonWriter.endArray();
     jsonWriter.endObject();
+  }
+
+  public static void convertDuplicates(@NotNull JsonWriter jsonWriter, Element duplicates) throws IOException {
+    jsonWriter.beginArray();
+    for (Element fragment : duplicates.getChildren("fragment")) {
+      convertDuplicateFragment(jsonWriter, fragment);
+    }
+    jsonWriter.endArray();
   }
 
   private static void convertDuplicateFragment(@NotNull JsonWriter jsonWriter, Element fragment) throws IOException {
