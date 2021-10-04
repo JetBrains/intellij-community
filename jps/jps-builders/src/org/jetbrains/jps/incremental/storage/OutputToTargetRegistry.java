@@ -56,11 +56,11 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     myRelativizer = relativizer;
   }
 
-  protected void addMapping(String outputPath, int buildTargetId) throws IOException {
+  void addMapping(String outputPath, int buildTargetId) throws IOException {
     addMapping(Collections.singleton(outputPath), buildTargetId);
   }
 
-  protected void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
+  void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
     final TIntHashSet set = new TIntHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {

@@ -139,7 +139,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if (tab == null) return null;
     if (tab instanceof DefaultMutableTreeNode) {
       var panel = ((DefaultMutableTreeNode)tab).getUserObject();
-      if (panel != null && panel instanceof DefaultWelcomeScreenTab) {
+      if (panel instanceof DefaultWelcomeScreenTab) {
         return (DefaultWelcomeScreenTab)panel;
       }
     }
