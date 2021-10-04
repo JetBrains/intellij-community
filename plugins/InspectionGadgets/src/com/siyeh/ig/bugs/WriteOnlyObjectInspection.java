@@ -13,6 +13,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -23,6 +24,8 @@ import javax.swing.*;
 import java.util.List;
 
 public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final CallMatcher OBJECT_CLONE =
+    CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
   public boolean ignoreImpureConstructors = true;
 
   @Override
@@ -53,7 +56,7 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
       public void visitNewExpression(PsiNewExpression expression) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(expression);
         PsiJavaCodeReferenceElement anchor = expression.getClassOrAnonymousClassReference();
-        if (anchor != null && nextCall != null && isNewExpression(expression) && isWriteWithoutRead(nextCall, true)) {
+        if (anchor != null && nextCall != null && isNewExpression(expression) && isWriteOnlyCall(nextCall, true)) {
           holder.registerProblem(anchor, InspectionGadgetsBundle.message("write.only.object.display.name"));
         }
       }
@@ -62,7 +65,7 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
         PsiElement anchor = call.getMethodExpression().getReferenceNameElement();
-        if (anchor != null && nextCall != null && isNewExpression(call) && isWriteWithoutRead(nextCall, false)) {
+        if (anchor != null && nextCall != null && isNewExpression(call) && isWriteOnlyCall(nextCall, false)) {
           holder.registerProblem(anchor, InspectionGadgetsBundle.message("write.only.object.display.name"));
         }
       }
@@ -84,8 +87,9 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
           List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, block);
           if (references.isEmpty()) return;
           for (PsiReferenceExpression ref : references) {
-            PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
-            if (!isWriteWithoutRead(call, exactType)) return;
+            if (!isWriteWithoutRead(ref, exactType)) {
+              return;
+            }
           }
           holder.registerProblem(identifier, InspectionGadgetsBundle.message("write.only.object.display.name"));
         }
@@ -93,8 +97,21 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
+  private static boolean isWriteWithoutRead(@NotNull PsiReferenceExpression ref, boolean exactType) {
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)parent)) {
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiExpression &&
+          ExpressionUtils.isVoidContext((PsiExpression)grandParent)) {
+        return true;
+      }
+    }
+    PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
+    return isWriteOnlyCall(call, exactType);
+  }
+
   @Contract("null, _ -> false")
-  private static boolean isWriteWithoutRead(@Nullable PsiMethodCallExpression call, boolean exactType) {
+  private static boolean isWriteOnlyCall(@Nullable PsiMethodCallExpression call, boolean exactType) {
     while (call != null) {
       if (!isMutatorMethod(call, exactType)) break;
       if (ExpressionUtils.isVoidContext(call)) return true;
@@ -119,6 +136,7 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
     if (initializer == null) return false;
     return ExpressionUtils.nonStructuralChildren(initializer).allMatch(
       expr -> {
+        if (OBJECT_CLONE.matches(expr)) return true;
         if (expr instanceof PsiNewExpression ||
             expr instanceof PsiMethodCallExpression &&
             ContractReturnValue.returnNew().equals(JavaMethodContractUtil.getNonFailingReturnValue(
