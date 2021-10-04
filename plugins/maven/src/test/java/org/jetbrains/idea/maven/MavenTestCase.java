@@ -360,19 +360,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   private static String createSettingsXmlContent(String content) {
-    String mirror = System.getProperty("idea.maven.test.mirror",
-                                       // use JB maven proxy server for internal use by default, see details at
-                                       // https://confluence.jetbrains.com/display/JBINT/Maven+proxy+server
-                                       "https://repo.labs.intellij.net/repo1");
     return "<settings>" +
            content +
-           "<mirrors>" +
-           "  <mirror>" +
-           "    <id>jb-central-proxy</id>" +
-           "    <url>" + mirror + "</url>" +
-           "    <mirrorOf>external:*,!flex-repository</mirrorOf>" +
-           "  </mirror>" +
-           "</mirrors>" +
            "</settings>";
   }
 
