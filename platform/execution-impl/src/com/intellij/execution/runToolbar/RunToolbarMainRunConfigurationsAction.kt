@@ -3,8 +3,13 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 
 class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction() {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarMainRunConfigurationsAction::class.java)
+  }
+
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
     return state == RunToolbarMainSlotState.CONFIGURATION
   }
@@ -14,5 +19,10 @@ class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction(
       val manager = RunToolbarSlotManager.getInstance(it)
       manager.mainSlotData.configuration
     } ?: super.getSelectedConfiguration(e)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    traceLog(LOG, e)
   }
 }

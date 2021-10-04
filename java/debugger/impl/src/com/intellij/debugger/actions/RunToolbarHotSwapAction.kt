@@ -10,12 +10,17 @@ import com.intellij.execution.runToolbar.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import java.util.*
 
 class RunToolbarHotSwapAction : AnAction(), RTBarAction {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarHotSwapAction::class.java)
+  }
+
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -61,5 +66,7 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+
+    //LOG.info(getLog(e))
   }
 }

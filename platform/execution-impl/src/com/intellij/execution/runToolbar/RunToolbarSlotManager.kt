@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
 import java.util.function.Function
 import javax.swing.SwingUtilities
+import com.intellij.openapi.diagnostic.trace
 
 class RunToolbarSlotManager(val project: Project) {
   companion object {
@@ -91,6 +92,8 @@ class RunToolbarSlotManager(val project: Project) {
       field = value
 
       if(value) {
+        LOG.trace {"SLOT MANAGER settings: new on top ${getMoveNewOnTop()}; update by selected ${getUpdateMainBySelected()}"}
+
         val runConfigurations = runToolbarSettings.getRunConfigurations()
         runConfigurations.forEachIndexed { index, entry ->
           if(index == 0) {
@@ -99,7 +102,7 @@ class RunToolbarSlotManager(val project: Project) {
             addSlot().configuration = entry
           }
         }
-        LOG.info("SLOT MANAGER restoreRunConfigurations: $runConfigurations")
+        LOG.trace {"SLOT MANAGER restoreRunConfigurations: $runConfigurations"}
 
         val con = project.messageBus.connect()
         connection = con
@@ -111,11 +114,11 @@ class RunToolbarSlotManager(val project: Project) {
             mainSlotData.environment?.let {
               val slot = addSlot()
               slot.configuration = settings
-              LOG.info("SLOT MANAGER runConfigurationSelected: $settings first slot added ")
+              LOG.trace {"SLOT MANAGER runConfigurationSelected: $settings first slot added "}
               moveToTop(slot.id)
             } ?: kotlin.run {
               mainSlotData.configuration = settings
-              LOG.info("SLOT MANAGER runConfigurationSelected: $settings change main configuration ")
+              LOG.trace {"SLOT MANAGER runConfigurationSelected: $settings change main configuration "}
               update()
             }
           }
@@ -162,9 +165,9 @@ class RunToolbarSlotManager(val project: Project) {
   private fun traceState() {
     val separator = " "
     val ids = dataIds.indices.mapNotNull { "${it+1}: ${slotsData[dataIds[it]]}" }.joinToString(", ")
-    LOG.info("SLOT MANAGER state: $state" +
+    LOG.trace {"SLOT MANAGER state: $state" +
              "${separator}== slots: 0: ${mainSlotData}, $ids" +
-             "${separator}== slotsData: ${slotsData.values}")
+             "${separator}== slotsData: ${slotsData.values}"}
   }
 
 
@@ -202,7 +205,7 @@ class RunToolbarSlotManager(val project: Project) {
     set(value) {
       if (value == field) return
       field = value
-      LOG.info("SLOT MANAGER STATE updated $value")
+      LOG.trace {"SLOT MANAGER STATE updated $value"}
       traceState()
       stateListeners.forEach { it.stateChanged(value) }
     }
@@ -255,7 +258,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
-    LOG.info("SLOT MANAGER process started: $env (${env.executionId}) ")
+    LOG.trace {"SLOT MANAGER process started: $env (${env.executionId}) "}
 
     activeProcesses.updateActiveProcesses(slotsData)
     if (newSlot) {
@@ -281,7 +284,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
-    LOG.info("SLOT MANAGER process started: $env (${env.executionId}) ")
+    LOG.trace {"SLOT MANAGER process started: $env (${env.executionId}) "}
 
     activeProcesses.updateActiveProcesses(slotsData)
     update()
@@ -310,7 +313,7 @@ class RunToolbarSlotManager(val project: Project) {
         it.environment = null
       }
     }
-    LOG.info("SLOT MANAGER process stopped: $executionId ")
+    LOG.trace {"SLOT MANAGER process stopped: $executionId "}
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
     ActivityTracker.getInstance().inc()
@@ -421,12 +424,12 @@ class RunToolbarSlotManager(val project: Project) {
       val runManager = RunManager.getInstance(project)
       if (mainSlotData.configuration !=null && mainSlotData.configuration != runManager.selectedConfiguration && mainSlotData.environment?.getRunToolbarProcess()?.isTemporaryProcess() != true) {
         runManager.selectedConfiguration = mainSlotData.configuration
-        LOG.info("SLOT MANAGER (saveSlotsConfiguration) change selected configuration by main: ${mainSlotData.configuration} ")
+        LOG.trace {"SLOT MANAGER (saveSlotsConfiguration) change selected configuration by main: ${mainSlotData.configuration} "}
       }
     }
 
     val configurtions = list.mapNotNull { slotsData[it]?.configuration }.toMutableList()
-    LOG.info("SLOT MANAGER saveSlotsConfiguration: ${configurtions} ")
+    LOG.trace {"SLOT MANAGER saveSlotsConfiguration: ${configurtions} "}
     runToolbarSettings.setRunConfigurations(configurtions)
   }
 }

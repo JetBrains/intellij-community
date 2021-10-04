@@ -65,7 +65,7 @@ class RunToolbarComponentService(val project: Project) {
   private fun start(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions[env.executionId] = env
-      LOG.info("new active process added: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      LOG.info("new active process added: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
       if(extraSlots.active) {
         extraSlots.processStarted(env)
       }
