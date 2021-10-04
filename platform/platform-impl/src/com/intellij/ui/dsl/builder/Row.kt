@@ -192,13 +192,25 @@ interface Row {
 
   fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<JLabel>
 
+  /**
+   * Creates text field with [columns] set to [COLUMNS_SHORT]
+   */
   fun textField(): Cell<JBTextField>
 
+  /**
+   * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
+   */
   fun textFieldWithBrowseButton(@NlsContexts.DialogTitle browseDialogTitle: String? = null,
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
 
+  /**
+   * Creates integer text field with [columns] set to [COLUMNS_TINY]
+   *
+   * @param range allowed values range inclusive
+   * @param keyboardStep increase/decrease step for keyboard keys up/down. The keys are not used if [keyboardStep] is null
+   */
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
   fun textArea(): Cell<JBTextArea>

@@ -29,6 +29,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(getter: () -> T?, setter: (T?) -> Unit
 /**
  * Minimal width of combobox in chars
  *
+ * @see COLUMNS_TINY
  * @see COLUMNS_SHORT
  * @see COLUMNS_MEDIUM
  */
