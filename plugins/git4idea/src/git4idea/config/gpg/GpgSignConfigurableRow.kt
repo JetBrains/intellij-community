@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
@@ -36,6 +37,8 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     }
   }
 
+  private val application get() = ApplicationManager.getApplication()
+
   private val statusLabel: JLabel = JBLabel().apply {
     foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
   }
@@ -55,16 +58,14 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     updatePresentation()
 
     val connection = project.messageBus.connect(disposable)
-    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
-                         VcsRepositoryMappingListener { scheduleUpdate() })
-    connection.subscribe(GitExecutableManager.TOPIC,
-                         GitExecutableListener { scheduleUpdate() })
-    connection.subscribe(GitConfigListener.TOPIC,
-                         object : GitConfigListener {
-                           override fun notifyConfigChanged(repository: GitRepository) {
-                             scheduleUpdate()
-                           }
-                         })
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener { scheduleUpdate() })
+    connection.subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
+      override fun notifyConfigChanged(repository: GitRepository) {
+        scheduleUpdate()
+      }
+    })
+
+    application.messageBus.connect(disposable).subscribe(GitExecutableManager.TOPIC, GitExecutableListener { scheduleUpdate() })
 
     updateRepoList()
     reloadConfigs()
