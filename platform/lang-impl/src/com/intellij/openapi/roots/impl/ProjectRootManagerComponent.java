@@ -204,7 +204,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
     isFiringEvent = true;
     try {
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes));
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
     }
     finally {
       isFiringEvent = false;

@@ -222,7 +222,12 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        DumbService.getInstance(myProject).cancelTask(task);
+        for (RootsChangeIndexingInfo info : ((ModuleRootEventImpl)event).getInfos()) {
+          if (info == RootsChangeIndexingInfo.TOTAL_REINDEX) {
+            DumbService.getInstance(myProject).cancelTask(task);
+            return;
+          }
+        }
       }
     });
     task.queue(myProject);
