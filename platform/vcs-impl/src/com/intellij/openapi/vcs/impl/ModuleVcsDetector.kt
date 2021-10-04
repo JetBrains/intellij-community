@@ -15,72 +15,25 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.NotNull
 
 internal class ModuleVcsDetector(private val project: Project) {
-  private val vcsManager by lazy(LazyThreadSafetyMode.NONE) {
-    (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl)
-  }
+  private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
 
-  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
-    init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw ExtensionNotApplicableException.INSTANCE
-      }
-    }
+  private fun startDetection() {
+    val busConnection = project.messageBus.connect()
 
-    override fun runActivity(project: Project) {
-      val vcsDetector = project.service<ModuleVcsDetector>()
+    val moduleListener = MyModuleListener()
+    busConnection.subscribe(ProjectTopics.MODULES, moduleListener)
+    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, moduleListener)
 
-      val listener = vcsDetector.MyModulesListener()
-      val busConnection = project.messageBus.connect()
-      busConnection.subscribe(ProjectTopics.MODULES, listener)
-      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener)
-      busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener)
+    if (vcsManager.needAutodetectMappings()) {
+      val initialDetectionListener = InitialMappingsDetectionListener()
+      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, initialDetectionListener)
+      busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, initialDetectionListener)
 
-      if (vcsDetector.vcsManager.needAutodetectMappings()) {
-        vcsDetector.autoDetectVcsMappings(true)
-      }
-    }
-  }
-
-  private inner class MyModulesListener : ModuleRootListener, ModuleListener, AdditionalLibraryRootsListener {
-    private val myMappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
-
-    override fun beforeRootsChange(event: ModuleRootEvent) {
-      myMappingsForRemovedModules.clear()
-    }
-
-    override fun rootsChanged(event: ModuleRootEvent) {
-      onRootsChanged()
-    }
-
-    private fun onRootsChanged() {
-      myMappingsForRemovedModules.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
-      // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
-      // on start etc (look inside)
-      if (vcsManager.needAutodetectMappings()) {
-        autoDetectVcsMappings(false)
-      }
-    }
-
-    override fun moduleAdded(project: Project, module: Module) {
-      myMappingsForRemovedModules.removeAll(getMappings(module))
-      autoDetectModuleVcsMapping(module)
-    }
-
-    override fun beforeModuleRemoved(project: Project, module: Module) {
-      myMappingsForRemovedModules.addAll(getMappings(module))
-    }
-
-    override fun libraryRootsChanged(presentableLibraryName: String?,
-                                     oldRoots: MutableCollection<out VirtualFile>,
-                                     newRoots: MutableCollection<out VirtualFile>,
-                                     libraryNameForDebug: @NotNull String) {
-      onRootsChanged()
+      autoDetectVcsMappings(true)
     }
   }
 
@@ -127,14 +80,70 @@ internal class ModuleVcsDetector(private val project: Project) {
           newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
         }
       }
+
     if (newMappings.isNotEmpty()) {
       vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
     }
   }
 
-  private fun getMappings(module: Module): List<VcsDirectoryMapping> {
-    return module.rootManager.contentRoots
-      .filter { it.isDirectory }
-      .mapNotNull { root -> vcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
+  private inner class MyModuleListener : ModuleRootListener, ModuleListener {
+    private val mappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
+
+    override fun beforeRootsChange(event: ModuleRootEvent) {
+      mappingsForRemovedModules.clear()
+    }
+
+    override fun beforeModuleRemoved(project: Project, module: Module) {
+      mappingsForRemovedModules.addAll(getMappings(module))
+    }
+
+    override fun moduleAdded(project: Project, module: Module) {
+      mappingsForRemovedModules.removeAll(getMappings(module))
+
+      autoDetectModuleVcsMapping(module)
+    }
+
+    override fun rootsChanged(event: ModuleRootEvent) {
+      mappingsForRemovedModules.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
+      mappingsForRemovedModules.clear()
+    }
+
+    private fun getMappings(module: Module): List<VcsDirectoryMapping> {
+      return module.rootManager.contentRoots
+        .filter { it.isDirectory }
+        .mapNotNull { root -> vcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
+    }
+  }
+
+  private inner class InitialMappingsDetectionListener : ModuleRootListener, AdditionalLibraryRootsListener {
+    override fun rootsChanged(event: ModuleRootEvent) {
+      onRootsChanged()
+    }
+
+    override fun libraryRootsChanged(presentableLibraryName: String?,
+                                     oldRoots: MutableCollection<out VirtualFile>,
+                                     newRoots: MutableCollection<out VirtualFile>,
+                                     libraryNameForDebug: String) {
+      onRootsChanged()
+    }
+
+    private fun onRootsChanged() {
+      if (vcsManager.needAutodetectMappings()) {
+        autoDetectVcsMappings(false)
+      }
+    }
+  }
+
+
+  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
+    init {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.INSTANCE
+      }
+    }
+
+    override fun runActivity(project: Project) {
+      project.service<ModuleVcsDetector>().startDetection()
+    }
   }
 }
