@@ -55,7 +55,7 @@ class EditorTabTheme : TabTheme {
     get() = EditorColorsManager.getInstance().globalScheme
 
   override val background: Color
-    get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.background())
+    get() = newUIAware(EditorColorsManager.getInstance().globalScheme.defaultBackground, JBUI.CurrentTheme.EditorTabs.background())
 
   override val borderColor: Color
     get() = JBUI.CurrentTheme.EditorTabs.borderColor()
@@ -75,7 +75,7 @@ class EditorTabTheme : TabTheme {
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED).foregroundColor?: JBUI.CurrentTheme.EditorTabs.underlinedTabForeground()
 
   override val underlineHeight: Int
-    get() = newUIAware(0, JBUI.CurrentTheme.EditorTabs.underlineHeight())
+    get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
 
   override val hoverInactiveBackground: Color
     get() = newUIAware(ColorUtil.mix(JBColor.PanelBackground, globalScheme.defaultBackground, 0.5), hoverBackground)
