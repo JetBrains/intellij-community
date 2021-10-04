@@ -30,75 +30,10 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
+  private val pathSelector = VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable, GitExecutableHandler())
+
   @Volatile
   private var versionCheckRequested = false
-
-  private val pathSelector =
-    VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable, object : VcsExecutablePathSelector.ExecutableHandler {
-      override fun patchExecutable(executable: String): String? {
-        return GitExecutableDetector.patchExecutablePath(executable)
-      }
-
-      override fun testExecutable(executable: String) {
-        testGitExecutable(executable)
-      }
-    })
-
-  private fun testGitExecutable(pathToGit: String) {
-    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
-    val errorNotifier = InlineErrorNotifierFromSettings(
-      GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
-      modalityState, disposable
-    )
-
-    object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
-      private lateinit var gitVersion: GitVersion
-
-      override fun run(indicator: ProgressIndicator) {
-        val executableManager = GitExecutableManager.getInstance()
-        val executable = executableManager.getExecutable(pathToGit)
-        executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(executable)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        val problemHandler = findGitExecutableProblemHandler(project)
-        problemHandler.showError(error, errorNotifier)
-      }
-
-      override fun onSuccess() {
-        if (gitVersion.isSupported) {
-          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
-        }
-        else {
-          showUnsupportedVersionError(project, gitVersion, errorNotifier)
-        }
-      }
-    }.queue()
-  }
-
-  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
-                                                      private val modalityState: ModalityState,
-                                                      disposable: Disposable) :
-    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
-    @CalledInAny
-    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
-      if (fixOption is ErrorNotifier.FixOption.Configure) {
-        super.showError(text, description, null)
-      }
-      else {
-        super.showError(text, description, fixOption)
-      }
-    }
-
-    override fun resetGitExecutable() {
-      super.resetGitExecutable()
-      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
-      invokeAndWaitIfNeeded(modalityState) {
-        resetPathSelector()
-      }
-    }
-  }
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
 
@@ -147,6 +82,39 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       detectedExecutable)
   }
 
+  private fun testGitExecutable(pathToGit: String) {
+    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
+    val errorNotifier = InlineErrorNotifierFromSettings(
+      GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
+      modalityState, disposable
+    )
+
+    object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
+      private lateinit var gitVersion: GitVersion
+
+      override fun run(indicator: ProgressIndicator) {
+        val executableManager = GitExecutableManager.getInstance()
+        val executable = executableManager.getExecutable(pathToGit)
+        executableManager.dropVersionCache(executable)
+        gitVersion = executableManager.identifyVersion(executable)
+      }
+
+      override fun onThrowable(error: Throwable) {
+        val problemHandler = findGitExecutableProblemHandler(project)
+        problemHandler.showError(error, errorNotifier)
+      }
+
+      override fun onSuccess() {
+        if (gitVersion.isSupported) {
+          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
+        }
+        else {
+          showUnsupportedVersionError(project, gitVersion, errorNotifier)
+        }
+      }
+    }.queue()
+  }
+
   /**
    * Special method to check executable after it has been changed through settings
    */
@@ -160,6 +128,40 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       runBackgroundableTask(GitBundle.message("git.executable.version.progress.title"), project, true) {
         GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
       }
+    }
+  }
+
+  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
+                                                      private val modalityState: ModalityState,
+                                                      disposable: Disposable)
+    : InlineErrorNotifier(inlineComponent, modalityState, disposable) {
+    @CalledInAny
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
+      if (fixOption is ErrorNotifier.FixOption.Configure) {
+        super.showError(text, description, null)
+      }
+      else {
+        super.showError(text, description, fixOption)
+      }
+    }
+
+    override fun resetGitExecutable() {
+      super.resetGitExecutable()
+
+      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
+      invokeAndWaitIfNeeded(modalityState) {
+        resetPathSelector()
+      }
+    }
+  }
+
+  private inner class GitExecutableHandler : VcsExecutablePathSelector.ExecutableHandler {
+    override fun patchExecutable(executable: String): String? {
+      return GitExecutableDetector.patchExecutablePath(executable)
+    }
+
+    override fun testExecutable(executable: String) {
+      testGitExecutable(executable)
     }
   }
 }
