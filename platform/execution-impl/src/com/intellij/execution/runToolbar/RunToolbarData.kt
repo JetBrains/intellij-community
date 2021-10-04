@@ -83,7 +83,8 @@ internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
-  return runToolbarData()?.configuration
+  val runToolbarData = runToolbarData()
+  return runToolbarData?.environment?.runnerAndConfigurationSettings ?: runToolbarData?.configuration
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {
@@ -97,6 +98,10 @@ internal fun AnActionEvent.arrowIcon(): Icon? {
       AllIcons.Toolbar.Expand
     }
   }
+}
+
+fun ExecutionEnvironment.getDisplayName(): String? {
+  return this.contentToReuse?.displayName
 }
 
 fun AnActionEvent.environment(): ExecutionEnvironment? {
