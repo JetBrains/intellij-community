@@ -703,4 +703,22 @@ interface UastApiTestBase : UastPluginSelection {
         TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
     }
 
+    fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
+        val anno = uFile.classes.find { it.name == "Anno" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        TestCase.assertTrue("@Anno is not an annotation?!", anno.isAnnotationType)
+        for (psi in anno.javaPsi.annotations) {
+            val uAnnotation = anno.uAnnotations.find { it.javaPsi == psi } ?: continue
+            val rebuiltAnnotation = psi.toUElement(UAnnotation::class.java)
+            TestCase.assertNotNull("Should be able to rebuild UAnnotation from $psi", rebuiltAnnotation)
+            TestCase.assertEquals(uAnnotation.qualifiedName, rebuiltAnnotation!!.qualifiedName)
+
+            if (rebuiltAnnotation.qualifiedName?.endsWith("Retention") == true) {
+                val value = rebuiltAnnotation.findAttributeValue("value")
+                val reference = value as? UReferenceExpression
+                TestCase.assertNotNull("Can't find the reference to @Retention value", reference)
+                TestCase.assertEquals("SOURCE", (reference?.referenceNameElement as? UIdentifier)?.name)
+            }
+        }
+    }
 }

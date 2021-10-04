@@ -40,6 +40,22 @@ open class FirUastApiTest : AbstractFirUastTest() {
         return filePath in whitelist || super.isExpectedToFail(filePath, fileContent)
     }
 
+    @TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
+    @TestDataPath("\$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners::class)
+    class Declaration : FirUastApiTest(), UastApiTestBase {
+        override val isFirUastPlugin: Boolean = true
+
+        override fun check(filePath: String, file: UFile) {
+            // Bogus
+        }
+
+        @TestMetadata("retention.kt")
+        fun testRetention() {
+            doCheck("uast-kotlin-fir/testData/declaration/retention.kt", ::checkCallbackForRetention)
+        }
+    }
+
     @TestMetadata("../uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)

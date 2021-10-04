@@ -52,4 +52,9 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     public void testObjects() throws Exception {
         runTest("testData/declaration/objects.kt");
     }
+
+    @TestMetadata("retention.kt")
+    public void testRetention() throws Exception {
+        runTest("testData/declaration/retention.kt");
+    }
 }

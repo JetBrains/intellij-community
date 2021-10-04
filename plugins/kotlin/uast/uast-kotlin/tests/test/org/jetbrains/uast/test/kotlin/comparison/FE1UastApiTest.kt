@@ -20,6 +20,23 @@ class FE1UastApiTest : AbstractFE1UastTest() {
         // Bogus
     }
 
+    @TestMetadata("uast-kotlin-fir/testData/declaration")
+    @TestDataPath("/")
+    class Declaration : AbstractFE1UastTest(), UastApiTestBase {
+        override var testDataDir = KotlinRoot.DIR_PATH.resolve("uast/uast-kotlin-fir/testData/declaration").toFile()
+
+        override val isFirUastPlugin: Boolean = false
+
+        override fun check(testName: String, file: UFile) {
+            // Bogus
+        }
+
+        @TestMetadata("retention.kt")
+        fun testRetention() {
+            doTest("retention", ::checkCallbackForRetention)
+        }
+    }
+
     @TestMetadata("uast-kotlin/testData")
     @TestDataPath("/")
     class Legacy : AbstractFE1UastTest(), UastApiTestBase {
