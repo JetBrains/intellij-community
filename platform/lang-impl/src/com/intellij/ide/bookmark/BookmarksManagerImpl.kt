@@ -11,7 +11,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
 
@@ -224,27 +223,8 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     while (allGroups.isNotEmpty()) allGroups[0].remove()
   }
 
-  fun sort() = synchronized(notifier) {
-    sort(allGroups, this::compare, notifier::groupsSorted)
-    allGroups.forEach { it.sortLater() }
-  }
-
   fun sort(group: BookmarkGroup) {
     (group as? Group)?.sortLater()
-  }
-
-  private fun <T> sort(list: MutableList<T>, comparator: Comparator<T>, notify: () -> Unit) {
-    val sorted = list.sortedWith(comparator)
-    if (sorted == list) return
-    list.clear()
-    list.addAll(sorted)
-    notify()
-  }
-
-  private fun compare(group1: Group, group2: Group) = when {
-    group1 == defaultGroup -> -1
-    group2 == defaultGroup -> 1
-    else -> NaturalComparator.INSTANCE.compare(group1.name, group2.name)
   }
 
   override fun update(map: MutableMap<Bookmark, Bookmark?>) {
@@ -456,7 +436,13 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     internal fun sortLater() = invoker.invokeLater { sort() }
 
     private fun sort() = synchronized(notifier) {
-      if (contains(this)) sort(groupBookmarks, this::compare) { notifier.bookmarksSorted(this) }
+      if (groupBookmarks.isEmpty()) return
+      if (!contains(this)) return
+      val list = groupBookmarks.sortedWith(this::compare)
+      if (list == groupBookmarks) return
+      groupBookmarks.clear()
+      groupBookmarks.addAll(list)
+      notifier.bookmarksSorted(this)
     }
 
     private fun compare(info1: InGroupInfo, info2: InGroupInfo): Int {
