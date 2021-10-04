@@ -35,27 +35,20 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   @Volatile
   private var versionCheckRequested = false
 
-  private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
-
   private fun RowBuilder.createRow() = row {
     pathSelector.mainPanel(growX)
       .onReset {
         resetPathSelector()
       }
       .onIsModified {
-        val projectSettingsPathToGit = projectSettings.pathToGit
-        val currentPath = getCurrentExecutablePath()
-        if (pathSelector.isOverridden) {
-          currentPath != projectSettingsPathToGit
-        }
-        else {
-          currentPath != applicationSettings.savedPathToGit || projectSettingsPathToGit != null
-        }
+        pathSelector.isModified(
+          applicationSettings.savedPathToGit,
+          projectSettings.pathToGit != null,
+          projectSettings.pathToGit)
       }
       .onApply {
-        val executablePathOverridden = pathSelector.isOverridden
-        val currentPath = getCurrentExecutablePath()
-        if (executablePathOverridden) {
+        val currentPath = pathSelector.currentPath
+        if (pathSelector.isOverridden) {
           projectSettings.pathToGit = currentPath
         }
         else {
@@ -69,17 +62,16 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   }
 
   private fun resetPathSelector() {
-    val projectSettingsPathToGit = projectSettings.pathToGit
     val detectedExecutable = try {
       GitExecutableManager.getInstance().getDetectedExecutable(project)
     }
     catch (e: ProcessCanceledException) {
       GitExecutableDetector.getDefaultExecutable()
     }
+    pathSelector.setAutoDetectedPath(detectedExecutable)
     pathSelector.reset(applicationSettings.savedPathToGit,
-      projectSettingsPathToGit != null,
-      projectSettingsPathToGit,
-      detectedExecutable)
+      projectSettings.pathToGit != null,
+      projectSettings.pathToGit)
   }
 
   private fun testGitExecutable(pathToGit: String) {

@@ -105,15 +105,17 @@ public class VcsExecutablePathSelector {
     return myProjectPathCheckbox.isSelected();
   }
 
-  public void reset(@Nullable String globalPath,
-                    boolean pathOverriddenForProject,
-                    @Nullable @NlsSafe String projectPath,
-                    @NotNull @NlsSafe String autoDetectedPath) {
+  public void setAutoDetectedPath(@NotNull @NlsSafe String autoDetectedPath) {
     myAutoDetectedPath = autoDetectedPath;
     ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + autoDetectedPath);
+  }
 
-    myProjectPathCheckbox.setSelected(pathOverriddenForProject);
-    if (pathOverriddenForProject) {
+  /**
+   * @param overridden if projectPath takes precedence over the globalPath
+   */
+  public void reset(@Nullable @NlsSafe String globalPath, boolean overridden, @Nullable @NlsSafe String projectPath) {
+    myProjectPathCheckbox.setSelected(overridden);
+    if (overridden) {
       mySavedPath = globalPath;
       myPathSelector.setText(projectPath);
     }
