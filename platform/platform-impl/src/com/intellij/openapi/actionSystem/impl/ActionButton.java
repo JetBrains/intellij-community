@@ -226,7 +226,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
     if (!(getParent() instanceof ActionToolbar)) {
-      update();
+      ActionManager.doWithLazyActionManager(__ -> update());
     }
     else {
       updateToolTipText();
