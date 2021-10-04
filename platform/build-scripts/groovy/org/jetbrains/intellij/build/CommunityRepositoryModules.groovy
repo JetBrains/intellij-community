@@ -543,6 +543,7 @@ final class CommunityRepositoryModules {
       excludeFromModule("intellij.groovy.psi", "standardDsls/**")
       withModule("intellij.groovy.jps", "groovy-jps.jar")
       withModule("intellij.groovy.rt", "groovy-rt.jar")
+      withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
       withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
