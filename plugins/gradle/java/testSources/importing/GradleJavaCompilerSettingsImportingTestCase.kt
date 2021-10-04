@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.runners.Parameterized
 

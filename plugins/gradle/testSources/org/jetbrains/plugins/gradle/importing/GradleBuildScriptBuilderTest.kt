@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.junit.Test
 
 class GradleBuildScriptBuilderTest {
@@ -120,7 +120,7 @@ class GradleBuildScriptBuilderTest {
   @Test
   fun `test compile-implementation dependency scope`() {
     val versions = mutableMapOf<String, String>()
-    val configureScript: org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.() -> Unit = {
+    val configureScript: org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.() -> Unit = {
       versions["junit5"] = junit5Version
       versions["junit4"] = junit4Version
       withJUnit()

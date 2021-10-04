@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait

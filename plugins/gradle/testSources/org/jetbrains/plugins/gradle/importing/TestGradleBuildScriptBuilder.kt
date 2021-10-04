@@ -13,13 +13,13 @@ import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-open class GradleBuildScriptBuilder(
+open class TestGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
+) : AbstractGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
 
   override val scriptBuilder = GroovyScriptBuilder()
 
-  override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
+  override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
   fun applyPlugin(plugin: String) =
     withPrefix { call("apply", argument("plugin", code(plugin))) }
@@ -36,38 +36,38 @@ open class GradleBuildScriptBuilder(
   fun project(name: String) = call("project", name)
   fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
 
-  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
-  fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
+  fun project(name: String, configure: Consumer<TestGradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
+  fun project(name: String, configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("project", name) {
-        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+        addElements(TestGradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
-  fun configure(expression: Expression, configure: Consumer<GradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
-  fun configure(expression: Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
+  fun configure(expression: Expression, configure: Consumer<TestGradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("configure", expression) {
-        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+        addElements(TestGradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
-  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
-  fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+  fun allprojects(configure: Consumer<TestGradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
+  fun allprojects(configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("allprojects") {
-        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+        addElements(TestGradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
-  fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+  fun subprojects(configure: TestGradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("subprojects") {
-        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+        addElements(TestGradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
-  fun subprojects(configure: Consumer<GradleBuildScriptBuilder>) = subprojects { configure.accept(this) }
+  fun subprojects(configure: Consumer<TestGradleBuildScriptBuilder>) = subprojects { configure.accept(this) }
 
   fun withGradleIdeaExtPluginIfCan() = apply {
     val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)
@@ -123,7 +123,7 @@ open class GradleBuildScriptBuilder(
     }
   }
 
-  private inner class GradleBuildScriptChildBuilder : GradleBuildScriptBuilder(gradleVersion) {
+  private inner class TestGradleBuildScriptChildBuilder : TestGradleBuildScriptBuilder(gradleVersion) {
 
     override fun withJavaPlugin() =
       applyPlugin("'java'")
@@ -146,17 +146,17 @@ open class GradleBuildScriptBuilder(
       Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
 
     @JvmStatic
-    fun buildscript(gradleVersion: GradleVersion, configure: Consumer<GradleBuildScriptBuilder>) =
+    fun buildscript(gradleVersion: GradleVersion, configure: Consumer<TestGradleBuildScriptBuilder>) =
       buildscript(gradleVersion, configure::accept)
 
-    fun buildscript(gradleVersion: GradleVersion, configure: GradleBuildScriptBuilder.() -> Unit) =
-      GradleBuildScriptBuilder(gradleVersion).apply(configure).generate()
+    fun buildscript(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) =
+      TestGradleBuildScriptBuilder(gradleVersion).apply(configure).generate()
 
     @JvmStatic
-    fun GradleImportingTestCase.buildscript(configure: Consumer<GradleBuildScriptBuilder>) =
+    fun GradleImportingTestCase.buildscript(configure: Consumer<TestGradleBuildScriptBuilder>) =
       buildscript(configure::accept)
 
-    fun GradleImportingTestCase.buildscript(configure: GradleBuildScriptBuilder.() -> Unit) =
+    fun GradleImportingTestCase.buildscript(configure: TestGradleBuildScriptBuilder.() -> Unit) =
       createBuildScriptBuilder().apply(configure).generate()
   }
 }

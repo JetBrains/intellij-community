@@ -13,7 +13,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,10 +39,10 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     createProjectSubFile("impl/src/main/resources/dir/file-impl.properties");
     createProjectSubFile("impl/src/test/resources/dir/file-impl-test.properties");
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder
-        .allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .addImplementationDependency(builder.project(":api"))
         .project(":api", p -> {
           p.addImplementationDependency(p.project(":impl"));
@@ -171,7 +171,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                          "public class ImplTest extends ApiTest {}");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .addImplementationDependency(it.project(":impl"))
         .project(":impl", p -> {
           p.addImplementationDependency(p.project(":api"));
