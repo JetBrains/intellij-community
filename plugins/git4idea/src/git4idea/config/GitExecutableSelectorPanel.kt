@@ -5,13 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.ui.layout.*
+import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
@@ -34,6 +34,11 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
   @Volatile
   private var versionCheckRequested = false
+
+  init {
+    application.messageBus.connect(disposable).subscribe(GitExecutableManager.TOPIC,
+      GitExecutableListener { runInEdt(getModalityState()) { resetPathSelector() } })
+  }
 
   private fun RowBuilder.createRow() = row {
     pathSelector.mainPanel(growX)
@@ -62,13 +67,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   }
 
   private fun resetPathSelector() {
-    val detectedExecutable = try {
-      GitExecutableManager.getInstance().getDetectedExecutable(project)
-    }
-    catch (e: ProcessCanceledException) {
-      GitExecutableDetector.getDefaultExecutable()
-    }
-    pathSelector.setAutoDetectedPath(detectedExecutable)
+    pathSelector.setAutoDetectedPath(GitExecutableManager.getInstance().getDetectedExecutable(project, false))
     pathSelector.reset(
       applicationSettings.savedPathToGit,
       projectSettings.pathToGit != null,
@@ -76,7 +75,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   }
 
   private fun testGitExecutable(pathToGit: String) {
-    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
+    val modalityState = getModalityState()
     val errorNotifier = InlineErrorNotifierFromSettings(
       GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
       modalityState, disposable
@@ -124,6 +123,8 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
     }
   }
 
+  private fun getModalityState() = ModalityState.stateForComponent(pathSelector.mainPanel)
+
   private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
                                                       private val modalityState: ModalityState,
                                                       disposable: Disposable)
@@ -141,7 +142,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
     override fun resetGitExecutable() {
       super.resetGitExecutable()
 
-      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
+      GitExecutableManager.getInstance().getDetectedExecutable(project, true) // populate cache
       invokeAndWaitIfNeeded(modalityState) {
         resetPathSelector()
       }
