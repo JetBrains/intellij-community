@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private Project myProject;
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -87,45 +86,44 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
       invoke(method, editor, project);
     }
     else if (elements[0] instanceof PsiClass) {
-      myProject = project;
-      invoke((PsiClass)elements[0], editor);
+      invoke((PsiClass)elements[0], editor, project);
     }
 
   }
 
-  private void invoke(PsiClass aClass, Editor editor) {
+  private static void invoke(PsiClass aClass, Editor editor, Project project) {
     String qualifiedName = aClass.getQualifiedName();
     if(qualifiedName == null) {
-      showJspOrLocalClassMessage(editor);
+      showJspOrLocalClassMessage(editor, project);
       return;
     }
-    if (!checkAbstractClassOrInterfaceMessage(aClass, editor)) return;
+    if (!checkAbstractClassOrInterfaceMessage(aClass, editor, project)) return;
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length > 0) {
       String message =
               JavaRefactoringBundle.message("class.does.not.have.implicit.default.constructor", aClass.getQualifiedName()) ;
-      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
-    final int answer = Messages.showYesNoDialog(myProject,
+    final int answer = Messages.showYesNoDialog(project,
                                                 JavaRefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
                                                 getRefactoringName(), Messages.getQuestionIcon()
     );
     if (answer != Messages.YES) return;
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
-    new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
+    new ReplaceConstructorWithFactoryDialog(project, null, aClass).show();
   }
 
-  private void showJspOrLocalClassMessage(Editor editor) {
+  private static void showJspOrLocalClassMessage(Editor editor, Project project) {
     String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
   }
-  private boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass, Editor editor) {
+  private static boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass, Editor editor, Project project) {
     if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
     String message = RefactoringBundle.getCannotRefactorMessage(aClass.isInterface() ?
                                                                 JavaRefactoringBundle.message("class.is.interface", aClass.getQualifiedName()) :
                                                                 JavaRefactoringBundle.message("class.is.abstract", aClass.getQualifiedName()));
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
     return false;
   }
 
@@ -138,11 +136,11 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
 
     PsiClass aClass = method.getContainingClass();
     if(aClass == null || aClass.getQualifiedName() == null) {
-      showJspOrLocalClassMessage(editor);
+      showJspOrLocalClassMessage(editor, project);
       return;
     }
 
-    if (!checkAbstractClassOrInterfaceMessage(aClass, editor)) return;
+    if (!checkAbstractClassOrInterfaceMessage(aClass, editor, project)) return;
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     new ReplaceConstructorWithFactoryDialog(project, method, method.getContainingClass()).show();
