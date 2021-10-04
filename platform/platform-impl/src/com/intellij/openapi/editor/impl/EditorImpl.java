@@ -1070,6 +1070,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollPane.setRowHeaderView(myGutterComponent);
 
+    myScrollingModel.initListeners();
+
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
