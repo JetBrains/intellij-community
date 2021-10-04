@@ -243,13 +243,20 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
   }
 
   public CompletableFuture<Location> locationAsync() {
+    return locationAsync(1);
+  }
+
+  private CompletableFuture<Location> locationAsync(int attempt) {
     return getStackFrameAsync()
       .thenCompose(frame -> {
         try {
           return CompletableFuture.completedFuture(frame.location());
         }
         catch (InvalidStackFrameException e) {
-          return locationAsync();
+          if (attempt > 0) {
+            return locationAsync(attempt-1);
+          }
+          throw new CompletionException(new EvaluateException(e.getMessage(), e));
         }
       });
   }
