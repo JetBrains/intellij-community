@@ -7,10 +7,7 @@ import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprint
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -96,13 +93,15 @@ open class VirtualFileIndex internal constructor(
         vfuSet.forEach { vfu ->
           existingVfuInFirstMap.add(vfu)
           val property2EntityId = this.vfu2EntityId[vfu]
-          assert(
-            property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+          assert(property2EntityId != null) {
+            "VirtualFileUrl: $vfu exists in the first collection by EntityId: ${entityId.asString()} with Property: $property but absent at other"
+          }
 
           val compositeKey = getCompositeKey(entityId, property)
           val existingEntityId = property2EntityId!![compositeKey]
-          assert(
-            existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+          assert(existingEntityId != null) {
+            "VirtualFileUrl: $vfu exist in both maps but EntityId: ${entityId.asString()} with Property: $property absent at other"
+          }
         }
       }
 
