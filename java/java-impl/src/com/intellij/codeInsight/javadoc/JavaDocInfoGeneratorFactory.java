@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Checks;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +17,17 @@ public class JavaDocInfoGeneratorFactory {
   }
 
   protected JavaDocInfoGenerator createImpl(@NotNull Project project, @Nullable PsiElement element) {
+    EditorSettingsExternalizable.getInstance();
+    EditorSettingsExternalizable.getInstance();
+    EditorSettingsExternalizable.getInstance();
     return new JavaDocInfoGenerator(
       project,
       element,
       JavaDocHighlightingManagerImpl.getInstance(),
       false,
-      EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled(),
-      EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfInlineCodeBlocksEnabled(),
-      EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfLinksEnabled());
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting"),
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks"),
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links"));
   }
 
   @NotNull
@@ -42,9 +45,12 @@ public class JavaDocInfoGeneratorFactory {
     private @Nullable PsiElement myElement;
     private @NotNull JavaDocHighlightingManager myManager = new JavaDocHighlightingManagerImpl();
     private boolean myIsRendered = false;
-    private boolean myDoHighlighting = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled();
-    private boolean myDoHighlightBlocks = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfInlineCodeBlocksEnabled();
-    private boolean myDoHighlightLinks = EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingOfLinksEnabled();
+    private boolean myDoHighlighting =
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting");
+    private boolean myDoHighlightBlocks =
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
+    private boolean myDoHighlightLinks =
+      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
 
     private JavaDocInfoGeneratorBuilder(@NotNull Project project) {
       myProject = project;

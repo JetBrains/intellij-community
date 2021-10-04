@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
@@ -42,9 +43,6 @@ private val myFocusModeCheckBox                       get() = CheckboxDescriptor
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), uiSettings::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
-private val myDocSyntaxHighlightingCheckBox           get() = CheckboxDescriptor(IdeBundle.message("checkbox.enable.doc.syntax.highlighting"), PropertyBinding(model::isDocSyntaxHighlightingEnabled, model::setDocSyntaxHighlightingEnabled))
-private val myDocSyntaxHighlightingOfInlineCode       get() = CheckboxDescriptor(IdeBundle.message("checkbox.enable.doc.syntax.highlighting.of.inline.code.blocks"), PropertyBinding(model::isDocSyntaxHighlightingOfInlineCodeBlocksEnabled, model::setDocSyntaxHighlightingOfInlineCodeBlocksEnabled))
-private val myDocSyntaxHighlightingOfLinksCheckBox    get() = CheckboxDescriptor(IdeBundle.message("checkbox.enable.doc.syntax.highlighting.of.links"), PropertyBinding(model::isDocSyntaxHighlightingOfLinksEnabled, model::setDocSyntaxHighlightingOfLinksEnabled))
 // @formatter:on
 
 class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -105,25 +103,6 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCodeLensCheckBox)
-        largeGapAfter()
-      }
-      titledRow(IdeBundle.message("group.documentation.components")) {
-        row {
-          val highlighting = checkBox(myDocSyntaxHighlightingCheckBox)
-          row {
-            checkBox(myDocSyntaxHighlightingOfInlineCode).enableIf(highlighting.selected)
-          }
-          row {
-            checkBox(myDocSyntaxHighlightingOfLinksCheckBox).enableIf(highlighting.selected)
-          }
-          row(IdeBundle.message("spinner.doc.syntax.highlighting.saturation")) {
-            component(JSpinner())
-              .applyToComponent { this@applyToComponent.model = SpinnerNumberModel(1.0, 0.0, 1.0, 0.05) }
-              .withBinding({ ((it.value as Double) * 100).roundToInt() }, { it, value -> it.value = value * 0.01 },
-                PropertyBinding(model::getDocSyntaxHighlightingSaturation, model::setDocSyntaxHighlightingSaturation))
-              .enableIf(highlighting.selected)
-          }
-        }
         largeGapAfter()
       }
 

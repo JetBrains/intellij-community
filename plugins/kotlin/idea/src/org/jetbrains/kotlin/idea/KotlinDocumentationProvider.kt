@@ -17,11 +17,14 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.MathUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -282,11 +285,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                 .eraseTypeParameter()
         }
 
-        private val doSyntaxHighlighting : Boolean get() =
-            EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled
+        private val doSyntaxHighlighting: Boolean get() = getBoolean("documentation.components.enable.doc.syntax.highlighting")
 
-        private val highlightingSaturation : Float get() =
-          EditorSettingsExternalizable.getInstance().docSyntaxHighlightingSaturation * 0.01f
+        private val highlightingSaturation: Float
+            get() = MathUtil.clamp(getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f
 
         private fun StringBuilder.appendHighlighted(
             value: String,
