@@ -41,6 +41,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           settings) as InlayProviderSettingsModel
       }
     }.toMutableMap()
+    val lastId = settings.getLastViewedProviderId()
     val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull {
       ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
     }
@@ -51,19 +52,13 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
         if (lang.value.size == 1) {
-          val node = addModelNode(lang.value.first(), groupNode)
-          if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
-            nodeToSelect = node
-          }
+          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastId, nodeToSelect)
         }
         else {
           val langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
           lang.value.forEach {
-            val node = addModelNode(it, langNode)
-            if (nodeToSelect == null && getProviderId(node) == settings.getLastViewedProviderId()) {
-              nodeToSelect = node
-            }
+            nodeToSelect = addModelNode(it, langNode, lastId, nodeToSelect)
           }
         }
       }
@@ -104,7 +99,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun addModelNode(model: InlayProviderSettingsModel,
-                           parent: CheckedTreeNode): CheckedTreeNode {
+                           parent: CheckedTreeNode,
+                           lastId: String?,
+                           selected: CheckedTreeNode?): CheckedTreeNode? {
+    var nodeToSelect: CheckedTreeNode? = selected
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
 
@@ -122,16 +120,17 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
       caseNode.isChecked = it.value
       node.add(caseNode)
+      if (nodeToSelect == null && getProviderId(caseNode) == lastId) {
+        nodeToSelect = caseNode
+      }
     }
-    return node
+    return if (nodeToSelect == null && getProviderId(node) == lastId) node else nodeToSelect
   }
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
     rightPanel.removeAll()
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
-        InlayHintsSettings.instance().saveLastViewedProviderId(getProviderId(treeNode))
-
         addDescription(item.description)
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
@@ -144,6 +143,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val preview = model.getCasePreview(item)
         addPreview(preview, model.language)
       }
+    }
+    if (treeNode != null) {
+      InlayHintsSettings.instance().saveLastViewedProviderId(getProviderId(treeNode))
     }
     rightPanel.revalidate()
     rightPanel.repaint()
@@ -163,8 +165,18 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
-    val model = treeNode.userObject as InlayProviderSettingsModel
-    return model.language.id + "." + model.id
+    when (val item = treeNode.userObject) {
+      is InlayProviderSettingsModel -> {
+        val model = treeNode.userObject as InlayProviderSettingsModel
+        return model.language.id + "." + model.id
+      }
+      is ImmediateConfigurable.Case -> {
+        val model = (treeNode.parent as CheckedTreeNode).userObject as InlayProviderSettingsModel
+        return model.language.id + "." + model.id + "." + item.id
+
+      }
+    }
+    return ""
   }
 
   fun reset() {
