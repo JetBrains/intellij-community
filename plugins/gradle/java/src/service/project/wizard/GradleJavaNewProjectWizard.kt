@@ -3,12 +3,9 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -30,18 +27,15 @@ class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
           isInheritGroupId = parentData?.group == groupId
           isInheritVersion = parentData?.version == version
 
-          isUseKotlinDsl = false
+          isUseKotlinDsl = useKotlinDsl
 
           gradleVersion = suggestGradleVersion()
         }
 
-        builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
-          override fun update(module: Module, rootModel: ModifiableRootModel) {
-            AbstractGradleModuleBuilder.getBuildScriptData(module)
-              ?.withJavaPlugin()
-              ?.withJUnit()
-          }
-        })
+        builder.configureBuildScript {
+          it.withJavaPlugin()
+          it.withJUnit()
+        }
 
         ExternalProjectsManagerImpl.setupCreatedProject(project)
         builder.commit(project)

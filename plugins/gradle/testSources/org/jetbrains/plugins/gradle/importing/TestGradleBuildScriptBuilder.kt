@@ -3,9 +3,8 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
@@ -15,9 +14,7 @@ import kotlin.apply as applyKt
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 open class TestGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
-
-  override val scriptBuilder = GroovyScriptBuilder()
+) : GroovyDslGradleBuildScriptBuilder<TestGradleBuildScriptBuilder>(gradleVersion) {
 
   override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
