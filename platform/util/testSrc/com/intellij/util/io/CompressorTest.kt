@@ -25,11 +25,12 @@ class CompressorTest {
     val zip = tempDir.newFile("test.zip")
     val data = tempDir.newFile("file.txt", "789".toByteArray())
     Compressor.Zip(zip).use {
+      it.addFile("empty.txt", byteArrayOf())
       it.addFile("file1.txt", "123".toByteArray())
       it.addFile("file2.txt", ByteArrayInputStream("456".toByteArray()))
       it.addFile("file3.txt", data)
     }
-    assertZip(zip, "file1.txt" to "123", "file2.txt" to "456", "file3.txt" to "789")
+    assertZip(zip, "empty.txt" to "", "file1.txt" to "123", "file2.txt" to "456", "file3.txt" to "789")
   }
 
   @Test fun simpleZipWithFilters() {

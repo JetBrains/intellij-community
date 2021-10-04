@@ -112,7 +112,9 @@ public abstract class Compressor implements Closeable {
       }
       e.setTime(timestamp);
       myStream.putNextEntry(e);
-      StreamUtil.copy(source, myStream);
+      if (length != 0) {
+        StreamUtil.copy(source, myStream);
+      }
       myStream.closeEntry();
     }
 
