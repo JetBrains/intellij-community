@@ -16,6 +16,9 @@ class Retry {
     this.log = log
     this.delayMs = delayMs
     this.retries = retries
+    if (retries < 1) {
+      log.error("Retries number is lesser than one: $retries")
+    }
   }
 
   def <T> T call(Closure<T> operation) {
