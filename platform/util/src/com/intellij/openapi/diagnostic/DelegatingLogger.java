@@ -13,6 +13,21 @@ public abstract class DelegatingLogger<T extends Logger> extends Logger {
   }
 
   @Override
+  public boolean isTraceEnabled() {
+    return myDelegate.isTraceEnabled();
+  }
+
+  @Override
+  public void trace(String message) {
+    myDelegate.trace(message);
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    myDelegate.trace(t);
+  }
+
+  @Override
   public boolean isDebugEnabled() {
     return myDelegate.isDebugEnabled();
   }
