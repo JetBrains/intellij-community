@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskD
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
@@ -319,7 +319,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       .contains(debugString)
   }
 
-  fun importProject(configure: GradleBuildScriptBuilder.() -> Unit) {
+  fun importProject(configure: TestGradleBuildScriptBuilder.() -> Unit) {
     val buildScript = createBuildScriptBuilder()
     buildScript.configure()
     importProject(buildScript.generate())
