@@ -171,7 +171,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   protected class ApplyAction extends AbstractAction {
-    private final Alarm myUpdateAlarm = new Alarm();
+    private final Alarm myUpdateAlarm = new Alarm(getDisposable());
 
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());
