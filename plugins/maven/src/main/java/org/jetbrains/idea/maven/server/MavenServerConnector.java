@@ -146,7 +146,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   @Override
   public String toString() {
     return "MavenServerConnector{" +
-           "myDistribution=" + myDistribution.getMavenHome() +
+           Integer.toHexString(this.hashCode()) +
+           ", myDistribution=" + myDistribution.getMavenHome() +
            ", myJdk=" + myJdk.getName() +
            ", myMultimoduleDirectories=" + myMultimoduleDirectories +
            '}';

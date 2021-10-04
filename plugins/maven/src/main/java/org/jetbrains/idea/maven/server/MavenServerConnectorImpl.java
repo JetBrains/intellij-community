@@ -154,6 +154,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   @ApiStatus.Internal
   @Override
   public void shutdown(boolean wait) {
+    MavenLog.LOG.warn("[connector] shutdown "  + this + " " + (mySupport == null));
     super.shutdown(true);
     cleanUp();
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
@@ -176,6 +177,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
     cleanUp();
     myManager.cleanUp(this);
+    MavenLog.LOG.warn("[connector] perform error " + this);
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
@@ -229,16 +231,17 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
         mySupport.onTerminate(e -> {
+          MavenLog.LOG.warn("[connector] terminate " + MavenServerConnectorImpl.this);
           shutdown(false);
         });
         MavenServer server = mySupport.acquire(this, "", indicator);
         startPullingDownloadListener(server);
         startPullingLogger(server);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + dirForLogs + " has been connected");
+        MavenLog.LOG.info("[connector] in " + dirForLogs + " has been connected " + MavenServerConnectorImpl.this);
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + dirForLogs, e);
+        MavenLog.LOG.warn("[connector] cannot connect in " + dirForLogs, e);
         myServerPromise.setError(e);
       }
     }
