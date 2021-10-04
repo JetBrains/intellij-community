@@ -8,9 +8,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 abstract class SaveAndSyncHandler {
   companion object {
