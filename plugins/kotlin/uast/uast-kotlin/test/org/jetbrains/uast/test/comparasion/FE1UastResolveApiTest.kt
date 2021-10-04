@@ -38,6 +38,11 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         fun testIf() {
             doTest("if", ::checkCallbackForIf)
         }
+
+        @TestMetadata("retention.kt")
+        fun testRetention() {
+            doTest("retention", ::checkCallbackForRetention)
+        }
     }
 
     @TestMetadata("uast-kotlin/testData")
