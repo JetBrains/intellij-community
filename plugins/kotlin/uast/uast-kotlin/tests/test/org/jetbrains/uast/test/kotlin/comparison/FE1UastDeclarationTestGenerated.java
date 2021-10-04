@@ -61,4 +61,9 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
     public abstract static class Legacy extends AbstractFE1UastDeclarationTest {
 
     }
+
+    @TestMetadata("retention.kt")
+    public void testRetention() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/retention.kt");
+    }
 }
