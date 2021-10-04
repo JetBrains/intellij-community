@@ -276,9 +276,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       return file
     }
 
-    val parent = file.parent ?: return null
-
     if (maxChecksUp > 1) {
+      val parent = file.parent ?: return null
       return getVirtualFileDirectory(parent, maxChecksUp - 1)
     } else {
       return null
