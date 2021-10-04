@@ -70,11 +70,11 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final long startNs = System.nanoTime();
     final ProjectData projectData = suite.getCoverageData();
-    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    final File tempFile = FileUtil.createTempFile("temp", "");
-    tempFile.deleteOnExit();
-    new SaveHook(tempFile, true, new IdeaClassFinder(project, suite), false).save(projectData);
+    if (projectData == null) return;
+    SaveHook.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false);
+
     final long generationStartNs = System.nanoTime();
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
     builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
     final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
