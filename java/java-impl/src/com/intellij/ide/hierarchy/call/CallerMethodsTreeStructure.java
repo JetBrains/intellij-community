@@ -48,9 +48,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       if (grandParent instanceof PsiExpressionList) {
         // for created anonymous class that immediately passed as argument use instantiation point as next call point (IDEA-73312)
         enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(grandParent);
-        if (enclosingElement != null) {
-          enclosingClass = enclosingElement.getContainingClass();
-        }
+        enclosingClass = enclosingElement == null ? null : enclosingElement.getContainingClass();
       }
       if (enclosingClass instanceof PsiAnonymousClass) {
         expectedQualifierClass = enclosingClass.getSuperClass();
