@@ -266,8 +266,6 @@
       <group id="Bookmarks.ToolWindow.GearActions">
         <action id="BookmarksView.GroupLineBookmarks" icon="AllIcons.Actions.GroupByFile"
                 class="com.intellij.ide.bookmark.actions.GroupLineBookmarksToggleAction"/>
-        <action id="BookmarksView.SortGroupsAndBookmarks" icon="AllIcons.ObjectBrowser.SortByType"
-                class="com.intellij.ide.bookmark.actions.SortGroupsAndBookmarksAction"/>
         <separator/>
         <action id="BookmarksView.AutoscrollFromSource" icon="AllIcons.General.AutoscrollFromSource"
                 class="com.intellij.ide.bookmark.actions.AutoscrollFromSourceToggleAction"/>
