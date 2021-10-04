@@ -90,7 +90,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       LOG.info("MAIN SLOT isOpened: $isOpened")
       updateState()
 
-      if (RunToolbarProcess.experimentalUpdating()) {
+      if (RunToolbarProcess.isExperimentalUpdatingEnabled) {
         forceUpdate()
       }
     }

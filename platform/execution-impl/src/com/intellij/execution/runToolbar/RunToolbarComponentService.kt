@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.application.subscribe
@@ -19,7 +19,7 @@ class RunToolbarComponentService(val project: Project) {
   private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
 
   init {
-    if (RunToolbarProcess.isAvailable()) {
+    if (RunToolbarProcess.isAvailable) {
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
@@ -214,7 +215,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static boolean isAvailableInStatusBar() {
     initUISettingsListener();
-    return ToolbarSettings.Companion.getInstance().showSettingsEntryPointInStatusBar();
+    UISettings uiSettings = UISettings.getInstance();
+    ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
+    return !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getShowNavigationBar() &&
+           !(toolbarSettings.isEnabled() && toolbarSettings.isVisible());
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";

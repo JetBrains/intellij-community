@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -27,7 +28,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
-  @NonNls public static final String NAV_BAR = "NavBar";
+  public static final @NonNls String NAV_BAR = "NavBar";
   private static final Logger LOG = Logger.getInstance(NavBarRootPaneExtension.class);
   @SuppressWarnings("StatefulEp")
   private final Project myProject;
@@ -47,9 +48,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   @Override
   public void revalidate() {
-    final UISettings settings = UISettings.getInstance();
-    LOG.debug("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
-    if (isShowToolPanel(settings)) {
+    boolean showToolPanel = isShowToolPanel(UISettings.getInstance());
+    LOG.debug("Revalidate in the navbarRootPane, toolbar visible: " + showToolPanel);
+    if (showToolPanel) {
       toggleRunPanel(true);
     }
   }
@@ -69,9 +70,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return myNavToolbarGroupExist;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     if (myWrapperPanel == null) {
       myWrapperPanel = new NavBarWrapperPanel(new BorderLayout()) {
         @Override
@@ -201,7 +201,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     }
 
     myNavigationBar.updateState(settings.getShowNavigationBar());
-    myWrapperPanel.setVisible(settings.getShowNavigationBar() && !UISettings.getInstance().getPresentationMode());
+    myWrapperPanel.setVisible(settings.getShowNavigationBar() && !settings.getPresentationMode());
 
     myWrapperPanel.revalidate();
     myNavigationBar.revalidate();
@@ -216,13 +216,15 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   @Override
-  @NotNull
-  public String getKey() {
+  public @NotNull String getKey() {
     return NAV_BAR;
   }
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
-    return uiSettings.getShowToolbarInNavigationBar() && !uiSettings.getPresentationMode();
+    return uiSettings.getShowNavigationBar() &&
+           !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getPresentationMode() &&
+           !ToolbarSettings.getInstance().isVisible();
   }
 
   private static void alignVertically(Container container) {
@@ -241,8 +243,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return firstAction instanceof ComboBoxAction;
   }
 
-  @Nullable
-  private static AnAction getFirstAction(final AnAction group) {
+  private static @Nullable AnAction getFirstAction(final AnAction group) {
     if (group instanceof DefaultActionGroup) {
       AnAction firstAction = null;
       for (final AnAction action : ((DefaultActionGroup)group).getChildActionsOrStubs()) {

@@ -3,7 +3,6 @@ package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.openapi.project.Project
 
-
 abstract class RunWidgetAvailabilityManager {
   companion object{
     fun getInstance(project: Project): RunWidgetAvailabilityManager = project.getService(RunWidgetAvailabilityManager::class.java)
@@ -30,10 +29,8 @@ abstract class RunWidgetAvailabilityManager {
   }
 }
 
-class BaseRunWidgetAvailabilityManager : RunWidgetAvailabilityManager() {
+internal class BaseRunWidgetAvailabilityManager : RunWidgetAvailabilityManager() {
 
-  override fun isAvailable(): Boolean {
-    return true
-  }
+  override fun isAvailable(): Boolean = true
 
 }
