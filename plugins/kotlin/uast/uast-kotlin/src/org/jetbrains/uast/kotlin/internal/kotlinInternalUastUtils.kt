@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -364,7 +365,14 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         return JavaPsiFacade.getInstance(sourcePsi.project).findPackage(declarationDescriptor.fqName.asString())
     }
 
-    resolveToPsiClass({ sourcePsi.toUElement() }, declarationDescriptor, sourcePsi)?.let { return it }
+    resolveToPsiClass({ sourcePsi.toUElement() }, declarationDescriptor, sourcePsi)?.let {
+        return if (declarationDescriptor is EnumEntrySyntheticClassDescriptor) {
+            // An enum entry, a subtype of enum class, is resolved to the enclosing enum class if the mapped type is used.
+            // However, the expected resolution result is literally the enum entry, not the enum class.
+            // From the resolved enum class (as PsiClass), we can search for the enum entry (as PsiField).
+            it.findFieldByName(declarationDescriptor.name.asString(), false)
+        } else it
+    }
 
     if (declarationDescriptor is DeclarationDescriptorWithSource) {
         declarationDescriptor.source.getPsi()?.takeIf { it.isValid }?.let { it.getMaybeLightElement() ?: it }?.let { return it }
