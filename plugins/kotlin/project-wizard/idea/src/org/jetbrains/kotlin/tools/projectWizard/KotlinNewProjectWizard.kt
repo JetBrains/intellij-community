@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.div
+import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
@@ -51,7 +51,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                 wizard.jdk = sdk
                 wizard.context.writeSettings {
                     StructurePlugin.name.reference.setValue(projectName)
-                    StructurePlugin.projectPath.reference.setValue(projectPath / projectName)
+                    StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
 
                     projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
                     artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
