@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -28,7 +29,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   public static final String GROUP_NAME = "JavaScript";
   public static final Icon ICON = AllIcons.Nodes.PpWeb;
 
-  private final WebProjectTemplate<T> myTemplate;
+  protected final WebProjectTemplate<T> myTemplate;
   protected final NotNullLazyValue<ProjectGeneratorPeer<T>> myGeneratorPeerLazyValue;
 
   public WebModuleBuilder(@NotNull WebProjectTemplate<T> template) {
@@ -59,6 +60,11 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   @Override
   public String getGroupName() {
     return GROUP_NAME;
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return NewProjectWizardLegacy.isAvailable();
   }
 
   @Override

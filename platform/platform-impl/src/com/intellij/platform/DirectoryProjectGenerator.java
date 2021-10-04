@@ -14,7 +14,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-
+/**
+ * Provides simple directory-oriented generators, which usually used in small IDEs, where there is only one module
+ * {@link com.intellij.ide.util.projectWizard.AbstractNewProjectStep}
+ * {@link com.intellij.ide.util.projectWizard.ProjectSettingsStepBase}
+ * {@link com.intellij.ide.util.projectWizard.CustomStepProjectGenerator}
+ * {@link HideableProjectGenerator}
+ * 
+ */
 public interface DirectoryProjectGenerator<T> {
   @Nullable
   @Nls(capitalization = Nls.Capitalization.Sentence)
