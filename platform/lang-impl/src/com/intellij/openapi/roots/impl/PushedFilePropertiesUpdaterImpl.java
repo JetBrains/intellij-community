@@ -320,7 +320,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     //noinspection deprecation
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.Companion.getInstance(project).getEntityStorage().
+                                                                    WorkspaceModel.getInstance(project).getEntityStorage().
                                                                       getCurrent().entities(ModuleEntity.class));
       List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
       IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();

@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
@@ -106,7 +106,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
       (model as ModifiableRootModelBridge).prepareForCommit()
     }
 
-    getInstance(project).updateProjectModel<Any?> { builder: WorkspaceEntityStorageBuilder ->
+    WorkspaceModel.getInstance(project).updateProjectModel<Any?> { builder: WorkspaceEntityStorageBuilder ->
       builder.addDiff(diff)
       null
     }
@@ -233,7 +233,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
 
     return ReadAction.compute<ModifiableRootModel, RuntimeException> {
       val rootManager = ModuleRootManagerEx.getInstanceEx(module)
-      getInstance(project).entityStorage.current
+      WorkspaceModel.getInstance(project).entityStorage.current
       (rootManager as ModuleRootComponentBridge).getModifiableModel(diff, rootConfigurationAccessor)
     }
   }
