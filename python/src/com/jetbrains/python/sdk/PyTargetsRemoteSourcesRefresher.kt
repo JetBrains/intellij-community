@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.PathUtil
 import com.intellij.util.io.ZipUtil
@@ -113,7 +114,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
       }
       rootZip.deleteExisting()
     }
-    sdk.remoteSdkAdditionalData!!.setPathMappings(pathMappings)
+    (sdk.sdkAdditionalData as? RemoteSdkProperties)?.setPathMappings(pathMappings)
   }
 
   private class StateFile {
