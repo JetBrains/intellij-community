@@ -32,6 +32,50 @@ import java.util.function.Supplier;
  * and do not throw exception, i.e do not break the control flow.
  * We suggest using overloads with {@link Attachment} provided, it may significantly reduce error investigation time.</p>
  *
+ * <p>Usage example:
+ * <pre>{@code
+ * private @NotNull Result process(int index, int value) {
+ *   // critical, will throw if index is wrong
+ *   Checks.checkIndex(index, myRegistrar.getSize());
+ *   // non-critical, will log and continue
+ *   Checks.requireAndLog(
+ *     myRegistrar.contains(value), () -> buildErrorInfo(value));
+ *
+ *   // ...
+ *   // doing some work
+ *   // ...
+ *   // check and attach some info if it fails
+ *   Checks.checkAndLog(
+ *     MyProcessor.class,
+ *     allInvariantsHoldFor(myRegistrar),
+ *     "Registrar is in inconsistent state",
+ *     AttachmentFactory.createAttachment(myFile));
+ *   // ...
+ *
+ *   // ...
+ *   if (isSomethingWentWrongWithGivenValue(index, value)) {
+ *     Checks.logWarn(MyProcessor.class, "Unexpected situation");
+ *     // doing some fallback scenario
+ *   }
+ *
+ *   // ...
+ *   if      (isVariant1()) { ... }
+ *   else if (isVariant2()) { ... }
+ *   else if (isVariant3()) { ... }
+ *   else {
+ *     // can not tell the compiler that this branch is impossible
+ *     Checks.unreachable();
+ *   }
+ *
+ *   // ...
+ *   // finishing work
+ *
+ *   // checking the result validity
+ *   Checks.ensure(isValid(result));
+ * }
+ * }</pre>
+ * </p>
+ *
  * <p><b>NOTE:</b> for performance critical parts of code of for the checks
  * which should not be enabled under some circumstances it is likely better to use standard Java assertions
  * via {@code assert statement : message} construction.</p>
@@ -505,6 +549,14 @@ public class Checks {
   @Contract("_ -> fail")
   public static void fail(@NotNull Object message) {
     throw new IllegalStateException(message.toString());
+  }
+
+  /**
+   * @throws IllegalStateException saying that this function call must have been unreachable.
+   */
+  @Contract("-> fail")
+  public static void unreachable() {
+    throw new IllegalStateException("Must be unreachable");
   }
 
   /**
