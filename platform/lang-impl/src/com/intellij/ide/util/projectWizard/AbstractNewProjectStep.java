@@ -50,8 +50,12 @@ import java.util.List;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
+/**
+ * Defines the new project wizard, which is used in small IDEs where we don't need to work with modules directly
+ */
 public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware, ActionsWithPanelProvider {
-  static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME = new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
+  static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
+    new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
   private static final Key<Boolean> CREATED_KEY = new Key<>("abstract.new.project.step.created");
@@ -145,11 +149,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
       ProjectSettingsStepBase<T> step;
       if (generator instanceof CustomStepProjectGenerator) {
-        //noinspection unchecked,CastConflictsWithInstanceof
+        //noinspection unchecked
         step = (ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback);
       }
       else {
-        //noinspection unchecked
         step = createProjectSpecificSettingsStep(generator, callback);
       }
 
@@ -178,7 +181,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       Project projectToClose = frame != null ? frame.getProject() : null;
       DirectoryProjectGenerator<T> generator = settings.getProjectGenerator();
       T actualSettings = projectGeneratorPeer.getSettings();
-      Project project = doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
+      doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
     }
   }
 
@@ -197,7 +200,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return null;
     }
 
-    VirtualFile baseDir = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
+    VirtualFile baseDir = WriteAction.compute(
+      () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(location.toString())));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
