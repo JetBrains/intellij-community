@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
-import com.intellij.util.lang.java6.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,12 +107,13 @@ public final class GroovycRunner {
       return null;
     }
 
-    final ClassLoader[] ref = new ClassLoader[1];
-    new Runnable() {
-      public void run() {
-        ref[0] = UrlClassLoader.build().urls(urls).useCache().allowLock().get();
-      }
-    }.run();
-    return ref[0];
+    try {
+      Class<?> classLoaderClass = Class.forName("com.intellij.util.lang.java6.UrlClassLoader");
+      return (ClassLoader)classLoaderClass.getMethod("create", List.class).invoke(null, urls);
+    }
+    catch (Throwable t) {
+      t.printStackTrace(err);
+      return null;
+    }
   }
 }

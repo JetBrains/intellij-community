@@ -206,6 +206,11 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @NotNull
+  public static UrlClassLoader create(List<URL> urls) {
+    return build().urls(urls).useCache().allowLock().get();
+  }
+
+  @NotNull
   public static Builder build() {
     return new Builder();
   }
