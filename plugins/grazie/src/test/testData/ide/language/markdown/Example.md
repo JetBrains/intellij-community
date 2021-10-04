@@ -21,11 +21,11 @@ It <warning descr="IT_VBZ">are</warning> written not many good .
 
 Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</warning> it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
-* even here it is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of error
+* even here it is <warning descr="EN_A_VS_AN">an</warning> friend of human
 
 Once more we have an inline fragment<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> it is `a` friend.
 
-It is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of human
+It is <warning descr="EN_A_VS_AN">an</warning> friend of human
 
 And we've got error in injected code!
 ```kotlin
