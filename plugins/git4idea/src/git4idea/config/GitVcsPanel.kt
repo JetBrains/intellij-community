@@ -30,7 +30,10 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.ui.*
+import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
@@ -95,12 +98,10 @@ internal class GitVcsPanel(private val project: Project) :
   BoundCompositeConfigurable<UnnamedConfigurable>(message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
-  private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
+  private val projectSettings get() = GitVcsSettings.getInstance(project)
 
   @Volatile
   private var versionCheckRequested = false
-
-  private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
     VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
@@ -360,6 +361,7 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   private fun RowBuilder.updateProjectInfoFilter() {
+    val currentUpdateInfoFilterProperties = MyLogProperties(project.service())
     row {
       cell {
         val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
