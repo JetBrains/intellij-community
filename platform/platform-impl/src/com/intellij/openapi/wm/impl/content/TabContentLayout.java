@@ -259,7 +259,11 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
     else if (size == 1) {
       ContentTabLabel tabLabel = myTabs.get(0);
-      if (!StringUtil.isEmptyOrSpaces(tabLabel.getContent().getToolwindowTitle())) return TabsDrawMode.PAINT_ALL;
+      Content content = tabLabel.getContent();
+      if (!StringUtil.isEmptyOrSpaces(content.getToolwindowTitle())) {
+        if (Boolean.TRUE.equals(content.getUserData(Content.SIMPLIFIED_TAB_RENDERING_KEY))) return TabsDrawMode.PAINT_SIMPLIFIED;
+        return TabsDrawMode.PAINT_ALL;
+      }
       if (tabLabel.hasActiveIcons()) return TabsDrawMode.PAINT_SIMPLIFIED;
       return TabsDrawMode.HIDE;
     }
