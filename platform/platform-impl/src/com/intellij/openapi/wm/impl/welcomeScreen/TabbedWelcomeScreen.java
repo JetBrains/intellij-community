@@ -173,6 +173,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     return new CardLayoutPanel<>() {
       @Override
       protected WelcomeScreenTab prepare(WelcomeScreenTab key) {
+        key.updateComponent();
         return key;
       }
 
