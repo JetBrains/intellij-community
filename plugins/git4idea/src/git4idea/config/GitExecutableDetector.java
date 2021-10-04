@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,15 +60,26 @@ public class GitExecutableDetector {
       }
     }
 
-    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
-      synchronized (DETECTED_EXECUTABLE_LOCK) {
-        if (!myDetectionComplete) {
-          myDetectedExecutable = runDetect();
-          myDetectionComplete = true;
-        }
-        return getExecutable(distribution);
+    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"),
+                                    () -> detectExecutable(distribution));
+  }
+
+  @Nullable
+  private String detectExecutable(@Nullable WSLDistribution distribution) {
+    String executable;
+    boolean fireEvent = false;
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      if (!myDetectionComplete) {
+        myDetectedExecutable = runDetect();
+        myDetectionComplete = true;
+        fireEvent = true;
       }
-    });
+      executable = getExecutable(distribution);
+    }
+    if (fireEvent) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+    }
+    return executable;
   }
 
   public void clear() {
@@ -76,6 +88,7 @@ public class GitExecutableDetector {
       myDetectedExecutable = null;
       myDetectionComplete = false;
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   @Nullable

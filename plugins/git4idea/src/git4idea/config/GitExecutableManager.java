@@ -137,14 +137,8 @@ public class GitExecutableManager {
     return WslPath.getDistributionByWindowsUncPath(basePath);
   }
 
-  @NotNull
-  public String getDetectedExecutable(@Nullable Project project) {
-    String executable = getDetectedExecutable(project, true);
-    return executable != null ? executable : GitExecutableDetector.getDefaultExecutable();
-  }
-
   @Nullable
-  private String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
+  public String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
     WSLDistribution distribution = getProjectWslDistribution(project);
     if (detectIfNeeded) {
       return myExecutableDetector.detect(distribution);
@@ -156,7 +150,6 @@ public class GitExecutableManager {
 
   public void dropExecutableCache() {
     myExecutableDetector.clear();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).executableChanged();
   }
 
   /**
