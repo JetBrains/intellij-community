@@ -1334,13 +1334,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (setIndexedStatus) {
         IndexingFlag.setFileIndexed(file);
       }
-      if (VfsEventsMerger.LOG != null) {
-        VfsEventsMerger.LOG.info("File " + file +
-                                 " indexes have been updated for indexes " + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
-                                 " and deleted for " + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
-                                 ". Indexes was wiped = " + isIndexesDeleted +
-                                 "; is file valid = " + isValid);
-      }
+      VfsEventsMerger.tryLog("INDEX_UPDATED", file,
+                             () -> " updated_indexes=" + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
+                                   " deleted_indexes=" + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
+                                   " valid=" + isValid);
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       return indexingStatistics;
     }
