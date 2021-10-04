@@ -46,6 +46,7 @@ public class GitExecutableManager {
   @NotNull private final GitExecutableDetector myExecutableDetector = new GitExecutableDetector();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
+  @Topic.AppLevel
   public static final Topic<GitExecutableListener> TOPIC = new Topic<>(GitExecutableListener.class, Topic.BroadcastDirection.NONE);
 
   public GitExecutableManager() {
