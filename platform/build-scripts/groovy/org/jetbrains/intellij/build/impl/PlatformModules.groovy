@@ -138,6 +138,7 @@ final class PlatformModules {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
     layout.excludedProjectLibraries.add("jps-javac-extension")
+    layout.excludedProjectLibraries.add("Eclipse")
     productLayout.platformLayoutCustomizer.accept(layout)
 
     Set<String> alreadyPackedModules = new HashSet<>()
