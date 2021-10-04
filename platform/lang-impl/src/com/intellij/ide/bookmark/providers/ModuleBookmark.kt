@@ -2,11 +2,10 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.Bookmark
-import com.intellij.ide.bookmark.ui.tree.ModuleNode
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Objects
 
-class ModuleBookmark(override val provider: ModuleBookmarkProvider, val name: @Nls String, val isGroup: Boolean) : Bookmark {
+internal class ModuleBookmark(override val provider: ModuleBookmarkProvider, val name: @Nls String, val isGroup: Boolean) : Bookmark {
 
   override val attributes: Map<String, String>
     get() = when (isGroup) {

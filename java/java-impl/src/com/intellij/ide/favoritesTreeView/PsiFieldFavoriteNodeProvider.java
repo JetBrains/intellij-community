@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -21,11 +21,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
+public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -113,14 +114,19 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     if (DumbService.isDumb(project)) return null;
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.allScope(project);
     final String[] paths = url.split(";");
     if (paths.length != 2) return null;
     final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(paths[0], scope);
     if (aClass == null) return null;
-    final PsiField aField = aClass.findFieldByName(paths[1], false);
-    return new Object[]{aField};
+    return aClass.findFieldByName(paths[1], false);
   }
 
 
