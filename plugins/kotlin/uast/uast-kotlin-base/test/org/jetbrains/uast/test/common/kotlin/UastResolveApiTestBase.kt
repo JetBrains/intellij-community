@@ -2,10 +2,7 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -177,8 +174,7 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 TestCase.assertNotNull("Can't find the reference to @Retention value", reference)
                 val resolvedValue = reference!!.resolve()
                 TestCase.assertNotNull("Can't resolve @Retention value", resolvedValue)
-                // TODO: resolve to enclosing enum class?
-                // TestCase.assertEquals("SOURCE", (resolvedValue as? PsiNamedElement)?.name)
+                TestCase.assertEquals("SOURCE", (resolvedValue as? PsiNamedElement)?.name)
             }
         }
     }
