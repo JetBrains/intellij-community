@@ -296,8 +296,8 @@ object CodeWithMeClientDownloader {
             }
           }
           catch (ex: IOException) {
-            LOG.error(ex)
             future.complete(false)
+            LOG.error(ex)
             return@execute
           }
 
@@ -323,8 +323,8 @@ object CodeWithMeClientDownloader {
           future.complete(true)
         }
         catch (e: Throwable) {
-          LOG.error(e)
           future.complete(false)
+          LOG.error(e)
         }
         finally {
           synchronized(currentlyDownloading) {
