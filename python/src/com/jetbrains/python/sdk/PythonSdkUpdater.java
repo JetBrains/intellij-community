@@ -31,13 +31,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.remote.RemoteSdkProperties;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.PathMappingSettings;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.ApiStatus;
@@ -491,8 +494,8 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   @NotNull
   private static List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-    if (additionalData instanceof PyRemoteSdkAdditionalDataBase) {
-      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)additionalData;
+    if (additionalData instanceof RemoteSdkProperties) {
+      final RemoteSdkProperties remoteSdkData = (RemoteSdkProperties)additionalData;
       final List<String> paths = new ArrayList<>();
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());
