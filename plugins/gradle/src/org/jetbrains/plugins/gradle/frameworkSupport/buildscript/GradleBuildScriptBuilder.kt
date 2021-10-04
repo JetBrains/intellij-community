@@ -2,13 +2,18 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
+import java.util.function.Consumer
 
 @Suppress("unused")
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
 
   fun addGroup(group: String): BSB
   fun addVersion(version: String): BSB
+
+  fun configureTask(name: String, configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>): BSB
 
   fun addDependency(scope: String, dependency: String) = addDependency(scope, dependency, null)
   fun addDependency(scope: String, dependency: Expression) = addDependency(scope, dependency, null)

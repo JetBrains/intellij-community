@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.util.function.Consumer
@@ -130,4 +131,9 @@ interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BS
    * @return content for build.gradle
    */
   fun generate(): String
+
+  /**
+   * @return partial AST for build.gradle
+   */
+  fun generateTree(): BlockElement
 }
