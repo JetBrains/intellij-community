@@ -116,7 +116,6 @@ public class RunAnythingRunProfileState extends CommandLineState {
         }
       }
     });
-    processHandler.setHasPty(true);
     return processHandler;
   }
 }
