@@ -24,6 +24,7 @@ object ChangesBrowserToolWindow {
     val toolWindowManager = ToolWindowManager.getInstance(project)
     val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager)
 
+    content.putUserData(Content.SIMPLIFIED_TAB_RENDERING_KEY, true)
     repoToolWindow.contentManager.removeAllContents(true)
     repoToolWindow.contentManager.addContent(content)
     repoToolWindow.activate(null)
