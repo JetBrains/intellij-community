@@ -112,7 +112,13 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     override fun toString(): String = "YamlInjectedLanguageBlockWrapper($original, $myRange," +
                                       " rangeInRoot = $textRange '${textRange.substring(injectionHost.psi.containingFile.text).escLBr()}')"
 
-    override fun getTextRange(): TextRange = rangeInHost
+    override fun getTextRange(): TextRange {
+      val subBlocks = subBlocks
+      if (subBlocks.isEmpty()) return rangeInHost
+      return TextRange.create(
+        subBlocks.first().textRange.startOffset.coerceAtMost(rangeInHost.startOffset),
+        subBlocks.last().textRange.endOffset.coerceAtLeast(rangeInHost.endOffset))
+    }
 
     private val myBlocks by lazy(LazyThreadSafetyMode.NONE) {
       SmartList<Block>().also { result ->
