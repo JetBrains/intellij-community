@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -61,6 +62,8 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
       else -> return emptyMap()
     }
 
+    val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
+
     cache as Cache?
     val file = if (item is PsiFileSystemItem) item.virtualFile else item.containingFile?.virtualFile
     val project = item.project
@@ -69,7 +72,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
     if (file != null && cache != null) {
       getFileFeatures(data, file, project, cache, currentTime)
     }
-    data.putAll(getElementFeatures(item, currentTime, searchQuery, elementPriority))
+    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority))
     return data
   }
 
@@ -90,6 +93,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
   }
 
   protected abstract fun getElementFeatures(element: PsiElement,
+                                            presentation: TargetPresentation?,
                                             currentTime: Long,
                                             searchQuery: String,
                                             elementPriority: Int): Map<String, Any>

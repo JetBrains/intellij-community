@@ -6,6 +6,7 @@ import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -37,6 +38,7 @@ internal class SearchEverywhereFileFeaturesProvider
   }
 
   override fun getElementFeatures(element: PsiElement,
+                                  presentation: TargetPresentation?,
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int): Map<String, Any> {
