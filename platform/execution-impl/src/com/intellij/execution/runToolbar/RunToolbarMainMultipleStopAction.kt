@@ -4,9 +4,14 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.actions.StopAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.diagnostic.Logger
 import javax.swing.Icon
 
 class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
+  companion object {
+    private val LOG = Logger.getInstance(RunToolbarMainMultipleStopAction::class.java)
+  }
+
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_STABLE
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -22,6 +27,8 @@ class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
         e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+
+    traceLog(LOG, e)
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
