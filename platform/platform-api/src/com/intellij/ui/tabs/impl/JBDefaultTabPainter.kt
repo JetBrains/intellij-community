@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.rd.fill2DRect
+import com.intellij.openapi.rd.fill2DRoundRect
 import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
@@ -13,6 +14,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.UIManager
 
 open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTabPainter {
 
@@ -65,7 +67,13 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
                               g: Graphics2D,
                               active: Boolean) {
     val underline = underlineRectangle(position, rect, theme.underlineHeight)
-    g.fill2DRect(underline, if (active) theme.underlineColor else theme.inactiveUnderlineColor)
+    val arc = UIManager.getInt("EditorTabs.underlineArc")
+    val color = if (active) theme.underlineColor else theme.inactiveUnderlineColor
+    if (arc != 0) {
+      g.fill2DRoundRect(underline, arc.toDouble(), color)
+    } else {
+      g.fill2DRect(underline, color)
+    }
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {
