@@ -24,6 +24,8 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
     private val whitelist : Set<String> = setOf(
         // TODO: Handle FirEqualityOperatorCall in KtFirCallResolver#resolveCall(KtBinaryExpression)
         "uast-kotlin-fir/testData/declaration/doWhile.kt",
+        // TODO: Resolve enum entry
+        "uast-kotlin-fir/testData/declaration/retention.kt",
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
@@ -51,6 +53,11 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
         }
 
         // TODO: once call is supported, test labeledExpression.kt for labeled this and super
+
+        @TestMetadata("retention.kt")
+        fun testRetention() {
+            doCheck("uast-kotlin-fir/testData/declaration/retention.kt", ::checkCallbackForRetention)
+        }
     }
 
     @TestMetadata("../uast-kotlin/testData")

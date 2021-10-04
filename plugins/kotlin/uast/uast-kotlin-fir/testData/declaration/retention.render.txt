@@ -1,0 +1,6 @@
+public abstract annotation AnnoOnAnno {
+    public abstract fun strings() : java.lang.String[] = UastEmptyExpression
+}
+
+public abstract annotation Anno {
+}
