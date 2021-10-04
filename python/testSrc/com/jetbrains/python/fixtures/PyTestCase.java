@@ -131,12 +131,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
-    try {
-      myFixture.setUp();
-    }
-    catch (final Exception e) {
-      throw new RuntimeException("Error running setup", e);
-    }
+    myFixture.setUp();
   }
 
   /**
