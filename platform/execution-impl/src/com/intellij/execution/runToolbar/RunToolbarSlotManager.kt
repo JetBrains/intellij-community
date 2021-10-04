@@ -238,7 +238,9 @@ class RunToolbarSlotManager(val project: Project) {
       addNewProcessOnBottom(env)
     }
 
-    ActivityTracker.getInstance().inc()
+    SwingUtilities.invokeLater {
+      ActivityTracker.getInstance().inc()
+    }
   }
 
   private fun addNewProcessOnTop(env: ExecutionEnvironment) {
@@ -296,27 +298,38 @@ class RunToolbarSlotManager(val project: Project) {
     }
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
-    ActivityTracker.getInstance().inc()
+    SwingUtilities.invokeLater {
+      ActivityTracker.getInstance().inc()
+    }
   }
 
   fun processTerminated(executionId: Long) {
-    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let {
-      if (it.environment?.getRunToolbarProcess()?.isTemporaryProcess() == true) {
-        if (it == mainSlotData && slotsData.size == 1) {
-          it.clear()
-          it.configuration = RunManager.getInstance(project).selectedConfiguration
-        } else {
-          removeSlot(it.id)
+    slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let { slotDate ->
+      val removable = slotDate.environment?.runnerAndConfigurationSettings?.let {
+        it.isTemporary || !RunManager.getInstance(project).hasSettings(it)
+      } ?: true
+
+      if (removable) {
+        if (slotDate == mainSlotData && slotsData.size == 1) {
+          slotDate.clear()
+          slotDate.configuration = RunManager.getInstance(project).selectedConfiguration
+        }
+        else {
+          removeSlot(slotDate.id)
         }
       }
       else {
-        it.environment = null
+        slotDate.environment = null
       }
     }
-    LOG.trace {"SLOT MANAGER process stopped: $executionId "}
+
+    LOG.trace { "SLOT MANAGER process stopped: $executionId " }
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
-    ActivityTracker.getInstance().inc()
+
+    SwingUtilities.invokeLater {
+      ActivityTracker.getInstance().inc()
+    }
   }
 
   fun extraSlotCount(): Int {
@@ -383,14 +396,16 @@ class RunToolbarSlotManager(val project: Project) {
 
       SwingUtilities.invokeLater {
         slotListeners.forEach { it.slotRemoved(index) }
+        ActivityTracker.getInstance().inc()
       }
     }
 
     (if (index >= 0) getData(index) else if (mainSlotData.id == id) mainSlotData else null)?.let { slotDate ->
       slotDate.environment?.let {
-        if(it.isProcessTerminating()) {
+        if (it.isRunning() != true) {
           remove()
-        } else if (Messages.showOkCancelDialog(
+        }
+        else if (Messages.showOkCancelDialog(
             project,
             LangBundle.message("run.toolbar.remove.active.process.slot.message"),
             LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
@@ -445,8 +460,8 @@ class ActiveProcesses {
     return when {
       activeCount == 1 -> {
         processes.entries.firstOrNull()?. let { entry ->
-          entry.value.firstOrNull()?.runnerAndConfigurationSettings?.let {
-            ExecutionBundle.message("run.toolbar.started", entry.key.name,  Executor.shortenNameIfNeeded(it.name))
+          entry.value.firstOrNull()?.contentToReuse?.let {
+            ExecutionBundle.message("run.toolbar.started", entry.key.name, it.displayName)
           }
         }
       }

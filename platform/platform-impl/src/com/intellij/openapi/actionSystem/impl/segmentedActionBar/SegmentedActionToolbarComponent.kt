@@ -150,12 +150,13 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun paintActiveBorder(g: Graphics) {
-    if(isActive || paintBorderForSingleItem) {
+    if((isActive || paintBorderForSingleItem) && visibleActions != null) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 
   override fun paintBorder(g: Graphics) {
+    super.paintBorder(g)
     paintActiveBorder(g)
   }
 

@@ -37,12 +37,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
 
     override fun slotRemoved(index: Int) {
-      if(index >= 0 && index < components.size) {
-        removeSingleComponent(components[index])
-      }
-      else {
-        rebuild()
-      }
+      rebuild()
     }
 
     override fun rebuildPopup() {
@@ -137,9 +132,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun rebuild() {
     build()
-    if(manager.slotsCount() > 0 && added) {
-      pack()
-    }
+    pack()
   }
 
   private fun build() {
@@ -181,11 +174,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
         it.pack()
       }
     }
-  }
-
-  private fun removeSingleComponent(component: SlotComponent) {
-    removeComponent(component)
-    pack()
   }
 
   private fun removeComponent(component: SlotComponent) {
