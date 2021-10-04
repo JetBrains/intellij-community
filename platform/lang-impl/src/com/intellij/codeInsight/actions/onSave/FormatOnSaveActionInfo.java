@@ -4,46 +4,101 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.application.options.GeneralCodeStylePanel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.ide.actionsOnSave.ActionOnSaveComment;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
-  private static final String FORMAT_ON_SAVE_PROPERTY = "format.on.save";
-  private static final boolean FORMAT_ON_SAVE_DEFAULT = false;
+public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
 
-  private static final Key<Boolean> ONLY_CHANGED_LINES_KEY = Key.create("format.on.save.only.changed.lines");
-  private static final String ONLY_CHANGED_LINES_PROPERTY = "format.on.save.only.changed.lines";
-  private static final boolean ONLY_CHANGED_LINES_DEFAULT = false;
-
-  public static boolean isReformatOnSaveEnabled(@NotNull Project project) {
-    return PropertiesComponent.getInstance(project).getBoolean(FORMAT_ON_SAVE_PROPERTY, FORMAT_ON_SAVE_DEFAULT);
-  }
-
-  public static boolean isReformatOnlyChangedLinesOnSave(@NotNull Project project) {
-    return VcsFacade.getInstance().hasActiveVcss(project) &&
-           PropertiesComponent.getInstance(project).getBoolean(ONLY_CHANGED_LINES_PROPERTY, ONLY_CHANGED_LINES_DEFAULT);
-  }
-
-
-  private static void setReformatOnlyChangedLines(@NotNull Project project, boolean onlyChangedLines) {
-    PropertiesComponent.getInstance(project).setValue(ONLY_CHANGED_LINES_PROPERTY, onlyChangedLines, ONLY_CHANGED_LINES_DEFAULT);
-  }
+  private static final Key<FormatOnSaveOptions> OPTIONS_FROM_UI_KEY = Key.create("format.on.save.options");
 
   public FormatOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
-    super(context,
-          CodeInsightBundle.message("actions.on.save.page.checkbox.reformat.code"),
-          FORMAT_ON_SAVE_PROPERTY,
-          FORMAT_ON_SAVE_DEFAULT);
+    super(context);
+  }
+
+  @Override
+  public @NotNull String getActionOnSaveName() {
+    return CodeInsightBundle.message("actions.on.save.page.checkbox.reformat.code");
+  }
+
+  @Override
+  public boolean isActionOnSaveEnabled() {
+    FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
+    return options.isFormatOnSaveEnabled();
+  }
+
+  @Override
+  public void setActionOnSaveEnabled(boolean enabled) {
+    FormatOnSaveOptions options = getOrCreateOptionsObjectStoringUiState();
+    options.setFormatOnSaveEnabled(enabled);
+  }
+
+  @Override
+  public @Nullable ActionOnSaveComment getComment() {
+    FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
+
+    if (options.isFormatOnSaveEnabled() && !options.isAllFileTypesSelected() && options.getSelectedFileTypes().isEmpty()) {
+      return ActionOnSaveComment.warning(CodeInsightBundle.message("actions.on.save.page.warning.no.file.types.selected"));
+    }
+
+    return null;
+  }
+
+  private boolean isFormatOnlyChangedLines() {
+    FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
+    return options.isFormatOnlyChangedLines();
+  }
+
+  private void setFormatOnlyChangedLines(boolean changedLines) {
+    FormatOnSaveOptions options = getOrCreateOptionsObjectStoringUiState();
+    options.setFormatOnlyChangedLines(changedLines);
+  }
+
+
+  private @Nullable FormatOnSaveOptions getOptionsObjectStoringUiState() {
+    return getContext().getUserData(OPTIONS_FROM_UI_KEY);
+  }
+
+  private @NotNull FormatOnSaveOptions getOrCreateOptionsObjectStoringUiState() {
+    FormatOnSaveOptions options = getOptionsObjectStoringUiState();
+    if (options == null) {
+      options = FormatOnSaveOptions.getInstance(getProject()).clone();
+      getContext().putUserData(OPTIONS_FROM_UI_KEY, options);
+    }
+    return options;
   }
 
   @Override
@@ -58,36 +113,206 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
 
   @Override
   public @NotNull List<? extends DropDownLink<?>> getDropDownLinks() {
-    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return Collections.emptyList();
+    DropDownLink<String> fileTypesLink = createFileTypesDropDownLink();
+    DropDownLink<String> changedLinesLink = createChangedLinesDropDownLink();
+    return changedLinesLink != null ? List.of(fileTypesLink, changedLinesLink) : List.of(fileTypesLink);
+  }
+
+  private @NotNull DropDownLink<String> createFileTypesDropDownLink() {
+    Function1<DropDownLink<String>, JBPopup> popupBuilder = new Function1<>() {
+      @Override
+      public JBPopup invoke(DropDownLink<String> link) {
+        return createFileTypesPopup(link);
+      }
+    };
+
+    return new DropDownLink<>(getFileTypesLinkText(), popupBuilder);
+  }
+
+  private @NotNull @NlsContexts.LinkLabel String getFileTypesLinkText() {
+    FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
+
+    if (options.isAllFileTypesSelected()) {
+      return CodeInsightBundle.message("actions.on.save.page.label.all.file.types");
+    }
+
+    Set<String> fileTypes = options.getSelectedFileTypes();
+
+    if (fileTypes.isEmpty()) {
+      return CodeInsightBundle.message("actions.on.save.page.label.select.file.types");
+    }
+
+    String fileTypeName = fileTypes.iterator().next();
+    FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(fileTypeName);
+    String presentableFileType = fileType != null ? getFileTypePresentableName(fileType) : fileTypeName;
+
+    if (fileTypes.size() == 1) {
+      return CodeInsightBundle.message("actions.on.save.page.label.one.file.type.selected", presentableFileType);
+    }
+
+    return CodeInsightBundle.message("actions.on.save.page.label.many.file.types.selected", presentableFileType, fileTypes.size() - 1);
+  }
+
+  private @NotNull JBPopup createFileTypesPopup(@NotNull DropDownLink<String> link) {
+    CheckedTreeNode root = new CheckedTreeNode(CodeInsightBundle.message("actions.on.save.page.label.all.file.types"));
+
+    for (FileType fileType : getFormattableFileTypes()) {
+      root.add(new CheckedTreeNode(fileType));
+    }
+
+    CheckboxTree tree = createFileTypesCheckboxTree(root);
+
+    return JBPopupFactory.getInstance().createComponentPopupBuilder(new JBScrollPane(tree), tree)
+      .setRequestFocus(true)
+      .addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          onFileTypePopupClosed(link, root);
+        }
+      })
+      .createPopup();
+  }
+
+  private static @NotNull SortedSet<FileType> getFormattableFileTypes() {
+    SortedSet<FileType> result = new TreeSet<>(Comparator.comparing(FormatOnSaveActionInfo::getFileTypePresentableName));
+
+    // add all file types that can be handled by DE internal formatter (== have FormattingModelBuilder)
+    ExtensionPoint<KeyedLazyInstance<FormattingModelBuilder>> ep = LanguageFormatting.INSTANCE.getPoint();
+    if (ep != null) {
+      for (KeyedLazyInstance<FormattingModelBuilder> instance : ep.getExtensionList()) {
+        String languageId = instance.getKey();
+        Language language = Language.findLanguageByID(languageId);
+        ContainerUtil.addIfNotNull(result, language != null ? language.getAssociatedFileType() : null);
+      }
+    }
+
+    // The following loop is to make sure that com.intellij.sh.ShFileType is added. Tt doesn't have FormattingModelBuilder, but it is
+    // handled by com.intellij.sh.formatter.ShExternalFormatter, adn it does have its Code Style page in Settings.
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+      ContainerUtil.addIfNotNull(result, provider.getLanguage().getAssociatedFileType());
+    }
+
+    return result;
+  }
+
+  private @NotNull CheckboxTree createFileTypesCheckboxTree(@NotNull CheckedTreeNode root) {
+    CheckboxTree tree = new CheckboxTree(createFileTypesRenderer(), root) {
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, path -> {
+          final CheckedTreeNode node = (CheckedTreeNode)path.getLastPathComponent();
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof FileType) {
+            return getFileTypePresentableName((FileType)userObject);
+          }
+          return userObject.toString();
+        });
+      }
+    };
+
+    tree.setRootVisible(true);
+    tree.setSelectionRow(0);
+
+    resetTree(root);
+
+    return tree;
+  }
+
+  private void resetTree(@NotNull CheckedTreeNode root) {
+    FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
+
+    if (options.isAllFileTypesSelected()) {
+      root.setChecked(true);
+      return;
+    }
+
+    root.setChecked(false);
+
+    Enumeration<TreeNode> fileTypesEnum = root.children();
+    while (fileTypesEnum.hasMoreElements()) {
+      CheckedTreeNode node = (CheckedTreeNode)fileTypesEnum.nextElement();
+      FileType fileType = (FileType)node.getUserObject();
+      node.setChecked(options.isFileTypeSelected(fileType));
+    }
+  }
+
+  private void onFileTypePopupClosed(@NotNull DropDownLink<String> link, @NotNull CheckedTreeNode root) {
+    FormatOnSaveOptions options = getOrCreateOptionsObjectStoringUiState();
+
+    if (root.isChecked()) {
+      options.setAllFileTypesSelected(true);
+    }
+    else {
+      options.setAllFileTypesSelected(false);
+
+      Enumeration<TreeNode> fileTypesEnum = root.children();
+      while (fileTypesEnum.hasMoreElements()) {
+        CheckedTreeNode node = (CheckedTreeNode)fileTypesEnum.nextElement();
+        FileType fileType = (FileType)node.getUserObject();
+
+        options.setFileTypeSelected(fileType, node.isChecked());
+      }
+    }
+
+    link.setText(getFileTypesLinkText());
+  }
+
+  private static @NotNull CheckboxTree.CheckboxTreeCellRenderer createFileTypesRenderer() {
+    return new CheckboxTree.CheckboxTreeCellRenderer() {
+      @Override
+      public void customizeRenderer(JTree t, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focus) {
+        if (!(value instanceof CheckedTreeNode)) return;
+
+        final CheckedTreeNode node = (CheckedTreeNode)value;
+        final Object userObject = node.getUserObject();
+
+        if (userObject instanceof String) {
+          getTextRenderer().append((String)userObject);
+        }
+        if (userObject instanceof FileType) {
+          getTextRenderer().setIcon(((FileType)userObject).getIcon());
+          getTextRenderer().append(getFileTypePresentableName(((FileType)userObject)));
+        }
+      }
+    };
+  }
+
+  private static @NotNull @Nls String getFileTypePresentableName(@NotNull FileType fileType) {
+    // in fact, the following is always true for file types handled here
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).getLanguage().getDisplayName();
+    }
+    return fileType.getDescription();
+  }
+
+  private @Nullable DropDownLink<String> createChangedLinesDropDownLink() {
+    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return null;
 
     String wholeFile = CodeInsightBundle.message("actions.on.save.page.label.whole.file");
-    String onlyChangedLines = CodeInsightBundle.message("actions.on.save.page.label.changed.lines");
+    String changedLines = CodeInsightBundle.message("actions.on.save.page.label.changed.lines");
 
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    boolean onlyChangedLinesOnly = onlyChangedLinesFromUi != null ? onlyChangedLinesFromUi : isReformatOnlyChangedLinesOnSave(getProject());
-    String current = onlyChangedLinesOnly ? onlyChangedLines : wholeFile;
+    String current = isFormatOnlyChangedLines() ? changedLines : wholeFile;
 
-    return List.of(new DropDownLink<>(current, List.of(wholeFile, onlyChangedLines),
-                                      choice -> getContext().putUserData(ONLY_CHANGED_LINES_KEY, choice == onlyChangedLines)));
+    return new DropDownLink<>(current, List.of(wholeFile, changedLines), choice -> setFormatOnlyChangedLines(choice == changedLines));
   }
 
   @Override
   protected void apply() {
-    super.apply();
-
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    if (onlyChangedLinesFromUi != null) {
-      setReformatOnlyChangedLines(getProject(), onlyChangedLinesFromUi);
+    if (getOptionsObjectStoringUiState() == null) {
+      // nothing changed
+      return;
     }
+
+    FormatOnSaveOptions.getInstance(getProject()).loadState(getOrCreateOptionsObjectStoringUiState().getState().clone());
   }
 
   @Override
   protected boolean isModified() {
-    if (super.isModified()) return true;
+    if (getOptionsObjectStoringUiState() == null) {
+      // nothing changed
+      return false;
+    }
 
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    if (onlyChangedLinesFromUi != null && isReformatOnlyChangedLinesOnSave(getProject()) != onlyChangedLinesFromUi) return true;
-
-    return false;
+    return !getOrCreateOptionsObjectStoringUiState().equals(FormatOnSaveOptions.getInstance(getProject()));
   }
 }
