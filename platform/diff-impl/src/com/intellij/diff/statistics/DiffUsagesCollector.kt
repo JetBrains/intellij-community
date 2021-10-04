@@ -22,7 +22,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 class DiffUsagesCollector : ApplicationUsagesCollector() {
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.diff", 5)
+    private val GROUP = EventLogGroup("vcs.diff", 6)
     val places = listOf(DiffPlaces.DEFAULT,
       DiffPlaces.CHANGES_VIEW,
       DiffPlaces.VCS_LOG_VIEW,
