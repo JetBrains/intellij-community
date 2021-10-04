@@ -35,7 +35,10 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
     // check if line contains `--exec` or `$SHELL -c`, and it's located after `wsl.exe --distribution`
     var execIndex = line.indexOf(EXEC_PARAMETER, wslExeIndex + 1)
     if (execIndex < 0) {
-      execIndex = line.indexOf(SHELL_C)
+      execIndex = line.indexOf(SHELL_C, wslExeIndex + 1)
+    }
+    if (execIndex < 0) {
+      return false
     }
 
     // check if line contains `&& `. If yes, then it should be located after `--exec`
