@@ -3,7 +3,6 @@ package org.jetbrains.jps.builders.impl.java;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
@@ -78,12 +77,17 @@ public final class EclipseCompilerTool extends JavaCompilingTool {
 
   @Override
   public @NotNull List<File> getAdditionalClasspath() {
-    return ContainerUtil.createMaybeSingletonList(findEcjJarFile());
+    File element = findEcjJarFile();
+    return element == null ? Collections.emptyList() : Collections.singletonList(element);
   }
 
   public static @Nullable File findEcjJarFile() {
-    String[] dirsToCheck = {"plugins/java/lib", "lib", "community/lib"};
-    for (String relativeDirectoryPath : dirsToCheck) {
+    File result = new File(PathManager.getHomePath(), "plugins/java/lib/ecj/eclipse.jar");
+    if (result.exists()) {
+      return result;
+    }
+
+    for (String relativeDirectoryPath : new String[]{"plugins/java/lib", "lib", "community/lib"}) {
       File lib = new File(PathManager.getHomePath(), relativeDirectoryPath);
       File[] children = lib.listFiles((dir, name) -> name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX));
       if (children != null && children.length > 0) {
