@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.*;
 
@@ -41,9 +43,38 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
     String methodName = method.getName();
-    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
-                                it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null &&
-                                      it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
+
+    boolean cheapSearch = ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
+                                               it -> it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null &&
+                                                     it.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
+
+    if (cheapSearch) return true;
+
+    // class inheritors check
+    Stream<PsiMethod> first = ClassInheritorsSearch.search(psiClass, psiClass.getResolveScope(), false)
+      .filtering(clazz -> {
+        PsiJavaFile file = (PsiJavaFile)clazz.getContainingFile();
+        PsiImportList list = file.getImportList();
+        String[] packages = file.getImplicitlyImportedPackages();
+        if (list != null && list.findSingleClassImportStatement(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return true;
+        boolean packageExists = ContainerUtil.exists(packages, pack -> pack.equals("org.junit.jupiter.params.provider"));
+        if (packageExists) return true;
+        else return false;
+      })
+      .mapping(aClazz -> {
+        final PsiMethod[] methods = aClazz.findMethodsByName(methodName, false);
+        return Arrays.stream(methods)
+          .filter(filteredMethod -> filteredMethod.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST) != null
+                                    && filteredMethod.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null);
+      })
+      .filtering(filteredMethod -> {
+        return filteredMethod != null;
+      }).findFirst();
+
+    if (first == null) return false;
+
+    if (!(first.findFirst().isEmpty())) return true;
+    return false;
   }
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstant) {
