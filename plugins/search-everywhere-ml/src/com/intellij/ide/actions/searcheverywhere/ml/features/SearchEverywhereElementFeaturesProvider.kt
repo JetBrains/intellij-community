@@ -53,4 +53,13 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedTab:
     if (!value.isFinite()) return -1.0
     return round(value * 100000) / 100000
   }
+
+  /**
+   * Associates the specified key with the value, only if the value is not null.
+   */
+  protected fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
+    value?.let {
+      this[key] = it
+    }
+  }
 }

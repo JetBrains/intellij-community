@@ -230,13 +230,4 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
   }
 
   protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
-
-  /**
-   * Associates the specified key with the value, only if the value is not null.
-   */
-  protected fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
-    value?.let {
-      this[key] = it
-    }
-  }
 }
