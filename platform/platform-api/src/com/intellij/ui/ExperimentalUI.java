@@ -85,8 +85,10 @@ public final class ExperimentalUI {
   private static void patchUIDefaults(RegistryValue value) {
     if (!value.asBoolean() || !is("ide.experimental.ui.inter.font")) return;
 
+    UIDefaults defaults = UIManager.getDefaults();
+    defaults.put("EditorTabs.underlineArc", 4);
+
     if (SystemInfo.isJetBrainsJvm) {
-      UIDefaults defaults = UIManager.getDefaults();
       List<String> keysToPatch = Arrays.asList("CheckBoxMenuItem.acceleratorFont",
                                                "CheckBoxMenuItem.font",
                                                "Menu.acceleratorFont",
