@@ -15,6 +15,7 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -97,7 +98,27 @@ public class GroovyPositionManager extends PositionManagerEx {
 
   @Override
   public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
+    if (!isInGroovyFile(descriptor)) {
+      return null;
+    }
     return new GroovyStackFrame(descriptor, true);
+  }
+
+  private static boolean isInGroovyFile(StackFrameDescriptorImpl descriptor) {
+    Location location = descriptor.getLocation();
+    if (location != null) {
+      var refType = location.declaringType();
+      try {
+        String safeName = refType.sourceName();
+        FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(safeName);
+        if (fileType != GroovyFileType.GROOVY_FILE_TYPE) {
+          return false;
+        }
+      } catch (AbsentInformationException e) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
