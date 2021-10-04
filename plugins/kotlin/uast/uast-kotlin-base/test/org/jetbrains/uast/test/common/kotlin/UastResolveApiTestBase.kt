@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
+import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -163,5 +164,22 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
         })
         Assert.assertNull("plain `this` has `null` label", thisReference)
+    }
+
+    fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
+        val anno = uFile.classes.find { it.name == "Anno" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        TestCase.assertTrue("@Anno is not an annotation?!", anno.isAnnotationType)
+        for (uAnnotation in anno.uAnnotations) {
+            if (uAnnotation.qualifiedName?.endsWith("Retention") == true) {
+                val value = uAnnotation.findAttributeValue("value")
+                val reference = value as? UReferenceExpression
+                TestCase.assertNotNull("Can't find the reference to @Retention value", reference)
+                val resolvedValue = reference!!.resolve()
+                TestCase.assertNotNull("Can't resolve @Retention value", resolvedValue)
+                // TODO: resolve to enclosing enum class?
+                // TestCase.assertEquals("SOURCE", (resolvedValue as? PsiNamedElement)?.name)
+            }
+        }
     }
 }
