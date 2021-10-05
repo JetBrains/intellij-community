@@ -357,6 +357,14 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun spinner(range: IntRange, step: Int): CellImpl<JBIntSpinner> {
+    return cell(JBIntSpinner(range.first, range.first, range.last, step))
+  }
+
+  override fun spinner(range: ClosedRange<Double>, step: Double): Cell<JSpinner> {
+    return cell(JSpinner(SpinnerNumberModel(range.start, range.start, range.endInclusive, step)))
+  }
+
   override fun textArea(): Cell<JBTextArea> {
     val textArea = JBTextArea()
     return cell(textArea, JBScrollPane(textArea))
