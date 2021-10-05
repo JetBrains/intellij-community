@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
+import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -26,6 +27,7 @@ import java.awt.Graphics
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 interface NewToolbarPaneListener {
   companion object {
@@ -42,6 +44,8 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
     private val logger = Logger.getInstance(NewToolbarRootPaneExtension::class.java)
   }
+
+  private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(myProject)
 
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
@@ -74,6 +78,18 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
         ActivityTracker.getInstance().inc()
       }
     })
+
+    val listener = object : RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
+      override fun availabilityChanged(value: Boolean) {
+        clearAndRefill()
+      }
+    }
+
+    runWidgetAvailabilityManager.addListener(listener)
+
+    Disposer.register(this) {
+      runWidgetAvailabilityManager.removeListener(listener)
+    }
   }
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
@@ -110,13 +126,18 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
         myPanelWrapper.add(myPanel, BorderLayout.CENTER)
 
-        val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
+        val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(if(runWidgetAvailabilityManager.isAvailable()) "NewToolbarActions" else "NewToolbarActionsWithoutRight")
 
         val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
 
         addGroupComponent(myPanel, BorderLayout.EAST, listChildren[2])
         addGroupComponent(myPanel, BorderLayout.CENTER, listChildren[1])
         addGroupComponent(myPanel, BorderLayout.WEST, listChildren[0])
+
+        SwingUtilities.invokeLater {
+          myPanelWrapper.invalidate()
+          myPanelWrapper.repaint()
+        }
 
         myPanelWrapper.isVisible = true
         myPanelWrapper.isEnabled = true
