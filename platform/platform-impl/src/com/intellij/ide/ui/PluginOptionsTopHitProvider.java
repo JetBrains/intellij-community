@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -10,21 +10,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
-  @NotNull
+
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public @NotNull Collection<OptionDescription> getOptions() {
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    List<OptionDescription> options = new ArrayList<>(plugins.length);
+    List<IdeaPluginDescriptorImpl> descriptors = PluginManagerCore.getPluginSet().allPlugins;
+    List<PluginBooleanOptionDescriptor> options = new ArrayList<>(descriptors.size());
     boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
 
-    for (IdeaPluginDescriptor descriptor : plugins) {
+    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       if (applicationInfo.isEssentialPlugin(descriptor.getPluginId())) {
         continue;
       }
@@ -34,12 +35,11 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
 
       options.add(new PluginBooleanOptionDescriptor(descriptor));
     }
-    return options;
+    return Collections.unmodifiableList(options);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "plugins";
   }
 }
