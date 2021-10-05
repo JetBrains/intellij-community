@@ -25,16 +25,16 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:11)
 optimisedVariablesWithLambdas.kt:14
 CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:14)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] param1: int = 1 (optimisedVariablesWithLambdas.kt:8)
-    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] param3: int = 3 (optimisedVariablesWithLambdas.kt:8)
+    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
+    JavaValue[local] param1: int = 1 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithLambdas.kt:9)
     JavaValue[local] b: java.lang.String = b (optimisedVariablesWithLambdas.kt:12)
 optimisedVariablesWithLambdas.kt:17
 CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:17)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] param3: int = 3 (optimisedVariablesWithLambdas.kt:8)
+    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithLambdas.kt:9)
     DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'param1' was optimised out
@@ -62,8 +62,8 @@ CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithLambdas.kt:34)
 optimisedVariablesWithLambdas.kt:39
 CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:39)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] param3: int = 3 (optimisedVariablesWithLambdas.kt:8)
+    JavaValue[local] param2: int = 2 (optimisedVariablesWithLambdas.kt:8)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithLambdas.kt:9)
     JavaValue[local] g: java.lang.String = g (optimisedVariablesWithLambdas.kt:37)
     DummyMessageValueNode = 'b' was optimised out
