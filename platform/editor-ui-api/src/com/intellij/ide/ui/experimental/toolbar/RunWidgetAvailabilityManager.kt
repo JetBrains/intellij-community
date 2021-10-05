@@ -15,6 +15,10 @@ abstract class RunWidgetAvailabilityManager {
     listeners.add(listener)
   }
 
+  fun removeListener(listener: RunWidgetAvailabilityListener) {
+    listeners.remove(listener)
+  }
+
   abstract fun isAvailable(): Boolean
 
   protected fun fireUpdate(value: Boolean) {
@@ -27,6 +31,7 @@ abstract class RunWidgetAvailabilityManager {
 }
 
 class BaseRunWidgetAvailabilityManager : RunWidgetAvailabilityManager() {
+
   override fun isAvailable(): Boolean {
     return true
   }

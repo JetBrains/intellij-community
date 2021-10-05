@@ -694,6 +694,16 @@
       </group>
     </group>
 
+    <group id="NewToolbarActionsWithoutRight">
+      <reference ref="LeftToolbarSideGroup"/>
+      <reference ref="CenterToolbarSideGroup"/>
+      <group id="RightToolbarSideGroupNoRunWidget">
+        <reference id="ToolbarRunGroup"/>
+        <reference id="SmallSpacer"/>
+        <reference id="SettingsEntryPoint"/>
+      </group>
+    </group>
+
     <group id="SegmentedSearchEverywhereGroup">
       <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
     </group>
