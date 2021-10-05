@@ -174,11 +174,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final List<PsiElement> innerClassesWithUsages = new ArrayList<>();
     final List<PsiElement> innerClassUsages = new ArrayList<>();
-    final PsiElement containingClass = DefUseUtil.getContainingClassOrLambda(local);
+    final PsiElement containingClass = LambdaUtil.getContainingClassOrLambda(local);
     for (PsiElement element : allRefs) {
       PsiElement innerClass = element;
       while (innerClass != null) {
-        final PsiElement parentPsiClass = DefUseUtil.getContainingClassOrLambda(innerClass.getParent());
+        final PsiElement parentPsiClass = LambdaUtil.getContainingClassOrLambda(innerClass.getParent());
         if (parentPsiClass == containingClass) {
           if (innerClass != element) {
             innerClassesWithUsages.add(innerClass);
