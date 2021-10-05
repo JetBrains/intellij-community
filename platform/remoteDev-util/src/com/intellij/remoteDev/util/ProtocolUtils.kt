@@ -1,4 +1,4 @@
-package com.jetbrains.gateway.util
+package com.intellij.remoteDev.util
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -16,11 +16,11 @@ object RemoteDevProtocolUtil {
   const val httpPrefix = "https://code-with-me.jetbrains.com/remoteDev"
 
   fun createGatewayUrl(parameters: Map<String, String>): String {
-    return "${gatewayPrefix}#" + buildParamsString(parameters)
+    return "$gatewayPrefix#" + buildParamsString(parameters)
   }
 
   fun createHttpUrl(parameters: Map<String, String>): String {
-    return "${httpPrefix}#" + buildParamsString(parameters)
+    return "$httpPrefix#" + buildParamsString(parameters)
   }
 
   private fun urlEncode(value: String): String {
