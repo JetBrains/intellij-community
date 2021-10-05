@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core
 
-import com.intellij.core.CoreBundle
 import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
@@ -12,12 +11,12 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.util.io.parentSystemIndependentPath
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -31,10 +30,10 @@ import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.io.File
-import java.io.IOException
-import java.net.URI
-import java.nio.file.Paths
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
 
@@ -143,35 +142,24 @@ private fun Module.getOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder
         return sourceRoots
     }
 
-    return runWriteAction {
-        getOrCreateRootDirectory()?.getOrCreateChildDirectory(project, "kotlin")
+    return listOfNotNull(createSourceRootDirectory())
+}
+
+private fun Module.createSourceRootDirectory(): VirtualFile? {
+    val contentEntry = rootManager.contentEntries.firstOrNull()
+        ?: throw KotlinExceptionWithAttachments("Content entry is not found").withAttachment("module", this.name)
+
+    val sourceRootPath = contentEntry.file?.toNioPath()
+        ?: VfsUtilCore.convertToURL(contentEntry.url)?.path?.let(::Path)
+        ?: throw KotlinExceptionWithAttachments("Content url is corrupted").withAttachment("url", contentEntry.url)
+
+    val srcFolderPath = sourceRootPath.resolve("kotlin")
+    runWriteAction {
+        VfsUtil.createDirectoryIfMissing(srcFolderPath.pathString)
         project.invalidateProjectRoots()
-        getNonGeneratedKotlinSourceRoots(pureKotlinSourceFoldersHolder)
     }
-}
 
-private fun VirtualFile.getOrCreateChildDirectory(requestor: Any, name: String): VirtualFile {
-    findChild(name)?.let {
-        if (!it.isDirectory) {
-            throw IOException(CoreBundle.message("directory.create.wrong.parent.error"))
-        }
-
-        if (!it.isValid) {
-            throw IOException(CoreBundle.message("invalid.directory.create.files"))
-        }
-
-        return it
-    }
-    return this.createChildDirectory(requestor, name)
-}
-
-private fun Module.getOrCreateRootDirectory(): VirtualFile? {
-    val contentEntry = rootManager.contentEntries.firstOrNull() ?: return null
-    contentEntry.file?.let { return it }
-
-    val path = Paths.get(URI.create(contentEntry.url))
-    val rootParent = LocalFileSystem.getInstance().findFileByPath(path.parentSystemIndependentPath)
-    return rootParent?.createChildDirectory(project, name.takeLastWhile { it != '.' })
+    return VfsUtil.findFile(srcFolderPath, true)
 }
 
 private fun getPackageDirectoriesInModule(rootPackage: PsiPackage, module: Module): Array<PsiDirectory> =
