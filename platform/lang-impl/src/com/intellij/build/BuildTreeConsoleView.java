@@ -41,6 +41,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -855,7 +856,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     EditSourceOnEnterKeyHandler.install(tree);
     new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(tree);
-    tree.setCellRenderer(new MyNodeRenderer());
+    if (Registry.is("build.toolwindow.show.inline.statistics")) {
+      tree.setCellRenderer(new MyNodeRenderer());
+    }
     tree.putClientProperty(SHRINK_LONG_RENDERER, true);
     return tree;
   }
