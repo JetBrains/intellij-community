@@ -154,8 +154,9 @@ public final class TipUIUtil {
 
         if (tipLoader == null) tipLoader = fallbackLoader;
 
-        final String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
-
+        String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
+        //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+        if ("IC".equals(ideCode)) ideCode = "IU";
         //So primary loader is determined. Now we're constructing retrievers that use a pair of path/loader to try to get the tips.
         final List<TipRetriever> retrievers = new ArrayList<>();
 
