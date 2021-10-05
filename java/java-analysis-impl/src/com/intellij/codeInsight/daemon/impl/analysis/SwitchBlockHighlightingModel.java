@@ -677,8 +677,8 @@ public class SwitchBlockHighlightingModel {
       alreadyDominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
-        results.add(
-          info);
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createMoveSwitchBranchUpFix(who, overWhom));
+        results.add(info);
       });
     }
 
