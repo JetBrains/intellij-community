@@ -26,25 +26,28 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
-public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription implements BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
+public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription
+  implements BooleanOptionDescription.RequiresRebuild,
+             NotABooleanOptionDescription {
+
   private static final Notifier ourRestartNeededNotifier = new Notifier();
 
-  private final IdeaPluginDescriptor plugin;
+  private final IdeaPluginDescriptor myDescriptor;
 
   PluginBooleanOptionDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    super(IdeBundle.message("search.everywhere.command.plugins", descriptor.getName()), PluginManagerConfigurable.ID);
-
-    plugin = descriptor;
+    super(IdeBundle.message("search.everywhere.command.plugins", descriptor.getName()),
+          PluginManagerConfigurable.ID);
+    myDescriptor = descriptor;
   }
 
   @Override
   public boolean isOptionEnabled() {
-    return plugin.isEnabled();
+    return !PluginManagerCore.isDisabled(myDescriptor.getPluginId());
   }
 
   @Override
   public void setOptionState(boolean enable) {
-    togglePluginState(List.of(plugin),
+    togglePluginState(List.of(myDescriptor),
                       PluginEnableDisableAction.globally(enable));
   }
 
@@ -136,6 +139,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
+      result.add(descriptor);
+
       result.addAll(MyPluginModel.getDependents(descriptor,
                                                 pluginIdMap,
                                                 applicationInfo));
