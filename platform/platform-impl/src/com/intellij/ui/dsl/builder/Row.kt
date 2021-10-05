@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
@@ -212,6 +213,20 @@ interface Row {
    * @param keyboardStep increase/decrease step for keyboard keys up/down. The keys are not used if [keyboardStep] is null
    */
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
+
+  /**
+   * Creates spinner for int values
+   *
+   * @param range allowed values range inclusive
+   */
+  fun spinner(range: IntRange, step: Int = 1): Cell<JBIntSpinner>
+
+  /**
+   * Creates spinner for double values
+   *
+   * @param range allowed values range inclusive
+   */
+  fun spinner(range: ClosedRange<Double>, step: Double = 1.0): Cell<JSpinner>
 
   fun textArea(): Cell<JBTextArea>
 
