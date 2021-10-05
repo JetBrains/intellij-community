@@ -164,18 +164,40 @@ interface UastResolveApiTestBase : UastPluginSelection {
     }
 
     fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
-        val anno = uFile.classes.find { it.name == "Anno" }
-            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
-        TestCase.assertTrue("@Anno is not an annotation?!", anno.isAnnotationType)
-        for (uAnnotation in anno.uAnnotations) {
+
+        fun checkRetentionAndResolve(uAnnotation: UAnnotation) {
             if (uAnnotation.qualifiedName?.endsWith("Retention") == true) {
                 val value = uAnnotation.findAttributeValue("value")
                 val reference = value as? UReferenceExpression
                 TestCase.assertNotNull("Can't find the reference to @Retention value", reference)
+                // Resolve @Retention value
                 val resolvedValue = reference!!.resolve()
                 TestCase.assertNotNull("Can't resolve @Retention value", resolvedValue)
                 TestCase.assertEquals("SOURCE", (resolvedValue as? PsiNamedElement)?.name)
             }
+        }
+
+        // Lookup @Anno directly from the source file
+        val anno = uFile.classes.find { it.name == "Anno" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        TestCase.assertTrue("@Anno is not an annotation?!", anno.isAnnotationType)
+        anno.uAnnotations.forEach(::checkRetentionAndResolve)
+
+        // Lookup @Anno indirectly from an annotated test class
+        val testClass = uFile.classes.find { it.name == "TestClass" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        val annoOnTestClass = testClass.uAnnotations.find { it.qualifiedName?.endsWith("Anno") == true }
+            ?: throw IllegalStateException("Target annotation not found at ${testClass.asSourceString()}")
+        // Resolve @Anno to PsiClass
+        val resolvedAnno = annoOnTestClass.resolve()
+        TestCase.assertNotNull("Can't resolve @Anno on TestClass", resolvedAnno)
+        for (psi in resolvedAnno!!.annotations) {
+            val uAnnotation = anno.uAnnotations.find { it.javaPsi == psi } ?: continue
+            val rebuiltAnnotation = psi.toUElement(UAnnotation::class.java)
+            TestCase.assertNotNull("Should be able to rebuild UAnnotation from $psi", rebuiltAnnotation)
+            TestCase.assertEquals(uAnnotation.qualifiedName, rebuiltAnnotation!!.qualifiedName)
+            // Check Retention on a rebuilt UAnnotation
+            checkRetentionAndResolve(rebuiltAnnotation)
         }
     }
 }
