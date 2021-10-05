@@ -47,6 +47,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -716,7 +717,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               g.setColor(colorUnderCaretRow);
             }
 
-            Icon icon = null;
+            Icon iconOnTheLine = null;
+            Icon hoverIcon = null;
             if (ExperimentalUI.isNewUI()) {
               VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
               Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
@@ -724,27 +726,30 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                              ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
                 .findFirst();
               if (breakpoint.isPresent()) {
-                icon = breakpoint.get().getIcon();
+                iconOnTheLine = breakpoint.get().getIcon();
               }
-              if (icon == null) {
                 if (Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
                   Object activeIcon = getClientProperty("line.number.hover.icon");
                   if (activeIcon instanceof Icon) {
-                    icon = (Icon)activeIcon;
+                    hoverIcon = (Icon)activeIcon;
                   }
-                }
               }
             }
 
-            if (icon != null) {
-              icon.paintIcon(this, g, offset - icon.getIconWidth(), y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2);
-            } else {
+            if (iconOnTheLine == null && hoverIcon == null) {
               String s = String.valueOf(lineToDisplay);
               int textOffset = isMirrored() ?
                                offset - getLineNumberAreaWidth() - 1 :
                                offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
 
               g.drawString(s, textOffset,y + myEditor.getAscent());
+            } else if (hoverIcon != null && iconOnTheLine == null) {
+              hoverIcon = scaleIcon(hoverIcon);
+              int iconX = offset - hoverIcon.getIconWidth();
+              int iconY = y + (visLinesIterator.getLineHeight() - hoverIcon.getIconHeight()) / 2;
+              GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.5f); //todo[kb] move transparency to theming options
+              hoverIcon.paintIcon(this, g, iconX, iconY);
+              config.restore();
             }
           }
         }
