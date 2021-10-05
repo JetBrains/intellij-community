@@ -68,6 +68,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
+    public boolean SHOW_INTENTION_PREVIEW = false;
 
     public boolean SMART_HOME = true;
 

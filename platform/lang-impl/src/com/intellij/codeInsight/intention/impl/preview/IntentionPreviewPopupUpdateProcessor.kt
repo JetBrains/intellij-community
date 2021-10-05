@@ -6,10 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.HTML_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
-import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
@@ -36,7 +34,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                                            private val originalFile: PsiFile,
                                            private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
-  private var show = Experiments.getInstance().isFeatureEnabled("editor.intention.action.auto.preview")
+  private var show = false
   private val editorsToRelease = mutableListOf<EditorEx>()
 
   private lateinit var popup: JBPopup
@@ -52,12 +50,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
       popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
         .setCancelCallback { cancel() }
+        .setCancelKeyEnabled(false)
         .addUserData(IntentionPreviewPopupKey())
         .createPopup()
 
       PopupPositionManager.positionPopupInBestPosition(popup, originalEditor, null)
 
-      updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.hide.text", ESCAPE_SHORTCUT_TEXT))
+      updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.hide.text", getShortcutText()))
     }
 
     val value = component.multiPanel.getValue(index, false)
@@ -104,6 +103,18 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     updateAdvertiserText = updateAdvertiser
   }
 
+  fun isShown() = show
+
+  fun hide() {
+    if (::popup.isInitialized && !popup.isDisposed) {
+      popup.cancel()
+    }
+  }
+
+  fun show() {
+    show = true
+  }
+
   private fun cancel(): Boolean {
     editorsToRelease.forEach { EditorFactory.getInstance().releaseEditor(it) }
     editorsToRelease.clear()
@@ -111,10 +122,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     show = false
     updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.show.text", getShortcutText()))
     return true
-  }
-
-  fun toggleShow() {
-    show = !show
   }
 
   private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: String = "") {
@@ -152,7 +159,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   companion object {
-    private val ESCAPE_SHORTCUT_TEXT = KeymapUtil.getPreferredShortcutText(ESCAPE.shortcuts)
     private const val MAX_HEIGHT = 300
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
