@@ -322,7 +322,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               }
               tr {
                 td("Number of too large for indexing files")
-                td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
+                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.numberOfTooLargeForIndexingFiles }.toString())
               }
 
               val times = projectIndexingHistory.times
