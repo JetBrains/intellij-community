@@ -1322,7 +1322,9 @@
     <toolbarWidget implementation="com.intellij.openapi.wm.impl.headertoolbar.ProjectWidgetFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"
                         serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
-   </extensions>
+
+    <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
+  </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

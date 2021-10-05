@@ -469,5 +469,9 @@
 
     <extensionPoint name="toolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory" dynamic="true"/>
 
+    <extensionPoint name="fsRootDataLoader" interface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"/>
+    <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
+
+    <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>
   </extensionPoints>
 </idea-plugin>

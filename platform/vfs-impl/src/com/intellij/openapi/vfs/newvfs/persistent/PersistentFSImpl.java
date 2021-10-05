@@ -63,18 +63,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final VirtualDirectoryCache myIdToDirCache = new VirtualDirectoryCache();
   private final ReadWriteLock myInputLock = new ReentrantReadWriteLock();
 
-  private final AtomicBoolean myShutDown = new AtomicBoolean(false);
+  private final AtomicBoolean myConnected = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private BulkFileListener myPublisher;
-  private final VfsData myVfsData = new VfsData();
+  private volatile VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl() {
-    if (SystemInfoRt.isFileSystemCaseSensitive) {
-      myRoots = new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
-    }
-    else {
-      myRoots = ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), HashingStrategy.caseInsensitive());
-    }
+    myRoots = SystemInfoRt.isFileSystemCaseSensitive
+              ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
+              : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
+                                                                HashingStrategy.caseInsensitive());
 
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
@@ -97,9 +95,36 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
       }
     });
-    Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
-    FSRecords.connect();
-    activity.end();
+
+    doConnect();
+  }
+
+  @ApiStatus.Internal
+  public void connect() {
+    myIdToDirCache.clear();
+    myVfsData = new VfsData();
+    LOG.assertTrue(!myConnected.get());
+    doConnect();
+    PersistentFsConnectionListener.EP_NAME.extensions().forEach(PersistentFsConnectionListener::connectionOpen);
+  }
+
+  @ApiStatus.Internal
+  public void disconnect() {
+    PersistentFsConnectionListener.EP_NAME.extensions().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
+    // TODO make sure we don't have files in memory
+    FileNameCache.drop();
+    LOG.assertTrue(myConnected.get());
+    myRoots.clear();
+    myIdToDirCache.clear();
+    performShutdown();
+  }
+
+  private void doConnect() {
+    if (myConnected.compareAndSet(false, true)) {
+      Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
+      FSRecords.connect();
+      activity.end();
+    }
   }
 
   private @NotNull BulkFileListener getPublisher() {
@@ -118,7 +143,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void performShutdown() {
-    if (myShutDown.compareAndSet(false, true)) {
+    if (myConnected.compareAndSet(true, false)) {
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed");
@@ -801,6 +826,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  public boolean doesHoldFile(@NotNull VirtualFile file) {
+    return ((VirtualFileSystemEntry)file).getVfsData() == myVfsData;
+  }
+
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
     getDelegate(file).moveFile(requestor, file, newParent);
     processEvent(new VFileMoveEvent(requestor, file, newParent));
@@ -1299,6 +1329,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable VirtualFileSystemEntry findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    if (!myConnected.get()) {
+      LOG.info("VFS disconnected. Can't provide root for " + path + " in " + fs);
+      return null;
+    }
     if (path.isEmpty()) {
       LOG.error("Invalid root, fs=" + fs);
       return null;
@@ -1339,6 +1373,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     int rootId = FSRecords.findRootRecord(rootUrl);
+    FSRecords.loadRootData(rootId, path, fs);
 
     int rootNameId = FileNameCache.storeName(rootName.toString());
     boolean mark;
@@ -1558,7 +1593,28 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FileAttributes attributes = childData.first;
     int nameId = writeAttributesToRecord(childId, parentFile, parentId, name, fs, attributes);
     assert childId > 0 : childId;
+    if (attributes.isDirectory()) {
+      FSRecords.loadDirectoryData(childId, childPath(parentFile, name), fs);
+    }
     return new ChildInfoImpl(childId, nameId, attributes, children, childData.second);
+  }
+
+  private static @NotNull String childPath(@NotNull VirtualFile parentFile, @NotNull CharSequence name) {
+    final StringBuilder sb = new StringBuilder(parentFile.getPath());
+    if (!StringUtil.endsWithChar(sb, '/')) {
+      sb.append('/');
+    }
+    sb.append(name);
+    return sb.toString();
+  }
+
+  public static void moveChildrenRecords(int fromParentId, int toParentId) {
+    if (fromParentId == -1) return;
+
+    for (ChildInfo childToMove : FSRecords.list(fromParentId).children) {
+      FSRecords.setParent(childToMove.getId(), toParentId);
+    }
+    FSRecords.moveChildren(fromParentId, toParentId);
   }
 
   // return File attributes, symlink target

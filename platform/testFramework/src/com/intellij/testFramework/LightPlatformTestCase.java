@@ -630,6 +630,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       setProject(null);
       ourModule = null;
       ourPsiManager = null;
+      ourSourceRoot = null;
     }
   }
 

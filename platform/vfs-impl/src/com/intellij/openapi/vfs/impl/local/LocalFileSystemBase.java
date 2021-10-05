@@ -605,20 +605,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  private static final String[] ourRootPaths;
-  static {
-    //noinspection SpellCheckingInspection
-    List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    roots.sort((o1, o2) -> o2.length() - o1.length());  // longest first
-    ourRootPaths = ArrayUtilRt.toStringArray(roots);
-  }
-
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    for (String customRootPath : ourRootPaths) {
-      if (normalizedPath.startsWith(customRootPath)) return customRootPath;
-    }
-
     String rootPath = FileUtil.extractRootPath(normalizedPath);
     return StringUtil.notNullize(rootPath);
   }
@@ -699,14 +687,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    return getAttributes(path);
+    return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
-  protected FileAttributes getAttributes(@NotNull String path) {
-    return myAttrGetter.accessDiskWithCheckCanceled(FileUtilRt.toSystemDependentName(path));
-  }
-
-  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
   private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list());
 
   @Override
@@ -734,5 +718,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
+  }
+
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
+    final FileAttributes fs = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    if (fs == null) return null;
+
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      final Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return new FileAttributes(fs.isDirectory(), fs.isSpecial(), fs.isSymLink(), fs.isHidden(), fs.length, custom, fs.isWritable(), fs.areChildrenCaseSensitive());
+      }
+    }
+
+    return fs;
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -51,13 +53,14 @@ public final class FSRecords {
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
   static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
   static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
-  static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
+  public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   private static volatile PersistentFSConnection ourConnection;
   private static volatile PersistentFSContentAccessor ourContentAccessor;
   private static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
   private static volatile PersistentFSTreeAccessor ourTreeAccessor;
   private static volatile PersistentFSRecordAccessor ourRecordAccessor;
+  private static volatile int ourCurrentVersion;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -68,18 +71,20 @@ public final class FSRecords {
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
-  private static final int VERSION = nextMask(59,  // acceptable range is [0..255]
-                                              8,
-                                              nextMask(useContentHashes,
-                                              nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
-                                              nextMask(bulkAttrReadSupport,
-                                              nextMask(inlineAttributes,
-                                              nextMask(ourStoreRootsSeparately,
-                                              nextMask(useCompressionUtil,
-                                              nextMask(useSmallAttrTable,
-                                              nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                              nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                              nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP, 0)))))))))));
+  private static int calculateVersion() {
+    return nextMask(59,  // acceptable range is [0..255]
+                    8,
+                    nextMask(useContentHashes,
+                    nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
+                    nextMask(bulkAttrReadSupport,
+                    nextMask(inlineAttributes,
+                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                    nextMask(useCompressionUtil,
+                    nextMask(useSmallAttrTable,
+                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(), 0)))))))))));
+  }
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;
@@ -132,14 +137,15 @@ public final class FSRecords {
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return VERSION;
+    return ourCurrentVersion;
   }
 
   static void connect() {
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
+    ourCurrentVersion = calculateVersion();
+    ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
     ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
     ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately, ourConnection);
+    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
     ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
     try {
       ourTreeAccessor.ensureLoaded();
@@ -205,6 +211,14 @@ public final class FSRecords {
 
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, () -> createRecord()));
+  }
+
+  static void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    writeAndHandleErrors(() -> ourTreeAccessor.loadRootData(id, path, fs));
+  }
+
+  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    writeAndHandleErrors(() -> ourTreeAccessor.loadDirectoryData(id, path, fs));
   }
 
   static void deleteRootRecord(int fileId) {
@@ -339,6 +353,37 @@ public final class FSRecords {
       handleError(e);
       ExceptionUtil.rethrow(e);
       return result;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  static void moveChildren(int fromParentId, int toParentId) {
+    assert fromParentId > 0: fromParentId;
+    assert toParentId > 0: toParentId;
+
+    w.lock();
+    try {
+      final ListResult children = list(fromParentId);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+      }
+
+      incModCount(toParentId);
+      ourTreeAccessor.doSaveChildren(toParentId, children);
+
+      incModCount(fromParentId);
+      ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
+    }
+    catch (ProcessCanceledException e) {
+      // NewVirtualFileSystem.list methods can be interrupted now
+      throw e;
+    }
+    catch (Throwable e) {
+      handleError(e);
+      ExceptionUtil.rethrow(e);
     }
     finally {
       w.unlock();

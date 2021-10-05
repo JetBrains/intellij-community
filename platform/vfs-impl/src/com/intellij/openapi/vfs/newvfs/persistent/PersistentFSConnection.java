@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
@@ -48,7 +49,7 @@ final class PersistentFSConnection {
   private final ContentHashEnumerator myContentHashesEnumerator;
   private final PersistentStringEnumerator myNames;
 
-  private volatile int myLocalModificationCount;
+  private final AtomicInteger myLocalModificationCount;
   private volatile boolean myDirty;
   /**
    * accessed under {@link #r}/{@link #w}
@@ -66,6 +67,7 @@ final class PersistentFSConnection {
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull IntList freeRecords,
+                         AtomicInteger localModificationCount,
                          boolean markDirty) throws IOException {
     myRecords = records;
     myNames = names;
@@ -74,6 +76,7 @@ final class PersistentFSConnection {
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
     myFreeRecords = freeRecords;
+    myLocalModificationCount = localModificationCount;
     if (markDirty) {
       markDirty();
     }
@@ -85,10 +88,10 @@ final class PersistentFSConnection {
 
         @Override
         public void run() {
-          if (lastModCount == myLocalModificationCount) {
+          if (lastModCount == myLocalModificationCount.get()) {
             flush();
           }
-          lastModCount = myLocalModificationCount;
+          lastModCount = myLocalModificationCount.get();
         }
       });
     }
@@ -175,11 +178,11 @@ final class PersistentFSConnection {
   void incLocalModCount() throws IOException {
     markDirty();
     //noinspection NonAtomicOperationOnVolatileField
-    myLocalModificationCount++;
+    myLocalModificationCount.incrementAndGet();
   }
 
   int getLocalModificationCount() {
-    return myLocalModificationCount;
+    return myLocalModificationCount.get();
   }
 
   void doForce() throws IOException {

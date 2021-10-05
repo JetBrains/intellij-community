@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 // unlike later numbers assigned to T are consequent and retained in memory / expected to be small.
 // Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
 // stored data is VfsTimeStamp Version T*
+@ApiStatus.Internal
+@Deprecated
 public final class VfsDependentEnum<T> {
   private final Path myFile;
   private final DataExternalizer<T> myKeyDescriptor;
@@ -37,6 +39,7 @@ public final class VfsDependentEnum<T> {
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
+  //todo drop them
   public VfsDependentEnum(@NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
     this(FSRecords.getPersistentFSPaths(), fileName, descriptor, version);
   }
