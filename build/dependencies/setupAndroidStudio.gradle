@@ -15,13 +15,12 @@ static String getAndroidStudioOs() {
 }
 
 def androidStudioVersion = (String) rootProject.findProperty("kombo.android.studio.version")
-def androidStudioBuild = (String) rootProject.findProperty("kombo.android.studio.platform.version")
 def targetPath = (String) rootProject.findProperty("kombo.android.studio.target")
 
 if (androidStudioVersion != null) {
   repositories {
     ivy {
-      url = new URI("https://dl.google.com/dl/android/studio/ide-zips/$androidStudioVersion")
+      url = new URI("https://redirector.gvt1.com/edgedl/android/studio/ide-zips/$androidStudioVersion")
 
       patternLayout {
         artifact("[artifact]-[revision]-${getAndroidStudioOs()}.[ext]")
@@ -40,7 +39,7 @@ configurations {
 
 dependencies {
   def distributionExtension = (androidStudioOs == "linux") ? "tar.gz" : "zip"
-  androidStudio "google:android-studio-ide:$androidStudioBuild@$distributionExtension"
+  androidStudio "google:android-studio:$androidStudioVersion@$distributionExtension"
 }
 
 static String skipTopLevelDirectory(String path) {
