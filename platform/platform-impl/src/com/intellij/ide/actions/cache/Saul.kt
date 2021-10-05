@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
@@ -52,25 +53,29 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
 
   fun start(project: Project) {
     // we expect that at least one action recovery exist: cache invalidation
-    perform(nextRecoveryAction(project), project)
+    perform(nextRecoveryAction(project), project, 0)
   }
 
-  fun perform(recoveryAction: RecoveryAction, project: Project) {
+  fun perform(recoveryAction: RecoveryAction, project: Project, idx: Int) {
     recoveryAction.performUnderProgress(project, true) { p ->
       if (hasNextRecoveryAction(p)) {
-        askUserToContinue(p, recoveryAction)
+        askUserToContinue(p, recoveryAction, idx)
       }
     }
   }
 
-  private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction) {
+  private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction, idx: Int) {
     if (!hasNextRecoveryAction(project)) return
     val recoveryAction = actionSeq.next()
+    val next = idx + 1
 
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
       .createNotification(
         IdeBundle.message("notification.cache.diagnostic.helper.title"),
-        IdeBundle.message("notification.cache.diagnostic.helper.text", previousRecoveryAction.presentableName),
+        IdeBundle.message("notification.cache.diagnostic.helper.text",
+          previousRecoveryAction.presentableName,
+          next,
+          service<Saul>().sortedActions.size),
         NotificationType.WARNING
       )
     notification
@@ -80,7 +85,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
       })
       .addAction(DumbAwareAction.create(recoveryAction.presentableName) {
         notification.expire()
-        perform(recoveryAction, project)
+        perform(recoveryAction, project, next)
       })
       .setImportant(true)
       .notify(project)
