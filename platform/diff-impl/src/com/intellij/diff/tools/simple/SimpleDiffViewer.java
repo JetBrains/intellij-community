@@ -696,6 +696,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return getTextSettings().isEnableSyncScroll() || getTextSettings().isEnableAligningChangesMode();
     }
 
+    @Override
+    public boolean forceSyncVerticalScroll() {
+      return needAlignChanges();
+    }
+
     @NotNull
     @Override
     public Range getRange(@NotNull Side baseSide, int line) {
