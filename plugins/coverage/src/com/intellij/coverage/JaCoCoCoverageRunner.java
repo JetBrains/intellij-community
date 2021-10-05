@@ -16,7 +16,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -147,35 +146,33 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     final Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), coverageBuilder);
 
     final Module[] modules = getModules(mainModule, project);
+    final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     for (Module module : modules) {
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null) {
-        final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
-        for (String root : roots) {
-          try {
-            Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root))).toURI());
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
-              @Override
-              public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
-                vmClassName = StringUtil.trimEnd(vmClassName, ".class");
-                if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                    !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
-                  return FileVisitResult.CONTINUE;
-                }
-                File file = path.toFile();
-                try {
-                  analyzer.analyzeAll(file);
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
+      final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(manager, module, true);
+      for (VirtualFile root : roots) {
+        try {
+          Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root.getUrl()))).toURI());
+          Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+              String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
+              vmClassName = StringUtil.trimEnd(vmClassName, ".class");
+              if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
+                  !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
                 return FileVisitResult.CONTINUE;
               }
-            });
-          }
-          catch (NoSuchFileException ignore) {}
+              File file = path.toFile();
+              try {
+                analyzer.analyzeAll(file);
+              }
+              catch (Exception e) {
+                LOG.info(e);
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
         }
+        catch (NoSuchFileException ignore) {}
       }
     }
   }
