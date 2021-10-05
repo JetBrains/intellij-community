@@ -93,6 +93,7 @@ public final class LambdaHighlightingUtil {
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
+      if (aClass.hasModifierProperty(PsiModifier.SEALED)) return JavaErrorBundle.message("sealed.cannot.be.functional.interface");
       MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
       if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) return JavaErrorBundle
         .message("target.method.is.generic");
