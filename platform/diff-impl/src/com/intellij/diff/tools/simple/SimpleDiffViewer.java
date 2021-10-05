@@ -693,7 +693,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MySyncScrollable extends BaseSyncScrollable {
     @Override
     public boolean isSyncScrollEnabled() {
-      return getTextSettings().isEnableSyncScroll();
+      return getTextSettings().isEnableSyncScroll() || getTextSettings().isEnableAligningChangesMode();
     }
 
     @NotNull
