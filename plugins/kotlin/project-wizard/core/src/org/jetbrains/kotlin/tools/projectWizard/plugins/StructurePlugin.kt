@@ -33,8 +33,6 @@ class StructurePlugin(context: Context) : Plugin(context) {
         ) {
             defaultValue = value(Paths.get("."))
 
-            validateOnProjectCreation = false
-
             validate { path ->
                 if (!Files.exists(path)) return@validate ValidationResult.OK
                 ValidationResult.create(Files.list(path).noneMatch { true }) {
