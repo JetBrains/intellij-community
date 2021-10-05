@@ -4,8 +4,8 @@ package com.intellij.ui.tabs.impl.themes
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
@@ -21,6 +21,8 @@ interface TabTheme {
   val underlinedTabBackground: Color?
   val underlinedTabForeground: Color
   val underlineHeight: Int
+  val underlineArc: Int
+    get() = 0
 
   val hoverInactiveBackground: Color?
   val underlinedTabInactiveBackground: Color?
@@ -76,6 +78,9 @@ class EditorTabTheme : TabTheme {
 
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
+
+  override val underlineArc: Int
+    get() = JBUI.CurrentTheme.EditorTabs.underlineArc()
 
   override val hoverInactiveBackground: Color
     get() = newUIAware(ColorUtil.mix(JBColor.PanelBackground, globalScheme.defaultBackground, 0.5), hoverBackground)
