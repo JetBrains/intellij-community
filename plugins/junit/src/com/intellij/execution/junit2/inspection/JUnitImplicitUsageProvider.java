@@ -73,7 +73,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
     if (first == null) return false;
 
-    if (!(first.findFirst().isEmpty())) return true;
+    if (first.findFirst().isPresent()) return true;
     return false;
   }
   private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
