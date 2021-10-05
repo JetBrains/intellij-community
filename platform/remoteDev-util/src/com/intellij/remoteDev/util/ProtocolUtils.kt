@@ -7,8 +7,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @NlsSafe
-@Suppress("SpellCheckingInspection")
-const val jetbrains_gateway_protocol_name = "jetbrainsgateway"
+const val jetbrains_gateway_protocol_name = "jetbrains-gateway"
 
 @ApiStatus.Experimental
 object RemoteDevProtocolUtil {
