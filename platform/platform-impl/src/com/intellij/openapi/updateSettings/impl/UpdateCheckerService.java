@@ -176,7 +176,7 @@ final class UpdateCheckerService {
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (current.asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
         new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
-      IdeUpdateUsageTriggerCollector.trigger("update.failed");
+      IdeUpdateUsageTriggerCollector.UPDATE_FAILED.log();
       LOG.info("The previous IDE update failed");
     }
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
@@ -186,7 +186,7 @@ final class UpdateCheckerService {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
-      IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+      IdeUpdateUsageTriggerCollector.UPDATE_WHATS_NEW.log(project);
     }
   }
 
