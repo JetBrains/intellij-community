@@ -1164,4 +1164,23 @@ public final class LambdaUtil {
     }
     return null;
   }
+
+  /**
+   * @return {@link PsiClass} or {@link PsiLambdaExpression} which contains passed {@code element}. 
+   *         {@link PsiAnonymousClass} is skipped if {@code element} is located in the corresponding expression list
+   */
+  @Nullable
+  public static PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
+    PsiElement currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
+        element = currentClass;
+      }
+      else {
+        return currentClass;
+      }
+    }
+  }
 }
