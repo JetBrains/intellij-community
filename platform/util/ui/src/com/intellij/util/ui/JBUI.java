@@ -608,6 +608,10 @@ public class JBUI {
         return getInt("EditorTabs.underlineHeight", DefaultTabs.underlineHeight());
       }
 
+      public static int underlineArc() {
+        return getInt("EditorTabs.underlineArc", 0);
+      }
+
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
