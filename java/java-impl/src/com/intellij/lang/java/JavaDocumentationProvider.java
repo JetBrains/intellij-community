@@ -17,14 +17,13 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
-import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,8 +80,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     @NotNull TextAttributes attributes,
     @Nullable String value
   ) {
-    if (doSyntaxHighlighting()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, getHighlightingSaturation());
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation());
     }
     else {
       buffer.append(value);
@@ -96,20 +94,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     @Nullable String value,
     String @NotNull ... properties
   ) {
-    if (doSyntaxHighlighting()) {
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
       HtmlSyntaxInfoUtil.appendStyledSpan(buffer, value, properties);
     }
     else {
       buffer.append(value);
     }
-  }
-
-  protected static boolean doSyntaxHighlighting() {
-    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting");
-  }
-
-  protected static float getHighlightingSaturation() {
-    return MathUtil.clamp(AdvancedSettings.getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f;
   }
 
   @Override
@@ -228,10 +218,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static JavaDocInfoGenerator getDocInfoGenerator(@NotNull Project project, boolean isGenerationForRenderedDoc) {
-    return JavaDocInfoGeneratorFactory.getBuilder(project)
-      .setIsGenerationForRenderedDoc(isGenerationForRenderedDoc)
-      .setDoSyntaxHighlighting(doSyntaxHighlighting())
-      .create();
+    return JavaDocInfoGeneratorFactory.getBuilder(project).setIsGenerationForRenderedDoc(isGenerationForRenderedDoc).create();
   }
 
   public static @Nls String generateClassInfo(PsiClass aClass) {
@@ -313,7 +300,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       JavaDocInfoGeneratorFactory.getBuilder(aClass.getProject())
         .setIsGenerationForRenderedDoc(false)
         .setHighlightingManager(highlightingManager)
-        .setDoSyntaxHighlighting(doSyntaxHighlighting())
         .create()
         .generateType(buffer, refs[i], aClass, false, true);
 
@@ -697,7 +683,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.getBuilder(target.getProject())
       .setPsiElement(target)
       .setIsGenerationForRenderedDoc(true)
-      .setDoSyntaxHighlighting(doSyntaxHighlighting())
       .create();
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());
   }

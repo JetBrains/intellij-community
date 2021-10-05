@@ -8,23 +8,20 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.MathUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -231,12 +228,17 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
             KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 
         private fun createHighlightingManager(project: Project?): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
-            if (!doSyntaxHighlighting) {
+            if (!DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
                 return KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING
             }
             return object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
                 override fun StringBuilder.appendHighlighted(value: String, attributes: TextAttributesAdapter) {
-                    HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes.attributes, value, highlightingSaturation)
+                    HtmlSyntaxInfoUtil.appendStyledSpan(
+                        this,
+                        attributes.attributes,
+                        value,
+                        DocumentationSettings.getHighlightingSaturation()
+                    )
                 }
 
                 override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
@@ -245,7 +247,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         project!!,
                         KotlinLanguage.INSTANCE,
                         codeSnippet,
-                        highlightingSaturation
+                        DocumentationSettings.getHighlightingSaturation()
                     )
                 }
 
@@ -284,11 +286,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
             }
                 .eraseTypeParameter()
         }
-
-        private val doSyntaxHighlighting: Boolean get() = getBoolean("documentation.components.enable.doc.syntax.highlighting")
-
-        private val highlightingSaturation: Float
-            get() = MathUtil.clamp(getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f
 
         private fun StringBuilder.appendHighlighted(
             value: String,
