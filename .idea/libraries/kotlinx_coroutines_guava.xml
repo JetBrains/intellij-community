@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-guava" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.5.1/kotlinx-coroutines-guava-1.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.5.2/kotlinx-coroutines-guava-1.5.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.5.1/kotlinx-coroutines-guava-1.5.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.5.2/kotlinx-coroutines-guava-1.5.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
