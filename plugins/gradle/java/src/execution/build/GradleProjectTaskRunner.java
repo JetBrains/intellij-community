@@ -162,7 +162,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     List<Module> modulesOfResourcesToBuild = addModulesBuildTasks(taskMap.get(ModuleResourcesBuildTask.class), buildTasksMap, initScripts);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
-    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
+    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap, initScripts);
 
     Set<String> rootPaths = buildTasksMap.keySet();
     if (rootPaths.isEmpty()) {
@@ -483,7 +483,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,
                                              @NotNull MultiMap<String, String> cleanTasksMap,
-                                             @NotNull MultiMap<String, String> buildTasksMap) {
+                                             @NotNull MultiMap<String, String> buildTasksMap,
+                                             @NotNull MultiMap<String, String> initScripts) {
     if (ContainerUtil.isEmpty(tasks)) return;
 
     for (ProjectTask projectTask : tasks) {
@@ -495,7 +496,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           buildTasksProvider.addBuildTasks(
             projectModelBuildTask,
             task -> cleanTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
-            task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName())
+            task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
+            (String path, String script) -> initScripts.putValue(path, script)
           );
         }
       }
