@@ -2009,8 +2009,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
-
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
     createModulePom("parent1",
                     "<groupId>test</groupId>" +
                     "<artifactId>parent1</artifactId>" +

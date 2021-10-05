@@ -155,13 +155,24 @@ class DummyIndexer : MavenServerIndexer {
 }
 
 class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun customize(workspaceMap: MavenWorkspaceMap?,
-                         failOnUnresolvedDependency: Boolean,
-                         console: MavenServerConsole,
-                         indicator: MavenServerProgressIndicator,
-                         alwaysUpdateSnapshots: Boolean,
-                         userProperties: Properties?,
-                         token: MavenToken?) {
+  override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
+                                                failOnUnresolvedDependency: Boolean,
+                                                alwaysUpdateSnapshots: Boolean,
+                                                userProperties: Properties?,
+                                                token: MavenToken?): MavenServerPullProgressIndicator {
+    return object: MavenServerPullProgressIndicator {
+      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
+        return null
+      }
+
+      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
+       return null
+      }
+
+      override fun cancel() {
+      }
+
+    }
   }
 
   override fun customizeComponents(token: MavenToken?) {
