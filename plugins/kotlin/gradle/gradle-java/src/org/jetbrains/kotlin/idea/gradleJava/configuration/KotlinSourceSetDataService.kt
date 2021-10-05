@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -194,7 +195,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 platform = platform,
                 modelsProvider = modelsProvider,
                 hmppEnabled = kotlinGradleProjectData.isHmpp,
-                pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList(),
+                pureKotlinSourceFolders = if (platform.isJvm()) kotlinGradleProjectData.pureKotlinSourceFolders.toList() else emptyList(),
                 dependsOnList = kotlinSourceSet.dependsOn,
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
@@ -234,8 +235,6 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                     productionOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
                     testOutputPath = null
                 }
-
-                this.pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList()
             }
 
             return kotlinFacet

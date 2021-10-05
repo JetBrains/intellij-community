@@ -108,7 +108,7 @@ private class PureKotlinSourceFoldersHolder {
      */
     fun hasPurePrefixInPath(module: Module, path: String): Boolean {
         val pureFolders = moduleMap.getOrPut(module) {
-            if (module.isAndroidModule()) null else KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders
+            KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders?.takeIf { it.isNotEmpty() && !module.isAndroidModule() }
         } ?: return true
 
         return pureFolders.any { path.startsWith(it, ignoreCase = true) }
