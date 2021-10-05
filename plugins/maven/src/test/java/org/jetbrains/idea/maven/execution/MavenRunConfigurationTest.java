@@ -117,7 +117,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
       .createConfiguration("name", MavenRunConfigurationType.class);
 
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
+    runConfiguration.setRunnerParameters(mavenRunnerParameters);
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     notContainMavenKey(parameters, MavenConfigSettings.NON_RECURSIVE);
@@ -148,7 +148,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     generalSettings.setLocalRepository("inheritLocalRepository");
     generalSettings.setUserSettingsFile("inheritUserSettings");
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
+    runConfiguration.setRunnerParameters(mavenRunnerParameters);
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     notContainMavenKey(parameters, MavenConfigSettings.NON_RECURSIVE);
@@ -175,10 +175,10 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     generalSettings.setLocalRepository("inheritLocalRepository");
     generalSettings.setUserSettingsFile("inheritUserSettings");
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
-    runConfiguration.getSettings().setThreads("5");
-    runConfiguration.getSettings().setLocalRepository("overrideLocalRepository");
-    runConfiguration.getSettings().setUserSettings("overrideUserSettings");
+    runConfiguration.setRunnerParameters(mavenRunnerParameters);
+    runConfiguration.getGeneralSettings().setThreads("5");
+    runConfiguration.getGeneralSettings().setLocalRepository("overrideLocalRepository");
+    runConfiguration.getGeneralSettings().setUserSettingsFile("overrideUserSettings");
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     containMavenKey(parameters, MavenConfigSettings.THREADS);
@@ -202,7 +202,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     runnerSettings.setMavenProperties(Map.of("mp1", "mp1"));
     runnerSettings.setEnvironmentProperties(Map.of("ep1", "ep1"));
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
+    runConfiguration.setRunnerParameters(mavenRunnerParameters);
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     Assert.assertTrue(parameters.getVMParametersList().hasParameter(runnerSettings.getVmOptions()));
@@ -228,10 +228,10 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     runnerSettings.setMavenProperties(Map.of("mp1", "mp1"));
     runnerSettings.setEnvironmentProperties(Map.of("ep1", "ep1"));
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.getSettings().setRunnerParameters(mavenRunnerParameters);
-    runConfiguration.getSettings().setVmOptions(vmOptions);
-    runConfiguration.getSettings().setMavenProperties(mavenProperties);
-    runConfiguration.getSettings().setEnvironment(environment);
+    runConfiguration.setRunnerParameters(mavenRunnerParameters);
+    runConfiguration.getRunnerSettings().setVmOptions(vmOptions);
+    runConfiguration.getRunnerSettings().setMavenProperties(mavenProperties);
+    runConfiguration.getRunnerSettings().setEnvironmentProperties(environment);
     JavaParameters parameters = runConfiguration.createJavaParameters(myProject);
 
     Assert.assertTrue(parameters.getVMParametersList().hasParameter(vmOptions));

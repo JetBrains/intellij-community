@@ -53,8 +53,8 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   id: String,
   @Nls(capitalization = Nls.Capitalization.Sentence) name: String,
   @Nls(capitalization = Nls.Capitalization.Title) group: String?,
-  crossinline getter: S.() -> V?,
-  crossinline setter: S.(V?) -> Unit,
+  crossinline getter: S.() -> V,
+  crossinline setter: S.(V) -> Unit,
   crossinline getText: (V) -> String
 ): VariantTagFragment<S, V?> = add(VariantTagFragment.createFragment(
   id,
@@ -63,10 +63,10 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   { EnumSet.allOf(V::class.java).toTypedArray() },
   { it.getter() },
   { it, v -> it.setter(v) },
-  { it.getter() != null }
+  { it.getter() != EnumSet.allOf(V::class.java).first() }
 )).apply {
-  setVariantNameProvider { it?.let(getText) ?: "" }
-  setDefaultVariant(null)
+  setVariantNameProvider { getText(it) }
+  setDefaultVariant(EnumSet.allOf(V::class.java).first())
 }
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addTag(
