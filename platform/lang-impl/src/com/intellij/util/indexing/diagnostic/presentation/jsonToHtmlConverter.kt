@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
 import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
@@ -17,7 +18,8 @@ import org.jetbrains.annotations.Nls
 fun createAggregateHtml(
   projectName: String,
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
-  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
+  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
+  changedFilesPushEvents: List<ChangedFilesPushedEvent>
 ): String = html {
   head {
     title("Indexing diagnostics of '$projectName'")
@@ -128,6 +130,32 @@ fun createAggregateHtml(
                   } ?: " Incompatible"))
                   td(event.chunkUniqueId)
                   td(event.generationTime?.presentableLocalDateTime() ?: "unknown")
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (changedFilesPushEvents.isNotEmpty()) {
+        div {
+          h1("Scanning to push properties of changed files")
+          table {
+            thead {
+              tr {
+                th("Time")
+                th("Reason")
+                th("Duration")
+                th("Is cancelled")
+              }
+            }
+            tbody {
+              for (event in changedFilesPushEvents.sortedByDescending { it.startTime.instant }) {
+                tr {
+                  td(event.startTime.presentableLocalDateTime())
+                  td(event.reason)
+                  td(event.duration.presentableDuration())
+                  td(if (event.isCancelled) "cancelled" else "fully finished")
                 }
               }
             }
