@@ -7,8 +7,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -87,8 +89,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         if (moduleDirectories.length > 1) {
           options.add(RefactoringBundle.message("rename.source.root.button.text"));
         }
-        int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                                      ArrayUtil.toStringArray(options), 0, Messages.getWarningIcon());
+        int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("dialog.title.rename.package.directories"),
+                                      ArrayUtil.toStringArray(options), 0, Messages.getQuestionIcon());
         if (ret == 0) {
           if (directories.length > projectDirectories.length) {
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, projectDirectories);
@@ -157,11 +159,23 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   @NotNull
   private static @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
-    if (directory.equals(currentVDirectory)) {
-      return directory.getVirtualFile().getPresentableUrl() +
-             " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
+    Project project = directory.getProject();
+    VirtualFile virtualFile = directory.getVirtualFile();
+    VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
+    String presentableUrl = null;
+    if (root != null) {
+      presentableUrl = VfsUtilCore.getRelativePath(virtualFile, root, '/');
+      if (presentableUrl != null) {
+        presentableUrl = "/" + presentableUrl;
+      }
     }
-    return directory.getVirtualFile().getPresentableUrl();
+    if (presentableUrl == null) {
+      presentableUrl = virtualFile.getPresentableUrl();
+    }
+    if (directory.equals(currentVDirectory)) {
+      return presentableUrl + " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
+    }
+    return presentableUrl;
   }
 
   private static void appendRoots(StringBuffer message, List<PsiDirectory> source, Function<PsiDirectory, String> directoryPresentation) {
