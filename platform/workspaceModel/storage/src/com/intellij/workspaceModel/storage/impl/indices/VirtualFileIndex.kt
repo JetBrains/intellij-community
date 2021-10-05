@@ -76,7 +76,7 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key.substring(it.value.toString().length + 1)
+      entityData.createEntity(entityStorage) to it.key.substring(it.value.asString().length + 1)
     } ?: emptySequence()
 
   fun getIndexedJarDirectories() = entityId2JarDir.values
@@ -117,7 +117,7 @@ open class VirtualFileIndex internal constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
