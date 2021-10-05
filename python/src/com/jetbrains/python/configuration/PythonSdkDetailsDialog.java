@@ -2,6 +2,8 @@
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Platform;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -26,6 +29,7 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
@@ -36,6 +40,8 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
+import com.jetbrains.python.ui.ManualPathEntryDialog;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -504,8 +510,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     @Override
     protected VirtualFile[] doAddItems() {
       try {
-        String[] files = PythonRemoteInterpreterManager
-          .getInstance().chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData(), false);
+        String[] files = chooseRemoteFiles();
 
         final String sourcesLocalPath = PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
 
@@ -539,11 +544,35 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       return VirtualFile.EMPTY_ARRAY;
     }
 
+    private String @NotNull [] chooseRemoteFiles() throws ExecutionException, InterruptedException {
+      SdkAdditionalData sdkAdditionalData = mySdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
+        PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+        if (remoteInterpreterManager == null) {
+          return ArrayUtil.EMPTY_STRING_ARRAY;
+        }
+        return remoteInterpreterManager.chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData, false);
+      }
+      else if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
+        // TODO [targets] Use proper file chooser dialog for corresponding target
+        ManualPathEntryDialog dialog = new ManualPathEntryDialog(myProject, Platform.UNIX);
+        if (dialog.showAndGet()) {
+          return new String[]{dialog.getPath()};
+        }
+        else {
+          return ArrayUtil.EMPTY_STRING_ARRAY;
+        }
+      }
+      else {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+    }
+
     @Override
     public void apply(SdkModificator sdkModificator) {
-      if (sdkModificator.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+      if (sdkModificator.getSdkAdditionalData() instanceof RemoteSdkProperties) {
         for (PathMappingSettings.PathMapping mapping : myNewMappings) {
-          ((PyRemoteSdkAdditionalDataBase)sdkModificator.getSdkAdditionalData()).getPathMappings()
+          ((RemoteSdkProperties)sdkModificator.getSdkAdditionalData()).getPathMappings()
             .addMappingCheckUnique(mapping.getLocalRoot(), mapping.getRemoteRoot());
         }
       }
