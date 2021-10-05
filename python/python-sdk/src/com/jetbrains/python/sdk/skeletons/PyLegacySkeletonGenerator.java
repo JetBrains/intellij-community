@@ -31,7 +31,7 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
    * @param pySdk         SDK
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
-  public PyLegacySkeletonGenerator(String skeletonPath,
+  public PyLegacySkeletonGenerator(@NotNull String skeletonPath,
                                    @NotNull Sdk pySdk,
                                    @Nullable String currentFolder) {
     super(skeletonPath, pySdk, currentFolder);
