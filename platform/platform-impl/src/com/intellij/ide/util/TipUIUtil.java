@@ -58,6 +58,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -68,7 +69,7 @@ import static com.intellij.util.ui.UIUtil.drawImage;
  */
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
-  private static final String SHORTCUT_ENTITY = "&shortcut:";
+  private static final Pattern SHORTCUT_PATTERN = Pattern.compile("&shortcut:([\\w.$]+?);");
   private static final List<TipEntity> ENTITIES = List.of(
 
     TipEntity.of("productName", ApplicationNamesInfo.getInstance().getFullProductName()),
@@ -131,7 +132,7 @@ public final class TipUIUtil {
       File tipFile = new File(tip.fileName);
       if (tipFile.isAbsolute() && tipFile.exists()) {
         text.append(FileUtil.loadFile(tipFile, StandardCharsets.UTF_8));
-        updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
+        updateImagesAndEntities(text, null, tipFile.getParentFile().getAbsolutePath(), component);
         cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), cssFile));
       }
       else {
@@ -175,8 +176,8 @@ public final class TipUIUtil {
               String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
 
             //Here and onwards we'll use path properties from successful tip retriever to get images and css
-            updateShortcuts(text);
-            updateImages(text, retriever.myLoader, tipImagesLocation, component);
+            //This new method updates all: images, entities and shortcuts
+            updateImagesAndEntities(text, retriever.myLoader, tipImagesLocation, component);
             final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
             cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
             break;
@@ -186,10 +187,7 @@ public final class TipUIUtil {
         if (tipContent == null) return getCantReadText(tip);
       }
       String replaced = text.toString();
-      //It's just cleaner expression here that we ca configure entities elsewhere and just replace them here in one loop.
-      for (final TipEntity entity : ENTITIES) {
-        replaced = entity.inline(replaced);
-      }
+
       final String inlinedCSS =
         cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
       return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
@@ -212,14 +210,47 @@ public final class TipUIUtil {
     return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
   }
 
-  private static void updateImages(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
+  private static void updateImagesAndEntities(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
     final boolean dark = StartupUiUtil.isUnderDarcula();
     final boolean hidpi = JBUI.isPixHiDPI(component);
 
     final Document tipHtml = Jsoup.parse(text.toString());
     tipHtml.outputSettings().prettyPrint(false);
-
     //Let's use JSOUP because normalizing HTML manually is less reliable
+
+    //First, inline all custom entities like productName
+    tipHtml.getElementsContainingOwnText("&").forEach(element -> {
+      //It's just cleaner expression here that we can configure entities elsewhere and just replace them here in one loop.
+      String textNodeText = element.text();
+      if (textNodeText.contains("&")) {
+        for (final TipEntity entity : ENTITIES) {
+          textNodeText = entity.inline(textNodeText);
+        }
+        element.text(textNodeText);
+      }
+    });
+
+    tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN).forEach(shortcut -> {
+      shortcut.text(SHORTCUT_PATTERN.matcher(shortcut.text()).replaceAll(result -> {
+
+        final String actionId = result.group(1);
+        String shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
+        if (shortcutText == null) {
+          Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.Companion.getInstance().getDefaultKeymapName());
+          if (defKeymap != null) {
+            shortcutText = getShortcutText(actionId, defKeymap);
+            if (shortcutText != null) {
+              shortcutText += " (default keymap)";
+            }
+          }
+        }
+        if (shortcutText == null) {
+          shortcutText = "\"" + actionId + "\" undefined, set via Settings/Keymap";
+        }
+        return shortcutText;
+      }));
+    });
+
     tipHtml.getElementsByTag("img")
       .forEach(img -> {
 
@@ -331,37 +362,6 @@ public final class TipUIUtil {
       BufferedImage image = ImageIO.read(stream);
       if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
       return image;
-    }
-  }
-
-  private static void updateShortcuts(StringBuilder text) {
-
-
-    int lastIndex = 0;
-    while (true) {
-      lastIndex = text.indexOf(SHORTCUT_ENTITY, lastIndex);
-      if (lastIndex < 0) return;
-      final int actionIdStart = lastIndex + SHORTCUT_ENTITY.length();
-      int actionIdEnd = text.indexOf(";", actionIdStart);
-      if (actionIdEnd < 0) {
-        return;
-      }
-      final String actionId = text.substring(actionIdStart, actionIdEnd);
-      String shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
-      if (shortcutText == null) {
-        Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.Companion.getInstance().getDefaultKeymapName());
-        if (defKeymap != null) {
-          shortcutText = getShortcutText(actionId, defKeymap);
-          if (shortcutText != null) {
-            shortcutText += " in default keymap";
-          }
-        }
-      }
-      if (shortcutText == null) {
-        shortcutText = "<no shortcut for action " + actionId + ">";
-      }
-      text.replace(lastIndex, actionIdEnd + 1, shortcutText);
-      lastIndex += shortcutText.length();
     }
   }
 
