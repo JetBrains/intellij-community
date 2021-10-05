@@ -34,7 +34,7 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarActi
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 }
 
-class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
+open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarPauseActionHandler()
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
@@ -46,7 +46,7 @@ class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   }
 }
 
-class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
+open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarResumeActionHandler()
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
