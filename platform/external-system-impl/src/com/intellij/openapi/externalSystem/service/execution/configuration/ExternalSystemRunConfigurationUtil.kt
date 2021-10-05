@@ -66,7 +66,6 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   { it.getter() != EnumSet.allOf(V::class.java).first() }
 )).apply {
   setVariantNameProvider { getText(it) }
-  setDefaultVariant(EnumSet.allOf(V::class.java).first())
 }
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addTag(
