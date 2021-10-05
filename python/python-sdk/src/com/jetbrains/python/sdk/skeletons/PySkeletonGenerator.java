@@ -88,9 +88,9 @@ public abstract class PySkeletonGenerator {
 
   private static final Gson ourGson = new GsonBuilder().create();
 
-  protected final Sdk mySdk;
+  @NotNull protected final Sdk mySdk;
   @Nullable protected final String myCurrentFolder;
-  protected final String mySkeletonsPath;
+  @NotNull protected final String mySkeletonsPath;
 
   /**
    * @param skeletonPath  path where skeletons should be generated
@@ -98,7 +98,7 @@ public abstract class PySkeletonGenerator {
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
-  public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
+  public PySkeletonGenerator(@NotNull String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = StringUtil.trimTrailing(skeletonPath, '\\');
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
