@@ -33,32 +33,33 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   init {
     val settings = InlayHintsSettings.instance()
-    val root = CheckedTreeNode()
-    var nodeToSelect: CheckedTreeNode? = null
-    val groups = InlayHintsProviderExtension.inlayProviderName.extensionList.groupBy { it.instance.groupId }.mapValues {
-      it.value.map { point ->
-        NewInlayProviderSettingsModel(point.instance.withSettings(Language.findLanguageByID(point.language)!!, settings),
-          settings) as InlayProviderSettingsModel
+    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap { it.getProvidersInfo(project) }
+    val groups = providerInfos.groupBy { it.provider.groupId }.mapValues {
+      it.value.map { info ->
+        NewInlayProviderSettingsModel(info.provider.withSettings(info.language, settings), settings) as InlayProviderSettingsModel
       }
     }.toMutableMap()
-    val lastId = settings.getLastViewedProviderId()
-    val paramLanguages = PARAMETER_NAME_HINTS_EP.extensionList.mapNotNull {
+    val parameterModels = PARAMETER_NAME_HINTS_EP.extensionList.map {
       ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
     }
-    groups[PARAMETERS_GROUP] = paramLanguages
+    groups[PARAMETERS_GROUP] = parameterModels
     val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+
+    val root = CheckedTreeNode()
+    val lastSelected = settings.getLastViewedProviderId()
+    var nodeToSelect: CheckedTreeNode? = null
     for (group in sortedMap) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
         if (lang.value.size == 1) {
-          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastId, nodeToSelect)
+          nodeToSelect = addModelNode(lang.value.first(), groupNode, lastSelected, nodeToSelect)
         }
         else {
           val langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
           lang.value.forEach {
-            nodeToSelect = addModelNode(it, langNode, lastId, nodeToSelect)
+            nodeToSelect = addModelNode(it, langNode, lastSelected, nodeToSelect)
           }
         }
       }
