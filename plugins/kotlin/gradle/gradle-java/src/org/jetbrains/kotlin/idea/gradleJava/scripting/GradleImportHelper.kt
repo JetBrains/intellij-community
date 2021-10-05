@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
+import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -48,6 +49,10 @@ fun runPartialGradleImport(project: Project, root: GradleBuildRoot) {
     ExternalSystemUtil.refreshProject(
         root.pathPrefix,
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+            .withVmOptions(
+                "-D${KotlinDslModelsParameters.PROVIDER_MODE_SYSTEM_PROPERTY_NAME}=" +
+                        KotlinDslModelsParameters.CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
+            )
             .projectResolverPolicy(
                 GradlePartialResolverPolicy { it is KotlinDslScriptModelResolver }
             )
