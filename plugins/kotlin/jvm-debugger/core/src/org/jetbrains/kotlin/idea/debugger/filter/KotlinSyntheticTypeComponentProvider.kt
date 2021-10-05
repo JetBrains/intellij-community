@@ -92,6 +92,7 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
         private val LOAD_INSTRUCTIONS_WITH_INDEX = Opcodes.ILOAD.toByte()..Opcodes.ALOAD.toByte()
         private val LOAD_INSTRUCTIONS = (Opcodes.ALOAD + 1).toByte()..(Opcodes.IALOAD - 1).toByte()
         private val RETURN_INSTRUCTIONS = Opcodes.IRETURN.toByte()..Opcodes.RETURN.toByte()
+        private val ICONST_INSTRUCTIONS = Opcodes.ICONST_M1..Opcodes.ICONST_5
     }
 
     // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
@@ -120,6 +121,11 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
                         val nextInstr = instructions[i]
                         return nextInstr in RETURN_INSTRUCTIONS
                     }
+                }
+                Opcodes.CHECKCAST.toByte() -> {
+                    if (instructions[++i] != Opcodes.NOP.toByte()) return false
+                    if (instructions[++i] !in ICONST_INSTRUCTIONS) return false
+                    ++i
                 }
                 else -> return false
             }
