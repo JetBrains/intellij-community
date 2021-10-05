@@ -43,12 +43,16 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
   private fun isLocalTarget() = targetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {
-    val builder = TargetedBuilder()
+    val builder = TargetedBuilder(mySdk, mySkeletonsPath)
     myCurrentFolder?.let { builder.workingDir(it) }
     return builder
   }
 
-  private inner class TargetedBuilder : Builder() {
+  /**
+   * Note that [mySdk] and [mySkeletonsPath] cannot be accessed directly in [TargetedBuilder]. In the other case [IllegalAccessError] is
+   * thrown by access control according to [JVM specification](https://docs.oracle.com/javase/specs/jvms/se16/html/jvms-5.html#jvms-5.4.4).
+   */
+  private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsPaths: String) : Builder() {
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = doRunProcess(listener)
 
     @Throws(InvalidSdkException::class)
@@ -61,7 +65,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
       )
       generatorScriptExecution.addParameter("-d")
       val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(
-        localRootPath = Paths.get(mySkeletonsPath),
+        localRootPath = Paths.get(skeletonsPaths),
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
       targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
@@ -105,17 +109,17 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
       }
 
       val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
-      
+
       // XXX Make it automatic
       targetEnvironment.uploadVolumes.values.forEach { it.upload(".", TargetProgressIndicator.EMPTY) }
-      
-      val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, mySdk, emptyList())
+
+      val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
       val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
       val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
       val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
       listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
       val result = capturingProcessHandler.runProcess()
-      
+
       // XXX Make it automatic
       targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
       return result
