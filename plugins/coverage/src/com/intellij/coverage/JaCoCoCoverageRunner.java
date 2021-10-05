@@ -88,7 +88,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                         @NotNull Project project,
                                         CoverageSuite suite) throws IOException {
     ExecFileLoader loader = new ExecFileLoader();
-    final CoverageBuilder coverageBuilder = getCoverageBuilder(sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
+    final CoverageBuilder coverageBuilder = new CoverageBuilder();
+    loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
 
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
       String className = classCoverage.getName();
@@ -135,14 +136,14 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  private static CoverageBuilder getCoverageBuilder(@NotNull File sessionDataFile,
-                                                    @Nullable Module mainModule,
-                                                    @NotNull Project project,
-                                                    ExecFileLoader loader,
-                                                    JavaCoverageSuite suite) throws IOException {
+  private static void loadReportToCoverageBuilder(@NotNull CoverageBuilder coverageBuilder,
+                                                  @NotNull File sessionDataFile,
+                                                  @Nullable Module mainModule,
+                                                  @NotNull Project project,
+                                                  ExecFileLoader loader,
+                                                  JavaCoverageSuite suite) throws IOException {
     loader.load(sessionDataFile);
 
-    final CoverageBuilder coverageBuilder = new CoverageBuilder();
     final Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), coverageBuilder);
 
     final Module[] modules = getModules(mainModule, project);
@@ -177,7 +178,6 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
         }
       }
     }
-    return coverageBuilder;
   }
 
   private static Module[] getModules(@Nullable Module mainModule,
@@ -267,16 +267,19 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     File targetDirectory = new File(settings.OUTPUT_DIRECTORY);
-    File coverageFile = new File(suite.getSuites()[0].getCoverageDataFileName());
     RunConfigurationBase runConfiguration = suite.getRunConfiguration();
     Module module = runConfiguration instanceof ModuleBasedConfiguration
                     ? ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule().getModule()
                     : null;
 
     ExecFileLoader loader = new ExecFileLoader();
-    CoverageBuilder coverageBuilder = getCoverageBuilder(coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+    CoverageBuilder coverageBuilder = new CoverageBuilder();
+    for (CoverageSuite aSuite : suite.getSuites()) {
+      File coverageFile = new File(aSuite.getCoverageDataFileName());
+      loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+    }
 
-    final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(coverageFile.getName());
+    final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(suite.getPresentableName());
 
     final IReportVisitor visitor = new HTMLFormatter().createVisitor(new FileMultiReportOutput(targetDirectory));
 
