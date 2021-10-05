@@ -3,10 +3,9 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
@@ -15,7 +14,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -135,10 +133,6 @@ public final class GroovyPresentationUtil {
     return builder.toString();
   }
 
-  private static float getHighlightingSaturation() {
-    return MathUtil.clamp(AdvancedSettings.getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f;
-  }
-
   private static @NotNull StringBuilder appendStyledSpan(
     boolean doHighlighting,
     @NotNull StringBuilder buffer,
@@ -146,7 +140,7 @@ public final class GroovyPresentationUtil {
     @Nullable String value
   ) {
     if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, getHighlightingSaturation());
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation());
     }
     else {
       buffer.append(value);

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
@@ -14,18 +15,22 @@ public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
   public GroovyDocInfoGenerator(
     PsiElement element,
     boolean isGenerationForRenderedDoc,
-    boolean doSyntaxHighlighting,
-    boolean doHighlightInlineCodeBlocks,
-    boolean doHighlightLinks
+    boolean doHighlightSignatures,
+    boolean doHighlightCodeBlocks,
+    @NotNull DocumentationSettings.InlineCodeHighlightingMode inlineCodeBlocksHighlightingMode,
+    boolean doSemanticHighlightingOfLinks,
+    float highlightingSaturationFactor
   ) {
     super(
       element.getProject(),
       element,
       GroovyDocHighlightingManager.getInstance(),
       isGenerationForRenderedDoc,
-      doSyntaxHighlighting,
-      doHighlightInlineCodeBlocks,
-      doHighlightLinks);
+      doHighlightSignatures,
+      doHighlightCodeBlocks,
+      inlineCodeBlocksHighlightingMode,
+      doSemanticHighlightingOfLinks,
+      highlightingSaturationFactor);
   }
 
   @Override

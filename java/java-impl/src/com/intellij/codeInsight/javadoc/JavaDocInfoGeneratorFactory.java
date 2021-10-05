@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -17,17 +17,16 @@ public class JavaDocInfoGeneratorFactory {
   }
 
   protected JavaDocInfoGenerator createImpl(@NotNull Project project, @Nullable PsiElement element) {
-    EditorSettingsExternalizable.getInstance();
-    EditorSettingsExternalizable.getInstance();
-    EditorSettingsExternalizable.getInstance();
     return new JavaDocInfoGenerator(
       project,
       element,
       JavaDocHighlightingManagerImpl.getInstance(),
       false,
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting"),
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks"),
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links"));
+      DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(),
+      DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      DocumentationSettings.getInlineCodeHighlightingMode(),
+      DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
+      DocumentationSettings.getHighlightingSaturation());
   }
 
   @NotNull
@@ -45,12 +44,11 @@ public class JavaDocInfoGeneratorFactory {
     private @Nullable PsiElement myElement;
     private @NotNull JavaDocHighlightingManager myManager = new JavaDocHighlightingManagerImpl();
     private boolean myIsRendered = false;
-    private boolean myDoHighlighting =
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting");
-    private boolean myDoHighlightBlocks =
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
-    private boolean myDoHighlightLinks =
-      AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
+    private boolean myDoHighlightSignatures = DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled();
+    private boolean myDoHighlightCodeBlocks = DocumentationSettings.isHighlightingOfCodeBlocksEnabled();
+    private @NotNull InlineCodeHighlightingMode myInlineCodeBlocksHighlightingMode = DocumentationSettings.getInlineCodeHighlightingMode();
+    private boolean myDoSemanticHighlightingOfLinks = DocumentationSettings.isSemanticHighlightingOfLinksEnabled();
+    private float myHighlightingSaturation = DocumentationSettings.getHighlightingSaturation();
 
     private JavaDocInfoGeneratorBuilder(@NotNull Project project) {
       myProject = project;
@@ -71,34 +69,42 @@ public class JavaDocInfoGeneratorFactory {
       return this;
     }
 
-    public JavaDocInfoGeneratorBuilder setDoSyntaxHighlighting(boolean doHighlighting) {
-      myDoHighlighting = doHighlighting;
+    public JavaDocInfoGeneratorBuilder setDoHighlightSignatures(boolean doHighlighting) {
+      myDoHighlightSignatures = doHighlighting;
       return this;
     }
 
-    public JavaDocInfoGeneratorBuilder setDoHighlightInlineCodeBlocks(boolean doHighlightBlocks) {
-      myDoHighlightBlocks = doHighlightBlocks;
+    public JavaDocInfoGeneratorBuilder setDoHighlightCodeBlocks(boolean doHighlighting) {
+      myDoHighlightCodeBlocks = doHighlighting;
       return this;
     }
 
-    public JavaDocInfoGeneratorBuilder setDoHighlightLinks(boolean doHighlightLinks) {
-      myDoHighlightLinks = doHighlightLinks;
+    public JavaDocInfoGeneratorBuilder setDoInlineCodeHighlightingMode(@NotNull InlineCodeHighlightingMode mode) {
+      myInlineCodeBlocksHighlightingMode = mode;
+      return this;
+    }
+
+    public JavaDocInfoGeneratorBuilder setDoSemanticHighlightingOfLinks(boolean doHighlightLinks) {
+      myDoSemanticHighlightingOfLinks = doHighlightLinks;
+      return this;
+    }
+
+    public JavaDocInfoGeneratorBuilder setHighlightingSaturationFactor(float saturationFactor) {
+      myHighlightingSaturation = saturationFactor;
       return this;
     }
 
     public JavaDocInfoGenerator create() {
-      if (!myDoHighlighting) {
-        myDoHighlightBlocks = false;
-        myDoHighlightLinks = false;
-      }
       return new JavaDocInfoGenerator(
         myProject,
         myElement,
         myManager,
         myIsRendered,
-        myDoHighlighting,
-        myDoHighlightBlocks,
-        myDoHighlightLinks);
+        myDoHighlightSignatures,
+        myDoHighlightCodeBlocks,
+        myInlineCodeBlocksHighlightingMode,
+        myDoSemanticHighlightingOfLinks,
+        myHighlightingSaturation);
     }
   }
 }

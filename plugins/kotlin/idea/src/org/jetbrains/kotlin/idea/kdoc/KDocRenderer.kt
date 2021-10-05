@@ -5,22 +5,19 @@ package org.jetbrains.kotlin.idea.kdoc
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import com.intellij.util.MathUtil
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -46,17 +43,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
 
 object KDocRenderer {
-
-    private val doSyntaxHighlighting: Boolean get() = getBoolean("documentation.components.enable.doc.syntax.highlighting")
-
-    private val doHighlightInlineCodeBlocks: Boolean
-        get() = getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks")
-
-    private val doHighlightLinks: Boolean
-        get() = getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links")
-
-    private val highlightingSaturation: Float get() =
-        MathUtil.clamp(getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f
 
     fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
         append(markdownToHtml(docComment, allowSingleParagraph = true))
@@ -128,10 +114,10 @@ object KDocRenderer {
                     pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
                     else -> KotlinHighlightingColors.CLASS
                 }
-                appendStyledSpan(doHighlightLinks, segmentAttributes, pathSegment)
-                appendStyledSpan(doHighlightLinks, KotlinHighlightingColors.DOT, ".")
+                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), segmentAttributes, pathSegment)
+                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), KotlinHighlightingColors.DOT, ".")
             }
-            appendStyledSpan(doHighlightLinks, lastSegmentAttributes, elementName)
+            appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), lastSegmentAttributes, elementName)
         }
     }
 
@@ -181,7 +167,13 @@ object KDocRenderer {
                                     else -> trimCommonIndent(target.extractExampleText()).htmlEscape()
                                 }
                                 this@appendSamplesList.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                                    doSyntaxHighlighting, subjectLink.project, KotlinLanguage.INSTANCE, codeSnippet
+                                    when (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
+                                        true -> InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
+                                        false -> InlineCodeHighlightingMode.NO_HIGHLIGHTING
+                                    },
+                                    subjectLink.project,
+                                    KotlinLanguage.INSTANCE,
+                                    codeSnippet
                                 )
                             }
                         }
@@ -249,7 +241,7 @@ object KDocRenderer {
                 if (subjectName != null) {
                     append("<p><code>")
                     when (val link = it.getChildrenOfType<KDocLink>().firstOrNull()) {
-                        null -> appendStyledSpan(doHighlightLinks, titleAttributes, subjectName)
+                        null -> appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), titleAttributes, subjectName)
                         else -> appendHyperlink(link)
                     }
                     append("</code>")
@@ -342,9 +334,9 @@ object KDocRenderer {
                     val startDelimiter = node.child(MarkdownTokenTypes.BACKTICK)?.text
                     if (startDelimiter != null) {
                         val text = node.text.substring(startDelimiter.length).removeSuffix(startDelimiter)
-                        sb.append("<code style='font-size:96%;'>")
+                        sb.append("<code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection()}%;'>")
                         sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                            doHighlightInlineCodeBlocks,
+                            DocumentationSettings.getInlineCodeHighlightingMode(),
                             comment.project,
                             KotlinLanguage.INSTANCE,
                             text
@@ -414,7 +406,10 @@ object KDocRenderer {
                 MarkdownTokenTypes.CODE_LINE,
                 MarkdownTokenTypes.CODE_FENCE_CONTENT -> {
                     sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                        doSyntaxHighlighting,
+                        when (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
+                            true -> InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
+                            false -> InlineCodeHighlightingMode.NO_HIGHLIGHTING
+                        },
                         comment.project,
                         guessLanguage(currentCodeFenceLang) ?: KotlinLanguage.INSTANCE,
                         nodeText
@@ -522,7 +517,7 @@ object KDocRenderer {
 
     private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributesKey: TextAttributesKey, value: String?): StringBuilder {
         if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, highlightingSaturation)
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation())
         } else {
             append(value)
         }
@@ -531,7 +526,7 @@ object KDocRenderer {
 
     private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributes: TextAttributes, value: String?): StringBuilder {
         if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, highlightingSaturation)
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation())
         } else {
             append(value)
         }
@@ -539,23 +534,27 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        doHighlighting: Boolean,
+        highlightingMode: InlineCodeHighlightingMode,
         project: Project,
         language: Language,
         codeSnippet: String
     ): StringBuilder {
         val codeSnippetBuilder = StringBuilder()
-        if (doHighlighting) { // highlight code by lexer
+        if (highlightingMode == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING) { // highlight code by lexer
             HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                codeSnippetBuilder, project, language, codeSnippet, false, highlightingSaturation
+                codeSnippetBuilder, project, language, codeSnippet, false, DocumentationSettings.getHighlightingSaturation()
             )
         } else {
             codeSnippetBuilder.append(StringUtil.escapeXmlEntities(codeSnippet))
         }
-        // set code text color as editor default code color instead of doc component text color
-        val codeAttributes = EditorColorsManager.getInstance().globalScheme.getAttributes(HighlighterColors.TEXT).clone()
-        codeAttributes.backgroundColor = null
-        appendStyledSpan(doHighlighting, codeAttributes, codeSnippetBuilder.toString())
+        if (highlightingMode != InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
+            // set code text color as editor default code color instead of doc component text color
+            val codeAttributes = EditorColorsManager.getInstance().globalScheme.getAttributes(HighlighterColors.TEXT).clone()
+            codeAttributes.backgroundColor = null
+            appendStyledSpan(true, codeAttributes, codeSnippetBuilder.toString())
+        } else {
+            append(codeSnippetBuilder.toString())
+        }
         return this
     }
 

@@ -12,12 +12,11 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -26,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -78,8 +76,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     @NotNull TextAttributes attributes,
     @Nullable String value
   ) {
-    if (doSyntaxHighlighting()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, getHighlightingSaturation());
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation());
     }
     else {
       buffer.append(value);
@@ -91,28 +89,12 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     @Nullable String value,
     String @NotNull ... properties
   ) {
-    if (doSyntaxHighlighting()) {
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
       HtmlSyntaxInfoUtil.appendStyledSpan(buffer, value, properties);
     }
     else {
       buffer.append(value);
     }
-  }
-
-  private static boolean doSyntaxHighlighting() {
-    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting");
-  }
-
-  private static boolean doHighlightingOfInlineCodeBlocksEnabled() {
-    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.inline.code.blocks");
-  }
-
-  private static boolean doHighlightingOfLinksEnabled() {
-    return AdvancedSettings.getBoolean("documentation.components.enable.doc.syntax.highlighting.of.links");
-  }
-
-  private static float getHighlightingSaturation() {
-    return MathUtil.clamp(AdvancedSettings.getInt("documentation.components.doc.syntax.highlighting.saturation"), 0, 100) * 0.01f;
   }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
@@ -171,7 +153,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         PsiParameter parameter = parameters[i];
         if (i > 0) appendStyledSpan(buffer, GroovyDocHighlightingManager.getInstance().getCommaAttributes(), ", ");
         if (parameter instanceof GrParameter) {
-          GroovyPresentationUtil.appendParameterPresentation((GrParameter)parameter, substitutor, TypePresentation.LINK, buffer, doSyntaxHighlighting());
+          GroovyPresentationUtil.appendParameterPresentation(
+            (GrParameter)parameter, substitutor, TypePresentation.LINK, buffer,
+            DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled());
         }
         else {
           PsiType type = parameter.getType();
@@ -314,7 +298,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       JavaDocInfoGeneratorFactory.getBuilder(context.getProject())
         .setHighlightingManager(GroovyDocHighlightingManager.getInstance())
         .setIsGenerationForRenderedDoc(isRendered)
-        .setDoSyntaxHighlighting(doSyntaxHighlighting())
         .create()
         .generateType(buffer, type, context);
     }
@@ -427,9 +410,11 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return new GroovyDocInfoGenerator(
       element,
       isGenerationForRenderedDoc,
-      doSyntaxHighlighting(),
-      doHighlightingOfInlineCodeBlocksEnabled(),
-      doHighlightingOfLinksEnabled());
+      DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(),
+      DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      DocumentationSettings.getInlineCodeHighlightingMode(),
+      DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
+      DocumentationSettings.getHighlightingSaturation());
   }
 
   protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {

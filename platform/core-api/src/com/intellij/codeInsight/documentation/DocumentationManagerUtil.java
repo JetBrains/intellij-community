@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 
 public class DocumentationManagerUtil {
@@ -23,13 +24,17 @@ public class DocumentationManagerUtil {
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {
-      buffer.append(isRendered ? "<code style='font-size:96%;'>" : "<code>");
+      buffer.append(isRendered ? "<code style='font-size:" + getMonospaceFontSizeCorrection() + "%;'>" : "<code>");
     }
     buffer.append(label);
     if (!plainLink) {
       buffer.append("</code>");
     }
     buffer.append("</a>");
+  }
+
+  private static int getMonospaceFontSizeCorrection() {
+    return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
