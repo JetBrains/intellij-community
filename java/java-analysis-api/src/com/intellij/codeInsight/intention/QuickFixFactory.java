@@ -549,4 +549,8 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair);
+
+  @NotNull
+  public abstract IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement);
 }

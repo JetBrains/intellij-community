@@ -1110,4 +1110,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if (!(returnType instanceof PsiArrayType)) return null;
     return new MergeDuplicateAttributesFix(pair);
   }
+
+  @Override
+  public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement) {
+    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
+  }
 }
