@@ -43,7 +43,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v27"
+    const val SERIALIZER_VERSION = "v28"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
