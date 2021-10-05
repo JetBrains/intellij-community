@@ -19,10 +19,6 @@
     <p><strong>NOTE:</strong> By default, all verification is performed locally, inside your IDE.</p>
     ]]></description>
 
-  <dependencies>
-    <plugin id="hunspell"/>
-  </dependencies>
-
   <content>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
