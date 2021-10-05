@@ -39,22 +39,19 @@ class MavenRunConfigurationSettingsEditor(
       addBeforeRunFragment(CompileStepBeforeRun.ID)
       addAll(BeforeRunFragment.createGroup())
       add(CommonTags.parallelRun())
-      addDistributionFragment().applyToComponent {
-        preferredSize = preferredSize.apply { width = 100 }
-        minimumSize = minimumSize.apply { width = 100 }
-      }
       val workingDirectoryFragment = addWorkingDirectoryFragment()
-      addCommandLineFragment(workingDirectoryFragment).applyToComponent {
-        preferredSize = preferredSize.apply { width = 200 }
-        minimumSize = minimumSize.apply { width = 200 }
-      }
+      addCommandLineFragment(workingDirectoryFragment)
+      addProfilesFragment(workingDirectoryFragment)
+
       addJreFragment()
       addEnvironmentFragment()
       addVmOptionsFragment()
-      addProfilesFragment(workingDirectoryFragment)
+
+      addDistributionFragment()
       addUserSettingsFragment()
       addLocalRepositoryFragment()
       addThreadsFragment()
+
       add(LogsGroupFragment())
 
       addTag(
