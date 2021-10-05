@@ -211,13 +211,16 @@ public final class ClassUtils {
     return parentClass != null;
   }
 
+  /**
+   * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
+   */
   @Nullable
   public static PsiClass getContainingClass(PsiElement element) {
     PsiClass currentClass;
     while (true) {
       currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (currentClass instanceof PsiAnonymousClass &&
-          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, true)) {
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
         element = currentClass;
       } else {
         return currentClass;
