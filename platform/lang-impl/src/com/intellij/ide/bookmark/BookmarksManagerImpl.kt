@@ -73,7 +73,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   }
 
   override fun noStateLoaded() {
-    val group = addOrReuseGroup(project.name, true)
+    val group = addOrReuseGroup(project.name)
     val listener = object : BookmarksListener {
       override fun bookmarkAdded(old: com.intellij.ide.bookmarks.Bookmark) {
         group.addLater(old, old.type, old.description)
@@ -86,7 +86,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
 
   private fun noStateLoaded(manager: FavoritesManager) {
     for (name in manager.availableFavoritesListNames) {
-      val group = addOrReuseGroup(name, false)
+      val group = addOrReuseGroup(name)
       for (item in manager.getFavoritesListRootUrls(name)) {
         group.addLater(item.data.first, BookmarkType.DEFAULT, null)
       }
@@ -121,8 +121,8 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     else -> synchronized(notifier) { if (findGroup(name) != null) null else Group(name, isDefault, true) }
   }
 
-  private fun addOrReuseGroup(name: String, isDefault: Boolean) = synchronized(notifier) {
-    findGroup(name)?.also { it.isDefault = it.isDefault || isDefault } ?: Group(name, isDefault, false)
+  private fun addOrReuseGroup(name: String, isDefaultState: Boolean? = null) = synchronized(notifier) {
+    findGroup(name)?.apply { isDefaultState?.let { isDefault = it } } ?: Group(name, isDefaultState ?: false, false)
   }
 
   override fun getBookmark(type: BookmarkType) = synchronized(notifier) {
