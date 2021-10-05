@@ -14,7 +14,6 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.UIManager
 
 open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTabPainter {
 
@@ -67,9 +66,9 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
                               g: Graphics2D,
                               active: Boolean) {
     val underline = underlineRectangle(position, rect, theme.underlineHeight)
-    val arc = UIManager.getInt("EditorTabs.underlineArc")
+    val arc = theme.underlineArc
     val color = if (active) theme.underlineColor else theme.inactiveUnderlineColor
-    if (arc != 0) {
+    if (arc > 0) {
       g.fill2DRoundRect(underline, arc.toDouble(), color)
     } else {
       g.fill2DRect(underline, color)
