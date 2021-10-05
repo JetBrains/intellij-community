@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.intentions.declarations
 
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.with
-import org.jetbrains.kotlin.idea.fir.api.*
+import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.psi.*
 
 class HLSpecifyExplicitTypeForCallableDeclarationIntention :
     AbstractHLIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.Type>(KtCallableDeclaration::class, applicator) {
-    override val applicabilityRange: HLApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.SELF
+    override val applicabilityRange: HLApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
     override val inputProvider = inputProvider<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.Type> { declaration ->
         val returnType = declaration.getReturnKtType()
-        val denotableType = returnType.approximateToSuperPublicDenotable() ?: returnType
+        val denotableType = returnType.approximateToSuperPublicDenotableOrSelf()
         with(CallableReturnTypeUpdaterApplicator.Type) { createByKtType(denotableType) }
     }
 
@@ -27,7 +27,13 @@ class HLSpecifyExplicitTypeForCallableDeclarationIntention :
                 if (declaration is KtConstructor<*> || declaration is KtFunctionLiteral) return@isApplicableByPsi false
                 declaration.typeReference == null && (declaration as? KtNamedFunction)?.hasBlockBody() != true
             }
-            familyAndActionName(KotlinBundle.lazyMessage("specify.return.type.explicitly"))
+            familyName(KotlinBundle.lazyMessage("specify.type.explicitly"))
+            actionName { declaration, _ ->
+                when (declaration) {
+                    is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+                    else -> KotlinBundle.message("specify.type.explicitly")
+                }
+            }
         }
     }
 }
