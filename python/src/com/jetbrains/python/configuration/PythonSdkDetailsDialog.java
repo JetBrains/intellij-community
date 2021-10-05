@@ -3,9 +3,7 @@ package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -445,9 +443,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
   }
 
-  private PythonPathEditor createPathEditor(final Sdk sdk) {
+  private PythonPathEditor createPathEditor(@NotNull final Sdk sdk) {
     if (PythonSdkUtil.isRemote(sdk)) {
-      return new PyRemotePathEditor(sdk);
+      return new PyRemotePathEditor(myProject, sdk);
     }
     else {
       return new PythonPathEditor(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
@@ -462,13 +460,15 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class PyRemotePathEditor extends PythonPathEditor {
     private final RemoteSdkProperties myRemoteSdkData;
-    private final Sdk mySdk;
+    @NotNull private final Project myProject;
+    @NotNull private final Sdk mySdk;
 
     private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
 
-    PyRemotePathEditor(Sdk sdk) {
+    PyRemotePathEditor(@NotNull Project project, @NotNull Sdk sdk) {
       super(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
             FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
+      myProject = project;
       mySdk = sdk;
       myRemoteSdkData = (RemoteSdkProperties)mySdk.getSdkAdditionalData();
     }
@@ -503,10 +503,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     protected VirtualFile[] doAddItems() {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
       try {
         String[] files = PythonRemoteInterpreterManager
-          .getInstance().chooseRemoteFiles(project, (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData(), false);
+          .getInstance().chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData(), false);
 
         final String sourcesLocalPath = PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
 
