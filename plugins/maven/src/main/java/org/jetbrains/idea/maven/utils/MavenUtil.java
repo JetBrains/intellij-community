@@ -1372,8 +1372,9 @@ public class MavenUtil {
   }
 
   public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
-    invokeLater(project, () -> {
-      FileContentUtilCore.reparseFiles(getConfigFiles(projects));
+    VirtualFile[] configFiles = getConfigFiles(projects);
+    ApplicationManager.getApplication().invokeLater(()-> {
+      FileContentUtilCore.reparseFiles(configFiles);
     });
   }
 
