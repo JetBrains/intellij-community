@@ -39,12 +39,15 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +143,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       delayedTasks.addAll(syncTasks);
     }
     if (!delayedTasks.isEmpty()) {
-      queueTasks(delayedTasks);
+      queueTasks(delayedTasks, "Push on VFS changes");
     }
     if (pushingSomethingSynchronously) {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> scheduleDumbModeReindexingIfNeeded());
@@ -209,14 +212,15 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     }, IndexableFilesDeduplicateFilter.create());
   }
 
-  private void queueTasks(@NotNull List<? extends Runnable> actions) {
+  private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
     DumbModeTask task = new DumbModeTask(this) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        performDelayedPushTasks();
+        ChangedFilesPushingStatistics statistics = new ChangedFilesPushingStatistics(reason);
+        performDelayedPushTasks(statistics);
       }
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -233,7 +237,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     task.queue(myProject);
   }
 
-  public void performDelayedPushTasks() {
+  public void performDelayedPushTasks() { performDelayedPushTasks(null); }
+
+  private void performDelayedPushTasks(@Nullable ChangedFilesPushingStatistics statistics) {
     boolean hadTasks = false;
     while (true) {
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
@@ -247,13 +253,22 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         hadTasks = true;
       }
       catch (ProcessCanceledException e) {
-        queueTasks(Collections.singletonList(task)); // reschedule dumb mode and ensure the canceled task is enqueued again
+        if (statistics != null) {
+          statistics.finished(true);
+          ChangedFilesPushedDiagnostic.INSTANCE.addEvent(myProject, statistics);
+        }
+        queueTasks(Collections.singletonList(task),
+                   "Rerun pushing tasks after process cancelled"); // reschedule dumb mode and ensure the canceled task is enqueued again
         throw e;
       }
     }
 
     if (hadTasks) {
       scheduleDumbModeReindexingIfNeeded();
+    }
+    if (statistics != null) {
+      statistics.finished(false);
+      ChangedFilesPushedDiagnostic.INSTANCE.addEvent(myProject, statistics);
     }
   }
 
@@ -296,7 +311,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   @Override
   public void pushAll(FilePropertyPusher<?> @NotNull ... pushers) {
-    queueTasks(Collections.singletonList(() -> doPushAll(Arrays.asList(pushers))));
+    queueTasks(Collections.singletonList(() -> doPushAll(Arrays.asList(pushers))), "Push all on " + Arrays.toString(pushers));
   }
 
   private void doPushAll(@NotNull List<? extends FilePropertyPusher<?>> pushers) {
