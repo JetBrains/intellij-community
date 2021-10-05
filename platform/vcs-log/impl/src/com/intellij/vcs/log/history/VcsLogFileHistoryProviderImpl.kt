@@ -185,8 +185,6 @@ private fun getCorrectedPath(project: Project, path: FilePath, root: VirtualFile
 }
 
 private fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {
-  VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.HISTORY_SHOWN, { data ->
-    val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
-    data.addData("kind", kind).addData("has_revision", hash != null)
-  }, project)
+  val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
+  VcsLogUsageTriggerCollector.triggerFileHistoryUsage(project, kind, hash != null)
 }
