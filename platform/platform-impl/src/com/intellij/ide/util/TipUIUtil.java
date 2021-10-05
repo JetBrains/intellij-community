@@ -214,9 +214,9 @@ public final class TipUIUtil {
     final boolean dark = StartupUiUtil.isUnderDarcula();
     final boolean hidpi = JBUI.isPixHiDPI(component);
 
+    //Let's use JSOUP because normalizing HTML manually is less reliable
     final Document tipHtml = Jsoup.parse(text.toString());
     tipHtml.outputSettings().prettyPrint(false);
-    //Let's use JSOUP because normalizing HTML manually is less reliable
 
     //First, inline all custom entities like productName
     tipHtml.getElementsContainingOwnText("&").forEach(element -> {
@@ -230,6 +230,7 @@ public final class TipUIUtil {
       }
     });
 
+    //Here comes shortcut processing
     tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN).forEach(shortcut -> {
       shortcut.text(SHORTCUT_PATTERN.matcher(shortcut.text()).replaceAll(result -> {
 
@@ -251,6 +252,7 @@ public final class TipUIUtil {
       }));
     });
 
+    //And finally images
     tipHtml.getElementsByTag("img")
       .forEach(img -> {
 
