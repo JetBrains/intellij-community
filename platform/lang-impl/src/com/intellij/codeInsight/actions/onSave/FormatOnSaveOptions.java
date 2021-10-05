@@ -23,10 +23,8 @@ public final class FormatOnSaveOptions implements PersistentStateComponent<Forma
   private static final ExtensionPointName<DefaultsProvider>
     EP_NAME = ExtensionPointName.create("com.intellij.formatOnSaveOptions.defaultsProvider");
 
-  public static abstract class DefaultsProvider {
-    protected @NotNull Collection<@NotNull FileType> getFileTypesFormattedOnSaveByDefault() {
-      return Collections.emptyList();
-    }
+  public interface DefaultsProvider {
+    @NotNull Collection<@NotNull FileType> getFileTypesFormattedOnSaveByDefault();
   }
 
   static class State implements Cloneable {
