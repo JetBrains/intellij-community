@@ -8,18 +8,13 @@ import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddFieldActions
 import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.HardcodedMethodConstants
-import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.uast.UClass
-import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.sourcePsiElement
 
 class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBase(UClass::class.java) {
@@ -37,33 +32,28 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
     if (isIgnoredSubclass(psiClass)) return emptyArray()
     val identifier = aClass.uastAnchor.sourcePsiElement ?: return emptyArray()
     val message = JvmAnalysisBundle.message("jvm.inspections.serializable.class.without.serialversionuid.problem.descriptor")
-    val fixes = arrayOf(AddSerialVersionUidFix())
-    return arrayOf(manager.createProblemDescriptor(identifier, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+    return arrayOf(manager.createProblemDescriptor(identifier, message, isOnTheFly, if (isOnTheFly) arrayOf(createFix(psiClass)) else null,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
   }
 
-  inner class AddSerialVersionUidFix : LocalQuickFix {
-    override fun getFamilyName(): String = InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix")
+  private fun createFix(psiClass: PsiClass): LocalQuickFix {
+    val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val uClass = descriptor.psiElement.getUastParentOfType<UClass>() ?: return
-      val psiClass = uClass.javaPsi
-      val containingFile = psiClass.containingFile ?: return
-      val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
-      val annotations = if (PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_14)) {
-        listOf(annotationRequest("java.io.Serial"))
-      } else emptyList()
-      val action = createAddFieldActions(psiClass, fieldRequest(
-        fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
-        annotations = annotations,
-        modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
-        fieldType = expectedTypes(PsiType.LONG),
-        targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
-        initializer = JvmValue.createLongValue(serialUid),
-        isConstant = true
-      )).first()
-      val vFile = containingFile.virtualFile ?: return
-      val editor = (FileEditorManager.getInstance(project).getSelectedEditor(vFile) as? TextEditor)?.editor ?: return
-      action.invoke(project, editor, containingFile)
+    val project = psiClass.project
+    val annotations = if (PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_14)) {
+      listOf(annotationRequest("java.io.Serial"))
     }
+    else emptyList()
+
+    val action = createAddFieldActions(psiClass, fieldRequest(
+      fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
+      annotations = annotations,
+      modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
+      fieldType = expectedTypes(PsiType.LONG),
+      targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
+      initializer = JvmValue.createLongValue(serialUid),
+      isConstant = true
+    )).first()
+    return IntentionWrapper.wrapToQuickFix(action, psiClass.containingFile)
   }
 }
