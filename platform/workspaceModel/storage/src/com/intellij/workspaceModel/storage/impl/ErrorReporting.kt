@@ -18,6 +18,7 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.createFile
 import kotlin.io.path.name
 
 @ApiStatus.Internal
@@ -80,10 +81,17 @@ internal fun WorkspaceEntityStorageBuilderImpl.serializeDiff(stream: OutputStrea
 }
 
 private fun WorkspaceEntityStorageBuilderImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
-  serializer.serializeDiffLog(stream, this.changeLog.changeLog/*.anonymize()*/)
+  serializer.serializeDiffLog(stream, this.changeLog.changeLog.anonymize())
 }
 
-// In progress...
+internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): WorkspaceEntityStorage {
+  val builder = WorkspaceEntityStorageBuilder.from(this)
+  builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
+    builder.changeSource(entity, entity.entitySource.anonymize(sourceFilter))
+  }
+  return builder.toStorage()
+}
+
 internal fun ChangeLog.anonymize(): ChangeLog {
   val result = HashMap(this)
   result.replaceAll { key, value ->
@@ -126,23 +134,25 @@ internal fun EntitySource.anonymize(sourceFilter: ((EntitySource) -> Boolean)?):
   return if (sourceFilter != null) {
     if (sourceFilter(this)) {
       MatchedEntitySource(this.toString())
-    } else {
+    }
+    else {
       UnmatchedEntitySource(this.toString())
     }
-  } else {
+  }
+  else {
     AnonymizedEntitySource(this.toString())
   }
 }
 
-class AnonymizedEntitySource(val originalSourceDump: String) : EntitySource
-class MatchedEntitySource(val originalSourceDump: String) : EntitySource
-class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
+data class AnonymizedEntitySource(val originalSourceDump: String) : EntitySource
+data class MatchedEntitySource(val originalSourceDump: String) : EntitySource
+data class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
 
 private fun serializeContentToFolder(contentFolder: Path,
                                      left: WorkspaceEntityStorage?,
                                      right: WorkspaceEntityStorage?,
-                                     resulting: WorkspaceEntityStorage): File? {
-
+                                     resulting: WorkspaceEntityStorage,
+                                     sourceFilter: ((EntitySource) -> Boolean)?): File? {
   if (right is WorkspaceEntityStorageBuilder) {
     serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
       right as WorkspaceEntityStorageBuilderImpl
@@ -150,10 +160,13 @@ private fun serializeContentToFolder(contentFolder: Path,
     }
   }
 
-  left?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
-  right?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
-  serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
+  left?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
+  right?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
+  serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting.anonymize(sourceFilter))
   serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
+
+  val operationName = if (sourceFilter == null) "Add_Diff" else "Replace_By_Source"
+  contentFolder.resolve(operationName).createFile()
 
   return if (!executingOnTC()) {
     val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
@@ -170,20 +183,13 @@ internal fun reportConsistencyIssue(message: String,
                                     left: WorkspaceEntityStorage?,
                                     right: WorkspaceEntityStorage?,
                                     resulting: WorkspaceEntityStorage) {
-  val entitySourceFilter = if (sourceFilter != null) {
-    val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
-    allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
-    allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
-  }
-  else null
-
-  var finalMessage = "$message\n\nEntity source filter: $entitySourceFilter"
-  finalMessage += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
+  var finalMessage = "$message\n\n"
+  finalMessage += "\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
   val zipFile = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
     val dumpDirectory = getStoreDumpDirectory()
     finalMessage += "\nSaving store content at: $dumpDirectory"
-    serializeContentToFolder(dumpDirectory, left, right, resulting)
+    serializeContentToFolder(dumpDirectory, left, right, resulting, sourceFilter)
   }
   else null
 
