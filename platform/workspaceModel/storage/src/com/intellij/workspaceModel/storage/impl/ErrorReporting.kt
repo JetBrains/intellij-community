@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -79,8 +80,63 @@ internal fun WorkspaceEntityStorageBuilderImpl.serializeDiff(stream: OutputStrea
 }
 
 private fun WorkspaceEntityStorageBuilderImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
-  serializer.serializeDiffLog(stream, this.changeLog)
+  serializer.serializeDiffLog(stream, this.changeLog.changeLog/*.anonymize()*/)
 }
+
+// In progress...
+internal fun ChangeLog.anonymize(): ChangeLog {
+  val result = HashMap(this)
+  result.replaceAll { key, value ->
+    when (value) {
+      is ChangeEntry.AddEntity<*> -> {
+        val newEntityData = value.entityData.clone()
+        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+        ChangeEntry.AddEntity(newEntityData, value.clazz)
+      }
+      is ChangeEntry.ChangeEntitySource<*> -> {
+        val newEntityData = value.newData.clone()
+        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+        ChangeEntry.ChangeEntitySource(newEntityData)
+      }
+      is ChangeEntry.RemoveEntity -> value
+      is ChangeEntry.ReplaceAndChangeSource<*> -> {
+        val newEntityData = value.sourceChange.newData.clone()
+        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+        @Suppress("UNCHECKED_CAST")
+        val sourceChange = ChangeEntry.ChangeEntitySource(newEntityData) as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
+
+        val changedData = value.dataChange.newData.clone()
+        changedData.entitySource = changedData.entitySource.anonymize(null)
+        @Suppress("UNCHECKED_CAST")
+        val dataChange = ChangeEntry.ReplaceEntity(changedData, value.dataChange.newChildren, value.dataChange.removedChildren,
+          value.dataChange.modifiedParents) as ChangeEntry.ReplaceEntity<WorkspaceEntity>
+        ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
+      }
+      is ChangeEntry.ReplaceEntity<*> -> {
+        val newEntityData = value.newData.clone()
+        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+        ChangeEntry.ReplaceEntity(newEntityData, value.newChildren, value.removedChildren, value.modifiedParents)
+      }
+    }
+  }
+  return result
+}
+
+internal fun EntitySource.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntitySource {
+  return if (sourceFilter != null) {
+    if (sourceFilter(this)) {
+      MatchedEntitySource(this.toString())
+    } else {
+      UnmatchedEntitySource(this.toString())
+    }
+  } else {
+    AnonymizedEntitySource(this.toString())
+  }
+}
+
+class AnonymizedEntitySource(val originalSourceDump: String) : EntitySource
+class MatchedEntitySource(val originalSourceDump: String) : EntitySource
+class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
 
 private fun serializeContentToFolder(contentFolder: Path,
                                      left: WorkspaceEntityStorage?,

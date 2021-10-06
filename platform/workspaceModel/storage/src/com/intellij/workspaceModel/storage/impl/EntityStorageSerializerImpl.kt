@@ -538,7 +538,7 @@ class EntityStorageSerializerImpl(
     return index
   }
 
-  internal fun serializeDiffLog(stream: OutputStream, log: WorkspaceBuilderChangeLog) {
+  internal fun serializeDiffLog(stream: OutputStream, log: ChangeLog) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -547,7 +547,7 @@ class EntityStorageSerializerImpl(
       output.writeString(serializerDataFormatVersion)
       saveContributedVersions(kryo, output)
 
-      val entityDataSequence = log.changeLog.values.mapNotNull {
+      val entityDataSequence = log.values.mapNotNull {
         when (it) {
           is ChangeEntry.AddEntity<*> -> it.entityData
           is ChangeEntry.RemoveEntity -> null
@@ -559,7 +559,7 @@ class EntityStorageSerializerImpl(
 
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
-      kryo.writeClassAndObject(output, log.changeLog)
+      kryo.writeClassAndObject(output, log)
     }
     finally {
       flush(output)
