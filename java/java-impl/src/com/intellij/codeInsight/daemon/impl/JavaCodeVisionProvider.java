@@ -5,30 +5,24 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaCodeVisionSettings;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.SequencePresentation;
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
-import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -49,8 +43,9 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event);
 
-    @NotNull
-    String getRegularText();
+    @NotNull String getRegularText();
+
+    @NotNull String getCaseId();
   }
 
   @Nullable
@@ -75,14 +70,18 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-               JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.getProject());
+                JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.getProject());
                 GotoDeclarationAction.startFindUsages(editor, element.getProject(), element, new RelativePoint(event));
               }
 
-              @NotNull
               @Override
-              public String getRegularText() {
+              public @NotNull String getRegularText() {
                 return usagesHint;
+              }
+
+              @Override
+              public @NotNull String getCaseId() {
+                return JavaCodeVisionConfigurable.USAGES_CASE_ID;
               }
             });
           }
@@ -101,11 +100,15 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
 
-                @NotNull
                 @Override
-                public String getRegularText() {
+                public @NotNull String getRegularText() {
                   return isInterface ? JavaBundle.message("code.vision.implementations.hint", inheritors) :
                          JavaBundle.message("code.vision.inheritors.hint", inheritors);
+                }
+
+                @Override
+                public @NotNull String getCaseId() {
+                  return JavaCodeVisionConfigurable.INHERITORS_CASE_ID;
                 }
               });
             }
@@ -123,11 +126,15 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
 
-                @NotNull
                 @Override
-                public String getRegularText() {
+                public @NotNull String getRegularText() {
                   return isAbstractMethod ? JavaBundle.message("code.vision.implementations.hint", overridings) :
                          JavaBundle.message("code.vision.overrides.hint", overridings);
+                }
+
+                @Override
+                public @NotNull String getCaseId() {
+                  return JavaCodeVisionConfigurable.INHERITORS_CASE_ID;
                 }
               });
             }
@@ -148,8 +155,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
             presentations.add(factory.textSpacePlaceholder(1, true));
           }
           SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
-          InlayPresentation withSettings = addSettings(element.getProject(), factory, shiftedPresentation);
-          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettings);
+          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, shiftedPresentation);
         }
         return true;
       }
@@ -187,29 +193,20 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                                       @NotNull InlResult result) {
     InlayPresentation text = factory.smallTextWithoutBackground(result.getRegularText());
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
-    return factory.referenceOnHover(text, (event, translated) -> {
+    InlayPresentation presentation = factory.referenceOnHover(text, (event, translated) -> {
       PsiElement actual = pointer.getElement();
       if (actual != null) {
         result.onClick(editor, actual, event);
       }
     });
-  }
+    String caseId = result.getCaseId();
 
-  private static @NotNull InlayPresentation addSettings(@NotNull Project project,
-                                                        @NotNull PresentationFactory factory,
-                                                        @NotNull InlayPresentation presentation) {
-    JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
-    item.addActionListener(e -> {
-      JavaCodeVisionUsageCollector.SETTINGS_CLICKED_EVENT_ID.log(project);
-      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
-    });
-    popupMenu.add(item);
-
-    return factory.onClick(presentation, MouseButton.Right, (e, __) -> {
-      JBPopupMenu.showByEvent(e, popupMenu);
-      return Unit.INSTANCE;
-    });
+    return new MenuOnClickPresentation(presentation, element.getProject(), () ->
+      InlayHintsUtils.INSTANCE.getDefaultInlayHintsProviderCasePopupActions(
+        KEY, JavaBundle.messagePointer("title.code.vision.inlay.hints"),
+        caseId, JavaCodeVisionConfigurable.getCaseName(caseId)
+      )
+    );
   }
 
   @NotNull
