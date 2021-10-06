@@ -21,10 +21,12 @@ internal class ProjectDataProvider(
 
     private val packageCache = LRUMap(500)
 
-    suspend fun fetchKnownRepositories(): ApiResult<List<ApiRepository>> = apiClient.repositories()
-        .mapSuccess { it.repositories }
+    suspend fun fetchKnownRepositories(): List<ApiRepository> = apiClient.repositories().repositories
 
-    suspend fun doSearch(searchQuery: String, filterOptions: FilterOptions): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
+    suspend fun doSearch(
+        searchQuery: String,
+        filterOptions: FilterOptions
+    ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
         val repositoryIds = filterOptions.onlyRepositoryIds
 
         return apiClient.packagesByQuery(
