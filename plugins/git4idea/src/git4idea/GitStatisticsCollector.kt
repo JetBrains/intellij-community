@@ -40,7 +40,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addEnumIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, "save.policy")
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
-    addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, "warn.about.crlf")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, "warn.about.detached")
 
