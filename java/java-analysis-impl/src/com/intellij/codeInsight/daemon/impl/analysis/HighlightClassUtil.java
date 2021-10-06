@@ -270,20 +270,21 @@ public final class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
       range(aClass, range.getStartOffset(), range.getEndOffset()).
       descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.PUBLIC, false, false));
     PsiClass[] classes = file.getClasses();
+    boolean containsClassForFile = ContainerUtil.exists(classes, otherClass ->
+                                                              !otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
+                                                              otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+                                                              virtualFile.getNameWithoutExtension().equals(otherClass.getName()));
+    if (!containsClassForFile) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
+    }
     if (classes.length > 1) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveClassToSeparateFileFix(aClass));
     }
-    for (PsiClass otherClass : classes) {
-      if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
-          otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-          virtualFile.getNameWithoutExtension().equals(otherClass.getName())) {
-        return errorResult;
-      }
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.PUBLIC, false, false));
+    if (!containsClassForFile) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     }
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameFileFix(aClass.getName() + JavaFileType.DOT_DEFAULT_EXTENSION));
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
 

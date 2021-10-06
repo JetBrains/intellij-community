@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
@@ -35,7 +36,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
           case PsiKeyword.RECORD:
             HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, new QuickFixActionRegistrarImpl(info));
             if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              QuickFixAction.registerQuickFixAction(info, new ConvertRecordToClassFix(errorElement));
+              QuickFixAction.registerQuickFixAction(info, PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement)));
             }
             break;
           case PsiKeyword.SEALED:

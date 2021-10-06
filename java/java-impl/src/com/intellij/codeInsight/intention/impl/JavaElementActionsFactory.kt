@@ -53,14 +53,14 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
+    if (canCreateEnumConstant(javaClass, request)) {
+      result += CreateEnumConstantAction(javaClass, request)
+    }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {
       result += CreateFieldAction(javaClass, request)
-    }
-    if (canCreateEnumConstant(javaClass, request)) {
-      result += CreateEnumConstantAction(javaClass, request)
     }
     return result
   }
