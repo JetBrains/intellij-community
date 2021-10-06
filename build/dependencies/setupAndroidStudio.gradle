@@ -43,7 +43,7 @@ dependencies {
 }
 
 static String skipTopLevelDirectory(String path) {
-  def index = path.indexOf('/')
+  def index = path.indexOf('/', 1)
   return (index >= 0) ? path.substring(index + 1) : path
 }
 
@@ -83,12 +83,15 @@ task downloadAndroidStudio(dependsOn: configurations.androidStudio) {
       eachFile(new Action<FileCopyDetails>() {
         @Override
         void execute(FileCopyDetails file) {
-          file.path((androidStudioOs == "mac") ? skipContentsDirectory(file.path) : skipTopLevelDirectory(file.path))
+          def mappedPath = (androidStudioOs == "mac") ? skipContentsDirectory(file.path) : skipTopLevelDirectory(file.path)
+          System.out.println("Mapped path: " + file.path + " -> " + mappedPath)
+          file.path(mappedPath)
         }
       })
     }
 
     System.out.println("Android Studio unpacked: ${targetDir}")
     System.out.println("Android Studio content: ${Arrays.asList(targetDir.list())}")
+    //System.out.println("Android Studio content: ${Arrays.asList(targetDir.listFiles()[0].list())}")
   }
 }
