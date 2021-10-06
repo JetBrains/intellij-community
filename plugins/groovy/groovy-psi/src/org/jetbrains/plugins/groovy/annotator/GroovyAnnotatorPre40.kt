@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 
 class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
@@ -82,6 +83,16 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
         .newAnnotation(HighlightSeverity.ERROR,
           GroovyBundle.message("inspection.message.both.open.ranges.are.available.in.groovy.4.or.later"))
         .range(range)
+        .create()
+    }
+  }
+
+  override fun visitLiteralExpression(literal: GrLiteral) {
+    super.visitLiteralExpression(literal)
+    if (literal.text.startsWith(".")) {
+      holder.newAnnotation(HighlightSeverity.ERROR,
+        GroovyBundle.message("inspection.message.fraction.literals.without.leading.zero.are.available.in.groovy.or.later"))
+        .range(literal)
         .create()
     }
   }

@@ -96,12 +96,12 @@ mNUM_INT_PART = {mNUM_BIN} | {mNUM_HEX} | {mNUM_OCT} | {mNUM_DEC}
 mNUM_INT = {mNUM_INT_PART} {mINT_SUFFIX}?
 mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
 mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
-mNUM_FLOAT = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mFLOAT_SUFFIX}
-mNUM_DOUBLE = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mDOUBLE_SUFFIX}
-mNUM_BIG_DECIMAL = {mNUM_DEC} (
-  ({mEXPONENT} {mBIG_SUFFIX}?) |
-  ("." {mNUM_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
-  {mBIG_SUFFIX}
+mNUM_FLOAT = {mNUM_DEC}? ("." {mNUM_DEC})? {mEXPONENT}? {mFLOAT_SUFFIX}
+mNUM_DOUBLE = {mNUM_DEC}? ("." {mNUM_DEC})? {mEXPONENT}? {mDOUBLE_SUFFIX}
+mNUM_BIG_DECIMAL = (
+  ({mNUM_DEC} {mEXPONENT} {mBIG_SUFFIX}?) |
+  ({mNUM_DEC}? "." {mNUM_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
+  ({mNUM_DEC} {mBIG_SUFFIX})
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

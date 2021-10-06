@@ -202,4 +202,10 @@ switch (10) {
 <error>1<..<2</error>
 """
   }
+
+  void 'test literal without leading zero'() {
+    highlightingTest """
+<error>.5555d</error>
+"""
+  }
 }
