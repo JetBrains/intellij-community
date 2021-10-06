@@ -123,6 +123,3 @@ interface UAnonymousClass : UClass, PsiAnonymousClass {
   override val psi: PsiAnonymousClass
 }
 
-@Deprecated("no more needed, use UClass", ReplaceWith("UClass"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-interface UClassTypeSpecific : UClass

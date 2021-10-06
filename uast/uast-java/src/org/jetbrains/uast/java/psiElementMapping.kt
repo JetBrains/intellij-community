@@ -200,8 +200,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   UClassLiteralExpression::class.java to classSetOf<PsiElement>(
     PsiClassObjectAccessExpression::class.java
   ),
-  UClassTypeSpecific::class.java to classSetOf<PsiElement>(
-  ),
   UComment::class.java to classSetOf<PsiElement>(
     PsiComment::class.java,
     PsiDocComment::class.java
@@ -462,8 +460,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   UMethod::class.java to classSetOf<PsiElement>(
     PsiAnnotationMethod::class.java,
     PsiMethod::class.java
-  ),
-  UMethodTypeSpecific::class.java to classSetOf<PsiElement>(
   ),
   UMultiResolvable::class.java to classSetOf<PsiElement>(
     PsiAnnotatedJavaCodeReferenceElement::class.java,
