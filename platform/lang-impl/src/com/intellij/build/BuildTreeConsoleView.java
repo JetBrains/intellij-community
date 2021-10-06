@@ -288,20 +288,19 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
   }
 
-  private @Nullable ExecutionNode getOrMaybeCreateParentNode(@NotNull BuildEvent event) {
+  private @Nullable ExecutionNode getOrMaybeCreateParentNode(@NotNull BuildEvent event,
+                                                             @NotNull Set<ExecutionNode> structureChanged) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     if (event instanceof MessageEvent) {
       parentNode = createMessageParentNodes((MessageEvent)event, parentNode);
-      if (parentNode != null) {
-        scheduleUpdate(parentNode, true); // To update its parent.
-      }
+      addIfNotNull(structureChanged, parentNode);
     }
     return parentNode;
   }
 
   private void onEventInternal(@NotNull Object buildId, @NotNull BuildEvent event) {
-    SmartHashSet<ExecutionNode> structureChanged = new SmartHashSet<>();
-    final ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
+    Set<ExecutionNode> structureChanged = new SmartHashSet<>();
+    final ExecutionNode parentNode = getOrMaybeCreateParentNode(event, structureChanged);
     final Object eventId = event.getId();
     ExecutionNode currentNode = nodesMap.get(eventId);
     ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
@@ -355,7 +354,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                 myConsoleViewHandler.addOutput(parentNode, buildId, event);
                 myConsoleViewHandler.addOutput(parentNode, "\n", true);
               }
-              reportMessageKind(messageEvent.getKind(), parentNode);
+              reportMessageKind(messageEvent.getKind(), parentNode, structureChanged);
             }
             myConsoleViewHandler.addOutput(currentNode, buildId, event);
           }
@@ -468,7 +467,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @NotNull
   private ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
-                                                  @NotNull SmartHashSet<ExecutionNode> structureChanged,
+                                                  @NotNull Set<ExecutionNode> structureChanged,
                                                   @Nullable ExecutionNode parentNode,
                                                   @NotNull Object eventId,
                                                   @NotNull ExecutionNode buildProgressRootNode) {
@@ -505,13 +504,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result.createDefaultResult();
   }
 
-  private void reportMessageKind(@NotNull MessageEvent.Kind eventKind, @NotNull ExecutionNode parentNode) {
+  private void reportMessageKind(@NotNull MessageEvent.Kind eventKind,
+                                 @NotNull ExecutionNode parentNode,
+                                 @NotNull Set<? super ExecutionNode> structureChanged) {
     if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
       ExecutionNode executionNode = parentNode;
       do {
         ExecutionNode updatedRoot = executionNode.reportChildMessageKind(eventKind);
         if (updatedRoot != null) {
-          scheduleUpdate(updatedRoot, true);
+          structureChanged.add(updatedRoot);
         }
         else {
           scheduleUpdate(executionNode, false);
@@ -604,7 +605,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         failureNode.setHint(hint);
       }
       parentNode.add(failureNode);
-      reportMessageKind(MessageEvent.Kind.ERROR, parentNode);
+      reportMessageKind(MessageEvent.Kind.ERROR, parentNode, structureChanged);
     }
     if (failureNavigatable != null && failureNavigatable != NonNavigatable.INSTANCE) {
       failureNode.setNavigatable(failureNavigatable);
