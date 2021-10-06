@@ -53,7 +53,9 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
     // class inheritors check
     Stream<PsiMethod> first = ClassInheritorsSearch.search(psiClass, psiClass.getResolveScope(), false)
       .filtering(clazz -> {
-        PsiJavaFile file = (PsiJavaFile)clazz.getContainingFile();
+        PsiFile classFile = clazz.getContainingFile();
+        if (!(classFile instanceof PsiJavaFile)) return false;
+        PsiJavaFile file = (PsiJavaFile)classFile;
         PsiImportList list = file.getImportList();
         String[] packages = file.getImplicitlyImportedPackages();
         if (list != null && list.findSingleClassImportStatement(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return true;
