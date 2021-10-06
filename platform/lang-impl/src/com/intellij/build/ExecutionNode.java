@@ -188,9 +188,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setEndTime(long endTime) {
+    return setEndTime(endTime, true);
+  }
+  @Nullable
+  @ApiStatus.Internal
+  ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     this.endTime = endTime;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   private ExecutionNode reapplyParentFilterIfRequired(@Nullable ExecutionNode result) {
@@ -291,9 +296,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setResult(@Nullable EventResult result) {
+    return setResult(result, true);
+  }
+
+  @ApiStatus.Internal
+  ExecutionNode setResult(@Nullable EventResult result, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     myResult = result;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   public boolean isAutoExpandNode() {
