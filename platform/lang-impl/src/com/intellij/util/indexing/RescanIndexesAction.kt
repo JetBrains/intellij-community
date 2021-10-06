@@ -48,9 +48,6 @@ internal class RescanIndexesAction : RecoveryAction {
             if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
                 stubIndex.getIndexedFileData(fileId).isEmpty() &&
                 isAbleToBuildStub(it.file)) {
-              if (it.fileName.contains(".class")) {
-                println()
-              }
               stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
               return@BooleanFunction true
             }
