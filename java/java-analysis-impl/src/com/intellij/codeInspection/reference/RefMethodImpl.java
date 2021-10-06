@@ -22,16 +22,16 @@ import java.util.*;
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
 
-  private static final int IS_APPMAIN_MASK = 0x10000;
-  private static final int IS_LIBRARY_OVERRIDE_MASK = 0x20000;
-  private static final int IS_CONSTRUCTOR_MASK = 0x40000;
-  private static final int IS_ABSTRACT_MASK = 0x80000;
-  private static final int IS_BODY_EMPTY_MASK = 0x100000;
-  private static final int IS_ONLY_CALLS_SUPER_MASK = 0x200000;
-  private static final int IS_RETURN_VALUE_USED_MASK = 0x400000;
+  private static final int IS_APPMAIN_MASK = 0b1_00000000_00000000;
+  private static final int IS_LIBRARY_OVERRIDE_MASK = 0b10_00000000_00000000;
+  private static final int IS_CONSTRUCTOR_MASK = 0b100_00000000_00000000;
+  private static final int IS_ABSTRACT_MASK = 0b1000_00000000_00000000;
+  private static final int IS_BODY_EMPTY_MASK = 0b10000_00000000_00000000;
+  private static final int IS_ONLY_CALLS_SUPER_MASK = 0b100000_00000000_00000000;
+  private static final int IS_RETURN_VALUE_USED_MASK = 0b1000000_00000000_00000000;
 
-  private static final int IS_TEST_METHOD_MASK = 0x4000000;
-  private static final int IS_CALLED_ON_SUBCLASS_MASK = 0x8000000;
+  private static final int IS_TEST_METHOD_MASK = 0b100_00000000_00000000_00000000;
+  private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000;
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 

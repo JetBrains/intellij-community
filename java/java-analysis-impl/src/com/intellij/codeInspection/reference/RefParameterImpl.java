@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -20,8 +20,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
-  private static final int USED_FOR_READING_MASK = 0x10000;
-  private static final int USED_FOR_WRITING_MASK = 0x20000;
+  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
+  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
 
 
   private final short myIndex;
