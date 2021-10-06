@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -20,6 +21,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createFile
 import kotlin.io.path.name
+import kotlin.io.path.writeText
 
 @ApiStatus.Internal
 fun reportErrorAndAttachStorage(message: String, storage: WorkspaceEntityStorage) {
@@ -85,6 +87,7 @@ private fun WorkspaceEntityStorageBuilderImpl.serializeDiff(serializer: EntitySt
 }
 
 internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): WorkspaceEntityStorage {
+  if (!isWrapped()) return this
   val builder = WorkspaceEntityStorageBuilder.from(this)
   builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
     builder.changeSource(entity, entity.entitySource.anonymize(sourceFilter))
@@ -93,6 +96,7 @@ internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> B
 }
 
 internal fun ChangeLog.anonymize(): ChangeLog {
+  if (!isWrapped()) return this
   val result = HashMap(this)
   result.replaceAll { key, value ->
     when (value) {
@@ -166,7 +170,19 @@ private fun serializeContentToFolder(contentFolder: Path,
   serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
 
   val operationName = if (sourceFilter == null) "Add_Diff" else "Replace_By_Source"
-  contentFolder.resolve(operationName).createFile()
+  val operationFile = contentFolder.resolve(operationName)
+  operationFile.createFile()
+  if (!isWrapped()) {
+    val entitySourceFilter = if (sourceFilter != null) {
+      val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
+      allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
+      allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
+    }
+    else ""
+    operationFile.writeText(entitySourceFilter)
+  }
+
+  if (isWrapped()) contentFolder.resolve("Report_Wrapped").createFile()
 
   return if (!executingOnTC()) {
     val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
@@ -202,3 +218,5 @@ internal fun reportConsistencyIssue(message: String,
     AbstractEntityStorage.LOG.error(finalMessage, e)
   }
 }
+
+private fun isWrapped(): Boolean = Registry.`is`("ide.new.project.model.report.wrapped", true)

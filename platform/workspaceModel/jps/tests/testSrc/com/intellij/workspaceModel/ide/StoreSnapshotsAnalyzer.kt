@@ -49,16 +49,22 @@ fun main(args: Array<String>) {
 
   val leftStore = serializer.deserializeCache(leftFile.inputStream()) ?: throw IllegalArgumentException("Cannot load cache")
 
-  //val filterPattern = args.getOrNull(1)
   if (file.resolve("Replace_By_Source").exists()) {
     val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
 
     val allEntitySources = leftStore.entitiesBySource { true }.map { it.key }.toHashSet()
     allEntitySources.addAll(rightStore.entitiesBySource { true }.map { it.key })
-    //val sortedSources = allEntitySources.sortedBy { it.toString() }
+
+    val pattern = if (file.resolve("Report_Wrapped").exists()) {
+      matchedPattern()
+    }
+    else {
+      val sortedSources = allEntitySources.sortedBy { it.toString() }
+      patternFilter(file.resolve("Replace_By_Source").readText(), sortedSources)
+    }
 
     val expectedResult = leftStore.toBuilder()
-    expectedResult.replaceBySource(matchedPattern(), rightStore)
+    expectedResult.replaceBySource(pattern, rightStore)
 
     // Set a breakpoint and check
     println("storage loaded")
