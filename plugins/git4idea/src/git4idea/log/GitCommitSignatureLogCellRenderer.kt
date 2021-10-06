@@ -17,27 +17,30 @@ internal class GitCommitSignatureLogCellRenderer : VcsLogIconCellRenderer() {
     icon = getIcon(signature)
     toolTipText = getToolTip(signature).toString()
   }
+
+  companion object {
+
+    fun getIcon(signature: GitCommitSignature?): Icon? =
+      when (signature) {
+        is GitCommitSignature.Verified -> GitIcons.Verified
+        GitCommitSignature.NotVerified -> GitIcons.Signed
+        null, GitCommitSignature.NoSignature -> null
+      }
+
+    fun getToolTip(signature: GitCommitSignature?): HtmlChunk =
+      when (signature) {
+        is GitCommitSignature.Verified ->
+          HtmlBuilder()
+            .append(message("tooltip.commit.signature.verify.success"))
+            .append(HtmlChunk.br())
+            .append(signature.user)
+            .append(HtmlChunk.br())
+            .append(signature.fingerprint)
+            .toFragment()
+
+        GitCommitSignature.NotVerified -> HtmlChunk.text(message("tooltip.commit.signature.verify.failure"))
+
+        null, GitCommitSignature.NoSignature -> HtmlChunk.text(message("tooltip.no.commit.signature"))
+      }
+  }
 }
-
-private fun getIcon(signature: GitCommitSignature?): Icon? =
-  when (signature) {
-    is GitCommitSignature.Verified -> GitIcons.Verified
-    GitCommitSignature.NotVerified -> GitIcons.Signed
-    null, GitCommitSignature.NoSignature -> null
-  }
-
-private fun getToolTip(signature: GitCommitSignature?): HtmlChunk =
-  when (signature) {
-    is GitCommitSignature.Verified ->
-      HtmlBuilder()
-        .append(message("tooltip.commit.signature.verify.success"))
-        .append(HtmlChunk.br())
-        .append(signature.user)
-        .append(HtmlChunk.br())
-        .append(signature.fingerprint)
-        .toFragment()
-
-    GitCommitSignature.NotVerified -> HtmlChunk.text(message("tooltip.commit.signature.verify.failure"))
-
-    null, GitCommitSignature.NoSignature -> HtmlChunk.text(message("tooltip.no.commit.signature"))
-  }

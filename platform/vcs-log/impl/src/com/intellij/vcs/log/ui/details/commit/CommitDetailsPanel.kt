@@ -2,13 +2,14 @@
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.ClickListener
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ColorIcon
@@ -17,15 +18,17 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
+import kotlin.properties.Delegates.observable
 
 class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit = {}) : JPanel() {
   companion object {
@@ -37,6 +40,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   data class RootColor(val root: VirtualFile, val color: Color)
 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
+  private val signaturePanel = SignaturePanel()
   private val messagePanel = CommitMessagePanel(navigate)
   private val branchesPanel = ReferencesPanel()
   private val tagsPanel = ReferencesPanel()
@@ -52,6 +56,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
       border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER)
       addToLeft(rootPanel)
       addToCenter(hashAndAuthorPanel)
+      addToBottom(signaturePanel)
     }
 
     add(messagePanel)
@@ -88,6 +93,11 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     containingBranchesPanel.setBranches(branches)
   }
 
+  fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
+    //TODO: show the rest of the statuses
+    signaturePanel.signature = statuses.find { it is VcsCommitExternalStatusPresentation.Signature }
+  }
+
   fun update() {
     messagePanel.update()
     rootPanel.update()
@@ -117,7 +127,7 @@ private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : Htm
 
   init {
     border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.INTERNAL_BORDER,
-                                CommitDetailsPanel.SIDE_BORDER)
+      CommitDetailsPanel.SIDE_BORDER)
   }
 
   fun updateMessage(message: CommitPresentation?) {
@@ -256,6 +266,36 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
       val metrics = getFontMetrics(parent.bodyFont)
       icon.paintIcon(this, g, 0, metrics.maxAscent - h + (h - icon.iconHeight - 1) / 2)
     }
+  }
+}
+
+private class SignaturePanel : BorderLayoutPanel() {
+  val label = JLabel().apply {
+    foreground = JBColor.GRAY
+  }.also {
+    object : ClickListener() {
+      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        return (signature as? VcsCommitExternalStatusPresentation.Clickable)?.onClick(event) ?: false
+      }
+    }.installOn(it)
+  }
+
+  var signature: VcsCommitExternalStatusPresentation? by observable(null) { _, _, newValue ->
+    isVisible = newValue != null
+    label.apply {
+      icon = newValue?.icon
+      text = newValue?.shortDescriptionText
+      toolTipText = newValue?.fullDescriptionHtml
+      cursor =
+        if (newValue is VcsCommitExternalStatusPresentation.Clickable) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        else Cursor.getDefaultCursor()
+    }
+  }
+
+  init {
+    isVisible = false
+    isOpaque = false
+    addToLeft(label)
   }
 }
 
