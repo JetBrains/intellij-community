@@ -461,7 +461,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitCallExpression(@NotNull GrCallExpression callExpression) {
-    if (callExpression.resolveMethod() == null && callExpression.getFirstChild() instanceof GrLiteral) {
+    if (callExpression.resolveMethod() == null &&
+        callExpression.getFirstChild() instanceof GrLiteral &&
+        callExpression.getExpressionArguments().length > 0 &&
+        callExpression.getExpressionArguments()[0] instanceof GrLiteral) {
       myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, GroovyBundle.message("inspection.message.cannot.resolve.method.call")).range(callExpression).create();
     }
   }
