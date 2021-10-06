@@ -362,7 +362,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           else if (element instanceof PsiFunctionalExpression) {
             RefElement decl = myRefManager.getReference(element);
             if (decl != null) {
-              myRefManager.addParallelTask(() -> ((RefElementImpl)decl).buildReferences());
+              myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
             }
           }
         }
@@ -370,7 +370,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         private void visitJavaModule(PsiJavaModule module) {
           RefElement refElement = myRefManager.getReference(module);
           if (refElement != null) {
-            myRefManager.addParallelTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
+            myRefManager.executeTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
           }
         }
       };
@@ -453,7 +453,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     public boolean visitFile(@NotNull UFile node) {
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement instanceof RefJavaFileImpl) {
-        myRefManager.addParallelTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
+        myRefManager.executeTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
       }
       return true;
     }
@@ -463,7 +463,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       processComments(node);
       RefElement decl = myRefManager.getReference(node.getSourcePsi());
       if (decl != null) {
-        myRefManager.addParallelTask(() -> ((RefElementImpl)decl).buildReferences());
+        myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
       }
 
       PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
@@ -490,7 +490,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       if (variable instanceof UParameter) {
         final RefElement reference = myRefManager.getReference(variable.getSourcePsi());
         if (reference instanceof RefParameterImpl) {
-          myRefManager.addParallelTask(() -> ((RefParameterImpl)reference).buildReferences());
+          myRefManager.executeTask(() -> ((RefParameterImpl)reference).buildReferences());
         }
       }
       return false;
