@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,13 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
 
     myChangesBrowser = new MyChangesBrowser(myProject);
 
-    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
+    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "") {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setText(getChangelistCommentHtml());
+      }
+    };
     myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
     myCommitMessageArea.setEditable(false);
     myCommitMessageArea.setBackground(UIUtil.getTreeBackground());
@@ -99,8 +106,14 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
 
     myChangesBrowser.setChangesToDisplay(myChanges);
 
-    myCommitMessageArea.setText(IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, changeList.getComment().trim()));
+    myCommitMessageArea.setText(getChangelistCommentHtml());
     myCommitMessageArea.setCaretPosition(0);
+  }
+
+  @NotNull
+  private @Nls String getChangelistCommentHtml() {
+    if (myChangeList == null) return "";
+    return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, myChangeList.getComment().trim());
   }
 
   public void setShowCommitMessage(boolean value) {
