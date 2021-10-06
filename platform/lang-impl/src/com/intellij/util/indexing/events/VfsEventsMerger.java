@@ -197,7 +197,7 @@ public final class VfsEventsMerger {
     });
   }
 
-  private static void tryLog(Supplier<String> message) {
+  public static void tryLog(Supplier<String> message) {
     if (LOG != null) {
       LOG.info(message.get());
     }
