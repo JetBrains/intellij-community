@@ -37,12 +37,12 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
     override fun afterValueChanged(value: RegistryValue) {
       val booleanValue = value.asBoolean()
-      toolbarState.showNewMainToolbar = booleanValue
       logger.info("New registry value: $booleanValue")
+
+      isVisible = booleanValue
 
       val uiSettings = UISettings.instance
       val uiSettingsState = uiSettings.state
-      uiSettingsState.showMainToolbar = !booleanValue && uiSettingsState.showMainToolbar
       uiSettingsState.showNavigationBar = !booleanValue && uiSettingsState.showNavigationBar
       uiSettings.fireUISettingsChanged()
     }

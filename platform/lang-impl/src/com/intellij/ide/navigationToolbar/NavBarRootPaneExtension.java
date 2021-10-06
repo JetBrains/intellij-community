@@ -90,14 +90,10 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         }
       };
 
-      addNavigationBarPanel(myWrapperPanel);
+      myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
       revalidate();
     }
     return myWrapperPanel;
-  }
-
-  private void addNavigationBarPanel(JComponent wrapperPanel) {
-    wrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
   }
 
   private void toggleRunPanel(final boolean show) {
