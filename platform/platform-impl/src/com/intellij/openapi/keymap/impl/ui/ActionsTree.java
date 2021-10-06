@@ -623,7 +623,8 @@ public final class ActionsTree {
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
-    private String getActionText(@Nullable AnAction action, String actionId) {
+    @NlsActions.ActionText
+    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
       String text = action == null ? null : action.getTemplatePresentation().getText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
         text = actionId;
