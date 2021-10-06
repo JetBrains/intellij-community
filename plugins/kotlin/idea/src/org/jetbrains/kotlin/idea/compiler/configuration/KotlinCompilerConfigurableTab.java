@@ -383,7 +383,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         apiVersionComboBox.setRenderer(new DescriptionListCellRenderer());
     }
 
-    public void setTargetPlatform(@Nullable IdePlatformKind<?> targetPlatform) {
+    public void setTargetPlatform(@Nullable IdePlatformKind targetPlatform) {
         k2jsPanel.setVisible(JsIdePlatformUtil.isJavaScript(targetPlatform));
         scriptPanel.setVisible(JvmIdePlatformUtil.isJvm(targetPlatform));
     }
