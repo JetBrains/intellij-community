@@ -28,8 +28,6 @@ abstract class BaseLayout {
   final MultiMap<String, String> excludedModuleLibraries = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
   final MultiMap<String, String> projectLibrariesToUnpack = MultiMap.createLinked()
-  /** module name -> name of JAR (or path relative to 'lib' directory) where localizable resources will be placed*/
-  protected final Map<String, String> localizableResourcesJars = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []
   final List<Pair<ResourcesGenerator, String>> resourceGenerators = new ArrayList<>()
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
