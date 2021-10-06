@@ -24,7 +24,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
               private const val serialVersionUID: Long = 7429157667498829299L
           }
       }
-    """.trimIndent(), "Add 'serialVersionUID' field")
+    """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
   }
 
   fun `test quickfix companion exists`() {
@@ -45,6 +45,6 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
               val bar =  0
           }
       }
-    """.trimIndent(), "Add 'serialVersionUID' field")
+    """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
   }
 }
