@@ -352,8 +352,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
-    protected void onSelection(int @NotNull [] selection) {
+    protected int @NotNull [] onSelection(int @NotNull [] selection) {
       myChangesBrowser.resetSelectedDetails();
+      return selection;
     }
 
     @Override

@@ -34,7 +34,6 @@ import java.awt.Graphics
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import kotlin.math.max
-import kotlin.math.min
 
 class CommitDetailsListPanel
 @JvmOverloads constructor(private val project: Project, parent: Disposable,
@@ -44,7 +43,6 @@ class CommitDetailsListPanel
   ComponentWithEmptyText {
 
   companion object {
-    private const val MAX_ROWS = 50
     private const val MIN_SIZE = 20
   }
 
@@ -101,9 +99,10 @@ class CommitDetailsListPanel
     statusText.text = text
   }
 
-  fun rebuildPanel(commits: List<CommitId>): List<CommitId> {
+  internal fun rebuildPanel(commits: List<CommitId>) {
     val oldRowsCount = displayedCommits.size
-    val newRowsCount = min(commits.size, MAX_ROWS)
+    displayedCommits = commits
+    val newRowsCount = displayedCommits.size
 
     for (i in oldRowsCount until newRowsCount) {
       val panel = createDetailsPanel()
@@ -118,28 +117,22 @@ class CommitDetailsListPanel
       detailsPanel.remove(detailsPanel.componentCount - 1)
     }
 
-    showOverflowLabelIfNeeded(commits.size)
-
     revalidate()
     repaint()
-
-    displayedCommits = commits.subList(0, newRowsCount)
-
-    return displayedCommits
   }
 
-  private fun showOverflowLabelIfNeeded(rows: Int) {
+  fun showOverflowLabelIfNeeded(max: Int, requested: Int) {
     val componentCount = viewPanel.componentCount
     if (componentCount > 1) {
       viewPanel.remove(componentCount - 1)
     }
 
-    if (rows > MAX_ROWS) {
+    if (requested > max) {
       val overflowLabelPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)).apply {
         isOpaque = false
 
         add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
-        add(JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", MAX_ROWS, rows)).apply {
+        add(JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", max, requested)).apply {
           font = FontUtil.getCommitMetadataFont()
           border = JBUI.Borders.emptyLeft(CommitDetailsPanel.SIDE_BORDER)
         })

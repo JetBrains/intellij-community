@@ -21,6 +21,7 @@ import com.intellij.vcs.log.ui.table.CommitSelectionListener
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
+import kotlin.math.min
 
 class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: VcsLogGraphTable,
                                                                   private val detailsPanel: CommitDetailsListPanel,
@@ -34,7 +35,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
   private val refsLoader = CommitDataLoader()
   private val hashesResolver = CommitDataLoader()
 
-  private var selection = emptyList<Int>()
+  private var currentSelection = IntArray(0)
 
   init {
     val containingBranchesListener = Runnable { branchesChanged() }
@@ -44,16 +45,25 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     Disposer.register(parentDisposable, this)
   }
 
-  override fun onSelection(selection: IntArray) {
+  override fun onSelection(selection: IntArray): IntArray {
     cancelLoading()
+    currentSelection = selection
+    return selection.copyOf(min(selection.size, MAX_COMMITS_TO_LOAD))
+  }
 
-    val commits = myGraphTable.model.getCommitIds(selection)
-    val displayedCommits = detailsPanel.rebuildPanel(commits)
+  override fun onDetailsLoaded(detailsList: List<VcsCommitMetadata>) {
+    //TODO: replace with detailsPanel.setCommits
+    val commitIds = detailsList.map { CommitId(it.id, it.root) }
+    detailsPanel.rebuildPanel(commitIds)
+    detailsPanel.showOverflowLabelIfNeeded(MAX_COMMITS_TO_LOAD, currentSelection.size)
 
-    val currentSelection = selection.copyOf(displayedCommits.size).toList()
-    this.selection = currentSelection
+    val unResolvedHashes = mutableSetOf<String>()
+    val presentations = detailsList.map { CommitPresentationUtil.buildPresentation(logData.project, it, unResolvedHashes) }
+    detailsPanel.forEachPanelIndexed { idx, panel ->
+      val presentation = presentations[idx]
+      panel.setCommit(presentation)
 
-    detailsPanel.forEachPanel { commit, panel ->
+      val commit = commitIds[idx]
       panel.setBranches(containingBranchesGetter.requestContainingBranches(commit.root, commit.hash))
       val root = commit.root
       if (colorManager.hasMultiplePaths()) {
@@ -67,21 +77,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     refsLoader.loadData(
       { currentSelection.map(myGraphTable.model::getRefsAtRow) },
       { panel, refs -> panel.setRefs(sortRefs(refs)) })
-  }
 
-  private fun sortRefs(refs: Collection<VcsRef>): List<VcsRef> {
-    val root = refs.firstOrNull()?.root ?: return emptyList()
-    return refs.sortedWith(logData.getLogProvider(root).referenceManager.labelsOrderComparator)
-  }
-
-  override fun onDetailsLoaded(detailsList: List<VcsCommitMetadata>) {
-    val unResolvedHashes = mutableSetOf<String>()
-    val presentations = detailsList.map {
-      CommitPresentationUtil.buildPresentation(logData.project, it, unResolvedHashes)
-    }
-    detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
-      panel.setCommit(presentations[i])
-    }
     if (unResolvedHashes.isNotEmpty()) {
       hashesResolver.loadData(
         { doResolveHashes(presentations, unResolvedHashes) },
@@ -89,12 +85,15 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     }
   }
 
+  private fun sortRefs(refs: Collection<VcsRef>): List<VcsRef> {
+    val root = refs.firstOrNull()?.root ?: return emptyList()
+    return refs.sortedWith(logData.getLogProvider(root).referenceManager.labelsOrderComparator)
+  }
+
   override fun onEmptySelection() {
     cancelLoading()
     setEmpty(VcsLogBundle.message("vcs.log.changes.details.no.commits.selected.status"))
   }
-
-  override fun getSelectionToLoad() = selection
 
   override fun onLoadingStarted() = detailsPanel.startLoadingDetails()
 
@@ -106,8 +105,9 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
   private fun setEmpty(text: @Nls String) {
     detailsPanel.setStatusText(text)
-    selection = emptyList()
+    currentSelection = IntArray(0)
     detailsPanel.rebuildPanel(emptyList())
+    detailsPanel.showOverflowLabelIfNeeded(MAX_COMMITS_TO_LOAD, 0)
   }
 
   private fun doResolveHashes(presentations: List<CommitPresentation>,
@@ -162,7 +162,6 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
     private var progressIndicator: ProgressIndicator? = null
 
     fun <T> loadData(loadData: (ProgressIndicator) -> List<T>, setData: (CommitDetailsPanel, T) -> Unit) {
-      val currentSelection = selection
       progressIndicator = BackgroundTaskUtil.executeOnPooledThread(this@VcsLogCommitSelectionListenerForDetails) {
         val indicator = ProgressManager.getInstance().progressIndicator
         val loaded = loadData(indicator)
@@ -172,8 +171,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
             detailsPanel.forEachPanelIndexed { i: Int, panel: CommitDetailsPanel ->
               setData(panel, loaded[i])
             }
-          },
-            { progressIndicator != indicator || currentSelection != selection })
+          }, { indicator.isCanceled })
       }
     }
 
@@ -186,6 +184,9 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
   }
 
   companion object {
+
+    private const val MAX_COMMITS_TO_LOAD = 50
+
     @JvmStatic
     fun install(graphTable: VcsLogGraphTable,
                 detailsPanel: CommitDetailsListPanel,

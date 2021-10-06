@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class CommitSelectionListener<T extends VcsCommitMetadata> implements ListSelectionListener {
@@ -62,17 +63,16 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
       onEmptySelection();
     }
     else {
-      onSelection(myGraphTable.getSelectedRows());
+      int[] toLoad = onSelection(myGraphTable.getSelectedRows());
       onLoadingStarted();
 
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
 
-      List<Integer> selectionToLoad = getSelectionToLoad();
-      myCommitDetailsGetter.loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
+      myCommitDetailsGetter.loadCommitsData(myGraphTable.getModel().convertToCommitIds(Ints.asList(toLoad)), detailsList -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
-          if (selectionToLoad.size() != detailsList.size()) {
-            LOG.error("Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+          if (toLoad.length != detailsList.size()) {
+            LOG.error("Loaded incorrect number of details " + detailsList + " for selection " + Arrays.toString(toLoad));
           }
           myLastRequest = null;
           onDetailsLoaded(detailsList);
@@ -88,11 +88,6 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
     }
   }
 
-  @NotNull
-  protected List<Integer> getSelectionToLoad() {
-    return Ints.asList(myGraphTable.getSelectedRows());
-  }
-
   @RequiresEdt
   protected abstract void onLoadingStarted();
 
@@ -106,7 +101,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   protected abstract void onDetailsLoaded(@NotNull List<? extends T> detailsList);
 
   @RequiresEdt
-  protected abstract void onSelection(int @NotNull [] selection);
+  protected abstract int @NotNull [] onSelection(int @NotNull [] selection);
 
   @RequiresEdt
   protected abstract void onEmptySelection();
