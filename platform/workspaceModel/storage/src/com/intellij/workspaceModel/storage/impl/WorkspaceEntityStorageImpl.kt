@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
@@ -20,11 +17,8 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import java.io.File
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.name
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -365,9 +359,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  internal fun addDiffAndReport(message: String,
-                                left: WorkspaceEntityStorage?,
-                                right: WorkspaceEntityStorage) {
+  internal fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
@@ -626,64 +618,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         }
       }
     }
-  }
-
-  internal fun reportConsistencyIssue(message: String,
-                                      e: Throwable,
-                                      sourceFilter: ((EntitySource) -> Boolean)?,
-                                      left: WorkspaceEntityStorage?,
-                                      right: WorkspaceEntityStorage?,
-                                      resulting: WorkspaceEntityStorage) {
-    val entitySourceFilter = if (sourceFilter != null) {
-      val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
-      allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
-      allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
-    }
-    else null
-
-    var finalMessage = "$message\n\nEntity source filter: $entitySourceFilter"
-    finalMessage += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
-
-    val zipFile = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
-      val dumpDirectory = getStoreDumpDirectory()
-      finalMessage += "\nSaving store content at: $dumpDirectory"
-      serializeContentToFolder(dumpDirectory, left, right, resulting)
-    }
-    else null
-
-    if (zipFile != null) {
-      val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
-      attachment.isIncluded = true
-      LOG.error(finalMessage, e, attachment)
-    }
-    else {
-      LOG.error(finalMessage, e)
-    }
-  }
-
-  private fun serializeContentToFolder(contentFolder: Path,
-                                       left: WorkspaceEntityStorage?,
-                                       right: WorkspaceEntityStorage?,
-                                       resulting: WorkspaceEntityStorage): File? {
-    left?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
-    right?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
-    serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
-    serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
-
-    if (right is WorkspaceEntityStorageBuilder) {
-      serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
-        right as WorkspaceEntityStorageBuilderImpl
-        serializer.serializeDiffLog(stream, right.changeLog)
-      }
-    }
-
-    return if (!executingOnTC()) {
-      val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
-      Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
-      FileUtil.delete(contentFolder)
-      zipFile
-    }
-    else null
   }
 
   companion object {
