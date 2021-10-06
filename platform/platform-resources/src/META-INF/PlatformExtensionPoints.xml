@@ -455,5 +455,9 @@
     <extensionPoint name="recoveryAction"
                     interface="com.intellij.ide.actions.cache.RecoveryAction"
                     dynamic="true"/>
+
+    <extensionPoint name="fragments.dsl.builder.extender"
+                    interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
