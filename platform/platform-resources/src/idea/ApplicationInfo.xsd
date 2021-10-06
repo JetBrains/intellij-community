@@ -350,22 +350,6 @@
         <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:string" name="size32">
-      <xs:annotation>
-        <xs:documentation>
-          Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
-        </xs:documentation>
-        <xs:documentation>deprecated</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:string" name="size128" >
-      <xs:annotation>
-        <xs:documentation>
-          Path to a 128x128 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
-        </xs:documentation>
-        <xs:documentation>deprecated</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute type="xs:string" name="ico">
       <xs:annotation>
         <xs:documentation>

@@ -69,18 +69,6 @@ public final class AppUIUtil {
       String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
       ScaleContext scaleContext = ScaleContext.create(window);
 
-      if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
-        if (image != null) {
-          images.add(image);
-        }
-      }
-
-      @SuppressWarnings("deprecation") Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
-      if (element != null) {
-        images.add(element);
-      }
-
       if (SystemInfoRt.isWindows) {
         @SuppressWarnings("deprecation") Image image = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl());
         images.add(image);
