@@ -39,7 +39,7 @@
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
-    <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.JavaGradleTargetEnvironmentAware" />
+    <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -93,5 +93,7 @@
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizard"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector"/>
+    <registryKey key="gradle.execution.target.server.debug.port" defaultValue="-1"
+                 description="Specifies port at which Gradle target server process will wait for debugger connections. -1 means disabled feature."/>
   </extensions>
 </idea-plugin>
