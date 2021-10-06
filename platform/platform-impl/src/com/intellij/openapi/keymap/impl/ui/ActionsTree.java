@@ -100,7 +100,7 @@ public final class ActionsTree {
       @Override
       public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
-          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value);
+          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value, true);
           return StringUtil.notNullize(path);
         }
         return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
@@ -353,10 +353,10 @@ public final class ActionsTree {
   }
 
   public void selectAction(String actionId) {
-    String path = myMainGroup.getActionQualifiedPath(actionId);
+    String path = myMainGroup.getActionQualifiedPath(actionId, false);
     String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
     if (path == null && boundId != null) {
-      path = myMainGroup.getActionQualifiedPath(boundId);
+      path = myMainGroup.getActionQualifiedPath(boundId, false);
       if (path == null) {
         return;
       }
@@ -375,7 +375,7 @@ public final class ActionsTree {
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      if (Objects.equals(getPath(node), path)) {
+      if (Objects.equals(getPath(node, false), path)) {
         return node;
       }
     }
@@ -387,7 +387,7 @@ public final class ActionsTree {
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      final String path = getPath(node);
+      final String path = getPath(node, false);
       if (paths.contains(path)) {
         result.add(node);
       }
@@ -396,7 +396,7 @@ public final class ActionsTree {
   }
 
   @Nullable
-  private String getPath(DefaultMutableTreeNode node) {
+  private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
@@ -405,14 +405,14 @@ public final class ActionsTree {
       if (parent instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
         if (object instanceof Group) {
-          return ((Group)object).getActionQualifiedPath(actionId);
+          return ((Group)object).getActionQualifiedPath(actionId, presentable);
         }
       }
 
-      return myMainGroup.getActionQualifiedPath(actionId);
+      return myMainGroup.getActionQualifiedPath(actionId, presentable);
     }
     if (userObject instanceof Group) {
-      return ((Group)userObject).getQualifiedPath();
+      return ((Group)userObject).getQualifiedPath(presentable);
     }
     if (userObject instanceof QuickList) {
       return ((QuickList)userObject).getName();
@@ -451,7 +451,7 @@ public final class ActionsTree {
     }
 
     private void addPathToList(DefaultMutableTreeNode root, ArrayList<? super String> list) {
-      String path = getPath(root);
+      String path = getPath(root, false);
       if (!StringUtil.isEmpty(path)) {
         list.add(path);
       }
@@ -519,6 +519,7 @@ public final class ActionsTree {
       String text;
       @NlsSafe String actionId = null;
       String boundId = null;
+      @NlsActions.ActionText
       String boundText = null;
       setToolTipText(null);
 
