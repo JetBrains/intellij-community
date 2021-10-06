@@ -13,6 +13,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel.RootColor
@@ -24,13 +25,13 @@ import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
 class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: VcsLogGraphTable,
+                                                                  private val colorManager: VcsLogColorManager,
                                                                   private val detailsPanel: CommitDetailsListPanel,
                                                                   parentDisposable: Disposable)
   : CommitSelectionListener<VcsCommitMetadata>(graphTable, graphTable.logData.miniDetailsGetter), Disposable {
 
   private val logData = graphTable.logData
   private val containingBranchesGetter = logData.containingBranchesGetter
-  private val colorManager = graphTable.colorManager
 
   private val refsLoader = CommitDataLoader()
   private val hashesResolver = CommitDataLoader()
@@ -187,11 +188,13 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
 
     private const val MAX_COMMITS_TO_LOAD = 50
 
+    @JvmOverloads
     @JvmStatic
     fun install(graphTable: VcsLogGraphTable,
                 detailsPanel: CommitDetailsListPanel,
-                disposable: Disposable) {
-      val listener = VcsLogCommitSelectionListenerForDetails(graphTable, detailsPanel, disposable)
+                disposable: Disposable,
+                colorManager: VcsLogColorManager = graphTable.colorManager) {
+      val listener = VcsLogCommitSelectionListenerForDetails(graphTable, colorManager, detailsPanel, disposable)
       graphTable.selectionModel.addListSelectionListener(listener)
     }
   }
