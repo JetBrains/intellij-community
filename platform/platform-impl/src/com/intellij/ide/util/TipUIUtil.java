@@ -223,31 +223,31 @@ public final class TipUIUtil {
     tipHtml.getElementsContainingOwnText("&").forEach(element -> {
       //It's just cleaner expression here that we can configure entities elsewhere and just replace them here in one loop.
       String textNodeText = element.text();
-      if (textNodeText.contains("&")) {
-        for (final TipEntity entity : ENTITIES) {
-          textNodeText = entity.inline(textNodeText);
-        }
-        element.text(textNodeText);
+      for (final TipEntity entity : ENTITIES) {
+        textNodeText = entity.inline(textNodeText);
       }
+      element.text(textNodeText);
     });
 
     //Here comes shortcut processing
     tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN).forEach(shortcut -> {
       shortcut.text(SHORTCUT_PATTERN.matcher(shortcut.text()).replaceAll(result -> {
-
+        String shortcutText = null;
         final String actionId = result.group(1);
-        String shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
-        if (shortcutText == null) {
-          Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.Companion.getInstance().getDefaultKeymapName());
-          if (defKeymap != null) {
-            shortcutText = getShortcutText(actionId, defKeymap);
-            if (shortcutText != null) {
-              shortcutText += " (default keymap)";
+        if (actionId != null) {
+          shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
+          if (shortcutText == null) {
+            Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.Companion.getInstance().getDefaultKeymapName());
+            if (defKeymap != null) {
+              shortcutText = getShortcutText(actionId, defKeymap);
+              if (shortcutText != null) {
+                shortcutText += IdeBundle.message("tips.of.the.day.shortcut.default.keymap");
+              }
             }
           }
         }
         if (shortcutText == null) {
-          shortcutText = "\"" + actionId + "\" undefined, set via Settings/Keymap";
+          shortcutText = "\"" + actionId + "\" " + IdeBundle.message("tips.of.the.day.shortcut.must.define");
         }
         return shortcutText;
       }));
