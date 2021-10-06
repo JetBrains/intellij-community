@@ -112,7 +112,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   private void startPullingProgress(MavenServerPullProgressIndicator serverPullProgressIndicator,
                                     MavenServerConsole console,
-                                    MavenServerProgressIndicator indicator) {
+                                    MavenProgressIndicator indicator) {
+    ScheduledFuture<?> future = myProgressPullingFuture;
+    if(future!=null && !future.isCancelled()) {
+      future.cancel(true);
+    }
     myProgressPullingFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
       try {
         if (indicator.isCanceled()) serverPullProgressIndicator.cancel();
@@ -333,7 +337,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                              @Nullable Properties userProperties) {
     stopPulling();
     myCustomization = new Customization(wrapAndExport(console),
-                                        wrapAndExport(indicator),
+                                        indicator,
                                         workspaceMap,
                                         failOnUnresolvedDependency,
                                         alwaysUpdateSnapshot,
@@ -349,7 +353,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   private static final class Customization {
     private final MavenServerConsole console;
-    private final MavenServerProgressIndicator indicator;
+    private final MavenProgressIndicator indicator;
 
     private final MavenWorkspaceMap workspaceMap;
     private final boolean failOnUnresolvedDependency;
@@ -357,7 +361,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     private final Properties userProperties;
 
     private Customization(MavenServerConsole console,
-                          MavenServerProgressIndicator indicator,
+                          MavenProgressIndicator indicator,
                           MavenWorkspaceMap workspaceMap,
                           boolean failOnUnresolvedDependency,
                           boolean alwaysUpdateSnapshot,
