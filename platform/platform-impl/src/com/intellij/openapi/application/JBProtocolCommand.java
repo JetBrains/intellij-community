@@ -32,8 +32,7 @@ public abstract class JBProtocolCommand {
     myCommand = command;
   }
 
-  @NotNull
-  public final String getCommandName() {
+  public final @NotNull String getCommandName() {
     return myCommand;
   }
 

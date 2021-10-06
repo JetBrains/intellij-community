@@ -21,7 +21,7 @@ internal class OpenSettingsService : RestService() {
   override fun getServiceName() = SERVICE_NAME
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val name = urlDecoder.parameters().get("name")?.firstOrNull()?.trim() ?: return parameterMissedErrorMessage("name")
+    val name = urlDecoder.parameters()["name"]?.firstOrNull()?.trim() ?: return parameterMissedErrorMessage("name")
     if (!doOpenSettings(name)) {
       return "no configurables found"
     }
