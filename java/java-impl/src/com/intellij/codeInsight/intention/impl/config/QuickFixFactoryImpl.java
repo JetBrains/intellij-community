@@ -1053,6 +1053,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @NotNull IntentionAction createVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
+    return new VariableTypeFix(variable, type);
+  }
+
+  @Override
   public @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass) {
     return new ConvertInterfaceToClassFix(aClass);
   }

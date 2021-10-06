@@ -443,10 +443,16 @@ public class SwitchBlockHighlightingModel {
         return null;
       }
       else if (label instanceof PsiPattern) {
-        PsiType patternType = JavaPsiPatternUtil.getPatternType((PsiPattern)label);
+        PsiPattern pattern = (PsiPattern)label;
+        PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
-          return createError(label, JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType)));
+          String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
+          HighlightInfo info = createError(label, message);
+          if (patternType instanceof PsiPrimitiveType) {
+            registerVariableTypeFixes(info, pattern, (PsiPrimitiveType)patternType);
+          }
+          return info;
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
           return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, label.getTextRange(), 0);
@@ -738,6 +744,20 @@ public class SwitchBlockHighlightingModel {
         return;
       }
       QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
+    }
+
+    private static void registerVariableTypeFixes(@Nullable HighlightInfo info,
+                                                  @NotNull PsiPattern pattern,
+                                                  @NotNull PsiPrimitiveType primitiveType) {
+      PsiType arrayType = PsiTypesUtil.createArrayType(primitiveType, 1);
+      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+      if (patternVariable == null) return;
+      PsiClassType boxedType = primitiveType.getBoxedType(patternVariable);
+      IntentionAction changeToArrayTypeFix = getFixFactory().createVariableTypeFix(patternVariable, arrayType);
+      QuickFixAction.registerQuickFixAction(info, changeToArrayTypeFix);
+      if (boxedType == null) return;
+      IntentionAction changeToBoxTypeFix = getFixFactory().createVariableTypeFix(patternVariable, boxedType);
+      QuickFixAction.registerQuickFixAction(info, changeToBoxTypeFix);
     }
 
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
