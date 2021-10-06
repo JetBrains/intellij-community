@@ -45,6 +45,6 @@ internal class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
     CompletableFuture.completedFuture(
       when (val name = parameters["name"]?.trim()?.nullize()) {
         null -> IdeBundle.message("ide.protocol.parameter.missing", "name")
-        else -> if (doOpenSettings(name)) null else IdeBundle.message("ide.protocol.settings.no.configurable", name)
+        else -> if (doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name)
       })
 }

@@ -25,9 +25,8 @@ final class JBProtocolCheckoutCommand extends JBProtocolCommand {
   private static final String REPOSITORY_NAME_KEY = "checkout.repo";
 
   JBProtocolCheckoutCommand() {
-    super("checkout"); //NON-NLS
+    super("checkout");
   }
-
 
   @Override
   public @NotNull Future<@Nullable @DialogMessage String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
