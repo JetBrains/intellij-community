@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -6,9 +6,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
@@ -47,8 +46,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 
 @CompileStatic
-class CompilationPartsUtil {
-
+final class CompilationPartsUtil {
   static void initLog4J(BuildMessages messages) {
     def logger = Logger.getRootLogger()
     logger.setLevel(Level.INFO)
@@ -113,7 +111,7 @@ class CompilationPartsUtil {
     BuildMessages messages = context.messages
 
     String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
-    if (StringUtil.isEmptyOrSpaces(serverUrl)) {
+    if (Strings.isEmptyOrSpaces(serverUrl)) {
       messages.warning("Compile Parts archive server url is not defined. \n" +
                        "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
       return
@@ -213,51 +211,49 @@ class CompilationPartsUtil {
 
       runUnderStatisticsTimer(messages, 'compile-parts:upload:time') {
         CompilationPartsUploader uploader = new CompilationPartsUploader(serverUrl, messages)
-
-        Set<String> alreadyUploaded = new HashSet<>()
-        boolean fallbackToHeads
-        def files = uploader.getFoundAndMissingFiles(metadataJson)
-        if (files != null) {
-          messages.info("Successfully fetched info about already uploaded files")
-          alreadyUploaded.addAll(files.found)
-          fallbackToHeads = false
-        }
-        else {
-          messages.warning("Failed to fetch info about already uploaded files, will fallback to HEAD requests")
-          fallbackToHeads = true
-        }
-
-        // Upload with higher threads count
-        executor.setMaximumPoolSize(executorThreadsCount * 2)
-        executor.prestartAllCoreThreads()
-
-        contexts.each { PackAndUploadContext ctx ->
-          if (alreadyUploaded.contains(ctx.name)) {
-            reusedCount.getAndIncrement()
-            reusedBytes.getAndAdd(new File(ctx.archive).size())
-            return
+        uploader.withCloseable {
+          Set<String> alreadyUploaded = new HashSet<>()
+          boolean fallbackToHeads
+          def files = uploader.getFoundAndMissingFiles(metadataJson)
+          if (files != null) {
+            messages.info("Successfully fetched info about already uploaded files")
+            alreadyUploaded.addAll(files.found)
+            fallbackToHeads = false
+          }
+          else {
+            messages.warning("Failed to fetch info about already uploaded files, will fallback to HEAD requests")
+            fallbackToHeads = true
           }
 
-          executor.submit {
-            def archiveFile = new File(ctx.archive)
+          // Upload with higher threads count
+          executor.setMaximumPoolSize(executorThreadsCount * 2)
+          executor.prestartAllCoreThreads()
 
-            String hash = hashes.get(ctx.name)
-            def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
-
-            if (uploader.upload(path, archiveFile, fallbackToHeads)) {
-              uploadedCount.getAndIncrement()
-              uploadedBytes.getAndAdd(archiveFile.size())
-            }
-            else {
+          for (PackAndUploadContext ctx in contexts) {
+            if (alreadyUploaded.contains(ctx.name)) {
               reusedCount.getAndIncrement()
-              reusedBytes.getAndAdd(archiveFile.size())
+              reusedBytes.getAndAdd(Files.size(Path.of(ctx.archive)))
+              continue
+            }
+
+            executor.submit {
+              def archiveFile = new File(ctx.archive)
+
+              String hash = hashes.get(ctx.name)
+              def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
+              if (uploader.upload(path, archiveFile, fallbackToHeads)) {
+                uploadedCount.getAndIncrement()
+                uploadedBytes.getAndAdd(archiveFile.size())
+              }
+              else {
+                reusedCount.getAndIncrement()
+                reusedBytes.getAndAdd(archiveFile.size())
+              }
             }
           }
+
+          executor.waitForAllComplete(messages)
         }
-
-        executor.waitForAllComplete(messages)
-
-        StreamUtil.closeStream(uploader)
       }
 
       messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
@@ -290,8 +286,7 @@ class CompilationPartsUtil {
     boolean forInstallers = System.getProperty('intellij.fetch.compiled.classes.for.installers', 'false').toBoolean()
     CompilationPartsMetadata metadata
     try {
-      metadata = new Gson().fromJson(FileUtil.loadFile(metadataFile, CharsetToolkit.UTF8),
-                                     CompilationPartsMetadata.class)
+      metadata = new Gson().fromJson(FileUtil.loadFile(metadataFile, StandardCharsets.UTF_8), CompilationPartsMetadata.class)
     }
     catch (Exception e) {
       messages.error("Failed to parse metadata file content: $e.message", e)
@@ -495,7 +490,7 @@ class CompilationPartsUtil {
         }
         executor.waitForAllComplete(messages)
 
-        StreamUtil.closeStream(httpClient)
+        CloseStreamUtil.closeStream(httpClient)
 
         deinitLog4J()
       }
