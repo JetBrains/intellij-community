@@ -92,13 +92,11 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    if (!Registry.`is`("ide.notification.action.center", false)) {
-      toolWindow.isShowStripeButton = false
-      toolWindow.remove()
-      return
-    }
+  override fun isApplicable(project: Project): Boolean {
+    return Registry.`is`("ide.notification.action.center", false)
+  }
 
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val panel = JBPanelWithEmptyText(BorderLayout())
     panel.background = NotificationComponent.BG_COLOR
 
