@@ -714,4 +714,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEnumOrdinal() { doTest(); }
   public void testThisInEnumSubclass() { doTest(); }
   public void testVarargConstructorNoArgs() { doTest(); }
+  public void testStringBuilderLengthReturn() { doTest(); }
 }

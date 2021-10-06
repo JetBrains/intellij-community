@@ -1322,6 +1322,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
                                                              !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
         return myFactory.fromDfType(type.getBasicType());
       }
+      if (val instanceof DfaVariableValue && qualifierStatusMap.shouldFlush((DfaVariableValue)val)) {
+        return myFactory.fromDfType(type);
+      }
       return val;
     });
   }
