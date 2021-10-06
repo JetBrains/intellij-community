@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.openapi.project.DumbService
+import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.search.GlobalSearchScope
+import com.sun.jdi.LocalVariable
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
@@ -112,4 +114,9 @@ object DebuggerUtils {
     }
 
     fun String.isGeneratedLambdaName() = matches(IR_BACKEND_LAMBDA_REGEX)
+
+    fun LocalVariable.getBorders(): ClosedRange<Location>? {
+        val range = getLocalVariableBorders(this) ?: return null
+        return range.from..range.to
+    }
 }
