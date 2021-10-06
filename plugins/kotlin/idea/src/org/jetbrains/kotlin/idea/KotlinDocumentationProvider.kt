@@ -237,7 +237,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         this,
                         attributes.attributes,
                         value,
-                        DocumentationSettings.getHighlightingSaturation()
+                        DocumentationSettings.getHighlightingSaturation(false)
                     )
                 }
 
@@ -247,7 +247,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         project!!,
                         KotlinLanguage.INSTANCE,
                         codeSnippet,
-                        DocumentationSettings.getHighlightingSaturation()
+                        DocumentationSettings.getHighlightingSaturation(false)
                     )
                 }
 

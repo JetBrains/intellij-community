@@ -271,29 +271,54 @@ public final class HtmlSyntaxInfoUtil {
     private final float mySaturationFactor;
 
     private ColorsSchemeWithChangedSaturation(@NotNull EditorColorsScheme delegate, float saturationFactor) {
-      super(delegate);
+      super((EditorColorsScheme)delegate.clone());
       mySaturationFactor = saturationFactor;
     }
 
     @Override
     public @NotNull Color getDefaultBackground() {
-      return tuneSaturationEspeciallyGrey(super.getDefaultBackground(), 1, mySaturationFactor);
+      return tuneColor(super.getDefaultBackground());
     }
 
     @Override
     public @NotNull Color getDefaultForeground() {
-      return tuneSaturationEspeciallyGrey(super.getDefaultForeground(), 1, mySaturationFactor);
+      return tuneColor(super.getDefaultForeground());
     }
 
     @Override
     public @Nullable Color getColor(ColorKey key) {
       Color color = super.getColor(key);
-      return color != null ? tuneSaturationEspeciallyGrey(color, 1, mySaturationFactor) : null;
+      return color != null ? tuneColor(color) : null;
     }
 
     @Override
     public void setColor(ColorKey key, @Nullable Color color) {
-      super.setColor(key, color != null ? tuneSaturationEspeciallyGrey(color, 1, mySaturationFactor) : null);
+      super.setColor(key, color != null ? tuneColor(color) : null);
+    }
+
+    @Override
+    public TextAttributes getAttributes(TextAttributesKey key) {
+      return tuneAttributes(super.getAttributes(key));
+    }
+
+    @Override
+    public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
+      super.setAttributes(key, tuneAttributes(attributes));
+    }
+
+    private Color tuneColor(Color color) {
+      return tuneSaturationEspeciallyGrey(color, 1, mySaturationFactor);
+    }
+
+    private TextAttributes tuneAttributes(TextAttributes attributes) {
+      if (attributes != null) {
+        attributes = attributes.clone();
+        Color foregroundColor = attributes.getForegroundColor();
+        Color backgroundColor = attributes.getBackgroundColor();
+        if (foregroundColor != null) attributes.setForegroundColor(tuneColor(foregroundColor));
+        if (backgroundColor != null) attributes.setBackgroundColor(tuneColor(backgroundColor));
+      }
+      return attributes;
     }
   }
 

@@ -140,7 +140,7 @@ public final class GroovyPresentationUtil {
     @Nullable String value
   ) {
     if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation());
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(false));
     }
     else {
       buffer.append(value);

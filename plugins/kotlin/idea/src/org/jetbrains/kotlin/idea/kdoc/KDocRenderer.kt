@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -96,8 +97,12 @@ object KDocRenderer {
     }
 
     private fun getTargetLinkElementAttributes(element: PsiElement?): TextAttributes {
-        val key = element?.let { textAttributesKeyForKtElement(it) } ?: CodeInsightColors.HYPERLINK_ATTRIBUTES
-        return getTargetLinkElementAttributes(key)
+        return element
+            ?.let { textAttributesKeyForKtElement(it) }
+            ?.let { getTargetLinkElementAttributes(it) }
+            ?: TextAttributes().apply {
+                foregroundColor = EditorColorsManager.getInstance().globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
+            }
     }
 
     private fun getTargetLinkElementAttributes(key: TextAttributesKey): TextAttributes {
@@ -111,7 +116,7 @@ object KDocRenderer {
         return buildString {
             for (pathSegment in qualifiedPath) {
                 val segmentAttributes = when {
-                    pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
+                    pathSegment.isEmpty() || pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
                     else -> KotlinHighlightingColors.CLASS
                 }
                 appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), segmentAttributes, pathSegment)
@@ -334,7 +339,7 @@ object KDocRenderer {
                     val startDelimiter = node.child(MarkdownTokenTypes.BACKTICK)?.text
                     if (startDelimiter != null) {
                         val text = node.text.substring(startDelimiter.length).removeSuffix(startDelimiter)
-                        sb.append("<code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection()}%;'>")
+                        sb.append("<code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection(true)}%;'>")
                         sb.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
                             DocumentationSettings.getInlineCodeHighlightingMode(),
                             comment.project,
@@ -347,7 +352,7 @@ object KDocRenderer {
                 MarkdownElementTypes.CODE_BLOCK,
                 MarkdownElementTypes.CODE_FENCE -> {
                     sb.trimEnd()
-                    sb.append("<pre><code>")
+                    sb.append("<pre><code style='font-size:${DocumentationSettings.getMonospaceFontSizeCorrection(true)}%;'>")
                     processChildren()
                     sb.append("</code></pre>")
                 }
@@ -366,16 +371,19 @@ object KDocRenderer {
                         if (DumbService.isDumb(comment.project)) {
                             sb.append(linkText)
                         } else {
-                            val resolvedLinkElement = comment.findDescendantOfType<KDocName> { it.text == label }
+                            comment.findDescendantOfType<KDocName> { it.text == label }
                                 ?.mainReference
                                 ?.resolve()
-                            DocumentationManagerUtil.createHyperlink(
-                                sb,
-                                label,
-                                highlightQualifiedName(linkText, getTargetLinkElementAttributes(resolvedLinkElement)),
-                                false,
-                                true
-                            )
+                                ?.let { resolvedLinkElement ->
+                                    DocumentationManagerUtil.createHyperlink(
+                                        sb,
+                                        label,
+                                        highlightQualifiedName(linkText, getTargetLinkElementAttributes(resolvedLinkElement)),
+                                        false,
+                                        true
+                                    )
+                                }
+                                ?: sb.appendStyledSpan(true, KotlinHighlightingColors.RESOLVED_TO_ERROR, label)
                         }
                     } else {
                         sb.append(node.text)
@@ -517,7 +525,7 @@ object KDocRenderer {
 
     private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributesKey: TextAttributesKey, value: String?): StringBuilder {
         if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation())
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(true))
         } else {
             append(value)
         }
@@ -526,7 +534,7 @@ object KDocRenderer {
 
     private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributes: TextAttributes, value: String?): StringBuilder {
         if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation())
+            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation(true))
         } else {
             append(value)
         }
@@ -542,7 +550,7 @@ object KDocRenderer {
         val codeSnippetBuilder = StringBuilder()
         if (highlightingMode == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING) { // highlight code by lexer
             HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-                codeSnippetBuilder, project, language, codeSnippet, false, DocumentationSettings.getHighlightingSaturation()
+                codeSnippetBuilder, project, language, codeSnippet, false, DocumentationSettings.getHighlightingSaturation(true)
             )
         } else {
             codeSnippetBuilder.append(StringUtil.escapeXmlEntities(codeSnippet))
@@ -568,7 +576,12 @@ object KDocRenderer {
             || attributes.foregroundColor == globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).foregroundColor
         ) {
             val tuned = attributes.clone()
-            tuned.foregroundColor = globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).foregroundColor
+            if (ApplicationManager.getApplication().isUnitTestMode) {
+                tuned.foregroundColor = globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).foregroundColor
+            }
+            else {
+                tuned.foregroundColor = globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
+            }
             return tuned
         }
         return attributes

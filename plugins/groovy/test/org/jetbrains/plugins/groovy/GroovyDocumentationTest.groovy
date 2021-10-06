@@ -118,7 +118,7 @@ class Foo {
 new Foo().<caret>foo()
 ''', '''\
 <div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-       May return <code><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
+       May return <code style='font-size:100%;'><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
      </div><table class='sections'></table>\
 '''
   }

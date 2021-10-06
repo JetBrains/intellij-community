@@ -77,7 +77,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     @Nullable String value
   ) {
     if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation());
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation(false));
     }
     else {
       buffer.append(value);
@@ -414,7 +414,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
       DocumentationSettings.getInlineCodeHighlightingMode(),
       DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
-      DocumentationSettings.getHighlightingSaturation());
+      DocumentationSettings.getHighlightingSaturation(isGenerationForRenderedDoc));
   }
 
   protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {

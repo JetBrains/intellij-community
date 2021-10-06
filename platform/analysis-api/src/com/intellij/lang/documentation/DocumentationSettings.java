@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,29 +19,35 @@ public class DocumentationSettings {
 
   public static boolean isHighlightingOfQuickDocSignaturesEnabled() {
     return ApplicationManager.getApplication().isUnitTestMode()
-           || AdvancedSettings.getBoolean("documentation.components.enable.doc.highlighting.of.quick.doc.signatures");
+           || Registry.is("documentation.component.enable.highlighting.of.quick.doc.signatures");
   }
 
   public static boolean isHighlightingOfCodeBlocksEnabled() {
     return ApplicationManager.getApplication().isUnitTestMode()
-           || AdvancedSettings.getBoolean("documentation.components.enable.doc.highlighting.of.code.blocks");
+           || AdvancedSettings.getBoolean("documentation.components.enable.code.blocks.highlighting");
   }
 
   public static boolean isSemanticHighlightingOfLinksEnabled() {
     return ApplicationManager.getApplication().isUnitTestMode()
-           || AdvancedSettings.getBoolean("documentation.components.enable.doc.semantic.highlighting.of.links");
+           || AdvancedSettings.getBoolean("documentation.components.enable.highlighting.of.links");
   }
 
   public static @NotNull InlineCodeHighlightingMode getInlineCodeHighlightingMode() {
-    return ApplicationManager.getApplication().isUnitTestMode()
+    return (ApplicationManager.getApplication().isUnitTestMode()
+            || AdvancedSettings.getBoolean("documentation.components.enable.inline.code.highlighting"))
            ? InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING
-           : AdvancedSettings.getEnum("documentation.components.doc.inline.code.highlighting.mode", InlineCodeHighlightingMode.class);
+           : InlineCodeHighlightingMode.NO_HIGHLIGHTING;
   }
 
-  public static float getHighlightingSaturation() {
-    return ApplicationManager.getApplication().isUnitTestMode()
-           ? 1.0f
-           : MathUtil.clamp(AdvancedSettings.getInt("documentation.components.doc.highlighting.saturation"), 0, 100) * 0.01F;
+  /**
+   * Allows reducing saturation of highlighting colors in order to lower distraction from the main code.
+   * Here 100 is the normal saturation (bright tones) and 0 is zero saturation (grey tones)
+   */
+  public static float getHighlightingSaturation(boolean isForRenderedDoc) {
+    int result = ApplicationManager.getApplication().isUnitTestMode() ? 100 :
+                 isForRenderedDoc ? Registry.intValue("documentation.component.highlighting.saturation.for.rendered.docs") :
+                 Registry.intValue("documentation.component.highlighting.saturation.for.hints");
+    return MathUtil.clamp(result, 0, 100) * 0.01F;
   }
 
   /**
@@ -48,11 +55,17 @@ public class DocumentationSettings {
    * and even in not a cross-platform way.
    * So we have to do some hacks to align fonts.
    */
-  public static int getMonospaceFontSizeCorrection() {
-    return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
+  public static int getMonospaceFontSizeCorrection(boolean isForRenderedDoc) {
+    if (isForRenderedDoc) {
+      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
+    }
+    else {
+      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 100;
+    }
   }
 
 
+  @ApiStatus.Experimental
   public enum InlineCodeHighlightingMode {
     NO_HIGHLIGHTING {
       @Override

@@ -1306,11 +1306,9 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="documentation.components.enable.doc.highlighting.of.quick.doc.signatures" default="true" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.enable.doc.highlighting.of.code.blocks" default="true" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.enable.doc.semantic.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.doc.inline.code.highlighting.mode" enumClass="com.intellij.lang.documentation.DocumentationSettings$InlineCodeHighlightingMode" default="AS_DEFAULT_CODE" groupKey="group.advanced.settings.documentation.components"/>
-    <advancedSetting id="documentation.components.doc.highlighting.saturation" default="65" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"

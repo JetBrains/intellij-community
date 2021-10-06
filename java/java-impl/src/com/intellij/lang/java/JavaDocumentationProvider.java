@@ -81,7 +81,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     @Nullable String value
   ) {
     if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation());
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation(false));
     }
     else {
       buffer.append(value);

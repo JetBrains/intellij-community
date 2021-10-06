@@ -26,7 +26,7 @@ public class JavaDocInfoGeneratorFactory {
       DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
       DocumentationSettings.getInlineCodeHighlightingMode(),
       DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
-      DocumentationSettings.getHighlightingSaturation());
+      DocumentationSettings.getHighlightingSaturation(false));
   }
 
   @NotNull
@@ -48,7 +48,7 @@ public class JavaDocInfoGeneratorFactory {
     private boolean myDoHighlightCodeBlocks = DocumentationSettings.isHighlightingOfCodeBlocksEnabled();
     private @NotNull InlineCodeHighlightingMode myInlineCodeBlocksHighlightingMode = DocumentationSettings.getInlineCodeHighlightingMode();
     private boolean myDoSemanticHighlightingOfLinks = DocumentationSettings.isSemanticHighlightingOfLinksEnabled();
-    private float myHighlightingSaturation = DocumentationSettings.getHighlightingSaturation();
+    private float myHighlightingSaturation = DocumentationSettings.getHighlightingSaturation(false);
 
     private JavaDocInfoGeneratorBuilder(@NotNull Project project) {
       myProject = project;
@@ -66,6 +66,7 @@ public class JavaDocInfoGeneratorFactory {
 
     public JavaDocInfoGeneratorBuilder setIsGenerationForRenderedDoc(boolean isRendered) {
       myIsRendered = isRendered;
+      myHighlightingSaturation = DocumentationSettings.getHighlightingSaturation(isRendered);
       return this;
     }
 

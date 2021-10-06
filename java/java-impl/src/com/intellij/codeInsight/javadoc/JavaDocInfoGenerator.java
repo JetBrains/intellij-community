@@ -17,6 +17,7 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -1549,7 +1550,9 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
     }
 
-    buffer.append(isRendered() ? "<code style='font-size:" + DocumentationSettings.getMonospaceFontSizeCorrection() + "%;'>" : "<code>");
+    buffer.append("<code style='font-size:");
+    buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
+    buffer.append("%;'>");
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
@@ -2128,7 +2131,12 @@ public class JavaDocInfoGenerator {
     if (Objects.equals(attributes.getForegroundColor(), defaultText.getForegroundColor())
         || Objects.equals(attributes.getForegroundColor(), identifier.getForegroundColor())) {
       TextAttributes tuned = attributes.clone();
-      tuned.setForegroundColor(globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor());
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        tuned.setForegroundColor(globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor());
+      }
+      else {
+        tuned.setForegroundColor(globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK));
+      }
       return tuned;
     }
     return attributes;
