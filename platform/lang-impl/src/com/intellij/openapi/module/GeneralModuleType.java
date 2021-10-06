@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
@@ -63,6 +64,11 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
     @Override
     public ModuleType<?> getModuleType() {
       return INSTANCE;
+    }
+
+    @Override
+    public String getGroupName() {
+      return IdeBundle.message("empty.project.generator.name");
     }
 
     @Override
