@@ -851,7 +851,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 )
             }
 
-            val moduleDataNode = moduleNodesByCompilationMap[compilation] ?: return null
+            val moduleDataNode = moduleNodesByCompilationMap[compilation]
+                ?.also { moduleNodesByCompilationMap.remove(compilation) }
+                ?: return null
             val projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT)
                 ?: error("Failed to find ProjectData for module node '$moduleDataNode'")
             val cacheHolder = ExternalSystemApiUtil.find(projectDataNode, KotlinIdeaProjectData.KEY)
