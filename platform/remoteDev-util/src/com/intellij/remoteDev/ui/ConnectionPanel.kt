@@ -125,7 +125,7 @@ open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel
 
   private fun connect() {
     val userName = userNameTextField.text
-    val urlToConnect = remoteUrlTextField.text
+    val urlToConnect = remoteUrlTextField.text.trim()
     if (userName.isBlank() || urlToConnect.isBlank()) return
 
     val onDone = {
