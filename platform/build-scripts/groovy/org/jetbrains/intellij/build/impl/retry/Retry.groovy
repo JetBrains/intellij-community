@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.retry
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 @CompileStatic
 class Retry {
@@ -21,11 +22,11 @@ class Retry {
     }
   }
 
-  def <T> T call(Closure<T> operation) {
+  def <T> T call(Supplier<T> operation) {
     def delayMs = delayMs
     for (i in 1..retries) {
       try {
-        return operation(i)
+        return operation.get()
       }
       catch (StopTrying e) {
         throw e.cause

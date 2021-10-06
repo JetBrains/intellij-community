@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
@@ -180,7 +179,7 @@ final class BuildTasksImpl extends BuildTasks {
       void run() {
         buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
         buildContext.messages.debug("Building provided modules list for the following modules: $modules")
-        FileUtil.delete(targetFile)
+        Files.deleteIfExists(targetFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
         runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules,
                               List.of("listBundledPlugins", targetFile.toString()))
@@ -224,15 +223,13 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
-      "idea.home.path"   : context.paths.projectHome,
-      "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
-      "idea.config.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/config"
-    ])))
-    if (context.productProperties.platformPrefix != null) {
-      //noinspection SpellCheckingInspection
-      jvmArgs.add("-Didea.platform.prefix=" + context.productProperties.platformPrefix)
-    }
+    List<String> jvmArgs = new ArrayList<>()
+    BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome)
+    BuildUtils.addVmProperty(jvmArgs, "idea.system.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/system")
+    BuildUtils.addVmProperty(jvmArgs, "idea.config.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/config")
+
+    BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
+    BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
     String debugPort = System.getProperty("intellij.build.${arguments.first()}.debug.port")
@@ -243,10 +240,13 @@ final class BuildTasksImpl extends BuildTasks {
     List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
     Set<String> additionalPluginIds = new HashSet<>()
     for (Path pluginPath : additionalPluginPaths) {
-      for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
-        if (ideClasspath.add(jarFile.absolutePath)) {
+      for (Path jarFile : BuildUtils.getPluginJars(pluginPath)) {
+        if (ideClasspath.add(jarFile.toString())) {
           context.messages.debug("$jarFile from plugin $pluginPath")
-          ContainerUtil.addIfNotNull(additionalPluginIds, BuildUtils.readPluginId(jarFile))
+          String pluginId = BuildUtils.readPluginId(jarFile)
+          if (pluginId != null) {
+            additionalPluginIds.add(pluginId)
+          }
         }
       }
     }
@@ -927,7 +927,11 @@ idea.fatal.error.notification=disabled
   }
 
   static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
-    if (tasks.empty) return Collections.emptyList()
+    tasks = tasks.findAll { !buildContext.options.buildStepsToSkip.contains(it.stepId) }
+    if (tasks.empty) {
+      return Collections.emptyList()
+    }
+
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.execute(buildContext)

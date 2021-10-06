@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipFile
 
-class ArchiveUtils {
+final class ArchiveUtils {
   static boolean archiveContainsEntry(String archivePath, String entryPath) {
     File archiveFile = new File(archivePath)
     String fileName = archiveFile.name

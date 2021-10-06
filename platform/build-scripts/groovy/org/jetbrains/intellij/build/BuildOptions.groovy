@@ -51,14 +51,14 @@ class BuildOptions {
    */
   Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")).findAll {!it.isBlank() })
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
-  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
+  public static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
-  static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
-  static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
+  public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final String GENERATE_JAR_ORDER_STEP = "jar_order"
   static final String SOURCES_ARCHIVE_STEP = "sources_archive"
-  static final String SCRAMBLING_STEP = "scramble"
+  public static final String SCRAMBLING_STEP = "scramble"
   static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
   static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
