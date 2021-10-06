@@ -16,10 +16,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -52,6 +49,7 @@ import java.util.*;
 public final class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
+  private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
   private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
@@ -728,8 +726,8 @@ public final class ActionsTree {
     private class ActionHyperlink extends Hyperlink {
       private final String myActionId;
 
-      public ActionHyperlink(String actionId, String actionText) {
-        super(actionText);
+      ActionHyperlink(String actionId, @NlsContexts.LinkLabel String actionText) {
+        super(null, actionText, GRAY_LINK);
         myActionId = actionId;
       }
 
