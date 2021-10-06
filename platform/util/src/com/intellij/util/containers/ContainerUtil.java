@@ -336,17 +336,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link THashSet#THashSet(Collection, TObjectHashingStrategy)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SafeVarargs
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... elements) {
-    return new THashSet<>(Arrays.asList(elements), strategy);
-  }
-
-  /**
    * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
    */
   @Deprecated

@@ -6,7 +6,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -118,17 +117,6 @@ public final class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link TreeSet#TreeSet()}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
-    return new TreeSet<T>();
-  }
-
-  /**
    * A variant of {@link Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.
    */
@@ -212,17 +200,6 @@ public final class ContainerUtilRt {
   public static <T> List<T> emptyList() {
     //noinspection unchecked
     return (List<T>)EmptyList.INSTANCE;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#addIfNotNull(Collection, Object)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
-    if (element != null) {
-      result.add(element);
-    }
   }
 
   /**
