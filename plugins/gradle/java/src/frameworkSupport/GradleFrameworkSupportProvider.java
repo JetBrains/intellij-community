@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
@@ -28,22 +27,11 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   public static final ExtensionPointName<GradleFrameworkSupportProvider> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.gradle.frameworkSupport");
 
-  /**
-   * @deprecated use {@link #addSupport(ProjectId, Module, ModifiableRootModel, ModifiableModelsProvider, BuildScriptDataBuilder)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
-                         @NotNull ModifiableModelsProvider modifiableModelsProvider,
-                         @NotNull BuildScriptDataBuilder buildScriptData) {
-  }
-
   public void addSupport(@NotNull ProjectId projectId,
                          @NotNull Module module,
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
-    addSupport(module, rootModel, modifiableModelsProvider, buildScriptData);
   }
 
   public JComponent createComponent() {

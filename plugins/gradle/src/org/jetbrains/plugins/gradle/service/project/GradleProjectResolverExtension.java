@@ -124,20 +124,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
 
   /**
-   * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
-   * used by the resolution return true then the {@link BuildActionExecuter} will have
-   * {@link BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
-   * any tasks that are scheduled by Gradle plugin in the model builders to be run.
-   *
-   * @deprecated not required anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default boolean requiresTaskRunning() {
-    return false;
-  }
-
-  /**
    * add paths containing these classes to classpath of gradle tooling extension
    *
    * @return classes to be available for gradle
