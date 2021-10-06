@@ -179,7 +179,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   private fun chooseGroupToAdd(groups: List<Group>) = when (groups.size) {
     1 -> groups[0]
     0 -> GroupCreateDialog(project, null, this).showAndGetGroup(true)
-    else -> GroupSelectDialog(project, null, this, groups).showAndGetGroup()
+    else -> GroupSelectDialog(project, null, this, groups).showAndGetGroup(true)
   }
 
   private fun canRemove(bookmark: Bookmark) = !findGroupsToRemove(bookmark).isNullOrEmpty()
