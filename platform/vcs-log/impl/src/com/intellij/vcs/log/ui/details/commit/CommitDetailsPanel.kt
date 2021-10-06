@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
-open class CommitDetailsPanel(private val project: Project, navigate: (CommitId) -> Unit) : JPanel() {
+class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit = {}) : JPanel() {
   companion object {
     const val SIDE_BORDER = 14
     const val INTERNAL_BORDER = 10
@@ -61,16 +61,9 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
     add(containingBranchesPanel)
   }
 
-  final override fun add(comp: Component?): Component = super.add(comp)
-
-  open fun setCommit(commit: CommitId, presentation: CommitPresentation) {
+  fun setCommit(presentation: CommitPresentation) {
     messagePanel.updateMessage(presentation)
     hashAndAuthorPanel.updateHashAndAuthor(presentation)
-  }
-
-  fun setCommit(commit: VcsCommitMetadata) {
-    val presentation = buildPresentation(project, commit, mutableSetOf())
-    setCommit(CommitId(commit.id, commit.root), presentation)
   }
 
   fun setRefs(references: List<VcsRef>?) {

@@ -12,10 +12,10 @@ import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.ift.GitLessonsBundle
@@ -141,7 +141,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
       proceedLink()
-      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogCommitDetailsListPanel -> true }
+      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: CommitDetailsListPanel -> true }
     }
 
     task {

@@ -32,8 +32,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -70,9 +72,11 @@ public final class PushLog extends JPanel implements DataProvider {
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private @Nls String mySyncRenderedText;
+  private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
-  public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+  public PushLog(@NotNull Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+    myProject = project;
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
@@ -235,7 +239,7 @@ public final class PushLog extends JPanel implements DataProvider {
     myChangesBrowser.addToolbarAction(editSourceAction);
     setDefaultEmptyText();
 
-    myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
+    myDetailsPanel = new CommitDetailsPanel();
     JScrollPane detailsScrollPane =
       new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     detailsScrollPane.setBorder(JBUI.Borders.empty());
@@ -406,7 +410,10 @@ public final class PushLog extends JPanel implements DataProvider {
     }
     myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
-      myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
+      VcsFullCommitDetails commitDetails = commitNodes.get(0).getUserObject();
+      CommitPresentationUtil.CommitPresentation presentation =
+        CommitPresentationUtil.buildPresentation(myProject, commitDetails, new HashSet<>());
+      myDetailsPanel.setCommit(presentation);
       myShowDetailsAction.setEnabled(true);
     }
     else {

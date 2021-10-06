@@ -11,16 +11,15 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.ContainingBranchesGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -30,49 +29,56 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
-public class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> implements Disposable {
+public class VcsLogCommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> implements Disposable {
 
   private final @NotNull VcsLogData myLogData;
+  private final @NotNull ContainingBranchesGetter myContainingBranchesGetter;
+  private final @NotNull VcsLogColorManager myColorManager;
 
-  @NotNull private final CommitDetailsListPanel<CommitPanel> myDetailsPanel;
+  private final @NotNull CommitDetailsListPanel myDetailsPanel;
 
-  @NotNull private final CommitDataLoader myRefsLoader = new CommitDataLoader();
-  @NotNull private final CommitDataLoader myHashesResolver = new CommitDataLoader();
+  private final @NotNull CommitDataLoader myRefsLoader = new CommitDataLoader();
+  private final @NotNull CommitDataLoader myHashesResolver = new CommitDataLoader();
 
-  @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
+  private @NotNull List<Integer> mySelection = ContainerUtil.emptyList();
 
-  CommitSelectionListenerForDetails(@NotNull VcsLogGraphTable graphTable,
-                                    @NotNull CommitDetailsListPanel<CommitPanel> detailsPanel,
-                                    @NotNull Disposable parentDisposable) {
+  VcsLogCommitSelectionListenerForDetails(@NotNull VcsLogGraphTable graphTable,
+                                          @NotNull CommitDetailsListPanel detailsPanel,
+                                          @NotNull Disposable parentDisposable) {
     super(graphTable, graphTable.getLogData().getMiniDetailsGetter());
     myLogData = graphTable.getLogData();
+    myContainingBranchesGetter = myLogData.getContainingBranchesGetter();
+    myColorManager = graphTable.getColorManager();
     myDetailsPanel = detailsPanel;
+
+    Runnable containingBranchesListener = this::branchesChanged;
+    myContainingBranchesGetter.addTaskCompletedListener(containingBranchesListener);
+    Disposer.register(this, () -> {
+      myContainingBranchesGetter.removeTaskCompletedListener(containingBranchesListener);
+    });
+
     Disposer.register(parentDisposable, this);
   }
 
   @Override
   protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
-    List<CommitId> ids = ContainerUtil.map(detailsList,
-                                           detail -> new CommitId(detail.getId(), detail.getRoot()));
     Set<String> unResolvedHashes = new HashSet<>();
     List<CommitPresentation> presentations =
       ContainerUtil.map(detailsList, detail -> buildPresentation(myLogData.getProject(), detail, unResolvedHashes));
     myDetailsPanel.forEachPanelIndexed((i, panel) -> {
-      panel.setCommit(ids.get(i), presentations.get(i));
+      panel.setCommit(presentations.get(i));
       return Unit.INSTANCE;
     });
 
     if (!unResolvedHashes.isEmpty()) {
       myHashesResolver.loadData(indicator -> doResolveHashes(presentations, unResolvedHashes),
-                                (panel, index, presentation) -> panel.setCommit(ids.get(index), presentation));
+                                (panel, presentation) -> panel.setCommit(presentation));
     }
   }
 
@@ -80,12 +86,32 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
   protected void onSelection(int @NotNull [] selection) {
     cancelLoading();
 
-    int shownPanelsCount = myDetailsPanel.rebuildPanel(selection.length);
-    mySelection = Ints.asList(Arrays.copyOf(selection, shownPanelsCount));
+    List<CommitId> commits = myGraphTable.getModel().getCommitIds(selection);
+    List<CommitId> displayedCommits = myDetailsPanel.rebuildPanel(commits);
 
+    mySelection = Ints.asList(Arrays.copyOf(selection, displayedCommits.size()));
     List<Integer> currentSelection = mySelection;
+
+    myDetailsPanel.forEachPanel((commit, panel) -> {
+      panel.setBranches(myContainingBranchesGetter.requestContainingBranches(commit.getRoot(), commit.getHash()));
+      VirtualFile root = commit.getRoot();
+      if (myColorManager.hasMultiplePaths()) {
+        panel.setRoot(new CommitDetailsPanel.RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, myColorManager)));
+      }
+      else {
+        panel.setRoot(null);
+      }
+      return Unit.INSTANCE;
+    });
+
     myRefsLoader.loadData(indicator -> ContainerUtil.map2List(currentSelection, row -> myGraphTable.getModel().getRefsAtRow(row)),
-                          (panel, index, refs) -> panel.setRefs(panel.sortRefs(refs)));
+                          (panel, refs) -> panel.setRefs(sortRefs(refs)));
+  }
+
+  private @NotNull List<? extends VcsRef> sortRefs(@NotNull Collection<? extends VcsRef> refs) {
+    VcsRef ref = ContainerUtil.getFirstItem(refs);
+    if (ref == null) return ContainerUtil.emptyList();
+    return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());
   }
 
   @Override
@@ -94,19 +120,18 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
     setEmpty(VcsLogBundle.message("vcs.log.changes.details.no.commits.selected.status"));
   }
 
-  @NotNull
   @Override
-  protected List<Integer> getSelectionToLoad() {
+  protected @NotNull List<Integer> getSelectionToLoad() {
     return mySelection;
   }
 
   @Override
-  protected void startLoading() {
+  protected void onLoadingStarted() {
     myDetailsPanel.startLoadingDetails();
   }
 
   @Override
-  protected void stopLoading() {
+  protected void onLoadingStopped() {
     myDetailsPanel.stopLoadingDetails();
   }
 
@@ -118,12 +143,11 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
   private void setEmpty(@Nls @NotNull String text) {
     myDetailsPanel.setStatusText(text);
     mySelection = ContainerUtil.emptyList();
-    myDetailsPanel.setCommits(ContainerUtil.emptyList());
+    myDetailsPanel.rebuildPanel(ContainerUtil.emptyList());
   }
 
-  @NotNull
-  private List<CommitPresentation> doResolveHashes(@NotNull List<? extends CommitPresentation> presentations,
-                                                   @NotNull Set<String> unResolvedHashes) {
+  private @NotNull List<CommitPresentation> doResolveHashes(@NotNull List<? extends CommitPresentation> presentations,
+                                                            @NotNull Set<String> unResolvedHashes) {
     MultiMap<String, CommitId> resolvedHashes = new MultiMap<>();
 
     Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
@@ -152,6 +176,13 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
     return ContainerUtil.map2List(presentations, presentation -> presentation.resolve(resolvedHashes));
   }
 
+  private void branchesChanged() {
+    myDetailsPanel.forEachPanel((commit, panel) -> {
+      panel.setBranches(myContainingBranchesGetter.requestContainingBranches(commit.getRoot(), commit.getHash()));
+      return Unit.INSTANCE;
+    });
+  }
+
   private void cancelLoading() {
     myHashesResolver.cancelLoading();
     myRefsLoader.cancelLoading();
@@ -166,16 +197,16 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
     @Nullable private ProgressIndicator myProgressIndicator = null;
 
     private <T> void loadData(@NotNull Function<ProgressIndicator, List<T>> loadData,
-                              @NotNull TriConsumer<CommitPanel, Integer, T> setData) {
+                              @NotNull BiConsumer<CommitDetailsPanel, T> setData) {
       List<Integer> currentSelection = mySelection;
-      myProgressIndicator = BackgroundTaskUtil.executeOnPooledThread(CommitSelectionListenerForDetails.this, () -> {
+      myProgressIndicator = BackgroundTaskUtil.executeOnPooledThread(VcsLogCommitSelectionListenerForDetails.this, () -> {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         List<T> loaded = loadData.apply(indicator);
         ApplicationManager.getApplication()
           .invokeLater(() -> {
                          myProgressIndicator = null;
                          myDetailsPanel.forEachPanelIndexed((i, panel) -> {
-                           setData.accept(panel, i, loaded.get(i));
+                           setData.accept(panel, loaded.get(i));
                            return Unit.INSTANCE;
                          });
                        },
@@ -191,5 +222,13 @@ public class CommitSelectionListenerForDetails extends CommitSelectionListener<V
         myProgressIndicator = null;
       }
     }
+  }
+
+  public static void install(@NotNull VcsLogGraphTable graphTable,
+                             @NotNull CommitDetailsListPanel detailsPanel,
+                             @NotNull Disposable disposable) {
+    VcsLogCommitSelectionListenerForDetails listener =
+      new VcsLogCommitSelectionListenerForDetails(graphTable, detailsPanel, disposable);
+    graphTable.getSelectionModel().addListSelectionListener(listener);
   }
 }

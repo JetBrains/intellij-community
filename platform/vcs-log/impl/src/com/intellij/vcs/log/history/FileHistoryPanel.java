@@ -25,14 +25,16 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
+import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +60,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @NotNull private final VcsLogGraphTable myGraphTable;
 
-  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
+  @NotNull private final CommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
 
   @Nullable private FileHistoryEditorDiffPreview myEditorDiffPreview;
@@ -95,23 +97,22 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
 
-    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
-      @Override
-      protected void navigate(@NotNull CommitId commit) {
+    myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
+      return new CommitDetailsPanel(commit -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           ui.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
         });
-      }
-    };
+        return Unit.INSTANCE;
+      });
+    });
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this);
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
                                                                 logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
-
-    myDetailsPanel.installCommitSelectionListener(myGraphTable);
 
     setEditorDiffPreview();
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);

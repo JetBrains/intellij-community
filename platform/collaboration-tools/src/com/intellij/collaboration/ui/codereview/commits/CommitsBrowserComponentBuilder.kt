@@ -118,7 +118,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
 
   private fun createCommitDetailsComponent(model: SingleValueModel<VcsCommitMetadata?>): JComponent {
 
-    val commitDetailsPanel = CommitDetailsPanel(project) {}
+    val commitDetailsPanel = CommitDetailsPanel()
     val scrollpane = ScrollPaneFactory.createScrollPane(commitDetailsPanel, true).apply {
       isVisible = false
       isOpaque = false
@@ -146,7 +146,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
             return """<b>$subject</b><br/><br/>$description"""
           }
         }
-        commitDetailsPanel.setCommit(CommitId(commit.id, commit.root), presentation)
+        commitDetailsPanel.setCommit(presentation)
       }
       scrollpane.isVisible = commit != null
     }

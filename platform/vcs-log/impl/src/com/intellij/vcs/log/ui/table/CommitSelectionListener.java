@@ -58,12 +58,12 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   public void processEvent() {
     int rows = myGraphTable.getSelectedRowCount();
     if (rows < 1) {
-      stopLoading();
+      onLoadingStopped();
       onEmptySelection();
     }
     else {
       onSelection(myGraphTable.getSelectedRows());
-      startLoading();
+      onLoadingStarted();
 
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
@@ -76,13 +76,13 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
           }
           myLastRequest = null;
           onDetailsLoaded(detailsList);
-          stopLoading();
+          onLoadingStopped();
         }
       }, t -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
           myLastRequest = null;
           onError(t);
-          stopLoading();
+          onLoadingStopped();
         }
       }, indicator);
     }
@@ -94,10 +94,10 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
   }
 
   @RequiresEdt
-  protected abstract void startLoading();
+  protected abstract void onLoadingStarted();
 
   @RequiresEdt
-  protected abstract void stopLoading();
+  protected abstract void onLoadingStopped();
 
   @RequiresEdt
   protected abstract void onError(@NotNull Throwable error);
