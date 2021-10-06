@@ -406,7 +406,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   fun hasShortcutDefined(actionId: String): Boolean =
-    actionIdToShortcuts[actionId]?.isNotEmpty() == true || parent?.hasShortcutDefined(actionId) == true
+    actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
 
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element) {
