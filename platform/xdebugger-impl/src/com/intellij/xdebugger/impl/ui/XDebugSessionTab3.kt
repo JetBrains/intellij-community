@@ -107,7 +107,9 @@ class XDebugSessionTab3(
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
 
     val toolbar = DefaultActionGroup()
-    toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
+    val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
+    val headerActionsWithoutDuplicates = headerGroup.getChildren(null).distinct()
+    toolbar.addAll(headerActionsWithoutDuplicates)
 
     val more = MoreActionGroup()
     more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
