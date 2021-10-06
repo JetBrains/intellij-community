@@ -1155,6 +1155,7 @@
       <reference ref="Stop"/>
       <separator/>
       <reference ref="Resume"/>
+      <reference ref="Pause"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
@@ -1171,7 +1172,6 @@
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
       <separator/>
-      <reference ref="Pause"/>
       <reference ref="ShowExecutionPoint"/>
       <separator/>
     </group>
