@@ -2,16 +2,18 @@
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.Main;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -41,16 +43,19 @@ public abstract class JBProtocolCommand {
     throw PluginException.createByClass(new UnsupportedOperationException(), getClass());
   }
 
-  @SuppressWarnings("deprecation")
-  public @NotNull Future<@NotNull CliResult> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
+  /**
+   * The method should return a future with the command execution result - {@code null} when successful,
+   * sentence-capitalized localized string in case of an error (see {@code "ide.protocol.*"} strings in {@code IdeBundle}).
+   */
+  public @NotNull Future<@Nullable @DialogMessage String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
     Map<String, String> simpleParameters = new LinkedHashMap<>(parameters);
     simpleParameters.put(JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME, fragment);
     perform(target, simpleParameters);
-    return CompletableFuture.completedFuture(CliResult.OK);
+    return CompletableFuture.completedFuture(null);
   }
 
   @ApiStatus.Internal
-  public static @NotNull Future<CliResult> execute(@NotNull String url) {
+  public static @NotNull Future<@Nullable @DialogMessage String> execute(@NotNull String url) {
     if (!url.startsWith(PROTOCOL)) throw new IllegalArgumentException(url);
 
     String query = url.substring(PROTOCOL.length());
@@ -76,7 +81,7 @@ public abstract class JBProtocolCommand {
       }
     }
 
-    return CliResult.error(Main.UNKNOWN_COMMAND, IdeBundle.message("ide.command.line.unknown.command", commandName));
+    return CompletableFuture.completedFuture(IdeBundle.message("ide.command.line.unknown.command", commandName));
   }
 
   @Deprecated
@@ -86,7 +91,8 @@ public abstract class JBProtocolCommand {
     for (JBProtocolCommand command : EP_NAME.getIterable()) {
       if (command.getCommandName().equals(commandName)) {
         try {
-          command.perform(JetBrainsProtocolHandler.getMainParameter(), JetBrainsProtocolHandler.getParameters());
+          Map<String, String> parameters = JetBrainsProtocolHandler.getParameters();
+          command.perform(JetBrainsProtocolHandler.getMainParameter(), parameters, parameters.get(FRAGMENT_PARAM_NAME));
         }
         finally {
           JetBrainsProtocolHandler.clear();
