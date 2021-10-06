@@ -11,7 +11,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectD
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.flatMapTransform
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
@@ -23,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -41,11 +41,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 import kotlin.time.toDuration
 
 internal class PackageSearchProjectService(val project: Project) : CoroutineScope by project.lifecycleScope {
 
-    private val replayFromErrorChannel = Channel<Unit>()
+    private val retryFromErrorChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(PackageSearchApiClient(ServerURLs.base))
 
     private val projectModulesLoadingFlow = MutableStateFlow(false)
@@ -57,14 +58,14 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     private val operationExecutedChannel = Channel<Unit>(onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-    val isLoadingFlow: Flow<Boolean> = combineTransform<Boolean, Boolean>(
+    val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
         knownRepositoriesLoadingFlow,
         moduleModelsLoadingFlow,
         allInstalledKnownRepositoriesLoadingFlow,
         installedPackagesLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> booleans.any { it } }
+    ) { booleans -> emit(booleans.any { it }) }
         .stateIn(this, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { trustedState ->
@@ -73,13 +74,14 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             else -> flowOf(emptyList())
         }
     }
-        .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, operationExecutedChannel.consumeAsFlow())
+        .replayOnSignals(retryFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, operationExecutedChannel.consumeAsFlow())
         .mapLatest(projectModulesLoadingFlow) { modules -> readAction { project.moduleTransformers.flatMapTransform(project, modules) } }
-        .catch {
-            logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
-            projectModulesLoadingFlow.emit(false)
-            replayFromErrorChannel.send(Unit)
-        }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#projectModulesSharedFlow",
+            message = "Error while elaborating latest project modules",
+            fallbackValue = emptyList(),
+            retryChannel = retryFromErrorChannel
+        )
         .flowOn(Dispatchers.Default)
         .shareIn(this, SharingStarted.Eagerly)
 
@@ -88,23 +90,23 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
 
-    private val knownRepositoriesFlow = flow {
-        val traceInfo = TraceInfo(TraceInfo.TraceSource.INIT)
-        while (true) {
-            knownRepositoriesLoadingFlow.emit(true)
-            dataProvider.fetchKnownRepositories()
-                .onFailure { logError(traceInfo, "knownRepositoriesStateFlow", it) { "Failed to refresh known repositories list." } }
-                .onSuccess {
-                    logInfo(traceInfo, "knownRepositoriesStateFlow") { "Known repositories refreshed. We know of ${it.size} repo(s)." }
-                    emit(it)
-                }
-            knownRepositoriesLoadingFlow.emit(false)
-            delay(1.toDuration(TimeUnit.HOURS))
-        }
-    }.stateIn(this, SharingStarted.Eagerly, emptyList())
+    private val knownRepositoriesFlow = timer(1.toDuration(TimeUnit.HOURS))
+        .mapLatest(knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#knownRepositoriesFlow",
+            message = "Error while refreshing known repositories",
+            fallbackValue = emptyList()
+        )
+        .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val moduleModelsStateFlow = projectModulesSharedFlow
         .mapLatest(moduleModelsLoadingFlow) { projectModules -> readAction { projectModules.map { ModuleModel(it) } } }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#moduleModelsStateFlow",
+            message = "Error while evaluating modules models",
+            fallbackValue = emptyList(),
+            retryChannel = retryFromErrorChannel
+        )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val allInstalledKnownRepositoriesFlow =
@@ -112,11 +114,23 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             .mapLatest(allInstalledKnownRepositoriesLoadingFlow) { (moduleModels, repos) ->
                 allKnownRepositoryModels(moduleModels, repos)
             }
+            .catchAndLog(
+                context = "${this::class.qualifiedName}#allInstalledKnownRepositoriesFlow",
+                message = "Error while evaluating installed repositories",
+                fallbackValue = KnownRepositories.All.EMPTY,
+                retryChannel = retryFromErrorChannel
+            )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    val installedPackagesStateFlow = projectModulesSharedFlow.mapLatest(installedPackagesLoadingFlow) {
-        installedPackages(it, project, dataProvider, TraceInfo(TraceInfo.TraceSource.INIT))
-    }.stateIn(this, SharingStarted.Eagerly, emptyList())
+    val installedPackagesStateFlow = projectModulesSharedFlow
+        .mapLatest(installedPackagesLoadingFlow) { installedPackages(it, project, dataProvider, TraceInfo(TraceInfo.TraceSource.INIT)) }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#installedPackagesStateFlow",
+            message = "Error while evaluating installed packages",
+            fallbackValue = emptyList(),
+            retryChannel = retryFromErrorChannel
+        )
+        .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val packageUpgradesStateFlow = installedPackagesStateFlow.mapLatest(packageUpgradesLoadingFlow) {
         coroutineScope {
@@ -124,7 +138,14 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             val allUpdates = async { computePackageUpgrades(it, false) }
             PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
         }
-    }.stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+    }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
+            message = "Error while evaluating packages upgrade candidates",
+            fallbackValue = PackageUpgradeCandidates.EMPTY,
+            retryChannel = retryFromErrorChannel
+        )
+        .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
 
     fun notifyOperationExecuted() {
         operationExecutedChannel.trySend(Unit)
@@ -134,7 +155,25 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 private fun <T, R> Flow<T>.mapLatest(loadingFlow: MutableStateFlow<Boolean>, transform: suspend (T) -> R): Flow<R> =
     mapLatest {
         loadingFlow.emit(true)
-        val result = transform(it)
-        loadingFlow.emit(false)
+        val result = try {
+            transform(it)
+        } finally {
+            loadingFlow.emit(false)
+        }
         result
     }
+
+private fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackValue: T, retryChannel: SendChannel<Unit>? = null) =
+    catch {
+        logInfo(context, it) { message }
+        retryChannel?.send(Unit)
+        emit(fallbackValue)
+    }
+
+private fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
+    if (emitAtStartup) emit(Unit)
+    while (true) {
+        delay(each)
+        emit(Unit)
+    }
+}
