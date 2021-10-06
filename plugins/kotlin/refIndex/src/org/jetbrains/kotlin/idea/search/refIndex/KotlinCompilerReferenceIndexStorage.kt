@@ -32,12 +32,12 @@ class KotlinCompilerReferenceIndexStorage(
          * [org.jetbrains.kotlin.incremental.AbstractIncrementalCache.Companion.SUBTYPES]
          */
         private const val SUBTYPES = "subtypes"
-    }
 
-    /**
-     * [org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.storageFile]
-     */
-    private val String.asStorageName: String get() = "$this.$CACHE_EXTENSION"
+        /**
+         * [org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.storageFile]
+         */
+        private val String.asStorageName: String get() = "$this.$CACHE_EXTENSION"
+    }
 
     private val lookupStorage = LookupStorage(targetDataDir.toFile(), RelativeFileToPathConverter(File(projectPath)))
     private val subtypesStorage = ClassOneToManyStorage(targetDataDir.resolve(SUBTYPES.asStorageName))
@@ -55,6 +55,16 @@ class KotlinCompilerReferenceIndexStorage(
     fun getSubtypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = subtypesStorage[fqName, deep]
 
     fun initialize(buildDataPaths: BuildDataPaths) {
+        val storagePaths = collectSourceStorages(buildDataPaths)
+        for (storagePath in storagePaths) {
+            initializeStorage(storagePath)
+        }
+    }
+
+    private fun collectSourceStorages(buildDataPaths: BuildDataPaths): List<Path> {
+        val storageName = SUBTYPES.asStorageName
+
+        val paths = mutableListOf<Path>()
         for (buildTargetType in JavaModuleBuildTargetType.ALL_TYPES) {
             val buildTargetPath = buildDataPaths.getTargetTypeDataRoot(buildTargetType).toPath()
             if (buildTargetPath.notExists() || !buildTargetPath.isDirectory()) continue
@@ -64,9 +74,11 @@ class KotlinCompilerReferenceIndexStorage(
                     ?.takeUnless { it.notExists() }
                     ?: return@forEachDirectoryEntry
 
-                initializeStorage(workingPath.resolve(SUBTYPES.asStorageName))
+                paths.add(workingPath.resolve(storageName))
             }
         }
+
+        return paths
     }
 
     private fun initializeStorage(subtypesSourcePath: Path) {
