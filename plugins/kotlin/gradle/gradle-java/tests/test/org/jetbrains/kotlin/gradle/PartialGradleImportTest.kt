@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptM
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
+import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.New
 import org.jetbrains.kotlin.idea.gradleJava.scripting.runPartialGradleImport
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
@@ -51,7 +52,7 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
     @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.6.0-SNAPSHOT+")
-    fun `test 'LoadConfigurationAction' is running in 'lenient' or 'classpath' mode`() {
+    fun `test 'runPartialGradleImport' is running in 'lenient' or 'classpath' mode`() {
         /*
         Setup simple Gradle project inline:
         Will apply Kotlin Multiplatform
@@ -71,8 +72,12 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
          */
         linkProject()
         runPartialGradleImport(
-            myProject, assertSingleGradleBuildRoot().assertInstanceOf<Imported>().also { imported ->
-                assertTrue(imported.data.models.isEmpty(), "Expected no models imported yet")
+            myProject, assertSingleGradleBuildRoot().also { root ->
+                when (root) {
+                    is Imported -> assertTrue(root.data.models.isEmpty(), "Expected no models imported yet")
+                    is New -> Unit
+                    else -> fail("Unexpected root type: ${root.javaClass.simpleName}")
+                }
             }
         )
 
