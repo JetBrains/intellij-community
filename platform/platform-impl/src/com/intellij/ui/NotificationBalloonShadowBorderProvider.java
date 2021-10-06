@@ -18,10 +18,10 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
+public final class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
   private static final Insets INSETS = new JBInsets(4, 6, 8, 6);
-  protected final Color myFillColor;
-  protected final Color myBorderColor;
+  private final Color myFillColor;
+  private final Color myBorderColor;
 
   public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
     myFillColor = fillColor;

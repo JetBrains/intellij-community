@@ -11,7 +11,6 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -86,21 +85,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    if (Registry.is("ide.notification.action.center", false)) {
-      setIcon(getActionCenterNotificationIcon(notifications));
-    }
-    else {
-      setIcon(createIconWithNotificationCount(this, NotificationType.getDominatingType(notifications), notifications.size(), false));
-    }
-  }
-
-  public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
-    for (Notification notification : notifications) {
-      if (notification.isSuggestionType() && notification.isImportantSuggestion() || notification.getType() == NotificationType.ERROR) {
-        return AllIcons.Toolwindows.NotificationsNewImportant;
-      }
-    }
-    return notifications.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew;
+    setIcon(createIconWithNotificationCount(this, NotificationType.getDominatingType(notifications), notifications.size(), false));
   }
 
   public static @NotNull LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size, boolean forToolWindow) {

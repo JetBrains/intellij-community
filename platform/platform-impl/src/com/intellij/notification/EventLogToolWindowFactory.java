@@ -16,7 +16,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -38,11 +37,6 @@ import java.awt.*;
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    if (Registry.is("ide.notification.action.center", false)) {
-      toolWindow.setShowStripeButton(false);
-      toolWindow.remove();
-      return;
-    }
     EventLog.getProjectService(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }

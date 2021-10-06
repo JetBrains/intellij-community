@@ -6,7 +6,9 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.notification.impl.*;
+import com.intellij.notification.impl.NotificationCollector;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -448,20 +449,6 @@ public final class EventLog {
   }
 
   public static void toggleLog(final @Nullable Project project, final @Nullable Notification notification) {
-    if (Registry.is("ide.notification.action.center", false)) {
-      if (project != null) {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
-        if (toolWindow != null) {
-          if (toolWindow.isVisible()) {
-            toolWindow.hide();
-          }
-          else {
-            toolWindow.activate(null);
-          }
-        }
-      }
-      return;
-    }
     final ToolWindow eventLog = getEventLog(project);
     if (eventLog != null) {
       if (!eventLog.isVisible()) {
@@ -554,9 +541,7 @@ public final class EventLog {
       NotificationCollector.getInstance().logNotificationLoggedInEventLog(myProject, notification);
       EventLogConsole console = getConsole(notification);
       if (console == null) {
-        if (!Registry.is("ide.notification.action.center", false)) {
-          myInitial.add(notification);
-        }
+        myInitial.add(notification);
       }
       else {
         StartupManager.getInstance(myProject).runAfterOpened(() -> {
@@ -620,9 +605,6 @@ public final class EventLog {
     }
 
     private @Nullable EventLogConsole getConsole(@NotNull String groupId) {
-      if (Registry.is("ide.notification.action.center", false)) {
-        return null;
-      }
       if (myCategoryMap.get(DEFAULT_CATEGORY) == null) {
         // still not initialized
         return null;

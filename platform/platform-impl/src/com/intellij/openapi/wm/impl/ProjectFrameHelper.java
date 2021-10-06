@@ -22,7 +22,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -171,9 +170,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
     }, myFrameDecorator);
 
-    myBalloonLayout = Registry.is("ide.notification.action.center", false)
-                      ? new ActionCenterBalloonLayout(myRootPane, JBUI.insets(8))
-                      : new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
+    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     frame.setBackground(UIUtil.getPanelBackground());
   }
 
