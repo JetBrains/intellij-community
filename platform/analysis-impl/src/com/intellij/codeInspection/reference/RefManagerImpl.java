@@ -61,7 +61,7 @@ public class RefManagerImpl extends RefManager {
   public static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
   private static final Logger LOG = Logger.getInstance(RefManager.class);
 
-  private long myLastUsedMask = 0x0800_0000; // guarded by this
+  private long myLastUsedMask = 0b1000_00000000_00000000_00000000; // guarded by this
 
   private final @NotNull Project myProject;
   private AnalysisScope myScope;
@@ -215,7 +215,7 @@ public class RefManagerImpl extends RefManager {
     if (myLastUsedMask < 0) {
       throw new IllegalStateException("We're out of 64 bits, sorry");
     }
-    myLastUsedMask *= 2;
+    myLastUsedMask <<= 1;
     return myLastUsedMask;
   }
 

@@ -27,15 +27,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
   private static final List<RefMethod> EMPTY_METHOD_LIST = ContainerUtil.emptyList();
-  private static final int IS_ANONYMOUS_MASK = 0x10000;
-  private static final int IS_INTERFACE_MASK = 0x20000;
-  private static final int IS_UTILITY_MASK   = 0x40000;
-  private static final int IS_ABSTRACT_MASK  = 0x80000;
+  private static final int IS_ANONYMOUS_MASK = 0b1_00000000_00000000;
+  private static final int IS_INTERFACE_MASK = 0b10_00000000_00000000;
+  private static final int IS_UTILITY_MASK   = 0b100_00000000_00000000;
+  private static final int IS_ABSTRACT_MASK  = 0b1000_00000000_00000000;
 
-  private static final int IS_APPLET_MASK    = 0x200000;
-  private static final int IS_SERVLET_MASK   = 0x400000;
-  private static final int IS_TESTCASE_MASK  = 0x800000;
-  private static final int IS_LOCAL_MASK     = 0x1000000;
+  private static final int IS_APPLET_MASK    = 0b100000_00000000_00000000;
+  private static final int IS_SERVLET_MASK   = 0b1000000_00000000_00000000;
+  private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000;
+  private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000;
 
   private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefClass> mySubClasses; // singleton (to conserve memory) or HashSet. guarded by this

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -18,16 +18,16 @@ import java.util.*;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
   private Set<RefClass> myOutTypeReferences; // guarded by this
-  private static final int ACCESS_MODIFIER_MASK = 0x03;
-  private static final int ACCESS_PRIVATE = 0x00;
-  private static final int ACCESS_PROTECTED = 0x01;
-  private static final int ACCESS_PACKAGE = 0x02;
-  private static final int ACCESS_PUBLIC = 0x03;
+  private static final int ACCESS_MODIFIER_MASK = 0b11;
+  private static final int ACCESS_PRIVATE = 0b00;
+  private static final int ACCESS_PROTECTED = 0b01;
+  private static final int ACCESS_PACKAGE = 0b10;
+  private static final int ACCESS_PUBLIC = 0b11;
 
-  private static final int IS_STATIC_MASK = 0x04;
-  private static final int IS_FINAL_MASK = 0x08;
-  private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
-  private static final int FORBID_PROTECTED_ACCESS_MASK = 0x800;
+  private static final int IS_STATIC_MASK = 0b100;
+  private static final int IS_FINAL_MASK = 0b1000;
+  private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0b100_00000000;
+  private static final int FORBID_PROTECTED_ACCESS_MASK = 0b1000_00000000;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
