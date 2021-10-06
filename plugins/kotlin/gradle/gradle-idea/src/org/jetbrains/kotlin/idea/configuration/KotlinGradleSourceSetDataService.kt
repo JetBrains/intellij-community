@@ -199,7 +199,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     }
 }
 
-fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val pluginId = moduleNode.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
@@ -219,7 +219,7 @@ fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind
     }
 }
 
-private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
             .filter { moduleNode.getResolvedVersionByModuleData(KOTLIN_GROUP_ID, listOf(it.key)) != null }
@@ -308,7 +308,7 @@ fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsIn
     adjustClasspath(kotlinFacet, dependencyClasspath)
 }
 
-private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind<*>?, sourceSet: String): String? {
+private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?, sourceSet: String): String? {
     if (!platformKind.isJavaScript) {
         return null
     }
