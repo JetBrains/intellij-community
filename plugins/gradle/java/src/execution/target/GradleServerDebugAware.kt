@@ -17,7 +17,7 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This extension allows to specifies port at which Gradle server process will wait for debugger connections.
+ * This extension allows to specify port at which Gradle server process will wait for debugger connections.
  */
 @ApiStatus.Internal
 class GradleServerDebugAware : GradleTargetEnvironmentAware {
