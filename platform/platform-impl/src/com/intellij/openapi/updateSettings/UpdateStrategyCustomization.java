@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
 import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
@@ -16,6 +17,16 @@ public class UpdateStrategyCustomization {
 
   public boolean forceEapUpdateChannelForEapBuilds() {
     return true;
+  }
+
+  /**
+   * Executed when IDE starts and provides a way to change current update channel. If a non-null value is returned, it'll be used as the current
+   * update channel as is. If {@code null} is returned, the default customization will be applied. (By default the update channel is set to
+   * {@link ChannelStatus#EAP 'EAP'} for EAP builds if {@link #forceEapUpdateChannelForEapBuilds()} is {@code true}, and to
+   * {@link ChannelStatus#RELEASE 'release'} for release builds on the first run.)
+   */
+  public @Nullable ChannelStatus changeDefaultChannel(@NotNull ChannelStatus currentChannel) {
+    return null;
   }
 
   public boolean isChannelActive(@NotNull ChannelStatus channel) {

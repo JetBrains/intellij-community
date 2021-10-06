@@ -91,9 +91,18 @@ final class UpdateCheckerService {
   private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
+
+    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
+    ChannelStatus changedChannel = customization.changeDefaultChannel(current);
+    if (changedChannel != null) {
+      settings.setSelectedChannelStatus(changedChannel);
+      LOG.info("channel set to '" + changedChannel.getCode() + "' by " + customization.getClass().getName());
+      return;
+    }
+
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
 
-    if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+    if (eap && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
