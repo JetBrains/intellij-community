@@ -38,7 +38,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,21 +214,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
                             preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, maxRowCount);
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
-    }
-
-    /**
-     * @deprecated Use {@link ActionGroupPopup#ActionGroupPopup(WizardPopup, ListPopupStep, Runnable, DataContext, int)} instead
-     * @noinspection unused
-     */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    @Deprecated
-    protected ActionGroupPopup(@Nullable WizardPopup aParent,
-                               @NotNull ListPopupStep step,
-                               @Nullable Runnable disposeCallback,
-                               @NotNull DataContext dataContext,
-                               @Nullable String actionPlace,
-                               int maxRowCount) {
-      this(aParent, step, disposeCallback, dataContext, maxRowCount);
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,

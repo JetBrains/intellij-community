@@ -1044,15 +1044,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return 0;
   }
 
-  /**
-   * @deprecated and won't be used anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected boolean shouldDrawMacShadow() {
-    return false;
-  }
-
   protected boolean shouldDrawDimmed() {
     return false;
   }

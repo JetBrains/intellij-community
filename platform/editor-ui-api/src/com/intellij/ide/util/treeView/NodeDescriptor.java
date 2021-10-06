@@ -65,24 +65,6 @@ public abstract class NodeDescriptor<E> {
     return myName;
   }
 
-  /**
-   * @deprecated Use {@link #getIcon()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final Icon getOpenIcon() {
-    return getIcon();
-  }
-
-  /**
-   * @deprecated Use {@link #getIcon()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final Icon getClosedIcon() {
-    return getIcon();
-  }
-
   @Nullable
   public final Icon getIcon() {
     return myClosedIcon;

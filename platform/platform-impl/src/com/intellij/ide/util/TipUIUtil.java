@@ -32,7 +32,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,15 +101,6 @@ public final class TipUIUtil {
       tip.fileName = tipFileName;
     }
     return tip;
-  }
-
-  /**
-   * @deprecated use {@link #openTipInBrowser(TipAndTrickBean, Browser)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
-    browser.setText(getTipText(tip, browser));
   }
 
   private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
@@ -327,16 +317,6 @@ public final class TipUIUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated use {@link #createBrowser()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static JEditorPane createTipBrowser() {
-    return new SwingBrowser();
   }
 
   public static Browser createBrowser() {
