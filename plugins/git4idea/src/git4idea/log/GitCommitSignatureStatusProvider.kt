@@ -2,8 +2,8 @@
 package git4idea.log
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 import git4idea.commit.signature.GitCommitSignature
@@ -19,7 +19,9 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
 
   override val id = ID
 
-  override fun createLoader(project: Project) = GitCommitSignatureLoader(project)
+  override fun createLoader(project: Project) =
+    if (SystemInfo.isWindows) NonCancellableGitCommitSignatureLoader(project)
+    else SimpleGitCommitSignatureLoader(project)
 
   override fun getPresentation(project: Project, commit: CommitId, status: GitCommitSignature): VcsCommitExternalStatusPresentation.Signature? {
     val icon = GitCommitSignatureLogCellRenderer.getIcon(status) ?: return null
