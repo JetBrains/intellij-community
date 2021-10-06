@@ -7,5 +7,3 @@ interface I {
 class Test : I {
     override fun foo()<caret> = null
 }
-
-// IGNORE_FIR

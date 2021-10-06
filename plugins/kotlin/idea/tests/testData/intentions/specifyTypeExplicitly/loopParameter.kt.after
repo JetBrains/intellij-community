@@ -1,4 +1,3 @@
-// IGNORE_FIR
 // WITH_RUNTIME
 
 import java.util.HashMap
