@@ -1,5 +1,6 @@
 package com.intellij.grazie.text;
 
+import com.intellij.grazie.ide.language.java.JavaTextExtractor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -9,6 +10,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -77,13 +80,14 @@ public class TextExtractionTest extends BasePlatformTestCase {
                      "* Hello {@link #foo},\n" +
                      "* here's an asterisk: *\n" +
                      "* and some {@code code}.\n" +
+                     "* tags1 <unknownTag>this<unknownTag>is</unknownTag>unknown</unknownTag >\n" +
+                     "* tags2 <unknown1>one<unknown2>unknown<unknown1>unknown</unknown2> two<p/> three<unknown1/> four</unknown1>\n" +
                      "* {@link #unknown} is unknown.\n" +
                      "* @param foo the text without the parameter name\n" +
                      "* @return the offset of {@link #bar} in something\n" +
                      " */";
     TextContent text = extractText("a.java", docText, 6);
-    assertEquals("Hello ,\nhere's an asterisk: *\nand some .\nis unknown.", text.toString());
-    assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\n|is unknown.", TextContentTest.unknownOffsets(text));
+    assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", TextContentTest.unknownOffsets(text));
 
     text = extractText("a.java", docText, docText.indexOf("the offset"));
     assertEquals("the offset of  in something", text.toString());
@@ -164,6 +168,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
     TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" ");
     PlatformTestUtil.startPerformanceTest("TextContent building with indent removing", 200, () -> {
       assertEquals(expected, builder.build(comment, TextContent.TextDomain.COMMENTS).toString());
+    }).assertTiming();
+  }
+
+  public void testBuildingPerformance_removingHtml() {
+    String text = "b<unknownTag>x</unknownTag>".repeat(10_000);
+    String expected = "b".repeat(10_000);
+    PsiFile file = myFixture.configureByText("a.java", "/**\n" + text + "*/");
+    PsiDocComment comment = PsiTreeUtil.findElementOfClassAtOffset(file, 10, PsiDocComment.class, false);
+    TextExtractor extractor = new JavaTextExtractor();
+    PlatformTestUtil.startPerformanceTest("TextContent building with HTML removal", 200, () -> {
+      assertEquals(expected, extractor.buildTextContent(comment, TextContent.TextDomain.ALL).toString());
     }).assertTiming();
   }
 
