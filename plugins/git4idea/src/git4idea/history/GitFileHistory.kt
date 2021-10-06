@@ -59,35 +59,31 @@ class GitFileHistory private constructor(private val project: Project,
   private fun load(consumer: Consumer<in GitFileRevision>,
                    exceptionConsumer: Consumer<in VcsException>,
                    vararg parameters: String) {
-    val logParser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
-                                                     GitLogOption.AUTHOR_NAME, GitLogOption.AUTHOR_EMAIL, GitLogOption.COMMITTER_NAME,
-                                                     GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
-                                                     GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
-                                                     GitLogOption.AUTHOR_TIME)
-    var firstCommitParent: String? = startingRevision.asString()
-    var currentPath = path
-    while (firstCommitParent != null) {
-      val handler = createLogHandler(logParser, currentPath, firstCommitParent, *parameters)
+    val logParser = createLogParser()
+    var startRevision: String? = startingRevision.asString()
+    var startPath = path
+    while (startRevision != null) {
+      val handler = createLogHandler(logParser, startPath, startRevision, *parameters)
       var skipFurtherOutput = false
-      var firstCommit: String? = null
+      var lastCommit: String? = null
       val splitter = GitLogOutputSplitter(handler, logParser) { record ->
         if (skipFurtherOutput) return@GitLogOutputSplitter
         if (record.statusInfos.firstOrNull()?.type == Change.Type.NEW && !path.isDirectory) {
           skipFurtherOutput = true
         }
-        val revision = createGitFileRevision(record, currentPath)
-        firstCommit = record.hash
+        val revision = createGitFileRevision(record, startPath)
+        lastCommit = record.hash
         consumer.consume(revision)
       }
       Git.getInstance().runCommandWithoutCollectingOutput(handler)
       if (splitter.hasErrors()) {
         return
       }
+      if (lastCommit == null) return
       try {
-        if (firstCommit == null) return
-        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit!!, currentPath) ?: return
-        currentPath = firstCommitParentAndPath.second
-        firstCommitParent = firstCommitParentAndPath.first
+        val firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(lastCommit!!, startPath) ?: return
+        startRevision = firstCommitParentAndPath.first
+        startPath = firstCommitParentAndPath.second
       }
       catch (e: VcsException) {
         LOG.warn("Tried to get first commit rename path", e)
@@ -133,17 +129,16 @@ class GitFileHistory private constructor(private val project: Project,
     val authorPair = Couple.of(record.authorName, record.authorEmail)
     val committerPair = Couple.of(record.committerName, record.committerEmail)
     val parents = listOf(*record.parentsHashes)
-    val statusInfo = record.statusInfos.firstOrNull()
-    val revisionPath = if (statusInfo != null) {
-      VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)
-    }
-    else {
-      lastPath
-    }
-    val deleted = statusInfo?.type == Change.Type.DELETED
+    val revisionPath = record.filePath() ?: lastPath
+    val deleted = record.statusInfos.firstOrNull()?.type == Change.Type.DELETED
     return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
                            record.fullMessage,
                            null, Date(record.authorTimeStamp), parents, deleted)
+  }
+
+  private fun GitLogFullRecord.filePath(): FilePath? {
+    val statusInfo = statusInfos.firstOrNull() ?: return null
+    return VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)
   }
 
   private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
@@ -162,6 +157,14 @@ class GitFileHistory private constructor(private val project: Project,
     h.endOptions()
     h.addRelativePaths(path)
     return h
+  }
+
+  private fun createLogParser(): GitLogParser<GitLogFullRecord> {
+    return GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
+                                            GitLogOption.AUTHOR_NAME, GitLogOption.AUTHOR_EMAIL, GitLogOption.COMMITTER_NAME,
+                                            GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
+                                            GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
+                                            GitLogOption.AUTHOR_TIME)
   }
 
   companion object {
