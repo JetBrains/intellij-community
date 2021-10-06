@@ -18,7 +18,6 @@ final class ProjectLocatorImpl extends ProjectLocator {
   @Nullable
   public Project guessProjectForFile(@Nullable VirtualFile file) {
     // StubUpdatingIndex calls this method very often, so, optimized implementation is required
-    @SuppressWarnings("deprecation")
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null && !project.isDisposed()) {
       return project;

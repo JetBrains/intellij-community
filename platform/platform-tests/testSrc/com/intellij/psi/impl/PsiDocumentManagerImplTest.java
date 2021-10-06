@@ -641,7 +641,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertEquals(text, editor.getDocument().getText());
 
       waitForCommits();
-      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      assertTrue("Still not committed: " + document + i, getPsiDocumentManager().isCommitted(document));
     }
   }
 
