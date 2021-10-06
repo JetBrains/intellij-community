@@ -45,7 +45,7 @@ class GroupSelectDialog(project: Project?, parent: Component?, val manager: Book
 
     title = message("dialog.group.select.title")
     setOKButtonText(message("dialog.group.select.button"))
-    return showAndGetGroup(manager.groups.isEmpty()) {
+    return showAndGetGroup(false) {
       manager.getGroup(groupName)?.apply { isDefault = it } ?: manager.addGroup(groupName, it)
     }
   }
