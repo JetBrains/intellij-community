@@ -162,7 +162,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     private const val MAX_HEIGHT = 300
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
-    fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)
+    fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_JAVADOC)
 
     @TestOnly
     fun getPreviewText(project: Project,
