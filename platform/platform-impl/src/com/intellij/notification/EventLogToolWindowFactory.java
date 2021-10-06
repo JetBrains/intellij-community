@@ -37,12 +37,12 @@ import java.awt.*;
 */
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
+  public boolean isApplicable(@NotNull Project project) {
+    return !Registry.is("ide.notification.action.center", false);
+  }
+
+  @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    if (Registry.is("ide.notification.action.center", false)) {
-      toolWindow.setShowStripeButton(false);
-      toolWindow.remove();
-      return;
-    }
     EventLog.getProjectService(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
