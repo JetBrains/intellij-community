@@ -173,30 +173,33 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
   addVmOptionsFragment(
+    object : LabeledSettingsFragmentInfo {
+      override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
+      override val settingsId: String = "external.system.vm.options.fragment"
+      override val settingsName: String = ExecutionBundle.message("run.configuration.java.vm.parameters.name")
+      override val settingsGroup: String = ExecutionBundle.message("group.java.options")
+      override val settingsHint: String = ExecutionBundle.message("run.configuration.java.vm.parameters.hint")
+      override val settingsActionHint: String = ExecutionBundle.message("specify.vm.options.for.running.the.application")
+    },
     { settings.vmOptions },
     { settings.vmOptions = it }
   )
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addVmOptionsFragment(
+  info: LabeledSettingsFragmentInfo,
   getVmOptions: C.() -> String?,
   setVmOptions: C.(String?) -> Unit
-) = add(createVmOptionsFragment(getVmOptions, setVmOptions))
+) = add(createVmOptionsFragment(info, getVmOptions, setVmOptions))
 
 fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
+  info: LabeledSettingsFragmentInfo,
   getVmOptions: C.() -> String?,
   setVmOptions: C.(String?) -> Unit
 ) = createLabeledTextSettingsEditorFragment(
   RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
   },
-  object : LabeledSettingsFragmentInfo {
-    override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
-    override val settingsId: String = "external.system.vm.options.fragment"
-    override val settingsName: String = ExecutionBundle.message("run.configuration.java.vm.parameters.name")
-    override val settingsGroup: String = ExecutionBundle.message("group.java.options")
-    override val settingsHint: String = ExecutionBundle.message("run.configuration.java.vm.parameters.hint")
-    override val settingsActionHint: String = ExecutionBundle.message("specify.vm.options.for.running.the.application")
-  },
+  info,
   getVmOptions,
   setVmOptions
 )
@@ -204,6 +207,14 @@ fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnvironmentFragment() =
   addEnvironmentFragment(
+    object : LabeledSettingsFragmentInfo {
+      override val editorLabel: String = ExecutionBundle.message("environment.variables.component.title")
+      override val settingsId: String = "external.system.environment.variables.fragment"
+      override val settingsName: String = ExecutionBundle.message("environment.variables.fragment.name")
+      override val settingsGroup: String = ExecutionBundle.message("group.operating.system")
+      override val settingsHint: String = ExecutionBundle.message("environment.variables.fragment.hint")
+      override val settingsActionHint: String = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
+    },
     { settings.env },
     { settings.env = it },
     { settings.isPassParentEnvs },
@@ -211,27 +222,22 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnviro
   )
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addEnvironmentFragment(
+  info: LabeledSettingsFragmentInfo,
   getEnvs: C.() -> Map<String, String>,
   setEnvs: C.(Map<String, String>) -> Unit,
   isPassParentEnvs: C.() -> Boolean,
   setPassParentEnvs: C.(Boolean) -> Unit
-) = add(createEnvironmentFragment(getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
+) = add(createEnvironmentFragment(info, getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
 
 fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
+  info: LabeledSettingsFragmentInfo,
   getEnvs: C.() -> Map<String, String>,
   setEnvs: C.(Map<String, String>) -> Unit,
   isPassParentEnvs: C.() -> Boolean,
   setPassParentEnvs: C.(Boolean) -> Unit
 ) = createLabeledSettingsEditorFragment<C, EnvironmentVariablesTextFieldWithBrowseButton>(
   EnvironmentVariablesTextFieldWithBrowseButton(),
-  object : LabeledSettingsFragmentInfo {
-    override val editorLabel: String = ExecutionBundle.message("environment.variables.component.title")
-    override val settingsId: String = "external.system.environment.variables.fragment"
-    override val settingsName: String = ExecutionBundle.message("environment.variables.fragment.name")
-    override val settingsGroup: String = ExecutionBundle.message("group.operating.system")
-    override val settingsHint: String = ExecutionBundle.message("environment.variables.fragment.hint")
-    override val settingsActionHint: String = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
-  },
+  info,
   { it, c ->
     c.envs = getEnvs(it)
     c.isPassParentEnvs = isPassParentEnvs(it)
