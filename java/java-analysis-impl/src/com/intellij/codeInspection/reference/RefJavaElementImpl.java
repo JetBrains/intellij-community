@@ -127,7 +127,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   @NotNull
   @Override
-  public String getAccessModifier() {
+  public synchronized String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;
     if (access_id == ACCESS_PUBLIC) return PsiModifier.PUBLIC;
@@ -139,7 +139,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     doSetAccessModifier(am);
   }
 
-  private void doSetAccessModifier(@NotNull String am) {
+  private synchronized void doSetAccessModifier(@NotNull String am) {
     final int access_id;
 
     if (PsiModifier.PRIVATE.equals(am)) {
@@ -155,7 +155,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       access_id = ACCESS_PROTECTED;
     }
 
-    myFlags = myFlags & ~0x3 | access_id;
+    myFlags = myFlags & ~ACCESS_MODIFIER_MASK | access_id;
   }
 
   public boolean isSuspiciousRecursive() {
