@@ -41,8 +41,9 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
   return stepSequence(this, s1, s2, s3)
 }
 
-fun stepSequence(vararg steps: NewProjectWizardStep): NewProjectWizardStep {
-  return object : AbstractNewProjectWizardStep(steps[0]) {
+fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {
+  val steps = listOf(first) + rest
+  return object : AbstractNewProjectWizardStep(first) {
     override fun setupUI(builder: Panel) {
       for (step in steps) {
         step.setupUI(builder)
