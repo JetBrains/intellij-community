@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.fir.inspections.declarations
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.fir.api.*
 import org.jetbrains.kotlin.idea.api.applicator.with
+import org.jetbrains.kotlin.idea.fir.api.AbstractHLInspection
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.presentation
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplic
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class HLRedundantUnitReturnTypeInspection :
-    AbstractHLInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.Type>(
+    AbstractHLInspection<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo>(
         KtNamedFunction::class
     ), CleanupLocalInspectionTool {
 
@@ -29,9 +29,10 @@ internal class HLRedundantUnitReturnTypeInspection :
         actionName(KotlinBundle.lazyMessage("redundant.unit.return.type"))
     }
 
-    override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.Type> { function ->
+    override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.TypeInfo> { function ->
         when {
-            function.getFunctionLikeSymbol().annotatedType.type.isUnit -> CallableReturnTypeUpdaterApplicator.Type.UNIT
+            function.getFunctionLikeSymbol().annotatedType.type.isUnit ->
+                CallableReturnTypeUpdaterApplicator.TypeInfo(CallableReturnTypeUpdaterApplicator.TypeInfo.UNIT)
             else -> null
         }
     }
