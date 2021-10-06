@@ -43,14 +43,18 @@ dependencies {
 }
 
 static String skipTopLevelDirectory(String path) {
-  def index = path.indexOf('/')
+  if (path.startsWith("./")) {
+    return skipTopLevelDirectory(path.substring(2))
+  }
+
+  def index = path.indexOf('/', 1)
   return (index >= 0) ? path.substring(index + 1) : path
 }
 
 static String skipContentsDirectory(String path) {
   def contentsPrefix = "/Contents/"
   def index = path.indexOf(contentsPrefix)
-  return (index >= 0) ? path.substring(index + contentsPrefix.length()) : path
+  return (index >= 0) ? path.substring(index + contentsPrefix.length()) : skipTopLevelDirectory(path)
 }
 
 task downloadAndroidStudio(dependsOn: configurations.androidStudio) {
