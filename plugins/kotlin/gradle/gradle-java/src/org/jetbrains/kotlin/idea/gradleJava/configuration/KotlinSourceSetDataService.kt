@@ -128,7 +128,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             }
         }
 
-        private fun IdePlatformKind<*>.toSimplePlatforms(
+        private fun IdePlatformKind.toSimplePlatforms(
             moduleData: ModuleData,
             isHmppModule: Boolean,
             projectPlatforms: List<KotlinPlatform>
