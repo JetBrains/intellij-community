@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBHtmlEditorKit
@@ -40,6 +41,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
 
   init {
     add(multiPanel)
+    border = PopupBorder.Factory.create(true, true)
     setLoadingText(CodeInsightBundle.message("intention.preview.loading.preview"))
   }
 

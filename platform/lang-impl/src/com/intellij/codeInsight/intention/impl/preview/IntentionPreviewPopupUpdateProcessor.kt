@@ -24,6 +24,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
+import com.intellij.ui.popup.PopupPositionManager.Position.LEFT
+import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
@@ -46,15 +48,17 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
     if (!::popup.isInitialized || popup.isDisposed) {
       component = IntentionPreviewComponent(project)
+
       component.multiPanel.select(LOADING_PREVIEW, true)
 
       popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
         .setCancelCallback { cancel() }
         .setCancelKeyEnabled(false)
+        .setShowBorder(false)
         .addUserData(IntentionPreviewPopupKey())
         .createPopup()
 
-      PopupPositionManager.positionPopupInBestPosition(popup, originalEditor, null)
+      positionPreview()
 
       updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.hide.text", getShortcutText()))
     }
@@ -144,7 +148,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     component.editors.forEach {
       it.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
         override fun recalculationEnds() {
-          val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 5
+          val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
           it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
           popup.pack(true, true)
         }
@@ -156,6 +160,10 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     }
 
     popup.pack(true, true)
+  }
+
+  private fun positionPreview() {
+    PopupPositionManager.positionPopupInBestPosition(popup, originalEditor, null, RIGHT, LEFT)
   }
 
   companion object {
