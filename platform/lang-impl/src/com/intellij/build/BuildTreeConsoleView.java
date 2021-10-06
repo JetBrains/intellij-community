@@ -230,7 +230,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Override
   public void clear() {
-    myTreeModel.getInvoker().runOrInvokeLater(() -> {
+    myTreeModel.getInvoker().invoke(() -> {
       getRootElement().removeChildren();
       nodesMap.clear();
       myConsoleViewHandler.clear();
@@ -270,7 +270,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private void updateFilter() {
     ExecutionNode rootElement = getRootElement();
-    myTreeModel.getInvoker().runOrInvokeLater(() -> {
+    myTreeModel.getInvoker().invoke(() -> {
       rootElement.setFilter(getFilter());
       scheduleUpdate(rootElement, true);
     });
@@ -332,7 +332,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             currentNode.setAlwaysLeaf(event instanceof FileMessageEvent);
             MessageEvent messageEvent = (MessageEvent)event;
             currentNode.setStartTime(messageEvent.getEventTime());
-            addIfNotNull(structureChanged, currentNode.setEndTime(messageEvent.getEventTime()));
+            currentNode.setEndTime(messageEvent.getEventTime(), false);
             Navigatable messageEventNavigatable = messageEvent.getNavigatable(myProject);
             currentNode.setNavigatable(messageEventNavigatable);
             MessageEventResult messageEventResult = messageEvent.getResult();
@@ -416,7 +416,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (result instanceof DerivedResult) {
         result = calculateDerivedResult((DerivedResult)result, currentNode);
       }
-      addIfNotNull(structureChanged, currentNode.setResult(result));
+      currentNode.setResult(result, false);
       addIfNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
       SkippedResult skippedResult = new SkippedResultImpl();
       finishChildren(structureChanged, currentNode, skippedResult);
