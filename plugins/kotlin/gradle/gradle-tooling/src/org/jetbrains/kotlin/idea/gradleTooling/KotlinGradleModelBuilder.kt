@@ -9,6 +9,7 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
@@ -135,7 +136,12 @@ class AndroidAwareGradleModelProvider<TModel>(
         projectModel: Model,
         modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
     ) {
-        val model = if (androidPluginIsRequestingVariantSpecificModels) {
+        val supportsParametrizedModels: Boolean = controller.findModel(BuildEnvironment::class.java)?.gradle?.gradleVersion?.let {
+            // Parametrized build models were introduced in 4.4. Make sure that gradle import does not fail on pre-4.4
+            GradleVersion.version(it) >= GradleVersion.version("4.4")
+        } ?: false
+
+        val model = if (androidPluginIsRequestingVariantSpecificModels && supportsParametrizedModels) {
             controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }
