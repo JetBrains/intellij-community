@@ -123,7 +123,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    private fun repositories(useKts: Boolean): String {
+    protected fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()
 
         fun MutableList<String>.addUrl(url: String) {
