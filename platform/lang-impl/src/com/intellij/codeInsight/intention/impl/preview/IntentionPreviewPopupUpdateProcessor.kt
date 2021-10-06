@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.preview
 
-import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.HTML_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
@@ -19,7 +18,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
@@ -41,7 +39,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
-  private lateinit var updateAdvertiserText: (@NlsContexts.PopupAdvertisement String) -> Unit
 
   override fun updatePopup(intentionAction: Any?) {
     if (!show) return
@@ -59,8 +56,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         .createPopup()
 
       positionPreview()
-
-      updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.hide.text", getShortcutText()))
     }
 
     val value = component.multiPanel.getValue(index, false)
@@ -102,9 +97,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     }
   }
 
-  fun setup(updateAdvertiser: (String) -> Unit, parentIndex: Int) {
+  fun setup(parentIndex: Int) {
     index = parentIndex
-    updateAdvertiserText = updateAdvertiser
   }
 
   fun isShown() = show
@@ -124,7 +118,6 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     editorsToRelease.clear()
     component.removeAll()
     show = false
-    updateAdvertiserText.invoke(CodeInsightBundle.message("intention.preview.adv.show.text", getShortcutText()))
     return true
   }
 

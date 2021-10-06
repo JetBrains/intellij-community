@@ -599,13 +599,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup((@NlsContexts.PopupAdvertisement var text) -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (!that.myPopup.isDisposed()) {
-        that.myPopup.setAdText(text, SwingConstants.LEFT);
-      }
-      return Unit.INSTANCE;
-    }, index);
+    that.myPreviewPopupUpdateProcessor.setup(index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
   }
 
@@ -619,16 +613,22 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW = shouldShow;
         if (shouldShow) {
           showPreview(that);
+          advertisePopup(that, false);
         }
         else {
           processor.hide();
+          advertisePopup(that, true);
         }
       }
     };
     ((WizardPopup)that.myPopup).registerAction("showIntentionPreview",
             KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
-    that.myPopup.setAdText(CodeInsightBundle.message("intention.preview.adv.show.text",
-            IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    advertisePopup(that, true);
+  }
+
+  private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
+    that.myPopup.setAdText(CodeInsightBundle.message(show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+                                                     IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
   }
 
   private static void showPreview(@NotNull IntentionHintComponent.IntentionPopup that) {
