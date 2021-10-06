@@ -111,7 +111,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   private void startPullingProgress(MavenServerPullProgressIndicator serverPullProgressIndicator,
-                                    MavenServerConsole console,
+                                    MavenConsole console,
                                     MavenProgressIndicator indicator) {
     ScheduledFuture<?> future = myProgressPullingFuture;
     if(future!=null && !future.isCancelled()) {
@@ -336,7 +336,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                              boolean alwaysUpdateSnapshot,
                                              @Nullable Properties userProperties) {
     stopPulling();
-    myCustomization = new Customization(wrapAndExport(console),
+    myCustomization = new Customization(console,
                                         indicator,
                                         workspaceMap,
                                         failOnUnresolvedDependency,
@@ -352,7 +352,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   private static final class Customization {
-    private final MavenServerConsole console;
+    private final MavenConsole console;
     private final MavenProgressIndicator indicator;
 
     private final MavenWorkspaceMap workspaceMap;
@@ -360,7 +360,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     private final boolean alwaysUpdateSnapshot;
     private final Properties userProperties;
 
-    private Customization(MavenServerConsole console,
+    private Customization(MavenConsole console,
                           MavenProgressIndicator indicator,
                           MavenWorkspaceMap workspaceMap,
                           boolean failOnUnresolvedDependency,
@@ -375,10 +375,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
   }
 
-
-  protected MavenServerConsole wrapAndExport(final MavenConsole console) {
-    return doWrapAndExport(new RemoteMavenServerConsole(console));
-  }
 
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
