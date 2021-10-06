@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -456,6 +457,13 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     final PsiMethod[] constructors = typeDefinition.getCodeConstructors();
     checkDefaultConstructors(holder, typeDefinition, superClass, constructors);
     checkRecursiveConstructors(holder, constructors);
+  }
+
+  @Override
+  public void visitCallExpression(@NotNull GrCallExpression callExpression) {
+    if (callExpression.resolveMethod() == null && callExpression.getFirstChild() instanceof GrLiteral) {
+      myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, GroovyBundle.message("inspection.message.cannot.resolve.method.call")).range(callExpression).create();
+    }
   }
 
   private static void checkDefaultConstructors(@NotNull AnnotationHolder holder,
