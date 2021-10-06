@@ -149,7 +149,8 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
         insertErrors(switchElement, definedRanges.size > 1, emptyList())
         val expectedRange = calculateActualRange(conditionalType)
         if (definedRanges.size == 1) {
-          insertErrors(switchElement, definedRanges[0] != expectedRange, emptyList())
+          val definedRange = definedRanges.single()
+          insertErrors(switchElement, definedRange.first > expectedRange.first || definedRange.second < expectedRange.second, emptyList())
         }
         Unit
       }
@@ -167,6 +168,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     }
 
     private fun glueRange(patterns: List<GrExpression>): List<Pair<Long, Long>> {
+      // both-inclusive
       data class Range(val left: Long, val right: Long)
 
       val ranges = mutableListOf<Range>()
@@ -174,7 +176,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       for (pattern in patterns) {
         if (pattern is GrLiteral) {
           val evaluated = evaluator.computeConstantExpression(pattern) as? Number
-          evaluated?.toLong()?.let { ranges.add(Range(it, it + 1)) }
+          evaluated?.toLong()?.let { ranges.add(Range(it, it)) }
         }
         else if (pattern is GrRangeExpression) {
           val left = evaluator.computeConstantExpression(pattern.from) as? Number
@@ -190,7 +192,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       ranges.sortBy { it.left }
       val collapsedRanges = mutableListOf<Pair<Long, Long>>()
       for (range in ranges) {
-        if (collapsedRanges.isEmpty() || collapsedRanges.last().second < range.left) {
+        if (collapsedRanges.isEmpty() || collapsedRanges.last().second < range.left - 1) {
           collapsedRanges.add(range.left to range.right)
         }
         else {
