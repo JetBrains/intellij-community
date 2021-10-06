@@ -87,5 +87,8 @@ task downloadAndroidStudio(dependsOn: configurations.androidStudio) {
         }
       })
     }
+
+    System.out.println("Android Studio unpacked: ${targetDir}")
+    System.out.println("Android Studio content: ${Arrays.asList(targetDir.list())}")
   }
 }
