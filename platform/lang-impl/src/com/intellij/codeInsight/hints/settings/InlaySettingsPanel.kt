@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
-import com.intellij.codeInsight.hints.settings.language.createEditor
+import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
@@ -154,9 +154,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addPreview(previewText: String?, language: Language) {
     if (previewText != null) {
-      val editor = createEditor(language, project) {}
-      editor.text = previewText
-      rightPanel.add(editor)
+      val usagePanel = ActionUsagePanel()
+      usagePanel.editor.settings.isLineNumbersShown = false
+      usagePanel.reset(previewText, language.associatedFileType)
+      rightPanel.add(usagePanel, "growx")
     }
   }
 
