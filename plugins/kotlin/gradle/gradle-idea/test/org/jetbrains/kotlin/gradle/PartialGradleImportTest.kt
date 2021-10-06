@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.kotlin.idea.gradleJava.scripting.LoadConfigurationAction
@@ -11,12 +8,8 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptM
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.New
 import org.jetbrains.kotlin.idea.gradleJava.scripting.runPartialGradleImport
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -76,9 +69,12 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
         /*
         Link & only partially import Gradle project
          */
-        linkGradleProject()
-        runPartialGradleImport(myProject, assertSingleGradleBuildRoot().assertInstanceOf<New>())
-
+        linkProject()
+        runPartialGradleImport(
+            myProject, assertSingleGradleBuildRoot().assertInstanceOf<Imported>().also { imported ->
+                assertTrue(imported.data.models.isEmpty(), "Expected no models imported yet")
+            }
+        )
 
         /*
         Expect successfully 'imported' the project and proper error message can be found in
@@ -122,20 +118,5 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
                 }
             """.trimIndent()
         )
-    }
-
-    private fun linkGradleProject() {
-        ExternalSystemApiUtil.subscribe(
-            myProject, GradleConstants.SYSTEM_ID, object : ExternalSystemSettingsListenerAdapter<ExternalProjectSettings>() {
-                override fun onProjectsLinked(settings: Collection<ExternalProjectSettings>) {
-                    super.onProjectsLinked(settings)
-                    settings.firstOrNull().safeAs<GradleProjectSettings>()?.gradleJvm = GRADLE_JDK_NAME
-                }
-            })
-
-        val systemSettings = ExternalSystemApiUtil.getSettings(myProject, externalSystemId)
-        currentExternalProjectSettings.externalProjectPath = projectPath
-        val projects = systemSettings.linkedProjectsSettings.toSet() + currentExternalProjectSettings
-        systemSettings.linkedProjectsSettings = projects
     }
 }
