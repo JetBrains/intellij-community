@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,10 +34,8 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,22 +61,15 @@ public final class ProjectProblemUtils {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
-    InlayPresentation errorTextPresentation = new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor,
-                                                                             new WithAttributesPresentation.AttributesFlags());
+    InlayPresentation errorTextPresentation =
+      new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor,
+                                     new WithAttributesPresentation.AttributesFlags());
     InlayPresentation problemsPresentation =
       factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
+    InlayPresentation withMenu =
+      new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
 
-    JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
-    item.addActionListener(e -> ProjectProblemHintProvider.openSettings(project));
-    popupMenu.add(item);
-
-    InlayPresentation withSettings = factory.onClick(problemsPresentation, MouseButton.Right, (e, __) -> {
-      JBPopupMenu.showByEvent(e, popupMenu);
-      return Unit.INSTANCE;
-    });
-
-    return factory.seq(problemsOffset, withSettings);
+    return factory.seq(problemsOffset, withMenu);
   }
 
   private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
