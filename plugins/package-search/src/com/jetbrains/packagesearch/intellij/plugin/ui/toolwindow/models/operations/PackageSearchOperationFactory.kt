@@ -9,8 +9,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.highestVersionByName
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
@@ -26,7 +26,7 @@ internal class PackageSearchOperationFactory {
     ): List<PackageSearchOperation<*>> {
         if (packageModel !is PackageModel.SearchResult) return emptyList()
 
-        val versionToInstall = PackageVersionUtils.highestVersionByName(packageModel.getAvailableVersions(onlyStable))
+        val versionToInstall = packageModel.getAvailableVersions(onlyStable).first().originalVersion
         return createAddPackageOperations(
             packageModel = packageModel,
             version = versionToInstall,
@@ -47,16 +47,20 @@ internal class PackageSearchOperationFactory {
         return packageModel.usageInfo.asSequence()
             .filter { it.projectModule == moduleModel.projectModule }
             .flatMap { usageInfo ->
-                val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(
-                    currentVersion = usageInfo.version,
-                    availableVersions = packageModel.getAvailableVersions(onlyStable)
-                ) ?: return@flatMap emptyList()
+                val upgradeVersion = if (usageInfo.version is PackageVersion.Named) {
+                    PackageVersionUtils.upgradeCandidateVersionOrNull(
+                        currentVersion = NormalizedPackageVersion.parseFrom(usageInfo.version),
+                        availableVersions = packageModel.getAvailableVersions(onlyStable)
+                    ) ?: return@flatMap emptyList()
+                } else {
+                    return@flatMap emptyList()
+                }
 
                 createChangePackageVersionOperations(
                     packageModel = packageModel,
-                    newVersion = upgradeVersion,
+                    newVersion = upgradeVersion.originalVersion,
                     targetModules = TargetModules.from(moduleModel),
-                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, upgradeVersion)
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, upgradeVersion.originalVersion)
                 )
             }
             .toList()
