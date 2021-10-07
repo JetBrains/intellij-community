@@ -355,22 +355,25 @@ final class FindInProjectTask {
   }
 
   private boolean canRelyOnSearchers() {
+    if (!Registry.is("find.use.indexing.searcher.extensions")) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
-    for(VirtualFile file:myFilesToScanInitially) {
+    for (VirtualFile file : myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);
       }
     }
-
+    if (!Registry.is("find.use.indexing.searcher.extensions")) return resultFiles;
     for (FindInProjectSearchEngine.FindInProjectSearcher searcher : mySearchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {
-        if (myFileMask.value(file)) resultFiles.add(file);
+        if (myFileMask.value(file)) {
+          resultFiles.add(file);
+        }
       }
     }
 
