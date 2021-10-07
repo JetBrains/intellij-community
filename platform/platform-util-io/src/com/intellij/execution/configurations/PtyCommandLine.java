@@ -95,7 +95,7 @@ public class PtyCommandLine extends GeneralCommandLine {
    * Allow to preserve the subprocess output after its termination on certain *nix OSes (notably, macOS).
    * Side effect is that the subprocess won't terminate until all the output has been read from it.
    *
-   * @see PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
+   * @see com.pty4j.PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
    */
   @NotNull
   public PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
