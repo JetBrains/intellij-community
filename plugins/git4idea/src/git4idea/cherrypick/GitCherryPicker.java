@@ -66,11 +66,13 @@ public class GitCherryPicker extends VcsCherryPicker {
                                      cherryPickedCommitsCount.get(),
                                      commits.size()
                                    ));
-                                   indicator.setFraction((double) cherryPickedCommitsCount.get() / commits.size());
                                  }
                                  GitCommandResult result = Git.getInstance()
                                    .cherryPick(repository, commit.getId().asString(), autoCommit, shouldAddSuffix(repository, commit.getId()),
                                                listeners.toArray(new GitLineHandlerListener[0]));
+                                 if (indicator != null) {
+                                   indicator.setFraction((double) cherryPickedCommitsCount.get() / commits.size());
+                                 }
                                  cherryPickedCommitsCount.inc();
                                  return result;
                                },
