@@ -113,7 +113,7 @@ class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
       .row()
 
     builder
-      .subGridBuilder(width = 10)
+      .subGridBuilder(width = 7)
       .title("sub-panels")
       .label(VerticalAlign.CENTER, 14)
       .subGridBuilder(verticalAlign = VerticalAlign.CENTER)
