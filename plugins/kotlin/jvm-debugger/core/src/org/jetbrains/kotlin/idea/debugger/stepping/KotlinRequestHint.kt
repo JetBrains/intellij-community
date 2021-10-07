@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.stepping
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.isOnSuspensionPoint
 import org.jetbrains.kotlin.idea.debugger.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.safeLocation
@@ -21,7 +22,12 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
 open class KotlinRequestHint(
-    stepThread: ThreadReferenceProxyImpl, suspendContext: SuspendContextImpl, stepSize: Int, depth: Int, filter: MethodFilter?, parentHint: RequestHint?
+    stepThread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl,
+    stepSize: Int,
+    depth: Int,
+    filter: MethodFilter?,
+    parentHint: RequestHint?
 ) : RequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
     private val myInlineFilter = createKotlinInlineFilter(suspendContext)
     override fun isTheSameFrame(context: SuspendContextImpl) =
@@ -150,5 +156,42 @@ class KotlinStepOverRequestHint(
 
         context.debugProcess.cancelRunToCursorBreakpoint()
         return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, location, method)
+    }
+}
+
+class KotlinStepIntoRequestHint(
+    stepThread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl,
+    filter: MethodFilter?,
+    parentHint: RequestHint?
+) : KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, filter, parentHint) {
+    var lastWasKotlinFakeLineNumber = false
+
+    private companion object {
+        private val LOG = Logger.getInstance(KotlinStepIntoRequestHint::class.java)
+    }
+
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        try {
+            val frameProxy = context.frameProxy ?: return STOP
+            val location = frameProxy.safeLocation()
+            // Continue stepping into if we are at a compiler generated fake line number.
+            if (location != null && isKotlinFakeLineNumber(location)) {
+                lastWasKotlinFakeLineNumber = true
+                return StepRequest.STEP_INTO
+            }
+            // If the last line was a fake line number, the next non-fake line number
+            // is always of interest (otherwise, we wouldn't have had to insert the
+            // fake line number in the first place).
+            if (lastWasKotlinFakeLineNumber) {
+                lastWasKotlinFakeLineNumber = false
+                return STOP
+            }
+            return super.getNextStepDepth(context)
+        } catch (ignored: VMDisconnectedException) {
+        } catch (e: EvaluateException) {
+            LOG.error(e)
+        }
+        return STOP
     }
 }
