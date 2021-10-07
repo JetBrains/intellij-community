@@ -14,7 +14,6 @@ import java.net.HttpURLConnection
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-@Suppress("TooGenericExceptionCaught") // Putting any potential issues in an Either.Left
 internal suspend fun requestString(
     url: String,
     acceptContentType: String,
@@ -54,7 +53,6 @@ internal suspend fun requestString(
             when {
                 responseText.isEmpty() -> cont.resumeWithException(EmptyBodyException())
                 else -> cont.resume(responseText)
-
             }
         }
     } catch (t: Throwable) {
