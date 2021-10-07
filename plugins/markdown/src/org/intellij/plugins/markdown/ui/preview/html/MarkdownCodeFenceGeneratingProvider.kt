@@ -10,7 +10,7 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownCodeViewExtension.Companion.processCodeLine
+import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
 
 internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProviders: Array<MarkdownCodeFencePluginGeneratingProvider>,
                                                    private val project: Project? = null,
@@ -21,12 +21,20 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     if (language == null) {
       return insertCodeOffsets(codeFenceContent, node)
     }
-    return pluginCacheProviders
+    val html = pluginCacheProviders
       .filter { it.isApplicable(language) }.stream()
       .findFirst()
       .map { it.generateHtml(language, codeFenceRawContent, node) }
       .orElse(insertCodeOffsets(codeFenceContent, node))
+
+    return processCodeBlock(codeFenceRawContent, language) + html
   }
+
+  private fun processCodeBlock(codeFenceRawContent: String, language: String): String =
+    CommandRunnerExtension.getRunnerByFile(file)?.processCodeBlock(codeFenceRawContent, language) ?: ""
+
+  private fun processCodeLine(rawCodeLine: String): String =
+    CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true) ?: ""
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
@@ -89,7 +97,7 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     var left = baseOffset
     for (line in content.lines()) {
       val right = left + line.length
-      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>${processCodeLine(escape(line), project, file)}</span>")
+      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>${processCodeLine(line) + escape(line)}</span>")
       left = right + 1
     }
     return lines.joinToString(

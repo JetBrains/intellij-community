@@ -9,36 +9,32 @@ import org.intellij.markdown.ast.LeafASTNode
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.TrimmingInlineHolderProvider
-import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownCodeViewExtension
+import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider.Companion.escape
 
-internal class CodeRunGeneratingProvider(val generatingProvider: GeneratingProvider,
-                                         val project: Project,
-                                         val file: VirtualFile) : TrimmingInlineHolderProvider() {
+internal class CodeSpanRunnerGeneratingProvider(val generatingProvider: GeneratingProvider,
+                                                val project: Project,
+                                                val file: VirtualFile) : TrimmingInlineHolderProvider() {
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
-    val codeViewExtension = MarkdownCodeViewExtension.allSorted.firstOrNull {
-      if (it is MarkdownConfigurableExtension) {
-        it.isEnabled
-      }
-      else true
-    }
+    val codeViewExtension = CommandRunnerExtension.getRunnerByFile(file)
     if (codeViewExtension == null ) {
       generatingProvider.processNode(visitor, text, node)
       return
     }
 
+    var codeLine = ""
     for (child in childrenToRender(node)) {
       if (child is LeafASTNode) { when (child.type) {
-          MarkdownTokenTypes.TEXT -> {
-            val codeLine = text.substring(child.startOffset, child.endOffset)
-            visitor.consumeTagOpen(node, "code")
-            visitor.consumeHtml(codeViewExtension.processCodeLine(escape(codeLine), project, file, false))
-            visitor.consumeTagClose("code")
+          MarkdownTokenTypes.BACKTICK -> continue
+          else -> {
+            codeLine += text.substring(child.startOffset, child.endOffset)
           }
         }
       }
     }
+    visitor.consumeTagOpen(node, "code")
+    visitor.consumeHtml(codeViewExtension.processCodeLine(codeLine, false) + escape(codeLine))
+    visitor.consumeTagClose("code")
   }
 }

@@ -4,9 +4,16 @@ if (window.__IntelliJTools === undefined) {
 }
 
 (function() {
-  const runCommand = (cmd) => {
+  const runLine = (cmd) => {
     try {
-      window.messagePipe.post("runCommand", cmd);
+      window.__IntelliJTools.messagePipe.post("runLine", cmd);
+    }
+    finally {}
+  };
+
+  const runBlock = (cmd) => {
+    try {
+      window.__IntelliJTools.messagePipe.post("runBlock", cmd);
     }
     finally {}
   };
@@ -23,7 +30,12 @@ if (window.__IntelliJTools === undefined) {
       e.stopPropagation();
       e.preventDefault();
       const cmd = target.getAttribute('data-command')
-      runCommand(cmd);
+      let cmdType = target.getAttribute('data-commandtype')
+      if (cmdType === 'block') {
+        runBlock(cmd);
+      } else {
+        runLine(cmd);
+      }
       return false;
     }
   });

@@ -4,6 +4,7 @@
 .run-icon > img {
   max-width: 1em;
   vertical-align: text-top;
+  margin-right: 0.3em;
 }
 
 .code-block {

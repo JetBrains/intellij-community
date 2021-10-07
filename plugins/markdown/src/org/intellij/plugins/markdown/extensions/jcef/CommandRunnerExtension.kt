@@ -14,8 +14,12 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectPro
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
@@ -24,7 +28,13 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.awt.image.BufferedImage
@@ -32,26 +42,34 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import javax.swing.Icon
 
-internal class CommandRunnerExtension : MarkdownCodeViewExtension, MarkdownConfigurableExtension, ResourceProvider {
+private const val RUN_LINE_EVENT = "runLine"
+private const val RUN_BLOCK_EVENT = "runBlock"
+
+internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
-
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
-
   val icons: List<String> = listOf("run.png", "runrun.png")
 
-  override val codeEvents: Map<String, (String, Project, VirtualFile) -> Unit> = mapOf("runCommand" to this::runCommand)
+  private var splitEditor: MarkdownEditorWithPreview? = null
+
+  init {
+    panel.browserPipe?.subscribe(RUN_LINE_EVENT, this::runLine)
+    panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, this::runBlock)
+    invokeLater {
+      splitEditor = MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)
+    }
+
+    val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(this)
+    Disposer.register(this, resourceProviderRegistration)
+
+    Disposer.register(this) {
+      panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
+      panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
+    }
+  }
 
   override val resourceProvider: ResourceProvider = this
-
-  override val displayName: String
-    get() = MarkdownBundle.message("markdown.extensions.commandrunner.display.name")
-
-  override val description: String
-    get() = MarkdownBundle.message("markdown.extensions.commandrunner.description")
-
-  override val id: String
-    get() = "CommandRunnerExtension"
 
   override fun canProvide(resourceName: String): Boolean = resourceName in scripts || resourceName in icons || resourceName in styles
 
@@ -84,36 +102,101 @@ internal class CommandRunnerExtension : MarkdownCodeViewExtension, MarkdownConfi
   }
 
 
-  override fun processCodeLine(escapedCodeLine: String, project: Project?, file: VirtualFile?, inBlock: Boolean): String {
-    if (project != null && file != null && previewProcessingEnabled() && matches(project, file.parent.canonicalPath, true, escapedCodeLine.trim())) {
+  fun processCodeLine(rawCodeLine: String, inBlock: Boolean): String {
+    val project = panel.project
+    val file = panel.virtualFile
+    if (project != null && file != null && previewProcessingEnabled() && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
       val cssClass = "run-icon" + if (inBlock) " code-block" else ""
-      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$escapedCodeLine'>" +
-             "<img src='${PreviewStaticServer.getStaticUrl("run.png")}'>" +
-             "</a>" +
-             escapedCodeLine
+      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$rawCodeLine'>" +
+             "<img src='${PreviewStaticServer.getStaticUrl(this,"run.png")}'>" +
+             "</a>"
     }
-    else return escapedCodeLine
+    else return ""
   }
 
-  // todo: need access to MarkdownEditorWithPreview
+  fun processCodeBlock(codeFenceRawContent: String, language: String): String {
+    if (!previewProcessingEnabled()) return ""
+    val lang = LanguageGuesser.guessLanguageForInjection(language)
+    val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
+      it.isApplicable(lang)
+    }
+    if (runner == null) return ""
+
+    val cssClass = "run-icon code-block" // todo: check possible xss
+    val html = "<a class='${cssClass}' href='#' role='button' " +
+               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:echo BLOCK' " +
+               "data-commandtype='block'" +
+               ">" +
+               "<img src='${PreviewStaticServer.getStaticUrl(this,"runrun.png")}'>" +
+               "</a>"
+
+    return html
+  } // free resources related to md file
+
+
+
+  // fixme: dynamic layout change
   private fun previewProcessingEnabled(): Boolean {
-    return isEnabled /*&& MarkdownExtension.currentProjectSettings.splitLayout == TextEditorWithPreview.Layout.SHOW_PREVIEW*/
+    return splitEditor?.layout  == TextEditorWithPreview.Layout.SHOW_PREVIEW
   }
 
-  private fun runCommand(command: String, project: Project, file: VirtualFile) {
+  private fun runLine(command: String) {
     val executorId = command.substringBefore(":")
     val shellCommand = command.substringAfter(":")
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
-    execute(project, file.parent.canonicalPath, true, shellCommand, executor)
+    val project = panel.project
+    val virtualFile = panel.virtualFile
+    if (project !=null && virtualFile != null) {
+      execute(project, virtualFile.parent.canonicalPath, true, shellCommand, executor)
+    }
   }
+
+  private fun runBlock(command: String) {
+    val executorId = command.substringBefore(":")
+    val shellCommand = command.substringAfter(":")
+    val runner = MarkdownRunner.EP_NAME.extensionList.first()
+    val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
+    val project = panel.project
+    val virtualFile = panel.virtualFile
+    if (project !=null && virtualFile != null) {
+      ApplicationManager.getApplication().invokeLater {
+        runner.run(shellCommand, project, virtualFile.parent.canonicalPath, executor)
+      }
+    }
+  }
+
+  override fun dispose() {
+    MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.remove(panel.virtualFile)
+  }
+
+
+  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownConfigurableExtension {
+
+    val extensions = mutableMapOf<VirtualFile, CommandRunnerExtension>()
+
+    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+      if (!isEnabled || panel.virtualFile == null || panel.project == null) return null
+
+      extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel) }
+      return extensions[panel.virtualFile]
+    }
+
+    override val displayName: String
+      get() = MarkdownBundle.message("markdown.extensions.commandrunner.display.name")
+
+    override val description: String
+      get() = MarkdownBundle.message("markdown.extensions.commandrunner.description")
+
+    override val id: String
+      get() = "CommandRunnerExtension"
+  }
+
 
 
   companion object {
 
-    fun commandRunnerEnabled() : Boolean {
-      return MarkdownCodeViewExtension.allSorted.any {
-        it is CommandRunnerExtension && it.isEnabled
-      }
+    fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
+      return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
     }
 
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {

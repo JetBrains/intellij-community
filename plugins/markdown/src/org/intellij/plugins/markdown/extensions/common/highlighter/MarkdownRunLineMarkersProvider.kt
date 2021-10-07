@@ -6,12 +6,13 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension.Companion.matches
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownCodeViewExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownRunner
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
@@ -22,11 +23,9 @@ import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
-  private var commandRunnerExtension: CommandRunnerExtension? = null
+  private var commandRunnerExtension: CommandRunnerExtension.Provider? = null
   init {
-    commandRunnerExtension = MarkdownCodeViewExtension.all.firstOrNull {
-      it is CommandRunnerExtension
-    } as CommandRunnerExtension?
+    commandRunnerExtension = MarkdownExtensionsUtil.findBrowserExtensionProvider<CommandRunnerExtension.Provider>()
   }
 
   private fun commandRunnerExtensionEnabled(): Boolean {
@@ -44,21 +43,30 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       }
     }
     if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
-          || element.hasType(MarkdownTokenTypes.TEXT) && element.parent.hasType(MarkdownElementTypes.CODE_SPAN))) {
+          || element.hasType(MarkdownElementTypes.CODE_SPAN))) {
       return null
     }
 
     val dir = element.containingFile.virtualFile.parent.path
-    if (!matches(element.project, dir, true, element.text)) {
+    val text = getText(element)
+    if (!matches(element.project, dir, true, text)) {
       return null
     }
 
 
-    return Info(object: AnAction ({MarkdownBundle.message("markdown.runner.launch.command", element.text)},  AllIcons.RunConfigurations.TestState.Run) {
+    val a1 = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
+      AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
-        execute(e.project!!, dir, true, element.text, DefaultRunExecutor.getRunExecutorInstance())
+        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance())
       }
-    })
+    }
+    val a2 = object : AnAction({ "Debug $text" },
+      AllIcons.RunConfigurations.TestState.Run) {
+      override fun actionPerformed(e: AnActionEvent) {
+        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance())
+      }
+    }
+    return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(a1)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
 
   }
 
@@ -72,13 +80,22 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
         ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
         .toString()
       val dir = element.containingFile.virtualFile.parent.path
-      return Info(object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
+      return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, object : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
           runner.run(text, e.project!!, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
       })
     }
     return null
+  }
+
+  private fun getText(element: PsiElement): @NlsSafe String {
+    if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return element.text.trim()
+    if (element.hasType(MarkdownElementTypes.CODE_SPAN)) {
+      val parentText = element.text
+      return parentText.substring(1, parentText.length - 1).trim()
+    }
+    return ""
   }
 }
 // todo: merge same line markers

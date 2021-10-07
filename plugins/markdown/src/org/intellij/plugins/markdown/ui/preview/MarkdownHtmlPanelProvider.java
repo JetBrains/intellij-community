@@ -41,12 +41,6 @@ public abstract class MarkdownHtmlPanelProvider {
   }
 
   @NotNull
-  public MarkdownHtmlPanel createHtmlPanel(Project project, VirtualFile file) {
-    return createHtmlPanel();
-  }
-
-
-  @NotNull
   public abstract AvailabilityInfo isAvailable();
 
   @NotNull
