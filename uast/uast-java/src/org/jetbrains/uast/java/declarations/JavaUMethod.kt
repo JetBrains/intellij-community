@@ -2,12 +2,11 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiAnnotationMethod
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiMethodImpl
+import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.convertOrReport
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 open class JavaUMethod(
@@ -31,9 +30,11 @@ open class JavaUMethod(
 
   override val uAnnotations: List<JavaUAnnotation> by lz { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
 
-  override val uastParameters: List<JavaUParameter> by lz {
-    javaPsi.parameterList.parameters.map { JavaUParameter(it, this) }
+  override val uastParameters: List<UParameter> by lz {
+    javaPsi.parameterList.parameters.mapNotNull { convertOrReport(it, this) }
   }
+
+  override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion() ?: javaPsi.containingClass
 
   override val uastAnchor: UIdentifier?
     get() {

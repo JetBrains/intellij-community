@@ -3,11 +3,13 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
 import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.impl.source.PsiParameterImpl
 import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
@@ -99,15 +101,20 @@ private class JavaRecordUParameter(
 fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?,
                                                   expectedTypes: Array<out Class<out UElement>>): Sequence<UVariable> {
 
-  val (psiRecordComponent, lightRecordField) = when (element) {
-    is PsiRecordComponent -> Pair(element, null)
-    is LightRecordField -> Pair(element.recordComponent, element)
+  val (psiRecordComponent, lightRecordField, lightConstructorParameter) = when (element) {
+    is PsiRecordComponent -> Triple(element, null, null)
+    is LightRecordConstructorParameter -> {
+      val lightRecordField = element.parentOfType<PsiMethod>()?.containingClass?.findFieldByName(element.name, false)
+        ?.castSafelyTo<LightRecordField>() ?: return emptySequence()
+      Triple(lightRecordField.recordComponent, lightRecordField, element)
+    }
+    is LightRecordField -> Triple(element.recordComponent, element, null)
     else -> return emptySequence()
   }
   
   val paramAlternative = alternative {
     val psiClass = psiRecordComponent.containingClass ?: return@alternative null
-    val jvmParameter = psiClass.constructors.asSequence()
+    val jvmParameter = lightConstructorParameter ?: psiClass.constructors.asSequence()
       .filter { !it.isPhysical }
       .flatMap { it.parameterList.parameters.asSequence() }.firstOrNull { it.name == psiRecordComponent.name }
     JavaRecordUParameter(psiRecordComponent, jvmParameter ?: return@alternative null, givenParent)

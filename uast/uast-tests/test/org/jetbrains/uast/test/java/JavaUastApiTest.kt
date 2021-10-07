@@ -211,8 +211,10 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   fun testRecordParameters() {
     doTest("Simple/Record.java") { _, file ->
       val parameter = file.findElementByTextFromPsi<UElement>("int x")
-      assertInstanceOf(parameter, UParameter::class.java) 
-      assertInstanceOf((parameter as UParameter).javaPsi, PsiParameter::class.java) 
+      assertInstanceOf(parameter, UParameter::class.java)
+      val lightParameter = (parameter as UParameter).javaPsi
+      assertInstanceOf(lightParameter, PsiParameter::class.java)
+      TestCase.assertEquals(parameter, lightParameter.toUElement())
       val field = file.findElementByTextFromPsi<UField>("int x")
       assertNotNull(field)
       assertInstanceOf(field.javaPsi, PsiField::class.java)

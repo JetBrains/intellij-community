@@ -4,6 +4,7 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
 import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef
@@ -139,6 +140,8 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
         is PsiEnumConstant -> el<UEnumConstant>(build(::JavaUEnumConstant))
         is PsiLocalVariable -> el<ULocalVariable>(build(::JavaULocalVariable))
         is PsiRecordComponent -> convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
+        is LightRecordConstructorParameter ->
+          convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
         is PsiParameter -> el<UParameter>(build(::JavaUParameter))
         is LightRecordField -> convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
         is PsiField -> el<UField>(build(::JavaUField))
