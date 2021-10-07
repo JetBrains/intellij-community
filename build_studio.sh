@@ -33,8 +33,6 @@ function get_absolute_path() {
   ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
 }
 
-BNUM="__BUILD_NUMBER__"
-
 OUT="${OUT_DIR:-out/studio}"
 DIST="${DIST_DIR:-"${OUT}/dist"}"
 
@@ -61,7 +59,7 @@ set_java_home
 
 export PATH="${JAVA_HOME}/bin:${PATH}"
 
-readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
+readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/__BUILD_NUMBER__/" build.txt)"
 
 declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
