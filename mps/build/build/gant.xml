@@ -285,6 +285,18 @@
             <arg value="apply"/>
             <arg value="${patchClassLoaderConfigurator}"/>
         </exec>
+
+        <property name="useAppInfoFromFile"
+                  value="${basedir}/patches/UseAppInfoFromFile.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${useAppInfoFromFile}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${useAppInfoFromFile}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
