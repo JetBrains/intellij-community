@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsKey;
@@ -55,7 +55,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     if (indicator != null) {
       indicator.setIndeterminate(false);
     }
-    Ref<Integer> cherryPickedCommitsCount = Ref.create(1);
+    IntRef cherryPickedCommitsCount = new IntRef(1);
     new GitApplyChangesProcess(myProject, commits, true,
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
                                (repository, commit, autoCommit, listeners) -> {
@@ -71,7 +71,7 @@ public class GitCherryPicker extends VcsCherryPicker {
                                  GitCommandResult result = Git.getInstance()
                                    .cherryPick(repository, commit.getId().asString(), autoCommit, shouldAddSuffix(repository, commit.getId()),
                                                listeners.toArray(new GitLineHandlerListener[0]));
-                                 cherryPickedCommitsCount.set(cherryPickedCommitsCount.get() + 1);
+                                 cherryPickedCommitsCount.inc();
                                  return result;
                                },
                                new GitAbortOperationAction.CherryPick(),
