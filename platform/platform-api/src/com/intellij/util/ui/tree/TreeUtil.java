@@ -1940,6 +1940,16 @@ public final class TreeUtil {
   }
 
   /**
+   * @param tree a tree, which nodes should be iterated
+   * @param lead a starting tree path
+   * @return next tree path with the same parent, or {@code null} if it is not found
+   */
+  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, TreePath lead) {
+    TreePath parent = lead == null ? null : lead.getParentPath();
+    return parent == null ? null : nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
+  }
+
+  /**
    * @param tree      a tree, which nodes should be iterated
    * @param path      a starting tree path
    * @param predicate a predicate that allows to skip some paths
@@ -1981,6 +1991,16 @@ public final class TreeUtil {
       TreePath path = tree.getPathForRow(row);
       if (path != null && predicate.test(path)) return path;
     }
+  }
+
+  /**
+   * @param tree a tree, which nodes should be iterated
+   * @param lead a starting tree path
+   * @return previous tree path with the same parent, or {@code null} if it is not found
+   */
+  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, TreePath lead) {
+    TreePath parent = lead == null ? null : lead.getParentPath();
+    return parent == null ? null : previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
 
   /**
