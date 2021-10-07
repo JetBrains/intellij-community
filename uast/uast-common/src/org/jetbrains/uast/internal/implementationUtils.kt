@@ -29,3 +29,15 @@ inline fun <reified T : UElement> T.log(text: String = ""): String {
   val className = T::class.java.simpleName
   return if (text.isEmpty()) className else "$className ($text)"
 }
+
+fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UElementAlternative<out U>): Sequence<U> {
+  val makersSeq = makers.asSequence()
+  return this.asSequence()
+    .flatMap { requiredType -> makersSeq.filter { requiredType.isAssignableFrom(it.uType) } }
+    .distinct()
+    .mapNotNull { it.make.invoke() }
+}
+
+inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
+
+class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)

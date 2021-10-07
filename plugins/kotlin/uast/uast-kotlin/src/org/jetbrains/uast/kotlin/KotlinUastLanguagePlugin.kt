@@ -34,6 +34,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.internal.UElementAlternative
+import org.jetbrains.uast.internal.accommodate
+import org.jetbrains.uast.internal.alternative
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.declarations.KotlinUIdentifier
@@ -755,14 +758,4 @@ private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let
 private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
     ?: default
 
-private fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UElementAlternative<out U>): Sequence<UElement> {
-    val makersSeq = makers.asSequence()
-    return this.asSequence()
-        .flatMap { requiredType -> makersSeq.filter { requiredType.isAssignableFrom(it.uType) } }
-        .distinct()
-        .mapNotNull { it.make.invoke() }
-}
 
-private inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
-
-private class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)

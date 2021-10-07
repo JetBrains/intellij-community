@@ -15,9 +15,7 @@
  */
 package org.jetbrains.uast.test.java
 
-import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -207,6 +205,24 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, call.kind)
     TestCase.assertEquals(null, call.resolve())
     TestCase.assertEquals("C", (call.classReference?.resolve() as? PsiClass)?.qualifiedName)
+  }
+
+  @Test
+  fun testRecordParameters() {
+    doTest("Simple/Record.java") { _, file ->
+      val parameter = file.findElementByTextFromPsi<UElement>("int x")
+      assertInstanceOf(parameter, UParameter::class.java) 
+      assertInstanceOf((parameter as UParameter).javaPsi, PsiParameter::class.java) 
+      val field = file.findElementByTextFromPsi<UField>("int x")
+      assertNotNull(field)
+      assertInstanceOf(field.javaPsi, PsiField::class.java)
+      val alternatives = UastFacade.convertToAlternatives(parameter.sourcePsi!!, DEFAULT_TYPES_LIST).toList()
+      UsefulTestCase.assertSize(2, alternatives)
+      TestCase.assertEquals(parameter, alternatives[0])
+      TestCase.assertEquals(field, alternatives[1])
+      val parameterFromField = field.javaPsi.toUElementOfType<UParameter>()
+      TestCase.assertEquals(parameter, parameterFromField)
+    }
   }
 
 }

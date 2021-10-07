@@ -3,11 +3,14 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.impl.source.PsiParameterImpl
 import com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.accommodate
+import org.jetbrains.uast.internal.alternative
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElement(
@@ -77,6 +80,51 @@ class JavaUParameter(
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
+private class JavaRecordUParameter(
+  override val sourcePsi: PsiRecordComponent,
+  override val javaPsi: PsiParameter,
+  givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UParameterEx, PsiParameter by javaPsi {
+
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiParameter
+    get() = javaPsi
+
+  override val uastAnchor: UIdentifier
+    get() = UIdentifier(sourcePsi.nameIdentifier, this)
+
+  override fun getPsiParentForLazyConversion(): PsiElement? = javaPsi.context
+}
+
+fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?,
+                                                  expectedTypes: Array<out Class<out UElement>>): Sequence<UVariable> {
+
+  val (psiRecordComponent, lightRecordField) = when (element) {
+    is PsiRecordComponent -> Pair(element, null)
+    is LightRecordField -> Pair(element.recordComponent, element)
+    else -> return emptySequence()
+  }
+  
+  val paramAlternative = alternative {
+    val psiClass = psiRecordComponent.containingClass ?: return@alternative null
+    val jvmParameter = psiClass.constructors.asSequence()
+      .filter { !it.isPhysical }
+      .flatMap { it.parameterList.parameters.asSequence() }.firstOrNull { it.name == psiRecordComponent.name }
+    JavaRecordUParameter(psiRecordComponent, jvmParameter ?: return@alternative null, givenParent)
+  }
+  val fieldAlternative = alternative {
+    val psiField = lightRecordField ?: psiRecordComponent.containingClass?.findFieldByName(psiRecordComponent.name, false)
+                   ?: return@alternative null
+    JavaRecordUField(psiRecordComponent, psiField, givenParent)
+  }
+  
+  return when (element) {
+    is LightRecordField -> expectedTypes.accommodate(fieldAlternative, paramAlternative)
+    else -> expectedTypes.accommodate(paramAlternative, fieldAlternative)
+  }
+}
+
+
 class JavaUField(
   override val sourcePsi: PsiField,
   givenParent: UElement?
@@ -87,6 +135,25 @@ class JavaUField(
 
   override val javaPsi: PsiField = unwrap<UField, PsiField>(sourcePsi)
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
+}
+
+private class JavaRecordUField(
+  private val psiRecord: PsiRecordComponent,
+  override val javaPsi: PsiField,
+  givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UFieldEx, PsiField by javaPsi {
+
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiField
+    get() = javaPsi
+
+  override val sourcePsi: PsiVariable?
+    get() = null
+
+  override val uastAnchor: UIdentifier
+    get() = UIdentifier(psiRecord.nameIdentifier, this)
+
+  override fun getPsiParentForLazyConversion(): PsiElement? = javaPsi.context
 }
 
 class JavaULocalVariable(
