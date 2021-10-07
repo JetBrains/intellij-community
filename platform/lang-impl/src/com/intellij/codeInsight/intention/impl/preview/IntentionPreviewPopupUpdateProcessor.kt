@@ -28,6 +28,7 @@ import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
+import java.awt.LayoutManager2
 import kotlin.math.min
 
 class IntentionPreviewPopupUpdateProcessor(private val project: Project,
@@ -143,6 +144,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         override fun recalculationEnds() {
           val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
           it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
+          val parent = it.component.parent
+          (parent.layout as LayoutManager2).invalidateLayout(parent)
           popup.pack(true, true)
         }
 
