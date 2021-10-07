@@ -10,14 +10,18 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
+private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+    listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+) {
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        super.configureModule(module, model)
+        MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    }
+}
+
 class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
-    ) {
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            super.configureModule(module, model)
-            MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-        }
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return ktProjectDescriptor
     }
 
     override fun setUp() {
