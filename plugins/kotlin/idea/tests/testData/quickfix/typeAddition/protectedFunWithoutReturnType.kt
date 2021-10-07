@@ -4,3 +4,4 @@ package a
 class A() {
     protected fun <caret>foo() = 1
 }
+/* IGNORE_FIR */

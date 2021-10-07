@@ -9,3 +9,4 @@ class A {
     val a<caret>
         get() = a
 }
+/* IGNORE_FIR */

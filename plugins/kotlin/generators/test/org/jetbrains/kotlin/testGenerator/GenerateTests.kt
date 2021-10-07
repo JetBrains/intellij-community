@@ -1077,6 +1077,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("quickfix/when", pattern = pattern)
             model("quickfix/wrapWithSafeLetCall", pattern = pattern)
+            model("quickfix/typeAddition", pattern = pattern)
             model("quickfix/typeMismatch/casts", pattern = pattern)
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
