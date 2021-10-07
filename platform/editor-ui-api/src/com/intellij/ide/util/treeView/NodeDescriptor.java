@@ -3,7 +3,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +64,6 @@ public abstract class NodeDescriptor<E> {
     return myName;
   }
 
-  @Nullable
   public final Icon getIcon() {
     return myClosedIcon;
   }
@@ -74,7 +72,6 @@ public abstract class NodeDescriptor<E> {
     return myColor;
   }
 
-  @Nullable
   public final Project getProject() {
     return myProject;
   }
