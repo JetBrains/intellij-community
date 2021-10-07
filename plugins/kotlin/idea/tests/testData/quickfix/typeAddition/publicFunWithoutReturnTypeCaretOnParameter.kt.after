@@ -4,3 +4,4 @@ package a
 class A() {
     public fun foo(p: String): String<caret> = "a"
 }
+/* IGNORE_FIR */
