@@ -78,6 +78,9 @@ public class FormatterStarter implements ApplicationStarter {
             }
           }
         }
+        else if (checkOption(args[i], "-d", "-dry")) {
+          fileSetFormatter.setDryRun(true);
+        }
         else {
           fatalError(messageOutput, "Unknown option " + args[i]);
         }
@@ -92,8 +95,19 @@ public class FormatterStarter implements ApplicationStarter {
       }
     }
     try {
-      fileSetFormatter.processFiles();
-      messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " file(s) formatted.\n");
+      if (fileSetFormatter.isDryRun()) {
+        FileSetProcessingStatistics stats = new FileSetProcessingStatistics();
+        fileSetFormatter.processFiles(stats);
+        messageOutput.info("\n" + stats.getTotal() + " file(s) scanned.\n");
+        messageOutput.info(stats.getProcessed() + " file(s) checked.\n");
+        messageOutput.info(stats.getValid() + " file(s) are well formed.\n");
+        if (stats.getValid() < stats.getProcessed()) {
+          System.exit(1);
+        }
+      } else {
+        fileSetFormatter.processFiles();
+        messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " file(s) formatted.\n");
+      }
     }
     catch (IOException e) {
       fatalError(messageOutput, e.getLocalizedMessage());
@@ -126,10 +140,11 @@ public class FormatterStarter implements ApplicationStarter {
 
 
   private static void showUsageInfo(@NotNull MessageOutput messageOutput) {
-    messageOutput.info("Usage: format [-h] [-r|-R] [-s|-settings settingsPath] path1 path2...\n");
+    messageOutput.info("Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] path1 path2...\n");
     messageOutput.info("  -h|-help       Show a help message and exit.\n");
     messageOutput.info("  -s|-settings   A path to Intellij IDEA code style settings .xml file.\n");
     messageOutput.info("  -r|-R          Scan directories recursively.\n");
+    messageOutput.info("  -d|-dry        Perform a dry run: no file modifications, only exit status\n");
     messageOutput.info("  -m|-mask       A comma-separated list of file masks.\n");
     messageOutput.info("  path<n>        A path to a file or a directory.\n");
     System.exit(0);

@@ -18,6 +18,7 @@ package com.intellij.java.formatting.commandLine;
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.commandLine.FileSetFormatter;
+import com.intellij.formatting.commandLine.FileSetProcessingStatistics;
 import com.intellij.formatting.commandLine.MessageOutput;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,22 +37,55 @@ import java.io.PrintWriter;
 public class FileSetFormatterTest extends LightPlatformTestCase {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine";
 
-  public void testFormat() throws IOException {
+  private static FileSetFormatter createFormatter() {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.getIndentOptions().INDENT_SIZE = 2;
     javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-    File sourceDir = createSourceDir("original");
-    String fileSpec = sourceDir.getCanonicalPath();
+
     MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
     FileSetFormatter formatter = new FileSetFormatter(messageOutput);
-    formatter.addEntry(fileSpec);
     formatter.addFileMask("*.java");
     formatter.setRecursive();
     formatter.setCodeStyleSettings(settings);
+
+    return formatter;
+  }
+
+  public void testFormat() throws IOException {
+    File sourceDir = createSourceDir("original");
+    String fileSpec = sourceDir.getCanonicalPath();
+    FileSetFormatter formatter = createFormatter();
+    formatter.addEntry(fileSpec);
     formatter.processFiles();
     compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);
+  }
+
+  public void testFormatDryRun_needsFormatting() throws IOException {
+    File sourceDir = createSourceDir("original");
+    String fileSpec = sourceDir.getCanonicalPath();
+    FileSetFormatter formatter = createFormatter();
+    formatter.addEntry(fileSpec);
+    formatter.setDryRun(true);
+    FileSetProcessingStatistics stats = new FileSetProcessingStatistics();
+    formatter.processFiles(stats);
+
+    compareDirs(new File(BASE_PATH + File.separator + "original"), sourceDir);  // No modifications expected
+    assertNotSame(stats.getProcessed(), stats.getValid());
+  }
+
+  public void testFormatDryRun_wellFormatted() throws IOException {
+    File sourceDir = createSourceDir("expected");
+    String fileSpec = sourceDir.getCanonicalPath();
+    FileSetFormatter formatter = createFormatter();
+    formatter.addEntry(fileSpec);
+    formatter.setDryRun(true);
+    FileSetProcessingStatistics stats = new FileSetProcessingStatistics();
+    formatter.processFiles(stats);
+
+    compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);  // No modifications expected
+    assertEquals(stats.getProcessed(), stats.getValid());
   }
 
   private static File createSourceDir(@NotNull String subDir) throws IOException {

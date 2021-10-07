@@ -13,6 +13,7 @@ import java.util.Set;
 
 public abstract class FileSetProcessor {
   private static final Logger LOG = Logger.getInstance(FileSetProcessor.class);
+  private static final FileSetProcessingStatistics FAKE_STATS = new FileSetProcessingStatistics();
 
   private final Set<File> myTopEntries = new HashSet<>();
   private final Set<String> myFileMasks = new HashSet<>();
@@ -21,7 +22,13 @@ public abstract class FileSetProcessor {
 
   public void processFiles() throws IOException {
     for (File topEntry : myTopEntries) {
-      processEntry(topEntry);
+      processEntry(topEntry, FAKE_STATS);
+    }
+  }
+
+  public void processFiles(FileSetProcessingStatistics stats) throws IOException {
+    for (File topEntry : myTopEntries) {
+      processEntry(topEntry, stats);
     }
   }
 
@@ -52,7 +59,7 @@ public abstract class FileSetProcessor {
     myTopEntries.add(file);
   }
 
-  private void processEntry(@NotNull File entry) throws IOException {
+  private void processEntry(@NotNull File entry, FileSetProcessingStatistics stats) throws IOException {
     if (entry.exists()) {
       if (entry.isDirectory()) {
         LOG.info("Scanning directory " + entry.getPath());
@@ -60,7 +67,7 @@ public abstract class FileSetProcessor {
         if (subEntries != null) {
           for (File subEntry : subEntries) {
             if (!subEntry.isDirectory() || isRecursive) {
-              processEntry(subEntry);
+              processEntry(subEntry, stats);
             }
           }
         }
@@ -72,7 +79,7 @@ public abstract class FileSetProcessor {
             throw new IOException("Can not find " + entry.getPath());
           }
           LOG.info("Processing " + virtualFile.getPath());
-          if (processFile(virtualFile)) myProcessedFiles++;
+          if (processFile(virtualFile, stats)) myProcessedFiles++;
         }
       }
     }
@@ -88,7 +95,11 @@ public abstract class FileSetProcessor {
     return false;
   }
 
-  protected abstract boolean processFile(@NotNull VirtualFile virtualFile);
+  protected abstract boolean processFile(@NotNull VirtualFile virtualFile, @NotNull FileSetProcessingStatistics stats);
+
+  protected boolean processFile(@NotNull VirtualFile virtualFile) {
+    return processFile(virtualFile, FAKE_STATS);
+  }
 
   public int getProcessedFiles() {
     return myProcessedFiles;

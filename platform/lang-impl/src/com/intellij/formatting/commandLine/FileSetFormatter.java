@@ -22,9 +22,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.UUID;
 
 public final class FileSetFormatter extends FileSetProcessor {
@@ -48,15 +51,27 @@ public final class FileSetFormatter extends FileSetProcessor {
   private final static String RESULT_MESSAGE_REJECTED_BY_FORMATTER = "Skipped, rejected by formatter.";
   private final static String RESULT_MESSAGE_BINARY_FILE = "Skipped, binary file.";
 
+  private final static String RESULT_MESSAGE_DRY_OK = "Formatted well";
+  private final static String RESULT_MESSAGE_DRY_FAIL = "Needs reformatting";
+
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
   private final MessageOutput myMessageOutput;
   private @NotNull CodeStyleSettings mySettings;
+  private boolean isDryRun = false;
 
   public FileSetFormatter(@NotNull MessageOutput messageOutput) {
     myMessageOutput = messageOutput;
     mySettings = CodeStyleSettingsManager.getInstance().createSettings();
     myProjectUID = UUID.randomUUID().toString();
+  }
+
+  public void setDryRun(boolean isDryRun) {
+    this.isDryRun = isDryRun;
+  }
+
+  public boolean isDryRun() {
+    return isDryRun;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings settings) {
@@ -92,11 +107,80 @@ public final class FileSetFormatter extends FileSetProcessor {
   }
 
   @Override
-  protected boolean processFile(@NotNull VirtualFile virtualFile) {
-    String resultMessage = RESULT_MESSAGE_OK;
+  public void processFiles(FileSetProcessingStatistics stats) throws IOException {
+    createProject();
+    if (myProject != null) {
+      super.processFiles(stats);
+      closeProject();
+    }
+  }
+
+  @Override
+  protected boolean processFile(@NotNull VirtualFile virtualFile, @NotNull FileSetProcessingStatistics stats) {
     assert myProject != null;
+
+    stats.fileTraversed();
+
+    String operation = isDryRun ? "Checking " : "Formatting ";
+    myMessageOutput.info(operation + virtualFile.getCanonicalPath() + "...");
+
+    if (virtualFile.getFileType().isBinary()) {
+      myMessageOutput.info(RESULT_MESSAGE_BINARY_FILE + "\n");
+      return false;
+    }
+
+    String resultMessage = isDryRun
+                           ? processFileInternalDry(virtualFile)
+                           : processFileInternal(virtualFile);
+
+    myMessageOutput.info(resultMessage + "\n");
+
+    if (RESULT_MESSAGE_OK.equals(resultMessage) || RESULT_MESSAGE_DRY_OK.equals(resultMessage)) {
+      stats.fileProcessed(true);
+      return true;
+    }
+    else if (RESULT_MESSAGE_DRY_FAIL.equals(resultMessage)) {
+      stats.fileProcessed(false);
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  private String processFileInternalDry(@NotNull VirtualFile virtualFile) {
+
+    if (virtualFile.getFileType().isBinary()) {
+      return RESULT_MESSAGE_BINARY_FILE;
+    }
+
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      LOG.warn("No document available for " + virtualFile.getPath());
+      return RESULT_MESSAGE_FAILED;
+    }
+
+    String originalContent = document.getText();
+
+    PsiFile psiCopy = PsiFileFactory.getInstance(myProject).createFileFromText(
+      "a." + virtualFile.getFileType().getDefaultExtension(), virtualFile.getFileType(), originalContent, LocalTimeCounter.currentTime(),
+      false
+    );
+
+    CodeStyleManager
+      .getInstance(myProject)
+      .reformatText(psiCopy, 0, psiCopy.getTextLength());
+
+    String reformattedContent = psiCopy.getText();
+
+    return Objects.equals(originalContent, reformattedContent)
+           ? RESULT_MESSAGE_DRY_OK
+           : RESULT_MESSAGE_DRY_FAIL;
+  }
+
+  private String processFileInternal(@NotNull VirtualFile virtualFile) {
+    String resultMessage = RESULT_MESSAGE_OK;
     VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
-    myMessageOutput.info("Formatting " + virtualFile.getCanonicalPath() + "...");
     if (!virtualFile.getFileType().isBinary()) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document != null) {
@@ -136,8 +220,7 @@ public final class FileSetFormatter extends FileSetProcessor {
     else {
       resultMessage = RESULT_MESSAGE_BINARY_FILE;
     }
-    myMessageOutput.info(resultMessage + "\n");
-    return RESULT_MESSAGE_OK.equals(resultMessage);
+    return resultMessage;
   }
 
   private static void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
