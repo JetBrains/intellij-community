@@ -48,14 +48,14 @@ class RunToolbarComponentService(val project: Project) {
 
       extraSlots.addListener(object : ActiveListener {
         override fun enabled() {
-          LOG.info("slot manager ACTIVATION. put data ${executions.map{it.value}.map{"$it (${it.executionId}); "}} ")
+          if(RunToolbarProcess.logNeeded) LOG.info( "ENABLED. put data ${executions.map{it.value}.map{"$it (${it.executionId}); "}} RunToolbar" )
           executions.forEach{
             extraSlots.processStarted(it.value)
           }
         }
 
         override fun disabled() {
-          LOG.info("slot manager INACTIVATION")
+          if(RunToolbarProcess.logNeeded) LOG.info("DISABLED RunToolbar" )
           super.disabled()
         }
       })
@@ -65,7 +65,7 @@ class RunToolbarComponentService(val project: Project) {
   private fun start(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions[env.executionId] = env
-      LOG.info("new active process added: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(RunToolbarProcess.logNeeded) LOG.info("new active: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
       if(extraSlots.active) {
         extraSlots.processStarted(env)
       }
@@ -75,7 +75,7 @@ class RunToolbarComponentService(val project: Project) {
   private fun terminated(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
-      LOG.info("new active process removed: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(RunToolbarProcess.logNeeded) LOG.info("removed: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
       if(extraSlots.active) {
         extraSlots.processTerminated(env.executionId)
       }
@@ -84,7 +84,7 @@ class RunToolbarComponentService(val project: Project) {
 
   private fun terminating(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
-      LOG.info("new active process terminating: ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"}")
+      if(RunToolbarProcess.logNeeded) LOG.info("terminating: ${env.executor.id} ${env}, slot manager ${if(extraSlots.active) "ENABLED" else "DISABLED"} RunToolbar" )
       if(extraSlots.active) {
         extraSlots.processTerminating(env)
       }

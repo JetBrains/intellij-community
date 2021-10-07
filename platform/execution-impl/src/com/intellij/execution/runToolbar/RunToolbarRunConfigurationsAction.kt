@@ -17,7 +17,6 @@ import javax.swing.SwingUtilities
 
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
  companion object {
-
    fun doRightClick(dataContext: DataContext) {
      ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
        if(it is ActionGroup) {
@@ -31,6 +30,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
      }
    }
  }
+
+  open fun trace(e: AnActionEvent, add: String? = null) {
+
+  }
 
   override fun getEditRunConfigurationAction(): AnAction? {
     return ActionManager.getInstance().getAction(RunToolbarEditConfigurationAction.ACTION_ID)
@@ -54,9 +57,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible
-    } ?: false
+    if(!e.presentation.isVisible) return
+
+    e.presentation.isVisible = !e.isActiveProcess()
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {

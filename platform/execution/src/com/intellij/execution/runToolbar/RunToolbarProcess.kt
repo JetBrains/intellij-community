@@ -19,6 +19,8 @@ interface RunToolbarProcess {
     val isAvailable: Boolean
       get() = RegistryManager.getInstance().`is`("ide.new.navbar")
 
+    const val logNeeded = true
+
     @JvmStatic
     val isExperimentalUpdatingEnabled: Boolean
       get() = RegistryManager.getInstance().`is`("ide.new.navbar.experimentalUpdating")
