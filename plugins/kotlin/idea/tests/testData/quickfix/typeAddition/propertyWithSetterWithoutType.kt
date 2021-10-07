@@ -10,3 +10,4 @@ class My {
             yy = arg + 1
         }
 }
+/* IGNORE_FIR */

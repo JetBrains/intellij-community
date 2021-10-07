@@ -10,3 +10,4 @@
 class A() {
     public val <caret>t = foo()
 }
+/* IGNORE_FIR */
