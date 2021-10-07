@@ -53,7 +53,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
-        if (lang.value.size == 1) {
+        if (lang.value.size == 1 && OTHER_GROUP != group.key) {
           nodeToSelect = addModelNode(lang.value.first(), groupNode, lastSelected, nodeToSelect)
         }
         else {
