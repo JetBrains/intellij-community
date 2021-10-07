@@ -88,7 +88,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return;
     }
 
-    ProjectTemplate[] templates = new ArchivedTemplatesFactory().createTemplates(CUSTOM_GROUP, null);
+    ProjectTemplate[] templates = new ArchivedTemplatesFactory().createTemplates(CUSTOM_GROUP);
     List<DirectoryProjectGenerator<?>> projectGenerators;
     if (templates.length == 0) {
       projectGenerators = Collections.emptyList();

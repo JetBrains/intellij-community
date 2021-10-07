@@ -69,9 +69,9 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
             TargetPlatform targetPlatform,
             ModuleBuilder moduleBuilder,
             @NotNull SettingsStep settingsStep,
-            @Nullable WizardContext wizardContext
+            @NotNull WizardContext wizardContext
     ) {
-        isNewProject = wizardContext != null && wizardContext.isCreatingNewProject();
+        isNewProject = wizardContext.isCreatingNewProject();
         myDisposable = wizardContext.getDisposable();
 
         if (!(JvmPlatformKt.isJvm(targetPlatform))) {
