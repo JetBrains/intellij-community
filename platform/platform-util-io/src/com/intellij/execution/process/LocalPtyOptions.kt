@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process
 
-class PtyCommandLineOptions private constructor(val consoleMode: Boolean,
-                                                val useCygwinLaunch: Boolean,
-                                                val initialColumns: Int,
-                                                val initialRows: Int) {
+class LocalPtyOptions private constructor(val consoleMode: Boolean,
+                                          val useCygwinLaunch: Boolean,
+                                          val initialColumns: Int,
+                                          val initialRows: Int) {
 
   override fun toString(): String {
     return "consoleMode=$consoleMode, useCygwinLaunch=$useCygwinLaunch, initialColumns=$initialColumns, initialRows=$initialRows"
@@ -16,7 +16,7 @@ class PtyCommandLineOptions private constructor(val consoleMode: Boolean,
 
   companion object {
     @JvmField
-    val DEFAULT = PtyCommandLineOptions(false, false, -1, -1)
+    val DEFAULT = LocalPtyOptions(false, false, -1, -1)
   }
 
   class Builder internal constructor(private var consoleMode: Boolean,
@@ -40,9 +40,9 @@ class PtyCommandLineOptions private constructor(val consoleMode: Boolean,
     fun initialRows(initialRows: Int) = apply { this.initialRows = initialRows }
     fun initialRows() = initialRows
 
-    fun build() = PtyCommandLineOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows)
+    fun build() = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows)
 
-    fun set(options: PtyCommandLineOptions) = apply {
+    fun set(options: LocalPtyOptions) = apply {
       consoleMode = options.consoleMode
       useCygwinLaunch = options.useCygwinLaunch
       initialColumns = options.initialColumns

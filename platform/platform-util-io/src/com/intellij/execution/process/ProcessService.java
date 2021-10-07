@@ -14,7 +14,7 @@ public interface ProcessService {
   Process startPtyProcess(String @NotNull [] command,
                           @Nullable String directory,
                           @NotNull Map<String, String> env,
-                          @NotNull PtyCommandLineOptions options,
+                          @NotNull LocalPtyOptions options,
                           @Nullable Application app,
                           boolean redirectErrorStream,
                           boolean windowsAnsiColorEnabled,

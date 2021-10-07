@@ -2,7 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.ProcessService;
-import com.intellij.execution.process.PtyCommandLineOptions;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -39,7 +39,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
 
-  private final PtyCommandLineOptions.Builder myOptionsBuilder = PtyCommandLineOptions.DEFAULT.builder().consoleMode(true);
+  private final LocalPtyOptions.Builder myOptionsBuilder = LocalPtyOptions.DEFAULT.builder().consoleMode(true);
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
   private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
 
@@ -69,7 +69,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
-  public PtyCommandLine withOptions(@NotNull PtyCommandLineOptions options) {
+  public PtyCommandLine withOptions(@NotNull LocalPtyOptions options) {
     myOptionsBuilder.set(options);
     return this;
   }
@@ -161,7 +161,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     String[] command = ArrayUtilRt.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
-    PtyCommandLineOptions options = myOptionsBuilder.build();
+    LocalPtyOptions options = myOptionsBuilder.build();
     Application app = ApplicationManager.getApplication();
     return ProcessService.getInstance()
       .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled,

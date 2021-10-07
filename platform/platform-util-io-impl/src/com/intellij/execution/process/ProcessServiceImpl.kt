@@ -16,7 +16,7 @@ class ProcessServiceImpl: ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
                                env: MutableMap<String, String>,
-                               options: PtyCommandLineOptions,
+                               options: LocalPtyOptions,
                                app: Application?,
                                redirectErrorStream: Boolean,
                                windowsAnsiColorEnabled: Boolean,
