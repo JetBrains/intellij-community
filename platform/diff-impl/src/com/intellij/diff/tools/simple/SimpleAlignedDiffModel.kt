@@ -19,6 +19,7 @@ import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -119,7 +120,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val inlayEditor = viewer.getEditor(side)
     val changeSide = side.other()
     val changeEditor = viewer.getEditor(changeSide)
-    var height = adjustedInlaysHeights.entries.find { it.key.side == side && it.key.change.isSame(change) }?.value ?: 0
+    var height = adjustedInlaysHeights[SideAndChange(side, change)] ?: 0
 
     height += linesToAdd * changeEditor.lineHeight
 
@@ -322,7 +323,17 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   }
 
   private data class InlayId(val side: Side, val offset: Int, val id: Long)
-  private data class SideAndChange(val side: Side, val change: SimpleDiffChange)
+  private data class SideAndChange(val side: Side, val change: SimpleDiffChange) {
+    override fun equals(other: Any?): Boolean {
+      return other is SideAndChange && side == other.side && change.isSame(other.change)
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hash(side,
+        change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT),
+        change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))
+    }
+  }
 
   private fun getRelatedLogicalLine(side: Side, logicalLine: Int, isAboveInlay: Boolean): Int {
     val needAlignLastLine = logicalLine == DiffUtil.getLineCount(viewer.getEditor(side).document) - 1
@@ -346,10 +357,6 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   private val editor1 get() = viewer.editor1
   private val editor2 get() = viewer.editor2
-
-  private fun SimpleDiffChange.isSame(other: SimpleDiffChange) =
-    getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
-    getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
 
   private fun SimpleDiffChange.calculateDeltaHeight(): Int {
     val leftStartLine = getStartLine(Side.LEFT)
@@ -390,6 +397,10 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   companion object {
     const val ALIGNED_CHANGE_INLAY_PRIORITY = 0
+
+    private fun SimpleDiffChange.isSame(other: SimpleDiffChange) =
+      getStartLine(Side.LEFT) == other.getStartLine(Side.LEFT) && getEndLine(Side.LEFT) == other.getEndLine(Side.LEFT) &&
+      getStartLine(Side.RIGHT) == other.getStartLine(Side.RIGHT) && getEndLine(Side.RIGHT) == other.getEndLine(Side.RIGHT)
 
     fun getAlignedChangeColor(type: TextDiffType, editor: Editor): Color? {
       return if (type === TextDiffType.MODIFIED) null else type.getColor(editor).let { ColorUtil.toAlpha(it, 200) }
