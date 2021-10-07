@@ -307,11 +307,14 @@ class KotlinPluginBuilder {
               break
             case KotlinPluginKind.AC_KMM:
               text = replace(text, "<id>([^<]+)</id>", "<id>com.intellij.appcode.kmm</id>")
-              text = replace(text, "<idea-version[^/>]+/>", "")
               text = replace(text, "<name>([^<]+)</name>", "")
               text = replace(text, "(?s)<description>.*</description>", "")
               text = replace(text, "(?s)<change-notes>.*</change-notes>", "")
-              text = replace(text, "</idea-plugin>", "<xi:include href=\"/META-INF/plugin.production.xml\" />\n</idea-plugin>")
+              text = replace(text, "</idea-plugin>", """\
+                                                      <xi:include href="/META-INF/plugin.production.xml" />
+                                                      <!-- Marketplace gets confused by identifiers from included xmls -->
+                                                      <id>com.intellij.appcode.kmm</id>
+                                                    </idea-plugin>""".stripIndent())
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")
