@@ -11,6 +11,8 @@ import com.intellij.ui.dsl.builder.Panel
  * Represents small part of UI [setupUI] and rules how this UI applies [setupProject] on new project.
  * All steps form tree of steps that applies in order from root to leaf.
  *
+ * @see AbstractNewProjectWizardStep
+ * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory
  */
 interface NewProjectWizardStep {
