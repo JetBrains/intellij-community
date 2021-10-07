@@ -2,6 +2,7 @@
 package training.dsl
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -308,7 +309,7 @@ fun LessonContext.highlightDebugActionsToolbar() {
   task {
     val needAction = ActionManager.getInstance().getAction("Resume")
     triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "MainSingleContentToolbar"
+      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == ActionPlaces.DEBUGGER_TOOLBAR
       if (!b) return@triggerByUiComponentAndHighlight false
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
