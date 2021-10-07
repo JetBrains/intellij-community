@@ -1075,7 +1075,7 @@ final class DistributionJARsBuilder {
         }
 
         Files.createDirectories(libOutputDir)
-        if (!removeVersionFromJarName && nioFiles.size() > 1 && lowerCasedLibName != "gradle") {
+        if (!removeVersionFromJarName && nioFiles.size() > 1 && lowerCasedLibName != "gradle" && lowerCasedLibName != "junixsocket-core") {
           Path targetFile = outputDir.resolve(FileUtil.sanitizeFileName(lowerCasedLibName, false) + ".jar")
           BuildHelper.getInstance(buildContext).mergeJars.invokeWithArguments(targetFile, nioFiles)
           layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), targetFile.toString())
