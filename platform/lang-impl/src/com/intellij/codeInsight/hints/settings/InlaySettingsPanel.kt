@@ -32,7 +32,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   init {
     val settings = InlayHintsSettings.instance()
-    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap { it.getProvidersInfo(project) }
+    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap {
+      it.getProvidersInfo(project)
+    }.filter { it.provider.isLanguageSupported(it.language) }
     val groups = providerInfos.groupBy { it.provider.groupId }.mapValues {
       it.value.map { info ->
         NewInlayProviderSettingsModel(info.provider.withSettings(info.language, settings), settings) as InlayProviderSettingsModel
