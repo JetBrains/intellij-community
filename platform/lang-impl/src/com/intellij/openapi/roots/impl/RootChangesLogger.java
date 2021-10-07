@@ -9,13 +9,16 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 final class RootChangesLogger {
   private final static int BATCH_CAPACITY = 10;
   @NotNull
   private final Logger myLogger;
+  //hash->isFullReindex
   @NotNull
   private final IntOpenHashSet myReportedHashes = new IntOpenHashSet();
   private final List<Report> myReports = new ArrayList<>(BATCH_CAPACITY);
@@ -29,9 +32,23 @@ final class RootChangesLogger {
    * Also it's the same project for all invocations
    */
   void info(@NotNull Project project, boolean fullReindex) {
+    Throwable stacktrace = new Throwable();
+    int hash = ThrowableInterner.computeAccurateTraceHashCode(stacktrace);
+    boolean isNew;
+    synchronized (myReportedHashes) {
+      isNew = myReportedHashes.add(hash);
+    }
+
+    if (isNew) {
+      myLogger.info("New rootsChanged event for \"" + project.getName() + "\" project with " +
+                    (fullReindex ? "full" : "partial") + " reindex with trace_hash = " + hash + ":\n" +
+                    ExceptionUtil.getThrowableText(stacktrace));
+      return;
+    }
+
     Report[] reports = null;
     synchronized (myReports) {
-      myReports.add(new Report(fullReindex));
+      myReports.add(new Report(hash, fullReindex));
       if (myReports.size() == BATCH_CAPACITY) {
         reports = myReports.toArray(new Report[0]);
         myReports.clear();
@@ -41,43 +58,34 @@ final class RootChangesLogger {
     if (reports != null) {
       StringBuilder text = new StringBuilder();
       text.append(BATCH_CAPACITY).append(" more rootsChanged events for \"").append(project.getName()).append("\" project.");
-      List<Integer> hashes = new ArrayList<>(BATCH_CAPACITY);
-      boolean wereAdded = false;
-      for (Report report : reports) {
-        int hash = ThrowableInterner.computeAccurateTraceHashCode(report.stacktrace);
-        boolean added;
-        synchronized (myReportedHashes) {
-          added = myReportedHashes.add(hash);
-        }
-        if (added) {
-          wereAdded = true;
-          text.append("\nNew ").append(report.myFullReindex ? "full" : "partial").append(" reindex with trace_hash = ").append(hash)
-            .append(":\n").append(ExceptionUtil.getThrowableText(report.stacktrace));
-        }
-        else {
-          hashes.add(hash);
-        }
-      }
-      boolean hasHashes = !hashes.isEmpty();
-      if (hasHashes) {
-        text.append(" ");
-        if (wereAdded) {
-          text.append("\n");
-        }
-        hashes.stream().collect(Collectors.groupingBy(hash -> hash)).forEach((hash, equalHashes) -> {
-          text.append(equalHashes.size()).append(" with trace_hash = ").append(hash).append(";");
-        });
-      }
-      myLogger.info(hasHashes ? text.substring(0, text.length() - 1) : text.toString());
+      Arrays.stream(reports).collect(Collectors.groupingBy(report -> report)).forEach((report, equalHashes) -> {
+        text.append(" ").append(equalHashes.size()).append(" ").append(report.myFullReindex ? "full" : "partial").
+          append(" reindex with trace_hash = ").append(report.myHash).append(";");
+      });
+      myLogger.info(text.substring(0, text.length() - 1));
     }
   }
 
   private static class Report {
-    private final Throwable stacktrace = new Throwable();
+    private final int myHash;
     private final boolean myFullReindex;
 
-    Report(boolean isFullReindex) {
+    Report(int hash, boolean isFullReindex) {
+      myHash = hash;
       myFullReindex = isFullReindex;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Report report = (Report)o;
+      return myHash == report.myHash && myFullReindex == report.myFullReindex;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myHash, myFullReindex);
     }
   }
 }
