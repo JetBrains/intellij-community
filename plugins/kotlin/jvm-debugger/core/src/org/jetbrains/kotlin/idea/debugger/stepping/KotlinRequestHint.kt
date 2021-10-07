@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.stepping
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.isOnSuspensionPoint
 import org.jetbrains.kotlin.idea.debugger.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.safeLocation
@@ -119,5 +121,41 @@ class KotlinStepOverRequestHint(
 
         context.debugProcess.cancelRunToCursorBreakpoint()
         return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, location, method)
+    }
+}
+
+class KotlinStepIntoRequestHint(
+    stepThread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl,
+    filter: MethodFilter?
+) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, filter) {
+    var lastWasKotlinFakeLineNumber = false
+
+    private companion object {
+        private val LOG = Logger.getInstance(KotlinStepIntoRequestHint::class.java)
+    }
+
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        try {
+            val frameProxy = context.frameProxy ?: return STOP
+            val location = frameProxy.safeLocation()
+            // Continue stepping into if we are at a compiler generated fake line number.
+            if (location != null && isKotlinFakeLineNumber(location)) {
+                lastWasKotlinFakeLineNumber = true
+                return StepRequest.STEP_INTO
+            }
+            // If the last line was a fake line number, the next non-fake line number
+            // is always of interest (otherwise, we wouldn't have had to insert the
+            // fake line number in the first place).
+            if (lastWasKotlinFakeLineNumber) {
+                lastWasKotlinFakeLineNumber = false
+                return STOP
+            }
+            return super.getNextStepDepth(context)
+        } catch (ignored: VMDisconnectedException) {
+        } catch (e: EvaluateException) {
+            LOG.error(e)
+        }
+        return STOP
     }
 }

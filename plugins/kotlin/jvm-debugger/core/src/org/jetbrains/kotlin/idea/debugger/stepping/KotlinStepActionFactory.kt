@@ -24,6 +24,10 @@ class KotlinStepActionFactory(private val debuggerProcess: DebugProcessImpl) {
         return KotlinStepOverCommand(smartStepFilter, StepRequest.STEP_LINE)
     }
 
+    fun createKotlinStepIntoAction(filter: MethodFilter?): KotlinStepIntoCommand {
+        return KotlinStepIntoCommand(filter, StepRequest.STEP_LINE)
+    }
+
     private val debuggerContext: DebuggerContextImpl get() = debuggerProcess.debuggerContext
     private val suspendManager: SuspendManager get() = debuggerProcess.suspendManager
     private val project: Project get() = debuggerProcess.project
@@ -76,14 +80,14 @@ class KotlinStepActionFactory(private val debuggerProcess: DebugProcessImpl) {
         return field.get(debuggerProcess) as T
     }
 
-    inner class KotlinStepOverCommand(private val mySmartStepFilter: KotlinMethodFilter, private val myStepSize: Int) {
-        private fun getContextThread(suspendContext: SuspendContextImpl): ThreadReferenceProxyImpl? {
+    open inner class KotlinStepCommand {
+        protected fun getContextThread(suspendContext: SuspendContextImpl): ThreadReferenceProxyImpl? {
             val contextThread = debuggerContext.threadProxy
             return contextThread ?: suspendContext.thread
         }
 
         // See: ResumeCommand.applyThreadFilter()
-        private fun applyThreadFilter(suspendContext: SuspendContextImpl, thread: ThreadReferenceProxyImpl) {
+        protected fun applyThreadFilter(suspendContext: SuspendContextImpl, thread: ThreadReferenceProxyImpl) {
             if (suspendContext.suspendPolicy == EventRequest.SUSPEND_ALL) {
                 // there could be explicit resume as a result of call to voteSuspend()
                 // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
@@ -95,7 +99,7 @@ class KotlinStepActionFactory(private val debuggerProcess: DebugProcessImpl) {
         }
 
         // See: StepCommand.resumeAction()
-        private fun resumeAction(suspendContext: SuspendContextImpl, thread: ThreadReferenceProxyImpl) {
+        protected fun resumeAction(suspendContext: SuspendContextImpl, thread: ThreadReferenceProxyImpl) {
             if (suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread) {
                 threadBlockedMonitor.startWatching(thread)
             }
@@ -105,7 +109,40 @@ class KotlinStepActionFactory(private val debuggerProcess: DebugProcessImpl) {
                 suspendManager.resume(suspendContext)
             }
         }
+    }
 
+    inner class KotlinStepIntoCommand(private val filter: MethodFilter?, private val myStepSize: Int): KotlinStepCommand() {
+        // See: StepIntoCommand.contextAction()
+        fun contextAction(suspendContext: SuspendContextImpl) {
+            showStatusText(KotlinDebuggerCoreBundle.message("stepping.over.inline"))
+            val stepThread = getContextThread(suspendContext)
+
+            if (stepThread == null) {
+                // TODO: Intellij code doesn't bother to check thread for null, so probably it's not-null actually
+                debuggerProcess.createStepIntoCommand(suspendContext, true, filter).contextAction(suspendContext)
+                return
+            }
+
+            val hint = KotlinStepIntoRequestHint(stepThread, suspendContext, filter)
+            hint.isResetIgnoreFilters = !session.shouldIgnoreSteppingFilters()
+
+            try {
+                session.setIgnoreStepFiltersFlag(stepThread.frameCount())
+            } catch (e: EvaluateException) {
+                LOG.info(e)
+            }
+
+            applyThreadFilter(suspendContext, stepThread)
+
+            doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint)
+
+            showStatusText(KotlinDebuggerCoreBundle.message("process.resumed"))
+            resumeAction(suspendContext, stepThread)
+            debugProcessDispatcher.multicaster.resumed(suspendContext)
+        }
+    }
+
+    inner class KotlinStepOverCommand(private val mySmartStepFilter: KotlinMethodFilter, private val myStepSize: Int): KotlinStepCommand() {
         // See: StepIntoCommand.contextAction()
         fun contextAction(suspendContext: SuspendContextImpl) {
             showStatusText(KotlinDebuggerCoreBundle.message("stepping.over.inline"))

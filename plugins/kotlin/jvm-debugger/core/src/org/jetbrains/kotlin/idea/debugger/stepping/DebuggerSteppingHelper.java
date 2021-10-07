@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.RequestHint;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -29,6 +30,38 @@ import org.jetbrains.kotlin.idea.debugger.SafeUtilKt;
 import java.util.List;
 
 public class DebuggerSteppingHelper {
+
+    public static DebugProcessImpl.ResumeCommand createStepIntoCommand(
+            SuspendContextImpl suspendContext,
+            boolean ignoreBreakpoints,
+            MethodFilter filter
+    ) {
+        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+
+        return debugProcess.new ResumeCommand(suspendContext) {
+            @Override
+            public void contextAction() {
+                StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
+                Location location = frameProxy == null ? null : SafeUtilKt.safeLocation(frameProxy);
+
+                if (location != null) {
+                    KotlinStepAction action = KotlinSteppingCommandProviderKt
+                            .getStepIntoAction(location, filter, suspendContext, frameProxy);
+
+                    createStepRequest(
+                            suspendContext, getContextThread(),
+                            debugProcess.getVirtualMachineProxy().eventRequestManager(),
+                            StepRequest.STEP_LINE, StepRequest.STEP_OUT);
+
+                    action.apply(debugProcess, suspendContext, ignoreBreakpoints);
+                    return;
+                }
+
+                debugProcess.createStepOutCommand(suspendContext).contextAction();
+            }
+        };
+    }
+
     public static DebugProcessImpl.ResumeCommand createStepOverCommand(
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,

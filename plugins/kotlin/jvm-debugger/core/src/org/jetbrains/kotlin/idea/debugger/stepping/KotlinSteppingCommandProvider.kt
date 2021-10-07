@@ -46,6 +46,27 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return getStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
+    override fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl?,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?,
+        stepSize: Int
+    ): DebugProcessImpl.ResumeCommand? {
+        if (suspendContext == null || suspendContext.isResumed) return null
+        val sourcePosition = suspendContext.debugProcess.debuggerContext.sourcePosition ?: return null
+        if (sourcePosition.file !is KtFile) return null
+        return getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    @TestOnly
+    fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl?,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?
+    ): DebugProcessImpl.ResumeCommand? {
+        return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
     @TestOnly
     fun getStepOverCommand(
         suspendContext: SuspendContextImpl,
@@ -139,6 +160,15 @@ private fun findCallsOnPosition(sourcePosition: SourcePosition, filter: (KtCallE
 
 interface KotlinMethodFilter : MethodFilter {
     fun locationMatches(context: SuspendContextImpl, location: Location): Boolean
+}
+
+fun getStepIntoAction(
+    location: Location,
+    smartStepFilter: MethodFilter?,
+    suspendContext: SuspendContextImpl,
+    frameProxy: StackFrameProxyImpl
+): KotlinStepAction {
+    return KotlinStepAction.KotlinStepInto(smartStepFilter)
 }
 
 fun getStepOverAction(
