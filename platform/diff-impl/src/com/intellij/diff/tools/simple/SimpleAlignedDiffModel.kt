@@ -33,7 +33,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
    * Inlay lines mapped to corresponding aligning empty line inlay from other diff side.
    */
   private val emptyInlays = mutableMapOf<InlayId, Inlay<EmptyLineAlignDiffInlayPresentation>>()
-  private val adjustedInlaysHeights = mutableMapOf<SideAndChange, Int>()
+  private val adjustedInlaysHeights = mutableMapOf<SideAndChange, HashSet<InlayHeight>>()
   private val inlayHighlighters = mutableMapOf<Side, MutableList<RangeHighlighter>>()
 
   init {
@@ -120,7 +120,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val inlayEditor = viewer.getEditor(side)
     val changeSide = side.other()
     val changeEditor = viewer.getEditor(changeSide)
-    var height = adjustedInlaysHeights[SideAndChange(side, change)] ?: 0
+    var height = adjustedInlaysHeights[SideAndChange(side, change)]?.sumOf(InlayHeight::height) ?: 0
 
     height += linesToAdd * changeEditor.lineHeight
 
@@ -228,15 +228,11 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
     when (processType) {
       ProcessType.REMOVED -> {
-        changeAlignedInlayHeight(changeIntersection, alignSide, inlay.heightInPixels) { affectedInlay ->
-          affectedInlay.renderer.height - inlay.heightInPixels
-        }
+        changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
         emptyInlays.remove(inlayId)?.let(Disposer::dispose)
       }
       ProcessType.HEIGHT_UPDATED -> {
-        changeAlignedInlayHeight(changeIntersection, alignSide, inlay.heightInPixels) {
-          (changeIntersection as InsideChange).change.calculateDeltaHeight() + inlay.heightInPixels
-        }
+        changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
         emptyInlays[inlayId]?.run { renderer.height = inlay.heightInPixels; update() }
       }
       ProcessType.ADDED -> {
@@ -246,9 +242,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
             addEmptyInlay(inlayId, lineToBeAligned, inlay.heightInPixels, isAboveInlay, alignInlayPriority, parent = inlay)
           }
           is InsideChange -> {
-            changeAlignedInlayHeight(changeIntersection, alignSide, inlay.heightInPixels) { affectedInlay ->
-              affectedInlay.renderer.height + inlay.heightInPixels
-            }
+            changeAlignedInlayHeight(changeIntersection, alignSide, inlay, processType)
             val change = changeIntersection.change
             if (!alignedInlays.containsKey(SideAndChange(alignSide, change))) {
               val alignInlayPriority = if (isAboveInlay) ALIGNED_CHANGE_INLAY_PRIORITY else Int.MIN_VALUE
@@ -274,17 +268,33 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
            DiffUtil.getLineCount(alignEditor.document) <= DiffUtil.getLineCount(inlayEditor.document)
   }
 
-  private fun changeAlignedInlayHeight(changeIntersection: ChangeIntersection, side: Side, inlayHeight: Int,
-                                       heightCalculator: (Inlay<ChangeAlignDiffInlayPresentation>) -> Int) {
+  private fun changeAlignedInlayHeight(changeIntersection: ChangeIntersection, side: Side, inlay: Inlay<*>, processType: ProcessType) {
     if (changeIntersection !is InsideChange) return
 
     val change = changeIntersection.change
+    val inlayHeight = inlay.heightInPixels
+    val inlayId = InlayId(side, inlay.offset, inlay.id)
 
     val sideAndChange = SideAndChange(side, change)
     alignedInlays[sideAndChange]
       ?.run {
-        renderer.height = heightCalculator(this)
-        adjustedInlaysHeights[sideAndChange] = inlayHeight
+        val storedInlaysHeights = adjustedInlaysHeights.getOrPut(sideAndChange) { hashSetOf() }
+        val storedInlayHeight = storedInlaysHeights.find { it.id == inlayId } ?: InlayHeight(inlayId, inlayHeight)
+
+        when (processType) {
+          ProcessType.REMOVED -> {
+            storedInlaysHeights.removeIf { it.id == storedInlayHeight.id }
+            renderer.height -= inlayHeight
+          }
+          ProcessType.ADDED -> {
+            storedInlaysHeights.add(storedInlayHeight)
+            renderer.height += inlayHeight
+          }
+          ProcessType.HEIGHT_UPDATED -> {
+            storedInlayHeight.height = inlayHeight
+            renderer.height = change.calculateDeltaHeight() + storedInlaysHeights.sumOf(InlayHeight::height)
+          }
+        }
         update()
       }
   }
@@ -322,6 +332,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     object NoIntersection : ChangeIntersection()
   }
 
+  private data class InlayHeight(val id: InlayId, var height: Int)
   private data class InlayId(val side: Side, val offset: Int, val id: Long)
   private data class SideAndChange(val side: Side, val change: SimpleDiffChange) {
     override fun equals(other: Any?): Boolean {
