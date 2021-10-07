@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiElement;
@@ -189,9 +190,16 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (contextType instanceof ContextType.UNSURE && !myConsiderUnknownContextBlocking) {
         fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix());
       }
-      myHolder.registerProblem(elementToHighLight,
-                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"),
-                               fixesStream.toArray(LocalQuickFix.EMPTY_ARRAY));
+
+      String message;
+      if (contextType instanceof ContextType.NONBLOCKING && StringUtil.isNotEmpty(((ContextType.NONBLOCKING)contextType).getDescription())) {
+        String contextDescription = ((ContextType.NONBLOCKING)contextType).getDescription();
+        message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.wildcard.descriptor", contextDescription);
+      }
+      else {
+        message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor");
+      }
+      myHolder.registerProblem(elementToHighLight, message, fixesStream.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
