@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,4 +47,12 @@ public abstract class ActionOnSaveInfoProvider {
    * @see ActionOnSaveContext
    */
   protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context);
+
+  /**
+   * Strings that help to find 'Actions on Save' page when using 'Find Action' or 'Search Everywhere' or when using a search field in
+   * Settings (Preferences). Typically, implementations return a singleton list with {@link ActionOnSaveInfo#getActionOnSaveName()}.
+   */
+  public Collection<String> getSearchableOptions() {
+    return Collections.emptyList();
+  }
 }
