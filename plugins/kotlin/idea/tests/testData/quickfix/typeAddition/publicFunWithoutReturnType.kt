@@ -4,3 +4,4 @@ package a
 class A() {
     public fun <caret>foo() = "a"
 }
+/* IGNORE_FIR */

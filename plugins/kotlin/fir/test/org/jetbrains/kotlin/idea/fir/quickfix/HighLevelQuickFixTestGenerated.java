@@ -2223,6 +2223,109 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeAddition")
+    public static class TypeAddition extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ambiguousFunctionReturnType.kt")
+        public void testAmbiguousFunctionReturnType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/ambiguousFunctionReturnType.kt");
+        }
+
+        @TestMetadata("ambiguousPropertyReturnType.kt")
+        public void testAmbiguousPropertyReturnType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/ambiguousPropertyReturnType.kt");
+        }
+
+        @TestMetadata("changeAccessorTypeToFunctionType.kt")
+        public void testChangeAccessorTypeToFunctionType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/changeAccessorTypeToFunctionType.kt");
+        }
+
+        @TestMetadata("noAddErrorType.kt")
+        public void testNoAddErrorType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/noAddErrorType.kt");
+        }
+
+        @TestMetadata("propertyHasType.kt")
+        public void testPropertyHasType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyHasType.kt");
+        }
+
+        @TestMetadata("propertyWithGetterWithBlockBody.kt")
+        public void testPropertyWithGetterWithBlockBody() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyWithGetterWithBlockBody.kt");
+        }
+
+        @TestMetadata("propertyWithGetterWithInferredType.kt")
+        public void testPropertyWithGetterWithInferredType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyWithGetterWithInferredType.kt");
+        }
+
+        @TestMetadata("propertyWithGetterWithoutType.kt")
+        public void testPropertyWithGetterWithoutType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyWithGetterWithoutType.kt");
+        }
+
+        @TestMetadata("propertyWithRecursiveGetter.kt")
+        public void testPropertyWithRecursiveGetter() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyWithRecursiveGetter.kt");
+        }
+
+        @TestMetadata("propertyWithSetterWithoutType.kt")
+        public void testPropertyWithSetterWithoutType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/propertyWithSetterWithoutType.kt");
+        }
+
+        @TestMetadata("protectedFunWithoutReturnType.kt")
+        public void testProtectedFunWithoutReturnType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/protectedFunWithoutReturnType.kt");
+        }
+
+        @TestMetadata("publicFunWithoutBody.kt")
+        public void testPublicFunWithoutBody() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/publicFunWithoutBody.kt");
+        }
+
+        @TestMetadata("publicFunWithoutReturnType.kt")
+        public void testPublicFunWithoutReturnType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/publicFunWithoutReturnType.kt");
+        }
+
+        @TestMetadata("publicFunWithoutReturnTypeCaretOnParameter.kt")
+        public void testPublicFunWithoutReturnTypeCaretOnParameter() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/publicFunWithoutReturnTypeCaretOnParameter.kt");
+        }
+
+        @TestMetadata("publicValWithoutReturnType.kt")
+        public void testPublicValWithoutReturnType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/publicValWithoutReturnType.kt");
+        }
+
+        @TestMetadata("publicValWithoutReturnTypeCaretOnPublic.kt")
+        public void testPublicValWithoutReturnTypeCaretOnPublic() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/publicValWithoutReturnTypeCaretOnPublic.kt");
+        }
+
+        @TestMetadata("wrongGetterParameterType.kt")
+        public void testWrongGetterParameterType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/wrongGetterParameterType.kt");
+        }
+
+        @TestMetadata("wrongGetterParameterTypeLongNameRuntime.kt")
+        public void testWrongGetterParameterTypeLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/wrongGetterParameterTypeLongNameRuntime.kt");
+        }
+
+        @TestMetadata("wrongSetterParameterType.kt")
+        public void testWrongSetterParameterType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeAddition/wrongSetterParameterType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/casts")
     public static class Casts extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
