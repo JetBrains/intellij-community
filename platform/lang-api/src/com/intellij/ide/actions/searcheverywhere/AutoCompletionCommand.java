@@ -10,5 +10,4 @@ public interface AutoCompletionCommand {
   void completeQuery(JTextComponent textComponent);
 
   @NlsSafe String getPresentationString();
-
 }

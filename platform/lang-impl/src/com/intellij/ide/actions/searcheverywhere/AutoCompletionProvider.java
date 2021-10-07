@@ -22,14 +22,17 @@ import java.util.stream.Collectors;
 
 final class AutoCompletionProvider {
 
-  public static List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors, JTextComponent textComponent) {
+  public static List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,
+                                                                             JTextComponent textComponent) {
     StubContributor stubContributor = new StubContributor(textComponent);
     return ContainerUtil.map(
       getCompletions(contributors, textComponent),
       command -> new SearchEverywhereFoundElementInfo(command, 0, stubContributor));
   }
 
-  private static List<AutoCompletionCommand> getCompletions(Collection<SearchEverywhereContributor<?>> contributors, JTextComponent textComponent) {
+  private static List<AutoCompletionCommand> getCompletions(Collection<SearchEverywhereContributor<?>> contributors,
+                                                            JTextComponent textComponent) {
+
     return contributors.stream()
       .filter(c -> c instanceof AutoCompletionContributor)
       .map(c -> ((AutoCompletionContributor)c))
@@ -67,7 +70,7 @@ final class AutoCompletionProvider {
     @Override
     public void fetchElements(@NotNull String pattern,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Processor<? super AutoCompletionCommand> consumer) {}
+                              @NotNull Processor<? super AutoCompletionCommand> consumer) { }
 
     @Override
     public boolean processSelectedItem(@NotNull AutoCompletionCommand selected,
@@ -118,7 +121,7 @@ final class AutoCompletionProvider {
         setBackground(isSelected ? list.getSelectionBackground() : null);
       }
 
-      SimpleTextAttributes baseStyle = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,  list.getForeground());
+      SimpleTextAttributes baseStyle = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground());
       appendHTML(value.getPresentationString(), baseStyle);
 
       return this;
@@ -137,5 +140,4 @@ final class AutoCompletionProvider {
       }
     }
   }
-
 }

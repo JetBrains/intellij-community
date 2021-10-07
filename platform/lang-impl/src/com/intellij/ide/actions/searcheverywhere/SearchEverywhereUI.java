@@ -131,8 +131,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                 ? new MixedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders)
-                 : new GroupedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run), equalityProviders);
+                 ? new MixedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run),
+                                            equalityProviders)
+                 : new GroupedResultsSearcher(myBufferedListener, run -> ApplicationManager.getApplication().invokeLater(run),
+                                              equalityProviders);
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
@@ -297,12 +299,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
-        SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
-        Object item = myListModel.getElementAt(i);
-        //noinspection ConstantConditions
-        Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
-        return (PsiElement)psi;
-      })
+          SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+          Object item = myListModel.getElementAt(i);
+          //noinspection ConstantConditions
+          Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
+          return (PsiElement)psi;
+        })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
       return PsiUtilCore.toPsiElementArray(elements);
@@ -310,11 +312,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     //item-specific data section--------------
     return indicesStream.mapToObj(i -> {
-      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
-      Object item = myListModel.getElementAt(i);
-      //noinspection ConstantConditions
-      return contributor.getDataForItem(item, dataId);
-    })
+        SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+        Object item = myListModel.getElementAt(i);
+        //noinspection ConstantConditions
+        return contributor.getDataForItem(item, dataId);
+      })
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
@@ -1178,7 +1180,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (pattern.isEmpty()) return;
       emptyStatus.appendLine(getNotFoundText());
 
-      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+      boolean showFindInFilesAction =
+        myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
       boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
       boolean anyActionAllowed = showFindInFilesAction || showResetScope || showResetFilter;
@@ -1192,7 +1195,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (showResetScope) {
         ActionListener resetScopeListener = e -> myHeader.resetScope();
         emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.reset.scope"));
-        emptyStatus.appendText(" "+StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
+        emptyStatus.appendText(" " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, resetScopeListener);
         firstPartAdded.set(true);
         actionsPrinted.incrementAndGet();
@@ -1293,7 +1296,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     @Override
     public void fetchElements(@NotNull String pattern,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Processor<? super Object> consumer) {}
+                              @NotNull Processor<? super Object> consumer) { }
 
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {

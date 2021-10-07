@@ -6,5 +6,4 @@ import java.util.List;
 public interface AutoCompletionContributor {
 
   List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition);
-
 }
