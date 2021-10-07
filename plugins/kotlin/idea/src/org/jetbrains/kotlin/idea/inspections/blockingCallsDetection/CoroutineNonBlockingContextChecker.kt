@@ -84,7 +84,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             if (type.isBuiltinFunctionalType) {
                 val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
                     ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
-                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NonBlocking else Blocking
+                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NonBlocking.INSTANCE else Blocking
             }
         }
 
@@ -93,12 +93,12 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
                 .take(2)
                 .firstOrNull { function -> function.nameIdentifier != null }
                 ?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
-            return if (isInSuspendFunctionBody) NonBlocking else Blocking
+            return if (isInSuspendFunctionBody) NonBlocking.INSTANCE else Blocking
         }
         val containingPropertyOrFunction: KtCallableDeclaration? =
             containingLambda.getParentOfTypes(true, KtProperty::class.java, KtNamedFunction::class.java)
-        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NonBlocking
-        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NonBlocking else Blocking
+        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NonBlocking.INSTANCE
+        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NonBlocking.INSTANCE else Blocking
     }
 
     private fun checkBlockingFriendlyDispatcherUsed(
@@ -147,7 +147,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     ): ContextType {
         val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_PACKAGE_FQN)
         if (!isInsideFlow) return Unsure
-        val flowOnCall = callExpression.findFlowOnCall() ?: return NonBlocking
+        val flowOnCall = callExpression.findFlowOnCall() ?: return NonBlocking.INSTANCE
         return checkBlockFriendlyDispatcherParameter(flowOnCall)
     }
 
@@ -179,12 +179,12 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         if (hasBlockingAnnotation) return Blocking
 
         val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_EXECUTOR_ANNOTATION))
-        if (hasNonBlockingAnnotation) return NonBlocking
+        if (hasNonBlockingAnnotation) return NonBlocking.INSTANCE
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking
+        val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
         return when(fqnOrNull) {
             IO_DISPATCHER_FQN -> Blocking
-            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking
+            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking.INSTANCE
             else -> Unsure
         }
     }
