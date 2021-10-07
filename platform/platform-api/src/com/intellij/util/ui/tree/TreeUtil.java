@@ -1337,9 +1337,8 @@ public final class TreeUtil {
     return getLastUserObject(AbstractTreeNode.class, path);
   }
 
-  @Nullable
-  public static TreePath getSelectedPathIfOne(@NotNull JTree tree) {
-    TreePath[] paths = tree.getSelectionPaths();
+  public static @Nullable TreePath getSelectedPathIfOne(@Nullable JTree tree) {
+    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
   }
 
