@@ -14,12 +14,11 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
@@ -166,8 +165,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun addDescription(@Nls s: String?) {
-    val htmlBody = UIUtil.toHtml(StringUtil.notNullize(s))
-    rightPanel.add(JLabel(htmlBody), "growy, width 200:300:300")
+    val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
+    rightPanel.add(htmlLabel, "growy, width 200:300:300")
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
