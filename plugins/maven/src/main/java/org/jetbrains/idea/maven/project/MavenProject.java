@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -640,30 +639,6 @@ public class MavenProject {
                                            @NotNull MavenProjectReader reader,
                                            @NotNull MavenProjectReaderProjectLocator locator) {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
-  }
-
-  public @NotNull Pair<MavenProjectChanges, NativeMavenProjectHolder> resolve(@NotNull Project project,
-                                                                              @NotNull MavenGeneralSettings generalSettings,
-                                                                              @NotNull MavenEmbedderWrapper embedder,
-                                                                              @NotNull MavenProjectReader reader,
-                                                                              @NotNull MavenProjectReaderProjectLocator locator,
-                                                                              @NotNull ResolveContext context)
-    throws MavenProcessCanceledException {
-    Collection<MavenProjectReaderResult> results = reader.resolveProject(generalSettings,
-                                                                         embedder,
-                                                                         Collections.singleton(getFile()),
-                                                                         getActivatedProfilesIds(),
-                                                                         locator);
-    MavenUtil.notifySyncForUnresolved(project, results);
-    final MavenProjectReaderResult result = results.iterator().next();
-    MavenProjectChanges changes = set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
-
-    if (result.nativeMavenProject != null) {
-      for (MavenImporter eachImporter : getSuitableImporters()) {
-        eachImporter.resolve(project, this, result.nativeMavenProject, embedder, context);
-      }
-    }
-    return Pair.create(changes, result.nativeMavenProject);
   }
 
   public @NotNull Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,

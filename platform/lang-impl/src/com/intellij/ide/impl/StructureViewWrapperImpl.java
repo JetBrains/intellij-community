@@ -12,7 +12,9 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -42,6 +44,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.BitUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -190,22 +193,37 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     if (WRAPPER_DATA_KEY.getData(dataContext) == this) return;
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
-    VirtualFile[] files = insideToolwindow ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (files != null && files.length == 1) {
-      setFile(files[0]);
-    }
-    else if (files != null && files.length > 1) {
-      setFile(null);
-    }
-    else if (myFirstRun) {
-      FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
-      List<Pair<VirtualFile, EditorWindow>> history = editorManager.getSelectionHistory();
-      if (!history.isEmpty()) {
-        setFile(history.get(0).getFirst());
+    if (insideToolwindow) {
+      if (myFirstRun) {
+        setFileFromSelectionHistory();
+        myFirstRun = false;
       }
     }
+    else {
+      DataContext asyncDataContext = Utils.wrapDataContext(dataContext);
+      ReadAction.nonBlocking(() -> CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext))
+        .finishOnUiThread(ModalityState.defaultModalityState(), files -> {
+          if (files != null && files.length == 1) {
+            setFile(files[0]);
+          }
+          else if (files != null && files.length > 1) {
+            setFile(null);
+          }
+          else if (myFirstRun) {
+            setFileFromSelectionHistory();
+          }
+          myFirstRun = false;
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+  }
 
-    myFirstRun = false;
+  private void setFileFromSelectionHistory() {
+    FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+    List<Pair<VirtualFile, EditorWindow>> history = editorManager.getSelectionHistory();
+    if (!history.isEmpty()) {
+      setFile(history.get(0).getFirst());
+    }
   }
 
   private void setFile(@Nullable VirtualFile file) {

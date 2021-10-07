@@ -6,7 +6,6 @@ import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -38,7 +37,9 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
 import java.io.File
+import javax.swing.JButton
 import javax.swing.JDialog
+import javax.swing.JList
 
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
   override val existedFile = "git/simple_cat.yml"
@@ -102,7 +103,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       firstShowBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.1", strong(main), action(it)))
-      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 0))
       triggerOnBranchesPopupShown()
     }
 
@@ -115,7 +116,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       before {
         curBranchName = repository.currentBranchName ?: error("Not found information about active branch")
       }
-      text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(GitBundle.message("branches.checkout"))))
+      val checkoutItemText = GitBundle.message("branches.checkout")
+      text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
+      highlightListItemAndRehighlight { item -> item.toString() == checkoutItemText }
       stateCheck { repository.currentBranchName == main }
       restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
@@ -138,6 +141,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.confirm.update", strong(CommonBundle.getOkButtonText())))
+      triggerByUiComponentAndHighlight { ui: JButton ->
+        ui.text == CommonBundle.getOkButtonText()
+      }
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
@@ -152,13 +158,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       proceedLink()
     }
 
+    task {
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == main }
+    }
+
     lateinit var secondShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
       secondShowBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.2", strong(branchName), strong(main), action(it)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
-        ui.text == main
-      }
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
       triggerOnBranchesPopupShown()
     }
 
@@ -171,7 +179,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.branch",
                                                     GitBranchPopupActions.getCurrentBranchTruncatedPresentation(project, repositories))
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
-      triggerByListItemAndHighlight { item -> item.toString().contains(checkoutAndRebaseText) }
+      highlightListItemAndRehighlight { item -> item.toString().contains(checkoutAndRebaseText) }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
       restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
@@ -216,6 +224,20 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
                                                   DvcsUtil.getShortRepositoryName(repository))
       ui.text?.contains(branchesInRepoText) == true
+    }
+  }
+
+  private fun TaskContext.highlightListItemAndRehighlight(checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
+    var showedList: JList<*>? = null
+    triggerByPartOfComponent l@{ ui: JList<*> ->
+      val ind = (0 until ui.model.size).find { checkList(ui.model.getElementAt(it)) } ?: return@l null
+      showedList = ui
+      ui.getCellBounds(ind, ind)
+    }
+    // it is a hack: restart current task to highlight list item when it will be shown again
+    // rehighlightPreviousUi property can not be used in this case, because I can't highlight this list item in the previous task
+    restoreState(restoreId = taskId) {
+      showedList != null && !showedList!!.isShowing
     }
   }
 

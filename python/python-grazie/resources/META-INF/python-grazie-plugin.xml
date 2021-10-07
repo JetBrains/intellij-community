@@ -2,5 +2,6 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="Python" implementationClass="com.intellij.grazie.ide.language.python.PythonTextExtractor"/>
     <problemFilter language="Python" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
+    <disableChecking language="Python"/>
   </extensions>
 </idea-plugin>

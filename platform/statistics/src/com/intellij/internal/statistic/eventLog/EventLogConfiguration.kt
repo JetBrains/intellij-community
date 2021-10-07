@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
@@ -25,7 +27,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
@@ -114,7 +115,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   val bucket: Int = deviceId.asBucket()
 
   private val salt: ByteArray = getOrGenerateSalt()
-  private val anonymizedCache = ConcurrentHashMap<String, String>()
+  private val anonymizedCache: AnonymizedIdsCache = AnonymizedIdsCache()
   private val machineIdReference: AtomicLazyValue<MachineId>
 
   val machineId: MachineId
@@ -214,5 +215,13 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       EventLogConfiguration.LOG.info("Generating new salt for $recorderId")
     }
     return salt
+  }
+}
+
+private class AnonymizedIdsCache {
+  private val cache: Cache<String, String> = Caffeine.newBuilder().maximumSize(200).build()
+
+  fun computeIfAbsent(data: String, mappingFunction: (String) -> String): String {
+    return cache.get(data, mappingFunction)
   }
 }

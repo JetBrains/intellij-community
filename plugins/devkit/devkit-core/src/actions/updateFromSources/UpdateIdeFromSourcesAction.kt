@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -61,7 +62,7 @@ internal open class UpdateIdeFromSourcesAction
 @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
              else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
-             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
+             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware, UpdateInBackground {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {

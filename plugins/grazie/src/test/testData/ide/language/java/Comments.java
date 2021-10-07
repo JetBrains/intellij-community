@@ -33,4 +33,20 @@ class ForMultiLanguageSupport {
   // We don't use the PHP php_strip_whitespace() function
 
   // If Content-Type is set to text/html, or is unset -> html
+
+  /*
+  for(;;)
+  {
+      ...
+  }
+  */
+
+  // // We have an "hours" value of 42, when...
+
+  // Test various properties of <TYPO>igamma</TYPO> & <TYPO>igammac</TYPO>.  These are normalized
+  // gamma integrals where
+  //   <TYPO>igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
+  //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
+
+  // value between hours and minutes (":" is used by default)
 }

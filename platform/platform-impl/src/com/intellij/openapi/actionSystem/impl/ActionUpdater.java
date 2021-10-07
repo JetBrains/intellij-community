@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
@@ -35,10 +36,8 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.PaintEvent;
-import java.util.List;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -109,9 +108,9 @@ final class ActionUpdater {
                   Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, updateOp),
-      group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
-    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
+      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
+      group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
+    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
 
     LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
                    "beforeActionPerformed requested in '" + myPlace + "'");
@@ -259,6 +258,9 @@ final class ActionUpdater {
         this::applyPresentationChanges, ModalityState.any(), disposableParent.getDisposed());
     });
 
+    if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
+      cancelAllUpdates("fast-track requested by '" + myPlace + "'");
+    }
     if (myToolbarAction) {
       cancelOnUserActivity(promise, disposableParent);
     }
@@ -283,18 +285,21 @@ final class ActionUpdater {
       });
     };
     ourPromises.add(promise);
+    ClientId clientId = ClientId.getCurrent();
     ourExecutor.execute(() -> {
       boolean[] success = {false};
       try {
-        ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
-          success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-            applicationEx,
-            () -> cancelPromise(promise, "write-action requested"),
-            () -> applicationEx.tryRunReadAction(runnable)), indicator);
-        if (!success[0] && !promise.isDone()) {
-          cancelPromise(promise, "read-action unavailable");
-        }
+        ClientId.withClientId(clientId, () -> {
+          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
+            success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+              applicationEx,
+              () -> cancelPromise(promise, "write-action requested"),
+              () -> applicationEx.tryRunReadAction(runnable)), indicator);
+          if (!success[0] && !promise.isDone()) {
+            cancelPromise(promise, "read-action unavailable");
+          }
+        });
       }
       catch (Throwable e) {
         if (!promise.isDone()) {
@@ -349,9 +354,10 @@ final class ActionUpdater {
                                            @NotNull Disposable disposableParent) {
     Disposable disposable = Disposer.newDisposable("Action Update");
     Disposer.register(disposableParent, disposable);
-    IdeEventQueue.getInstance().addPostprocessor(e -> {
-      if (e instanceof ComponentEvent && !(e instanceof PaintEvent) && (e.getID() & AWTEvent.MOUSE_MOTION_EVENT_MASK) == 0) {
-        cancelPromise(promise, e);
+    IdeEventQueue.getInstance().addPostprocessor(event -> {
+      if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
+        cancelPromise(promise, event);
       }
       return false;
     }, disposable);
@@ -483,7 +489,6 @@ final class ActionUpdater {
     if (myEventTransform != null) {
       event = myEventTransform.apply(event);
     }
-    event.setInjectedContext(action.isInInjectedContext());
     event.setUpdateSession(asUpdateSession());
     return event;
   }
@@ -535,14 +540,14 @@ final class ActionUpdater {
       .filter(o -> !isDumb || o.isDumbAware());
   }
 
-  private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {
+  private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
+    if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
     String id = ActionManager.getInstance().getId(action);
-    if (id != null) {
-      LOG.error("update failed for AnAction(" + action.getClass().getName() + ") with ID=" + id, exc);
-    }
-    else {
-      LOG.error("update failed for ActionGroup: " + action + "[" + presentation.getText() + "]", exc);
-    }
+    String text = event == null ? null : event.getPresentation().getText();
+    String message = op.name() + " failed for " + (action instanceof ActionGroup ? "ActionGroup" : "AnAction") +
+                     "(" + action.getClass().getName() + (id != null ? ", id=" + id : "") + ")" +
+                     (StringUtil.isNotEmpty(text) ? " with text=" + event.getPresentation().getText() : "");
+    LOG.error(message, ex);
   }
 
   private @Nullable Presentation update(AnAction action, UpdateStrategy strategy) {
@@ -564,24 +569,33 @@ final class ActionUpdater {
                           AnActionEvent e,
                           boolean beforeActionPerformed) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
-
-    long startTime = System.currentTimeMillis();
-    final boolean result;
     try {
-      result = !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
+      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
     }
-    catch (ProcessCanceledException ex) {
-      throw ex;
-    }
-    catch (Throwable exc) {
-      handleUpdateException(action, e.getPresentation(), exc);
+    catch (Throwable ex) {
+      handleException(beforeActionPerformed ? Op.beforeActionPerformedUpdate : Op.update, action, e, ex);
       return false;
     }
-    long endTime = System.currentTimeMillis();
-    if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
-      LOG.debug("'" + e.getPlace() + "' (" + action + "): updated in " + (endTime - startTime) + " ms");
+  }
+
+  private static AnAction @NotNull [] doGetChildren(@NotNull ActionGroup group, @Nullable AnActionEvent e) {
+    try {
+      return group.getChildren(e);
     }
-    return result;
+    catch (Throwable ex) {
+      handleException(Op.getChildren, group, e, ex);
+      return AnAction.EMPTY_ARRAY;
+    }
+  }
+
+  private static boolean doCanBePerformed(@NotNull ActionGroup group, @NotNull DataContext context) {
+    try {
+      return group.canBePerformed(context);
+    }
+    catch (Throwable ex) {
+      handleException(Op.canBePerformed, group, null, ex);
+      return true;
+    }
   }
 
   private static final ConcurrentMap<AsyncPromise<?>, String> ourDebugPromisesMap = CollectionFactory.createConcurrentWeakIdentityMap();
@@ -602,7 +616,12 @@ final class ActionUpdater {
       String message = "'" + place + "' update cancelled: " + reason;
       LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
     }
-    promise.cancel();
+    if (promise instanceof AsyncPromise) {
+      ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));
+    }
+    else {
+      promise.cancel();
+    }
   }
 
   private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }

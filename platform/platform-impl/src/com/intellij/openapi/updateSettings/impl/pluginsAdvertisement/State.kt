@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -19,6 +18,8 @@ import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.containers.orNull
 import com.intellij.util.xmlb.annotations.Tag
@@ -74,6 +75,8 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
     @JvmStatic
     fun getFullExtension(file: VirtualFile): String? = file.extension?.let { "*.$it" }
 
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     private fun requestCompatiblePlugins(
       extensionOrFileName: String,
       dataSet: Set<PluginData>,
@@ -135,10 +138,9 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
     state[matcher.presentableString] = descriptor
   }
 
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   fun updateCache(extensionOrFileName: String): Boolean {
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
-
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }

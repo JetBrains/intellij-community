@@ -158,7 +158,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   void requestToUpdateWarning() {
     myValidationRequested = false;
-    if (isInplaceValidationSupported()) return;
+    if (myComponent == null || isInplaceValidationSupported()) return;
 
     addValidationRequest();
   }

@@ -241,7 +241,7 @@ class FileTemplatesLoader implements Disposable {
         URL descriptionUrl = descriptionPath == null ? null :
                              URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
         assert templateUrl != null;
-        result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
+        result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl, descriptionPath));
         // FTManagers loop
         break;
       }

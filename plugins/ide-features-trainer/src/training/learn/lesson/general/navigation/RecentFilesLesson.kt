@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -14,11 +13,11 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -72,7 +71,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("RecentFiles") {
       text(LessonsBundle.message("recent.files.show.recent.files", action(it)))
-      triggerOnLabelShown(IdeBundle.message("title.popup.recent.files"))
+      triggerOnRecentFilesShown()
       test { actions(it) }
     }
 
@@ -104,7 +103,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("RecentFiles") {
       text(LessonsBundle.message("recent.files.use.recent.files.again", action(it)))
-      triggerOnLabelShown(IdeBundle.message("title.popup.recent.files"))
+      triggerOnRecentFilesShown()
       test { actions(it) }
     }
 
@@ -137,7 +136,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("RecentLocations") {
       text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
-      triggerOnLabelShown(IdeBundle.message("recent.locations.popup.title"))
+      val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
+      triggerByUiComponentAndHighlight(false, false) { ui: SimpleColoredComponent ->
+        ui.getCharSequence(true).contains(recentLocationsText)
+      }
       test { actions(it) }
     }
 
@@ -185,7 +187,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
                 }
               }
             }
-            invokeLater { completeStep() }
+            taskInvokeLater { completeStep() }
           }
         }
 
@@ -210,9 +212,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     return enteredPrefix.equals(expected, ignoreCase = true)
   }
 
-  private fun TaskContext.triggerOnLabelShown(@Nls labelText: String) {
+  private fun TaskContext.triggerOnRecentFilesShown() {
+    val recentFilesText = IdeBundle.message("title.popup.recent.files")
     triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
-      ui.text?.contains(labelText) == true
+      ui.text?.contains(recentFilesText) == true
     }
   }
 

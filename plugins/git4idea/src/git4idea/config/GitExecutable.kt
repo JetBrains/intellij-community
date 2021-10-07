@@ -39,7 +39,7 @@ sealed class GitExecutable {
   abstract fun convertFilePathBack(path: String, workingDir: File): File
 
   @Throws(ExecutionException::class)
-  abstract fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean)
+  abstract fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext)
 
   @Throws(ExecutionException::class)
   abstract fun createBundledCommandLine(project: Project?, vararg command: String): GeneralCommandLine
@@ -61,9 +61,9 @@ sealed class GitExecutable {
       return workingDir.resolve(path)
     }
 
-    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
-      if (withLowPriority) ExecUtil.setupLowPriorityExecution(commandLine)
-      if (withNoTty) ExecUtil.setupNoTtyExecution(commandLine)
+    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
+      if (executableContext.isWithLowPriority) ExecUtil.setupLowPriorityExecution(commandLine)
+      if (executableContext.isWithNoTty) ExecUtil.setupNoTtyExecution(commandLine)
     }
 
     override fun createBundledCommandLine(project: Project?, vararg command: String): GeneralCommandLine {
@@ -119,8 +119,8 @@ sealed class GitExecutable {
       return File(distribution.uncRoot, path)
     }
 
-    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
-      if (withNoTty) {
+    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
+      if (executableContext.isWithNoTty) {
         val executablePath = commandLine.exePath
         commandLine.exePath = "setsid"
         if (Registry.`is`("git.use.setsid.wait.for.wsl.ssh")) {
@@ -139,17 +139,17 @@ sealed class GitExecutable {
       //}
       //commandLine.exePath = executable
 
-      patchWslExecutable(handler.project(), commandLine)
+      patchWslExecutable(handler.project(), commandLine, executableContext.wslOptions)
     }
 
     override fun createBundledCommandLine(project: Project?, vararg command: String): GeneralCommandLine {
       val commandLine = GeneralCommandLine(*command)
-      patchWslExecutable(project, commandLine)
+      patchWslExecutable(project, commandLine, null)
       return commandLine
     }
 
-    private fun patchWslExecutable(project: Project?, commandLine: GeneralCommandLine) {
-      val options = WSLCommandLineOptions()
+    private fun patchWslExecutable(project: Project?, commandLine: GeneralCommandLine, wslOptions: WSLCommandLineOptions?) {
+      val options = wslOptions ?: WSLCommandLineOptions()
       if (Registry.`is`("git.wsl.exe.executable.no.shell")) {
         options.isLaunchWithWslExe = true
         options.isExecuteCommandInShell = false
@@ -169,7 +169,7 @@ sealed class GitExecutable {
     override fun convertFilePath(file: File): String = file.absolutePath
     override fun convertFilePathBack(path: String, workingDir: File): File = File(path)
 
-    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
+    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
       throw ExecutionException(errorMessage)
     }
 

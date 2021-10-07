@@ -13,7 +13,7 @@ class MarkdownConfigureImageIntentionOutsideMarkdownTest: BasePlatformTestCase()
     myFixture.configureByFile(getTestFileName())
     // Workaround for org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention.SettingsListener
     (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
-    val intentions = myFixture.filterAvailableIntentions(MarkdownBundle.message("markdown.configure.image.intention.name"))
+    val intentions = myFixture.filterAvailableIntentions(MarkdownBundle.message("markdown.configure.image.text"))
     assertEmpty(intentions)
   }
 

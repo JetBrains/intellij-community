@@ -32,7 +32,7 @@ internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMark
     val image = obtainOuterElement(element) ?: return null
     return ConfigureImageDialog(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
+      MarkdownBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       linkTitle = image.collectLinkTitleText(),
       linkDescriptionText = image.collectLinkDescriptionText(),
@@ -69,7 +69,7 @@ internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMark
     }
     WriteCommandAction.runWriteCommandAction(
       project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
+      MarkdownBundle.message("markdown.configure.image.title.text"),
       null,
       action
     )

@@ -29,7 +29,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundleIndependent
+import org.jetbrains.kotlin.idea.KotlinIndependentBundle
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
+import org.jetbrains.kotlin.idea.search.isPotentiallyOperator
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -259,7 +260,12 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             val uniqueProcessor = CommonProcessors.UniqueProcessor(processor)
 
             if (options.isUsages) {
-                val kotlinSearchOptions = createKotlinReferencesSearchOptions(options, forHighlight)
+                val baseKotlinSearchOptions = createKotlinReferencesSearchOptions(options, forHighlight)
+                val kotlinSearchOptions = if (element.isPotentiallyOperator()) {
+                    baseKotlinSearchOptions
+                } else {
+                    baseKotlinSearchOptions.copy(searchForOperatorConventions = false)
+                }
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
 
                 addTask { applyQueryFilters(element, options, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
@@ -336,7 +342,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
         private const val DISABLE_ONCE = "DISABLE_ONCE"
         private const val DISABLE = "DISABLE"
-        private val DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT = KotlinBundleIndependent.message(
+        private val DISABLE_COMPONENT_AND_DESTRUCTION_SEARCH_TEXT = KotlinIndependentBundle.message(
             "find.usages.text.find.usages.for.data.class.components.and.destruction.declarations",
             DISABLE_ONCE,
             DISABLE

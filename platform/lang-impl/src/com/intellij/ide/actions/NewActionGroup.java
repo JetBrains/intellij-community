@@ -29,26 +29,32 @@ import java.util.function.Predicate;
 /**
  * @author Dmitry Avdeev
  */
-public class NewActionGroup extends ActionGroup {
+public class NewActionGroup extends ActionGroup implements UpdateInBackground {
   @NonNls private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
+  public boolean isUpdateInBackground() {
+    AnAction g1 = ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+    AnAction g2 = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
+    return (g1 == null || UpdateInBackground.isUpdateInBackground(g1)) &&
+           (g2 == null || UpdateInBackground.isUpdateInBackground(g2));
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    AnAction[] actions = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW)).getChildren(e);
-    if (e == null || ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      AnAction newGroup = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
-      if (newGroup != null) {
-        AnAction[] newProjectActions = ((ActionGroup)newGroup).getChildren(e);
-        if (newProjectActions.length > 0) {
-          List<AnAction> mergedActions = new ArrayList<>(newProjectActions.length + 1 + actions.length);
-          Collections.addAll(mergedActions, newProjectActions);
-          mergedActions.add(Separator.getInstance());
-          Collections.addAll(mergedActions, actions);
-          return mergedActions.toArray(AnAction.EMPTY_ARRAY);
-        }
-      }
-    }
-    return actions;
+    boolean addG2 = e == null || ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
+    AnAction g1 = ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+    AnAction g2 = addG2 ? ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID) : null;
+
+    AnAction[] actions1 = g1 instanceof ActionGroup ? ((ActionGroup)g1).getChildren(e) : EMPTY_ARRAY;
+    AnAction[] actions2 = g2 instanceof ActionGroup ? ((ActionGroup)g2).getChildren(e) : EMPTY_ARRAY;
+    if (actions2.length == 0) return actions1;
+
+    List<AnAction> mergedActions = new ArrayList<>(actions2.length + 1 + actions1.length);
+    Collections.addAll(mergedActions, actions2);
+    mergedActions.add(Separator.getInstance());
+    Collections.addAll(mergedActions, actions1);
+    return mergedActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {

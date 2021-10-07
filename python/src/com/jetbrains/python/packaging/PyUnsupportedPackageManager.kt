@@ -17,7 +17,8 @@ class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
                                       args: MutableList<String>,
                                       askForSudo: Boolean,
                                       showProgress: Boolean,
-                                      workingDir: String?): ProcessOutput {
+                                      workingDir: String?,
+                                      pyArgs: List<String>?): ProcessOutput {
     if (sdk.homePath == null) {
       throw ExecutionException(PySdkBundle.message("python.sdk.cannot.find.python.interpreter.for.sdk", sdk.name))
     }

@@ -75,11 +75,15 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
       id.myEnabled = enabled;
     }
 
-    NST.enableScrubberItems(getNativePeer(), indices, enabled);
+    synchronized (this) {
+      NST.enableScrubberItems(myNativePeer, indices, enabled);
+    }
   }
 
   void showItems(Collection<Integer> indices, boolean visible, boolean inverseOthers) {
-    NST.showScrubberItem(getNativePeer(), indices, visible, inverseOthers);
+    synchronized (this) {
+      NST.showScrubberItem(myNativePeer, indices, visible, inverseOthers);
+    }
   }
 
   @Override

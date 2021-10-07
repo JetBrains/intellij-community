@@ -362,7 +362,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   public boolean equals(Object obj) {
     return obj instanceof AbstractFileType &&
            getName().equals(((AbstractFileType)obj).getName()) &&
-           mySyntaxTable.equals(((AbstractFileType)obj).myDefaultSyntaxTable);
+           mySyntaxTable.equals(((AbstractFileType)obj).mySyntaxTable);
   }
 
   @Override

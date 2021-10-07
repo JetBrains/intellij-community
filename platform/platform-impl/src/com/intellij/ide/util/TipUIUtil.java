@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -59,6 +60,7 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 
+import static com.intellij.DynamicBundle.findLanguageBundle;
 import static com.intellij.util.ui.UIUtil.drawImage;
 
 /**
@@ -128,6 +130,11 @@ public final class TipUIUtil {
         PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
         ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
                                 ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+
+        DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+        if (langBundle != null) {
+          tipLoader = langBundle.pluginDescriptor.getPluginClassLoader();
+        }
 
         InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", tip.fileName);
         if (tipStream == null) {

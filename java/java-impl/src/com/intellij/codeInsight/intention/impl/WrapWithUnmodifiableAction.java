@@ -9,18 +9,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -30,6 +33,14 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+
+  private static final Map<String, String> CLASS_TO_METHOD = Map.of(
+              JAVA_UTIL_LIST, "unmodifiableList",
+              JAVA_UTIL_SORTED_SET, "unmodifiableSortedSet",
+              JAVA_UTIL_SET, "unmodifiableSet",
+              JAVA_UTIL_SORTED_MAP, "unmodifiableSortedMap",
+              JAVA_UTIL_MAP, "unmodifiableMap"
+  );
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -43,22 +54,10 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
 
         PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
         if (expectedClass != null) {
-          GlobalSearchScope scope = psiClass.getResolveScope();
-
-          if (isInheritorChain(psiClass, JAVA_UTIL_LIST, expectedClass, scope, project)) {
-            wrapWith(expression, "unmodifiableList");
-          }
-          else if (isInheritorChain(psiClass, JAVA_UTIL_SORTED_SET, expectedClass, scope, project)) {
-            wrapWith(expression, "unmodifiableSortedSet");
-          }
-          else if (isInheritorChain(psiClass, JAVA_UTIL_SET, expectedClass, scope, project)) {
-            wrapWith(expression, "unmodifiableSet");
-          }
-          else if (isInheritorChain(psiClass, JAVA_UTIL_SORTED_MAP, expectedClass, scope, project)) {
-            wrapWith(expression, "unmodifiableSortedMap");
-          }
-          else if (isInheritorChain(psiClass, JAVA_UTIL_MAP, expectedClass, scope, project)) {
-            wrapWith(expression, "unmodifiableMap");
+          String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
+          if (collectionClass != null) {
+            String method = CLASS_TO_METHOD.get(collectionClass);
+            wrapWith(expression, method);
           }
         }
       }
@@ -96,28 +95,27 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
     }
     PsiExpression expression = getParentExpression(editor, file);
     if (expression != null) {
-      if (PsiUtil.isOnAssignmentLeftHand(expression) || isUnmodifiable(expression)) {
-        return false;
-      }
+      if (PsiUtil.isOnAssignmentLeftHand(expression)) return false;
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (psiClass != null) {
         PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
 
         if (expectedClass != null) {
-          GlobalSearchScope scope = psiClass.getResolveScope();
-
-          if (isInheritorChain(psiClass, JAVA_UTIL_LIST, expectedClass, scope, project)) {
-            setText(JavaBundle.message("intention.wrap.with.unmodifiable.list"));
-            return true;
-          }
-          if (isInheritorChain(psiClass, JAVA_UTIL_SET, expectedClass, scope, project) ||
-              isInheritorChain(psiClass, JAVA_UTIL_SORTED_SET, expectedClass, scope, project)) {
-            setText(JavaBundle.message("intention.wrap.with.unmodifiable.set"));
-            return true;
-          }
-          if (isInheritorChain(psiClass, JAVA_UTIL_MAP, expectedClass, scope, project) ||
-              isInheritorChain(psiClass, JAVA_UTIL_SORTED_MAP, expectedClass, scope, project)) {
-            setText(JavaBundle.message("intention.wrap.with.unmodifiable.map"));
+          String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
+          if (collectionClass != null && !isUnmodifiable(expression)) {
+            String message;
+            switch (collectionClass) {
+              case JAVA_UTIL_LIST:
+                message = "intention.wrap.with.unmodifiable.list";
+                break;
+              case JAVA_UTIL_SET:
+              case JAVA_UTIL_SORTED_SET:
+                message = "intention.wrap.with.unmodifiable.set";
+                break;
+              default:
+                message = "intention.wrap.with.unmodifiable.map";
+            }
+            setText(JavaBundle.message(message));
             return true;
           }
         }
@@ -134,15 +132,26 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
     return ExpectedTypeUtils.findExpectedType(expression, false);
   }
 
-  private static boolean isInheritorChain(PsiClass psiClass,
-                                          String collectionClassName,
-                                          PsiClass expectedClass,
-                                          GlobalSearchScope scope,
-                                          Project project) {
-    PsiClass collectionClass = JavaPsiFacade.getInstance(project).findClass(collectionClassName, scope);
+  private static String findSuperClass(PsiClass psiClass,
+                                       PsiClass expectedClass,
+                                       Set<String> candidates) {
+    var processor = new Processor<PsiClass>() {
+      String myResult;
 
-    return InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true) &&
-           InheritanceUtil.isInheritorOrSelf(collectionClass, expectedClass, true);
+      @Override
+      public boolean process(PsiClass superClass) {
+        String qualifiedName = superClass.getQualifiedName();
+        if (qualifiedName != null && candidates.contains(qualifiedName)) {
+          if (InheritanceUtil.isInheritorOrSelf(superClass, expectedClass, true)) {
+            myResult = qualifiedName;
+          }
+          return false;
+        }
+        return true;
+      }
+    };
+    InheritanceUtil.processSupers(psiClass, true, processor);
+    return processor.myResult;
   }
 
   private static boolean isUnmodifiable(@NotNull PsiExpression expression) {

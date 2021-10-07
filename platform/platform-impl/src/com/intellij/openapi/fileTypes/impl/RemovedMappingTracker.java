@@ -100,7 +100,6 @@ final class RemovedMappingTracker {
   }
 
   void load(@NotNull Element e) {
-    myRemovedMappings.clear();
     List<RemovedMapping> removedMappings = readRemovedMappings(e);
     Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
     for (RemovedMapping mapping : removedMappings) {

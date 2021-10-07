@@ -61,7 +61,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
   @NonNls
-  private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
+  private static final Pattern REG_EXP = Pattern.compile("[^\\pL&&[^-]]+");
 
   public SearchableOptionsRegistrarImpl() {
     Application app = ApplicationManager.getApplication();

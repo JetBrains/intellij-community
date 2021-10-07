@@ -12,6 +12,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.invokeMethod;
+
 /**
  * @deprecated use org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
  */
@@ -52,7 +54,9 @@ public class RuntimeDependenciesProvider {
   }
 
   public RuntimeDependenciesProvider resolve(DeprecatedDependencyResolver resolver) {
-    String runtimeConfigurationName = mySourceSet.getRuntimeConfigurationName();
+    Object configurationName = invokeMethod(mySourceSet, "getRuntimeConfigurationName");
+    assert configurationName != null;
+    String runtimeConfigurationName = configurationName.toString();
     Configuration runtimeClasspathConfiguration = myProject.getConfigurations().findByName(runtimeConfigurationName + "Classpath");
     Configuration originRuntimeConfiguration = myProject.getConfigurations().findByName(runtimeConfigurationName);
     myConfiguration = runtimeClasspathConfiguration != null ? runtimeClasspathConfiguration : originRuntimeConfiguration;

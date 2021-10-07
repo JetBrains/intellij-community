@@ -99,24 +99,30 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         fun checkIfDescriptor(candidate: Any?): Boolean =
             candidate is DeclarationDescriptor || candidate is Collection<*> && candidate.any(::checkIfDescriptor)
 
+        val shouldHighlightErrors = KotlinHighlightingUtil.shouldHighlightErrors(file)
+
         val analysisResult =
-            file.analyzeWithAllCompilerChecks(
-                {
-                    val element = it.psiElement
-                    if (element in elements &&
-                        it !in highlightInfoByDiagnostic &&
-                        !RenderingContext.parameters(it).any(::checkIfDescriptor)
-                    ) {
-                        annotateDiagnostic(
-                            element,
-                            holder,
-                            it,
-                            highlightInfoByDiagnostic,
-                            highlightInfoByTextRange
-                        )
+            if (shouldHighlightErrors) {
+                file.analyzeWithAllCompilerChecks(
+                    {
+                        val element = it.psiElement
+                        if (element in elements &&
+                            it !in highlightInfoByDiagnostic &&
+                            !RenderingContext.parameters(it).any(::checkIfDescriptor)
+                        ) {
+                            annotateDiagnostic(
+                                element,
+                                holder,
+                                it,
+                                highlightInfoByDiagnostic,
+                                highlightInfoByTextRange
+                            )
+                        }
                     }
-                }
-            ).also { it.throwIfError() }
+                )
+            } else {
+                file.analyzeWithAllCompilerChecks()
+            }.also { it.throwIfError() }
         // resolve is done!
 
         val bindingContext = analysisResult.bindingContext
@@ -124,7 +130,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
         cleanUpCalculatingAnnotations(highlightInfoByTextRange)
-        if (!KotlinHighlightingUtil.shouldHighlightErrors(file)) return
+        if (!shouldHighlightErrors) return
 
         annotateDuplicateJvmSignature(file, holder, bindingContext.diagnostics)
 

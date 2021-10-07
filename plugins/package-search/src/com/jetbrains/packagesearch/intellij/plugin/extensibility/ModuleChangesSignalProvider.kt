@@ -23,7 +23,7 @@ interface ModuleChangesSignalProvider {
          */
         internal fun listenToModuleChanges(project: Project): Flow<Unit> = callbackFlow {
             val subs = extensionPointName.extensions(project).toList().map {
-                it.registerModuleChangesListener(project) { offer(Unit) }
+                it.registerModuleChangesListener(project) { trySend(Unit) }
             }
             awaitClose { subs.unsubscribeAll() }
         }

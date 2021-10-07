@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.waitAndProcessInvocationEventsInIdeEventQueue
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,9 +56,8 @@ private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
 
 @ApiStatus.Internal
-open class StartupManagerImpl(private val project: Project) : StartupManagerEx() {
+open class StartupManagerImpl(private val project: Project) : StartupManagerEx(), Disposable {
   companion object {
-    @JvmStatic
     @TestOnly
     fun addActivityEpListener(project: Project) {
       StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity?> {
@@ -328,13 +328,16 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     activity?.end()
   }
 
+  private var scheduledFuture: ScheduledFuture<*>? = null
   private fun scheduleBackgroundPostStartupActivities() {
-    val scheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule({
+    scheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule({
+      scheduledFuture = null
       if (project.isDisposed) {
         return@schedule
       }
 
       val startTimeNano = System.nanoTime()
+      // read action - dynamic plugin loading executed as a write action
       val activities = ReadAction.compute<List<StartupActivity.Background>, RuntimeException> {
         BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity.Background?> {
           override fun extensionAdded(extension: StartupActivity.Background, pluginDescriptor: PluginDescriptor) {
@@ -348,7 +351,14 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         "Background post-startup activities done in ${TimeoutUtil.getDurationMillis(startTimeNano)}ms"
       }
     }, Registry.intValue("ide.background.post.startup.activity.delay").toLong(), TimeUnit.MILLISECONDS)
-    Disposer.register(project) { scheduledFuture.cancel(false) }
+  }
+
+  override fun dispose() {
+    val future = scheduledFuture
+    if (future != null) {
+      scheduledFuture = null
+      future.cancel(false)
+    }
   }
 
   private fun runBackgroundPostStartupActivities(activities: List<StartupActivity.Background>) {

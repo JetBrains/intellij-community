@@ -295,6 +295,19 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData());
   }
 
+  /**
+   * Does the same that {@link #scheduleUpdate(Sdk, Project)}, but simply omits the new update request if another one is in progress,
+   * while the former method will schedule the next update after processing the other update.
+   */
+  public static void ensureUpdateScheduled(@NotNull Sdk sdk, @NotNull Project project) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    synchronized (ourLock) {
+      if (ourUnderRefresh.contains(key) || ourToBeRefreshed.containsKey(key)) return;
+      ourUnderRefresh.add(key);
+    }
+    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, key, new PyUpdateSdkRequestData()));
+  }
+
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");

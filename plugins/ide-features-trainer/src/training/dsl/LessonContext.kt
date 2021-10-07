@@ -2,7 +2,6 @@
 package training.dsl
 
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -26,7 +25,7 @@ abstract class LessonContext: LearningDslBase {
   fun prepareRuntimeTask(modalityState: ModalityState? = ModalityState.any(), preparation: TaskRuntimeContext.() -> Unit) {
     task {
       addFutureStep {
-        invokeLater(modalityState) {
+        taskInvokeLater(modalityState) {
           preparation()
           completeStep()
         }

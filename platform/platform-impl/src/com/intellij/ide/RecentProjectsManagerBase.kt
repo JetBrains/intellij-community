@@ -594,6 +594,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         if (info.frame !== frameInfo) {
           info.frame = frameInfo
         }
+        info.displayName = getProjectDisplayName(project)
         info.projectWorkspaceId = workspaceId
         info.frameTitle = frame.title
       }

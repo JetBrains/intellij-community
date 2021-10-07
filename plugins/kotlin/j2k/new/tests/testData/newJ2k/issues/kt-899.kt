@@ -21,7 +21,7 @@ internal class Test {
         }
         val c = 1.toChar()
         var i7 = 0
-        while (i7 < c.toInt()) {
+        while (i7 < c.code) {
             println(i7)
             i7++
         }

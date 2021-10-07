@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -56,24 +57,26 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         }
     }
 
-    override fun isApplicable(project: Project) = runBlocking {
-        val isAvailable = project.packageSearchModulesChangesFlow.first().isNotEmpty()
+    override fun isApplicable(project: Project): Boolean {
+        val isAvailable = runBlocking { project.packageSearchModulesChangesFlow.first().isNotEmpty() }
 
         if (!isAvailable) project.packageSearchModulesChangesFlow
             .filter { it.isNotEmpty() }
             .take(1)
-            .map(Dispatchers.AppUI) {
+            .flowOn(Dispatchers.Default)
+            .map {
                 RegisterToolWindowTask.closable(
                     ToolWindowId,
                     PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
                     PackageSearchIcons.ArtifactSmall
                 )
             }
-            .map(Dispatchers.AppUI) { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
-            .onEach(Dispatchers.AppUI) { toolWindow -> initialize(toolWindow, project) }
+            .map { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
+            .onEach { toolWindow -> initialize(toolWindow, project) }
+            .flowOn(Dispatchers.AppUI)
             .launchIn(project.lifecycleScope)
 
-        isAvailable
+        return isAvailable
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = initialize(toolWindow, project)

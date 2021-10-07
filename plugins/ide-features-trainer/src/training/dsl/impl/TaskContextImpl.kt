@@ -4,6 +4,7 @@ package training.dsl.impl
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -20,10 +21,16 @@ import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
+import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiUtil
 import java.awt.Component
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                private val recorder: ActionsRecorder,
@@ -87,7 +94,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     fun restoreNotification(file: VirtualFile) =
       RestoreNotification(LearnBundle.message("learn.restore.notification.wrong.editor"),
                           LearnBundle.message("learn.restore.get.back.link.text")) {
-        invokeLater {
+        lessonExecutor.taskInvokeLater {
           FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
         }
       }
@@ -126,7 +133,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                                notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
                                                setNotification: (RestoreNotification) -> Unit) {
     addRestoreCheck(delayMillis, { true }) {
-      val notification = notificationRequired(runtimeContext) ?: checkEditor()
+      val notification = checkEditor() ?: notificationRequired(runtimeContext)
       val lessonManager = LessonManager.instance
       val activeNotification = lessonManager.shownRestoreNotification
       if (notification != null && notification.message != activeNotification?.message) {
@@ -158,14 +165,13 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                             ui,
                                             useBalloon,
                                             runtimeContext.actionsRecorder,
-                                            lessonExecutor.project,
-                                            lessonExecutor.visualIndexNumber)
+                                            lessonExecutor)
     }
   }
 
 
   override fun type(text: String) = before {
-    invokeLater(ModalityState.current()) {
+    taskInvokeLater(ModalityState.current()) {
       WriteCommandAction.runWriteCommandAction(project) {
         val startOffset = editor.caretModel.offset
         editor.document.insertString(startOffset, text)
@@ -266,7 +272,87 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {
+  override fun <ComponentType : Component>
+    triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
+                                         highlightBorder: Boolean,
+                                         highlightInside: Boolean,
+                                         usePulsation: Boolean,
+                                         selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                         finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
+    triggerByUiComponentAndHighlight l@{
+      val component = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+        finderFunction(it)
+      }
+      if (component != null) {
+        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+        taskInvokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightComponent(component, options)
+        }
+      }
+      component
+    }
+  }
+
+  @Suppress("OverridingDeprecatedMember")
+  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
+                                                                  highlightBorder: Boolean,
+                                                                  highlightInside: Boolean,
+                                                                  usePulsation: Boolean,
+                                                                  selector: ((candidates: Collection<T>) -> T?)?,
+                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    triggerByUiComponentAndHighlight l@{
+      val whole = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+        rectangle(it) != null
+      }
+      if (whole != null) {
+        taskInvokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
+        }
+      }
+      whole
+    }
+  }
+
+  override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
+    triggerByUiComponentAndHighlight l@{
+      val list = LearningUiUtil.findComponentOrNull(JList::class.java) l@{
+        val index = checkList(it)
+        index != null && it.visibleRowCount > index
+      }
+      if (list != null) {
+        taskInvokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightJListItem(list, options) {
+            checkList(list)
+          }
+        }
+      }
+      list
+    }
+  }
+
+  // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
+  override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                    checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
+    triggerByUiComponentAndHighlight l@{
+      val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
+        checkTree(it) != null
+      }
+      if (tree != null) {
+        taskInvokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
+            checkTree(tree)
+          }
+        }
+      }
+      tree
+    }
+  }
+
+
+
+  private fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {
     val step = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().executeOnPooledThread {
       while (true) {
@@ -277,7 +363,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         try {
           val highlightFunction = { findAndHighlight(runtimeContext) }
           val foundComponent = highlightFunction() ?: continue
-          invokeLater(ModalityState.any()) {
+          lessonExecutor.taskInvokeLater(ModalityState.any()) {
             lessonExecutor.foundComponent = foundComponent
             lessonExecutor.rehighlightComponent = highlightFunction
             step.complete(true)
@@ -288,6 +374,9 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
         catch (e: ComponentLookupException) {
           continue
+        }
+        catch (e: Throwable) {
+          thisLogger().error(lessonExecutor.getLessonInfoString(), e)
         }
         break
       }

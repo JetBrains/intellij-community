@@ -514,8 +514,8 @@ public final class MavenProjectReader {
                                                              final MavenExplicitProfiles explicitProfiles,
                                                              final MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
     try {
-      Collection<MavenServerExecutionResult> executionResults =
-        embedder.resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+      Collection<MavenServerExecutionResult> executionResults = embedder
+        .resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
       Map<String, VirtualFile> filesMap = CollectionFactory.createFilePathMap();
       filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
 

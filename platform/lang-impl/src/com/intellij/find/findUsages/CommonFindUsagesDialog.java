@@ -16,8 +16,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   @NotNull protected final PsiElement myPsiElement;
   @Nullable private final String myHelpId;
@@ -48,11 +46,6 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   protected boolean isInFileOnly() {
     return super.isInFileOnly() ||
            PsiSearchHelper.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement) instanceof LocalSearchScope;
-  }
-
-  @Override
-  protected JPanel createFindWhatPanel() {
-    return null;
   }
 
   @Override

@@ -222,7 +222,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
       else {
         message += " (adapter=" + adapter + ")";
-        throw componentManager.createError(message, adapter.getPluginDescriptor().getPluginId(),
+        throw componentManager.createError(message, null, adapter.getPluginDescriptor().getPluginId(),
                                            Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
       }
     }

@@ -25,11 +25,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.autosizeColumnsAt
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
@@ -52,7 +56,7 @@ internal class PackagesTable(
     private val operationExecutor: OperationExecutor,
     operationFactory: PackageSearchOperationFactory,
     private val onItemSelectionChanged: SelectedPackageModelListener
-) : JBTable(), CopyProvider {
+) : JBTable(), CopyProvider, Displayable<PackagesTable.ViewModel> {
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -87,7 +91,7 @@ internal class PackagesTable(
 
     private val autosizingColumnsIndices: List<Int>
 
-    private var latestTargetModules: TargetModules = TargetModules.None
+    private var targetModules: TargetModules = TargetModules.None
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
     private var allKnownRepositories = KnownRepositories.All.EMPTY
 
@@ -103,6 +107,22 @@ internal class PackagesTable(
             selectedPackage = null
         }
     }
+
+    val hasInstalledItems: Boolean
+        get() = tableModel.items.any { it is PackagesTableItem.InstalledPackage }
+
+    val firstPackageIndex: Int
+        get() = tableModel.items.indexOfFirst { it is PackagesTableItem.InstalledPackage }
+
+    var selectedIndex: Int
+        get() = selectedRow
+        set(value) {
+            if (tableModel.items.isNotEmpty() && (0 until tableModel.items.count()).contains(value)) {
+                setRowSelectionInterval(value, value)
+            } else {
+                clearSelection()
+            }
+        }
 
     init {
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
@@ -223,78 +243,58 @@ internal class PackagesTable(
     override fun getCellEditor(row: Int, column: Int): TableCellEditor? =
         tableModel.columns[column].getEditor(tableModel.items[row])
 
-    fun display(
-        displayItems: List<PackagesTableItem<*>>,
-        onlyStable: Boolean,
-        targetModules: TargetModules,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        traceInfo: TraceInfo
-    ) {
-        this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
-        this.allKnownRepositories = allKnownRepositories
+    internal data class ViewModel(
+        val displayItems: List<PackagesTableItem<*>>,
+        val onlyStable: Boolean,
+        val targetModules: TargetModules,
+        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val allKnownRepositories: KnownRepositories.All,
+        val traceInfo: TraceInfo
+    )
 
-        logDebug(traceInfo, "PackagesTable#displayData()") { "Displaying ${displayItems.size} item(s)" }
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+        knownRepositoriesInTargetModules = viewModel.knownRepositoriesInTargetModules
+        allKnownRepositories = viewModel.allKnownRepositories
+        targetModules = viewModel.targetModules
+
+        logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Displaying ${viewModel.displayItems.size} item(s)" }
 
         // We need to update those immediately before setting the items, on EDT, to avoid timing issues
         // where the target modules or only stable flags get updated after the items data change, thus
         // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
-        versionColumn.updateData(onlyStable, targetModules)
-        actionsColumn.updateData(onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
-        latestTargetModules = targetModules
+        versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
+        actionsColumn.updateData(viewModel.onlyStable, viewModel.targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
 
+        val previouslySelectedIdentifier = selectedPackage?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
-        tableModel.items = displayItems
+        tableModel.items = viewModel.displayItems
 
-        if (displayItems.isEmpty()) {
-            clearSelection()
+        if (viewModel.displayItems.isEmpty() || previouslySelectedIdentifier == null) {
             selectionModel.addListSelectionListener(listSelectionListener)
-
-            return
+            onItemSelectionChanged(null)
+            return@withContext
         }
 
         autosizeColumnsAt(autosizingColumnsIndices)
 
-        if (selectedPackage == null) {
-            selectionModel.addListSelectionListener(listSelectionListener)
-            return
-        }
-
         var indexToSelect: Int? = null
 
         // TODO factor out with a lambda
-        for ((index, item) in displayItems.withIndex()) {
-            if (item.packageModel.identifier == selectedPackage?.packageModel?.identifier) {
-                logDebug(traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
+        for ((index, item) in viewModel.displayItems.withIndex()) {
+            if (item.packageModel.identifier == previouslySelectedIdentifier) {
+                logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
                 indexToSelect = index
             }
         }
 
+        selectionModel.addListSelectionListener(listSelectionListener)
         if (indexToSelect != null) {
             selectedIndex = indexToSelect
         } else {
-            logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
-            clearSelection()
+            logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
         }
-        selectionModel.addListSelectionListener(listSelectionListener)
         updateAndRepaint()
     }
-
-    val hasInstalledItems: Boolean
-        get() = tableModel.items.any { it is PackagesTableItem.InstalledPackage }
-
-    val firstPackageIndex: Int
-        get() = tableModel.items.indexOfFirst { it is PackagesTableItem.InstalledPackage }
-
-    var selectedIndex: Int
-        get() = selectedRow
-        set(value) {
-            if (tableModel.items.isNotEmpty() && (0 until tableModel.items.count()).contains(value)) {
-                setRowSelectionInterval(value, value)
-            } else {
-                clearSelection()
-            }
-        }
 
     override fun performCopy(dataContext: DataContext) {
         getSelectedTableItem()?.performCopy(dataContext)
@@ -313,7 +313,7 @@ internal class PackagesTable(
 
     private fun updatePackageScope(packageModel: PackageModel, newScope: PackageScope) {
         if (packageModel is PackageModel.Installed) {
-            val operations = operationFactory.createChangePackageScopeOperations(packageModel, newScope, latestTargetModules, repoToInstall = null)
+            val operations = operationFactory.createChangePackageScopeOperations(packageModel, newScope, targetModules, repoToInstall = null)
 
             logDebug("PackagesTable#updatePackageScope()") {
                 "The user has selected a new scope for ${packageModel.identifier}: '$newScope'. This resulted in ${operations.size} operation(s)."
@@ -349,7 +349,7 @@ internal class PackagesTable(
                     operationFactory.createChangePackageVersionOperations(
                         packageModel = packageModel,
                         newVersion = newVersion,
-                        targetModules = latestTargetModules,
+                        targetModules = targetModules,
                         repoToInstall = repoToInstall
                     )
                 }
@@ -387,7 +387,7 @@ internal class PackagesTable(
         packageModel = packageModel,
         selectedVersion = (tableModel.columns[2] as VersionColumn).valueOf(this).selectedVersion,
         selectedScope = (tableModel.columns[1] as ScopeColumn).valueOf(this).selectedScope,
-        mixedBuildSystemTargets = latestTargetModules.isMixedBuildSystems
+        mixedBuildSystemTargets = targetModules.isMixedBuildSystems
     )
 
     private fun applyColumnSizes(tW: Int, columns: List<TableColumn>, weights: List<Float>) {

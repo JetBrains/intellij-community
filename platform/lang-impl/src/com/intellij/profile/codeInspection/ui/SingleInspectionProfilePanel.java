@@ -17,7 +17,9 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -30,7 +32,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -46,6 +47,7 @@ import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -72,7 +74,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -82,7 +84,6 @@ import java.util.*;
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(SingleInspectionProfilePanel.class);
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
-  @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
@@ -594,15 +595,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    int modifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
-
-    registerKeyboardAction(__ -> {
-      if (myTreeTable.getStrictlySelectedToolNode() != null) {
-        final Container parent = myTreeTable.getParent();
-        compoundPopup().show(parent, parent.getWidth() / 2,  parent.getHeight() / 2);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_V, modifiers), WHEN_IN_FOCUSED_WINDOW);
-
     new TreeSpeedSearch(tree, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
@@ -828,6 +820,19 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                  GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  JBInsets.create(10, 0),
                                                  0, 0));
+        severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+          KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
+          "changeSeverity"
+        );
+        severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            final var panel = (JPanel)severityLevelChooserComponent;
+            final var button = (ComboBoxAction.ComboBoxButton)panel.getComponent(0);
+            button.showPopup();
+          }
+        });
+
         final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
           scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(scopesChooserComponent,
@@ -977,7 +982,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    DescriptionEditorPaneKt.readHTML(myDescription, EMPTY_HTML);
+    DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPane.EMPTY_HTML);
     myOptionsPanel.validate();
     myOptionsPanel.repaint();
   }
@@ -1119,6 +1124,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         profile.lockProfile(enabled);
       }
     });
+
     return panel;
   }
 
@@ -1252,21 +1258,21 @@ public class SingleInspectionProfilePanel extends JPanel {
         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
         e -> { myInspectionsFilter.reset(); }
       );
-    } else {
-      emptyText.appendLine(
-        AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
-        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-        e -> {
-          JBPopupFactory.getInstance()
+    } else if (myCreateInspectionActions.getChildrenCount() > 0) {
+      emptyText
+        .appendSecondaryText(
+          AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
+          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+          e -> JBPopupFactory
+            .getInstance()
             .createActionGroupPopup(
               AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
               myCreateInspectionActions,
-              DataManager.getInstance().getDataContext(this),
+              DataManager.getInstance().getDataContext(myInspectionProfilePanel),
               null,
               true)
-            .showInCenterOf(myTreeTable);
-        }
-      );
+            .show(new RelativePoint(myTreeTable, myTreeTable.getEmptyText().getPointBelow()))
+        );
     }
   }
 

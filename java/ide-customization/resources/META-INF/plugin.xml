@@ -9,6 +9,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <!-- Android Studio: sends statistics to JetBrains (find a better way to disable this?)
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     Android Studio: sends statistics to JetBrains (find a better way to disable this?) -->
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>

@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -29,7 +28,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combine
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
@@ -58,17 +56,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.util.isInstanceOf
 import java.net.SocketTimeoutException
 import java.net.URI
-import java.net.URISyntaxException
 import java.util.Locale
+import java.util.concurrent.TimeUnit.HOURS
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeoutException
-import kotlin.time.hours
-import kotlin.time.milliseconds
+import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
@@ -120,7 +116,7 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage
         )
     }.replayOnSignal(dataChangeChannel.consumeAsFlow())
-        .debounce(200.milliseconds)
+        .debounce(200.toDuration(MILLISECONDS))
         .map { it.toRootDataModel() }
         .onEach { rerunHighlightingOnOpenBuildFiles() }
         .catch {
@@ -144,7 +140,7 @@ internal class PackageSearchDataService(
 
         checkNotificationsSetupIsCorrect()
 
-        launchLoop(1.hours) {
+        launchLoop(1.toDuration(HOURS)) {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
         }
 
@@ -321,11 +317,11 @@ internal class PackageSearchDataService(
 
     private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = readAction { progress ->
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                ?.also { progress.checkCancelled() }
-                ?.listDependenciesInModule(this)
-                ?.toList()
-                ?: emptyList()
+        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+            ?.also { progress.checkCancelled() }
+            ?.listDependenciesInModule(this)
+            ?.toList()
+            ?: emptyList()
     }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
@@ -396,7 +392,7 @@ internal class PackageSearchDataService(
     private fun tryParsingAsURI(rawValue: String): URI? =
         try {
             URI(rawValue.trim().trimEnd('/', '?', '#'))
-        } catch (e: URISyntaxException) {
+        } catch (e: Exception) {
             logInfo("PackageSearchDataService#tryParsingAsURI") { "Unable to parse URI: '$rawValue'" }
             null
         }
@@ -504,12 +500,12 @@ internal class PackageSearchDataService(
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
                     try {
-                        val file = PsiUtil.getPsiFile(project, virtualFile)
+                        val file = psiManager.findFile(virtualFile) ?: return@filter false
                         ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
                             ?.hasSupportFor(project, file)
                             ?: false
-                    } catch (e: Throwable) {
-                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", e) {
+                    } catch (ignored: Throwable) {
+                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", ignored) {
                             "Error while filtering open files to trigger highlight rerun for"
                         }
                         false

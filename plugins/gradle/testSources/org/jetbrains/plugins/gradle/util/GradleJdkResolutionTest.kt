@@ -196,21 +196,19 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
   @Test
   fun `test suggested gradle version for sdk is compatible with target sdk`() {
-    val gradleVersion = GradleVersion.current()
-    require(gradleVersion >= GradleVersion.version("6.3"))
-    require(gradleVersion < GradleVersion.version("7.0"))
+    val bundledGradleApiVersion = GradleVersion.current()
+    require(bundledGradleApiVersion >= GradleVersion.version("7.1"))
 
     assertSuggestedGradleVersionFor(null, "1.1")
     assertSuggestedGradleVersionFor(null, "1.5")
 
     assertSuggestedGradleVersionFor("4.10.3", "1.7")
-    assertSuggestedGradleVersionFor(gradleVersion, "1.8")
-    assertSuggestedGradleVersionFor(gradleVersion, "9")
-    assertSuggestedGradleVersionFor(gradleVersion, "11")
-    assertSuggestedGradleVersionFor(gradleVersion, "13")
-    assertSuggestedGradleVersionFor(gradleVersion, "14")
-    assertSuggestedGradleVersionFor(gradleVersion, "15")
-    assertSuggestedGradleVersionFor("7.0", "16")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "1.8")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "9")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "11")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "13")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "14")
+    assertSuggestedGradleVersionFor(bundledGradleApiVersion, "16")
 
     // com.intellij.util.lang.JavaVersion.MAX_ACCEPTED_VERSION - 1
     assertSuggestedGradleVersionFor(null, "24")

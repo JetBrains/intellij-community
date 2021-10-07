@@ -10,11 +10,15 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.FlowLayout
@@ -23,7 +27,7 @@ import javax.swing.JLabel
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
     onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
-) : BorderLayoutPanel() {
+) : BorderLayoutPanel(), Displayable<HeaderPanel.ViewModel> {
 
     private val titleLabel = JLabel().apply {
         border = scaledEmptyBorder(right = 20)
@@ -90,22 +94,29 @@ internal class HeaderPanel(
         }
     }
 
-    fun display(@Nls title: String, rowsCount: Int?, availableUpdatesCount: Int, updateOperations: List<PackageSearchOperation<*>>) {
-        titleLabel.text = title
+    internal data class ViewModel(
+        @Nls val title: String,
+        val rowsCount: Int?,
+        val availableUpdatesCount: Int,
+        val updateOperations: List<PackageSearchOperation<*>>
+    )
 
-        if (rowsCount != null) {
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+        titleLabel.text = viewModel.title
+
+        if (viewModel.rowsCount != null) {
             countLabel.isVisible = true
-            countLabel.text = rowsCount.toString()
+            countLabel.text = viewModel.rowsCount.toString()
         } else {
             countLabel.isVisible = false
         }
 
-        updateAllOperations = updateOperations
-        if (availableUpdatesCount > 0) {
+        updateAllOperations = viewModel.updateOperations
+        if (viewModel.availableUpdatesCount > 0) {
             updateAllLink.setHyperlinkText(
                 PackageSearchBundle.message(
                     "packagesearch.ui.toolwindow.actions.upgradeAll.text.withCount",
-                    availableUpdatesCount
+                    viewModel.availableUpdatesCount
                 )
             )
             updateAllLink.isVisible = true

@@ -463,12 +463,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
-                                                 boolean showProgress, @Nullable String workingDir) throws ExecutionException {
-    return getPythonProcessOutput(helperPath, args, askForSudo, showProgress, workingDir, null);
-  }
-
-  @NotNull
-  protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
                                                  boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
     throws ExecutionException {
     final String homePath = getSdk().getHomePath();

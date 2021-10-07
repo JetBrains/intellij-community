@@ -78,7 +78,10 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         else {
           // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
           val unwrappedConnection = conn.connection as NonClosableConnection
-          unwrappedConnection.delegate.close()
+          // do not block the current thread on "ProjectConnection.close" for existing running Gradle operation
+          ApplicationManager.getApplication().executeOnPooledThread {
+            unwrappedConnection.delegate.close()
+          }
         }
       }
       val newConnector = createConnector(connectorParams, taskId, listener)
@@ -220,7 +223,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       else if (connectorParams.distributionType == DistributionType.WRAPPED) {
         if (connectorParams.wrapperPropertyFile != null) {
           val gradleUserHomeLocalFile = localPathToGradleUserHome?.let { File(localPathToGradleUserHome) }
-          DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile, gradleUserHomeLocalFile, projectDir)
+          DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile)
         }
       }
 

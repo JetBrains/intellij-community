@@ -24,5 +24,6 @@
     <orderEntry type="library" exported="" name="ap-validation" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

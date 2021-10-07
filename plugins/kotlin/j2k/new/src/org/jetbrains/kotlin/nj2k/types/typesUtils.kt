@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.Locale
 
 fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) =
     JKTypeElement(this, annotationList)
@@ -124,7 +125,6 @@ fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
         JKJavaPrimitiveType.BOOLEAN -> JKLiteralExpression.LiteralType.BOOLEAN
         JKJavaPrimitiveType.INT -> JKLiteralExpression.LiteralType.INT
         JKJavaPrimitiveType.LONG -> JKLiteralExpression.LiteralType.LONG
-        JKJavaPrimitiveType.CHAR -> JKLiteralExpression.LiteralType.CHAR
         JKJavaPrimitiveType.DOUBLE -> JKLiteralExpression.LiteralType.DOUBLE
         JKJavaPrimitiveType.FLOAT -> JKLiteralExpression.LiteralType.FLOAT
         else -> null
@@ -150,6 +150,9 @@ fun JKJavaPrimitiveType.isNumberType() =
             this == JKJavaPrimitiveType.LONG ||
             this == JKJavaPrimitiveType.FLOAT ||
             this == JKJavaPrimitiveType.DOUBLE
+
+fun JKJavaPrimitiveType.kotlinName() =
+    jvmPrimitiveType.javaKeywordName.capitalize(Locale.US)
 
 
 val primitiveTypes =

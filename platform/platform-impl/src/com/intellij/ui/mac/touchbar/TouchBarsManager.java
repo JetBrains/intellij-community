@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SimpleTimerTask;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,18 +56,13 @@ final class TouchBarsManager {
                             InputEvent.CTRL_DOWN_MASK |
                             InputEvent.SHIFT_DOWN_MASK |
                             InputEvent.ALT_GRAPH_DOWN_MASK;
+    final int oldLastModifiersEx = ourLastModifiersEx;
     ourLastModifiersEx = e.getModifiersEx() & usedKeyMask;
+    final boolean areModifiersChanged = ourLastModifiersEx != oldLastModifiersEx;
 
-    if (e instanceof MouseEvent) {
-      return;
-    }
-
-    // find current (showing) component corresponding to event window
-    final Window windowOfEvent = getWindow(e.getComponent());
-    if (windowOfEvent == null) {
-      if (LOG_INPUT_PROCESSING) {
-        LOG.debug("INPUT: can't find window of component %s", e.getComponent());
-      }
+    if (e instanceof MouseEvent && !areModifiersChanged) {
+      // NOTE: to increase stability of switching normal/alt layouts
+      // we process changes of modifiers mask even from mouse events
       return;
     }
 
@@ -77,6 +73,13 @@ final class TouchBarsManager {
         && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE
         && ourLastModifiersEx == 0
     ) {
+      // find current (showing) component corresponding to event window
+      final Window windowOfEvent = getWindow(e.getComponent());
+      if (windowOfEvent == null) {
+        if (LOG_INPUT_PROCESSING) LOG.debug("INPUT: can't find window of component %s (during isPhisycalEsc processing)", e.getComponent());
+        return;
+      }
+
       final Stack s = ourStacks.get(windowOfEvent);
       if (s != null) {
         final @Nullable ComponentActions ca = s.getTopActions();
@@ -87,6 +90,7 @@ final class TouchBarsManager {
     }
 
     if (LOG_INPUT_PROCESSING) {
+      final Window windowOfEvent = getWindow(e.getComponent());
       final @Nullable ComponentActions componentActions = getShownActions(windowOfEvent);
       if (componentActions == null) {
         LOG.debug("INPUT: no touchbar actions are shown for window '%s', component '%s'", windowOfEvent, e.getComponent());
@@ -95,15 +99,18 @@ final class TouchBarsManager {
       }
     }
 
-    // change to alt for all registered components of window
-    for (ComponentActions ca: ourComp2Actions.values()) {
-      if (ca == null) {
-        continue;
+    if (areModifiersChanged) {
+      // change to alt for all registered components
+      for (ComponentActions ca : ourComp2Actions.values()) {
+        if (ca != null)
+          ca.setCurrent(ourLastModifiersEx);
       }
-      ca.setCurrent(ourLastModifiersEx);
-    }
 
-    getWindowStack(windowOfEvent).updateIfNecessary();
+      // NOTE: mask-change can be received from popup window, but we must update stack for popup and also at least for main-frame.
+      // So update for all windows.
+      for (Stack s : ourStacks.values())
+        s.updateIfNecessary();
+    }
   }
 
   private static void processFocusEvent(AWTEvent e) {
@@ -563,7 +570,11 @@ final class TouchBarsManager {
           ApplicationManager.getApplication().invokeLater(atb::updateActionItems);
         }
 
-        NST.setTouchBar(myWindow != null ? myWindow.get() : null, myLastShownTouchbar);
+        Window window = myWindow != null ? myWindow.get() : null;
+        if (myLastShownTouchbar != null)
+          myLastShownTouchbar.setTo(window);
+        else
+          NST.setTouchBar(window, ID.NIL);
       }, CHANGE_DELAY);
     }
   }

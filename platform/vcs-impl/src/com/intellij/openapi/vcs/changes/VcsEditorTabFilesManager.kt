@@ -81,7 +81,10 @@ class VcsEditorTabFilesManager :
     val composite = window.findFileComposite(file) ?: return
 
     window.setSelectedEditor(composite, focusEditor)
-    if (focusEditor) window.requestFocus(true)
+    if (focusEditor) {
+      window.requestFocus(true)
+      window.toFront()
+    }
   }
 
   override fun dispose() {}

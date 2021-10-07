@@ -116,12 +116,17 @@ class LanguageToolChecker : TextChecker() {
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 && text.startsWith("\")", match.fromPos - 1)) {
+      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 &&
+          (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
         return true //https://github.com/languagetool-org/languagetool/issues/5269
       }
 
       if (match.rule.id == "ARTICLE_ADJECTIVE_OF" && text.substring(match.fromPos, match.toPos).equals("iterable", ignoreCase = true)) {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
+      }
+
+      if (match.rule.id == "EN_A_VS_AN" && text.subSequence(match.toPos, text.length).matches(Regex("[^\\p{javaLetterOrDigit}]*hour.*"))) {
+        return true // https://github.com/languagetool-org/languagetool/issues/5260
       }
 
       return false

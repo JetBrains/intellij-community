@@ -35,13 +35,14 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyFStringLikeCompletionContributor extends CompletionContributor {
 
-  private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
+  private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
       .withParent(PyStringLiteralExpression.class)
+      .andNot(psiElement().withSuperParent(2, PyLiteralPattern.class))
       .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
 
   public PyFStringLikeCompletionContributor() {
-    extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<>() {
+    extend(CompletionType.BASIC, APPLICABLE_STRING_ELEMENT, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,

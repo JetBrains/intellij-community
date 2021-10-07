@@ -33,14 +33,15 @@ Supports Maven and Gradle projects.
 
     </extensionPoints>
 
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.externalSystem.dependencyUpdater</depends>
-
     <content>
         <module name="intellij.packageSearch/gradle"/>
         <module name="intellij.packageSearch/kotlin"/>
         <module name="intellij.packageSearch/maven"/>
     </content>
+    <dependencies>
+        <plugin id="com.intellij.java"/>
+        <plugin id="com.intellij.externalSystem.dependencyUpdater"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider

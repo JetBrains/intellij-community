@@ -15,7 +15,7 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundleIndependent
+import org.jetbrains.kotlin.idea.KotlinIndependentBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -107,39 +107,39 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
 
         fun elementKind() = when (targetElement) {
             is KtClass -> if (targetElement.isInterface())
-                KotlinBundleIndependent.message("find.usages.interface")
+                KotlinIndependentBundle.message("find.usages.interface")
             else
-                KotlinBundleIndependent.message("find.usages.class")
+                KotlinIndependentBundle.message("find.usages.class")
             is KtObjectDeclaration -> if (targetElement.isCompanion())
-                KotlinBundleIndependent.message("find.usages.companion.object")
+                KotlinIndependentBundle.message("find.usages.companion.object")
             else
-                KotlinBundleIndependent.message("find.usages.object")
-            is KtNamedFunction -> KotlinBundleIndependent.message("find.usages.function")
-            is KtPropertyAccessor -> KotlinBundleIndependent.message(
+                KotlinIndependentBundle.message("find.usages.object")
+            is KtNamedFunction -> KotlinIndependentBundle.message("find.usages.function")
+            is KtPropertyAccessor -> KotlinIndependentBundle.message(
                 "find.usages.for.property",
                 (if (targetElement.isGetter)
-                    KotlinBundleIndependent.message("find.usages.getter")
+                    KotlinIndependentBundle.message("find.usages.getter")
                 else
-                    KotlinBundleIndependent.message("find.usages.setter"))
+                    KotlinIndependentBundle.message("find.usages.setter"))
             ) + " "
-            is KtFunctionLiteral -> KotlinBundleIndependent.message("find.usages.lambda")
-            is KtPrimaryConstructor, is KtSecondaryConstructor -> KotlinBundleIndependent.message("find.usages.constructor")
+            is KtFunctionLiteral -> KotlinIndependentBundle.message("find.usages.lambda")
+            is KtPrimaryConstructor, is KtSecondaryConstructor -> KotlinIndependentBundle.message("find.usages.constructor")
             is KtProperty -> if (targetElement.isLocal)
-                KotlinBundleIndependent.message("find.usages.variable")
+                KotlinIndependentBundle.message("find.usages.variable")
             else
-                KotlinBundleIndependent.message("find.usages.property")
-            is KtTypeParameter -> KotlinBundleIndependent.message("find.usages.type.parameter")
-            is KtParameter -> KotlinBundleIndependent.message("find.usages.parameter")
-            is KtDestructuringDeclarationEntry -> KotlinBundleIndependent.message("find.usages.variable")
-            is KtTypeAlias -> KotlinBundleIndependent.message("find.usages.type.alias")
-            is KtLabeledExpression -> KotlinBundleIndependent.message("find.usages.label")
-            is KtImportAlias -> KotlinBundleIndependent.message("find.usages.import.alias")
-            is KtLightClassForFacade -> KotlinBundleIndependent.message("find.usages.facade.class")
+                KotlinIndependentBundle.message("find.usages.property")
+            is KtTypeParameter -> KotlinIndependentBundle.message("find.usages.type.parameter")
+            is KtParameter -> KotlinIndependentBundle.message("find.usages.parameter")
+            is KtDestructuringDeclarationEntry -> KotlinIndependentBundle.message("find.usages.variable")
+            is KtTypeAlias -> KotlinIndependentBundle.message("find.usages.type.alias")
+            is KtLabeledExpression -> KotlinIndependentBundle.message("find.usages.label")
+            is KtImportAlias -> KotlinIndependentBundle.message("find.usages.import.alias")
+            is KtLightClassForFacade -> KotlinIndependentBundle.message("find.usages.facade.class")
             else -> {
                 //TODO Implement in FIR
                 when {
-                    targetElement.isRenameJavaSyntheticPropertyHandler -> KotlinBundleIndependent.message("find.usages.property")
-                    targetElement.isRenameKotlinPropertyProcessor -> KotlinBundleIndependent.message("find.usages.property.accessor")
+                    targetElement.isRenameJavaSyntheticPropertyHandler -> KotlinIndependentBundle.message("find.usages.property")
+                    targetElement.isRenameKotlinPropertyProcessor -> KotlinIndependentBundle.message("find.usages.property.accessor")
                     else -> null
                 }
             }

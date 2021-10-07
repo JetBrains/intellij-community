@@ -31,7 +31,7 @@ public class NSTLibTest {
       assertNotNull("Failed to create native touchbar object, result is null", test);
       assertNotSame("Failed to create native touchbar object, result is ID.NIL", ID.NIL, test);
       if (test != ID.NIL)
-        lib.releaseTouchBar(test);
+        lib.releaseNativePeer(test);
     } catch (RuntimeException e) {
       fail("nst library was loaded, but native object can't be created: " + e.getMessage());
     }

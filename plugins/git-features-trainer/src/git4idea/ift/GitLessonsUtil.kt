@@ -39,6 +39,8 @@ import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KClass
 
 object GitLessonsUtil {
@@ -132,10 +134,15 @@ object GitLessonsUtil {
     }
   }
 
-  private fun VcsLogGraphTable.getRectForSubsequentCommits(startCommitRow: Int, sequenceLength: Int): Rectangle {
+  private fun VcsLogGraphTable.getRectForSubsequentCommits(startCommitRow: Int, sequenceLength: Int): Rectangle? {
     val cells = (1..4).map { getCellRect(startCommitRow, it, false) }
+    val y = cells[0].y
+    val height = cells[0].height * sequenceLength
     val width = cells.fold(0) { acc, rect -> acc + rect.width }
-    return Rectangle(cells[0].x, cells[0].y, width, cells[0].height * sequenceLength)
+    if (y + height <= visibleRect.y) return null
+    val adjustedY = max(y, visibleRect.y)
+    val adjustedHeight = min(height, y + height - visibleRect.y)
+    return Rectangle(cells[0].x, adjustedY, width, adjustedHeight)
   }
 
   fun TaskContext.triggerOnNotification(checkState: (Notification) -> Boolean) {
@@ -150,16 +157,23 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String, duplicateMessage: Boolean = true) {
+  fun TaskContext.gotItStep(position: Balloon.Position,
+                            width: Int,
+                            @Nls text: String,
+                            cornerToPointerDistance: Int = -1,
+                            duplicateMessage: Boolean = true) {
     val gotIt = CompletableFuture<Boolean>()
-    text(text, LearningBalloonConfig(position, width, duplicateMessage) { gotIt.complete(true) })
+    text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+      gotIt.complete(true)
+    })
     addStep(gotIt)
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
                                   GitLessonsBundle.message("git.window.closed.warning",
-                                                           action("CheckinProject"), strong(VcsBundle.message("commit.dialog.configurable"))),
+                                                           action("CheckinProject"),
+                                                           strong(VcsBundle.message("commit.dialog.configurable"))),
                                   restoreTaskWhenResolved)
   }
 

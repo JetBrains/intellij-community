@@ -68,7 +68,7 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
   private fun getMarkerElementPresentation(element: PsiElement): String {
     val fileName = obtainPathText(element)?.let(::processFileName) ?: ""
     return when {
-      fileName.isEmpty() -> MarkdownBundle.message("markdown.setup.image.line.marker.text")
+      fileName.isEmpty() -> MarkdownBundle.message("markdown.configure.image.text")
       else -> MarkdownBundle.message("markdown.configure.image.line.marker.presentation", fileName)
     }
   }
@@ -83,7 +83,7 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
     ::getMarkerElementPresentation,
     { _, e -> performAction(e) },
     ALIGNMENT,
-    { MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name") }
+    { MarkdownBundle.message("markdown.configure.image.text") }
   ) {
     override fun getElementPresentation(element: PsiElement): String {
       return getMarkerElementPresentation(element)

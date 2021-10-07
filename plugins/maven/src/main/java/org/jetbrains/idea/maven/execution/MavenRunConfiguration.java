@@ -225,9 +225,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 
-    public MavenGeneralSettings myGeneralSettings;
-    public MavenRunnerSettings myRunnerSettings;
-    public MavenRunnerParameters myRunnerParameters;
+    public @Nullable MavenGeneralSettings myGeneralSettings;
+    public @Nullable MavenRunnerSettings myRunnerSettings;
+    public @Nullable MavenRunnerParameters myRunnerParameters;
 
     /* reflection only */
     public MavenSettings() {

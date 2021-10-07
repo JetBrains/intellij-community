@@ -43,15 +43,10 @@ class GrazieScopeTab : GrazieUIComponent {
     ListSpeedSearch(languageList) { it.text }
   }
 
-  override fun isModified(state: GrazieConfig.State) =
-    with(state.checkingContext) {
-      cbLiterals.isSelected != isCheckInStringLiteralsEnabled ||
-      cbComments.isSelected != isCheckInCommentsEnabled ||
-      cbDocumentation.isSelected != isCheckInDocumentationEnabled ||
-      cbCommits.isSelected != isCheckInCommitMessagesEnabled ||
-      myDisabledLanguageIds != disabledLanguages ||
-      myEnabledLanguageIds != enabledLanguages
-    }
+  override fun isModified(state: GrazieConfig.State): Boolean {
+    val myState = toCheckingContext()
+    return state.checkingContext.domainsDiffer(myState) || state.checkingContext.languagesDiffer(myState)
+  }
 
   override fun reset(state: GrazieConfig.State) {
     with(state.checkingContext) {
@@ -74,15 +69,15 @@ class GrazieScopeTab : GrazieUIComponent {
     }
   }
 
-  override fun apply(state: GrazieConfig.State): GrazieConfig.State = state.copy(
-    checkingContext = CheckingContext(
-      isCheckInStringLiteralsEnabled = cbLiterals.isSelected,
-      isCheckInCommentsEnabled = cbComments.isSelected,
-      isCheckInDocumentationEnabled = cbDocumentation.isSelected,
-      isCheckInCommitMessagesEnabled = cbCommits.isSelected,
-      disabledLanguages = myDisabledLanguageIds,
-      enabledLanguages = myEnabledLanguageIds
-    )
+  override fun apply(state: GrazieConfig.State): GrazieConfig.State = state.copy(checkingContext = toCheckingContext())
+
+  private fun toCheckingContext() = CheckingContext(
+    isCheckInStringLiteralsEnabled = cbLiterals.isSelected,
+    isCheckInCommentsEnabled = cbComments.isSelected,
+    isCheckInDocumentationEnabled = cbDocumentation.isSelected,
+    isCheckInCommitMessagesEnabled = cbCommits.isSelected,
+    disabledLanguages = myDisabledLanguageIds,
+    enabledLanguages = myEnabledLanguageIds
   )
 
   override val component = panel(MigLayout(createLayoutConstraints())) {

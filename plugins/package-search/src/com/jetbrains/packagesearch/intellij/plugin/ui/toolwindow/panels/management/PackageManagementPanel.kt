@@ -20,11 +20,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -124,13 +125,14 @@ internal class PackageManagementPanel(
                     currentTargetModules = data.targetModules,
                     traceInfo = data.traceInfo
                 )
-                withContext(Dispatchers.AppUI) {
-                    modulesTree.display(
+
+                modulesTree.display(
+                    ModulesTree.ViewModel(
                         treeModel = treeModel,
                         traceInfo = data.traceInfo,
                         pendingSelectionPath = selectionPath
                     )
-                }
+                )
             }
             .launchIn(this)
 
@@ -144,9 +146,8 @@ internal class PackageManagementPanel(
                 data.traceInfo
             )
 
-            withContext(Dispatchers.AppUI) {
-
-                packagesListPanel.display(
+            packagesListPanel.display(
+                PackagesListPanel.ViewModel(
                     headerData = data.headerData,
                     packageModels = data.packageModels,
                     targetModules = data.targetModules,
@@ -156,16 +157,18 @@ internal class PackageManagementPanel(
                     tableData = tableData,
                     traceInfo = data.traceInfo
                 )
+            )
 
-                packageDetailsPanel.display(
+            packageDetailsPanel.display(
+                PackageDetailsPanel.ViewModel(
                     selectedPackageModel = data.selectedPackage,
                     knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
                     allKnownRepositories = data.allKnownRepositories,
                     targetModules = data.targetModules,
-                    onlyStable = data.filterOptions.onlyStable
+                    onlyStable = data.filterOptions.onlyStable,
+                    invokeLaterScope = project.lifecycleScope
                 )
-            }
-
+            )
         }.launchIn(this)
     }
 

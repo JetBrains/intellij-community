@@ -1,5 +1,5 @@
 class TestArithmWithChars {
     fun foo(x: Int): Int {
-        return x - '0'.toInt()
+        return x - '0'.code
     }
 }

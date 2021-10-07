@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -134,11 +135,6 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        List<Navigatable> navigatables =
-          ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
-        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();
         ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
@@ -161,6 +157,15 @@ abstract class ServiceView extends JPanel implements Disposable {
         return viewOptions;
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        return new SmartList<DataProvider>(slowDataId -> {
+          if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowDataId)) {
+            List<Navigatable> navigatables = ContainerUtil.mapNotNull(selectedItems, item -> item.getViewDescriptor().getNavigatable());
+            return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+          }
+          return null;
+        });
+      }
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
       ServiceViewDescriptor descriptor = selectedItem == null || selectedItem.isRemoved() ? null : selectedItem.getViewDescriptor();
       DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();

@@ -84,8 +84,19 @@ void setPrincipal(id tbobj, const char * uid) {
 }
 
 __used
-void releaseTouchBar(id tbobj) {
-    [tbobj release];
+void releaseNativePeer(id tbobj) {
+    void (^doRelease)() = ^{
+        if ([tbobj isKindOfClass:[NSCustomTouchBarItem class]])
+            ((NSCustomTouchBarItem *)tbobj).view = nil;
+        [tbobj release];
+    };
+      if ([NSThread isMainThread]) {
+          doRelease();
+      } else {
+          dispatch_async(dispatch_get_main_queue(), ^{
+              doRelease();
+          });
+      }
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)

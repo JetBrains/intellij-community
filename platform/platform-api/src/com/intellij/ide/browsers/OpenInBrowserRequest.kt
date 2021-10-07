@@ -14,6 +14,8 @@ abstract class OpenInBrowserRequest @JvmOverloads constructor(open val file: Psi
 
   var isAppendAccessToken: Boolean = true
 
+  var reloadMode: ReloadMode? = null
+
   val virtualFile: VirtualFile?
     get() = file.virtualFile
 
@@ -25,6 +27,12 @@ abstract class OpenInBrowserRequest @JvmOverloads constructor(open val file: Psi
   fun isPhysicalFile(): Boolean {
     return file.viewProvider.isPhysical && virtualFile !is LightVirtualFile
   }
+
+}
+
+enum class ReloadMode {
+  NONE,
+  RELOAD_ON_SAVE
 }
 
 fun createOpenInBrowserRequest(element: PsiElement, isForceFileUrlIfNoUrlProvider: Boolean = false): OpenInBrowserRequest? {

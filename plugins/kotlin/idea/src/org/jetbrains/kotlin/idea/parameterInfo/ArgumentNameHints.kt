@@ -68,7 +68,7 @@ private fun getArgumentNameHintsForCallCandidate(
                         valueArgumentList.leftParenthesis?.textRange?.endOffset ?: argExp.startOffset
                     else
                         arg.getSpreadElement()?.startOffset ?: argExp.startOffset
-                    return@mapNotNull InlayInfo(prefix + valueParam.name.identifier, offset)
+                    return@mapNotNull InlayInfo(prefix + valueParam.name.identifier + ":", offset)
                 }
             }
         }

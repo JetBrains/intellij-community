@@ -17,6 +17,7 @@ import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLTokenTypes
 import org.jetbrains.yaml.YAMLUtil
 import org.jetbrains.yaml.psi.YAMLBlockScalar
+import kotlin.math.min
 
 abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBlockScalar {
   protected abstract val contentType: IElementType
@@ -30,7 +31,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
      val contentRanges = linesNodes.mapNotNull { line ->
        val first = line.first()
        val start = (first.textRange.startOffset - myStart
-                    + if (first.elementType == YAMLTokenTypes.INDENT) indent else 0)
+                    + if (first.elementType == YAMLTokenTypes.INDENT) min(first.textLength, indent) else 0)
        val end = line.last().textRange.endOffset - myStart
        if (start <= end)
          TextRange.create(start, end)

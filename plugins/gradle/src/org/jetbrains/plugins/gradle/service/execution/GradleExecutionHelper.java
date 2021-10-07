@@ -54,6 +54,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 
@@ -120,7 +122,11 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          return maybeApplyUserDirWorkaround(() -> f.fun(connection), projectDir);
+          Map<String, String> propertiesFixes = newHashMap(
+            pair("user.dir", projectDir),
+            pair("java.system.class.loader", null)
+          );
+          return maybeFixSystemProperties(() -> f.fun(connection), propertiesFixes);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -135,20 +141,31 @@ public class GradleExecutionHelper {
       });
   }
 
-  public static <T> T maybeApplyUserDirWorkaround(@NotNull Computable<T> action, String projectDir) {
-    String userDir = null;
+  public static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, Map<String, String> keyToMask) {
+    Map<String, String> oldValues = new HashMap<>();
     try {
       if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
-        userDir = System.getProperty("user.dir");
-        if (userDir != null) System.setProperty("user.dir", projectDir);
+        keyToMask.forEach((key,newVal) -> {
+          final String oldVal = System.getProperty(key);
+          oldValues.put(key, oldVal);
+          if (oldVal != null) {
+            if (newVal != null) {
+              System.setProperty(key, newVal);
+            } else {
+              System.clearProperty(key);
+            }
+          }
+        });
       }
       return action.compute();
     }
     finally {
-      if (userDir != null) {
-        // restore original user.dir property
-        System.setProperty("user.dir", userDir);
-      }
+      // restore original properties
+      oldValues.forEach((k,v) -> {
+        if (v != null) {
+          System.setProperty(k, v);
+        }
+      });
     }
   }
 

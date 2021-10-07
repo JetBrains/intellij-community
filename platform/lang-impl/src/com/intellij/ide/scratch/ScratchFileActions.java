@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -111,7 +112,9 @@ public final class ScratchFileActions {
       LanguageItem selectionItem =
         context.language != null ? LanguageItem.fromLanguage(context.language) :
         context.fileExtension != null ? new LanguageItem(
-          null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) : null;
+          null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) :
+        StringUtil.isNotEmpty(context.text) ? new LanguageItem(
+          null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
       // extract text from the focused component, e.g. a tree or a list
       ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
@@ -125,13 +128,11 @@ public final class ScratchFileActions {
         context.fileExtension = o.fileExtension;
         if (o == extractItem) {
           context.text = StringUtil.notNullize(textExtractor.extractText());
+          context.caretOffset = 0;
         }
         else if (o != selectionItem) {
           context.text = "";
-        }
-        if (context.language != null) {
-          ScratchFileCreationHelper.EXTENSION.forLanguage(context.language)
-            .prepareText(project, context, DataContext.EMPTY_CONTEXT);
+          context.caretOffset = 0;
         }
         doCreateNewScratch(project, context);
       };
@@ -207,11 +208,8 @@ public final class ScratchFileActions {
                                                                   @NotNull DataContext dataContext) {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
-    if (!context.text.isEmpty()) {
+    if (StringUtil.isNotEmpty(context.text)) {
       initLanguageFromCaret(project, editor, file, context, dataContext);
-    }
-    else {
-      context.text = StringUtil.notNullize(PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext));
     }
     context.ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     return context;
@@ -226,7 +224,11 @@ public final class ScratchFileActions {
       }
     }
     if (context.language != null) {
-      ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).beforeCreate(project, context);
+      ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
+      if (StringUtil.isEmpty(context.text)) {
+        helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+      }
+      helper.beforeCreate(project, context);
     }
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
@@ -427,6 +429,7 @@ public final class ScratchFileActions {
           return result.size() < 1000;
         }
       });
+      Collections.sort(result, Comparator.comparing(o -> o.getFile().getName(), NaturalComparator.INSTANCE));
       return result;
     }
 

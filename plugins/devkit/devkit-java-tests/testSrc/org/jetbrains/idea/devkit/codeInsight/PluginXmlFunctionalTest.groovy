@@ -199,12 +199,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testExtensionsDependencies() {
     addExtensionsModule("ExtensionsDependencies-module")
+
     VirtualFile contentFile = addExtensionsModule("ExtensionsDependencies-content")
+    VirtualFile contentSubDescriptorFile =
+      myFixture.copyFileToProject("ExtensionsDependencies-content.subDescriptor.xml",
+                                  "/ExtensionsDependencies-content/ExtensionsDependencies-content.subDescriptor.xml")
 
     doHighlightingTest("ExtensionsDependencies.xml",
                        "ExtensionsDependencies-plugin.xml")
 
     myFixture.configureFromExistingVirtualFile(contentFile)
+    doHighlightingTest()
+
+    myFixture.configureFromExistingVirtualFile(contentSubDescriptorFile)
     doHighlightingTest()
   }
 

@@ -15,7 +15,7 @@ public abstract class EnterBetweenBracesNoCommitDelegate extends EnterBetweenBra
     final HighlighterIterator it = createBeforeIterator(editor, lBraceOffset + 1);
     while(!it.atEnd() && it.getStart() < rBraceOffset) {
       it.advance();
-      if (it.getStart() == rBraceOffset) {
+      if (!it.atEnd() && it.getStart() == rBraceOffset) {
         return false;
       }
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.ui.components.JBList
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.table.JBTableRow
 import com.jetbrains.python.PyBundle
@@ -38,8 +39,8 @@ class PythonQuickFixesRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.type.new.argument", code("foo"), code("y"), code(", y")))
-      triggerByListItemAndHighlight(highlightBorder = false, highlightInside = false) { item ->
-        item.toString().contains("string=y") && checkEditor(editor)
+      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: JBList<*> ->
+        checkEditor(editor)
       }
       proposeMyRestore()
       test { type(", y") }

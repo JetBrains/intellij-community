@@ -24,7 +24,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                  "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
+                                  "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "ShowSearchHistory"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
     { "alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
@@ -78,7 +78,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift INSERT",             "$Paste", "Terminal.Paste"},
-    { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter", "SplitChooser.PreviousWindow"},
+    { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "SplitChooser.PreviousWindow"},
     { "shift alt ENTER",          "Console.TableResult.EditValueMaximized", "JupyterDebugAction", "SplitChooser"},
     { "shift alt A",              "NotebookInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
     { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
@@ -171,7 +171,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Emacs", new String[][] {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                  "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
+                                  "EmacsStyleIndent", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
     { "alt MINUS",                "RInsertAssignmentAction", "SECOND_STROKE_SHORTCUT"},
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
     { "control B",                "EditorLeft", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},

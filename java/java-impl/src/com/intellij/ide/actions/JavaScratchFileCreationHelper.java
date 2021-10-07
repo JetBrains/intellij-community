@@ -19,42 +19,31 @@ public class JavaScratchFileCreationHelper extends ScratchFileCreationHelper {
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     String caretMarker = "CARET_MARKER";
     if (context.text == "") {
-      String text = reformat(
-        project, context.language,
-        "class Scratch { public static void main (String[] args) {\n" + caretMarker + "\n} }");
+      String templateText = "class Scratch { public static void main (String[] args) {\n" + caretMarker + "\n} }";
+      String text = reformat(project, context.language, templateText);
       context.caretOffset = text.indexOf(caretMarker);
       context.text = text.substring(0, context.caretOffset) + text.substring(context.caretOffset + caretMarker.length());
       return true;
     }
     //todo add required import statements from dataContext if available
-    PsiFile psi = parseHeader(project, context.language, context.text);
+    String textPrefix = StringUtil.trim(StringUtil.first(context.text, 1024, false));
+    PsiFile psi = parseHeader(project, context.language, textPrefix);
     SyntaxTraverser<PsiElement> s = SyntaxTraverser.psiTraverser();
-    if (s.withRoot(psi).traverse().filter(PsiClass.class).first() != null ||
-        s.withRoot(psi).traverse().filter(PsiErrorElement.class).first() == null) {
-      return true;
+    for (PsiElement e : s.withRoot(psi)) {
+      if (e instanceof PsiPackageStatement || e instanceof PsiImportStatement || e instanceof PsiClass) return true;
+      if (e instanceof PsiErrorElement && e.getParent() == psi) break;
     }
-    psi = parseHeader(project, context.language, "class Scratch {\n" + context.text + "\n}");
-    if (s.withRoot(psi).traverse().filter(PsiMethod.class).first() != null) {
-      String text = reformat(
-        project, context.language,
-        "class Scratch {\n" + caretMarker + "\n}");
-      context.caretOffset = text.indexOf(caretMarker);
-      context.text = text.substring(0, context.caretOffset) +
-                     StringUtil.trim(context.text) +
-                     text.substring(context.caretOffset + caretMarker.length());
-      return true;
-    }
-
-    psi = parseHeader(project, context.language, "class Scratch {\n" + context.text + "\n}");
-    if (s.withRoot(psi).traverse().filter(PsiMember.class).first() != null) {
-      String text = reformat(project, context.language,
-                             "class Scratch { public static void main (String[] args) {\n" + caretMarker + "\n} }");
-      context.caretOffset = text.indexOf(caretMarker);
-      context.text = text.substring(0, context.caretOffset) +
-                     StringUtil.trim(context.text) +
-                     text.substring(context.caretOffset + caretMarker.length());
-      return true;
-    }
-    return false;
+    psi = parseHeader(project, context.language, "class Scratch {\n" + textPrefix + "\n}");
+    PsiMember psiMember = s.withRoot(psi).traverse().filter(PsiMember.class).skip(1).first();
+    String templateText =
+      psiMember != null && psiMember.getText().contains(textPrefix)
+      ? "class Scratch {\n" + caretMarker + "\n}"
+      : "class Scratch { public static void main (String[] args) {\n" + caretMarker + "\n} }";
+    String text = reformat(project, context.language, templateText);
+    context.caretOffset = text.indexOf(caretMarker);
+    context.text = text.substring(0, context.caretOffset) +
+                 StringUtil.trim(context.text) +
+                 text.substring(context.caretOffset + caretMarker.length());
+    return true;
   }
 }

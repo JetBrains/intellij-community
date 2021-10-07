@@ -32,6 +32,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "9d",
+    "name": "intellij.aopCommon",
+    "n": "i.aopCommon",
+    "package": "com.intellij.aop",
+    "sourceModule": "intellij.aopCommon",
+    "descriptor": "plugins/aop-common/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.aop",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cJ6",
     "n": "com.intellij.clion"
   }
@@ -2647,12 +2659,24 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "oO1",
-    "name": "intellij.spring.boot.core/cloud-stream",
-    "n": "i.spring.boot.core/cloud-stream",
+    "id": "Xe1",
+    "name": "intellij.spring.boot.cloud",
+    "n": "i.spring.boot.cloud",
+    "package": "com.intellij.spring.boot.cloud",
+    "sourceModule": "intellij.spring.boot.cloud",
+    "descriptor": "plugins/spring/spring-boot/spring-cloud/spring-boot-cloud/resources/intellij.spring.boot.cloud.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "pl",
+    "name": "intellij.spring.boot.cloud.stream",
+    "n": "i.spring.boot.cloud.stream",
     "package": "com.intellij.spring.boot.cloud.stream",
-    "sourceModule": "intellij.spring.boot.core",
-    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.cloud-stream.xml",
+    "sourceModule": "intellij.spring.boot.cloud.stream",
+    "descriptor": "plugins/spring/spring-boot/spring-cloud/spring-boot-cloud-stream/resources/intellij.spring.boot.cloud.stream.xml",
     "parent": "cLR",
     "type": 0
   }
@@ -2719,6 +2743,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "v5",
+    "name": "intellij.spring.boot.initializr",
+    "n": "i.spring.boot.initializr",
+    "package": "com.intellij.spring.boot.initializr",
+    "sourceModule": "intellij.spring.boot.initializr",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-initializr/resources/intellij.spring.boot.initializr.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "hJ",
     "name": "intellij.spring.boot.core/gradle",
     "n": "i.spring.boot.core/gradle",
@@ -2743,12 +2779,12 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Cn",
-    "name": "intellij.spring.boot.core/shared-indexes",
-    "n": "i.spring.boot.core/shared-indexes",
+    "id": "Mj",
+    "name": "intellij.spring.boot.core/shared-indices",
+    "n": "i.spring.boot.core/shared-indices",
     "package": "com.intellij.spring.boot.initializr.indexing",
     "sourceModule": "intellij.spring.boot.core",
-    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.shared-indexes.xml",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.shared-indices.xml",
     "parent": "cLR",
     "type": 0
   }
@@ -2804,6 +2840,18 @@
     "package": "com.intellij.spring.aop",
     "sourceModule": "intellij.spring.core",
     "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.aop-integration.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "or",
+    "name": "intellij.spring.core/jsf",
+    "n": "i.spring.core/jsf",
+    "package": "com.intellij.spring.jsf",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.jsf.xml",
     "parent": "c2Z",
     "type": 0
   }
@@ -3197,6 +3245,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "S9",
+    "name": "intellij.java.plugin",
+    "n": "i.java.plugin",
+    "package": null,
+    "sourceModule": "intellij.java.plugin",
+    "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.java",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "sk",
     "name": "com.intellij.modules.json",
     "n": "c.i.m.json",
@@ -3215,18 +3275,6 @@
     "sourceModule": "",
     "descriptor": "",
     "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "S9",
-    "name": "intellij.java.plugin",
-    "n": "i.java.plugin",
-    "package": null,
-    "sourceModule": "intellij.java.plugin",
-    "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.java",
-    "type": 1
   }
 }, {
   "group": "nodes",
@@ -3631,19 +3679,7 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "9d",
-    "name": "intellij.aopCommon",
-    "n": "i.aopCommon",
-    "package": null,
-    "sourceModule": "intellij.aopCommon",
-    "descriptor": "plugins/aop-common/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.aop",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "v5",
+    "id": "v51",
     "name": "intellij.spring.messaging",
     "n": "i.spring.messaging",
     "package": null,
@@ -4634,9 +4670,17 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "LR_oO1",
+    "id": "LR_Xe1",
     "source": "LR",
-    "target": "oO1",
+    "target": "Xe1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_pl",
+    "source": "LR",
+    "target": "pl",
     "type": 1
   }
 }, {
@@ -4682,6 +4726,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "LR_v5",
+    "source": "LR",
+    "target": "v5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "LR_hJ",
     "source": "LR",
     "target": "hJ",
@@ -4698,9 +4750,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "LR_Cn",
+    "id": "LR_Mj",
     "source": "LR",
-    "target": "Cn",
+    "target": "Mj",
     "type": 1
   }
 }, {
@@ -4725,6 +4777,14 @@
     "id": "2Z_gi",
     "source": "2Z",
     "target": "gi",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_or",
+    "source": "2Z",
+    "target": "or",
     "type": 1
   }
 }, {
@@ -4821,6 +4881,14 @@
     "id": "YE_HW",
     "source": "YE",
     "target": "HW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "9d_S9",
+    "source": "9d",
+    "target": "S9",
     "type": 0
   }
 }, {
@@ -7058,8 +7126,8 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "oO1_nQ",
-    "source": "oO1",
+    "id": "pl_nQ",
+    "source": "pl",
     "target": "nQ",
     "type": 0
   }
@@ -7074,9 +7142,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "eo_oO1",
+    "id": "eo_pl",
     "source": "eo",
-    "target": "oO1",
+    "target": "pl",
     "type": 0
   }
 }, {
@@ -7130,9 +7198,33 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "v5_4q",
+    "source": "v5",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hJ_v5",
+    "source": "hJ",
+    "target": "v5",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "hJ_87",
     "source": "hJ",
     "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "EP_v5",
+    "source": "EP",
+    "target": "v5",
     "type": 0
   }
 }, {
@@ -7146,8 +7238,16 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Cn_1t",
-    "source": "Cn",
+    "id": "Mj_v5",
+    "source": "Mj",
+    "target": "v5",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Mj_1t",
+    "source": "Mj",
     "target": "1t",
     "type": 0
   }
@@ -7210,6 +7310,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "or_wC",
+    "source": "or",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "or_FR",
+    "source": "or",
+    "target": "FR",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "G9_2Z",
     "source": "G9",
     "target": "2Z",
@@ -7258,9 +7374,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "nQ_v5",
+    "id": "nQ_v51",
     "source": "nQ",
-    "target": "v5",
+    "target": "v51",
     "type": 0
   }
 }, {
@@ -7434,9 +7550,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Tf_v5",
+    "id": "Tf_v51",
     "source": "Tf",
-    "target": "v5",
+    "target": "v51",
     "type": 0
   }
 }, {

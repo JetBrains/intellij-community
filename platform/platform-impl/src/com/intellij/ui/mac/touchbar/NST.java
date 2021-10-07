@@ -78,7 +78,7 @@ final class NST {
               ourNSTLibrary = null;
             }
             else {
-              ourNSTLibrary.releaseTouchBar(test);
+              ourNSTLibrary.releaseNativePeer(test);
               LOG.info("nst library works properly, successfully created and released native touchbar object");
             }
           }
@@ -111,11 +111,11 @@ final class NST {
     return ourNSTLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
   }
 
-  static void releaseTouchBar(ID tbObj) {
-    ourNSTLibrary.releaseTouchBar(tbObj);
+  static void releaseNativePeer(ID nativePeer) {
+    ourNSTLibrary.releaseNativePeer(nativePeer);
   }
 
-  static void setTouchBar(@Nullable Window window, TouchBar tb) {
+  static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
     long nsViewPtr = 0;
     if (window != null) {
       final ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
@@ -153,7 +153,7 @@ final class NST {
           LOG.debug("frame peer isn't instance of sun.lwawt.LWWindowPeer, class of peer: %s", peer.getClass());
       }
     }
-    ourNSTLibrary.setTouchBar(new ID(nsViewPtr), tb == null ? ID.NIL : tb.getNativePeer());
+    ourNSTLibrary.setTouchBar(new ID(nsViewPtr), touchBarNativePeer);
   }
 
   static void selectItemsToShow(ID tbObj, String[] ids, int count) {
@@ -179,19 +179,6 @@ final class NST {
       raster == null ? 0 : raster.getSecond().width,
       raster == null ? 0 : raster.getSecond().height,
       action); // called from AppKit, uses per-event autorelease-pool
-  }
-
-  static ID createPopover(String uid,
-                                 int itemWidth,
-                                 String text,
-                                 Icon icon,
-                                 ID tbObjExpand,
-                                 ID tbObjTapAndHold) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
   // NOTE: due to optimization scrubber is created without icons
@@ -257,10 +244,9 @@ final class NST {
     @NotNull List<TBItemScrubber.ItemData> items = scrubber.getItems();
     final Pair<Pointer, Integer> mem = _packItems(items.subList(fromIndex, fromIndex + itemsCount), itemsCount, withImages, withText);
     synchronized (scrubber) {
-      final ID scrubObj = scrubber.getNativePeer();
-      if (scrubObj.equals(ID.NIL))
+      if (scrubber.myNativePeer.equals(ID.NIL))
         return;
-      ourNSTLibrary.updateScrubberItems(scrubObj, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(), fromIndex);
+      ourNSTLibrary.updateScrubberItems(scrubber.myNativePeer, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(), fromIndex);
     }
     if (withImages && scrubber.getStats() != null)
       scrubber.getStats().incrementCounter(StatsCounters.scrubberIconsProcessingDurationNs, System.nanoTime() - startNs);

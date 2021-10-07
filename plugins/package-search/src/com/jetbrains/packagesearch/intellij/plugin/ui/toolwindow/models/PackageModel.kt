@@ -94,6 +94,22 @@ internal sealed class PackageModel(
                 appendLine(remoteInfo.name)
             }
         }.toLowerCase(Locale.ROOT)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Installed) return false
+
+            if (usageInfo != other.usageInfo) return false
+            if (searchableInfo != other.searchableInfo) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = usageInfo.hashCode()
+            result = 31 * result + searchableInfo.hashCode()
+            return result
+        }
     }
 
     class SearchResult(
@@ -109,6 +125,19 @@ internal sealed class PackageModel(
             appendLine(remoteInfo.description)
             appendLine(remoteInfo.name)
         }.toLowerCase(Locale.ROOT)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is SearchResult) return false
+
+            if (searchableInfo != other.searchableInfo) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return searchableInfo.hashCode()
+        }
     }
 
     companion object {

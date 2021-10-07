@@ -156,19 +156,18 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     Set<OptionDescription> optionDescriptions = null;
     boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
-      final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
-      if (descriptions != null) {
-        descriptions.removeIf(description -> {
-          return "ActionManager".equals(description.getPath()) ||
-                 filterOutInspections && "Inspections".equals(description.getGroupName());
-        });
-        if (!descriptions.isEmpty()) {
-          if (optionDescriptions == null) {
-            optionDescriptions = descriptions;
-          }
-          else {
-            optionDescriptions.retainAll(descriptions);
-          }
+      final Set<OptionDescription> descriptions = Objects.requireNonNullElse(registrar.getAcceptableDescriptions(word), new HashSet<>());
+      descriptions.removeIf(description -> {
+        return "ActionManager".equals(description.getPath()) ||
+               filterOutInspections && "Inspections".equals(description.getGroupName());
+      });
+
+      if (!descriptions.isEmpty()) {
+        if (optionDescriptions == null) {
+          optionDescriptions = descriptions;
+        }
+        else {
+          optionDescriptions.retainAll(descriptions);
         }
       }
       else {

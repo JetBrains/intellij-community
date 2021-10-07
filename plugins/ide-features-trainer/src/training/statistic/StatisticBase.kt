@@ -51,16 +51,16 @@ internal class StatisticBase : CounterUsagesCollector() {
   }
 
   enum class LessonStopReason {
-    CLOSE_PROJECT, RESTART, CLOSE_FILE, OPEN_MODULES, OPEN_NEXT_OR_PREV_LESSON
+    CLOSE_PROJECT, RESTART, CLOSE_FILE, OPEN_MODULES, OPEN_NEXT_OR_PREV_LESSON, EXIT_LINK
   }
 
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 9)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 10)
 
-    var isLearnProjectClosing = false
+    var isLearnProjectCloseLogged = false
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
@@ -119,10 +119,13 @@ internal class StatisticBase : CounterUsagesCollector() {
         val lessonId = lessonManager.currentLesson!!.id
         val taskId = lessonManager.currentLessonExecutor!!.currentTaskIndex
         lessonStoppedEvent.log(lessonIdField with lessonId,
-          taskIdField with taskId.toString(),
-          languageField with courseLanguage(),
-          reasonField with reason
+                               taskIdField with taskId.toString(),
+                               languageField with courseLanguage(),
+                               reasonField with reason
         )
+        if (reason == LessonStopReason.CLOSE_PROJECT || reason == LessonStopReason.EXIT_LINK) {
+          isLearnProjectCloseLogged = true
+        }
       }
     }
 

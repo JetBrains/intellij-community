@@ -18,14 +18,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.run.PythonRunConfigurationParams;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
+  private static final ConcurrentHashMap<PythonRunConfiguration, Boolean> waitingForExecution = new ConcurrentHashMap<>();
+
   public PyRunFileInConsoleAction() {
-    super(PyBundle.messagePointer("acton.run.file.in.python.console.title"), PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
+    super(PyBundle.messagePointer("acton.run.file.in.python.console.title"),
+          PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
   }
 
   @Override
@@ -43,18 +48,34 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
     final Project project = e.getProject();
     if (project == null) return;
     final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace());
-    final ConfigurationFromContext fromContext =
-      RunConfigurationProducer.getInstance(PythonRunConfigurationProducer.class).createConfigurationFromContext(context);
-    if (fromContext == null) return;
-    final RunnerAndConfigurationSettings settings = fromContext.getConfigurationSettings();
-    final PythonRunConfigurationParams configuration = (PythonRunConfigurationParams)settings.getConfiguration();
-    configuration.setShowCommandLineAfterwards(true);
+    PythonRunConfigurationProducer configProducer = RunConfigurationProducer.getInstance(PythonRunConfigurationProducer.class);
+    RunnerAndConfigurationSettings settings = configProducer.findExistingConfiguration(context);
     RunManager runManager = RunManager.getInstance(project);
-    runManager.setTemporaryConfiguration(settings);
+    if (settings == null) {
+      final ConfigurationFromContext fromContext = configProducer.createConfigurationFromContext(context);
+      if (fromContext == null) return;
+      settings = fromContext.getConfigurationSettings();
+      runManager.setTemporaryConfiguration(settings);
+    }
+    final PythonRunConfiguration configuration = (PythonRunConfiguration)settings.getConfiguration();
     runManager.setSelectedConfiguration(settings);
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), settings);
     if (builder != null) {
+      boolean oldValueShowCommandline = configuration.showCommandLineAfterwards();
+      configuration.setShowCommandLineAfterwards(true);
+      waitingForExecution.put(configuration, oldValueShowCommandline);
+
       ExecutionManager.getInstance(project).restartRunProfile(builder.build());
+    }
+  }
+
+  /*
+    Restore the option which was changed for the action execution
+   */
+  public static void configExecuted(PythonRunConfiguration configuration) {
+    if (waitingForExecution.containsKey(configuration)) {
+      Boolean oldValue = waitingForExecution.remove(configuration);
+      configuration.setShowCommandLineAfterwards(oldValue);
     }
   }
 }

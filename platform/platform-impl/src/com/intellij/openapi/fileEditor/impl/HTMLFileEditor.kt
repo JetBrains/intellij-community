@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
@@ -82,13 +83,13 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
       override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { navigating.set(true); BrowserUtil.browse(request.url); true }
+        if (userGesture) { navigating.set(true); browse(request.url); true }
         else false
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
       override fun onBeforePopup(browser: CefBrowser, frame: CefFrame, targetUrl: String, targetFrameName: String?): Boolean {
-        BrowserUtil.browse(targetUrl)
+        browse(targetUrl)
         return true
       }
     }, contentPanel.cefBrowser)
@@ -116,6 +117,9 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       contentPanel.loadHTML(file.content.toString())
     }
   }
+
+  private fun browse(url: String) =
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
 
   override fun getComponent(): JComponent = multiPanel
   override fun getPreferredFocusedComponent(): JComponent = multiPanel

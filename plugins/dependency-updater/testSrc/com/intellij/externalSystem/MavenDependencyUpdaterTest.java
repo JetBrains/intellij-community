@@ -3,11 +3,9 @@ package com.intellij.externalSystem;
 import com.intellij.buildsystem.model.DeclaredDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.xml.XmlTag;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
@@ -77,7 +75,6 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
     assertFilesAsExpected();
   }
 
-  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
   public void testUpdateManagedDependency() throws IOException {
     myModifierService.updateDependency(getModule("m1"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
@@ -86,7 +83,6 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
     assertFilesAsExpected();
   }
 
-  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
   public void testUpdateManagedDependencyNoScope() throws IOException {
     myModifierService.updateDependency(getModule("m1"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
@@ -95,7 +91,6 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
     assertFilesAsExpected();
   }
 
-  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
   public void testUpdateManagedDependencyRemoveScope() throws IOException {
     myModifierService.updateDependency(getModule("m1"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),

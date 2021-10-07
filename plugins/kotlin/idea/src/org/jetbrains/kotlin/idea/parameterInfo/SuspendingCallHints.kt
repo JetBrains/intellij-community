@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 fun provideSuspendingCallHint(callExpression: KtCallExpression): InlayInfo? {
     val resolvedCall = callExpression.resolveToCall() ?: return null
     if (resolvedCall.candidateDescriptor.isSuspend) {
-        return InlayInfo(TYPE_INFO_PREFIX + "#", callExpression.calleeExpression?.startOffset ?: callExpression.startOffset)
+        return InlayInfo("#", callExpression.calleeExpression?.startOffset ?: callExpression.startOffset)
     }
     return null
 }

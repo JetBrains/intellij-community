@@ -120,7 +120,10 @@ public class DependencyResultsTransformer {
     String name = componentResult.getModuleVersion().getName();
     String group = componentResult.getModuleVersion().getGroup();
     String version = componentResult.getModuleVersion().getVersion();
-    String selectionReason = componentResult.getSelectionReason().getDescription();
+    ComponentSelectionReason reason = componentResult.getSelectionReason();
+
+    Object description = invokeMethod(reason, "getDescription");
+    String selectionReason = description == null ? "" : description.toString();
 
     boolean resolveFromArtifacts = resultId instanceof ModuleComponentIdentifier;
 
@@ -391,7 +394,10 @@ public class DependencyResultsTransformer {
     String name = componentResult.getModuleVersion().getName();
     String group = componentResult.getModuleVersion().getGroup();
     String version = componentResult.getModuleVersion().getVersion();
-    String selectionReason = componentResult.getSelectionReason().getDescription();
+
+    ComponentSelectionReason reason = componentResult.getSelectionReason();
+    Object description = invokeMethod(reason, "getDescription");
+    String selectionReason = description == null ? "" : description.toString();
 
     DefaultExternalProjectDependency dependency = new DefaultExternalProjectDependency();
     dependency.setName(name);

@@ -75,11 +75,6 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
     return this
   }
 
-  fun useDistributionBaseDir(distributionBaseDir: File?): GradleConnector {
-    distributionFactory.setDistributionBaseDir(distributionBaseDir)
-    return this
-  }
-
   override fun forProjectDirectory(projectDir: File?): GradleConnector {
     connectionParamsBuilder.setProjectDir(projectDir)
     return this
@@ -131,7 +126,7 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
         override fun getDisplayName() = "Default distribution"
         override fun getToolingImplementationClasspath(progressLoggerFactory: ProgressLoggerFactory?,
                                                        progressListener: InternalBuildProgressListener?,
-                                                       userHomeDir: File?,
+                                                       parameters: ConnectionParameters?,
                                                        cancellationToken: BuildCancellationToken?): ClassPath {
           throw IllegalStateException("Target Gradle distribution should not be resolved on host environment.")
         }

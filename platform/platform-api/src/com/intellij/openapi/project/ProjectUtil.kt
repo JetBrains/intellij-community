@@ -160,7 +160,7 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
  * @param projectPath value of [Project.getPresentableUrl]
  */
 fun getProjectCacheFileName(projectPath: Path): String {
-  return getProjectCacheFileName(projectPath.systemIndependentPath, projectPath.fileName.toString(), false, ".", "")
+  return getProjectCacheFileName(projectPath.systemIndependentPath, (projectPath.fileName ?: projectPath).toString(), false, ".", "")
 }
 
 private fun getProjectCacheFileName(presentableUrl: String?,

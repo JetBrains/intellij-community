@@ -73,7 +73,7 @@ public final class XFramesView extends XDebugView {
 
     myFrameSelectionHandler = new AutoScrollToSourceHandler() {
       @Override
-      protected boolean isAutoScrollMode() { return true; }
+      protected boolean isAutoScrollMode() { return myListenersEnabled; }
 
       @Override
       protected void setAutoScrollMode(boolean state) { }

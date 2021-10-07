@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsEnvCustomizer;
 import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
@@ -27,6 +28,7 @@ import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
+import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.ApiStatus;
@@ -68,8 +70,7 @@ public abstract class GitHandler {
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  private boolean myWithLowPriority;
-  private boolean myWithNoTty;
+  private final GitExecutableContext myExecutableContext;
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
@@ -103,7 +104,7 @@ public abstract class GitHandler {
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
+    this(project, VfsUtilCore.virtualToIoFile(vcsRoot), command, configParameters);
   }
 
   /**
@@ -136,6 +137,13 @@ public abstract class GitHandler {
 
     myStdoutSuppressed = true;
     mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
+
+    GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
+    VirtualFile root = VfsUtil.findFileByIoFile(directory, true);
+    VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
+                                                     ? VcsEnvCustomizer.ExecutableType.WSL
+                                                     : VcsEnvCustomizer.ExecutableType.LOCAL;
+    myExecutableContext = new GitExecutableContext(gitVcs, root, executableType);
   }
 
   @NotNull
@@ -167,6 +175,10 @@ public abstract class GitHandler {
     return myCommandLine.getWorkDirectory();
   }
 
+  public VcsExecutableContext getExecutableContext() {
+    return myExecutableContext;
+  }
+
   @NotNull
   public GitExecutable getExecutable() {
     return myExecutable;
@@ -185,14 +197,14 @@ public abstract class GitHandler {
    * Execute process with lower priority
    */
   public void withLowPriority() {
-    myWithLowPriority = true;
+    myExecutableContext.withLowPriority(true);
   }
 
   /**
    * Detach git process from IDE TTY session
    */
   public void withNoTty() {
-    myWithNoTty = true;
+    myExecutableContext.withNoTty(true);
   }
 
   public void addParameters(@NonNls String @NotNull ... parameters) {
@@ -429,7 +441,7 @@ public abstract class GitHandler {
       }
 
       prepareEnvironment();
-      myExecutable.patchCommandLine(this, myCommandLine, myWithLowPriority, myWithNoTty);
+      myExecutable.patchCommandLine(this, myCommandLine, myExecutableContext);
 
       OUTPUT_LOG.debug(String.format("%s %% %s started: %s", getCommand(), this.hashCode(), myCommandLine));
 
@@ -459,14 +471,8 @@ public abstract class GitHandler {
 
     // customizers take read locks, which could not be acquired under potemkin progress
     if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
-      GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
-      VirtualFile root = VfsUtil.findFileByIoFile(myCommandLine.getWorkDirectory(), true);
-      VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
-                                                       ? VcsEnvCustomizer.ExecutableType.WSL
-                                                       : VcsEnvCustomizer.ExecutableType.LOCAL;
-      VcsExecutableContext context = new VcsExecutableContext(gitVcs, root, executableType);
       VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
-        customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, context);
+        customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
       });
 
       executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer

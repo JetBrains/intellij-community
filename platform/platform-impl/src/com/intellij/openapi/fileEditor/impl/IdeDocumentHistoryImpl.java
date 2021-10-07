@@ -555,7 +555,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
-    return backPlaces.removeIf(info -> !info.myFile.isValid());
+    return backPlaces.removeIf(info -> (info.myFile instanceof SkipFromDocumentHistory) || !info.myFile.isValid());
+  }
+
+  public interface SkipFromDocumentHistory {
   }
 
   @Override

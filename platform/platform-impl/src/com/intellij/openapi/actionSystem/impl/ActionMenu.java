@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -23,8 +22,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +42,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
-  private static final boolean KEEP_MENU_HIERARCHY = SystemInfo.isMacSystemMenu && Registry.is("keep.menu.hierarchy", false);
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -243,9 +245,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   private class MenuListenerImpl implements ChangeListener, MenuListener {
+    ScheduledFuture myDelayedClear;
     boolean isSelected = false;
-
-    boolean myIsHidden = false;
 
     @Override
     public void stateChanged(ChangeEvent e) {
@@ -290,10 +291,6 @@ public final class ActionMenu extends JBMenu {
     }
 
     private void onMenuHidden() {
-      if (KEEP_MENU_HIERARCHY) {
-        return;
-      }
-
       Runnable clearSelf = () -> {
         clearItems();
         addStubItem();
@@ -305,19 +302,7 @@ public final class ActionMenu extends JBMenu {
         // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
-        Disposable listenerHolder = Disposer.newDisposable();
-        Disposer.register(ApplicationManager.getApplication(), listenerHolder);
-        IdeEventQueue.getInstance().addDispatcher(e -> {
-          if (e instanceof KeyEvent) {
-            if (myIsHidden) {
-              clearSelf.run();
-            }
-            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
-          }
-          return false;
-        }, listenerHolder);
-
-        myIsHidden = true;
+        myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS);
       }
       else {
         clearSelf.run();
@@ -330,12 +315,13 @@ public final class ActionMenu extends JBMenu {
         myDisposable = Disposer.newDisposable();
       }
       Disposer.register(myDisposable, helper);
-      if (KEEP_MENU_HIERARCHY || myIsHidden) {
+      if (myDelayedClear != null) {
+        myDelayedClear.cancel(false);
+        myDelayedClear = null;
         clearItems();
       }
-      myIsHidden = false;
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-        fillMenu();
+        fillMenuWithRetries();
       }
     }
   }
@@ -343,12 +329,35 @@ public final class ActionMenu extends JBMenu {
   @Override
   public void setPopupMenuVisible(boolean b) {
     if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace))) {
-      fillMenu();
+      fillMenuWithRetries();
       if (!isSelected()) {
         return;
       }
     }
     super.setPopupMenuVisible(b);
+  }
+
+  private void fillMenuWithRetries() {
+    while (!tryFillMenu()) {
+      if (!isSelected()) break;
+    }
+  }
+
+  private boolean tryFillMenu() {
+    try {
+      fillMenu();
+    }
+    catch (Utils.ProcessCanceledWithReasonException ex) {
+      String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
+      if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+        return false;
+      }
+      ExceptionUtil.rethrow(ex);
+    }
+    catch (Throwable ex) {
+      ExceptionUtil.rethrow(ex);
+    }
+    return true;
   }
 
   public void clearItems() {
@@ -395,6 +404,7 @@ public final class ActionMenu extends JBMenu {
                    RelativePoint.getNorthEastOf(this));
   }
 
+  // TODO: fix listener registration after 'PresentationFactory.clearPresentationCaches'
   private class MenuItemSynchronizer implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent e) {

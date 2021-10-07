@@ -18,7 +18,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
-import org.jetbrains.annotations.NotNull
 import java.util.*
 
 class GrazieInspection : LocalInspectionTool() {
@@ -34,10 +33,11 @@ class GrazieInspection : LocalInspectionTool() {
     val checkers = TextChecker.allCheckers()
     val checkedDomains = checkedDomains()
     val fileLanguage = file.language
+    val areChecksDisabled = getDisabledChecker(fileLanguage)
 
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (element is PsiWhiteSpace || areChecksDisabled(element, fileLanguage)) return
+        if (element is PsiWhiteSpace || areChecksDisabled(element)) return
 
         val extracted = TextExtractor.findUniqueTextAt(element, checkedDomains) ?: return
         if (extracted.length > 50_000) return // too large text
@@ -67,10 +67,17 @@ class GrazieInspection : LocalInspectionTool() {
       return result
     }
 
-    internal fun areChecksDisabled(element: PsiElement, fileLanguage: Language): Boolean {
-      var psiLanguage = element.language
-      if (fileLanguage.isKindOf(psiLanguage)) psiLanguage = fileLanguage // e.g. XML PSI in HTML files
-      return psiLanguage.id in GrazieConfig.get().checkingContext.getEffectivelyDisabledLanguageIds()
+    internal fun getDisabledChecker(fileLanguage: Language): (PsiElement) -> Boolean {
+      val supportedLanguages = TextExtractor.getSupportedLanguages()
+      val disabledLanguages = GrazieConfig.get().checkingContext.getEffectivelyDisabledLanguageIds()
+      return { element ->
+        var lang: Language? = element.language
+        if (fileLanguage.isKindOf(lang)) lang = fileLanguage // e.g. XML PSI in HTML files
+        while (lang != null && lang !in supportedLanguages) {
+          lang = lang.baseLanguage
+        }
+        lang != null && lang.id in disabledLanguages
+      }
     }
   }
 }

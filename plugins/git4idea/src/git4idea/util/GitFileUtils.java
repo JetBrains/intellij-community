@@ -278,24 +278,20 @@ public final class GitFileUtils {
 
   public static void addTextConvParameters(@Nullable GitVersion version, @NotNull GitBinaryHandler h, boolean addp) {
     version = ObjectUtils.chooseNotNull(version, GitVersion.NULL);
-    switch (AdvancedSettings.getEnum(READ_CONTENT_WITH, GitTextConvMode.class)) {
-      case FILTERS: {
-        if (CAT_FILE_SUPPORTS_FILTERS.existsIn(version)) {
-          h.addParameters("--filters");
-        }
-        break;
-      }
-      case TEXTCONV: {
-        if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(version)) {
-          h.addParameters("--textconv");
-        }
-        break;
-      }
-      default: {
-        if (addp) {
-          h.addParameters("-p");
-        }
-      }
+    GitTextConvMode mode = AdvancedSettings.getEnum(READ_CONTENT_WITH, GitTextConvMode.class);
+
+    if (mode == GitTextConvMode.FILTERS && CAT_FILE_SUPPORTS_FILTERS.existsIn(version)) {
+      h.addParameters("--filters");
+      return;
+    }
+    if (mode == GitTextConvMode.TEXTCONV && CAT_FILE_SUPPORTS_TEXTCONV.existsIn(version)) {
+      h.addParameters("--textconv");
+      return;
+    }
+
+    // '-p' is not needed with '--batch' parameter
+    if (addp) {
+      h.addParameters("-p");
     }
   }
 }

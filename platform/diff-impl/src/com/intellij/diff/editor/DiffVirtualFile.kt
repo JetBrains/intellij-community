@@ -4,6 +4,7 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,7 +13,8 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.docking.impl.DockManagerImpl
 
 abstract class DiffVirtualFile(name: String) :
-  LightVirtualFile(name, DiffFileType.INSTANCE, ""), DiffContentVirtualFile, VirtualFileWithoutContent {
+  LightVirtualFile(name, DiffFileType.INSTANCE, ""),
+  DiffContentVirtualFile, VirtualFileWithoutContent, IdeDocumentHistoryImpl.SkipFromDocumentHistory {
 
   init {
     useDiffWindowDimensionKey()

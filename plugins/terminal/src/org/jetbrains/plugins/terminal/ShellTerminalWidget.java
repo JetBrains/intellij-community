@@ -38,7 +38,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
-  private final Project myProject;
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
   private boolean myPromptUpdateNeeded = true;
@@ -51,7 +50,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myProject = project;
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
     getTerminalPanel().addPreKeyEventHandler(e -> {
@@ -62,7 +60,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       handleAnyKeyPressed();
 
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(myProject);
+        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -75,11 +73,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         myShellCommandHandlerHelper.processKeyPressed(e);
       }
     });
-  }
-
-  @NotNull
-  Project getProject() {
-    return myProject;
   }
 
   public void handleEnterPressed() {
