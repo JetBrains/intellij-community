@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -219,7 +220,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        ChangedFilesPushingStatistics statistics = new ChangedFilesPushingStatistics(reason);
+        ChangedFilesPushingStatistics statistics;
+        if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
+          statistics = new ChangedFilesPushingStatistics(reason);
+        }
+        else {
+          statistics = null;
+        }
         performDelayedPushTasks(statistics);
       }
     };
