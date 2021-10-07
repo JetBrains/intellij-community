@@ -145,19 +145,23 @@ fun createAggregateHtml(
               tr {
                 th("Time")
                 th("Reason")
-                th("Duration")
+                th("Full duration")
                 th("Is cancelled")
+                th("Number")
               }
             }
             tbody {
+              val eventsToUnify = mutableListOf<ChangedFilesPushedEvent>()
               for (event in changedFilesPushEvents.sortedByDescending { it.startTime.instant }) {
-                tr {
-                  td(event.startTime.presentableLocalDateTime())
-                  td(event.reason)
-                  td(event.duration.presentableDuration())
-                  td(if (event.isCancelled) "cancelled" else "fully finished")
+                if (canUnify(event, eventsToUnify)) {
+                  eventsToUnify.add(event)
+                }
+                else {
+                  printUnified(eventsToUnify)
+                  print(event)
                 }
               }
+              printUnified(eventsToUnify)
             }
           }
         }
@@ -165,6 +169,43 @@ fun createAggregateHtml(
     }
   }
 }.toString()
+
+private fun HtmlBuilder.print(event: ChangedFilesPushedEvent) {
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(event.duration.presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td("1")
+  }
+}
+
+private fun HtmlBuilder.printUnified(eventsToUnify: List<ChangedFilesPushedEvent>) {
+  if (eventsToUnify.isEmpty()) return
+  val event = eventsToUnify[0]
+  if (eventsToUnify.size == 1) {
+    print(event)
+    return
+  }
+  tr {
+    td(event.startTime.presentableLocalDateTime())
+    td(event.reason)
+    td(JsonDuration(eventsToUnify.sumOf { it.duration.nano }).presentableDuration())
+    td(if (event.isCancelled) "cancelled" else "fully finished")
+    td(eventsToUnify.size.toString())
+  }
+}
+
+private fun canUnify(event: ChangedFilesPushedEvent, baseList: List<ChangedFilesPushedEvent>): Boolean {
+  if (event.isCancelled || event.duration.nano > 1_000_000) {
+    return false
+  }
+  if (baseList.isEmpty()) {
+    return true
+  }
+  val first = baseList[0]
+  return first.reason == event.reason
+}
 
 private const val NOT_APPLICABLE = "N/A"
 
