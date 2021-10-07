@@ -130,9 +130,9 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
 
   @Override
   public void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator, MavenToken token) throws
-                                                                                                        MavenServerIndexerException,
-                                                                                                        MavenServerProcessCanceledException,
-                                                                                                        RemoteException {
+                                                                                                                          MavenServerIndexerException,
+                                                                                                                          MavenServerProcessCanceledException,
+                                                                                                                          RemoteException {
     MavenServerUtil.checkToken(token);
     IndexingContext index = getIndex(id);
 
@@ -199,7 +199,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
   }
 
   @Override
-  public void processArtifacts(int indexId, MavenServerIndicesProcessor processor, MavenToken token) throws MavenServerIndexerException {
+  public List<IndexedMavenId> processArtifacts(int indexId, int startFrom, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       final int CHUNK_SIZE = 10000;
@@ -208,7 +208,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
       int total = r.numDocs();
 
       List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
-      for (int i = 0; i < total; i++) {
+      for (int i = startFrom; i < total; i++) {
         if (r.isDeleted(i)) continue;
 
         Document doc = r.document(i);
@@ -226,13 +226,14 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
         result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
 
         if (result.size() == CHUNK_SIZE) {
-          processor.processArtifacts(result);
-          result.clear();
+          return result;
         }
       }
-
-      if (!result.isEmpty()) {
-        processor.processArtifacts(result);
+      if (result.isEmpty()) {
+        return null;
+      }
+      else {
+        return result;
       }
     }
     catch (Exception e) {

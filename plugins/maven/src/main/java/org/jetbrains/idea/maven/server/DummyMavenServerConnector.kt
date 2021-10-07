@@ -130,7 +130,8 @@ class DummyIndexer : MavenServerIndexer {
   override fun updateIndex(id: Int, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
-  override fun processArtifacts(indexId: Int, processor: MavenServerIndicesProcessor?, token: MavenToken?) {
+  override fun processArtifacts(indexId: Int, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? {
+    return null
   }
 
   override fun addArtifact(indexId: Int, artifactFile: File?, token: MavenToken?): IndexedMavenId {
