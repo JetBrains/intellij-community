@@ -75,7 +75,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
         IdeBundle.message("notification.cache.diagnostic.helper.text",
           previousRecoveryAction.presentableName,
           next,
-          service<Saul>().sortedActions.size),
+          service<Saul>().sortedActions.filter { it.canBeApplied(project) }.size),
         NotificationType.WARNING
       )
     notification
