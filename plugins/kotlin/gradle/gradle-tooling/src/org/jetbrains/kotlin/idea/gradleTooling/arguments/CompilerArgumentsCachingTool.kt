@@ -17,8 +17,8 @@ object CompilerArgumentsCachingTool {
                 .let { KotlinCachedMultipleCompilerArgument(it) }
         val cachedMultipleArguments = extractedBucket.multipleArguments.entries.associate { it.cacheEntry(mapper) }
         val cachedFlagArguments = extractedBucket.flagArguments.entries.associate { it.cacheEntry(mapper) }
-        val cachedInternalArguments = extractedBucket.internalArguments.map { cacheCompilerArgument(it, mapper) }.toTypedArray()
-        val cachedFreeArgs = extractedBucket.freeArgs.map { cacheCompilerArgument(it, mapper) }.toTypedArray()
+        val cachedInternalArguments = extractedBucket.internalArguments.map { cacheCompilerArgument(it, mapper) }
+        val cachedFreeArgs = extractedBucket.freeArgs.map { cacheCompilerArgument(it, mapper) }
         return CachedCompilerArgumentsBucket(
             cachedCompilerArgumentsClassName,
             cachedSingleArguments,

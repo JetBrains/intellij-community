@@ -6,5 +6,5 @@ import java.io.Serializable
 interface ArgsInfo<T, R> : Serializable {
     val currentCompilerArguments: T
     val defaultCompilerArguments: T
-    val dependencyClasspath: Iterable<R>
+    val dependencyClasspath: Collection<R>
 }

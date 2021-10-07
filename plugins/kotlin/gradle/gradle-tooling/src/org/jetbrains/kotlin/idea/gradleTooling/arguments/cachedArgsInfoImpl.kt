@@ -9,7 +9,7 @@ data class CachedSerializedArgsInfo(
     override val cacheOriginIdentifier: Long,
     override val currentCompilerArguments: List<KotlinCachedCompilerArgument<*>>,
     override val defaultCompilerArguments: List<KotlinCachedCompilerArgument<*>>,
-    override val dependencyClasspath: Iterable<KotlinCachedCompilerArgument<*>>
+    override val dependencyClasspath: Collection<KotlinCachedCompilerArgument<*>>
 ) : CachedArgsInfo<List<KotlinCachedCompilerArgument<*>>> {
     override fun duplicate(): CachedArgsInfo<List<KotlinCachedCompilerArgument<*>>> = copy()
 }
@@ -18,7 +18,7 @@ data class CachedExtractedArgsInfo(
     override val cacheOriginIdentifier: Long,
     override val currentCompilerArguments: CachedCompilerArgumentsBucket,
     override val defaultCompilerArguments: CachedCompilerArgumentsBucket,
-    override val dependencyClasspath: Iterable<KotlinCachedCompilerArgument<*>>
+    override val dependencyClasspath: Collection<KotlinCachedCompilerArgument<*>>
 ) : CachedArgsInfo<CachedCompilerArgumentsBucket> {
     override fun duplicate(): CachedArgsInfo<CachedCompilerArgumentsBucket> = copy()
 }

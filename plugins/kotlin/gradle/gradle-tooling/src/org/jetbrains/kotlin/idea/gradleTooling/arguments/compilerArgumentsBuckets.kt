@@ -11,8 +11,8 @@ class ExtractedCompilerArgumentsBucket(
     val classpathParts: Array<String> = emptyArray(),
     val multipleArguments: Map<String, Array<String>?> = emptyMap(),
     val flagArguments: Map<String, Boolean> = emptyMap(),
-    val internalArguments: Array<String> = emptyArray(),
-    val freeArgs: Array<String> = emptyArray()
+    val internalArguments: List<String> = emptyList(),
+    val freeArgs: List<String> = emptyList()
 ) : CompilerArgumentsClassNameAware<String>, Serializable
 
 class CachedCompilerArgumentsBucket(
@@ -21,6 +21,6 @@ class CachedCompilerArgumentsBucket(
     val classpathParts: KotlinCachedMultipleCompilerArgument,
     val multipleArguments: Map<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>,
     val flagArguments: Map<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>,
-    val internalArguments: Array<KotlinCachedCompilerArgument<*>>,
-    val freeArgs: Array<KotlinCachedCompilerArgument<*>>
+    val internalArguments: List<KotlinCachedCompilerArgument<*>>,
+    val freeArgs: List<KotlinCachedCompilerArgument<*>>
 ) : CompilerArgumentsClassNameAware<KotlinCachedRegularCompilerArgument>, Serializable

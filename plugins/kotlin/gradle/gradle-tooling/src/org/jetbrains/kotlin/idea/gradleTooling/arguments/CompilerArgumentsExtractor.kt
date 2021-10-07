@@ -71,14 +71,13 @@ object CompilerArgumentsExtractor {
 
         val freeArgs = (compilerArguments.javaClass.kotlin.memberProperties.single { it.name == "freeArgs" }
             .get(compilerArguments) as List<String>)
-            .toTypedArray()
 
         val internalArguments = (compilerArguments.javaClass.kotlin.memberProperties.single { it.name == "internalArguments" }
             .get(compilerArguments) as List<*>).filterNotNull()
             .map { internalArgument ->
                 internalArgument.javaClass.kotlin.memberProperties.single { prop -> prop.name == "stringRepresentation" }
                     .get(internalArgument) as String
-            }.toTypedArray()
+            }
 
         return ExtractedCompilerArgumentsBucket(
             compilerArgumentsClassName,

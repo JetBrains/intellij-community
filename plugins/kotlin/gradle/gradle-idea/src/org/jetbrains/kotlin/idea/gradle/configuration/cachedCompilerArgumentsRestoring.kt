@@ -20,13 +20,13 @@ import kotlin.reflect.full.memberProperties
 data class EntityArgsInfoImpl(
     override val currentCompilerArguments: CommonCompilerArguments,
     override val defaultCompilerArguments: CommonCompilerArguments,
-    override val dependencyClasspath: Iterable<String>
+    override val dependencyClasspath: Collection<String>
 ) : ArgsInfo<CommonCompilerArguments, String>
 
 data class FlatSerializedArgsInfoImpl(
     override val currentCompilerArguments: List<String>,
     override val defaultCompilerArguments: List<String>,
-    override val dependencyClasspath: Iterable<String>
+    override val dependencyClasspath: Collection<String>
 ) : ArgsInfo<List<String>, String>
 
 object CachedArgumentsRestoring {

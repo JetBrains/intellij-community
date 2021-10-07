@@ -113,8 +113,8 @@ internal fun createCachedArgsBucket(): CachedCompilerArgumentsBucket = CachedCom
     classpathParts = KotlinCachedMultipleCompilerArgument(emptyList()),
     multipleArguments = emptyMap(),
     flagArguments = emptyMap(),
-    internalArguments = emptyArray(),
-    freeArgs = emptyArray()
+    internalArguments = emptyList(),
+    freeArgs = emptyList()
 )
 
 internal fun createCachedArgsInfo(): CachedArgsInfo<*> = CachedExtractedArgsInfo(

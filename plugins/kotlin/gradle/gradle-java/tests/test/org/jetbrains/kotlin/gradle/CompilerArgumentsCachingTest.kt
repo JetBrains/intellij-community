@@ -15,6 +15,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -160,14 +161,14 @@ class CompilerArgumentsCachingTest {
             )
         }
 
-        Assert.assertArrayEquals(
+        assertContentEquals(
             freeArgs,
-            cachedBucket.freeArgs.map { mapper.getCached((it as KotlinCachedRegularCompilerArgument).data) }.toTypedArray()
+            cachedBucket.freeArgs.map { mapper.getCached((it as KotlinCachedRegularCompilerArgument).data) }
         )
 
-        Assert.assertArrayEquals(
+        assertContentEquals(
             internalArguments,
-            cachedBucket.internalArguments.map { mapper.getCached((it as KotlinCachedRegularCompilerArgument).data) }.toTypedArray()
+            cachedBucket.internalArguments.map { mapper.getCached((it as KotlinCachedRegularCompilerArgument).data) }
         )
     }
 
