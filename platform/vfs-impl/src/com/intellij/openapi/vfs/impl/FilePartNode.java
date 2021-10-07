@@ -530,7 +530,7 @@ class FilePartNode {
     return false;
   }
 
-  private boolean isCaseSensitive() {
+  boolean isCaseSensitive() {
     VirtualFile file = myFile();
     return file == null ? myFS.isCaseSensitive() : file.isCaseSensitive();
   }
