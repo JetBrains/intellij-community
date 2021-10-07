@@ -7,22 +7,22 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMember
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_POJO
+import org.jetbrains.plugins.groovy.lang.psi.util.getPOJO
 
 class GrPOJOInspection : BaseInspection() {
   override fun buildVisitor() = object : BaseInspectionVisitor() {
     override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) {
-      val pojo = typeDefinition.getAnnotation(GROOVY_TRANSFORM_STC_POJO) ?: return
-      if (typeDefinition.parentsOfType<PsiMember>(true).all { !it.hasAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC) }) {
-        registerError(pojo, GENERIC_ERROR_OR_WARNING)
+      val actualPojo = typeDefinition.getAnnotation(GROOVY_TRANSFORM_STC_POJO) ?: return
+      val enabledPojo = getPOJO(typeDefinition)
+      if (enabledPojo == null) {
+        registerError(actualPojo, GENERIC_ERROR_OR_WARNING)
       }
     }
   }

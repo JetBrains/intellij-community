@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.openapi.util.Key
@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
+import org.jetbrains.plugins.groovy.lang.psi.util.getPOJO
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
@@ -26,6 +27,7 @@ class GroovyObjectTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
     if (context.codeClass.isInterface) return
     if (context.superClass?.language == GroovyLanguage) return
+    if (getPOJO(context.codeClass) != null) return
 
     val groovyObject = context.findClass(GROOVY_OBJECT)
     if (groovyObject == null || !GrTraitUtil.isInterface(groovyObject)) return
