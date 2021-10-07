@@ -42,6 +42,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_UTIL_TEST_CASE = "groovy.util.GroovyTestCase";
   String GROOVY_LANG_SINGLETON = "groovy.lang.Singleton";
   String GROOVY_TRANSFORM_COMPILE_STATIC = "groovy.transform.CompileStatic";
+  String GROOVY_TRANSFORM_STC_POJO = "groovy.transform.stc.POJO";
   String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
   String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
   String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";

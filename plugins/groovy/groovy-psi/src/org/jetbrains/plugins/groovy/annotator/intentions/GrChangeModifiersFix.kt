@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
-class GrRemoveModifiersFix(private val modifiersToRemove: List<String>,
+class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
                            val modifierToInsert: String?,
                            @Nls private val textRepresentation: String)
   : IntentionAction {
@@ -54,7 +56,11 @@ class GrRemoveModifiersFix(private val modifiersToRemove: List<String>,
       }
     }
     if (!hasRequiredModifier && modifierToInsert != null) {
-      owner.modifierList?.setModifierProperty(modifierToInsert, true)
+      if (modifierToInsert in GrModifier.GROOVY_MODIFIERS || modifierToInsert in PsiModifier.MODIFIERS) {
+        owner.modifierList?.setModifierProperty(modifierToInsert, true)
+      } else {
+        owner.modifierList?.addAnnotation(modifierToInsert)
+      }
     }
   }
 }
