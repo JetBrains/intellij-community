@@ -11,6 +11,7 @@ object CompilerArgumentsExtractor {
     private const val LEGACY_ARGUMENT_ANNOTATION_CLASS = "org.jetbrains.kotlin.com.sampullara.cli.Argument"
     private const val CREATE_COMPILER_ARGS = "createCompilerArgs"
     private const val SETUP_COMPILER_ARGS = "setupCompilerArgs"
+    private val EXPLICIT_DEFAULT_OPTIONS: List<String> = listOf("jvmTarget")
 
     private val ARGUMENT_ANNOTATION_CLASSES = setOf(LEGACY_ARGUMENT_ANNOTATION_CLASS, ARGUMENT_ANNOTATION_CLASS)
 
@@ -47,7 +48,7 @@ object CompilerArgumentsExtractor {
         val defaultArgs = compilerArguments::class.java.getConstructor().newInstance()
         val compilerArgumentsPropertiesToProcess = compilerArguments.javaClass.kotlin.memberProperties
             .filter { prop ->
-                prop.get(compilerArguments) != prop.get(defaultArgs) && prop.annotations.any {
+                prop.name in EXPLICIT_DEFAULT_OPTIONS || prop.get(compilerArguments) != prop.get(defaultArgs) && prop.annotations.any {
                     (it.javaClass.getMethodOrNull("annotationType")?.invoke(it) as? Class<*>)?.name in ARGUMENT_ANNOTATION_CLASSES
                 }
             }
@@ -56,15 +57,13 @@ object CompilerArgumentsExtractor {
         val classpathParts: Array<String>
 
         val allSingleArguments = compilerArgumentsPropertiesToProcess.filter { it.returnType.classifier == String::class }
-            .map { (it.get(compilerArguments) as String?).let { value -> it.name to value } }
-            .toMap()
+            .associate { (it.get(compilerArguments) as String?).let { value -> it.name to value } }
 
         classpathParts = allSingleArguments["classpath"]?.split(File.pathSeparator)?.toTypedArray() ?: emptyArray()
         singleArguments = allSingleArguments.filterKeys { it != "classpath" }
 
         val multipleArguments = compilerArgumentsPropertiesToProcess.filter { it.returnType.classifier == Array<String>::class }
-            .map { (it.get(compilerArguments) as Array<String>?).let { value -> it.name to value } }
-            .toMap()
+            .associate { (it.get(compilerArguments) as Array<String>?).let { value -> it.name to value } }
 
         val flagArguments = compilerArgumentsPropertiesToProcess.filter { it.returnType.classifier == Boolean::class }
             .associate { it.name to it.get(compilerArguments) as Boolean }

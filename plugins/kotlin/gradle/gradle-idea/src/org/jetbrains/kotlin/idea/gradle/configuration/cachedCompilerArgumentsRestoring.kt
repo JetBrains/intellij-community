@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.idea.facet.substituteDefaults
 import org.jetbrains.kotlin.idea.gradle.configuration.CachedCompilerArgumentsRestoringManager.restoreCompilerArgument
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
 import org.jetbrains.kotlin.idea.projectModel.ArgsInfo
@@ -66,7 +65,6 @@ object CachedArgumentsRestoring {
         }
         val compilerArgumentsClass = Class.forName(compilerArgumentsClassName) as Class<out CommonCompilerArguments>
         val newCompilerArgumentsBean = compilerArgumentsClass.getConstructor().newInstance()
-        parseCommandLineArguments(substituteDefaults(emptyList(), newCompilerArgumentsBean), newCompilerArgumentsBean)
         val propertiesByName = compilerArgumentsClass.kotlin.memberProperties.associateBy { it.name }
         cachedBucket.singleArguments.entries.map { restoreEntry(it, cacheAware) }.mapNotNull {
             val key = propertiesByName[(it.first as KotlinRawRegularCompilerArgument).data] ?: return@mapNotNull null
