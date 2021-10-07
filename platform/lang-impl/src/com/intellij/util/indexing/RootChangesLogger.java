@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.roots.impl;
+package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,20 +17,12 @@ import java.util.stream.Collectors;
 final class RootChangesLogger {
   private final static int BATCH_CAPACITY = 10;
   @NotNull
-  private final Logger myLogger;
-  //hash->isFullReindex
+  private static final Logger myLogger = Logger.getInstance(RootChangesLogger.class);
+
   @NotNull
   private final IntOpenHashSet myReportedHashes = new IntOpenHashSet();
   private final List<Report> myReports = new ArrayList<>(BATCH_CAPACITY);
 
-  RootChangesLogger(@NotNull Logger logger) { myLogger = logger; }
-
-  /**
-   * Actually if it's full reindex is evident from stacktrace.
-   * Explicit parameter is to simplify reading old builds' logs only
-   * <p>
-   * Also it's the same project for all invocations
-   */
   void info(@NotNull Project project, boolean fullReindex) {
     Throwable stacktrace = new Throwable();
     int hash = ThrowableInterner.computeAccurateTraceHashCode(stacktrace);
