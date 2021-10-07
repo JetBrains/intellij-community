@@ -173,9 +173,14 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(CastExpressionFixFactories.initializerTypeMismatch)
     }
 
+    private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SpecifyExplicitTypeFixFactories.ambiguousAnonymousTypeInferred)
+    }
+
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
     }
+
     private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
     }
@@ -189,6 +194,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         expressions,
         whenStatements,
         typeMismatch,
+        needExplicitType,
         superKeyword,
         vararg,
     )

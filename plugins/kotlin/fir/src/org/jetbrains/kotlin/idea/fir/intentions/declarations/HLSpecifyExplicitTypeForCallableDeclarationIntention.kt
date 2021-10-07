@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.fir.intentions.declarations
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -25,6 +27,12 @@ class HLSpecifyExplicitTypeForCallableDeclarationIntention :
     override val applicabilityRange: HLApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
     override val inputProvider = inputProvider<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo> { declaration ->
+        val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).map { it::class }.toSet()
+        // Avoid redundant intentions
+        if (KtFirDiagnostic.AmbiguousAnonymousTypeInferred::class in diagnostics ||
+            KtFirDiagnostic.PropertyWithNoTypeNoInitializer::class in diagnostics ||
+            KtFirDiagnostic.MustBeInitialized::class in diagnostics
+        ) return@inputProvider null
         getTypeInfo(declaration)
     }
 
