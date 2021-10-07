@@ -1086,6 +1086,15 @@ public final class HighlightClassUtil {
     }
     return null;
   }
+  
+  static HighlightInfo checkExtendsSealedClass(PsiFunctionalExpression expression, PsiType functionalInterfaceType) {
+    PsiClass functionalInterface = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceType);
+    if (functionalInterface == null || !functionalInterface.hasModifierProperty(PsiModifier.SEALED)) return null;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(expression)
+      .descriptionAndTooltip(JavaErrorBundle.message("sealed.cannot.be.functional.interface"))
+      .create();
+  }
 
    public static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.SEALED)) {

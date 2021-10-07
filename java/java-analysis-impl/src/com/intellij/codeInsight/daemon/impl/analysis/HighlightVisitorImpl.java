@@ -397,13 +397,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
-        final String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
-        if (notFunctionalMessage != null) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                         .descriptionAndTooltip(notFunctionalMessage).create());
-        }
-        else {
-          checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+        myHolder.add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
+        if (!myHolder.hasErrorResults()) {
+          final String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
+          if (notFunctionalMessage != null) {
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                           .descriptionAndTooltip(notFunctionalMessage).create());
+          }
+          else {
+            checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
+          }
         }
       }
       else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
@@ -1556,6 +1559,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (functionalInterfaceType != null) {
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
+      }
       if (!myHolder.hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (!isFunctional) {
