@@ -62,7 +62,6 @@ public class MavenSpyOutputParser {
 
       MavenEventType eventType = MavenEventType.valueByName(type);
       if (eventType == null) {
-        MavenLog.LOG.info("maven event type not found by name " + type);
         return;
       }
       processErrorLogLine(parameters.get("error"), eventType, messageConsumer);
