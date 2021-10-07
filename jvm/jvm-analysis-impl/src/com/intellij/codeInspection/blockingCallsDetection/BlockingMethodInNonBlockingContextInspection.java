@@ -169,8 +169,8 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (callExpression == null) return;
 
       ContextType contextType = isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings);
-      if (contextType instanceof ContextType.BLOCKING ||
-          (contextType instanceof ContextType.UNSURE && myConsiderUnknownContextBlocking)) {
+      if (contextType instanceof ContextType.Blocking ||
+          (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking)) {
         return;
       }
       ProgressIndicatorProvider.checkCanceled();
@@ -187,13 +187,13 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       StreamEx<LocalQuickFix> fixesStream = StreamEx.of(myBlockingMethodCheckers)
         .flatArray(checker -> checker.getQuickFixesFor(elementContext));
 
-      if (contextType instanceof ContextType.UNSURE && !myConsiderUnknownContextBlocking) {
+      if (contextType instanceof ContextType.Unsure && !myConsiderUnknownContextBlocking) {
         fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix());
       }
 
       String message;
-      if (contextType instanceof ContextType.NONBLOCKING && StringUtil.isNotEmpty(((ContextType.NONBLOCKING)contextType).getDescription())) {
-        String contextDescription = ((ContextType.NONBLOCKING)contextType).getDescription();
+      if (contextType instanceof ContextType.NonBlocking && StringUtil.isNotEmpty(((ContextType.NonBlocking)contextType).getDescription())) {
+        String contextDescription = ((ContextType.NonBlocking)contextType).getDescription();
         message = JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.wildcard.descriptor", contextDescription);
       }
       else {
@@ -225,13 +225,13 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
   private static ContextType isContextNonBlockingFor(PsiElement element,
                                                      List<? extends NonBlockingContextChecker> nonBlockingContextCheckers,
                                                      BlockingCallInspectionSettings settings) {
-    ContextType effectiveContextType = ContextType.UNSURE.INSTANCE;
+    ContextType effectiveContextType = ContextType.Unsure.INSTANCE;
     ElementContext elementContext = new ElementContext(element, settings);
     for (NonBlockingContextChecker checker : nonBlockingContextCheckers) {
       ProgressIndicatorProvider.checkCanceled();
       ContextType checkResult = checker.computeContextType(elementContext);
       effectiveContextType = chooseType(effectiveContextType, checkResult);
-      if (effectiveContextType instanceof ContextType.NONBLOCKING) return effectiveContextType;
+      if (effectiveContextType instanceof ContextType.NonBlocking) return effectiveContextType;
     }
     return effectiveContextType;
   }

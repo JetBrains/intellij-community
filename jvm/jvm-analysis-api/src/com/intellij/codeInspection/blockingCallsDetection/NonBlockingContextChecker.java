@@ -27,10 +27,10 @@ public interface NonBlockingContextChecker {
    */
   default ContextType computeContextType(@NotNull ElementContext elementContext) {
     if (isContextNonBlockingFor(elementContext.getElement())) {
-      return ContextType.NONBLOCKING.INSTANCE;
+      return ContextType.NonBlocking.INSTANCE;
     }
     else {
-      return ContextType.BLOCKING.INSTANCE;
+      return ContextType.Blocking.INSTANCE;
     }
   }
 

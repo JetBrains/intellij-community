@@ -10,20 +10,20 @@ sealed class ContextType(
   /*
      * Blocking calls inside are NOT ALLOWED
      */
-  class NONBLOCKING(@Nls val description: String?) : ContextType(true, 1) {
+  class NonBlocking(@Nls val description: String?) : ContextType(true, 1) {
     companion object {
       @JvmField
-      val INSTANCE: ContextType = NONBLOCKING(null)
+      val INSTANCE: ContextType = NonBlocking(null)
     }
   }
 
   /*
    * Blocking calls inside are ALLOWED
    */
-  object BLOCKING : ContextType(true, 0)
+  object Blocking : ContextType(true, 0)
 
   /*
    * No information about whether it is ok to call blocking methods inside current context or not
    */
-  object UNSURE : ContextType(false, -1)
+  object Unsure : ContextType(false, -1)
 }

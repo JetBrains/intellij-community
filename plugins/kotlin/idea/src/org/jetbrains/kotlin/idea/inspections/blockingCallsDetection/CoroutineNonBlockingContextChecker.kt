@@ -65,26 +65,26 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
     override fun computeContextType(elementContext: ElementContext): ContextType {
         val element = elementContext.element
-        if (element !is KtCallExpression) return UNSURE
+        if (element !is KtCallExpression) return Unsure
 
         val containingLambda = element.parents
             .filterIsInstance<KtLambdaExpression>()
             .firstOrNull()
         val containingArgument = containingLambda?.getParentOfType<KtValueArgument>(true, KtCallableDeclaration::class.java)
         if (containingArgument != null) {
-            val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return BLOCKING
-            val call = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return BLOCKING
+            val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return Blocking
+            val call = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return Blocking
 
             val blockingFriendlyDispatcherUsed = checkBlockingFriendlyDispatcherUsed(call, callExpression)
             if (blockingFriendlyDispatcherUsed.isDefinitelyKnown) return blockingFriendlyDispatcherUsed
 
-            val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return BLOCKING
-            val type = parameterForArgument.returnType ?: return BLOCKING
+            val parameterForArgument = call.getParameterForArgument(containingArgument) ?: return Blocking
+            val type = parameterForArgument.returnType ?: return Blocking
 
             if (type.isBuiltinFunctionalType) {
                 val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
                     ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
-                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NONBLOCKING else BLOCKING
+                return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NonBlocking else Blocking
             }
         }
 
@@ -93,12 +93,12 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
                 .take(2)
                 .firstOrNull { function -> function.nameIdentifier != null }
                 ?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
-            return if (isInSuspendFunctionBody) NONBLOCKING else BLOCKING
+            return if (isInSuspendFunctionBody) NonBlocking else Blocking
         }
         val containingPropertyOrFunction: KtCallableDeclaration? =
             containingLambda.getParentOfTypes(true, KtProperty::class.java, KtNamedFunction::class.java)
-        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NONBLOCKING
-        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NONBLOCKING else BLOCKING
+        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NonBlocking
+        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NonBlocking else Blocking
     }
 
     private fun checkBlockingFriendlyDispatcherUsed(
@@ -122,22 +122,22 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         (this.constructor.supertypes + this).any { it.fqName?.asString() == COROUTINE_CONTEXT }
 
     private fun checkBlockFriendlyDispatcherParameter(call: ResolvedCall<*>): ContextType {
-        val argumentDescriptor = call.getFirstArgument()?.resolveToCall()?.resultingDescriptor ?: return UNSURE
+        val argumentDescriptor = call.getFirstArgument()?.resolveToCall()?.resultingDescriptor ?: return Unsure
         return argumentDescriptor.isBlockFriendlyDispatcher()
     }
 
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
         val classDescriptor =
-            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return UNSURE
-        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return UNSURE
+            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return Unsure
+        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return Unsure
         val propertyDescriptor = classDescriptor
             .unsubstitutedMemberScope
             .getContributedDescriptors(DescriptorKindFilter.VARIABLES)
             .filterIsInstance<PropertyDescriptor>()
             .singleOrNull { it.isOverridableOrOverrides && it.type.isCoroutineContext() }
-            ?: return UNSURE
+            ?: return Unsure
 
-        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return UNSURE
+        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return Unsure
         return initializer.hasBlockFriendlyDispatcher()
     }
 
@@ -146,21 +146,21 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         callExpression: KtCallExpression
     ): ContextType {
         val isInsideFlow = call.resultingDescriptor.fqNameSafe.asString().startsWith(FLOW_PACKAGE_FQN)
-        if (!isInsideFlow) return UNSURE
-        val flowOnCall = callExpression.findFlowOnCall() ?: return NONBLOCKING
+        if (!isInsideFlow) return Unsure
+        val flowOnCall = callExpression.findFlowOnCall() ?: return NonBlocking
         return checkBlockFriendlyDispatcherParameter(flowOnCall)
     }
 
     private fun KtExpression.hasBlockFriendlyDispatcher(): ContextType {
         class RecursiveExpressionVisitor : PsiRecursiveElementVisitor() {
-            var allowsBlocking: ContextType = UNSURE
+            var allowsBlocking: ContextType = Unsure
 
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
                     val callableDescriptor = element.getCallableDescriptor()
                     val allowsBlocking = callableDescriptor.castSafelyTo<DeclarationDescriptor>()
                         ?.isBlockFriendlyDispatcher()
-                    if (allowsBlocking != null && allowsBlocking != UNSURE) {
+                    if (allowsBlocking != null && allowsBlocking != Unsure) {
                         this.allowsBlocking = allowsBlocking
                         return
                     }
@@ -173,27 +173,27 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): ContextType {
-        if (this == null) return UNSURE
+        if (this == null) return Unsure
 
         val hasBlockingAnnotation = annotations.hasAnnotation(FqName(BLOCKING_EXECUTOR_ANNOTATION))
-        if (hasBlockingAnnotation) return BLOCKING
+        if (hasBlockingAnnotation) return Blocking
 
         val hasNonBlockingAnnotation = annotations.hasAnnotation(FqName(NONBLOCKING_EXECUTOR_ANNOTATION))
-        if (hasNonBlockingAnnotation) return NONBLOCKING
+        if (hasNonBlockingAnnotation) return NonBlocking
 
-        val fqnOrNull = fqNameOrNull()?.asString() ?: return NONBLOCKING
+        val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking
         return when(fqnOrNull) {
-            IO_DISPATCHER_FQN -> BLOCKING
-            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NONBLOCKING
-            else -> UNSURE
+            IO_DISPATCHER_FQN -> Blocking
+            MAIN_DISPATCHER_FQN, DEFAULT_DISPATCHER_FQN -> NonBlocking
+            else -> Unsure
         }
     }
 
     private fun union(vararg checks: () -> ContextType): ContextType {
         for (check in checks) {
             val iterationResult = check()
-            if (iterationResult != UNSURE) return iterationResult
+            if (iterationResult != Unsure) return iterationResult
         }
-        return UNSURE
+        return Unsure
     }
 }
