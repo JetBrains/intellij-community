@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitApplyChangesProcess;
 import git4idea.GitUtil;
@@ -29,6 +30,7 @@ import git4idea.repo.GitRepositoryManager;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -59,28 +61,10 @@ public class GitCherryPicker extends VcsCherryPicker {
     new GitApplyChangesProcess(myProject, commits, true,
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
                                (repository, commit, autoCommit, listeners) -> {
-                                 if (indicator != null) {
-                                   if (commits.size() > 1) {
-                                     indicator.setText(DvcsBundle.message(
-                                       "cherry.picking.process.commit",
-                                       StringUtil.trimMiddle(commit.getSubject(), 30),
-                                       cherryPickedCommitsCount.get(),
-                                       commits.size()
-                                     ));
-                                   }
-                                   else {
-                                     indicator.setText(DvcsBundle.message(
-                                       "cherry.picking.process.commit.single",
-                                       StringUtil.trimMiddle(commit.getSubject(), 30)
-                                     ));
-                                   }
-                                 }
-                                 GitCommandResult result = Git.getInstance()
-                                   .cherryPick(repository, commit.getId().asString(), autoCommit, shouldAddSuffix(repository, commit.getId()),
-                                               listeners.toArray(new GitLineHandlerListener[0]));
-                                 if (indicator != null) {
-                                   indicator.setFraction((double) cherryPickedCommitsCount.get() / commits.size());
-                                 }
+                                 GitCommandResult result = cherryPickSingleCommit(
+                                   repository, commit, autoCommit, listeners,
+                                   indicator, cherryPickedCommitsCount.get(), commits.size()
+                                 );
                                  cherryPickedCommitsCount.inc();
                                  return result;
                                },
@@ -89,6 +73,50 @@ public class GitCherryPicker extends VcsCherryPicker {
                                (repository, commit) -> createCommitMessage(repository, commit),
                                true,
                                (repository, autoCommit) -> cancelCherryPick(repository, autoCommit)).execute();
+  }
+
+  private GitCommandResult cherryPickSingleCommit(
+    @NotNull GitRepository repository,
+    @NotNull VcsCommitMetadata commit,
+    boolean autoCommit,
+    @NotNull List<? extends GitLineHandlerListener> listeners,
+    @Nullable ProgressIndicator indicator,
+    int alreadyCherryPickedCount,
+    int totalCommitsToCherryPick
+  ) {
+    if (indicator != null) {
+      updateCherryPickIndicatorText(indicator, commit, alreadyCherryPickedCount, totalCommitsToCherryPick);
+    }
+    GitCommandResult result = Git.getInstance().cherryPick(
+      repository, commit.getId().asString(), autoCommit, shouldAddSuffix(repository, commit.getId()),
+      listeners.toArray(new GitLineHandlerListener[0])
+    );
+    if (indicator != null) {
+      indicator.setFraction((double)alreadyCherryPickedCount / totalCommitsToCherryPick);
+    }
+    return result;
+  }
+
+  private static void updateCherryPickIndicatorText(
+    @NotNull ProgressIndicator indicator,
+    @NotNull VcsCommitMetadata commit,
+    int alreadyCherryPickedCount,
+    int totalCommitsToCherryPick
+  ) {
+    if (totalCommitsToCherryPick > 1) {
+      indicator.setText(DvcsBundle.message(
+        "cherry.picking.process.commit",
+        StringUtil.trimMiddle(commit.getSubject(), 30),
+        alreadyCherryPickedCount,
+        totalCommitsToCherryPick
+      ));
+    }
+    else {
+      indicator.setText(DvcsBundle.message(
+        "cherry.picking.process.commit.single",
+        StringUtil.trimMiddle(commit.getSubject(), 30)
+      ));
+    }
   }
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
