@@ -33,7 +33,7 @@ final class PluginLayout extends BaseLayout {
   Boolean pluginCompatibilityExactVersion = false
   Boolean retainProductDescriptorForBundledPlugin = false
 
-  private PluginLayout(String mainModule) {
+  private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
   }
 
@@ -169,7 +169,7 @@ final class PluginLayout extends BaseLayout {
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     void withResourceFromModule(String moduleName, String resourcePath, String relativeOutputPath) {
-      layout.resourcePaths << new ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false)
+      layout.resourcePaths.add(new ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false))
     }
 
     /**
@@ -177,7 +177,7 @@ final class PluginLayout extends BaseLayout {
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     void withResourceArchive(String resourcePath, String relativeOutputFile) {
-      layout.resourcePaths << new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true)
+      layout.resourcePaths.add(new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true))
     }
 
     /**
