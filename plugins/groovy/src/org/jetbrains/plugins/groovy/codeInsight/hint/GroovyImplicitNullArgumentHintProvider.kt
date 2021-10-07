@@ -37,4 +37,8 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
 
     override val mainCheckboxText: String = GroovyBundle.message("settings.inlay.show.hints.for.implicit.null.argument")
   }
+
+  override fun getProperty(key: String): String {
+    return GroovyBundle.message(key)
+  }
 }
