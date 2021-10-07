@@ -46,7 +46,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
                 holder.registerProblem(expression, new TextRange(start + j + 1, start + j + 2),
                                        JavaBundle.message("inspection.trailing.whitespaces.in.text.block.message"),
                                        createFixes());
-                return;
+                break;
               }
             }
           }
