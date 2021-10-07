@@ -43,7 +43,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     val parameterModels = PARAMETER_NAME_HINTS_EP.extensionList.map {
       ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
     }
-    groups[PARAMETERS_GROUP] = parameterModels
+    if (parameterModels.isNotEmpty()) {
+      groups[PARAMETERS_GROUP] = parameterModels
+    }
     val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
 
     val root = CheckedTreeNode()
