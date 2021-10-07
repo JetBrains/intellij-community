@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -45,7 +46,6 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(myProject)
   private val runWidgetListener = object : RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
     override fun availabilityChanged(value: Boolean) {
-      revalidate()
       repaint()
     }
   }
@@ -97,12 +97,13 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
           true,
         )
         toolbar.targetComponent = myPanel
+        toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
 
         myPanel.add(toolbar as JComponent, layoutConstrains)
       }
     }
 
-    myPanel.revalidate();
+    myPanel.revalidate()
   }
 
   override fun getComponent(): JComponent = myPanel
