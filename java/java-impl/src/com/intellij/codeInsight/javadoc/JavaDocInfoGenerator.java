@@ -8,7 +8,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
-import com.intellij.diagnostic.Checks;
 import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
@@ -125,6 +124,8 @@ public class JavaDocInfoGenerator {
   private final InlineCodeHighlightingMode myInlineCodeBlocksHighlightingMode;
   private final boolean myDoSemanticHighlightingOfLinks;
   private final float myHighlightingSaturation;
+
+  private boolean myIsSignatureGenerationInProgress;
 
   public JavaDocInfoGenerator(@NotNull Project project, @Nullable PsiElement element) {
     this(
@@ -605,7 +606,12 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
-      if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
+      myIsSignatureGenerationInProgress = true;
+      if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) {
+        myIsSignatureGenerationInProgress = false;
+        return;
+      }
+      myIsSignatureGenerationInProgress = false;
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
 
@@ -808,7 +814,9 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
+      myIsSignatureGenerationInProgress = true;
       generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
+      myIsSignatureGenerationInProgress = false;
       enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
@@ -1207,7 +1215,9 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
+      myIsSignatureGenerationInProgress = true;
       generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
+      myIsSignatureGenerationInProgress = false;
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
 
@@ -2115,7 +2125,9 @@ public class JavaDocInfoGenerator {
       buffer.append("<font color=red>").append(label).append("</font>");
     }
     else {
-      generateLink(buffer, target, doSemanticHighlightingOfLinks() ? tryHighlightLinkLabel(target, label) : label, plainLink);
+      String highlightedLabel =
+        myIsSignatureGenerationInProgress || doSemanticHighlightingOfLinks() ? tryHighlightLinkLabel(target, label) : label;
+      generateLink(buffer, target, highlightedLabel, plainLink);
     }
   }
 
@@ -2123,13 +2135,14 @@ public class JavaDocInfoGenerator {
    * If highlighted links has the same color as highlighted inline code blocks they will be indistinguishable.
    * In this case we should change link color to standard hyperlink color which we believe is apriori different.
    */
-  private static @NotNull TextAttributes tuneAttributesForLink(@NotNull TextAttributes attributes) {
+  private @NotNull TextAttributes tuneAttributesForLink(@NotNull TextAttributes attributes) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes defaultText = globalScheme.getAttributes(HighlighterColors.TEXT);
     TextAttributes identifier = globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
 
-    if (Objects.equals(attributes.getForegroundColor(), defaultText.getForegroundColor())
-        || Objects.equals(attributes.getForegroundColor(), identifier.getForegroundColor())) {
+    if (!myIsSignatureGenerationInProgress &&
+        (Objects.equals(attributes.getForegroundColor(), defaultText.getForegroundColor())
+         || Objects.equals(attributes.getForegroundColor(), identifier.getForegroundColor()))) {
       TextAttributes tuned = attributes.clone();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         tuned.setForegroundColor(globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor());
@@ -2143,7 +2156,6 @@ public class JavaDocInfoGenerator {
   }
 
   private @NotNull String tryHighlightLinkLabel(@NotNull PsiElement element, @NotNull String label) {
-    Checks.require(doSemanticHighlightingOfLinks());
     if (element instanceof PsiClass) {
       return getStyledSpan(true, tuneAttributesForLink(getHighlightingManager().getClassDeclarationAttributes((PsiClass)element)), label);
     }
@@ -2168,7 +2180,6 @@ public class JavaDocInfoGenerator {
     @NotNull TextAttributes labelAttributes,
     @NotNull String label
   ) {
-    Checks.require(doSemanticHighlightingOfLinks());
     StringBuilder buffer = new StringBuilder();
     int openParenIndex = label.indexOf("(");
     if (openParenIndex == -1) openParenIndex = label.length();

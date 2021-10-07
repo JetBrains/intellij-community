@@ -57,7 +57,7 @@ new Gr().fo<caret>o()
 def docs() {}
 
 <caret>docs()
-''', '''<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
+''', '''<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
    check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#0000ff;">character sequences</span></code></a>
  </div><table class='sections'></table>'''
   }
@@ -117,7 +117,7 @@ class Foo {
 }
 new Foo().<caret>foo()
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
+<div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
        May return <code style='font-size:100%;'><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
      </div><table class='sections'></table>\
 '''
@@ -132,7 +132,7 @@ def foo() {}
 
 f<caret>oo()""",
            """\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p><code> lorem ipsum </code></td></table>\
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p><code> lorem ipsum </code></td></table>\
 """
   }
 
