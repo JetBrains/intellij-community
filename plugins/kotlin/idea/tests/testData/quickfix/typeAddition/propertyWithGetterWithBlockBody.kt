@@ -11,3 +11,4 @@ class My {
             return 3.14
         }
 }
+/* IGNORE_FIR */

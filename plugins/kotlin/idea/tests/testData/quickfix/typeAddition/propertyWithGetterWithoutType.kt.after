@@ -2,3 +2,4 @@
 
 val x: Int
     get(): Int = 42
+/* IGNORE_FIR */

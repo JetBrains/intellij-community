@@ -161,6 +161,9 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(CastExpressionFixFactories.initializerTypeMismatch)
     }
 
+    private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SpecifyExplicitTypeFixFactories.ambiguousAnonymousTypeInferred)
+    }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
@@ -170,6 +173,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         mutability,
         expressions,
         whenStatements,
-        typeMismatch
+        typeMismatch,
+        needExplicitType,
     )
 }
