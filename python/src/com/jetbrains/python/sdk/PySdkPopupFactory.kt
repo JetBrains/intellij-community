@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -21,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.PyAddSdkDialog
 import java.util.function.Consumer
 
@@ -78,7 +76,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
     if (Experiments.getInstance().isFeatureEnabled("add.python.interpreter.dialog.on.targets")) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(currentSdk))
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(it, currentSdk) })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
@@ -98,17 +96,6 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
       Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
       null
     ).apply { setHandleAutoSelectionBeforeShow(true) }
-  }
-
-  private fun collectAddInterpreterActions(currentSdk: Sdk?): List<AnAction> {
-    return listOf(AddLocalInterpreterAction(project, module) { switchToSdk(it, currentSdk) }) +
-           collectNewInterpreterOnTargetActions(currentSdk)
-  }
-
-  private fun collectNewInterpreterOnTargetActions(currentSdk: Sdk?): List<AnAction> {
-    return PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList.map { factory ->
-      AddInterpreterOnTargetAction(project, factory.getTargetType()) { switchToSdk(it, currentSdk) }
-    }
   }
 
   private fun switchToSdk(sdk: Sdk, currentSdk: Sdk?) {
