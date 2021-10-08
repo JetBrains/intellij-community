@@ -22,8 +22,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -72,6 +74,7 @@ final class ActionUpdater {
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
   private boolean myForceAsync;
+  private String myInEDTActionOperation;
   private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
@@ -136,16 +139,17 @@ final class ActionUpdater {
       AnAction action = entry.getKey();
       Presentation orig = myPresentationFactory.getPresentation(action);
       Presentation copy = entry.getValue();
+      JComponent customComponent = null;
       if (action instanceof CustomComponentAction) {
-        // toolbar may have already created a custom component, do not erase it
-        JComponent copyC = copy.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        JComponent origC = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        if (copyC == null && origC != null) {
-          copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, origC);
-        }
+        // 1. toolbar may have already created a custom component, do not erase it
+        // 2. presentation factory may be just reset, do not reuse component from a copy
+        customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
       }
-      orig.copyFrom(copy);
+      orig.copyFrom(copy, customComponent);
       reflectSubsequentChangesInOriginalPresentation(orig, copy);
+      if (customComponent != null && orig.isVisible()) {
+        ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
+      }
     }
   }
 
@@ -164,7 +168,7 @@ final class ActionUpdater {
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
     boolean isEDT = EDT.isCurrentThreadEdt();
     if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
+      LOG.error("Calling `" + action.getClass().getName() + "#" + operation + "` on EDT " +
                 (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
     if (isEDT || canAsync && shallAsync) {
@@ -176,6 +180,7 @@ final class ActionUpdater {
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
       long start = System.nanoTime();
+      myInEDTActionOperation = "`" + action.getClass().getName() + "#" + operation + "`";
       try {
         return ProgressManager.getInstance().runProcess(() -> {
           try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
@@ -184,10 +189,11 @@ final class ActionUpdater {
         }, ProgressWrapper.wrap(progress));
       }
       finally {
+        myInEDTActionOperation = null;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn("Slow (" + elapsed + " ms) '" + operation + "' on action " + action + " of " + action.getClass() +
-                   ". Consider speeding it up and/or implementing UpdateInBackground.");
+          LOG.warn("Slow (" + elapsed + " ms) `" + action.getClass().getName() + "#" + operation + "`. " +
+                   "Consider speeding it up and/or implementing UpdateInBackground.");
         }
       }
     });
@@ -268,12 +274,12 @@ final class ActionUpdater {
       cancelAllUpdates("context menu requested");
     }
 
-    Runnable runnable = () -> {
+    Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
       ensureSlowDataKeysPreCached();
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
-      computeOnEdt(() -> {
+      return () -> { // invoked outside the read-action
         try {
           applyPresentationChanges();
           promise.setResult(result);
@@ -282,23 +288,28 @@ final class ActionUpdater {
           promise.setError(e);
         }
         return null;
-      });
+      };
     };
     ourPromises.add(promise);
     ClientId clientId = ClientId.getCurrent();
     ourExecutor.execute(() -> {
-      boolean[] success = {false};
+      Ref<Computable<Void>> applyRunnableRef = Ref.create();
       try {
         ClientId.withClientId(clientId, () -> {
           ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
-            success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
+            if (ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
               applicationEx,
-              () -> cancelPromise(promise, "write-action requested"),
-              () -> applicationEx.tryRunReadAction(runnable)), indicator);
-          if (!success[0] && !promise.isDone()) {
-            cancelPromise(promise, "read-action unavailable");
-          }
+              () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
+                                           "nested write-action requested by " + myInEDTActionOperation),
+              () -> applicationEx.tryRunReadAction(() -> applyRunnableRef.set(computable.compute()))) &&
+                !applyRunnableRef.isNull() && !promise.isDone()) {
+              computeOnEdt(applyRunnableRef.get());
+            }
+            else if (!promise.isDone()) {
+              cancelPromise(promise, "read-action unavailable");
+            }
+          }, indicator);
         });
       }
       catch (Throwable e) {
@@ -310,7 +321,7 @@ final class ActionUpdater {
         ourPromises.remove(promise);
         if (!promise.isDone()) {
           cancelPromise(promise, "unknown reason");
-          LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + success[0] + ")"));
+          LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + !applyRunnableRef.isNull() + ")"));
         }
       }
     });
@@ -616,7 +627,12 @@ final class ActionUpdater {
       String message = "'" + place + "' update cancelled: " + reason;
       LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
     }
-    if (promise instanceof AsyncPromise) {
+    boolean nestedWA = reason instanceof String && ((String)reason).startsWith("nested write-action");
+    if (nestedWA) {
+      LOG.error(new IllegalStateException(
+        "An action must not request write-action during actions update. See CustomComponentAction.createCustomComponent javadoc."));
+    }
+    if (!nestedWA && promise instanceof AsyncPromise) {
       ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));
     }
     else {

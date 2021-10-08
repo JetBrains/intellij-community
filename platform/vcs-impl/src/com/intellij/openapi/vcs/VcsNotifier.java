@@ -62,12 +62,11 @@ public class VcsNotifier {
                                   @NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   boolean showDetailsAction) {
-    if (showDetailsAction && ProjectLevelVcsManager.getInstance(myProject).isConsoleVisible()) {
-      return notifyError(null, title, message, createShowDetailsAction());
+    Notification notification = createNotification(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.ERROR, null);
+    if (showDetailsAction) {
+      addShowDetailsAction(myProject, notification);
     }
-    else {
-      return notifyError(displayId, title, message);
-    }
+    return notify(notification);
   }
 
   /**
@@ -417,15 +416,13 @@ public class VcsNotifier {
     return notify(notification);
   }
 
-  @NotNull
-  public NotificationAction createShowDetailsAction() {
-    return NotificationAction.createSimple(
-      VcsBundle.message("notification.showDetailsInConsole"),
-      () -> {
-        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+  public static void addShowDetailsAction(@NotNull Project project, @NotNull Notification notification) {
+    if (ProjectLevelVcsManager.getInstance(project).isConsoleVisible()) {
+      notification.addAction(NotificationAction.createSimple(VcsBundle.message("notification.showDetailsInConsole"), () -> {
+        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
         vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
-      }
-    );
+      }));
+    }
   }
 
   @Nls

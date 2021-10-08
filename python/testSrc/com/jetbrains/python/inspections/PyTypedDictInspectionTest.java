@@ -272,6 +272,23 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "Y = TypedDict('Y', {'n': None})\n");
   }
 
+  // PY-50025
+  public void testNoWarningInSubscriptionExpressionOnDictLiteral() {
+    doTestByText("ROMAN = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}\n" +
+                 "class Solution:\n" +
+                 "    def romanToInt(self, roman: str) -> int:\n" +
+                 "        result = 0\n" +
+                 "        for letter in roman:\n" +
+                 "            int_value = ROMAN[letter]\n" +
+                 "        return 42");
+  }
+
+  // PY-50113
+  public void testNoWarningInGetMethodOnDictLiteral() {
+    doTestByText("def baz(param: str):\n" +
+                 "    {'a': 1}.get(param)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

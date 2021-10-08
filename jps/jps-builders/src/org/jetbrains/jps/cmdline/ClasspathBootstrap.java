@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
@@ -57,6 +58,22 @@ public final class ClasspathBootstrap {
     ProtobufDecoder.class,  // netty codec
   };
 
+  private static final String[] REFLECTION_OPEN_PACKAGES = {
+    // needed for jps core functioning
+    "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+
+    // needed for some lombok and google errorprone compiler versions to function
+    "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
+  };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
   private static final String PROTOBUF_JAVA6_VERSION = "3.5.1";
@@ -216,6 +233,13 @@ public final class ClasspathBootstrap {
   public static File getResourceFile(Class<?> aClass) {
     final String resourcePath = getResourcePath(aClass);
     return resourcePath != null? new File(resourcePath) : null;
+  }
+
+  public static void configureReflectionOpenPackages(Consumer<String> paramConsumer) {
+    for (String aPackage : REFLECTION_OPEN_PACKAGES) {
+      paramConsumer.accept("--add-opens");
+      paramConsumer.accept(aPackage);
+    }
   }
 
   private static List<String> getInstrumentationUtilRoots() {

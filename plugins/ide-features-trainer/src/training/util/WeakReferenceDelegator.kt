@@ -6,14 +6,14 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 // Maybe it can be moved to the platform
-class WeakReferenceDelegator<T>(obj: T? = null): ReadWriteProperty<Any?, T?> {
-  private var reference : WeakReference<T>?
+class WeakReferenceDelegator<T>(obj: T? = null) : ReadWriteProperty<Any?, T?> {
+  private var reference: WeakReference<T>?
 
   init {
     this.reference = obj?.let { WeakReference(it) }
   }
 
-  override fun getValue(thisRef:Any? , property: KProperty<*>): T? {
+  override fun getValue(thisRef: Any?, property: KProperty<*>): T? {
     return reference?.get()
   }
 

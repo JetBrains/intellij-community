@@ -374,6 +374,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
+    addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
 
     return res;
   }

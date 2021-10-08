@@ -62,7 +62,8 @@ public final class StatusBarUtil {
       return LightEditService.getInstance().getSelectedFileEditor();
     }
 
-    DockContainer c = DockManager.getInstance(project).getContainerFor(statusBar.getComponent());
+    DockContainer c = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),
+                                                                       DockableEditorTabbedContainer.class::isInstance);
     EditorsSplitters splitters = null;
     if (c instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)c).getSplitters();

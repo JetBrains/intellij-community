@@ -81,7 +81,7 @@ def pytest_addoption(parser):
                      dest="teamcity", default=0, help="force output of JetBrains TeamCity service messages")
     group._addoption('--no-teamcity', action="count",
                      dest="no_teamcity", default=0, help="disable output of JetBrains TeamCity service messages")
-    parser.addoption('--jb-swapdiff', action="store", dest="swapdiff", default=False, help="Swap actual/expected in diff")
+    parser.addoption('--jb-swapdiff', action="store_true", dest="swapdiff", default=False, help="Swap actual/expected in diff")
 
     kwargs = {"help": "skip output of passed tests for JetBrains TeamCity service messages"}
     if _is_bool_supported():

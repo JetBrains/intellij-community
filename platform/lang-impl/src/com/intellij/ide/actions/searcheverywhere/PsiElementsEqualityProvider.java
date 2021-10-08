@@ -21,13 +21,8 @@ public class PsiElementsEqualityProvider extends AbstractEqualityProvider {
 
   @Nullable
   public static PsiElement toPsi(Object o) {
-    if (o instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
-      return toPsi(((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)o).getItem());
-    }
-
-    if (o instanceof PsiElement) {
-      return  (PsiElement)o;
-    }
+    PsiElement psi = PSIPresentationBgRendererWrapper.toPsi(o);
+    if (psi != null) return psi;
 
     if (o instanceof PsiElementNavigationItem) {
       return  ((PsiElementNavigationItem)o).getTargetElement();

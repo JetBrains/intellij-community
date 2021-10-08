@@ -23,7 +23,7 @@ public final class ActiveRules {
                                                              boolean supportsScopesRule,
                                                              boolean supportsModuleRule) {
     List<UsageGroupingRule> rules = new ArrayList<>();
-    if (supportsNonCodeRule) {
+    if (supportsNonCodeRule && (presentation == null || !presentation.isDetachedMode())) {
       rules.add(new NonCodeUsageGroupingRule(presentation));
     }
     if (supportsScopesRule && usageViewSettings.isGroupByScope()) {

@@ -3,6 +3,7 @@ package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -25,6 +26,8 @@ import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
+import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
+import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
 import java.awt.Rectangle
@@ -33,6 +36,8 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val existedFile = "git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
+
+  private var showGitBranchesBackup: Boolean? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -49,6 +54,13 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     resetGitLogWindow()
 
+    prepareRuntimeTask l@{
+      val property = SHOW_GIT_BRANCHES_LOG_PROPERTY
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: return@l
+      showGitBranchesBackup = logUiProperties[property]
+      logUiProperties[property] = true
+    }
+
     task {
       highlightLatestCommitsFromBranch(branchName)
     }
@@ -59,18 +71,26 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
+      var selectionCleared = false
       // todo: return highlighting of full tree node when IFT-234 will be resolved
       triggerByPartOfComponent(highlightBorder = false) l@{ tree: DnDAwareTree ->
         val path = TreeUtil.treePathTraverser(tree).find { it.getPathComponent(it.pathCount - 1).toString() == "HEAD_NODE" }
                    ?: return@l null
         val rect = tree.getPathBounds(path) ?: return@l null
-        Rectangle(rect.x, rect.y, rect.width, 0)
+        Rectangle(rect.x, rect.y, rect.width, 0).also {
+          if (!selectionCleared) {
+            tree.clearSelection()
+            selectionCleared = true
+          }
+        }
       }
     }
 
     task {
-      text(GitLessonsBundle.message("git.project.history.apply.branch.filter"))
-      text(GitLessonsBundle.message("git.project.history.click.head.tooltip"),
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties
+      val choice = if (logUiProperties == null || !logUiProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) 1 else 0
+      text(GitLessonsBundle.message("git.project.history.apply.branch.filter", choice))
+      text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
            LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
@@ -155,5 +175,12 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
+  }
+
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    if (showGitBranchesBackup != null) {
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
+      logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!
+    }
   }
 }

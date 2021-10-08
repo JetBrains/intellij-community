@@ -136,9 +136,8 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
         throw new RuntimeException();
       }
       else {
-        T nativeValue = noStorageChange.get();
-
-        WorkspaceEntityStorageBuilder builder = ((VersionedEntityStorageOnBuilder)myStorage).getBuilder();
+        noStorageChange.get();
+        WorkspaceEntityStorageBuilder builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
         PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(mapping.getEntities(this));
         if (entity == null) {

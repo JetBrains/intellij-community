@@ -57,7 +57,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   override fun isDeclaration(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
 
-  override fun signatureRange(declaration: PsiElement): TextRange? = findSupport(declaration)!!.signatureRange(declaration)?.takeIf {
+  override fun signatureRange(declaration: PsiElement): TextRange? = findSupport(declaration)?.signatureRange(declaration)?.takeIf {
     !declaration.containingFile.hasErrorElementInRange(it)
   }
 

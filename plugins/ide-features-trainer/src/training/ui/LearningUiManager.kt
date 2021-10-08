@@ -2,6 +2,7 @@
 package training.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.BidirectionalMap
 import training.learn.lesson.LessonManager
 import training.util.WeakReferenceDelegator
@@ -34,6 +35,7 @@ object LearningUiManager {
     LessonManager.instance.clearCurrentLesson()
   }
 
+  @NlsSafe
   fun getIconIndex(icon: Icon): String {
     var index = iconMap.getKeysByValue(icon)?.firstOrNull()
     if (index == null) {
@@ -47,7 +49,7 @@ object LearningUiManager {
   private var currentCallbackId = 0
 
   /** The returned Id should be used in the text only once */
-  fun addCallback(callback: () -> Unit) : Int {
+  fun addCallback(callback: () -> Unit): Int {
     callbackMap[currentCallbackId++] = callback
     return currentCallbackId - 1
   }

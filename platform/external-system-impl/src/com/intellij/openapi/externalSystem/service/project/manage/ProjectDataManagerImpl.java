@@ -205,7 +205,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   public <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
     Collection<DataNode<?>> dummy = new SmartList<>();
     dummy.addAll(nodes);
-    importData(dummy, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    importData(dummy, project, createModifiableModelsProvider(project), synchronous);
   }
 
   @Override
@@ -222,7 +222,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   public <T> void importData(@NotNull DataNode<T> node,
                              @NotNull Project project,
                              boolean synchronous) {
-    importData(node, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    importData(node, project, createModifiableModelsProvider(project), synchronous);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -363,7 +363,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final ProjectData projectData,
                                 @NotNull Project project,
                                 boolean synchronous) {
-    removeData(key, toRemove, toIgnore, projectData, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    removeData(key, toRemove, toIgnore, projectData, project, createModifiableModelsProvider(project), synchronous);
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
@@ -389,6 +389,11 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     else {
       return ContainerUtil.emptyList();
     }
+  }
+
+  @Override
+  public @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project) {
+    return new IdeModifiableModelsProviderImpl(project);
   }
 
   private void ensureTheDataIsReadyToUse(@NotNull Collection<? extends DataNode<?>> nodes) {

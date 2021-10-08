@@ -1,11 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
@@ -14,12 +10,16 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColors
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import training.FeaturesTrainerIcons
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
 import training.learn.course.KLesson
 import training.statistic.StatisticBase
+import training.ui.views.NewContentLabel
+import training.util.iftPluginIsUsing
+import training.util.learningPanelWasOpenedInCurrentVersion
 import training.util.rigid
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -64,7 +64,21 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
 
     panel.add(rigid(16, 1))
     for (module in modules) {
-      panel.add(moduleHeader(module))
+      val moduleHeader = moduleHeader(module)
+      if (!moduleHasNewContent(module)) {
+        panel.add(moduleHeader)
+      } else {
+        val nameLine = JPanel()
+        nameLine.isOpaque = false
+        nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+        nameLine.alignmentX = JPanel.LEFT_ALIGNMENT
+
+        nameLine.add(moduleHeader)
+        nameLine.add(rigid(10, 0))
+        nameLine.add(NewContentLabel())
+
+        panel.add(nameLine)
+      }
       panel.add(rigid(2, 2))
       panel.add(moduleDescription(module))
       panel.add(rigid(16, 16))
@@ -72,6 +86,23 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
     panel.add(rigid(16, 15))
     StatisticBase.logWelcomeScreenPanelExpanded()
     return panel
+  }
+
+  private fun moduleHasNewContent(module: IftModule): Boolean {
+    if (!iftPluginIsUsing) {
+      return false
+    }
+    return module.lessons.any { it.isNewLesson() }
+  }
+
+  override fun newContentMarker(): JComponent? {
+    if (learningPanelWasOpenedInCurrentVersion) {
+      return null
+    }
+    if (CourseManager.instance.modules.any { moduleHasNewContent(it) }) {
+      return NewContentLabel()
+    }
+    return null
   }
 
   private fun moduleDescription(module: IftModule): HeightLimitedPane {
@@ -97,16 +128,15 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun openLearningFromWelcomeScreen(module: IftModule?) {
-    val action = ActionManager.getInstance().getAction("ShowLearnPanel")
-
-    val onboardingLesson = findOnboardingLesson(module)
-    if (onboardingLesson != null) {
-      OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson)
-    }
-    else {
-      CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
-      val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
+    LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
+      val onboardingLesson = findOnboardingLesson(module)
+      if (onboardingLesson != null) {
+        OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson, selectedSdk)
+      }
+      else {
+        CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
+        OpenLessonActivities.openLearnProjectFromWelcomeScreen(selectedSdk)
+      }
     }
   }
 

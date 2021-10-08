@@ -19,7 +19,7 @@ interface ProjectStoreOwner : IComponentStoreOwner {
 }
 
 val Project.isDirectoryBased: Boolean
-  get() = !isDefault && StorageScheme.DIRECTORY_BASED == (stateStore as IProjectStore).storageScheme
+  get() = !isDefault && StorageScheme.DIRECTORY_BASED == (stateStore as? IProjectStore)?.storageScheme
 
 fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null

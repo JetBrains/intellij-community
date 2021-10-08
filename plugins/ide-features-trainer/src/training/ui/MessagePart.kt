@@ -3,12 +3,12 @@ package training.ui
 
 internal class MessagePart(val type: MessageType, private val textFn: () -> String) {
 
-  constructor(text: String, type: MessageType): this(type, {text})
+  constructor(text: String, type: MessageType) : this(type, { text })
 
   val text: String
     get() = textFn()
 
-  enum class MessageType { TEXT_REGULAR, TEXT_BOLD, SHORTCUT, CODE, LINK, CHECK, ICON_IDX, PROPOSE_RESTORE, LINE_BREAK }
+  enum class MessageType { TEXT_REGULAR, TEXT_BOLD, SHORTCUT, CODE, LINK, CHECK, ICON_IDX, PROPOSE_RESTORE, LINE_BREAK, ILLUSTRATION }
 
   var startOffset = 0
   var endOffset = 0
@@ -28,7 +28,7 @@ internal class MessagePart(val type: MessageType, private val textFn: () -> Stri
 
   fun splitMe(): List<MessagePart> {
     return splitter().map {
-      MessagePart(text.substring(it), type).also { part->
+      MessagePart(text.substring(it), type).also { part ->
         part.startOffset = startOffset + it.first
         part.endOffset = startOffset + it.last + 1
         part.link = link

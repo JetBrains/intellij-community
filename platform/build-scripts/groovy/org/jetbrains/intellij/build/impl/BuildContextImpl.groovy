@@ -357,6 +357,10 @@ Android Studio: don't patch ApplicationInfo.xml */
       jvmArgs.add('-Didea.jre.check=true')
     }
 
+    if (productProperties.useSplash) {
+      //noinspection SpellCheckingInspection
+      jvmArgs.add('-Dsplash=true')
+    }
     return jvmArgs
   }
 }

@@ -19,10 +19,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
@@ -690,14 +687,22 @@ public final class HighlightControlFlowUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
     }
-    return checkWriteToFinalInsideLambda(variable, context);
+    HighlightInfo finalInsideLambdaInfo = checkWriteToFinalInsideLambda(variable, context);
+    if (finalInsideLambdaInfo != null) {
+      return finalInsideLambdaInfo;
+    }
+    return checkFinalUsageInsideGuardedPattern(variable, context);
   }
 
+  @Nullable
   private static HighlightInfo checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
     if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
       final PsiElement parent = variable.getParent();
       if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
+        return null;
+      }
+      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null) {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
@@ -706,6 +711,25 @@ public final class HighlightControlFlowUtil {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
         return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "lambda.variable.must.be.final");
       }
+    }
+    return null;
+  }
+
+  /**
+   * 14.30.1 Kinds of Patterns
+   * <p>Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final.
+   */
+  @Nullable
+  private static HighlightInfo checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+    PsiGuardedPattern guardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class);
+    if (guardedPattern == null) return null;
+    PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(guardedPattern);
+    if (variable != patternVariable && !isEffectivelyFinal(variable, guardedPattern, context)) {
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context)
+        .descriptionAndTooltip(JavaErrorBundle.message("guarded.pattern.variable.must.be.final")).create();
+      // todo quick-fix may be registered here, but
+      // todo com.intellij.codeInsight.intention.QuickFixFactory.createVariableAccessFromInnerClassFix should be fix beforehand
+      return highlightInfo;
     }
     return null;
   }
@@ -766,7 +790,6 @@ public final class HighlightControlFlowUtil {
       scope = new PsiElement[]{variable.getParent()};
     }
     if (scope.length < 1 || scope[0] == null || scope[0].getContainingFile() != context.getContainingFile()) return null;
-
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;
     outer:

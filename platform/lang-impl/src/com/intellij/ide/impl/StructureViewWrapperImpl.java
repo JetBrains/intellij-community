@@ -202,6 +202,7 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     else {
       DataContext asyncDataContext = Utils.wrapDataContext(dataContext);
       ReadAction.nonBlocking(() -> CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext))
+        .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState(), files -> {
           if (files != null && files.length == 1) {
             setFile(files[0]);

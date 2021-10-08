@@ -78,7 +78,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.choose.change.signature",
-                                 strong(PyBundle.message("QFIX.NAME.change.signature"))))
+                                       strong(PyBundle.message("QFIX.NAME.change.signature"))))
 
       triggerByPartOfComponent { table: JTable ->
         val model = table.model
@@ -96,7 +96,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.select.new.parameter",
-                                 action("EditorTab"), LessonUtil.rawEnter()))
+                                       action("EditorTab"), LessonUtil.rawEnter()))
 
       val selector = { collection: Collection<EditorComponentImpl> ->
         collection.takeIf { it.size > 2 }?.maxByOrNull { it.locationOnScreen.x }
@@ -115,7 +115,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.set.default.value",
-                                 action("EditorTab")))
+                                       action("EditorTab")))
       restoreByUi()
       stateCheck {
         (previous.ui as? EditorComponentImpl)?.text == "0"
@@ -136,7 +136,7 @@ class PythonQuickFixesRefactoringLesson
         beforeRefactoring = editor.document.text
       }
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.finish.refactoring",
-                                 LessonUtil.rawCtrlEnter(), strong(RefactoringBundle.message("refactor.button").dropMnemonic())))
+                                       LessonUtil.rawCtrlEnter(), strong(RefactoringBundle.message("refactor.button").dropMnemonic())))
 
       stateCheck {
         val b = editor.document.text != beforeRefactoring

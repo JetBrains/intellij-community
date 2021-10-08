@@ -38,7 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
@@ -71,7 +71,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   protected ModifiableModuleModel doGetModifiableModuleModel() {
     return ReadAction.compute(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      ModifiableModuleModel modifiableModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(getActualStorageBuilder());
+      ModifiableModuleModel modifiableModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(getActualStorageBuilder());
       Module[] modules = modifiableModel.getModules();
       for (Module module : modules) {
         setIdeModelsProviderForModule(module);

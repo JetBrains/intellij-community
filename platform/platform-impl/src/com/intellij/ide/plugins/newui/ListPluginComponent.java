@@ -189,7 +189,7 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (Registry.is("ide.plugins.per.project", false) &&
+          if (PluginEnabler.isPerProjectEnabled() &&
               !Registry.is("ide.plugins.per.project.use.checkboxes", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               action -> createEnableDisableAction(action, List.of(this)),
@@ -324,7 +324,7 @@ public class ListPluginComponent extends JPanel {
 
     String stamp = instance.getConfirmationStamp(productCode);
     if (stamp == null) {
-      if (ApplicationManager.getApplication().isEAP()) {
+      if (ApplicationManager.getApplication().isEAP() && !Boolean.getBoolean("eap.require.license")) {
         setTagTooltip(IdeBundle.message("label.text.plugin.eap.license.not.required"));
         return;
       }

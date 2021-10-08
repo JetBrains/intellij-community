@@ -33,7 +33,7 @@ internal class StepAnimator(val verticalScrollBar: JScrollBar, val messagePane: 
     val needAdd = needScrollTo - start
     animator = object : Animator("Scroll animation", needAdd, 200, false) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-        verticalScrollBar.value = start + (totalFrames * (1 - cos(Math.PI * (frame.toDouble()/totalFrames))) / 2).roundToInt() //0..1
+        verticalScrollBar.value = start + (totalFrames * (1 - cos(Math.PI * (frame.toDouble() / totalFrames))) / 2).roundToInt() //0..1
       }
 
       override fun paintCycleEnd() {
@@ -54,6 +54,7 @@ internal class StepAnimator(val verticalScrollBar: JScrollBar, val messagePane: 
         messagePane.currentAnimation = frame
         messagePane.repaint()
       }
+
       override fun paintCycleEnd() {
         if (this == animator) {
           stopMessageAnimation()

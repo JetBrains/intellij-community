@@ -123,16 +123,13 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 
+  @NotNull
   protected static File createTempFile() throws IOException {
     File tempFile = FileUtil.createTempFile("coverage", "args");
-    if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
-      tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
-      if (tempFile.getAbsolutePath().contains(" ")) {
-        final String userDefined = System.getProperty(JAVA_COVERAGE_AGENT_AGENT_PATH);
-        if (userDefined != null && new File(userDefined).isDirectory()) {
-          tempFile = FileUtil.createTempFile(new File(userDefined), "coverage", "args", true);
-        }
-      }
+    if (tempFile.getAbsolutePath().contains(" ")) {
+      String path = JavaExecutionUtil.handleSpacesInAgentPath(tempFile.getAbsolutePath(), "coverage", JAVA_COVERAGE_AGENT_AGENT_PATH);
+      if (path == null) throw new IOException("Cannot create temporary file without spaces in path.");
+      tempFile = new File(path);
     }
     return tempFile;
   }

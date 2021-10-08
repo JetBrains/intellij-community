@@ -299,9 +299,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected void setSdk(@Nullable Sdk item) {
+    final var currentSdk = getSdk();
+
+    PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);
     PySdkExtKt.setPythonSdk(myProject, item);
+    PyTransferredSdkRootsKt.transferRootsToModulesWithInheritedSdk(myProject, item);
+
     if (myModule != null) {
+      PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
       PySdkExtKt.setPythonSdk(myModule, item);
+      PyTransferredSdkRootsKt.transferRoots(myModule, item);
     }
   }
 

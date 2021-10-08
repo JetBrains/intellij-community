@@ -24,53 +24,25 @@ import org.jetbrains.annotations.Nullable;
 
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance(JumpToObjectAction.class);
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode == null) {
-      return;
-    }
-
-    final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    if(!(descriptor instanceof ValueDescriptor)) {
-      return;
-    }
+    NodeDescriptorImpl descriptor = selectedNode == null ? null : selectedNode.getDescriptor();
+    if (!(descriptor instanceof ValueDescriptor)) return;
 
     DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
-    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if(debugProcess == null) {
-      return;
-    }
+    DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+    if (debugProcess == null) return;
 
     debugProcess.getManagerThread().schedule(new NavigateCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
   }
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    if(!isFirstStart(e)) {
-      return;
-    }
-
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
-    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if(debugProcess == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
-    final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    if (descriptor instanceof ValueDescriptor) {
-      debugProcess.getManagerThread().schedule(new EnableCommand(debuggerContext, (ValueDescriptor)descriptor, debugProcess, e));
-    }
-    else {
-      e.getPresentation().setVisible(false);
-    }
+    NodeDescriptorImpl descriptor = selectedNode == null ? null : selectedNode.getDescriptor();
+    e.getPresentation().setEnabledAndVisible(descriptor instanceof ValueDescriptor);
   }
 
   private static SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess) throws ClassNotLoadedException {
@@ -130,20 +102,6 @@ public class JumpToObjectAction extends DebuggerAction{
       if (sourcePosition != null) {
         sourcePosition.navigate(true);
       }
-    }
-  }
-
-  private static class EnableCommand extends SourcePositionCommand {
-    EnableCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
-      super(debuggerContext, descriptor, debugProcess, e);
-    }
-    @Override
-    protected EnableCommand createRetryCommand() {
-      return new EnableCommand(myDebuggerContext, myDescriptor, myDebugProcess, myActionEvent);
-    }
-    @Override
-    protected void doAction(final SourcePosition sourcePosition) {
-      enableAction(myActionEvent, sourcePosition != null);
     }
   }
 

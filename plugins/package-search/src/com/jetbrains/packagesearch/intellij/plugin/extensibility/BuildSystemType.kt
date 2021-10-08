@@ -1,17 +1,24 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-class BuildSystemType(val name: String, val language: String, val statisticsKey: String) {
+import org.jetbrains.annotations.ApiStatus
+
+class BuildSystemType(
+    val name: String,
+    val language: String,
+    @Deprecated("This property will be removed soon as it is unused.")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    val statisticsKey: String
+) {
+
     companion object {
 
         @JvmStatic
         val MAVEN = BuildSystemType(name = "MAVEN", language = "xml", statisticsKey = "maven")
 
         @JvmStatic
-        val GRADLE_GROOVY = BuildSystemType(name = "GRADLE", language= "groovy", statisticsKey = "gradle-groovy")
+        val GRADLE_GROOVY = BuildSystemType(name = "GRADLE", language = "groovy", statisticsKey = "gradle-groovy")
 
         @JvmStatic
-        val GRADLE_KOTLIN = BuildSystemType(name = "GRADLE", language= "kotlin", statisticsKey = "gradle-kts")
+        val GRADLE_KOTLIN = BuildSystemType(name = "GRADLE", language = "kotlin", statisticsKey = "gradle-kts")
     }
 }
-
-class Build

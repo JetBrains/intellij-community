@@ -24,6 +24,8 @@ import org.jetbrains.yaml.meta.model.YamlArrayType;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.psi.*;
 
+import java.util.function.Supplier;
+
 @ApiStatus.Internal
 public class YamlMetaTypeProvider {
 
@@ -72,10 +74,10 @@ public class YamlMetaTypeProvider {
   @Nullable
   public MetaTypeProxy getValueMetaType(@NotNull YAMLValue typedValue) {
     return CachedValuesManager.getCachedValue(typedValue, myKey, () -> {
-      debug(" >> computing type for : " + YamlDebugUtil.getDebugInfo(typedValue));
+      debug(() -> " >> computing type for : " + YamlDebugUtil.getDebugInfo(typedValue));
       MetaTypeProxy computed = computeMetaType(typedValue);
-      debug(" << finished for : " + YamlDebugUtil.getDebugInfo(typedValue) +
-            ", result: " + (computed == null ? "<null>" : computed));
+      debug(() -> " << finished for : " + YamlDebugUtil.getDebugInfo(typedValue) +
+              ", result: " + (computed == null ? "<null>" : computed));
       return new CachedValueProvider.Result<>(computed, typedValue.getContainingFile(), myModificationTracker);
     });
   }
@@ -91,7 +93,7 @@ public class YamlMetaTypeProvider {
       YAMLSequenceItem sequenceItem = (YAMLSequenceItem)typed;
       YAMLSequence sequence = ObjectUtils.tryCast(sequenceItem.getParent(), YAMLSequence.class);
       if (sequence == null) {
-        debug("Unexpected: sequenceItem parent is not a sequence: " + sequenceItem.getParent());
+        debug(() -> "Unexpected: sequenceItem parent is not a sequence: " + sequenceItem.getParent());
         return null;
       }
       MetaTypeProxy sequenceMeta = getMetaTypeProxy(sequence);
@@ -151,7 +153,7 @@ public class YamlMetaTypeProvider {
   private Field computeMetaType(@NotNull YAMLKeyValue keyValue) {
     YAMLMapping parentMapping = keyValue.getParentMapping();
     if (parentMapping == null) {
-      debug("Unexpected: keyValue parent is not a mapping: " + keyValue.getParent());
+      debug(() -> "Unexpected: keyValue parent is not a mapping: " + keyValue.getParent());
       return null;
     }
     MetaTypeProxy parentMeta = getMetaTypeProxy(parentMapping);
@@ -181,9 +183,12 @@ public class YamlMetaTypeProvider {
     return clazz.isInstance(psi) ? clazz.cast(psi) : PsiTreeUtil.getParentOfType(psi, clazz);
   }
 
-  private static void debug(String text) {
-    LOG.debug(text);
-    //System.err.println(text);
+  private static void debug(Supplier<String> textSupplier) {
+    if(LOG.isDebugEnabled()) {
+      String text = textSupplier.get();
+      LOG.debug(text);
+      //System.err.println(text);
+    }
   }
 
   private static boolean hasLineBreakBetweenKeyAndValue(@NotNull YAMLKeyValue keyValue, @NotNull PsiElement keySibling) {

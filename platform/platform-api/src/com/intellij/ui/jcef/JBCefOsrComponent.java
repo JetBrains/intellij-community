@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
 import org.cef.browser.CefBrowser;
@@ -15,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
 /**
  * A lightweight component on which an off-screen browser is rendered.
@@ -27,7 +30,7 @@ import java.awt.event.*;
 class JBCefOsrComponent extends JPanel {
   private volatile @NotNull JBCefOsrHandler myRenderHandler;
   private volatile @NotNull CefBrowser myBrowser;
-  private double myScale = 1.0;
+  private final @NotNull MyScale myScale = new MyScale();
 
   private @NotNull Alarm myAlarm;
   private @NotNull Disposable myDisposable;
@@ -35,7 +38,8 @@ class JBCefOsrComponent extends JPanel {
   JBCefOsrComponent() {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
     setBackground(JBColor.background());
-    addPropertyChangeListener("graphicsConfiguration", e -> myRenderHandler.updateScale(myScale = JBUIScale.sysScale(this)));
+    addPropertyChangeListener("graphicsConfiguration",
+                              e -> myRenderHandler.updateScale(myScale.update(myRenderHandler.getDeviceScaleFactor(myBrowser))));
 
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
@@ -93,13 +97,30 @@ class JBCefOsrComponent extends JPanel {
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> myBrowser.wasResized((int)Math.ceil(w * myScale), (int)Math.ceil(h * myScale)), 100);
+
+    double scale = myScale.getInverted();
+    myAlarm.addRequest(() -> myBrowser.wasResized(CEIL.round(w * scale), CEIL.round(h * scale)), 100);
   }
 
+  @SuppressWarnings("DuplicatedCode")
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
-    myBrowser.sendMouseEvent(e);
+
+    double scale = myScale.getIdeBiased();
+    myBrowser.sendMouseEvent(new MouseEvent(
+      e.getComponent(),
+      e.getID(),
+      e.getWhen(),
+      e.getModifiersEx(),
+      ROUND.round(e.getX() / scale),
+      ROUND.round(e.getY() / scale),
+      ROUND.round(e.getXOnScreen() / scale),
+      ROUND.round(e.getYOnScreen() / scale),
+      e.getClickCount(),
+      e.isPopupTrigger(),
+      e.getButton()));
+
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       requestFocusInWindow();
     }
@@ -114,15 +135,16 @@ class JBCefOsrComponent extends JPanel {
     if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
       val *= -1;
     }
+    double scale = myScale.getIdeBiased();
     myBrowser.sendMouseWheelEvent(new MouseWheelEvent(
       e.getComponent(),
       e.getID(),
       e.getWhen(),
       e.getModifiersEx(),
-      e.getX(),
-      e.getY(),
-      e.getXOnScreen(),
-      e.getYOnScreen(),
+      ROUND.round(e.getX() / scale),
+      ROUND.round(e.getY() / scale),
+      ROUND.round(e.getXOnScreen() / scale),
+      ROUND.round(e.getYOnScreen() / scale),
       e.getClickCount(),
       e.isPopupTrigger(),
       e.getScrollType(),
@@ -131,15 +153,64 @@ class JBCefOsrComponent extends JPanel {
       val));
   }
 
+  @SuppressWarnings("DuplicatedCode")
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
     super.processMouseMotionEvent(e);
-    myBrowser.sendMouseEvent(e);
+
+    double scale = myScale.getIdeBiased();
+    myBrowser.sendMouseEvent(new MouseEvent(
+      e.getComponent(),
+      e.getID(),
+      e.getWhen(),
+      e.getModifiersEx(),
+      ROUND.round(e.getX() / scale),
+      ROUND.round(e.getY() / scale),
+      ROUND.round(e.getXOnScreen() / scale),
+      ROUND.round(e.getYOnScreen() / scale),
+      e.getClickCount(),
+      e.isPopupTrigger(),
+      e.getButton()));
   }
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
     super.processKeyEvent(e);
     myBrowser.sendKeyEvent(e);
+  }
+
+  static class MyScale {
+    private volatile double myScale = 1;
+    private volatile double myInvertedScale = 1;
+
+    public MyScale update(double scale) {
+      myScale = scale;
+      if (!JreHiDpiUtil.isJreHiDPIEnabled()) myInvertedScale = 1 / myScale;
+      return this;
+    }
+
+    public MyScale update(MyScale scale) {
+      myScale = scale.myScale;
+      myInvertedScale = scale.myInvertedScale;
+      return this;
+    }
+
+    public double get() {
+      return myScale;
+    }
+
+    public double getInverted() {
+      return JreHiDpiUtil.isJreHiDPIEnabled() ? myScale : myInvertedScale;
+    }
+
+    public double getIdeBiased() {
+      // IDE-managed HiDPI
+      return JreHiDpiUtil.isJreHiDPIEnabled() ? 1 : myScale;
+    }
+
+    public double getJreBiased() {
+      // JRE-managed HiDPI
+      return JreHiDpiUtil.isJreHiDPIEnabled() ? myScale : 1;
+    }
   }
 }

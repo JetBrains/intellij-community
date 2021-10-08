@@ -20,6 +20,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.BuiltInServer;
 
 import java.awt.event.InputEvent;
 import java.util.Collection;
@@ -46,7 +47,7 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     try {
       OpenInBrowserRequest browserRequest = createOpenInBrowserRequest(psiFile, false);
       if (browserRequest == null) return;
-      browserRequest.setReloadMode(ReloadMode.RELOAD_ON_SAVE);
+      browserRequest.setReloadMode(WebBrowserManager.getInstance().getWebPreviewReloadMode());
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(browserRequest, preferLocalFileUrl);
       if (!urls.isEmpty()) {
         BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {

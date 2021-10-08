@@ -92,7 +92,8 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
     actionTask("Debugger.PopFrame") {
       proposeModificationRestore(afterFixText)
-      JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"), icon(AllIcons.Actions.PopFrame), action(it))
+      JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
+                                icon(AllIcons.Actions.PopFrame), action(it))
     }
   }
 

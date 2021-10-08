@@ -58,7 +58,9 @@ dependencies {
   implementation('org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}')
 #end
 #if ($context.hasLibrary("formsfx"))
-  implementation('com.dlsc.formsfx:formsfx-core:${context.getVersion("com.dlsc.formsfx", "formsfx-core")}')
+  implementation('com.dlsc.formsfx:formsfx-core:${context.getVersion("com.dlsc.formsfx", "formsfx-core")}') {
+    exclude(group: 'org.openjfx')
+  }
 #end
 #if ($context.hasLibrary("validatorfx"))
   implementation('net.synedra:validatorfx:${context.getVersion("net.synedra", "validatorfx")}') {
@@ -72,7 +74,9 @@ dependencies {
   implementation('org.kordamp.bootstrapfx:bootstrapfx-core:${context.getVersion("org.kordamp.bootstrapfx", "bootstrapfx-core")}')
 #end
 #if ($context.hasLibrary("tilesfx"))
-  implementation('eu.hansolo:tilesfx:${context.getVersion("eu.hansolo", "tilesfx")}')
+  implementation('eu.hansolo:tilesfx:${context.getVersion("eu.hansolo", "tilesfx")}') {
+    exclude(group: 'org.openjfx')
+  }
 #end
 
 #if ($context.testRunnerId == "junit")

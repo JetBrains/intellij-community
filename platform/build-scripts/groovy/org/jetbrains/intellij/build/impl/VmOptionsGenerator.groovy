@@ -43,12 +43,6 @@ final class VmOptionsGenerator {
     }
 
     result.addAll(COMMON_VM_OPTIONS)
-
-    if (productProperties.useSplash) {
-      //noinspection SpellCheckingInspection
-      result.add('-Dsplash=true')
-    }
-
     return result
   }
 }

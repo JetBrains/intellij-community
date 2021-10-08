@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -21,9 +22,11 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
@@ -150,7 +153,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         final CharBuffer data = Charset.defaultCharset().decode(ByteBuffer.wrap(file.contentsToByteArray()));
         final Element element = builder.build(new StringReader(data.toString())).getRootElement();
 
-        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), new PyTestFactory(PythonTestConfigurationType.getInstance()));
+        final PyTestConfiguration configuration =
+          new PyTestConfiguration(myFixture.getProject(), new PyTestFactory(PythonTestConfigurationType.getInstance()));
         configuration.readExternal(element);
         return configuration;
       }
@@ -695,6 +699,23 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
           };
         }
       });
+  }
+
+  /**
+   * Set test runner to autodetect, and ensure pytest fixture still works
+   */
+  @Test
+  public void testFixturePyTestAutoDetected() {
+    runPythonTest(new PyExecutionFixtureTestTask(PyTestFixtureAndParametrizedTest.testSubfolder) {
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, ExecutionException {
+        Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
+        PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+        var runnerService = TestRunnerService.getInstance(myFixture.getModule());
+        runnerService.setSelectedFactory(PythonTestConfigurationType.getInstance().getAutoDetectFactory());
+        ApplicationManager.getApplication().invokeAndWait(() -> PyTestFixtureAndParametrizedTest.Companion.testInspectionStatic(myFixture));
+      }
+    });
   }
 
   /**

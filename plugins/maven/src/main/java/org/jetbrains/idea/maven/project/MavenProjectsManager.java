@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -585,10 +584,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       for (Module m : modules) {
         if (m.isDisposed()) continue;
         ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-        // force re-save (since can be stored externally)
-        if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
-          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
-        }
       }
     });
   }

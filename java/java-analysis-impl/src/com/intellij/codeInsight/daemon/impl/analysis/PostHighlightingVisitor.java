@@ -406,10 +406,15 @@ class PostHighlightingVisitor {
         return highlightInfo;
       }
     }
-    else if (parameter instanceof PsiPatternVariable) {
+    else if (parameter instanceof PsiPatternVariable && !PsiUtil.isIgnoredName(parameter.getName())) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createDeleteFix(parameter));
+        if (parameter.getDeclarationScope().getParent() instanceof PsiSwitchBlock) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter));
+        }
+        else {
+          QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createDeleteFix(parameter));
+        }
         return highlightInfo;
       }
     }

@@ -54,6 +54,10 @@
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
+
+    <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
+
+    <preloadingActivity implementation="com.intellij.grazie.jlanguage.LangTool$Preloader"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
@@ -62,10 +66,6 @@
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommentProblemFilter"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
   </extensions>
 
   <extensionPoints>

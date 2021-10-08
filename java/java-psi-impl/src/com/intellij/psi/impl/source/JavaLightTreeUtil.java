@@ -89,4 +89,8 @@ public final class JavaLightTreeUtil {
     LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, modifierListOwner, MODIFIER_LIST);
     return LightTreeUtil.firstChildOfType(tree, modifierList, modifierKeyword) != null;
   }
+
+  public static boolean isNullLiteralExpression(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+    return node.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(node).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
+  }
 }

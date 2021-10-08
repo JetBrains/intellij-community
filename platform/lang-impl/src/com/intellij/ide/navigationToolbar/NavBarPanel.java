@@ -605,10 +605,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  protected void navigateInsideBar(int sourceItemIndex, final Object object) {
+  protected void navigateInsideBar(int sourceItemIndex, final Object object, boolean forceNavigate) {
     UIEventLogger.NavBarNavigate.log(myProject);
 
-    boolean restorePopup = shouldRestorePopupOnSelect(object, sourceItemIndex);
+    boolean restorePopup = !forceNavigate && shouldRestorePopupOnSelect(object, sourceItemIndex);
     Object obj = expandDirsWithJustOneSubdir(object);
     myContextObject = null;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -75,7 +75,7 @@ data class RoundedIntEventField(override val name: String) : PrimitiveEventField
     get() = listOf("{regexp#integer}")
 
   override fun addData(fuData: FeatureUsageData, value: Int) {
-    fuData.addData(name, StatisticsUtil.getNextPowerOfTwo(value))
+    fuData.addData(name, StatisticsUtil.roundToPowerOfTwo(value))
   }
 }
 
@@ -93,7 +93,7 @@ data class RoundedLongEventField(override val name: String): PrimitiveEventField
     get() = listOf("{regexp#integer}")
 
   override fun addData(fuData: FeatureUsageData, value: Long) {
-    fuData.addData(name, StatisticsUtil.getNextPowerOfTwo(value))
+    fuData.addData(name, StatisticsUtil.roundToPowerOfTwo(value))
   }
 }
 

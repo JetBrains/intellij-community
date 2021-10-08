@@ -69,7 +69,7 @@ internal class GitHubInfoPanel : JPanel() {
             AC().fill()
         )
         linkLabel.urlClickedListener = {
-            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.GitHub, url ?: "unknown")
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.GitHub)
         }
         add(linkLabel, CC().pad(1, (-2).scaled(), 0, 0))
         add(starsLabel)

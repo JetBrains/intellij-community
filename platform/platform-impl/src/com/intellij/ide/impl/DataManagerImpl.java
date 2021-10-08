@@ -72,7 +72,7 @@ public class DataManagerImpl extends DataManager {
         ids.add(dataId);
         data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
-        if (data != null) return validOrNull(data, dataId, provider);
+        if (data != null) return validOrNull(data, dataId, dataRule);
       }
 
       return null;
@@ -114,7 +114,7 @@ public class DataManagerImpl extends DataManager {
       if (rules1 != null) {
         for (GetDataRule rule : rules1) {
           data = rule.getData(dataProvider);
-          if (data != null) return data;
+          if (data != null) return validOrNull(data, dataId, rule);
         }
       }
       if (rules2 != null) {
@@ -123,7 +123,7 @@ public class DataManagerImpl extends DataManager {
             String injectedId = InjectedDataKeys.injectedId(id);
             return injectedId != null ? dataProvider.getData(injectedId) : null;
           });
-          if (data != null) return data;
+          if (data != null) return validOrNull(data, dataId, rule);
         }
       }
       return null;
@@ -136,7 +136,7 @@ public class DataManagerImpl extends DataManager {
     for (DataProvider provider : asyncProviders) {
       Object data = provider.getData(dataId);
       if (data != null) {
-        return data;
+        return validOrNull(data, dataId, provider);
       }
     }
     return null;

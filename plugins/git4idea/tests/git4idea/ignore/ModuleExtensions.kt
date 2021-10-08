@@ -7,12 +7,10 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.impl.ContentEntryImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import org.junit.Assert.assertFalse
 
 fun Module.addExclude(outDir: VirtualFile) {
   ModuleRootModificationUtil.updateModel(this) { model ->
@@ -34,10 +32,6 @@ fun Module.addContentRoot(vDir: VirtualFile): ContentEntry? {
   ModuleRootModificationUtil.updateModel(this) { model -> model.addContentEntry(vDir) }
   for (entry in ModuleRootManager.getInstance(this).contentEntries) {
     if (Comparing.equal(entry.file, vDir)) {
-      if (entry is ContentEntryImpl) {
-        assertFalse(entry.isDisposed)
-      }
-
       return entry
     }
   }

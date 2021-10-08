@@ -40,6 +40,12 @@
       <groupId>com.dlsc.formsfx</groupId>
       <artifactId>formsfx-core</artifactId>
       <version>${context.getVersion("com.dlsc.formsfx", "formsfx-core")}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>#end
     #if ($context.hasLibrary("validatorfx"))<dependency>
       <groupId>net.synedra</groupId>
@@ -66,6 +72,12 @@
       <groupId>eu.hansolo</groupId>
       <artifactId>tilesfx</artifactId>
       <version>${context.getVersion("eu.hansolo", "tilesfx")}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>#end
 
     #if ($context.testRunnerId == "junit")<dependency>

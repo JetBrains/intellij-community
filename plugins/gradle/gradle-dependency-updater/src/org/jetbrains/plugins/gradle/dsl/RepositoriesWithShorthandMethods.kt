@@ -31,8 +31,9 @@ enum class RepositoriesWithShorthandMethods(
 
     private fun URI.isEquivalentLenientTo(url: String?): Boolean {
       if (url == null) return false
-      val firstUri = URI(url.trim().trimEnd('/', '?', '#'))
-      return this == firstUri.normalize()
+      val otherUriNormalized = URI(url.trim().trimEnd('/', '?', '#')).normalize()
+      val thisUriNormalized = URI(toASCIIString().trim().trimEnd('/', '?', '#')).normalize()
+      return thisUriNormalized == otherUriNormalized
     }
   }
 }

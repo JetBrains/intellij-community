@@ -13,9 +13,6 @@ import com.intellij.util.messages.Topic
 private val topic = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
 
 interface GrazieStateLifecycle {
-  /** Initialize Grazie with passed state */
-  fun init(state: GrazieConfig.State) {}
-
   /** Update Grazie state */
   fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {}
 }
@@ -28,7 +25,6 @@ internal class GrazieInitializerManager {
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
     connection.subscribe(topic, LangTool)
-    connection.subscribe(topic, LangDetector)
     connection.subscribe(topic, GrazieSpellchecker)
   }
 

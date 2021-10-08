@@ -290,11 +290,11 @@ public class MavenProject {
     return myFile;
   }
 
-  public @NotNull @NlsSafe String getPath() {
-    return myFile.getPresentableUrl();
+  public @NotNull @NonNls String getPath() {
+    return myFile.getPath();
   }
 
-  public @NotNull @NlsSafe String getDirectory() {
+  public @NotNull @NonNls String getDirectory() {
     return myFile.getParent().getPath();
   }
 
@@ -649,7 +649,9 @@ public class MavenProject {
                                                                          getFile(),
                                                                          getActivatedProfilesIds(),
                                                                          console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) return Pair.create(false, MavenProjectChanges.NONE);
+    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
+      return Pair.create(false, MavenProjectChanges.NONE);
+    }
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -15,7 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwitchStatement {
-  private static final Logger LOG = Logger.getInstance(PsiSwitchBlockImpl.class);
+  private static final Logger LOG = Logger.getInstance(PsiSwitchStatementImpl.class);
 
   public PsiSwitchStatementImpl() {
     super(JavaElementType.SWITCH_STATEMENT);

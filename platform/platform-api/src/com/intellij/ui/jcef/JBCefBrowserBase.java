@@ -36,7 +36,8 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Base64;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -139,7 +140,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private @Nullable JDialog myDevtoolsFrame = null;
 
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
-    myCefClient = ObjectUtils.notNull(builder.myClient, JBCefApp.getInstance().createClient(true));
+    myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
     boolean isDefaultBrowserCreated = false;
@@ -415,6 +416,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
 
       myCefBrowser.stopLoad();
+      myCefBrowser.setCloseAllowed();
       myCefBrowser.close(true);
 
       if (myCefClient.isDefault()) Disposer.dispose(myCefClient);

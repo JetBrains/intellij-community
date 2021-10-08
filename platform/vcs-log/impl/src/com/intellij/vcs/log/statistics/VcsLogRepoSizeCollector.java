@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -40,14 +40,14 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
         int branchesCount = dataPack.getRefsModel().getBranches().size();
         int usersCount = logData.getAllUsers().size();
         Set<MetricEvent> usages = ContainerUtil.newHashSet(new MetricEvent("dataInitialized"));
-        usages.add(MetricEventFactoryKt.newCounterMetric("commit.count", StatisticsUtil.getNextPowerOfTwo(commitCount)));
-        usages.add(MetricEventFactoryKt.newCounterMetric("branches.count", StatisticsUtil.getNextPowerOfTwo(branchesCount)));
-        usages.add(MetricEventFactoryKt.newCounterMetric("users.count", StatisticsUtil.getNextPowerOfTwo(usersCount)));
+        usages.add(MetricEventFactoryKt.newCounterMetric("commit.count", StatisticsUtil.roundToPowerOfTwo(commitCount)));
+        usages.add(MetricEventFactoryKt.newCounterMetric("branches.count", StatisticsUtil.roundToPowerOfTwo(branchesCount)));
+        usages.add(MetricEventFactoryKt.newCounterMetric("users.count", StatisticsUtil.roundToPowerOfTwo(usersCount)));
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
         for (VcsKey vcs : groupedRoots.keySet()) {
           FeatureUsageData vcsData = new FeatureUsageData().addData("vcs", getVcsKeySafe(vcs));
           int rootCount = groupedRoots.get(vcs).size();
-          usages.add(MetricEventFactoryKt.newCounterMetric("root.count", StatisticsUtil.getNextPowerOfTwo(rootCount), vcsData));
+          usages.add(MetricEventFactoryKt.newCounterMetric("root.count", StatisticsUtil.roundToPowerOfTwo(rootCount), vcsData));
         }
         return usages;
       }
@@ -82,6 +82,6 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 }

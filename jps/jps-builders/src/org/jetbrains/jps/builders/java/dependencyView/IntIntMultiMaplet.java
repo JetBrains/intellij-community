@@ -53,7 +53,10 @@ abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
 
     for (final int a : keys) {
       final TIntHashSet b = get(a);
-
+      if (b == null) {
+        continue;
+      }
+      
       stream.print("  Key: ");
       stream.println(context.getValue(a));
       stream.println("  Values:");

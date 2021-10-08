@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -140,7 +141,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     // temp code
     PsiFile containingFile = tag.getContainingFile();
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
+    boolean fileHasHtml = HtmlUtil.hasHtml(containingFile);
+    // Non-html code like Pug embedded in HTML template
+    if (fileHasHtml && !tag.getLanguage().isKindOf(XMLLanguage.INSTANCE)) return;
+    boolean htmlCode = fileHasHtml || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);

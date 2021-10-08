@@ -157,7 +157,6 @@ internal object LessonExecutorUtil {
 }
 
 
-
 private class ExtractTaskPropertiesContext(override val project: Project) : TaskContext() {
   var textCount = 0
   var hasDetection = false
@@ -174,6 +173,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   override fun trigger(checkId: (String) -> Boolean) {
     hasDetection = true
   }
+
   override fun <T> trigger(actionId: String, calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean) {
     hasDetection = true
   }

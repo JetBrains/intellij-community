@@ -187,7 +187,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       debuggerRunnerSettings.LOCAL, debuggerRunnerSettings.getTransport(), debuggerRunnerSettings.getDebugPort())
       .project(myProject)
       .asyncAgent(true)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())

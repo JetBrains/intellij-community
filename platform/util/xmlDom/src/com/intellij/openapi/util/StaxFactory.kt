@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("StaxFactory")
 package com.intellij.openapi.util
 
@@ -34,6 +34,12 @@ private fun createConfig(coalesce: Boolean): ReaderConfig {
 @Throws(XMLStreamException::class)
 fun createXmlStreamReader(input: InputStream): XMLStreamReader2 {
   return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), input))
+}
+
+@Throws(XMLStreamException::class)
+fun createXmlStreamReader(bytes: ByteArray): XMLStreamReader2 {
+  val readerConfig = configWithCoalescing.createNonShared(null, null, "UTF-8")
+  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(readerConfig, bytes, 0, bytes.size))
 }
 
 @Throws(XMLStreamException::class)

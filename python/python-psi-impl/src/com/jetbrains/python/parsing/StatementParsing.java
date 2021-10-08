@@ -173,7 +173,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
         if (!myBuilder.eof()) {
-          assert matchToken(PyTokenTypes.DEDENT);
+          assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+          myBuilder.advanceLexer();
         }
       }
       else {
@@ -191,7 +192,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.advanceLexer();
       if (!getPatternParser().parseCasePattern()) {
         SyntaxTreeBuilder.Marker patternError = myBuilder.mark();
-        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON)) {
+        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON, PyTokenTypes.STATEMENT_BREAK)) {
           nextToken();
         }
         patternError.error(PyPsiBundle.message("PARSE.expected.pattern"));
@@ -940,7 +941,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (indentFound && !myBuilder.eof()) {
-        assert matchToken(PyTokenTypes.DEDENT);
+        assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+        myBuilder.advanceLexer();
       }
     }
     else {

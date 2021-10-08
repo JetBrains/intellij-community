@@ -2,8 +2,6 @@
 package com.intellij.grazie.ide.ui.grammar.tabs.rules.component
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.msg.GrazieInitializerManager
-import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.rules.GrazieRulesTreeCellRenderer
@@ -17,9 +15,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.components.service
 import com.intellij.ui.*
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.ScrollPaneConstants
@@ -27,12 +23,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
-                                                                              GrazieStateLifecycle, Disposable, GrazieUIComponent {
+                                                                              Disposable, GrazieUIComponent {
   private val disabledRules = hashSetOf<String>()
   private val enabledRules = hashSetOf<String>()
   private val filterComponent: GrazieRulesTreeFilter = GrazieRulesTreeFilter(this)
-
-  private lateinit var myConnection: MessageBusConnection
 
   init {
     selectionModel.addTreeSelectionListener { event ->
@@ -59,16 +53,8 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
     TreeSpeedSearch(this) { (it.lastPathComponent as GrazieRulesTreeNode).nodeText }
   }
 
-  override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    if (prevState.enabledLanguages != newState.enabledLanguages) {
-      resetTreeModel(allRules(newState))
-    }
-  }
-
   override val component by lazy {
     panel tree@{
-      // register tree on language list update from proofreading tab
-      myConnection = service<GrazieInitializerManager>().register(this@GrazieTreeComponent)
       panel(constraint = BorderLayout.NORTH) {
         border = JBUI.Borders.emptyBottom(2)
 
@@ -114,7 +100,6 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
 
   override fun dispose() {
     filterComponent.dispose()
-    myConnection.disconnect()
   }
 
   fun filter(str: String) {

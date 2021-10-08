@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
@@ -75,7 +76,6 @@ object GitLessonsUtil {
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
-      // todo: find out how to open branches if it is hidden (git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY is internal and can't be accessed)
       vcsLogUi?.filterUi?.clearFilters()
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
 
@@ -256,5 +256,9 @@ object GitLessonsUtil {
       }
     }
     else text("$introduction $suggestionWithoutIcon")
+  }
+
+  fun loadIllustration(illustrationName: String): Icon {
+    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java)
   }
 }

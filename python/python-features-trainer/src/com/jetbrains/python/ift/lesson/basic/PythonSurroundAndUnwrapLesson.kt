@@ -19,7 +19,9 @@ class PythonSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
   override val lineShiftBeforeUnwrap = -2
 
   override val helpLinks: Map<String, String> = mapOf(
-    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"), "https://www.jetbrains.com/help/pycharm/surrounding-blocks-of-code-with-language-constructs.html"),
-    Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"), "https://www.jetbrains.com/help/pycharm/unwrapping-and-removing-statements.html"),
+    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
+         "https://www.jetbrains.com/help/pycharm/surrounding-blocks-of-code-with-language-constructs.html"),
+    Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"),
+         "https://www.jetbrains.com/help/pycharm/unwrapping-and-removing-statements.html"),
   )
 }

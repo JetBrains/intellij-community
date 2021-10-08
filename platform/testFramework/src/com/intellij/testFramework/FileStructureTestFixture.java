@@ -11,6 +11,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public class FileStructureTestFixture implements Disposable {
   @Nullable
   public FilteringTreeStructure.FilteringNode update() {
     FileStructurePopup popup = getPopup();
+    UIUtil.dispatchAllInvocationEvents(); // Prevent write actions cancelling rebuild and update
     PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate());
     TreePath path = PlatformTestUtil.waitForPromise(popup.select(popup.getCurrentElement(myFile)));
     return TreeUtil.getLastUserObject(FilteringTreeStructure.FilteringNode.class, path);

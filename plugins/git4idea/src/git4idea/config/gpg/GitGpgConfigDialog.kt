@@ -63,7 +63,7 @@ class GitGpgConfigDialog(
     updatePresentation()
   }
 
-  override fun getPreferredFocusedComponent(): JComponent = comboBox
+  override fun getPreferredFocusedComponent(): JComponent = checkBox
 
   override fun createSouthAdditionalPanel(): JPanel {
     val label = JBLabel(message("settings.configure.sign.gpg.synced.with.gitconfig.text"))

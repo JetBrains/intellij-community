@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-class DependencyVisitor extends PyRecursiveElementVisitor {
+final class DependencyVisitor extends PyRecursiveElementVisitor {
 
   @NotNull
   private final PyElement myElementToFind;
@@ -40,6 +40,19 @@ class DependencyVisitor extends PyRecursiveElementVisitor {
    */
   DependencyVisitor(@NotNull final PyElement elementToFind) {
     myElementToFind = elementToFind;
+  }
+
+  @Override
+  public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
+    var value = node.findAssignedValue();
+    if (value != null) {
+      var reference = value.getReference();
+      if (reference != null && reference.isReferenceTo(myElementToFind)) {
+        myDependencyFound = true;
+        return;
+      }
+    }
+    super.visitPyTargetExpression(node);
   }
 
   @Override

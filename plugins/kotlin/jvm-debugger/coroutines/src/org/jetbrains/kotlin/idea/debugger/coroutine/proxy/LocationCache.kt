@@ -32,6 +32,6 @@ class LocationCache(val context: DefaultExecutionContext) {
             } catch (ignored: AbsentInformationException) {
             }
         }
-        return GeneratedLocation(context.debugProcess, type, methodName, line)
+        return GeneratedLocation(type, methodName, line)
     }
 }

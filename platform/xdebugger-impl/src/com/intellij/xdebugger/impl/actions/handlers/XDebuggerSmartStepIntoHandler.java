@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -97,7 +97,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
             choose(handler, variants, position, session, editor);
           }
         }))
-        .onError(throwable -> session.stepInto());
+        .onError(throwable -> UIUtil.invokeLaterIfNeeded(session::stepInto));
     }
   }
 

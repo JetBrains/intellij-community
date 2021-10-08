@@ -65,7 +65,7 @@ class JavaStatementCompletionLesson
     task("EditorCompleteStatement") {
       val code = "isPrime = false; break"
       text(JavaLessonsBundle.message("java.statement.completion.complete.finish.body",
-                                code(code), action(it)))
+                                     code(code), action(it)))
       trigger(it)
       test {
         type(code)

@@ -24,7 +24,7 @@ internal object GrazieFUSCounter {
       addData("id", problem.rule.globalId)
       addPluginInfo(getPluginInfo(problem.rule.javaClass))
       addData("fixes", problem.corrections.size)
-      addProject(problem.text.commonParent.project)
+      addProject(problem.text.containingFile.project)
     }
   }
 

@@ -65,7 +65,7 @@ internal class ActionsColumn(
         when (item) {
             is PackagesTableItem.InstalledPackage -> {
                 val packageModel = item.packageModel
-                val currentVersion = item.selectedPackageModel.selectedVersion
+                val currentVersion = item.uiPackageModel.selectedVersion
 
                 when {
                   currentVersion is PackageVersion.Missing -> PackageOperationType.SET
@@ -80,12 +80,10 @@ internal class ActionsColumn(
         if (operationType == null) return emptyList()
 
         val packageModel = item.packageModel
-        val targetVersion = packageModel.getLatestAvailableVersion(onlyStable)
-            ?: return emptyList()
 
         val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
             packageModel,
-            targetVersion,
+            item.uiPackageModel.selectedVersion,
             allKnownRepositories
         )
 
@@ -93,7 +91,7 @@ internal class ActionsColumn(
             PackageOperationType.UPGRADE, PackageOperationType.SET -> {
                 operationFactory.createChangePackageVersionOperations(
                     packageModel = packageModel as PackageModel.Installed,
-                    newVersion = targetVersion,
+                    newVersion = item.uiPackageModel.selectedVersion,
                     targetModules = targetModules,
                     repoToInstall = repoToInstall
                 )
@@ -101,8 +99,8 @@ internal class ActionsColumn(
             PackageOperationType.INSTALL -> {
                 operationFactory.createAddPackageOperations(
                     packageModel = packageModel as PackageModel.SearchResult,
-                    version = targetVersion,
-                    scope = item.selectedPackageModel.selectedScope,
+                    version = item.uiPackageModel.selectedVersion,
+                    scope = item.uiPackageModel.selectedScope,
                     targetModules = targetModules,
                     repoToInstall = repoToInstall
                 )
@@ -113,7 +111,7 @@ internal class ActionsColumn(
     @Nls
     private fun generateMessageFor(item: PackagesTableItem<*>): String? {
         val packageModel = item.packageModel
-        val selectedVersion = item.selectedPackageModel.selectedVersion
+        val selectedVersion = item.uiPackageModel.selectedVersion
 
         val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
             packageModel,

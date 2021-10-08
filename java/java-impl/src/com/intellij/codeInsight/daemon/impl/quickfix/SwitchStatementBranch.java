@@ -16,8 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 import java.util.*;
@@ -25,15 +24,15 @@ import java.util.*;
 class SwitchStatementBranch {
 
   private final Set<PsiElement> myPendingDeclarations = new HashSet<>(5);
-  private final List<String> myCaseValues = new ArrayList<>(2);
+  private final List<PsiElement> myCaseElements = new ArrayList<>(2);
   private final List<PsiElement> myBodyElements = new ArrayList<>(5);
   private final List<PsiElement> myPendingWhiteSpace = new ArrayList<>(2);
   private boolean myDefault;
   private boolean myHasStatements;
   private boolean myAlwaysExecuted;
 
-  public void addCaseValue(String labelString) {
-    myCaseValues.add(labelString);
+  public void addCaseValue(PsiElement caseElement) {
+    myCaseElements.add(caseElement);
   }
 
   public void addStatement(PsiStatement statement) {
@@ -57,8 +56,8 @@ class SwitchStatementBranch {
     }
   }
 
-  public List<String> getCaseValues() {
-    return Collections.unmodifiableList(myCaseValues);
+  public List<PsiElement> getCaseElements() {
+    return Collections.unmodifiableList(myCaseElements);
   }
 
   public List<PsiElement> getBodyElements() {
@@ -93,41 +92,25 @@ class SwitchStatementBranch {
     return Collections.unmodifiableSet(myPendingDeclarations);
   }
 
-  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted, CommentTracker commentTracker) {
-    if (label.isDefaultCase()) {
+  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted) {
+    if (isDefaultLabel(label)) {
       setDefault();
       setAlwaysExecuted(defaultAlwaysExecuted);
     }
     else {
-      PsiExpressionList values = label.getCaseValues();
-      if (values != null) {
-        for (PsiExpression value : values.getExpressions()) {
-          final String valueText = getCaseValueText(value, commentTracker);
-          addCaseValue(valueText);
+      PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          addCaseValue(labelElement);
         }
       }
     }
   }
 
-  private static String getCaseValueText(PsiExpression value, CommentTracker commentTracker) {
-    value = PsiUtil.skipParenthesizedExprDown(value);
-    if (value == null) {
-      return "";
-    }
-    if (!(value instanceof PsiReferenceExpression)) {
-      return commentTracker.text(value);
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
-    final PsiElement target = referenceExpression.resolve();
-
-    if (!(target instanceof PsiEnumConstant)) {
-      return commentTracker.text(value);
-    }
-    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
-    final PsiClass aClass = enumConstant.getContainingClass();
-    if (aClass == null) {
-      return commentTracker.text(value);
-    }
-    return aClass.getQualifiedName() + '.' + commentTracker.text(referenceExpression);
+  private static boolean isDefaultLabel(PsiSwitchLabelStatementBase label) {
+    if (label.isDefaultCase()) return true;
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList == null) return false;
+    return ContainerUtil.exists(labelElementList.getElements(), element -> element instanceof PsiDefaultCaseLabelElement);
   }
 }

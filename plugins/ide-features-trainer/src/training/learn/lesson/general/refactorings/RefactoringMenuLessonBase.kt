@@ -24,6 +24,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
         ui.text?.contains(refactorThisTitle) == true
       }
       restoreIfModifiedOrMoved()
+      test { actions(it) }
     }
 
     if (TaskTestContext.inTestMode) {

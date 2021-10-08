@@ -42,7 +42,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -97,9 +97,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private void initModuleModel() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    if (moduleManager instanceof ModuleManagerComponentBridge) {
+    if (moduleManager instanceof ModuleManagerBridgeImpl) {
       myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
-      myModuleModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
     }
     else {
       myModuleModel = moduleManager.getModifiableModel();

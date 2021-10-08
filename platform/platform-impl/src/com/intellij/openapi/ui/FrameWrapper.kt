@@ -313,7 +313,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     private var frameTitle: String? = null
     private var fileTitle: String? = null
     private var file: Path? = null
-    var myFrameDecorator: IdeFrameDecorator? = null
 
     init {
       FrameState.setFrameStateListener(this)
@@ -323,10 +322,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       }
       MouseGestureManager.getInstance().add(this)
       focusTraversalPolicy = IdeFocusTraversalPolicy()
-      // NB!: the root pane must be set before decorator,
-      // which holds its own client properties in a root pane
-      myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
-
     }
 
     override fun isInFullScreen() = false

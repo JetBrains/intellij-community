@@ -1,6 +1,7 @@
 package com.intellij.grazie.text;
 
 import com.intellij.grazie.GrazieConfig;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,13 @@ public abstract class Rule {
    */
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  /**
+   * @return an optional navigatable to open from "Rule X settings" quick fix.
+   */
+  public @Nullable Navigatable editSettings() {
+    return null;
   }
 
   @SuppressWarnings("unused")

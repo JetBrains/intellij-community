@@ -864,16 +864,16 @@
     <keyboard-shortcut first-keystroke="control shift F12"/>
   </action>
   <action id="ResizeToolWindowLeft">
-    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt shift LEFT"/>
   </action>
   <action id="ResizeToolWindowRight">
-    <keyboard-shortcut first-keystroke="control shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt shift RIGHT"/>
   </action>
   <action id="ResizeToolWindowUp">
-    <keyboard-shortcut first-keystroke="control shift UP"/>
+    <keyboard-shortcut first-keystroke="control alt shift UP"/>
   </action>
   <action id="ResizeToolWindowDown">
-    <keyboard-shortcut first-keystroke="control shift DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt shift DOWN"/>
   </action>
   <action id="MaximizeToolWindow">
     <keyboard-shortcut first-keystroke="control shift QUOTE"/>

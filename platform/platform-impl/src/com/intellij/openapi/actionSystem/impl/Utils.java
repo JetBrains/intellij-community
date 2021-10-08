@@ -231,6 +231,9 @@ public final class Utils {
                        boolean isWindowMenu,
                        boolean useDarkIcons,
                        @Nullable RelativePoint relativePoint) {
+    if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+      throw new ProcessCanceledException();
+    }
     Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
     List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
                                                 removeIcon, component);
@@ -540,6 +543,33 @@ public final class Utils {
 
   public static boolean isFrozenDataContext(DataContext context) {
     return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
+  }
+
+  static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {
+    Utils.ProcessCanceledWithReasonException lastCancellation = null;
+    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+    for (int i = 0; i < retries; i++) {
+      try {
+        runnable.run();
+        return;
+      }
+      catch (Utils.ProcessCanceledWithReasonException ex) {
+        lastCancellation = ex;
+        String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
+        if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+          continue;
+        }
+        throw ex;
+      }
+      catch (Throwable ex) {
+        ExceptionUtil.rethrow(ex);
+      }
+      if (expire.getAsBoolean()) return;
+    }
+    if (retries > 1) {
+      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
+    }
+    throw Objects.requireNonNull(lastCancellation);
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {

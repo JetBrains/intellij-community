@@ -168,6 +168,20 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
+    fun noLibraryDependency(libraryNameRegexString: String, scope: DependencyScope) {
+        val libraryNameRegex = Regex.fromLiteral(libraryNameRegexString)
+
+        val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+            .filter { it.libraryName?.matches(libraryNameRegex) == true && it.scope == scope }
+
+        if (libraryEntries.isNotEmpty()) {
+            report(
+                "Expected no dependencies for $libraryNameRegexString, but found:\n" +
+                        libraryEntries.joinToString(prefix = "[", postfix = "]", separator = ",") { it.presentableName }
+            )
+        }
+    }
+
     fun libraryDependency(libraryName: String, scope: DependencyScope, isOptional: Boolean = false) {
         libraryDependency(Regex.fromLiteral(libraryName), scope, isOptional)
     }

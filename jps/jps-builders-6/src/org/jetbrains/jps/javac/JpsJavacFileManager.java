@@ -551,12 +551,58 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   // this method overrides corresponding API method since javac 9
   public boolean contains(Location location, FileObject fo) throws IOException {
     if (fo instanceof JpsFileObject) {
-      return location.equals(((JpsFileObject)fo).getLocation());
+      return location.equals(((JpsFileObject)fo).getLocation()) || getLocationForModule(location, ((JpsFileObject)fo)) != null;
     }
     return myContainsCall.callDefaultImpl(getStdManager(), "file object " + fo.getClass().getName(), location, fo);
   }
   private final DelegateCallHandler<JavaFileManager, Boolean> myContainsCall = new DelegateCallHandler<JavaFileManager, Boolean>(
     JavaFileManager.class, "contains", Location.class, FileObject.class
+  );
+
+  // this method overrides corresponding API method since javac 9
+  public Location getLocationForModule(Location location, JavaFileObject fo) throws IOException {
+    if (fo instanceof JpsFileObject) {
+      final File path = fo instanceof InputFileObject? ((InputFileObject)fo).getFile() : fo instanceof OutputFileObject? ((OutputFileObject)fo).getFile() : null;
+      if (path != null) {
+        for (Location loc : Iterators.flat(listLocationsForModules(location))) {
+          for (File root : getLocation(loc)) {
+            if (isAncestor(root, path)) {
+              return loc;
+            }
+          }
+        }
+      }
+      return null;
+    }
+    return myGetLocationForModuleCall.callDefaultImpl(getStdManager(), location, fo);
+  }
+
+  private static boolean isAncestor(File dir, File file) {
+    final String dirPath = FileUtilRt.toCanonicalPath(dir.getAbsolutePath(), File.separatorChar, false);
+    final String filePath = FileUtilRt.toCanonicalPath(file.getAbsolutePath(), File.separatorChar, false);
+    final boolean trailingSlash = dirPath.endsWith("/");
+    if (filePath.length() < (trailingSlash? dirPath.length() : dirPath.length() + 1)) {
+      return false;
+    }
+    if (!filePath.regionMatches(!isFileSystemCaseSensitive, 0, dirPath, 0, dirPath.length())) {
+      return false;
+    }
+    if (!trailingSlash && filePath.charAt(dirPath.length()) != '/') {
+      return false;
+    }
+    return true;
+  }
+
+  private final DelegateCallHandler<JavaFileManager, Location> myGetLocationForModuleCall = new DelegateCallHandler<JavaFileManager, Location>(
+    JavaFileManager.class, "getLocationForModule", Location.class, JavaFileObject.class
+  );
+
+  // this method overrides corresponding API method since javac 9
+  public Iterable<Set<Location>> listLocationsForModules(Location location) throws IOException {
+    return myListLocationForModulesCall.callDefaultImpl(getStdManager(), location);
+  }
+  private final DelegateCallHandler<JavaFileManager, Iterable<Set<Location>>> myListLocationForModulesCall = new DelegateCallHandler<JavaFileManager, Iterable<Set<Location>>>(
+    JavaFileManager.class, "listLocationsForModules", Location.class
   );
 
   public void onOutputFileGenerated(File file) {

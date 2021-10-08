@@ -43,7 +43,8 @@ abstract class SurroundAndUnwrapLesson
         }
         restoreByUi()
         test {
-          type("${surroundItems.joinToString(separator = " ")}\n") }
+          type("${surroundItems.joinToString(separator = " ")}\n")
+        }
       }
 
       prepareRuntimeTask {
@@ -95,7 +96,8 @@ abstract class SurroundAndUnwrapLesson
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback)
+      else null
     }
   }
 }

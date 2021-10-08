@@ -34,7 +34,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction {
+public class ExternalJavaDocAction extends AnAction implements UpdateInBackground {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);

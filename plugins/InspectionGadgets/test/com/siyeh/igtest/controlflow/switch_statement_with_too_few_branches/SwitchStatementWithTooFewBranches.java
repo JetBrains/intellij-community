@@ -59,5 +59,23 @@ class SwitchStatementWithTooFewBranches {
     System.out.println(switch(i) {case 1 -> "bar"; case 2 -> "baz"; default -> "foo";});
     
     switch (i)<EOLError descr="'{' expected"></EOLError>
+
+    Object o = new Object();
+    switch (o) {
+      case null -> System.out.println();
+      case String s -> {
+        System.out.println(s);
+      }
+      default -> System.out.println();
+    }
+
+    <warning descr="'switch' statement has only 'default' case">switch</warning> (o) {
+      case default -> System.out.println();
+    }
+
+    <warning descr="'switch' statement has too few case labels (1), and should probably be replaced with an 'if' statement">switch</warning> (o) {
+      case null -> System.out.println();
+      case default -> System.out.println();
+    }
   }
 }

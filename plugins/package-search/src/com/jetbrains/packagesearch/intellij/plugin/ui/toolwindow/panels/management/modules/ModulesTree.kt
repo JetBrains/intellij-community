@@ -44,7 +44,7 @@ internal class ModulesTree(
         val targetModules = checkNotNull(node.userObject as? TargetModules) {
             "Node '${node.path}' has invalid data: ${node.userObject}"
         }
-        PackageSearchEventsLogger.logModuleSelected(targetModules::class.simpleName)
+        PackageSearchEventsLogger.logTargetModuleSelected(targetModules)
 
         setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
     }

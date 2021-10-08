@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
@@ -38,7 +38,7 @@ class BrokenPluginIndexingTest : JavaCodeInsightFixtureTestCase() {
     }
 
     val text = "<fileBasedIndex implementation=\"" + BrokenFileBasedIndexExtension::class.qualifiedName + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text, BrokenFileBasedIndexExtension::class.java.classLoader))
+    Disposer.register(testRootDisposable, loadExtensionWithText(text))
     val file = myFixture.addClass("class Some {}").containingFile.virtualFile
     FileBasedIndex.getInstance().getFileData(BrokenFileBasedIndexExtension.INDEX_ID, file, project)
 

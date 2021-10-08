@@ -66,9 +66,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         if (e.isConsumed()) return;
         myPanel.getModel().setSelectedIndex(selectedIndex);
         if (e.isPopupTrigger()) return;
-        Object value = getList().getSelectedValue();
-        if (value != null) {
-          myPanel.navigateInsideBar(sourceItemIndex, value);
+        int idx = getList().locationToIndex(e.getPoint());
+        if (idx != -1) {
+          Object value = getList().getModel().getElementAt(idx);
+          myPanel.navigateInsideBar(sourceItemIndex, value, e.isControlDown());
         }
       }
     });
@@ -184,7 +185,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        panel.navigateInsideBar(sourceItemIndex, list.getSelectedValue());
+        panel.navigateInsideBar(sourceItemIndex, list.getSelectedValue(), false);
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);

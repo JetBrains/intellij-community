@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.dsl.TaskContext
+import training.dsl.TaskTextProperties
 import training.dsl.impl.LessonExecutor
 import training.dsl.impl.OpenPassedContext
 import training.learn.course.KLesson
@@ -33,7 +34,7 @@ class LessonManager {
   internal var currentLessonExecutor: LessonExecutor? = null
     private set
 
-  var shownRestoreNotification : TaskContext.RestoreNotification? = null
+  var shownRestoreNotification: TaskContext.RestoreNotification? = null
     private set
 
   val testActionsExecutor: Executor by lazy {
@@ -72,7 +73,7 @@ class LessonManager {
     currentLessonExecutor = lessonExecutor
   }
 
-  internal fun lessonIsRunning() : Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
+  internal fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
   fun stopLesson() = stopLesson(false)
 
@@ -102,9 +103,13 @@ class LessonManager {
     LearningUiManager.activeToolWindow?.scrollToTheStart()
   }
 
-  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false, visualNumber: Int? = null) {
+  fun addMessage(@Language("HTML") text: String,
+                 isInformer: Boolean = false,
+                 visualNumber: Int? = null,
+                 useInternalParagraphStyle: Boolean = false,
+                 textProperties: TaskTextProperties? = null) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
-    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber))
+    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber, useInternalParagraphStyle, textProperties))
   }
 
   fun addInactiveMessage(message: String, visualNumber: Int?) {

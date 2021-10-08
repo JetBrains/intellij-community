@@ -256,8 +256,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
 
       final var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                                 totalFiles,
-                                                                                 scope.getShortenName()), MessageType.INFO);
+                                                                                               totalFiles,
+                                                                                               scope.getShortenName()), MessageType.INFO);
       if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
       notification.notify(getProject());
 
@@ -375,11 +375,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         getWrappersFromTools(localTools, file, includeDoNotShow, wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection),
         getWrappersFromTools(globalSimpleTools, file, includeDoNotShow, wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
       externalAnnotatable.forEach(wrapper -> {
-          ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
-          InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
-          ReadAction.run(() -> BatchModeDescriptorsUtil
-            .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, CONVERT, toolPresentation));
-        });
+        ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
+        InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
+        ReadAction.run(() -> BatchModeDescriptorsUtil
+          .addProblemDescriptors(Arrays.asList(descriptors), false, this, null, CONVERT, toolPresentation));
+      });
 
       return true;
     };
@@ -525,8 +525,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getEventPublisher(),
             toolWrapper,
             GLOBAL_SIMPLE,
+            getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+              return -1;
             });
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
           BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
@@ -656,6 +658,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               reportWhenActivityFinished(
                 eventPublisher,
                 InspectListener.ActivityKind.REFERENCE_SEARCH,
+                getProject(),
                 () -> {
                   ((RefManagerImpl)getRefManager()).findAllDeclarations();
                 });
@@ -670,8 +673,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               eventPublisher,
               toolWrapper,
               GLOBAL,
+              getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
+                return -1;
               });
 
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
@@ -698,6 +703,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     reportWhenActivityFinished(
       eventPublisher,
       InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
+      getProject(),
       () -> {
         processPostRunActivities(needRepeatSearchRequest);
       });
@@ -1014,8 +1020,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (problems.getFiles().isEmpty()) {
       if (commandName != null) {
         var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                        scope.getFileCount(),
-                                                                        scope.getDisplayName()), MessageType.INFO);
+                                                                                           scope.getFileCount(),
+                                                                                           scope.getDisplayName()), MessageType.INFO);
         if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix));
         notification.notify(getProject());
       }

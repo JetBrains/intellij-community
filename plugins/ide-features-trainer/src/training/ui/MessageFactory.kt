@@ -85,6 +85,7 @@ internal object MessageFactory {
         var runnable: Runnable? = null
         when (content.name) {
           "icon" -> error("Need to return reflection-based icon processing")
+          "illustration" -> type = MessagePart.MessageType.ILLUSTRATION
           "icon_idx" -> type = MessagePart.MessageType.ICON_IDX
           "code" -> type = MessagePart.MessageType.CODE
           "shortcut" -> type = MessagePart.MessageType.SHORTCUT

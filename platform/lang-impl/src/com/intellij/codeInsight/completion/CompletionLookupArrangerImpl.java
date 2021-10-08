@@ -23,7 +23,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   }
 
   @Override
-  public synchronized void addElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
+  public void addElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
     super.addElement(element, presentation);
   }

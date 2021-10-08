@@ -315,4 +315,12 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
                                 @NotNull String searchPattern) {
     return myDelegate.getElementPriority(getItem(element), searchPattern);
   }
+
+  @Nullable
+  public static PsiElement toPsi(Object o) {
+    if (o instanceof PsiElement) return (PsiElement)o;
+    if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
+
+    return null;
+  }
 }

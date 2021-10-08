@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.scopes;
 
 import com.intellij.JavaTestUtil;
@@ -45,7 +45,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
     super.setUp();
     Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
       "<useScopeEnlarger implementation=\"com.intellij.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
-                                                   getClass().getClassLoader()));
+      "com.intellij"));
     //bug? Test seems to use stale data.
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(new File(getTestDataPath())), false, true, null);
   }

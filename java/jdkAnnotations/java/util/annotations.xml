@@ -3376,6 +3376,12 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Objects boolean equals(java.lang.Object, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Objects boolean equals(java.lang.Object, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.util.Objects java.lang.String toString(java.lang.Object, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;null, _ -&gt; param2&quot;"/>

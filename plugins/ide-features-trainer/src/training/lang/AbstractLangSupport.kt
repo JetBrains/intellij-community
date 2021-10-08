@@ -57,7 +57,7 @@ abstract class AbstractLangSupport : LangSupport {
 
   open val readMeCreator: ReadMeCreator? = null
 
-  override fun getSdkForProject(project: Project): Sdk? {
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     try {
       // Use no SDK if it's a valid for this language
       checkSdk(null, project)

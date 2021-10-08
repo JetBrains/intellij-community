@@ -6,14 +6,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This class exists for compatibility only.
+ * Will be removed together with {@link PsiSwitchLabelStatementBase#getCaseValues()} in the future.
+ */
 public class LightExpressionList extends LightElement implements PsiExpressionList {
-  private final @NotNull PsiExpression[] myExpressions;
+  private final PsiExpression[] myExpressions;
   private final @NotNull PsiElement myContext;
   private final TextRange myRange;
 
   public LightExpressionList(@NotNull PsiManager manager,
                              @NotNull Language language,
-                             @NotNull PsiExpression[] expressions,
+                             PsiExpression[] expressions,
                              @NotNull PsiElement context,
                              TextRange range) {
     super(manager, language);
@@ -23,7 +27,7 @@ public class LightExpressionList extends LightElement implements PsiExpressionLi
   }
 
   @Override
-  public @NotNull PsiExpression [] getExpressions() {
+  public PsiExpression @NotNull [] getExpressions() {
     return myExpressions;
   }
 

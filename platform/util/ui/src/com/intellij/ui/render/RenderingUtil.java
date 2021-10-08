@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
@@ -42,6 +42,12 @@ public final class RenderingUtil {
    */
   @ApiStatus.Internal
   public static final Key<Supplier<Color>> CUSTOM_SELECTION_BACKGROUND = Key.create("CUSTOM_SELECTION_BACKGROUND");
+
+  /**
+   * This key can be set to provide a custom selection foreground.
+   */
+  @ApiStatus.Internal
+  public static final Key<Supplier<Color>> CUSTOM_SELECTION_FOREGROUND = Key.create("CUSTOM_SELECTION_FOREGROUND");
 
 
   /**
@@ -93,13 +99,13 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JList<?> list) {
-    Color background = getCustomSelectionBackground(list);
+    Color background = getCustomColor(list, CUSTOM_SELECTION_BACKGROUND);
     return background != null ? background : CurrentTheme.List.Selection.background(isFocused(list));
   }
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JTable table) {
-    Color background = getCustomSelectionBackground(table);
+    Color background = getCustomColor(table, CUSTOM_SELECTION_BACKGROUND);
     return background != null ? background : CurrentTheme.Table.Selection.background(isFocused(table));
   }
 
@@ -107,7 +113,7 @@ public final class RenderingUtil {
   public static Color getSelectionBackground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getSelectionBackground(table); // tree table
-    Color background = getCustomSelectionBackground(tree);
+    Color background = getCustomColor(tree, CUSTOM_SELECTION_BACKGROUND);
     return background != null ? background : CurrentTheme.Tree.Selection.background(isFocused(tree));
   }
 
@@ -151,19 +157,22 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionForeground(@NotNull JList<?> list) {
-    return CurrentTheme.List.Selection.foreground(isFocused(list));
+    Color foreground = getCustomColor(list, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.List.Selection.foreground(isFocused(list));
   }
 
   @NotNull
   public static Color getSelectionForeground(@NotNull JTable table) {
-    return CurrentTheme.Table.Selection.foreground(isFocused(table));
+    Color foreground = getCustomColor(table, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.Table.Selection.foreground(isFocused(table));
   }
 
   @NotNull
   public static Color getSelectionForeground(@NotNull JTree tree) {
     JTable table = getTableFor(tree);
     if (table != null) return getSelectionForeground(table); // tree table
-    return CurrentTheme.Tree.Selection.foreground(isFocused(tree));
+    Color foreground = getCustomColor(tree, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.Tree.Selection.foreground(isFocused(tree));
   }
 
 
@@ -205,8 +214,8 @@ public final class RenderingUtil {
     return sibling instanceof JTable ? (JTable)sibling : null;
   }
 
-  private static Color getCustomSelectionBackground(@NotNull JComponent component) {
-    Supplier<Color> supplier = UIUtil.getClientProperty(component, CUSTOM_SELECTION_BACKGROUND);
+  private static Color getCustomColor(@NotNull JComponent component, @NotNull Key<Supplier<Color>> key) {
+    Supplier<Color> supplier = UIUtil.getClientProperty(component, key);
     return supplier == null ? null : supplier.get();
   }
 }

@@ -1280,16 +1280,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private boolean matchLabelStatement(@NotNull PsiSwitchLabelStatementBase statement1, @NotNull PsiSwitchLabelStatementBase statement2) {
-    final PsiExpressionList values1 = statement1.getCaseValues();
-    final PsiExpressionList values2 = statement2.getCaseValues();
+    final PsiCaseLabelElementList labelElementList1 = statement1.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList2 = statement2.getCaseLabelElementList();
     if (statement1.isDefaultCase() && !statement2.isDefaultCase()) {
       return false;
     }
-    if (values1 == null) {
+    if (labelElementList1 == null) {
       return true;
     }
-    final PsiExpression[] expressions = (values2 == null) ? PsiExpression.EMPTY_ARRAY : values2.getExpressions();
-    if (!myMatchingVisitor.matchInAnyOrder(values1.getExpressions(), expressions)) {
+    final PsiCaseLabelElement[] caseLabelElements =
+      (labelElementList2 == null) ? PsiCaseLabelElement.EMPTY_ARRAY : labelElementList2.getElements();
+    if (!myMatchingVisitor.matchInAnyOrder(labelElementList1.getElements(), caseLabelElements)) {
       return false;
     }
     final PsiElement[] body = getBody(statement1);

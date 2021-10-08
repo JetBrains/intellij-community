@@ -226,8 +226,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return createUnboxingProblem(context, expression);
     }
     if (parent instanceof PsiSwitchBlock) {
-      NullabilityProblem<PsiElement> problem = createUnboxingProblem(context, expression);
-      return problem == null ? fieldAccessNPE.problem(context, expression) : problem;
+      return getSwitchBlockProblem((PsiSwitchBlock)parent, expression, context);
     }
     if (parent instanceof PsiForeachStatement || parent instanceof PsiThrowStatement ||
         parent instanceof PsiSynchronizedStatement) {
@@ -330,6 +329,33 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static NullabilityProblem<?> getSwitchBlockProblem(@NotNull PsiSwitchBlock switchBlock,
+                                                             @NotNull PsiExpression expression,
+                                                             @NotNull PsiExpression context) {
+    Nullability exprNullability = DfaPsiUtil.getTypeNullability(expression.getType());
+    // if selector expr is nullable or unknown and switch contains null label, then we shouldn't check nullity of the expr
+    if (exprNullability != Nullability.NOT_NULL) {
+      PsiCodeBlock body = switchBlock.getBody();
+      if (body != null) {
+        PsiStatement[] statements = body.getStatements();
+        for (PsiStatement statement : statements) {
+          PsiSwitchLabelStatementBase labelStatement = tryCast(statement, PsiSwitchLabelStatementBase.class);
+          if (labelStatement == null) continue;
+          PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+          if (labelElementList == null) continue;
+          for (PsiCaseLabelElement element : labelElementList.getElements()) {
+            if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) {
+              return null;
+            }
+          }
+        }
+      }
+    }
+    NullabilityProblem<PsiElement> problem = createUnboxingProblem(context, expression);
+    return problem == null ? fieldAccessNPE.problem(context, expression) : problem;
   }
 
   @Nullable

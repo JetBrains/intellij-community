@@ -59,7 +59,8 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
 
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
-      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))  // escapeHtml required in case of hieroglyph localization
+      // escapeHtml required in case of hieroglyph localization
+      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
       triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
         ui.text?.contains(inspectionInfoLabelText) == true
       }

@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.recorder.compile
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.RawPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.recorder.GuiRecorderManager
@@ -64,21 +67,32 @@ internal class LocalCompiler {
 
   }
 
-  //alternative way to run compiled code with pluginClassloader built especially for this file
+  // alternative way to run compiled code with pluginClassloader built especially for this file
   private fun run() {
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Script running...")
     var classLoadersArray: Array<ClassLoader>
     try {
-      //run testGuiTest gradle configuration
+      // run testGuiTest gradle configuration
       ApplicationManager::class.java.classLoader.loadClass("com.intellij.testGuiFramework.impl.GuiTestCase")
       classLoadersArray = arrayOf(ApplicationManager::class.java.classLoader)
     }
     catch (cfe: ClassNotFoundException) {
       classLoadersArray = arrayOf(ApplicationManager::class.java.classLoader, this.javaClass.classLoader)
     }
+    val coreLoader = PluginManagerCore::class.java.classLoader
     val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().files(listOf(tempDir.toPath())).useCache(),
-                                              classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?,
-                                              PluginManagerCore::class.java.classLoader)
+                                              classLoadersArray
+                                                .asSequence()
+                                                .filter { it !== coreLoader }
+                                                .map {
+                                                val descriptor = IdeaPluginDescriptorImpl(raw = RawPluginDescriptor(),
+                                                                                          path = Path.of(""),
+                                                                                          isBundled = false,
+                                                                                          id = PluginId.getId(it.toString()))
+                                                descriptor.classLoader = it
+                                                descriptor
+                                              }.toList().toTypedArray(), DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?,
+                                              coreLoader)
     val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)
                       ?: throw Exception("Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.getDeclaredConstructor().newInstance()

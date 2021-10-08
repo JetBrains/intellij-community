@@ -307,7 +307,7 @@ class PythonOnboardingTour :
     task {
 
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let { toolbar ->
+        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
           val stop = ui.components.find { it is ActionButton && it.action == ActionManager.getInstance().getAction("Stop") }
           if (configurations != null && stop != null) {
@@ -316,7 +316,8 @@ class PythonOnboardingTour :
             val width = stop.x + stop.width - x
             val height = stop.y + stop.height - y
             Rectangle(x, y, width, height)
-          } else null
+          }
+          else null
         }
       }
     }
@@ -505,7 +506,7 @@ class PythonOnboardingTour :
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
-    fun returnTypeMessage(project: Project)=
+    fun returnTypeMessage(project: Project) =
       if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
       else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
 
@@ -618,6 +619,7 @@ class PythonOnboardingTour :
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
       }
+      restoreIfModified(sample)
       proceedLink()
     }
     prepareRuntimeTask {

@@ -42,6 +42,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
+import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -86,7 +87,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       text(GitLessonsBundle.message("git.quick.start.type.clone", code(StringUtil.removeEllipsisSuffix(cloneActionText))))
       triggerByListItemAndHighlight { item ->
-        item.toString().contains(cloneActionText)
+        item.toNullableString()?.contains(cloneActionText) == true
       }
       triggerStart(it)
       restoreByUi(delayMillis = defaultRestoreDelay)
@@ -211,7 +212,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       stateCheck {
         val lineEndOffset = editor.document.getLineEndOffset(line)
         val color = editor.document.charsSequence.subSequence(startOffset, lineEndOffset).removeSuffix("]").trim()
-        !textToHighlight.startsWith(color) && color.length >= 3
+        !textToHighlight.startsWith(color) && color.length >= 3 && !ChangeListManager.getInstance(project).allChanges.isEmpty()
       }
       proposeRestore {
         val caretOffset = editor.caretModel.offset

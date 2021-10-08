@@ -50,7 +50,14 @@ public final class LightEditProjectManager {
   }
 
   private static void fireProjectOpened(@NotNull Project project) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
+    Application app = ApplicationManager.getApplication();
+    Runnable fireRunnable = () -> app.getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
+    if (app.isDispatchThread() || app.isUnitTestMode()) {
+      fireRunnable.run();
+    }
+    else {
+      app.invokeLater(fireRunnable);
+    }
   }
 
   private static @NotNull LightEditProjectImpl createProject() {

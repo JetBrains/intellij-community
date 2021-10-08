@@ -47,7 +47,7 @@ class MultiProjectIndexTest {
   @Test
   fun `test index extension process files intersection`() {
     val text = "<fileBasedIndexInfrastructureExtension implementation=\"" + CountingTestExtension::class.java.name + "\"/>"
-    Disposer.register(disposable.disposable, loadExtensionWithText(text, CountingTestExtension::class.java.classLoader))
+    Disposer.register(disposable.disposable, loadExtensionWithText(text))
     val ext = FileBasedIndexInfrastructureExtension.EP_NAME.findExtension(CountingTestExtension::class.java)!!
 
     val projectPath1 = tempDir.newDirectory("project1").toPath()

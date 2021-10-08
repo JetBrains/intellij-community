@@ -10,7 +10,14 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,6 +26,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,110 +40,85 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.EventConsumer {
+public final class CachedValueProfilerDumpHelper {
+
+  private static final Logger LOG = Logger.getInstance(CachedValueProfilerDumpHelper.class);
 
   private static final int VERSION = 1;
+  private static final String FILE_EXTENSION = "cvperf";
+  private static final LightVirtualFile LIVE_PROFILING_FILE;
 
-  private final Project myProject;
-  private final File myFileTmp;
-  private final MyWriter myWriter;
-  private final MyQueue myQueue;
+  static {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FILE_EXTENSION);
+    LIVE_PROFILING_FILE = new LightVirtualFile("Live Caches Profiling", fileType, "");
+  }
 
+  private CachedValueProfilerDumpHelper() { }
+
+  public interface EventConsumerFactory {
+    @NotNull CachedValueProfiler.EventConsumer createEventConsumer();
+  }
 
   static void toggleProfiling(@NotNull Project project) {
     CachedValueProfiler.EventConsumer prev = CachedValueProfiler.setEventConsumer(null);
     if (prev == null) {
+      CachedValueProfiler.EventConsumer viewer = openDumpViewer(project);
       try {
-        CachedValueProfiler.setEventConsumer(new CachedValueProfilerDumpHelper(project));
+        File tmpFile = newFile(true);
+        CachedValueProfiler.setEventConsumer(new FileEventConsumer(tmpFile, viewer));
       }
       catch (IOException ex) {
         notifyFailure(project, ex);
       }
     }
-    else if (prev instanceof CachedValueProfilerDumpHelper) {
-      ((CachedValueProfilerDumpHelper)prev).close();
+    else if (prev instanceof FileEventConsumer) {
+      File tmpFile = ((FileEventConsumer)prev).file;
+      try {
+        ((FileEventConsumer)prev).close();
+        ((FileEventConsumer)prev).future.get();
+        File file = newFile(false);
+        FileUtil.rename(tmpFile, file);
+        notifySuccess(project, file);
+      }
+      catch (Exception ex) {
+        notifyFailure(project, ex);
+        FileUtil.delete(tmpFile);
+      }
     }
   }
 
-  private CachedValueProfilerDumpHelper(@NotNull Project project) throws IOException {
-    myProject = project;
-    myFileTmp = newFile(true);
-    myWriter = new MyWriter(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(myFileTmp))));
-    myQueue = new MyQueue();
-  }
-
-  void close() {
-    Throwable error = null;
-    for (Closeable c : Arrays.asList(myQueue, myWriter)) {
-      try {
-        c.close();
-      }
-      catch (IOException ex) {
-        if (error == null) error = ex;
+  private static @Nullable CachedValueProfiler.EventConsumer openDumpViewer(@NotNull Project project) {
+    VirtualFile file = LIVE_PROFILING_FILE;
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
+    if (providers.length == 1 && "cvp-editor".equals(providers[0].getEditorTypeId())) {
+      FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true, false);
+      FileEditor editor = editors.length > 0 ? editors[0] : null;
+      if (editor instanceof EventConsumerFactory) {
+        return ((EventConsumerFactory)editor).createEventConsumer();
       }
     }
-    if (error == null) {
-      error = myWriter.myError;
-    }
-    if (error != null) {
-      notifyFailure(myProject, error);
-      FileUtil.delete(myFileTmp);
-    }
-    else {
-      File file = newFile(false);
-      try {
-        FileUtil.rename(myFileTmp, file);
-        notifySuccess(myProject, file);
-      }
-      catch (IOException e) {
-        notifyFailure(myProject, e);
-      }
-    }
+    return null;
   }
 
   @NotNull
   private static File newFile(boolean tmp) {
     String fileName = "caches-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(System.currentTimeMillis())) +
-                      ".cvperf" + (tmp ? ".tmp" : "");
+                      "." + FILE_EXTENSION + (tmp ? ".tmp" : "");
     return new File(new File(PathManager.getLogPath()), fileName);
   }
 
-  @Override
-  public void onFrameEnter(long frameId, CachedValueProfiler.EventPlace place, long parentId, long time) {
-    myQueue.offer(() -> myWriter.onFrameEnter(frameId, place, parentId, time));
-  }
-
-  @Override
-  public void onFrameExit(long frameId, long start, long computed, long time) {
-    myQueue.offer(() -> myWriter.onFrameExit(frameId, start, computed, time));
-  }
-
-  @Override
-  public void onValueComputed(long frameId, CachedValueProfiler.EventPlace place, long start, long time) {
-    myQueue.offer(() -> myWriter.onValueComputed(frameId, place, start, time));
-  }
-
-  @Override
-  public void onValueUsed(long frameId, CachedValueProfiler.EventPlace place, long computed, long time) {
-    myQueue.offer(() -> myWriter.onValueUsed(frameId, place, computed, time));
-  }
-
-  @Override
-  public void onValueInvalidated(long frameId, CachedValueProfiler.EventPlace place, long used, long time) {
-    myQueue.offer(() -> myWriter.onValueInvalidated(frameId, place, used, time));
-  }
-
-  @Override
-  public void onValueRejected(long frameId, CachedValueProfiler.EventPlace place, long start, long computed, long time) {
-    myQueue.offer(() -> myWriter.onValueRejected(frameId, place, start, computed, time));
+  @NotNull
+  private static MyWriter newFileWriter(File file) throws IOException {
+    return new MyWriter(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
   }
 
   private static String placeToString(StackTraceElement place) {
@@ -173,60 +159,189 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   }
 
   private static void notifyFailure(@NotNull Project project, @NotNull Throwable exception) {
-    NotificationGroupManager.getInstance().getNotificationGroup("Cached value profiling")
-      .createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR)
-      .notify(project);
+    if (exception instanceof IOException) {
+      NotificationGroupManager.getInstance().getNotificationGroup("Cached value profiling")
+        .createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR)
+        .notify(project);
+      LOG.warn(exception);
+    }
+    else {
+      LOG.error(exception);
+    }
   }
 
-  static class MyQueue extends ConcurrentLinkedQueue<Runnable> implements Runnable, Closeable {
+  static class FileEventConsumer extends ExecutorEventConsumer {
 
-    volatile boolean closed;
+    final File file;
     final Future<?> future;
 
-    MyQueue() {
-      future = ProcessIOExecutorService.INSTANCE.submit(this);
-    }
-
-    private void drainQueue() {
-      Runnable r;
-      while ((r = poll()) != null) {
-        r.run();
-      }
+    FileEventConsumer(File file, CachedValueProfiler.EventConsumer second) throws IOException {
+      super(new MyQueueExecutor(), second == null ? newFileWriter(file) :
+                                   new CompositeEventConsumer(newFileWriter(file), second));
+      this.file = file;
+      future = ProcessIOExecutorService.INSTANCE.submit((MyQueueExecutor)executor);
     }
 
     @Override
-    public boolean offer(Runnable runnable) {
-      if (closed) return false;
-      return super.offer(runnable);
+    public void close() {
+      try {
+        super.close();
+      }
+      finally {
+        ((MyQueueExecutor)executor).closed = true;
+      }
+    }
+  }
+
+  static class MyQueueExecutor extends ConcurrentLinkedQueue<Runnable> implements Executor, Runnable {
+
+    volatile boolean closed;
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+      if (closed) return;
+      offer(command);
     }
 
     @Override
     public void run() {
-      while (!closed) {
-        drainQueue();
-        synchronized (future) {
-          try {
-            future.wait(100);
-          }
-          catch (InterruptedException ignore) { }
+      while (true) {
+        Runnable r = poll();
+        if (r != null) r.run();
+        else if (!closed) TimeoutUtil.sleep(1);
+        else {
+          break;
         }
       }
+    }
+  }
+
+  static class ExecutorEventConsumer implements CachedValueProfiler.EventConsumer, Closeable {
+    final Executor executor;
+    final CachedValueProfiler.EventConsumer consumer;
+    volatile boolean closed;
+
+    ExecutorEventConsumer(@NotNull Executor executor,
+                          @NotNull CachedValueProfiler.EventConsumer consumer) {
+      this.executor = executor;
+      this.consumer = consumer;
+    }
+
+    @Override
+    public void close() {
+      try {
+        if (consumer instanceof Closeable) {
+          executeImpl(() -> {
+            try {
+              ((Closeable)consumer).close();
+            }
+            catch (IOException ex) {
+              ExceptionUtil.rethrow(ex);
+            }
+          });
+        }
+      }
+      finally {
+        closed = true;
+      }
+    }
+
+    void executeImpl(Runnable runnable) {
+      if (closed) return;
+      executor.execute(runnable);
+    }
+
+    @Override
+    public void onFrameEnter(long frameId, CachedValueProfiler.EventPlace place, long parentId, long time) {
+      executeImpl(() -> consumer.onFrameEnter(frameId, place, parentId, time));
+    }
+
+    @Override
+    public void onFrameExit(long frameId, long start, long computed, long time) {
+      executeImpl(() -> consumer.onFrameExit(frameId, start, computed, time));
+    }
+
+    @Override
+    public void onValueComputed(long frameId, CachedValueProfiler.EventPlace place, long start, long time) {
+      executeImpl(() -> consumer.onValueComputed(frameId, place, start, time));
+    }
+
+    @Override
+    public void onValueUsed(long frameId, CachedValueProfiler.EventPlace place, long computed, long time) {
+      executeImpl(() -> consumer.onValueUsed(frameId, place, computed, time));
+    }
+
+    @Override
+    public void onValueInvalidated(long frameId, CachedValueProfiler.EventPlace place, long used, long time) {
+      executeImpl(() -> consumer.onValueInvalidated(frameId, place, used, time));
+    }
+
+    @Override
+    public void onValueRejected(long frameId, CachedValueProfiler.EventPlace place, long start, long computed, long time) {
+      executeImpl(() -> consumer.onValueRejected(frameId, place, start, computed, time));
+    }
+  }
+
+  static class CompositeEventConsumer implements CachedValueProfiler.EventConsumer, Closeable {
+    final CachedValueProfiler.EventConsumer first;
+    final CachedValueProfiler.EventConsumer second;
+
+    CompositeEventConsumer(@NotNull CachedValueProfiler.EventConsumer first,
+                           @NotNull CachedValueProfiler.EventConsumer second) {
+      this.first = first;
+      this.second = second;
+    }
+
+    @Override
+    public void onFrameEnter(long frameId, CachedValueProfiler.EventPlace place, long parentId, long time) {
+      first.onFrameEnter(frameId, place, parentId, time);
+      second.onFrameEnter(frameId, place, parentId, time);
+    }
+
+    @Override
+    public void onFrameExit(long frameId, long start, long computed, long time) {
+      first.onFrameExit(frameId, start, computed, time);
+      second.onFrameExit(frameId, start, computed, time);
+    }
+
+    @Override
+    public void onValueComputed(long frameId, CachedValueProfiler.EventPlace place, long start, long time) {
+      first.onValueComputed(frameId, place, start, time);
+      second.onValueComputed(frameId, place, start, time);
+    }
+
+    @Override
+    public void onValueUsed(long frameId, CachedValueProfiler.EventPlace place, long computed, long time) {
+      first.onValueUsed(frameId, place, computed, time);
+      second.onValueUsed(frameId, place, computed, time);
+    }
+
+    @Override
+    public void onValueInvalidated(long frameId, CachedValueProfiler.EventPlace place, long used, long time) {
+      first.onValueInvalidated(frameId, place, used, time);
+      second.onValueInvalidated(frameId, place, used, time);
+    }
+
+    @Override
+    public void onValueRejected(long frameId, CachedValueProfiler.EventPlace place, long start, long computed, long time) {
+      first.onValueRejected(frameId, place, start, computed, time);
+      second.onValueRejected(frameId, place, start, computed, time);
     }
 
     @Override
     public void close() throws IOException {
-      closed = true;
-      try {
-        synchronized (future) {
-          future.notifyAll();
+      Throwable error = null;
+      for (Object c : ContainerUtil.ar(first, second)) {
+        if (!(c instanceof Closeable)) continue;
+        try {
+          ((Closeable)c).close();
         }
-        future.get(500, TimeUnit.MILLISECONDS);
-        drainQueue();
+        catch (Throwable ex) {
+          if (error == null) error = ex;
+        }
       }
-      catch (ExecutionException ex) {
-        throw new IOException(ex);
-      }
-      catch (InterruptedException | TimeoutException ignore) { }
+      if (error instanceof IOException) throw (IOException)error;
+      ExceptionUtil.rethrowAllAsUnchecked(error);
     }
   }
 
@@ -239,7 +354,6 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
   private static class MyWriter implements CachedValueProfiler.EventConsumer, Closeable {
 
     final JsonWriter myWriter;
-    IOException myError;
 
     MyWriter(OutputStream out) throws IOException {
       myWriter = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
@@ -251,9 +365,13 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
 
     @Override
     public void close() throws IOException {
-      myWriter.endArray();
-      myWriter.endObject();
-      myWriter.close();
+      try {
+        myWriter.endArray();
+        myWriter.endObject();
+      }
+      finally {
+        myWriter.close();
+      }
     }
 
     @Override
@@ -304,7 +422,7 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
         myWriter.endObject();
       }
       catch (IOException e) {
-        if (myError != null) myError = e;
+        ExceptionUtil.rethrow(e);
       }
     }
   }

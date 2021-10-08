@@ -47,7 +47,7 @@ class PythonInPlaceRefactoringLesson
     task("ShowIntentionActions") {
       text(
         PythonLessonsBundle.message("python.in.place.refactoring.invoke.intentions",
-                              icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
+                                    icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { ui -> // no highlighting
         ui.toString().contains("'s'")
       }

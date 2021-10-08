@@ -1025,9 +1025,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       result.setUserProperties(userProperties);
 
-      if (activeProfiles != null) {
-        result.setActiveProfiles(activeProfiles);
-      }
+      result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
       if (inactiveProfiles != null) {
         result.setInactiveProfiles(inactiveProfiles);
       }
@@ -1054,6 +1052,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static List<String> collectActiveProfiles(@Nullable List<String> defaultActiveProfiles,
+                                                    @Nullable List<String> explicitActiveProfiles,
+                                                    @Nullable List<String> explicitInactiveProfiles) {
+    if (defaultActiveProfiles == null || defaultActiveProfiles.isEmpty()) {
+      return explicitActiveProfiles != null ? explicitActiveProfiles : Collections.<String>emptyList();
+    }
+
+    Set<String> result = new HashSet<String>(defaultActiveProfiles);
+    if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
+      result.removeAll(explicitInactiveProfiles);
+    }
+
+    if (explicitActiveProfiles != null) {
+      result.addAll(explicitActiveProfiles);
+    }
+
+    return new ArrayList<String>(result);
   }
 
   @NotNull

@@ -11,6 +11,7 @@
       "foreground": "#FFFFFF",
 
       "infoForeground": "#E0861F",
+      "successForeground": "#50A661",
 
       "selectionBackground": "#3333FF",
       "selectionForeground": "#FFFFFF",
@@ -442,6 +443,15 @@
         "backgroundBrightness": 0.7
       },
       "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "#333638",
+      "stepNumberForeground": "#FEFEFE",
+      "Tooltip.background": "#0E62CF",
+      "Tooltip.spanBackground": "#0250B0",
+      "Tooltip.foreground": "#F5F5F5",
+      "Tooltip.stepNumberForeground": "#6A9DDE"
     },
 
     "WelcomeScreen": {

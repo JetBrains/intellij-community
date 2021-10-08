@@ -35,9 +35,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
     fun requireDescriptor() = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 
-    override fun toString(): String {
-      return "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
-    }
+    override fun toString() = "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
   }
 
   override fun toString(): String {

@@ -32,6 +32,7 @@ import java.util.List;
 
 import static com.intellij.xml.util.HtmlUtil.MATH_ML_NAMESPACE;
 import static com.intellij.xml.util.HtmlUtil.SVG_NAMESPACE;
+import static com.intellij.xml.util.XmlUtil.HTML_URI;
 
 /**
  * @author Eugene.Kudelevsky
@@ -53,10 +54,13 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
     String namespace;
     if (elementDescriptor == null &&
         !((namespace = tag.getNamespace()).equals(XmlUtil.XHTML_URI))) {
-      return new AnyXmlElementDescriptor(
-        null,
-        XmlUtil.HTML_URI.equals(namespace) ? this : tag.getNSDescriptor(tag.getNamespace(), true)
-      );
+      var nsDescriptor = HTML_URI.equals(namespace) ? this : tag.getNSDescriptor(namespace, true);
+      if (HTML_URI.equals(namespace) || MATH_ML_NAMESPACE.equals(namespace) || SVG_NAMESPACE.equals(namespace)) {
+        return new RelaxedAnyHtmlElementDescriptor(null, nsDescriptor);
+      }
+      else {
+        return new AnyXmlElementDescriptor(null, nsDescriptor);
+      }
     }
 
     return elementDescriptor;
@@ -70,7 +74,8 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   @Override
   public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     final XmlElementDescriptor[] descriptors = super.getRootElementsDescriptors(doc);
-    List<XmlElementDescriptor> rootElements = ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor));
+    List<XmlElementDescriptor> rootElements =
+      ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor));
     ContainerUtil.addAll(rootElements, HtmlUtil.getCustomTagDescriptors(doc));
     return rootElements.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
@@ -90,7 +95,7 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
     XmlElementDescriptor descriptor = super.getElementDescriptor(localName, namespace);
     if (descriptor != null) return descriptor;
-    descriptor =  super.getElementDescriptor(localName, MATH_ML_NAMESPACE);
+    descriptor = super.getElementDescriptor(localName, MATH_ML_NAMESPACE);
     if (descriptor != null) return descriptor;
     return super.getElementDescriptor(localName, SVG_NAMESPACE);
   }

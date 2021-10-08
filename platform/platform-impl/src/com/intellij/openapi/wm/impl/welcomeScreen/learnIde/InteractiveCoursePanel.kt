@@ -29,6 +29,9 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
   val startLearningButton = JButton()
 
+  private val newContentMarker = data.newContentMarker()
+  private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
+
   private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
   private val interactiveCourseContent = createInteractiveCourseContent()
 
@@ -120,7 +123,20 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
       font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
     learnIdeFeaturesHeader.alignmentX = LEFT_ALIGNMENT
-    panel.add(learnIdeFeaturesHeader)
+
+    if (nameLine != null) {
+      nameLine.isOpaque = false
+      nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+      nameLine.alignmentX = LEFT_ALIGNMENT
+
+      nameLine.add(learnIdeFeaturesHeader)
+      nameLine.add(rigid(10, 0))
+      nameLine.add(newContentMarker)
+
+      panel.add(nameLine)
+    } else {
+      panel.add(learnIdeFeaturesHeader)
+    }
 
     panel.add(rigid(1, 4))
     panel.add(interactiveCourseDescription)
@@ -212,6 +228,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     this.isOpaque = false
     interactiveCourseDescription.maximumSize = interactiveCourseDescription.preferredSize
     interactiveCourseContent.add(expandedCourseContent)
+    nameLine?.remove(newContentMarker)
     chevronPanel.maximumSize = chevronPanel.size
     interactiveCourseContent.revalidate()
     interactiveCourseContent.repaint()
@@ -224,6 +241,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     val pointerLocation = MouseInfo.getPointerInfo().location
     if (pointerInLearnIdeFeaturesPanel(pointerLocation)) activateLearnIdeFeaturesPanel()
     interactiveCourseContent.remove(expandedCourseContent)
+    nameLine?.add(newContentMarker)
     interactiveCourseContent.revalidate()
     interactiveCourseContent.repaint()
     repaint()

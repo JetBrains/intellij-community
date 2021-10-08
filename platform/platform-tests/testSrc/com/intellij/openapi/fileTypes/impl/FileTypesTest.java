@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.*;
@@ -52,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +82,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    // we test myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
+    // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
     myFileTypeManager = new FileTypeManagerImpl();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
@@ -168,6 +170,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile file = getVirtualFile(createTempFile(".svn", ""));
     assertTrue(myFileTypeManager.isFileIgnored(file));
     assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("x.txt", null, "", StandardCharsets.UTF_8)));
+  }
+
+  public void testEmptyFileWithoutExtension() throws IOException {
+    VirtualFile foo = getVirtualFile(createTempFile("foo", ""));
+    WriteAction.run(() -> myFileTypeManager.associatePattern(DetectedByContentFileType.INSTANCE, "foo"));
+    FileType type = myFileTypeManager.getFileTypeByFile(foo); // foo.getFileType() will call FileTypeRegistry.getInstance() which we try to avoid
+    assertFalse(type.getName(), type.isBinary());
   }
 
   private static void checkNotAssociated(@NotNull FileType fileType,
@@ -443,6 +452,60 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertOneElement(myFileTypeManager.getRemovedMappingTracker().removeIf(mapping -> mapping.getFileNameMatcher().equals(matcher)));
   }
 
+  public void testAddExistingExtensionFromFileTypeXToFileTypeYMustSurviveRestart() throws IOException, JDOMException {
+    String ext = ((ExtensionFileNameMatcher)Arrays.stream(myFileTypeManager.getRegisteredFileTypes())
+      .filter(type -> !(type instanceof AbstractFileType))
+      .flatMap(type -> myFileTypeManager.getAssociations(type).stream())
+      .filter(association -> association instanceof ExtensionFileNameMatcher)
+      .findFirst()
+      .get()).getExtension();
+
+    FileType type = myFileTypeManager.getFileTypeByExtension(ext);
+    FileType otherType = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypes(), t -> !t.equals(type) && (t instanceof AbstractFileType));
+    // try to assign ext from type to otherType
+
+    WriteAction.run(() -> myFileTypeManager.associateExtension(otherType, ext));
+    assertEquals(otherType, myFileTypeManager.getFileTypeByExtension(ext));
+    assertEmpty(myFileTypeManager.getRemovedMappingTracker().getMappingsForFileType(type.getName()));
+    
+    @Language("XML")
+    String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
+                 "   <extensionMap>\n" +
+                 "     <mapping ext=\""+ext+"\" type=\"" + otherType.getName()+ "\" />\n" +
+                 "     <removed_mapping ext=\""+ext+"\" type=\"" + type.getName()+ "\" approved=\"true\"/>\n" +
+                 "   </extensionMap>\n" +
+                 "</blahblah>";
+    Element element = JDOMUtil.load(xml);
+
+    myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
+    assertEmpty(reInitFileTypeManagerComponent(element));
+
+    assertEquals(otherType, myFileTypeManager.getFileTypeByExtension(ext));
+    assertNotEmpty(myFileTypeManager.getRemovedMappingTracker().getMappingsForFileType(type.getName()));
+    myFileTypeManager.getRemovedMappingTracker().clear();
+  }
+
+  public void testAddHashBangToReassignedTypeMustSurviveRestart() throws IOException, JDOMException {
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.getRegisteredFileTypeWithDescriptors().stream()
+      .filter(f -> !(f.fileType instanceof AbstractFileType))
+      .findFirst()
+      .get();
+
+    String hashBang = "xxx";
+    @Language("XML")
+    String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
+                 "   <extensionMap>\n" +
+                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n"+
+                 "   </extensionMap>\n" +
+                 "</blahblah>";
+    Element element = JDOMUtil.load(xml);
+
+    myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
+    assertEmpty(reInitFileTypeManagerComponent(element));
+
+    assertEquals(ftd, myFileTypeManager.myPatternsTable.findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
+  }
+
   public void testReassignedPredefinedFileType() {
     FileType perlType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlType.getName());
@@ -628,8 +691,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
                  "   </extensionMap>\n" +
                  "</blahblah>";
     Element element = JDOMUtil.load(xml);
-
-    Disposer.register(getTestRootDisposable(), myFileTypeManager);
 
     myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
     reInitFileTypeManagerComponent(element);

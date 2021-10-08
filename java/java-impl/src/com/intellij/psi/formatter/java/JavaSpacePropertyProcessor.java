@@ -674,6 +674,14 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitGuardedPattern(PsiGuardedPattern pattern) {
+    super.visitGuardedPattern(pattern);
+    if (myChild1.getElementType() == JavaTokenType.ANDAND || myChild2.getElementType() == JavaTokenType.ANDAND) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
@@ -1326,7 +1334,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
     if (myChild1.getElementType() == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }

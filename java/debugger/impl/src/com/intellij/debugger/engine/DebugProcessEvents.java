@@ -404,10 +404,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         AsyncStacksUtils.setupAgent(this);
       }
 
-      if (canBeModified) {
-        MemoryAgentUtil.setupAgent(this);
-      }
-
       XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
 
       // breakpoints should be initialized after all processAttached listeners work

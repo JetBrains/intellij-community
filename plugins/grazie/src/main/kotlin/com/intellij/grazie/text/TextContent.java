@@ -2,6 +2,7 @@ package com.intellij.grazie.text;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -65,6 +66,11 @@ public interface TextContent extends CharSequence {
    * @return the PSI element containing all of this content's fragments.
    */
   @NotNull PsiElement getCommonParent();
+
+  /**
+   * @return the PSI file containing this content.
+   */
+  @NotNull PsiFile getContainingFile();
 
   /**
    * @return the leaf PSI element containing the given text offset.

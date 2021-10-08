@@ -77,7 +77,9 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Override
   public PsiElement getDeclarationScope() {
     PsiElement parent = getPattern().getParent();
-    if (!(parent instanceof PsiInstanceOfExpression)) return parent;
+    if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)) {
+      return parent;
+    }
     boolean negated = false;
     for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
       if (nextParent instanceof PsiParenthesizedExpression) continue;
@@ -104,6 +106,16 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
           nextParent = nextParent.getParent();
         }
         return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiSwitchLabelStatementBase) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression)) {
+        continue;
       }
       return parent;
     }

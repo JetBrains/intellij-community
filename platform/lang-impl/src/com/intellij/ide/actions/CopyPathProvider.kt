@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.datatransfer.StringSelection
 
-abstract class CopyPathProvider : DumbAwareAction() {
+abstract class CopyPathProvider : DumbAwareAction(), UpdateInBackground {
   override fun update(e: AnActionEvent) {
     val dataContext = e.dataContext
     val editor = CommonDataKeys.EDITOR.getData(dataContext)

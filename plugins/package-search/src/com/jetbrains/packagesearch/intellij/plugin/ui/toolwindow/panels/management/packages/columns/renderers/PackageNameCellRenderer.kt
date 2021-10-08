@@ -71,9 +71,9 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val packageModel = value.packageModel
 
                 val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
-                val identifier = packageModel.identifier
+                val rawIdentifier = packageModel.identifier.rawValue
 
-                createNamePanel(columnWidth, name, identifier, packageModel.isKotlinMultiplatform, isSelected).apply {
+                createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
                     table.colors.applyTo(this, isSelected)
                 }
             }
@@ -81,9 +81,9 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 val packageModel = value.packageModel
 
                 val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
-                val identifier = packageModel.identifier
+                val rawIdentifier = packageModel.identifier.rawValue
 
-                createNamePanel(columnWidth, name, identifier, packageModel.isKotlinMultiplatform, isSelected).apply {
+                createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
                     table.colors.applyTo(this, isSelected)
                     if (!isSelected) background = PackageSearchUI.ListRowHighlightBackground
                 }
@@ -129,7 +129,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         }
     }
 
-    // This is a hack; ideally we should have this done by the layout itself, but MigLayout wasn't cooperating
+    // This is a hack; ideally we should have this done by the layout itself,
+    // but MigLayout wasn't cooperating
     // TODO Use a custom layout to do this in a less hacky fashion
     private class TagPaintingJPanel(private val columnWidth: Int, private val isSelected: Boolean) : JPanel(
         MigLayout(layoutConstraints.width("${columnWidth}px!"), columnConstraints)

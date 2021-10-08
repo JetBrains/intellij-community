@@ -416,21 +416,26 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
       List<Evaluator> evaluators = new SmartList<>();
-      PsiExpressionList caseValues = statement.getCaseValues();
-      if (caseValues != null) {
-        for (PsiExpression expression : caseValues.getExpressions()) {
-          Evaluator evaluator = accept(expression);
+      PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+      boolean defaultCase = statement.isDefaultCase();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) {
+            defaultCase = true;
+            continue;
+          }
+          Evaluator evaluator = accept(labelElement);
           if (evaluator != null) {
             evaluators.add(evaluator);
           }
         }
       }
       if (statement instanceof PsiSwitchLabeledRuleStatement) {
-        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, statement.isDefaultCase(),
+        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, defaultCase,
                                                                accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
       }
       else {
-        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, defaultCase);
       }
     }
 

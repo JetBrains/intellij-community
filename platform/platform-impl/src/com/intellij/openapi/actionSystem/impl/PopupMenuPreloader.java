@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.lang.ref.WeakReference;
@@ -52,6 +55,7 @@ public final class PopupMenuPreloader implements Runnable {
       IdeEventQueue.getInstance().addIdleListener(preloader, 2000);
     };
     UiNotifyConnector.doWhenFirstShown(component, runnable);
+    if (component instanceof JMenuBar) return;
     component.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -86,7 +90,9 @@ public final class PopupMenuPreloader implements Runnable {
       dispose(-1);
       return;
     }
-    DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(component));
+    Component contextComponent = ActionPlaces.MAIN_MENU.equals(myPlace) ?
+                                 IJSwingUtilities.getFocusedComponentInWindowOrSelf(component) : component;
+    DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent));
     boolean isInModalContext = ModalityState.stateForComponent(component).dominates(ModalityState.NON_MODAL);
     long start = System.nanoTime();
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
@@ -103,7 +109,9 @@ public final class PopupMenuPreloader implements Runnable {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourEditorContextMenuPreloadCount ++;
       }
-      LOG.info("Popup menu preloaded for `" + myPlace + "` in " + millis + " ms");
+      ActionGroup group = myGroupSupplier.get();
+      String text = group == null ? null : group.getTemplateText();
+      LOG.info("Popup menu " + (text == null ? "" : "'" + text + "' ") + "preloaded at '" + myPlace + "' in " + millis + " ms");
     }
   }
 }

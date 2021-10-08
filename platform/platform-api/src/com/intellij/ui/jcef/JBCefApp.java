@@ -18,6 +18,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -38,6 +41,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
+
 /**
  * A wrapper over {@link CefApp}.
  * <p>
@@ -55,8 +60,9 @@ public final class JBCefApp {
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 87;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 89;
+  private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 5;
 
   @NotNull private final CefApp myCefApp;
 
@@ -179,7 +185,7 @@ public final class JBCefApp {
     String extraArgsProp = System.getProperty("ide.browser.jcef.extra.args", "");
     if (!extraArgsProp.isEmpty()) {
       String[] extraArgs = extraArgsProp.split(" ");
-      if (extraArgs != null && extraArgs.length > 0) {
+      if (extraArgs.length > 0) {
         LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
         args = ArrayUtil.mergeArrays(args, extraArgs);
       }
@@ -250,6 +256,9 @@ public final class JBCefApp {
       JCefAppConfig config = null;
       if (isSupported()) {
         try {
+          if (!JreHiDpiUtil.isJreHiDPIEnabled()) {
+            System.setProperty("jcef.forceDeviceScaleFactor", String.valueOf(getForceDeviceScaleFactor()));
+          }
           config = JCefAppConfig.getInstance();
         }
         catch (Exception e) {
@@ -309,8 +318,16 @@ public final class JBCefApp {
         return unsupported.apply("JCEF runtime version is not supported");
       }
       if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
-        return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+        return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
                                  ", current is " + version.cefVersion.major);
+      }
+      if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
+          (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
+           MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
+      {
+        return unsupported.apply("JCEF: minimum supported API version is " +
+                                 MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
+                                 ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
       }
       URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
       if (url == null) {
@@ -435,5 +452,25 @@ public final class JBCefApp {
       getInstance().myCefApp.registerSchemeHandlerFactory(
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
+  }
+
+  /**
+   * Used to force JCEF scale in IDE-managed HiDPI mode.
+   */
+  public static double getForceDeviceScaleFactor() {
+    return JreHiDpiUtil.isJreHiDPIEnabled() ? -1 : ScaleContext.create().getScale(DerivedScaleType.PIX_SCALE);
+  }
+
+  /**
+   * Returns normal (unscaled) size of the provided scaled size if IDE-managed HiDPI mode is enabled.
+   * In JRE-managed HiDPI mode the method has no effect.
+   * <p></p>
+   * This method should be applied to size values (for instance, font size) previously scaled (explicitly or implicitly)
+   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in html (in CSS, for instance).
+   *
+   * @see com.intellij.ui.scale.ScaleType
+   */
+  public static int normalizeScaledSize(int scaledSize) {
+    return JreHiDpiUtil.isJreHiDPIEnabled() ? scaledSize : ROUND.round(scaledSize / getForceDeviceScaleFactor());
   }
 }

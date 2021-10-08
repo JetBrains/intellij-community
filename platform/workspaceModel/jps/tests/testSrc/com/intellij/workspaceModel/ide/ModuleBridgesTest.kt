@@ -25,8 +25,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -692,7 +692,7 @@ class ModuleBridgesTest {
   @Test
   fun `creating module from modifiable model and removing it`() =
     WriteCommandAction.runWriteCommandAction(project) {
-      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
 
       moduleManager.modifiableModel.let { modifiableModel ->
         modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
@@ -720,7 +720,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `remove module without removing module library`() = WriteCommandAction.runWriteCommandAction(project) {
-    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
 
     val module = moduleManager.modifiableModel.let { modifiableModel ->
       val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)

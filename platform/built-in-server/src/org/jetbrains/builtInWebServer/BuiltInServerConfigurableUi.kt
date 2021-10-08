@@ -14,7 +14,6 @@ class BuiltInServerConfigurableUi : ConfigurableUi<BuiltInServerOptions> {
   private lateinit var builtInServerPort: PortField
   private lateinit var builtInServerAvailableExternallyCheckBox: JCheckBox
   private lateinit var allowUnsignedRequestsCheckBox: JCheckBox
-  private lateinit var reloadOnSaveCheckBox: JCheckBox
 
   private val mainPanel: DialogPanel = panel {
     row(XmlBundle.message("setting.value.builtin.server.port.label")) {
@@ -40,25 +39,18 @@ class BuiltInServerConfigurableUi : ConfigurableUi<BuiltInServerOptions> {
         allowUnsignedRequestsCheckBox = it.component
       }
     }
-    row {
-      checkBox(XmlBundle.message("setting.value.reload.page.on.save")).also {
-        reloadOnSaveCheckBox = it.component
-      }
-    }
   }
 
   override fun reset(settings: BuiltInServerOptions) {
     builtInServerPort.number = settings.builtInServerPort
     builtInServerAvailableExternallyCheckBox.isSelected = settings.builtInServerAvailableExternally
     allowUnsignedRequestsCheckBox.isSelected = settings.allowUnsignedRequests
-    reloadOnSaveCheckBox.isSelected = settings.reloadPageOnSave
   }
 
   override fun isModified(settings: BuiltInServerOptions): Boolean {
     return builtInServerPort.number != settings.builtInServerPort ||
            builtInServerAvailableExternallyCheckBox.isSelected != settings.builtInServerAvailableExternally ||
-           allowUnsignedRequestsCheckBox.isSelected != settings.allowUnsignedRequests ||
-           reloadOnSaveCheckBox.isSelected != settings.reloadPageOnSave
+           allowUnsignedRequestsCheckBox.isSelected != settings.allowUnsignedRequests
   }
 
   override fun apply(settings: BuiltInServerOptions) {
@@ -70,7 +62,6 @@ class BuiltInServerConfigurableUi : ConfigurableUi<BuiltInServerOptions> {
       settings.builtInServerAvailableExternally = builtInServerAvailableExternallyCheckBox.isSelected
       BuiltInServerOptions.onBuiltInServerPortChanged()
     }
-    settings.reloadPageOnSave = reloadOnSaveCheckBox.isSelected
   }
 
   override fun getComponent(): JComponent = mainPanel

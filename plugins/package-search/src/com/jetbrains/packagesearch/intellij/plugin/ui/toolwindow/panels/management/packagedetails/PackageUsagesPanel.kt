@@ -25,7 +25,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         val navigatable = linkActionsMap[anchor] ?: return
         if (!navigatable.canNavigate()) return
         navigatable.navigate(true)
-        PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.PackageUsages, anchor)
+        PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.PackageUsages)
     }
 
     fun display(packageModel: PackageModel.Installed) {

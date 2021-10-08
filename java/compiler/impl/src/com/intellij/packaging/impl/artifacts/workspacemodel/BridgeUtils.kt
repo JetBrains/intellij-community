@@ -57,7 +57,7 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
                                  JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
-  return ArtifactBridge(it.persistentId(), entityStorage, project, null)
+  return ArtifactBridge(it.persistentId(), entityStorage, project, null, null)
 }
 
 fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -23,6 +24,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +41,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class InternalDecoratorImpl extends InternalDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
+  @ApiStatus.Internal
+  public static final Key<Boolean> SHARED_ACCESS_KEY = Key.create("sharedAccess");
+
   private final ToolWindowImpl toolWindow;
 
   @Nullable

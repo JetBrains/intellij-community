@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ClonableOrderEntry
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.SdkFinder
 import com.intellij.openapi.roots.libraries.Library
@@ -18,7 +17,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
@@ -134,7 +133,18 @@ internal class ModuleOrderEntryBridge(
   override fun getUrls(rootType: OrderRootType): Array<String> = getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   private fun getEnumerator(rootType: OrderRootType) = ownerModuleBridge.let {
-    ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it)
+    getEnumeratorForType(rootType, it).usingCache()
+  }
+
+  private fun getEnumeratorForType(type: OrderRootType, module: Module): OrderRootsEnumerator {
+    val base = OrderEnumerator.orderEntries(module)
+    if (type === OrderRootType.CLASSES) {
+      return base.exportedOnly().withoutModuleSourceEntries().recursively().classes()
+    }
+    return if (type === OrderRootType.SOURCES) {
+      base.exportedOnly().recursively().sources()
+    }
+    else base.roots(type)
   }
 
   override fun getPresentableName() = moduleName
@@ -290,7 +300,7 @@ internal class SdkOrderEntryBridge(
   companion object {
     @JvmStatic
     internal fun findSdk(sdkName: String, sdkType: String): Sdk? {
-      for (finder in SdkFinder.EP_NAME.extensions) {
+      for (finder in SdkFinder.EP_NAME.extensionsIfPointIsRegistered) {
         val sdk = finder.findSdk(sdkName, sdkType)
         if (sdk != null) return sdk
       }

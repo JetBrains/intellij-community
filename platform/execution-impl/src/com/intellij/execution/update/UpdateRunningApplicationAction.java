@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UpdateRunningApplicationAction extends AnAction implements UpdateInBackground {
+public class UpdateRunningApplicationAction extends AnAction {
   UpdateRunningApplicationAction() {
     super(ExecutionBundle.messagePointer("action.AnAction.text.update.running.application"),
           ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);

@@ -34,7 +34,9 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
           if (bodyStatement instanceof PsiYieldStatement) {
-            if (((PsiYieldStatement)bodyStatement).getExpression() != null) {
+            PsiYieldStatement yieldStatement = (PsiYieldStatement)bodyStatement;
+            if (yieldStatement.getExpression() != null &&
+                PsiTreeUtil.getParentOfType(yieldStatement, PsiSwitchBlock.class) instanceof PsiSwitchExpression) {
               registerProblem(bodyStatement.getFirstChild());
             }
           }

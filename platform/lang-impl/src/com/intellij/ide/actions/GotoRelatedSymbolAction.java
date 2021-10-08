@@ -58,7 +58,7 @@ public class GotoRelatedSymbolAction extends AnAction {
       return;
     }
 
-    if (items.size() == 1 && items.get(0).getElement() != null) {
+    if (items.size() == 1) {
       items.get(0).navigate();
       return;
     }

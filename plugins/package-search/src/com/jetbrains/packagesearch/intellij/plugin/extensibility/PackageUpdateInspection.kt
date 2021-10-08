@@ -11,12 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 
 internal abstract class PackageUpdateInspection : LocalInspectionTool() {
 
-    abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
+    protected abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
 
     final override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (!shouldCheckFile(file)) {
@@ -36,7 +37,8 @@ internal abstract class PackageUpdateInspection : LocalInspectionTool() {
             val currentVersion = packageUpdateInfo.usageInfo.version
             val scope = packageUpdateInfo.usageInfo.scope
             val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
-            val versionElement = getVersionPsiElement(file, unifiedDependency) ?: continue
+            val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: continue
+            if(versionElement.containingFile != file) continue
 
             problemsHolder.registerProblem(
                 versionElement,
@@ -54,10 +56,15 @@ internal abstract class PackageUpdateInspection : LocalInspectionTool() {
         return problemsHolder.resultsArray
     }
 
-    private fun shouldCheckFile(file: PsiFile): Boolean =
-        ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
-            ?.hasSupportFor(file.project, file)
-            ?: false
+    private fun shouldCheckFile(file: PsiFile): Boolean {
+        // This is a workaround for IDEA-274152; a proper fix requires breaking API changes and is slated for 2021.3
+        val isScala = file.language.displayName.contains("scala", ignoreCase = true)
+        if (isScala) return false
+
+        val operationProvider = ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
+            ?: return false
+        return operationProvider.hasSupportFor(file.project, file)
+    }
 
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
