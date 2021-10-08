@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard
 
-import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
-import com.intellij.ide.wizard.NewProjectWizardBaseStep
-import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.chain
+import com.intellij.ide.wizard.*
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.WebModuleBuilder
@@ -14,7 +11,7 @@ import javax.swing.Icon
 
 open class WebTemplateNewProjectWizardBuilder(val template: WebProjectTemplate<*>) : AbstractNewProjectWizardBuilder() {
   override fun createStep(context: WizardContext): NewProjectWizardStep {
-    return object : NewProjectWizardBaseStep(context) {
+    return object : GitNewProjectWizardStep(context) {
       override fun showGitRepositoryCheckbox(): Boolean {
         return false
       }

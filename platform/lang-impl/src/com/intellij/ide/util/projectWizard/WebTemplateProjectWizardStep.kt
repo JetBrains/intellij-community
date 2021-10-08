@@ -2,7 +2,7 @@
 package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
-import com.intellij.ide.wizard.NewProjectWizardBaseStep
+import com.intellij.ide.wizard.GitNewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.Panel
@@ -10,7 +10,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.io.systemIndependentPath
 import javax.swing.JLabel
 
-class WebTemplateProjectWizardStep(val parent: NewProjectWizardBaseStep,
+class WebTemplateProjectWizardStep(val parent: GitNewProjectWizardStep,
                                    val template: WebProjectTemplate<*>) : AbstractNewProjectWizardStep(parent) {
   val peer = template.createLazyPeer()
 

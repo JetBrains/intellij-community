@@ -29,7 +29,10 @@ import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-open class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
+
+class NewProjectWizardBaseStep(context: WizardContext) : GitNewProjectWizardStep(context)
+
+open class GitNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
   final override val propertyGraph = PropertyGraph("New project wizard")
 
@@ -151,7 +154,7 @@ open class NewProjectWizardBaseStep(override val context: WizardContext) : NewPr
     if (git) {
       val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
       if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project )  {
+        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
           GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
         }
       }
