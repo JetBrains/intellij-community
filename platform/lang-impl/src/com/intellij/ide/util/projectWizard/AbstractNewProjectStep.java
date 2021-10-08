@@ -54,7 +54,7 @@ import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
  * Defines the new project wizard, which is used in small IDEs where we don't need to work with modules directly
  */
 public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware, ActionsWithPanelProvider {
-  static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
+  public static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME =
     new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);

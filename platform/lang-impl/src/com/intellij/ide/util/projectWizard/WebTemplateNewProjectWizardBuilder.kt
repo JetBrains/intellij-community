@@ -7,16 +7,19 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.module.WebModuleTypeBase
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.UIBundle
 import javax.swing.Icon
 
-open class WebTemplateNewProjectWizardBuilder(val template: WebProjectTemplate<*>) : AbstractNewProjectWizardBuilder() {
+abstract class WebTemplateNewProjectWizardBuilderBase : AbstractNewProjectWizardBuilder() {
   override fun createStep(context: WizardContext): NewProjectWizardStep {
     return object : GitNewProjectWizardStep(context) {
       override fun showGitRepositoryCheckbox(): Boolean {
         return false
       }
-    }.chain { WebTemplateProjectWizardStep(it, template) }
+    }.chain { createTemplateStep(it) }
   }
+
+  protected abstract fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep
 
   override fun getIgnoredSteps(): List<Class<out ModuleWizardStep>> {
     try {
@@ -35,7 +38,27 @@ open class WebTemplateNewProjectWizardBuilder(val template: WebProjectTemplate<*
 
   override fun getModuleType(): ModuleType<*> = WebModuleTypeBase.getInstance()
   override fun getGroupName() = WebModuleBuilder.GROUP_NAME
-  override fun getPresentableName() = StringUtil.capitalizeWords(template.name, true)
+}
+
+
+open class WebTemplateNewProjectWizardBuilder(private val template: WebProjectTemplate<*>) : WebTemplateNewProjectWizardBuilderBase() {
   override fun getBuilderId(): String? = template.javaClass.name
+  override fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep =
+    WebTemplateProjectWizardStep(parent, template)
+
+  override fun getPresentableName() = StringUtil.capitalizeWords(template.name, true)
   override fun getNodeIcon(): Icon = template.icon
+}
+
+open class MultiWebTemplateNewProjectWizardBuilder(protected val templates: List<WebProjectTemplate<*>>) : WebTemplateNewProjectWizardBuilderBase() {
+  override fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep {
+    return object : AbstractNewProjectWizardMultiStepBase(parent) {
+      override val label: String
+        get() = UIBundle.message("label.project.wizard.new.project.project.type")
+      override val steps: Map<String, NewProjectWizardStep>
+        get() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
+    }
+  }
+
+  override fun getBuilderId(): String? = templates.joinToString { it.javaClass.name }
 }
