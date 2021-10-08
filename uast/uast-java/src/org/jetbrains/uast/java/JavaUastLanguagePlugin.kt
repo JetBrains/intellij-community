@@ -133,6 +133,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
         is PsiClass -> el<UClass> {
           JavaUClass.create(element, givenParent)
         }
+        is PsiRecordHeader -> el<UMethod> { JavaUMethod.create(element, givenParent) }
         is PsiMethod -> el<UMethod> {
           JavaUMethod.create(element, this@JavaUastLanguagePlugin, givenParent)
         }

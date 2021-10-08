@@ -126,7 +126,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiTypeParameter::class.java,
     PsiWhileStatement::class.java,
     PsiYieldStatement::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiRecordHeader::class.java
   ),
   UAnnotation::class.java to classSetOf<PsiElement>(
     PsiAnnotation::class.java
@@ -224,7 +225,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiPatternVariable::class.java,
     PsiResourceVariable::class.java,
     PsiTypeParameter::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiRecordHeader::class.java
   ),
   UDeclarationEx::class.java to classSetOf<PsiElement>(
     PsiAnnotationMethod::class.java,
@@ -239,7 +241,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiPatternVariable::class.java,
     PsiResourceVariable::class.java,
     PsiTypeParameter::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiRecordHeader::class.java
   ),
   UDeclarationsExpression::class.java to classSetOf<PsiElement>(
     PsiDeclarationStatement::class.java,
@@ -322,7 +325,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiTypeParameter::class.java,
     PsiWhileStatement::class.java,
     PsiYieldStatement::class.java,
-    PsiRecordComponent::class.java
+    PsiRecordComponent::class.java,
+    PsiRecordHeader::class.java
   ),
   UElementWithLocation::class.java to classSetOf<PsiElement>(
     //PsiExpressionStatement::class.java,
@@ -467,7 +471,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   ),
   UMethod::class.java to classSetOf<PsiElement>(
     PsiAnnotationMethod::class.java,
-    PsiMethod::class.java
+    PsiMethod::class.java,
+    PsiRecordHeader::class.java
   ),
   UMultiResolvable::class.java to classSetOf<PsiElement>(
     PsiAnnotatedJavaCodeReferenceElement::class.java,

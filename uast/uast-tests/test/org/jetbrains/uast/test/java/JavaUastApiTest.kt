@@ -16,6 +16,7 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -224,6 +225,18 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       TestCase.assertEquals(field, alternatives[1])
       val parameterFromField = field.javaPsi.toUElementOfType<UParameter>()
       TestCase.assertEquals(parameter, parameterFromField)
+    }
+  }
+  
+  @Test
+  fun testRecordConstructor() {
+    doTest("Simple/Record.java") { _, file ->
+      val uClass = SyntaxTraverser.psiTraverser(file.sourcePsi).asSequence().mapNotNull { it.toUElementOfType<UClass>() }.single()
+      val constructor = uClass.methods.single { it.isConstructor }
+      assertInstanceOf(constructor.javaPsi, LightRecordCanonicalConstructor::class.java)
+      TestCase.assertEquals(constructor, constructor.javaPsi.toUElement())
+      assertInstanceOf(constructor.sourcePsi, PsiRecordHeader::class.java)
+      TestCase.assertEquals(constructor, constructor.sourcePsi.toUElement())
     }
   }
 
