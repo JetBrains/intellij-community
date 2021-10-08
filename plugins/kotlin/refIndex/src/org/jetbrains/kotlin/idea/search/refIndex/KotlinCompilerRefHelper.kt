@@ -38,9 +38,23 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
     private fun KtCallableDeclaration.asCompilerRefs(names: NameEnumerator): List<CompilerRef>? {
         if (isTopLevelKtOrJavaMember()) return asTopLevelCompilerRefs(names)
-
-        return null
+        val containingClassOrObject = containingClassOrObject ?: return null
+        return when (containingClassOrObject) {
+            is KtClass -> asClassMemberCompilerRefs(containingClassOrObject, names)
+            is KtObjectDeclaration -> asObjectMemberCompilerRefs(containingClassOrObject, names)
+            else -> null
+        }
     }
+
+    private fun KtCallableDeclaration.asClassMemberCompilerRefs(
+        containingClass: KtClass,
+        names: NameEnumerator,
+    ): List<CompilerRef>? = null
+
+    private fun KtCallableDeclaration.asObjectMemberCompilerRefs(
+        containingObject: KtObjectDeclaration,
+        names: NameEnumerator,
+    ): List<CompilerRef>? = null
 
     private fun KtCallableDeclaration.asTopLevelCompilerRefs(names: NameEnumerator): List<CompilerRef>? =
         containingKtFile.javaFileFacadeFqName.asString().let { qualifier ->
