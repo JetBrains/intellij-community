@@ -5,6 +5,7 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.project.DumbService
 
 private val LOG = logger<JBProtocolNavigateCommand>()
 
@@ -31,11 +32,13 @@ open class JBProtocolNavigateCommand: JBProtocolCommand(NAVIGATE_COMMAND) {
       return
     }
     openProjectWithAction(parameters) {
-      NavigatorWithinProject(it, parameters, ::locationToOffset)
-        .navigate(listOf(
-          NavigatorWithinProject.NavigationKeyPrefix.FQN,
-          NavigatorWithinProject.NavigationKeyPrefix.PATH
-        ))
+      DumbService.getInstance(it).runWhenSmart {
+        NavigatorWithinProject(it, parameters, ::locationToOffset)
+          .navigate(listOf(
+            NavigatorWithinProject.NavigationKeyPrefix.FQN,
+            NavigatorWithinProject.NavigationKeyPrefix.PATH
+          ))
+      }
     }
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.StatusBarProgress
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
@@ -72,9 +71,7 @@ fun openProjectWithAction(parameters: Map<String, String>, action: (Project) -> 
       if (project != null) {
         ApplicationManager.getApplication().invokeLater({
           StartupManager.getInstance(project).runAfterOpened {
-            DumbService.getInstance(project).runWhenSmart {
-              action(project)
-            }
+            action(project)
           }
         }, ModalityState.NON_MODAL, project.disposed)
       }
