@@ -1,10 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.target.TargetCustomToolWizardStep
-import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.TargetEnvironmentWizard.Companion.createWizard
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,8 +23,6 @@ import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.PyAddSdkDialog
-import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
-import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.util.function.Consumer
 
 class PySdkPopupFactory(val project: Project, val module: Module) {
@@ -107,50 +101,13 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
   }
 
   private fun collectAddInterpreterActions(currentSdk: Sdk?): List<AnAction> {
-    return listOf(AddLocalInterpreterAction(currentSdk)) + collectNewInterpreterOnTargetActions(currentSdk)
+    return listOf(AddLocalInterpreterAction(project, module) { switchToSdk(it, currentSdk) }) +
+           collectNewInterpreterOnTargetActions(currentSdk)
   }
 
   private fun collectNewInterpreterOnTargetActions(currentSdk: Sdk?): List<AnAction> {
     return PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList.map { factory ->
-      AddInterpreterOnTargetAction(currentSdk, factory.getTargetType())
-    }
-  }
-
-  private inner class AddLocalInterpreterAction(val currentSdk: Sdk?) : AnAction({ "Add Local Interpreter..." },
-                                                                                 AllIcons.Nodes.HomeFolder) {
-    override fun actionPerformed(e: AnActionEvent) {
-      val model = PyConfigurableInterpreterList.getInstance(project).model
-
-      PyAddTargetBasedSdkDialog.show(
-        project,
-        module,
-        model.sdks.asList(),
-        Consumer {
-          if (it != null && model.findSdk(it.name) == null) {
-            model.addSdk(it)
-            model.apply()
-            switchToSdk(it, currentSdk)
-          }
-        }
-      )
-    }
-  }
-
-  private inner class AddInterpreterOnTargetAction(val currentSdk: Sdk?, private val targetType: TargetEnvironmentType<*>)
-    : AnAction({ "On ${targetType.displayName}..." }, targetType.icon) {
-    override fun actionPerformed(e: AnActionEvent) {
-      val wizard = createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
-      if (wizard != null && wizard.showAndGet()) {
-        val model = PyConfigurableInterpreterList.getInstance(project).model
-        val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
-        if (sdk != null && model.findSdk(sdk.name) == null) {
-          model.addSdk(sdk)
-
-
-          model.apply()
-          switchToSdk(sdk, currentSdk)
-        }
-      }
+      AddInterpreterOnTargetAction(project, factory.getTargetType()) { switchToSdk(it, currentSdk) }
     }
   }
 
