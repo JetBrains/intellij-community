@@ -5,6 +5,7 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
@@ -14,6 +15,8 @@ import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragme
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
+import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
@@ -37,6 +40,20 @@ class MavenRunConfigurationSettingsEditor(
   runConfiguration,
   runConfiguration.extensionsManager
 ) {
+  private val resetOperation = AnonymousParallelOperationTrace()
+
+  override fun resetEditorFrom(s: RunnerAndConfigurationSettingsImpl) {
+    resetOperation.task {
+      super.resetEditorFrom(s)
+    }
+  }
+
+  override fun resetEditorFrom(settings: MavenRunConfiguration) {
+    resetOperation.task {
+      super.resetEditorFrom(settings)
+    }
+  }
+
   override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> {
     return SettingsFragmentsContainer.fragments {
       add(CommonParameterFragments.createRunHeader())
@@ -59,7 +76,7 @@ class MavenRunConfigurationSettingsEditor(
       { true }
     ) {
       override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-        checkBoxGroup(
+        inheritCheckBoxGroup(
           "maven.runner.group.inherit",
           MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
           { it, c -> c.isSelected = it.isInheritedGeneralSettings },
@@ -90,7 +107,7 @@ class MavenRunConfigurationSettingsEditor(
     { true }
   ) {
     override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-      checkBoxGroup(
+      inheritCheckBoxGroup(
         "maven.runner.group.inherit",
         MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
         { it, c -> c.isSelected = it.isInheritedRunnerSettings },
@@ -106,40 +123,55 @@ class MavenRunConfigurationSettingsEditor(
     }
   }).apply { isRemovable = false }
 
-  private fun <S> SettingsFragmentsContainer<S>.checkBoxGroup(
+  private fun <S> SettingsFragmentsContainer<S>.inheritCheckBoxGroup(
     id: String,
     label: @NlsContexts.Checkbox String,
     reset: (S, JCheckBox) -> Unit,
     apply: (S, JCheckBox) -> Unit,
     configure: SettingsFragmentsContainer<S>.() -> Unit
   ) {
-    val checkBox = JCheckBox(label)
-    add(createSettingsEditorFragment(
-      checkBox,
-      object : SettingsFragmentInfo {
-        override val settingsId: String = id
-        override val settingsName: String? = null
-        override val settingsGroup: String? = null
-        override val settingsPriority: Int = 0
-        override val settingsType = SettingsEditorFragmentType.EDITOR
-        override val settingsHint: String? = null
-        override val settingsActionHint: String? = null
-      },
-      reset,
-      apply,
-      { true }
-    )).apply { isRemovable = false }
     val fragments = SettingsFragmentsContainer.fragments(configure)
-    checkBox.addItemListener {
+    addInheritCheckBoxFragment(id, label, reset, apply)
+      .applyToComponent { bind(fragments) }
+    fragments.forEach(::add)
+  }
+
+  private fun <S> SettingsFragmentsContainer<S>.addInheritCheckBoxFragment(
+    id: String,
+    label: @NlsContexts.Checkbox String,
+    reset: (S, JCheckBox) -> Unit,
+    apply: (S, JCheckBox) -> Unit,
+  ) = add(createSettingsEditorFragment(
+    JCheckBox(label),
+    object : SettingsFragmentInfo {
+      override val settingsId: String = id
+      override val settingsName: String? = null
+      override val settingsGroup: String? = null
+      override val settingsPriority: Int = 0
+      override val settingsType = SettingsEditorFragmentType.EDITOR
+      override val settingsHint: String? = null
+      override val settingsActionHint: String? = null
+    },
+    reset,
+    apply,
+    { true }
+  )).apply { isRemovable = false }
+
+  private fun JCheckBox.bind(fragments: List<SettingsEditorFragment<*, *>>) {
+    addItemListener {
       for (fragment in fragments) {
         val component = fragment.component()
         if (component != null) {
-          UIUtil.setEnabledRecursively(component, !checkBox.isSelected)
+          UIUtil.setEnabledRecursively(component, !isSelected)
         }
       }
     }
     for (fragment in fragments) {
-      add(fragment)
+      fragment.addSettingsEditorListener {
+        if (resetOperation.isOperationCompleted()) {
+          isSelected = false
+        }
+      }
     }
   }
 
