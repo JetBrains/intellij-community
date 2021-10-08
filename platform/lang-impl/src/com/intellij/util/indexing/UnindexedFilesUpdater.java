@@ -102,14 +102,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     synchronized (ourLastRunningTaskLock) {
       UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
       //two tasks with non-null myPredefinedIndexableFilesIterators should be just run one after other
-      if (runningTask == null || runningTask.myPredefinedIndexableFilesIterators == null || predefinedIndexableFilesIterators == null) {
+      if (runningTask == null || predefinedIndexableFilesIterators == null) {
         myProject.putUserData(RUNNING_TASK, this);
 
-        if (runningTask != null) {
-          if (runningTask.myPredefinedIndexableFilesIterators == null && predefinedIndexableFilesIterators != null) {
-            //new task should be run for all changes to handle what wasn't handled by the previous one
-            predefinedIndexableFilesIterators = null;
-          }
+        if (runningTask != null) { // => predefinedIndexableFilesIterators == null
+          // In case  of unlimited check followed by a limited change cancelling first and making unlimited check anew results
+          // in endless restart of unlimited checks on Windows with empty Maven cache.
+          // So only in case the second one is unlimited check the first one will be cancelled.
           DumbService.getInstance(project).cancelTask(runningTask);
         }
       }
