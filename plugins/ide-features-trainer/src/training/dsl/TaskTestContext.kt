@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.util.ui.tree.TreeUtil
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.BasicJListCellReader
@@ -29,10 +30,11 @@ import java.awt.Container
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.*
+import javax.swing.tree.TreePath
 
 @LearningDsl
 class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
-  private val defaultTimeout = Timeout.timeout(3, TimeUnit.SECONDS)
+  val defaultTimeout = Timeout.timeout(3, TimeUnit.SECONDS)
 
   val robot: Robot get() = LearningUiUtil.robot
 
@@ -80,13 +82,33 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
   }
 
   /**
+   * Finds a JTree component in hierarchy of context component with a path satisfies the [checkPath] predicate and returns JTreeFixture
+   *
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  inline fun <C : Container> ContainerFixture<C>.jTree(timeout: Timeout = defaultTimeout,
+                                                       crossinline checkPath: (TreePath) -> Boolean): JTreeFixture {
+    val tree = findComponentWithTimeout(timeout) { ui: JTree ->
+      ui.isShowing && TreeUtil.treePathTraverser(ui).any { path -> checkPath(path) }
+    }
+    return JTreeFixture(robot(), tree)
+  }
+
+  /**
    * Finds a JButton component in hierarchy of context component with a name and returns ExtendedButtonFixture.
    *
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <C : Container> ContainerFixture<C>.button(name: String, timeout: Timeout = defaultTimeout): JButtonFixture {
-    val jButton: JButton = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text == name }
-    return JButtonFixture(robot(), jButton)
+    return button(timeout) { b: JButton -> b.text == name }
+  }
+
+  inline fun <C : Container, reified ButtonType : JButton> ContainerFixture<C>.button(
+    timeout: Timeout = defaultTimeout,
+    crossinline finderFunction: (ButtonType) -> Boolean
+  ): JButtonFixture {
+    val button = findComponentWithTimeout(timeout) { b: ButtonType -> b.isShowing && b.isEnabled && finderFunction(b) }
+    return JButtonFixture(robot(), button)
   }
 
   fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout: Timeout = defaultTimeout)

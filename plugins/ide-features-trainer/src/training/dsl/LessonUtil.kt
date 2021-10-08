@@ -44,6 +44,7 @@ import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.*
+import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
@@ -324,6 +325,16 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
+  test {
+    ideFrame {
+      val linkText = "Click to proceed"
+      val lessonMessagePane = findComponentWithTimeout(defaultTimeout) { _: LessonMessagePane -> true }
+      val offset = lessonMessagePane.text.indexOf(linkText)
+      if (offset == -1) error("Not found '$linkText' in the LessonMessagePane")
+      val rect = lessonMessagePane.modelToView2D(offset + linkText.length / 2)
+      robot.click(lessonMessagePane, Point(rect.centerX.toInt(), rect.centerY.toInt()))
+    }
+  }
 }
 
 fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
