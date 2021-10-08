@@ -194,7 +194,7 @@
       <add-to-group group-id="Diff.EditorPopupMenu"/>
     </action>
 
-    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider">
+    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="CopyFileReference"/>
     </action>
   </actions>
