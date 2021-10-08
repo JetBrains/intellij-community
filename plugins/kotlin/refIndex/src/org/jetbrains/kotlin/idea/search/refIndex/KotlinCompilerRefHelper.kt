@@ -32,19 +32,23 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             is KtClass -> originalElement.asCompilerRef(names)?.let(::listOf)
             is KtObjectDeclaration -> originalElement.asCompilerRefs(names)
             is KtConstructor<*> -> originalElement.asCompilerRef(names)?.let(::listOf)
-            is KtCallableDeclaration -> originalElement.takeIf { it.isTopLevelKtOrJavaMember() }
-                ?.containingKtFile
-                ?.javaFileFacadeFqName
-                ?.asString()
-                ?.let { qualifier ->
-                    when (originalElement) {
-                        is KtNamedFunction -> originalElement.asCompilerRefs(qualifier, names)
-                        is KtProperty -> originalElement.asCompilerRefs(qualifier, names)
-                        else -> null
-                    }
-                }
-
+            is KtCallableDeclaration -> originalElement.asCompilerRefs(names)
             else -> null
+        }
+
+    private fun KtCallableDeclaration.asCompilerRefs(names: NameEnumerator): List<CompilerRef>? {
+        if (isTopLevelKtOrJavaMember()) return asTopLevelCompilerRefs(names)
+
+        return null
+    }
+
+    private fun KtCallableDeclaration.asTopLevelCompilerRefs(names: NameEnumerator): List<CompilerRef>? =
+        containingKtFile.javaFileFacadeFqName.asString().let { qualifier ->
+            when (this) {
+                is KtNamedFunction -> asCompilerRefs(qualifier, names)
+                is KtProperty -> asCompilerRefs(qualifier, names)
+                else -> null
+            }
         }
 
     private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = jvmFqName
