@@ -108,7 +108,7 @@ public final class ProgressIndicatorUtils {
       throw new IllegalStateException("Must not call from EDT");
     }
     Runnable cancellation = indicatorCancellation(progressIndicator);
-    if (isWriting(application)) {
+    if (isWriteActionRunningOrPending(application)) {
       cancellation.run();
       return false;
     }
@@ -146,14 +146,14 @@ public final class ProgressIndicatorUtils {
   public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
                                                       @NotNull Runnable cancellation,
                                                       @NotNull Runnable action) {
-    if (isWriting(application)) {
+    if (isWriteActionRunningOrPending(application)) {
       cancellation.run();
       return false;
     }
 
     ourWACancellations.add(cancellation);
     try {
-      if (isWriting(application)) {
+      if (isWriteActionRunningOrPending(application)) {
         // the listener might not be notified if write action was requested concurrently with listener addition
         cancellation.run();
         return false;
@@ -174,7 +174,8 @@ public final class ProgressIndicatorUtils {
     };
   }
 
-  private static boolean isWriting(@NotNull ApplicationEx application) {
+  @ApiStatus.Internal
+  public static boolean isWriteActionRunningOrPending(@NotNull ApplicationEx application) {
     return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
 
