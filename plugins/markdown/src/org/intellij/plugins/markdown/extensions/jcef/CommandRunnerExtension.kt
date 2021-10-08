@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
@@ -44,12 +45,13 @@ import javax.swing.Icon
 
 private const val RUN_LINE_EVENT = "runLine"
 private const val RUN_BLOCK_EVENT = "runBlock"
-
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
   val icons: List<String> = listOf("run.png", "runrun.png")
+  val commandCache = mutableMapOf<Int, String>()
+
 
   private var splitEditor: MarkdownEditorWithPreview? = null
 
@@ -106,8 +108,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
     val project = panel.project
     val file = panel.virtualFile
     if (project != null && file != null && previewProcessingEnabled() && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
+      val index = commandCache.size
+      commandCache[index] = rawCodeLine
       val cssClass = "run-icon" + if (inBlock) " code-block" else ""
-      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$rawCodeLine'>" +
+      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index'>" +
              "<img src='${PreviewStaticServer.getStaticUrl(this,"run.png")}'>" +
              "</a>"
     }
@@ -122,16 +126,18 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
     }
     if (runner == null) return ""
 
-    val cssClass = "run-icon code-block" // todo: check possible xss
+    val index = commandCache.size
+    commandCache[index] = codeFenceRawContent
+    val cssClass = "run-icon code-block"
     val html = "<a class='${cssClass}' href='#' role='button' " +
-               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:echo BLOCK' " +
+               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index' " +
                "data-commandtype='block'" +
                ">" +
                "<img src='${PreviewStaticServer.getStaticUrl(this,"runrun.png")}'>" +
                "</a>"
 
     return html
-  } // free resources related to md file
+  }
 
 
 
@@ -140,27 +146,37 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
     return splitEditor?.layout  == TextEditorWithPreview.Layout.SHOW_PREVIEW
   }
 
-  private fun runLine(command: String) {
-    val executorId = command.substringBefore(":")
-    val shellCommand = command.substringAfter(":")
+  private fun runLine(encodedLine: String) {
+    val executorId = encodedLine.substringBefore(":")
+    val cmdIndex = encodedLine.substringAfter(":").toInt()
+    val command = commandCache[cmdIndex]
+    if (command == null) {
+      LOG.error("Command index $cmdIndex not found. Please attach .md file to error report. commandCache = ${commandCache}")
+      return
+    }
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
     val project = panel.project
     val virtualFile = panel.virtualFile
     if (project !=null && virtualFile != null) {
-      execute(project, virtualFile.parent.canonicalPath, true, shellCommand, executor)
+      execute(project, virtualFile.parent.canonicalPath, true, command, executor)
     }
   }
 
-  private fun runBlock(command: String) {
-    val executorId = command.substringBefore(":")
-    val shellCommand = command.substringAfter(":")
+  private fun runBlock(encodedLine: String) {
+    val executorId = encodedLine.substringBefore(":")
+    val cmdIndex = encodedLine.substringAfter(":").toInt()
+    val command = commandCache[cmdIndex]
+    if (command == null) {
+      LOG.error("Command index $cmdIndex not found. Please attach .md file to error report. ${commandCache}")
+      return
+    }
     val runner = MarkdownRunner.EP_NAME.extensionList.first()
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
     val project = panel.project
     val virtualFile = panel.virtualFile
     if (project !=null && virtualFile != null) {
       ApplicationManager.getApplication().invokeLater {
-        runner.run(shellCommand, project, virtualFile.parent.canonicalPath, executor)
+        runner.run(command, project, virtualFile.parent.canonicalPath, executor)
       }
     }
   }
@@ -240,5 +256,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
               && it !is RunAnythingRecentProjectProvider
               && it !is RunAnythingRunConfigurationProvider)
     }
+
+    private val LOG = logger<CommandRunnerExtension>()
   }
 }
