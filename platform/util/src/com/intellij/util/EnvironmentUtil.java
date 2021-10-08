@@ -511,8 +511,11 @@ public final class EnvironmentUtil {
    * but you need to run a new child process with original variables values,
    * because overridden variables values shouldn't be passed to child process environment.
    * So this method will restore the original variables values and remove all extra ones.
+   * <p/>
+   * Real case: some environment variables are overridden for IDE process in the way described above
+   * by {@code plugins/remote-dev-server/build/resources/linux/scripts/launcher.sh}
    *
-   * @param envs - modifiable environment. The overridden variables values will be restored right in it.
+   * @param envs  modifiable environment. The overridden variables values will be restored right in it.
    */
   public static void restoreOverriddenVars(@NotNull Map<String, String> envs) {
     List<Pair<String, String>> reserved = ContainerUtil.mapNotNull(envs.entrySet(), entry -> {
