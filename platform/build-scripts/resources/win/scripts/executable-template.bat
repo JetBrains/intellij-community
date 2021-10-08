@@ -127,7 +127,7 @@ IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET "CLASS_PATH=%CLASS_PATH%;%@@produ
   %ACC% ^
   "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
-  @@ide_jvm_args@@ ^
   %IDE_PROPERTIES_PROPERTY% ^
+  @@ide_jvm_args@@ ^
   com.intellij.idea.Main ^
   %*
