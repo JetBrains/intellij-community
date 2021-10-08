@@ -1,7 +1,8 @@
 {
+    "mainFile": "Main.java",
     "usages": [
-        "Main.java",
+        "JavaUsage.java",
         "KotlinUsage.kt",
-        "JavaUsage.java"
+        "Main.java"
     ]
 }

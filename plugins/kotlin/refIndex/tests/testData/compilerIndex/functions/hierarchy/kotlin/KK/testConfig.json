@@ -1,12 +1,12 @@
 {
     "mainFile": "KK.kt",
     "usages": [
-        "jkk_.kt",
         "jjkk_.kt",
+        "jkk_.kt",
         "jkkk_.kt",
+        "kjkk_.kt",
         "kk_.kt",
         "kkk_.kt",
-        "kjkk_.kt",
         "kkkk_.kt"
     ]
 }
