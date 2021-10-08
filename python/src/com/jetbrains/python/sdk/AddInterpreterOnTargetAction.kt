@@ -8,13 +8,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 
 internal class AddInterpreterOnTargetAction(private val project: Project,
                                             private val targetType: TargetEnvironmentType<*>,
-                                            private val onSdkCreated: (sdk: Sdk) -> Unit
-) : AnAction({ "On ${targetType.displayName}..." }, targetType.icon) {
+                                            private val onSdkCreated: (sdk: Sdk) -> Unit)
+  : AnAction(PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName), targetType.icon) {
   override fun actionPerformed(e: AnActionEvent) {
     val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
     if (wizard != null && wizard.showAndGet()) {

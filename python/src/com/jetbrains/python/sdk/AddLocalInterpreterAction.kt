@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import java.util.function.Consumer
@@ -14,7 +15,7 @@ import java.util.function.Consumer
 internal class AddLocalInterpreterAction(private val project: Project,
                                          private val module: Module,
                                          private val onSdkCreated: (sdk: Sdk) -> Unit)
-  : AnAction({ "Add Local Interpreter..." }, AllIcons.Nodes.HomeFolder) {
+  : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder) {
   override fun actionPerformed(e: AnActionEvent) {
     val model = PyConfigurableInterpreterList.getInstance(project).model
 
