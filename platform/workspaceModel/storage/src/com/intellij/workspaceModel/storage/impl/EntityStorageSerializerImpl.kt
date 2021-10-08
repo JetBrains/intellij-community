@@ -551,7 +551,7 @@ class EntityStorageSerializerImpl(
       val entityDataSequence = log.values.mapNotNull {
         when (it) {
           is ChangeEntry.AddEntity<*> -> it.entityData
-          is ChangeEntry.RemoveEntity -> null
+          is ChangeEntry.RemoveEntity<*> -> null
           is ChangeEntry.ReplaceEntity<*> -> it.newData
           is ChangeEntry.ChangeEntitySource<*> -> it.newData
           is ChangeEntry.ReplaceAndChangeSource<*> -> it.dataChange.newData

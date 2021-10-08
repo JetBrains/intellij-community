@@ -151,17 +151,20 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
+      val entityId = (e as WorkspaceEntityBase).id
+
+      val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
+
       // Get entity data that will be modified
       @Suppress("UNCHECKED_CAST")
-      val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
+      val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
       @Suppress("UNCHECKED_CAST")
       val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
       val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
 
-      val entityId = e.id
-
+      val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
       val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
@@ -197,7 +200,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
 
       // Add an entry to changelog
-      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData)
+      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
 
       val updatedEntity = copiedData.createEntity(this)
 
@@ -214,13 +217,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
     try {
       lockWrite()
 
+      val originalSource = this.getOriginalSource((e as WorkspaceEntityBase).id)
+
       @Suppress("UNCHECKED_CAST")
       val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
       copiedData.entitySource = newSource
 
       val entityId = copiedData.createEntityId()
 
-      this.changeLog.addChangeSourceEvent(entityId, copiedData)
+      this.changeLog.addChangeSourceEvent(entityId, copiedData, originalSource)
 
       indexes.entitySourceIndex.index(entityId, newSource)
       newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
@@ -275,7 +280,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
           }
-          is ChangeEntry.RemoveEntity -> {
+          is ChangeEntry.RemoveEntity<*> -> {
             val removedData = originalImpl.entityDataById(change.id) ?: continue
             val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
@@ -386,6 +391,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
+    val originals = accumulator.associateWith {
+      this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity> to this.getOriginalParents(it.asChild())
+    }
+
     for (id in accumulator) {
       val entityData = entityDataById(id)
       if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
@@ -398,7 +407,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     accumulator.forEach {
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
-      this.changeLog.addRemoveEvent(it)
+      this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
   }
 
@@ -483,11 +492,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
       return newBuilder
     }
 
-    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl,
-                                                       entityId: EntityId,
-                                                       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
-                                                       beforeParents: Map<ConnectionId, ParentEntityId>,
-                                                       copiedData: WorkspaceEntityData<T>) {
+    internal fun <T : WorkspaceEntity> addReplaceEvent(
+      builder: WorkspaceEntityStorageBuilderImpl,
+      entityId: EntityId,
+      beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
+      beforeParents: Map<ConnectionId, ParentEntityId>,
+      copiedData: WorkspaceEntityData<T>,
+      originalEntity: WorkspaceEntityData<T>,
+      originalParents: Map<ConnectionId, ParentEntityId>,
+    ) {
       val parents = builder.refs.getParentRefsOfChild(entityId.asChild())
       val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId.asParent())
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
@@ -515,7 +528,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val removedKeys = beforeParents.keys - parents.keys
       removedKeys.forEach { parentsMapRes[it] = null }
 
-      builder.changeLog.addReplaceEvent(entityId, copiedData, addedChildren, removedChildren, parentsMapRes)
+      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, originalParents, addedChildren, removedChildren, parentsMapRes)
     }
   }
 }

@@ -63,7 +63,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           target.indexes.updateIndices(change.entityData.createEntityId(), targetEntityData, diff)
           target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
         }
-        is ChangeEntry.RemoveEntity -> {
+        is ChangeEntry.RemoveEntity<*> -> {
           LOG.trace { "addDiff: remove entity. ${change.id}" }
           val sourceEntityId = change.id.asThis()
 
@@ -84,12 +84,12 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
           LOG.trace { "addDiff: change entity source" }
-          replaceSourceOperation(change.newData)
+          replaceSourceOperation(change.newData, change.originalSource)
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
           LOG.trace { "addDiff: replace and change source" }
           replaceOperation(change.dataChange)
-          replaceSourceOperation(change.sourceChange.newData)
+          replaceSourceOperation(change.sourceChange.newData, change.sourceChange.originalSource)
         }
       }
     }
@@ -104,7 +104,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     }
   }
 
-  private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>) {
+  private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>, originalSource: EntitySource) {
     val outdatedId = data.createEntityId().notThis()
     val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
 
@@ -114,7 +114,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       val newEntitySource = data.entitySource
       existingEntityData.entitySource = newEntitySource
       target.indexes.entitySourceIndex.index(usedPid.id, newEntitySource)
-      target.changeLog.addChangeSourceEvent(usedPid.id, existingEntityData)
+      target.changeLog.addChangeSourceEvent(usedPid.id, existingEntityData, originalSource)
     }
   }
 
@@ -200,6 +200,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId.id) ?: return
+    val originalEntityData = target.getOriginalEntityData(targetEntityId.id) as WorkspaceEntityData<WorkspaceEntity>
+    val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
 
     // Replace entity doesn't modify entitySource
     newTargetEntityData.entitySource = existingTargetEntityData.entitySource
@@ -226,7 +228,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     replaceRestoreParents(change, newEntityId)
 
-    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData)
+    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
+      originalEntityData, originalParents)
   }
 
   private fun replaceRestoreChildren(

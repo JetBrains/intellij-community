@@ -108,26 +108,37 @@ internal fun ChangeLog.anonymize(): ChangeLog {
       is ChangeEntry.ChangeEntitySource<*> -> {
         val newEntityData = value.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        ChangeEntry.ChangeEntitySource(newEntityData)
+        ChangeEntry.ChangeEntitySource(value.originalSource.anonymize(null), newEntityData)
       }
-      is ChangeEntry.RemoveEntity -> value
+      is ChangeEntry.RemoveEntity<*> -> value
       is ChangeEntry.ReplaceAndChangeSource<*> -> {
         val newEntityData = value.sourceChange.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         @Suppress("UNCHECKED_CAST")
-        val sourceChange = ChangeEntry.ChangeEntitySource(newEntityData) as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
+        val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData) as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
 
-        val changedData = value.dataChange.newData.clone()
+        @Suppress("UNCHECKED_CAST")
+        val changedData = value.dataChange.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
         changedData.entitySource = changedData.entitySource.anonymize(null)
         @Suppress("UNCHECKED_CAST")
-        val dataChange = ChangeEntry.ReplaceEntity(changedData, value.dataChange.newChildren, value.dataChange.removedChildren,
-          value.dataChange.modifiedParents) as ChangeEntry.ReplaceEntity<WorkspaceEntity>
+        val changedOldData = value.dataChange.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
+        val dataChange = ChangeEntry.ReplaceEntity(changedOldData,
+          value.dataChange.oldParents,
+          changedData,
+          value.dataChange.newChildren,
+          value.dataChange.removedChildren,
+          value.dataChange.modifiedParents)
         ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
       }
       is ChangeEntry.ReplaceEntity<*> -> {
-        val newEntityData = value.newData.clone()
+        @Suppress("UNCHECKED_CAST")
+        val newEntityData = value.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        ChangeEntry.ReplaceEntity(newEntityData, value.newChildren, value.removedChildren, value.modifiedParents)
+        @Suppress("UNCHECKED_CAST")
+        val oldEntityData = value.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
+        ChangeEntry.ReplaceEntity(oldEntityData, value.oldParents, newEntityData, value.newChildren, value.removedChildren, value.modifiedParents)
       }
     }
   }

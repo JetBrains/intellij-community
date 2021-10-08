@@ -129,7 +129,7 @@ internal object ReplaceBySourceAsGraph {
               thisBuilder) && (dataDiffersByEntitySource || dataDiffersByProperties) && matchedEntityData.entitySource !is DummyParentEntitySource) {
             // Entity exists in local store, but has changes. Generate replace operation
             replaceOperation(thisBuilder, matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties,
-                             dataDiffersByEntitySource)
+                             dataDiffersByEntitySource, localNode.entitySource)
           }
 
           // To make a store consistent in such case, we will clean up all refer to this entity
@@ -164,7 +164,7 @@ internal object ReplaceBySourceAsGraph {
               val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
 
               replaceOperation(thisBuilder, matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties,
-                               dataDiffersByEntitySource)
+                dataDiffersByEntitySource, localNode.entitySource)
 
               // To make a store consistent in such case, we will clean up all refer to this entity
               thisBuilder.removeEntitiesByOneToOneRef(sourceFilter, replaceWith, replaceMap, matchedEntityId, existingEntityId)
@@ -202,10 +202,16 @@ internal object ReplaceBySourceAsGraph {
     //   Those entities should be just removed.
     for ((localEntity, entityId) in localMatchedEntities.values()) {
       val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
-      thisBuilder.entitiesByType.remove(localEntity.id, entityClass)
-      thisBuilder.indexes.entityRemoved(entityId.id)
-      if (localEntity is SoftLinkable) thisBuilder.indexes.removeFromSoftLinksIndex(localEntity)
-      thisBuilder.changeLog.addRemoveEvent(entityId.id)
+      val id = createEntityId(localEntity.id, entityClass)
+      val dataToRemove = thisBuilder.entityDataById(id)
+      if (dataToRemove != null) {
+        val original = thisBuilder.entityDataByIdOrDie(id) as WorkspaceEntityData<WorkspaceEntity>
+        val originalParents = thisBuilder.refs.getParentRefsOfChild(id.asChild())
+        thisBuilder.entitiesByType.remove(localEntity.id, entityClass)
+        thisBuilder.indexes.entityRemoved(entityId.id)
+        if (localEntity is SoftLinkable) thisBuilder.indexes.removeFromSoftLinksIndex(localEntity)
+        thisBuilder.changeLog.addRemoveEvent(entityId.id, original, originalParents)
+      }
     }
 
     val lostChildren = HashSet<ThisEntityId>()
@@ -387,8 +393,9 @@ internal object ReplaceBySourceAsGraph {
                                localNode: WorkspaceEntityData<out WorkspaceEntity>,
                                matchedEntityId: NotThisEntityId,
                                dataDiffersByProperties: Boolean,
-                               dataDiffersByEntitySource: Boolean) {
-    val clonedEntity = matchedEntityData.clone()
+                               dataDiffersByEntitySource: Boolean,
+                               originalEntitySource: EntitySource) {
+    val clonedEntity = matchedEntityData.clone() as WorkspaceEntityData<WorkspaceEntity>
     val persistentIdBefore = matchedEntityData.persistentId() ?: error("PersistentId expected for $matchedEntityData")
     clonedEntity.id = localNode.id
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
@@ -401,10 +408,16 @@ internal object ReplaceBySourceAsGraph {
     thisBuilder.indexes.updateExternalMappingForEntityId(matchedEntityId.id, clonedEntityId, replaceWith.indexes)
 
     if (dataDiffersByProperties) {
-      thisBuilder.changeLog.addReplaceEvent(clonedEntityId, clonedEntity, emptyList(), emptySet(), emptyMap())
+      thisBuilder.changeLog.addReplaceEvent(clonedEntityId,
+        clonedEntity,
+        localNode.clone() as WorkspaceEntityData<WorkspaceEntity>,
+        thisBuilder.refs.getParentRefsOfChild(localNode.createEntityId().asChild()),
+        emptyList(),
+        emptySet(),
+        emptyMap())
     }
     if (dataDiffersByEntitySource) {
-      thisBuilder.changeLog.addChangeSourceEvent(clonedEntityId, clonedEntity)
+      thisBuilder.changeLog.addChangeSourceEvent(clonedEntityId, clonedEntity, originalEntitySource)
     }
   }
 
