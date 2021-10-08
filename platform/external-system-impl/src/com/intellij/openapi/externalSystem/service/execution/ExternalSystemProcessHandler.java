@@ -20,6 +20,7 @@ import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -101,8 +102,23 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Override
   public void notifyProcessTerminated(int exitCode) {
-    super.notifyProcessTerminated(exitCode);
-    closeInput();
+    try {
+      super.notifyProcessTerminated(exitCode);
+      closeInput();
+    }
+    finally {
+      /*-
+       * This is just a safety net to make sure the other side of the pipe gets
+       * closed even if none of the clients bother to dispose this process
+       * handler.
+       *
+       * Here, we assume that `detachProcessImpl()` is either idempotent or
+       * never called directly (only via `dispose()`).
+       *
+       * The complete solution will be provided as a part of IDEA-278376.
+       */
+      Disposer.dispose(this);
+    }
   }
 
   @Override
