@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
@@ -74,35 +74,6 @@ fun getOriginFromUrl(url: String): Origin? {
     LOG.warn("Couldn't parse URL $url", e)
   }
   return null
-}
-
-@State(name = "Trusted.Hosts.Settings", storages = [Storage("trusted-hosts.xml")])
-@Service(Service.Level.APP)
-class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings.State>(State()) {
-
-  class State : BaseState() {
-    @get:OptionTag("TRUSTED_HOSTS")
-    var trustedHosts by list<String>()
-  }
-
-  fun isUrlTrusted(url: String): Boolean {
-    return false
-  }
-
-  fun setHostTrusted(host: String, value: Boolean) {
-    if (value) {
-      state.trustedHosts.add(host)
-    }
-    else {
-      state.trustedHosts.remove(host)
-    }
-  }
-
-  fun getTrustedHosts(): List<String> = Collections.unmodifiableList(state.trustedHosts)
-
-  fun setTrustedHosts(hosts: List<String>) {
-    state.trustedHosts = ArrayList<String>(hosts)
-  }
 }
 
 @State(name = "Trusted.Paths.Settings", storages = [Storage("trusted-paths.xml")])
