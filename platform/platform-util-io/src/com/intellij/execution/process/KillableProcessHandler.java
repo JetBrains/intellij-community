@@ -46,8 +46,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
   }
@@ -75,6 +77,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     myMediatedProcess = false;
   }
 
+  /**
+   * @deprecated just don't use this method
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
