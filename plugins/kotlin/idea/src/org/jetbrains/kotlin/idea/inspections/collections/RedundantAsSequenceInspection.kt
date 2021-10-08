@@ -11,21 +11,20 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
-import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     companion object {
+        private val asSequenceOnSequenceFqName = FqName("kotlin.sequences.asSequence")
         private val asSequenceFqName = FqName("kotlin.collections.asSequence")
         private val terminations = collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
         private val transformationsAndTerminations =
@@ -36,24 +35,38 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
         val call = qualified.callExpression ?: return
         val callee = call.calleeExpression ?: return
         if (callee.text != "asSequence") return
-        val parent = qualified.getQualifiedExpressionForReceiver()
-        val parentCall = parent?.callExpression ?: return
 
         val context = qualified.analyze(BodyResolveMode.PARTIAL)
-        val receiverType = qualified.receiverExpression.getType(context) ?: return
-        if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
-        if (call.getResolvedCall(context)?.isCalling(asSequenceFqName) != true) return
-        if (!parentCall.isTermination(context)) return
-        val grandParentCall = parent.getQualifiedExpressionForReceiver()?.callExpression
-        if (grandParentCall?.isTransformationOrTermination(context) == true) return
+        when {
+            call.isCalling(asSequenceOnSequenceFqName, context) -> {
+                val typeArgumentList = call.typeArgumentList
+                if (typeArgumentList != null && !typeArgumentList.isRedundant()) return
+                registerProblem(holder, qualified, callee)
+            }
+            call.isCalling(asSequenceFqName, context) -> {
+                val parent = qualified.getQualifiedExpressionForReceiver()
+                val parentCall = parent?.callExpression ?: return
+                val receiverType = qualified.receiverExpression.getType(context) ?: return
+                if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
+                if (!parentCall.isTermination(context)) return
+                val grandParentCall = parent.getQualifiedExpressionForReceiver()?.callExpression
+                if (grandParentCall?.isTransformationOrTermination(context) == true) return
+                registerProblem(holder, qualified, callee)
+            }
+        }
+    })
 
+    private fun KtTypeArgumentList.isRedundant() =
+        RemoveExplicitTypeArgumentsIntention.isApplicableTo(this, approximateFlexible = false)
+
+    private fun registerProblem(holder: ProblemsHolder, qualified: KtQualifiedExpression, callee: KtExpression) {
         holder.registerProblem(
             qualified,
             callee.textRangeIn(qualified),
             KotlinBundle.message("inspection.redundant.assequence.call"),
             RemoveAsSequenceFix()
         )
-    })
+    }
 
     private fun KtCallExpression.isTermination(context: BindingContext): Boolean {
         val fqName = terminations[calleeExpression?.text] ?: return false
