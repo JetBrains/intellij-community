@@ -83,27 +83,30 @@ public final class ExperimentalUI {
   }
 
   private static void patchUIDefaults(RegistryValue value) {
-    if (!value.asBoolean() || !is("ide.experimental.ui.inter.font")) return;
-
     UIDefaults defaults = UIManager.getDefaults();
     defaults.put("EditorTabs.underlineArc", 4);
+    if (value.asBoolean() && is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
+      installInterFont();
+    }
+  }
 
-    if (SystemInfo.isJetBrainsJvm) {
-      List<String> keysToPatch = Arrays.asList("CheckBoxMenuItem.acceleratorFont",
-                                               "CheckBoxMenuItem.font",
-                                               "Menu.acceleratorFont",
-                                               "Menu.font",
-                                               //"MenuBar.font",
-                                               "MenuItem.acceleratorFont",
-                                               "MenuItem.font",
-                                               "PopupMenu.font",
-                                               "RadioButtonMenuItem.acceleratorFont",
-                                               "RadioButtonMenuItem.font");
-      for (String key : keysToPatch) {
-        Font font = UIManager.getFont(key);
-        Font inter = new FontUIResource("Inter", font.getStyle(), font.getSize());
-        defaults.put(key, inter);
-      }
+  private static void installInterFont() {
+    UIDefaults defaults = UIManager.getDefaults();
+    List<String> keysToPatch = Arrays.asList("CheckBoxMenuItem.acceleratorFont",
+                                             "CheckBoxMenuItem.font",
+                                             "Menu.acceleratorFont",
+                                             "Menu.font",
+                                             //"MenuBar.font",
+                                             "MenuItem.acceleratorFont",
+                                             "MenuItem.font",
+                                             "PopupMenu.font",
+                                             "RadioButtonMenuItem.acceleratorFont",
+                                             "RadioButtonMenuItem.font");
+    for (String key : keysToPatch) {
+      Font font = UIManager.getFont(key);
+      Font inter = new FontUIResource("Inter", font.getStyle(), font.getSize());
+      defaults.put(key, inter);
+    }
 
       if (JBColor.isBright()) {
         Color menuBg = new ColorUIResource(0x242933);
@@ -119,5 +122,4 @@ public final class ExperimentalUI {
         defaults.put("RadioButtonMenuItem.acceleratorForeground", menuFg);
       }
     }
-  }
 }
