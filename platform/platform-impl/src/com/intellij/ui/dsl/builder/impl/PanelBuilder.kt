@@ -276,6 +276,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     if (rightGap != null) {
       return when (rightGap) {
+        RightGap.NONE -> 0
         RightGap.SMALL -> dialogPanelConfig.spacing.horizontalSmallGap
         RightGap.COLUMNS -> dialogPanelConfig.spacing.horizontalColumnsGap
       }
