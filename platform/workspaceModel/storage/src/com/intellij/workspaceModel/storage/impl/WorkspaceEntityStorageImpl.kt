@@ -276,16 +276,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
-          is ChangeEntry.AddEntity<*> -> {
+          is ChangeEntry.AddEntity -> {
             val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
           }
-          is ChangeEntry.RemoveEntity<*> -> {
+          is ChangeEntry.RemoveEntity -> {
             val removedData = originalImpl.entityDataById(change.id) ?: continue
             val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
           }
-          is ChangeEntry.ReplaceEntity<*> -> {
+          is ChangeEntry.ReplaceEntity -> {
             @Suppress("DuplicatedCode")
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
@@ -293,14 +293,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
-          is ChangeEntry.ChangeEntitySource<*> -> {
+          is ChangeEntry.ChangeEntitySource -> {
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
             val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
-          is ChangeEntry.ReplaceAndChangeSource<*> -> {
+          is ChangeEntry.ReplaceAndChangeSource -> {
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
             val replaceToData = change.dataChange.newData.createEntity(this) as WorkspaceEntityBase
@@ -492,13 +492,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
       return newBuilder
     }
 
-    internal fun <T : WorkspaceEntity> addReplaceEvent(
+    internal fun addReplaceEvent(
       builder: WorkspaceEntityStorageBuilderImpl,
       entityId: EntityId,
       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
       beforeParents: Map<ConnectionId, ParentEntityId>,
-      copiedData: WorkspaceEntityData<T>,
-      originalEntity: WorkspaceEntityData<T>,
+      copiedData: WorkspaceEntityData<out WorkspaceEntity>,
+      originalEntity: WorkspaceEntityData<out WorkspaceEntity>,
       originalParents: Map<ConnectionId, ParentEntityId>,
     ) {
       val parents = builder.refs.getParentRefsOfChild(entityId.asChild())

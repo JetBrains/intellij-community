@@ -100,22 +100,22 @@ internal fun ChangeLog.anonymize(): ChangeLog {
   val result = HashMap(this)
   result.replaceAll { key, value ->
     when (value) {
-      is ChangeEntry.AddEntity<*> -> {
+      is ChangeEntry.AddEntity -> {
         val newEntityData = value.entityData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         ChangeEntry.AddEntity(newEntityData, value.clazz)
       }
-      is ChangeEntry.ChangeEntitySource<*> -> {
+      is ChangeEntry.ChangeEntitySource -> {
         val newEntityData = value.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         ChangeEntry.ChangeEntitySource(value.originalSource.anonymize(null), newEntityData)
       }
-      is ChangeEntry.RemoveEntity<*> -> value
-      is ChangeEntry.ReplaceAndChangeSource<*> -> {
+      is ChangeEntry.RemoveEntity -> value
+      is ChangeEntry.ReplaceAndChangeSource -> {
         val newEntityData = value.sourceChange.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         @Suppress("UNCHECKED_CAST")
-        val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData) as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
+        val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
 
         @Suppress("UNCHECKED_CAST")
         val changedData = value.dataChange.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
@@ -131,7 +131,7 @@ internal fun ChangeLog.anonymize(): ChangeLog {
           value.dataChange.modifiedParents)
         ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
       }
-      is ChangeEntry.ReplaceEntity<*> -> {
+      is ChangeEntry.ReplaceEntity -> {
         @Suppress("UNCHECKED_CAST")
         val newEntityData = value.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
