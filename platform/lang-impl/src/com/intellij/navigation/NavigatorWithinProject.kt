@@ -33,51 +33,69 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 
 const val NAVIGATE_COMMAND = "navigate"
+const val REFERENCE_TARGET = "reference"
 const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
-const val REFERENCE_TARGET = "reference"
-
 const val SELECTION = "selection"
 
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("use `openProject` instead")
 fun openProjectWithAction(parameters: Map<String, String>, action: (Project) -> Unit) {
-  val projectName = parameters[PROJECT_NAME_KEY]
-  val originUrl = parameters[ORIGIN_URL_KEY]
-  if (projectName.isNullOrEmpty() && originUrl.isNullOrEmpty()) {
-    return
+  openProject(parameters).thenAccept {
+    it?.let { action(it) }
+  }
+}
+
+fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
+  val projectName = parameters[PROJECT_NAME_KEY]?.nullize(nullizeSpaces = true)
+  val originUrl = parameters[ORIGIN_URL_KEY]?.nullize(nullizeSpaces = true)
+  if (projectName == null && originUrl == null) {
+    return CompletableFuture.failedFuture(IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters")))
   }
 
-  val check = { name: String, path: Path? ->
-    !projectName.isNullOrEmpty() && name == projectName || areOriginsEqual(originUrl, getProjectOriginUrl(path))
+  val openProject = ProjectUtil.getOpenProjects().find {
+    projectName != null && it.name == projectName ||
+    originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
+  }
+  if (openProject != null) {
+    return CompletableFuture.completedFuture(openProject)
   }
 
-  ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }?.let {
-    action(it)
-    return
+  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
+    .filterIsInstance(ReopenProjectAction::class.java)
+    .find {
+      projectName != null && it.projectName == projectName ||
+      originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
+    }
+  if (recentProjectAction == null) {
+    return CompletableFuture.completedFuture(null)
   }
 
-  val actions = RecentProjectListActionProvider.getInstance().getActions()
-  val recentProjectAction = actions.asSequence()
-                              .filterIsInstance(ReopenProjectAction::class.java)
-                              .find { check.invoke(it.projectName, Path.of(it.projectPath)) }
-                            ?: return
-
-  RecentProjectsManagerBase.instanceEx.openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
+  val result = CompletableFuture<Project?>()
+  RecentProjectsManagerBase.instanceEx
+    .openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
     .thenAccept { project ->
-      if (project != null) {
-        ApplicationManager.getApplication().invokeLater({
-          StartupManager.getInstance(project).runAfterOpened {
-            DumbService.getInstance(project).runWhenSmart {
-              action(project)
+      when (project) {
+        null -> result.complete(null)
+        else -> {
+          ApplicationManager.getApplication().invokeLater({
+            StartupManager.getInstance(project).runAfterOpened {
+              DumbService.getInstance(project).runWhenSmart {
+                result.complete(project)
+              }
             }
-          }
-        }, ModalityState.NON_MODAL, project.disposed)
+          }, ModalityState.NON_MODAL, project.disposed)
+        }
       }
     }
+  return result
 }
 
 data class LocationInFile(val line: Int, val column: Int)
