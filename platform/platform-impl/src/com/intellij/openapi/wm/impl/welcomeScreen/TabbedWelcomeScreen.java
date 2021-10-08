@@ -128,7 +128,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if(selectedTab == null) return;
     var panel = selectedTab.myAssociatedComponent;
     panel.removeAll();
-    panel.add(component, "grow");
+    panel.add(component, BorderLayout.CENTER);
     revalidate();
     repaint();
     leftPanel.setVisible(false);
