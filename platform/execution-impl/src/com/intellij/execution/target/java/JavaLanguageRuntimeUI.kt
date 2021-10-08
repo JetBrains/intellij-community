@@ -4,7 +4,6 @@ package com.intellij.execution.target.java
 import com.intellij.execution.ExecutionBundle.message
 import com.intellij.execution.target.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 import java.util.function.Supplier
 
@@ -23,14 +22,6 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       textField(config::javaVersionString)
     }
   }
-
-  private fun Row.browsableTextField(@NlsContexts.DialogTitle title: String, propertyBinding: PropertyBinding<String>): CellBuilder<*> =
-    if (targetType is BrowsableTargetEnvironmentType) {
-      TargetUIUtil.textFieldWithBrowseButton(this, targetType, targetProvider, project, title, propertyBinding)
-    }
-    else {
-      textField(propertyBinding)
-    }
 
   override fun RowBuilder.addAdditionalPanelUI() {
     addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
