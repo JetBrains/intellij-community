@@ -757,7 +757,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
   }
 
-  private static boolean isStickingToEnd(@NotNull Editor editor) {
+  protected static boolean isStickingToEnd(@NotNull Editor editor) {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
