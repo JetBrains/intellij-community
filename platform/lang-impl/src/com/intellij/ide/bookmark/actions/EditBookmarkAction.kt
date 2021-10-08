@@ -29,7 +29,7 @@ internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointe
       null,
       description,
       null
-    )?.let { group.setDescription(bookmark, it) }
+    )?.let { group.setDescription(bookmark, { it }) }
   }
 
   init {

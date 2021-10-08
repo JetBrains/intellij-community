@@ -2,6 +2,7 @@
 package com.intellij.ide.bookmark
 
 import com.intellij.openapi.util.NlsSafe
+import java.util.function.Supplier
 
 interface BookmarkGroup {
   var name: @NlsSafe String
@@ -16,10 +17,10 @@ interface BookmarkGroup {
    * @return a bookmark description or `null` if the bookmark is not contained in this group
    */
   fun getDescription(bookmark: Bookmark): @NlsSafe String?
-  fun setDescription(bookmark: Bookmark, description: @NlsSafe String)
+  fun setDescription(bookmark: Bookmark, description: Supplier<@NlsSafe String>)
 
   fun canAdd(bookmark: Bookmark): Boolean
-  fun add(bookmark: Bookmark, type: BookmarkType, description: @NlsSafe String): Boolean
+  fun add(bookmark: Bookmark, type: BookmarkType, description: Supplier<@NlsSafe String>): Boolean
 
   fun canRemove(bookmark: Bookmark): Boolean
   fun remove(bookmark: Bookmark): Boolean
