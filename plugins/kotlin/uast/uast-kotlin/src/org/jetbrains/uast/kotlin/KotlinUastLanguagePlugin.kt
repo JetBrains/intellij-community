@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -186,7 +187,7 @@ internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.
 internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
 
-@TestOnly
+@ApiStatus.Internal
 object KotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
         is KtValueArgumentList -> unwrapElements(element.parent)
