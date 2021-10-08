@@ -413,8 +413,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean processed =
       ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(contexts, new LinkedBlockingQueue<>(), new SensitiveProgressWrapper(indicator), TOMB_STONE, context ->
         AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
-          Runnable runnable = () ->
-            application.runReadAction(() -> { // equivalent to tryRunReadAction() in impatient mode but shorter
+          Runnable runnable = () -> {
+            if (!application.tryRunReadAction(() -> {
               InspectionProblemsHolder holder = context.holder;
               int resultCount = holder.getResultCount();
               PsiElement favoriteElement = context.myFavoriteElement;
@@ -442,7 +442,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                   resultCount = -1; // mark as "new favorite element is stored"
                 }
               }
-            });
+            })) {
+              throw new ProcessCanceledException();
+            }
+          };
 
           if (shouldFailFastAcquiringReadAction) {
             application.executeByImpatientReader(runnable);
