@@ -15,7 +15,11 @@
  */
 package org.jetbrains.uast.internal
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.visitor.UastVisitor
 
 fun List<UElement>.acceptList(visitor: UastVisitor) {
@@ -41,3 +45,27 @@ fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UEl
 inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
 
 class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)
+
+inline fun <reified T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement): T? =
+  convertOrReport(psiElement, parent, T::class.java)
+
+fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, expectedType: Class<T>): T? {
+  fun getInfoString() = buildString {
+    appendln("context:${parent.javaClass}")
+    appendln("psiElement:${psiElement.javaClass}")
+    appendln("psiElementContent:${runCatching { psiElement.text }}")
+  }
+
+  val plugin = parent.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)
+  if (plugin == null) {
+    Logger.getInstance(parent.javaClass)
+      .error("cant get UAST plugin for $parent to convert element $psiElement", Attachment("info.txt", getInfoString()))
+    return null
+  }
+  val result = expectedType.cast(plugin.convertElement(psiElement, parent, expectedType))
+  if (result == null) {
+    Logger.getInstance(parent.javaClass)
+      .error("failed to convert element $psiElement in $parent", Attachment("info.txt", getInfoString()))
+  }
+  return result
+}
