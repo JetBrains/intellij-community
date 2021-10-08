@@ -6,7 +6,9 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
@@ -43,6 +45,8 @@ public final class EnvironmentUtil {
   private static final String LC_CTYPE = "LC_CTYPE";
 
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
+
+  static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
 
   public static final String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
@@ -482,6 +486,34 @@ public final class EnvironmentUtil {
       }
     }
     return false;
+  }
+
+  public static void restoreOverriddenVars(@NotNull Map<String, String> envs) {
+    List<Pair<String, String>> reserved = new ArrayList<>();
+
+    for (String key : envs.keySet()) {
+      if (key.startsWith(RESERVED_ORIGINAL_VARIABLE_PREFIX)) {
+        reserved.add(new Pair<>(key, envs.get(key)));
+      }
+    }
+
+    for (Pair<String, String> pair : reserved) {
+      String originalName = pair.first.substring(RESERVED_ORIGINAL_VARIABLE_PREFIX.length());
+      if (originalName.length() == 0) {
+        LOG.warn("the name of the reserved environment variable consists only of the prefix \"" +
+                 RESERVED_ORIGINAL_VARIABLE_PREFIX + "\". name=" + pair.first + " value=" + pair.second);
+        continue;
+      }
+
+      envs.remove(pair.first);
+
+      if (StringUtil.isNotEmpty(pair.second)) {
+        envs.put(originalName, pair.second);
+      }
+      else {
+        envs.remove(originalName);  // we assume that an empty value means no value (GTW-335)
+      }
+    }
   }
 
   public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {

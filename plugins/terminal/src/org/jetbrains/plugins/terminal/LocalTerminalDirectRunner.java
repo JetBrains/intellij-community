@@ -131,6 +131,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
+      EnvironmentUtil.restoreOverriddenVars(envs);
     }
 
     if (!SystemInfo.isWindows) {
