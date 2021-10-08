@@ -7,15 +7,9 @@ import java.util.*
 object PkceUtils {
   fun generateCodeVerifier(): String = DigestUtil.randomToken()
 
-  fun generateShaCodeChallenge(codeVerifier: String, withoutPadding: Boolean): String {
+  fun generateShaCodeChallenge(codeVerifier: String, encoder: Base64.Encoder): String {
     val sha = DigestUtil.sha256().digest(codeVerifier.toByteArray())
-    val encoder =
-      if (withoutPadding) {
-        Base64.getEncoder().withoutPadding()
-      }
-      else {
-        Base64.getEncoder()
-      }
+
     return encoder.encodeToString(sha)
   }
 }

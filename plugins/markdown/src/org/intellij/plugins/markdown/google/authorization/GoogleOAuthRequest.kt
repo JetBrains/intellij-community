@@ -11,13 +11,14 @@ import com.intellij.util.io.DigestUtil
 import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
+import java.util.*
 
 internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
   private val port: Int get() = BuiltInServerManager.getInstance().port
 
+  private val encoder = Base64.getUrlEncoder().withoutPadding()
   private val codeVerifier = PkceUtils.generateCodeVerifier()
-
-  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, true)
+  private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, encoder)
 
   override val authorizationCodeUrl: Url
     get() = Urls.newFromEncoded("http://localhost:${port}/${RestService.PREFIX}/${service<GoogleOAuthService>().name}/authorization_code")
