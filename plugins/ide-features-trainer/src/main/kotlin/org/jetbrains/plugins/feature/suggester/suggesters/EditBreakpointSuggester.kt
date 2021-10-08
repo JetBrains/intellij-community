@@ -11,6 +11,8 @@ import org.jetbrains.plugins.feature.suggester.TipSuggestion
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
 import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
+import org.jetbrains.plugins.feature.suggester.util.WeakReferenceDelegator
+import java.lang.ref.WeakReference
 import java.util.Queue
 
 class EditBreakpointSuggester : AbstractFeatureSuggester() {
@@ -24,24 +26,26 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
     override val languages = listOf(Language.ANY.id)
 
     private val numOfPausesToGetSuggestion = 8
+
     @Suppress("UnstableApiUsage")
-    private val pausesOnBreakpointHistory: Queue<XSourcePosition> = EvictingQueue.create(numOfPausesToGetSuggestion)
-    private var previousSuggestionPosition: XSourcePosition? = null
+    private val pausesOnBreakpointHistory: Queue<WeakReference<XSourcePosition>> =
+        EvictingQueue.create(numOfPausesToGetSuggestion)
+    private var previousSuggestionPosition: XSourcePosition? by WeakReferenceDelegator(null)
 
     override fun getSuggestion(action: Action): Suggestion {
         when (action) {
             is DebugSessionPausedAction -> {
                 val breakpoint = findBreakpointOnPosition(action.project, action.position)
                 if (breakpoint != null && breakpoint.conditionExpression == null) {
-                    pausesOnBreakpointHistory.add(action.position)
+                    pausesOnBreakpointHistory.add(WeakReference(action.position))
                 } else {
                     pausesOnBreakpointHistory.clear()
                 }
 
                 if (pausesOnBreakpointHistory.isAllOnTheSameLine() &&
-                    !isOnTheSameLine(pausesOnBreakpointHistory.lastOrNull(), previousSuggestionPosition)
+                    !isOnTheSameLine(pausesOnBreakpointHistory.lastOrNull()?.get(), previousSuggestionPosition)
                 ) {
-                    previousSuggestionPosition = pausesOnBreakpointHistory.lastOrNull()
+                    previousSuggestionPosition = pausesOnBreakpointHistory.lastOrNull()?.get()
                     pausesOnBreakpointHistory.clear()
                     return TipSuggestion(message, id, suggestingTipFileName)
                 }
@@ -50,9 +54,9 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
         return NoSuggestion
     }
 
-    private fun Queue<XSourcePosition>.isAllOnTheSameLine(): Boolean {
+    private fun Queue<WeakReference<XSourcePosition>>.isAllOnTheSameLine(): Boolean {
         if (size < numOfPausesToGetSuggestion) return false
-        val lastPos = last()
-        return asIterable().all { isOnTheSameLine(it, lastPos) }
+        val lastPos = last().get()
+        return all { isOnTheSameLine(it.get(), lastPos) }
     }
 }
