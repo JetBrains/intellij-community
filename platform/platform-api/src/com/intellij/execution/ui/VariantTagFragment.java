@@ -172,7 +172,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
       myDropDown.setAutoHideOnDisable(false);
-      myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
       add(myDropDown, JLayeredPane.POPUP_LAYER);
       myButton.addKeyListener(new KeyAdapter() {
         @Override
