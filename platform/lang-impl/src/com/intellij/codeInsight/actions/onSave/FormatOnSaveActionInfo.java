@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -176,7 +177,7 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
   private static @NotNull SortedSet<FileType> getFormattableFileTypes() {
     SortedSet<FileType> result = new TreeSet<>(Comparator.comparing(FormatOnSaveActionInfo::getFileTypePresentableName));
 
-    // add all file types that can be handled by DE internal formatter (== have FormattingModelBuilder)
+    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
     ExtensionPoint<KeyedLazyInstance<FormattingModelBuilder>> ep = LanguageFormatting.INSTANCE.getPoint();
     if (ep != null) {
       for (KeyedLazyInstance<FormattingModelBuilder> instance : ep.getExtensionList()) {
@@ -186,9 +187,21 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
       }
     }
 
-    // The following loop is to make sure that com.intellij.sh.ShFileType is added. Tt doesn't have FormattingModelBuilder, but it is
-    // handled by com.intellij.sh.formatter.ShExternalFormatter, adn it does have its Code Style page in Settings.
-    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+    // Iterating only FormattingModelBuilders is not enough. Some FormattingModelBuilders may format several languages
+    // (for example, JavascriptFormattingModelBuilder handles both JavaScript and ActionsScript). Also, some file types may get formatted by
+    // external formatter integrated in the IDE (like ShExternalFormatter).
+    //
+    // A good sign that IDE supports some file type formatting is that it has a Code Style page for this file type. The following code makes
+    // sure that all file types that have their Code Style pages are included in the result set.
+    //
+    // The logic of iterating Code Style pages is similar to what's done in CodeStyleSchemesConfigurable.buildConfigurables()
+    for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+      Language language = provider.getLanguage();
+      if (provider.hasSettingsPage() && language != null) {
+        ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
+      }
+    }
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
       ContainerUtil.addIfNotNull(result, provider.getLanguage().getAssociatedFileType());
     }
 
