@@ -267,7 +267,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : refText;
     // Empty text, nothing to highlight
-    if (refName == null || refName.length() <= 0) {
+    if (StringUtil.isEmpty(refName)) {
       return;
     }
 
@@ -333,8 +333,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if ("__qualname__".equals(refText) && !LanguageLevel.forElement(element).isPython2()) {
           return;
         }
-        final PyQualifiedExpression expr = (PyQualifiedExpression)element;
-        if (PyNames.COMPARISON_OPERATORS.contains(expr.getReferencedName())) {
+        if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
           return;
         }
       }

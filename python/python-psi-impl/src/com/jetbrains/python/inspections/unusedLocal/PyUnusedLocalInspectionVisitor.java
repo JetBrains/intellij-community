@@ -195,7 +195,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final Map<String, PyNames.BuiltinDescription> builtinMethods =
         function.getContainingClass() != null ? PyNames.getBuiltinMethods(level) : PyNames.getModuleBuiltinMethods(level);
 
-      return !PyNames.INIT.equals(functionName) && builtinMethods.containsKey(functionName);
+      return functionName != null && !PyNames.INIT.equals(functionName) && builtinMethods.containsKey(functionName);
     }
 
     return false;
