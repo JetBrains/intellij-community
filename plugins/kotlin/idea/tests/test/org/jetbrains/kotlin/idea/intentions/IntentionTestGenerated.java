@@ -5214,6 +5214,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/typeArgumentPresent.kt");
         }
 
+        @TestMetadata("usedAsExpression.kt")
+        public void testUsedAsExpression() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/usedAsExpression.kt");
+        }
+
         @TestMetadata("userDefined.kt")
         public void testUserDefined() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/userDefined.kt");
