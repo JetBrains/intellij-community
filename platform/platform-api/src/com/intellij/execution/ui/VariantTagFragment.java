@@ -82,7 +82,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
     setSelected(!variant.equals(getVariants()[0]));
-    component().updateButton(getName() + ": " + getVariantName(variant), null, true);
+    component().updateButton(getName() + ": " + getVariantName(variant), null);
   }
 
   protected V[] getVariants() {
@@ -171,6 +171,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
+      myDropDown.setAutoHideOnDisable(false);
       myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
       add(myDropDown, JLayeredPane.POPUP_LAYER);
       myButton.addKeyListener(new KeyAdapter() {
@@ -226,11 +227,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     }
 
     @Override
-    protected void updateButton(String text, Icon icon, boolean isEnabled) {
+    protected void updateButton(String text, Icon icon) {
       String[] split = text.split(": ");
       myButton.setText(split[0] + ": ");
       myDropDown.setText(split.length > 1 ? split[1] : null);
-      myButton.setEnabled(isEnabled);
       layoutButtons();
     }
   }
