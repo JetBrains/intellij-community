@@ -64,13 +64,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
-        final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-        if (functionalInterfaceType == null) return;
         MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
         if (methodRefCandidate == null) return;
-        final PsiExpression candidate =
-          canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
-                                      methodRefCandidate.myExpression);
+        final PsiExpression candidate = getLambdaToMethodReferenceConversionCandidate(expression, methodRefCandidate.myExpression);
         if (candidate == null) return;
         ProblemHighlightType type;
         if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
@@ -91,6 +87,24 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
           type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier)));
       }
     };
+  }
+
+  @Nullable
+  private static PsiExpression getLambdaToMethodReferenceConversionCandidate(@NotNull PsiLambdaExpression expression,
+                                                                             @NotNull PsiExpression methodRefCandidate) {
+    PsiParameter[] parameters = expression.getParameterList().getParameters();
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    if (functionalInterfaceType == null) return null;
+    final PsiExpression candidate = canBeMethodReferenceProblem(parameters, functionalInterfaceType, null, methodRefCandidate);
+    if (candidate == null) return null;
+    boolean safeLambdaReplacement = LambdaUtil.isSafeLambdaReplacement(expression, () -> {
+      String text = createMethodReferenceText(methodRefCandidate, functionalInterfaceType, parameters);
+      // We already did the same operation inside canBeMethodReferenceProblem
+      LOG.assertTrue(text != null);
+      return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
+    });
+    if (!safeLambdaReplacement) return null;
+    return candidate;
   }
 
   @Nullable
@@ -305,9 +319,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   public static PsiExpression replaceLambdaWithMethodReference(@NotNull PsiLambdaExpression lambda) {
     MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(lambda.getBody());
     if (methodRefCandidate == null || !methodRefCandidate.mySafeQualifier || !methodRefCandidate.myConformsCodeStyle) return lambda;
-    PsiExpression candidate =
-      canBeMethodReferenceProblem(lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda,
-                                  methodRefCandidate.myExpression);
+    PsiExpression candidate = getLambdaToMethodReferenceConversionCandidate(lambda, methodRefCandidate.myExpression);
     return tryConvertToMethodReference(lambda, candidate);
   }
 
@@ -614,7 +626,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   @NotNull
-  static PsiExpression tryConvertToMethodReference(@NotNull PsiLambdaExpression lambda, PsiElement body) {
+  private static PsiExpression tryConvertToMethodReference(@NotNull PsiLambdaExpression lambda, PsiElement body) {
     Project project = lambda.getProject();
     PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
     if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return lambda;
