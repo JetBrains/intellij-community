@@ -9,9 +9,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 open class JBProtocolNavigateCommand: JBProtocolCommand(NAVIGATE_COMMAND) {
-  companion object {
-    const val NAVIGATE_COMMAND = "navigate"
-  }
   /**
    * The handler parses the following "navigate" command parameters:
    *
@@ -44,7 +41,7 @@ open class JBProtocolNavigateCommand: JBProtocolCommand(NAVIGATE_COMMAND) {
         }
       }
     }
-}
 
-private fun locationToOffset(locationInFile: LocationInFile, editor: Editor) =
-  editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))
+  private fun locationToOffset(locationInFile: LocationInFile, editor: Editor) =
+    editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))
+}

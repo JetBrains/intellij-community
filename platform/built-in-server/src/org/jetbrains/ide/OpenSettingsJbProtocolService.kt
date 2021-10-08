@@ -7,7 +7,6 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.util.text.nullize
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
@@ -42,9 +41,7 @@ private fun doOpenSettings(name: String): Boolean {
 
 internal class OpenSettingsJbProtocolService : JBProtocolCommand(SERVICE_NAME) {
   override fun perform(target: String?, parameters: Map<String, String>, fragment: String?): Future<String?> =
-    CompletableFuture.completedFuture(
-      when (val name = parameters["name"]?.trim()?.nullize()) {
-        null -> IdeBundle.message("ide.protocol.parameter.missing", "name")
-        else -> if (doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name)
-      })
+    parameter(parameters, "name").let { name ->
+      CompletableFuture.completedFuture(if (doOpenSettings(name)) null else IdeBundle.message("jb.protocol.settings.no.configurable", name))
+    }
 }

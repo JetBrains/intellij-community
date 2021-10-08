@@ -45,14 +45,6 @@ const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
 const val SELECTION = "selection"
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("use `openProject` instead")
-fun openProjectWithAction(parameters: Map<String, String>, action: (Project) -> Unit) {
-  openProject(parameters).thenAccept {
-    it?.let { action(it) }
-  }
-}
-
 fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
   val projectName = parameters[PROJECT_NAME_KEY]?.nullize(nullizeSpaces = true)
   val originUrl = parameters[ORIGIN_URL_KEY]?.nullize(nullizeSpaces = true)
@@ -86,12 +78,15 @@ fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
         null -> result.complete(null)
         else -> {
           ApplicationManager.getApplication().invokeLater({
-            StartupManager.getInstance(project).runAfterOpened {
-              DumbService.getInstance(project).runWhenSmart {
-                result.complete(project)
+            if (project.isDisposed) result.complete(null)
+            else {
+              StartupManager.getInstance(project).runAfterOpened {
+                DumbService.getInstance(project).runWhenSmart {
+                  result.complete(project)
+                }
               }
             }
-          }, ModalityState.NON_MODAL, project.disposed)
+          }, ModalityState.NON_MODAL)
         }
       }
     }
@@ -104,7 +99,6 @@ typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, val locationToOffset: LocationToOffsetConverter) {
   companion object {
     private const val FILE_PROTOCOL = "file://"
-
     private const val PATH_GROUP = "path"
     private const val LINE_GROUP = "line"
     private const val COLUMN_GROUP = "column"
@@ -113,24 +107,17 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
 
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
-      if (!matcher.matches()) {
-        return Triple(null, null, null)
-      }
-      val path: String? = matcher.group(PATH_GROUP)
-      val line: String? = matcher.group(LINE_GROUP)
-      val column: String? = matcher.group(COLUMN_GROUP)
-
-      return Triple(path, line, column)
+      return if (!matcher.matches()) Triple(null, null, null)
+             else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
     }
 
     private fun parseLocationInFile(range: String): LocationInFile? {
       val position = range.split(':')
-      if (position.size != 2) return null
-      try {
-        return LocationInFile(position[0].toInt(), position[1].toInt())
+      return if (position.size != 2) null else try {
+        LocationInFile(position[0].toInt(), position[1].toInt())
       }
       catch (e: Exception) {
-        return null
+        null
       }
     }
   }

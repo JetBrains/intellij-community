@@ -38,6 +38,8 @@ public abstract class JBProtocolCommand {
 
   /** @deprecated please implement {@link #perform(String, Map, String)} instead */
   @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @SuppressWarnings("unused")
   public void perform(String target, @NotNull Map<String, String> parameters) {
     throw PluginException.createByClass(new UnsupportedOperationException(), getClass());
   }
@@ -45,12 +47,20 @@ public abstract class JBProtocolCommand {
   /**
    * The method should return a future with the command execution result - {@code null} when successful,
    * sentence-capitalized localized string in case of an error (see {@code "ide.protocol.*"} strings in {@code IdeBundle}).
+   *
+   * @see #parameter(Map, String)
    */
   public @NotNull Future<@Nullable @DialogMessage String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
     Map<String, String> simpleParameters = new LinkedHashMap<>(parameters);
-    simpleParameters.put(JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME, fragment);
+    simpleParameters.put(FRAGMENT_PARAM_NAME, fragment);
     perform(target, simpleParameters);
     return CompletableFuture.completedFuture(null);
+  }
+
+  protected @NotNull String parameter(@NotNull Map<String, String> parameters, @NotNull String name) {
+    String value = parameters.get(name);
+    if (value == null || value.isBlank()) throw new IllegalArgumentException(IdeBundle.message("ide.protocol.parameter.missing", name));
+    return value;
   }
 
   @ApiStatus.Internal
