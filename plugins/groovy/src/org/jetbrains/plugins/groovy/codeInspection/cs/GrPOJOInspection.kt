@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.getPOJO
 class GrPOJOInspection : BaseInspection() {
   override fun buildVisitor() = object : BaseInspectionVisitor() {
     override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) {
-      val actualPojo = typeDefinition.getAnnotation(GROOVY_TRANSFORM_STC_POJO) ?: return
+      val actualPojo = typeDefinition.getAnnotation(GROOVY_TRANSFORM_STC_POJO)?.takeIf { it !is LightElement }?: return
       val enabledPojo = getPOJO(typeDefinition)
       if (enabledPojo == null) {
         registerError(actualPojo, GENERIC_ERROR_OR_WARNING)
