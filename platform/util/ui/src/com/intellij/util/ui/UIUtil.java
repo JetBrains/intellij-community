@@ -2625,6 +2625,12 @@ public final class UIUtil {
     });
   }
 
+  public static void setEnabledRecursively(@NotNull Component component, boolean enabled) {
+    forEachComponentInHierarchy(component, c -> {
+      c.setEnabled(enabled);
+    });
+  }
+
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
     forEachComponentInHierarchy(component, c -> c.setBackground(bg));
   }

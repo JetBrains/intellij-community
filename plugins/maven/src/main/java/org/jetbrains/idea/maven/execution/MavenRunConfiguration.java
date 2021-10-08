@@ -96,8 +96,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     return settings.getGeneralSettings() == null;
   }
 
+  public void setInheritedGeneralSettings(boolean isInherited) {
+    settings.setGeneralSettings(isInherited ? null : getGeneralSettings());
+  }
+
   public boolean isInheritedRunnerSettings() {
     return settings.getRunnerSettings() == null;
+  }
+
+  public void setInheritedRunnerSettings(boolean isInherited) {
+    settings.setRunnerSettings(isInherited ? null : getRunnerSettings());
   }
 
   public @NotNull MavenGeneralSettings getGeneralSettings() {

@@ -12,13 +12,16 @@ import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirect
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
+import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextField
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
@@ -26,6 +29,7 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsIn
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
+import javax.swing.JCheckBox
 
 class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
@@ -55,18 +59,25 @@ class MavenRunConfigurationSettingsEditor(
       { true }
     ) {
       override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-        addDistributionFragment()
-        addUserSettingsFragment()
-        addLocalRepositoryFragment()
-        addThreadsFragment()
-        addUsePluginRegistryTag()
-        addPrintStacktracesTag()
-        addUpdateSnapshotsTag()
-        addExecuteNonRecursivelyTag()
-        addWorkOfflineTag()
-        addCheckSumPolicyTag()
-        addOutputLevelTag()
-        addMultiprojectBuildPolicyTag()
+        checkBoxGroup(
+          "maven.runner.group.inherit",
+          MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
+          { it, c -> c.isSelected = it.isInheritedGeneralSettings },
+          { it, c -> it.isInheritedGeneralSettings = c.isSelected }
+        ) {
+          addDistributionFragment()
+          addUserSettingsFragment()
+          addLocalRepositoryFragment()
+          addThreadsFragment()
+          addUsePluginRegistryTag()
+          addPrintStacktracesTag()
+          addUpdateSnapshotsTag()
+          addExecuteNonRecursivelyTag()
+          addWorkOfflineTag()
+          addCheckSumPolicyTag()
+          addOutputLevelTag()
+          addMultiprojectBuildPolicyTag()
+        }
       }
     }).apply { isRemovable = false }
 
@@ -79,14 +90,58 @@ class MavenRunConfigurationSettingsEditor(
     { true }
   ) {
     override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-      addJreFragment()
-      addEnvironmentFragment()
-      addVmOptionsFragment()
-      addProfilesFragment(workingDirectoryFragment)
-      addSkipTestsTag()
-      addResolveWorkspaceArtifactsTag()
+      checkBoxGroup(
+        "maven.runner.group.inherit",
+        MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
+        { it, c -> c.isSelected = it.isInheritedRunnerSettings },
+        { it, c -> it.isInheritedRunnerSettings = c.isSelected }
+      ) {
+        addJreFragment()
+        addEnvironmentFragment()
+        addVmOptionsFragment()
+        addProfilesFragment(workingDirectoryFragment)
+        addSkipTestsTag()
+        addResolveWorkspaceArtifactsTag()
+      }
     }
   }).apply { isRemovable = false }
+
+  private fun <S> SettingsFragmentsContainer<S>.checkBoxGroup(
+    id: String,
+    label: @NlsContexts.Checkbox String,
+    reset: (S, JCheckBox) -> Unit,
+    apply: (S, JCheckBox) -> Unit,
+    configure: SettingsFragmentsContainer<S>.() -> Unit
+  ) {
+    val checkBox = JCheckBox(label)
+    add(createSettingsEditorFragment(
+      checkBox,
+      object : SettingsFragmentInfo {
+        override val settingsId: String = id
+        override val settingsName: String? = null
+        override val settingsGroup: String? = null
+        override val settingsPriority: Int = 0
+        override val settingsType = SettingsEditorFragmentType.EDITOR
+        override val settingsHint: String? = null
+        override val settingsActionHint: String? = null
+      },
+      reset,
+      apply,
+      { true }
+    )).apply { isRemovable = false }
+    val fragments = SettingsFragmentsContainer.fragments(configure)
+    checkBox.addItemListener {
+      for (fragment in fragments) {
+        val component = fragment.component()
+        if (component != null) {
+          UIUtil.setEnabledRecursively(component, !checkBox.isSelected)
+        }
+      }
+    }
+    for (fragment in fragments) {
+      add(fragment)
+    }
+  }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addSkipTestsTag() {
     addTag(

@@ -34,7 +34,9 @@ import com.intellij.ui.components.textFieldWithBrowseButton
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.*
+import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.text.JTextComponent
 
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addBeforeRunFragment(buildTaskKey: Key<*>) =
@@ -375,7 +377,10 @@ fun <S, C : JComponent> createSettingsEditorFragment(
   actionHint = settingsFragmentInfo.settingsActionHint
 
   val editorComponent = editorComponent
-  CommonParameterFragments.setMonospaced(editorComponent)
+  if (editorComponent is JTextComponent ||
+      editorComponent is JComboBox<*>) {
+    CommonParameterFragments.setMonospaced(editorComponent)
+  }
   if (editorComponent is JBTextField) {
     FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
   }
