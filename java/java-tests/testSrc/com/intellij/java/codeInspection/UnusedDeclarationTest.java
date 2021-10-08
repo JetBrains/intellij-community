@@ -150,8 +150,6 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
-  public void testJunitMethodSource() {doTest();}
-
   public void testMockedField() {
     doTest();
   }
