@@ -9,9 +9,10 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.module.WebModuleTypeBase
+import com.intellij.openapi.util.text.StringUtil
 import javax.swing.Icon
 
-open class WebTemplateNewProjectWizardBuilder<T>(val template: WebProjectTemplate<T>) : AbstractNewProjectWizardBuilder() {
+open class WebTemplateNewProjectWizardBuilder(val template: WebProjectTemplate<*>) : AbstractNewProjectWizardBuilder() {
   override fun createStep(context: WizardContext): NewProjectWizardStep {
     return object : NewProjectWizardBaseStep(context) {
       override fun showGitRepositoryCheckbox(): Boolean {
@@ -37,7 +38,7 @@ open class WebTemplateNewProjectWizardBuilder<T>(val template: WebProjectTemplat
 
   override fun getModuleType(): ModuleType<*> = WebModuleTypeBase.getInstance()
   override fun getGroupName() = WebModuleBuilder.GROUP_NAME
-  override fun getPresentableName() = template.name
+  override fun getPresentableName() = StringUtil.capitalizeWords(template.name, true)
   override fun getBuilderId(): String? = template.javaClass.name
   override fun getNodeIcon(): Icon = template.icon
 }
