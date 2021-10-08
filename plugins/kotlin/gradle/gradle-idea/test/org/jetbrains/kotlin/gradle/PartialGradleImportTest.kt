@@ -30,7 +30,7 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
     Right now, there is no API to run such independent tests.
     This test can be considered fast enough, to delay efforts for such an API
     */
-    @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.5.30+")
+    @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.5.255-SNAPSHOT+")
     fun `test 'regular' sync is not running in 'lenient' or 'classpath' mode`() {
         createSimpleSettingsGradleKtsProjectSubFile()
         createProjectSubFile(
@@ -50,7 +50,7 @@ class PartialGradleImportTest : MultiplePluginVersionGradleImportingTestCase() {
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.6.0-SNAPSHOT+")
+    @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.5.0+")
     fun `test 'runPartialGradleImport' is running in 'lenient' or 'classpath' mode`() {
         /*
         Setup simple Gradle project inline:
