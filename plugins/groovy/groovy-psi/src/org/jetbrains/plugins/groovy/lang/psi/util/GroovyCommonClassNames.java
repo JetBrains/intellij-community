@@ -28,6 +28,8 @@ public interface GroovyCommonClassNames {
   String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
   String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
   String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
+  String GROOVY_TRANSFORM_RECORD_TYPE = "groovy.transform.RecordType";
+  String GROOVY_TRANSFORM_RECORD_BASE = "groovy.transform.RecordBase";
   String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
   String GROOVY_TRANSFORM_MAP_CONSTRUCTOR = "groovy.transform.MapConstructor";
   String GROOVY_TRANSFORM_PROPERTY_OPTIONS = "groovy.transform.PropertyOptions";
