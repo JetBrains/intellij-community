@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.ide.actions.CreateFileFromTemplateAction
-import com.intellij.ide.actions.CreateFileFromTemplateDialog
-import com.intellij.ide.actions.CreateFromTemplateAction
+import com.intellij.ide.actions.*
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults
@@ -26,6 +24,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -144,7 +143,7 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)!!
             val project = PlatformDataKeys.PROJECT.getData(dataContext)!!
             val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-            return ideView.directories.any { projectFileIndex.isInSourceContent(it.virtualFile) }
+            return ideView.directories.any { projectFileIndex.isInContent(it.virtualFile) }
         }
 
         return false
@@ -252,7 +251,9 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             val service = DumbService.getInstance(dir.project)
             service.isAlternativeResolveEnabled = true
             try {
-                val psiFile = createFromTemplate(targetDir, className, template)
+                val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
+                if (adjustedDir == null) return null
+                val psiFile = createFromTemplate(adjustedDir, className, template)
                 if (psiFile is KtFile) {
                     val singleClass = psiFile.declarations.singleOrNull() as? KtClass
                     if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {
@@ -261,6 +262,7 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                         }
                     }
                 }
+                JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
                 return psiFile
             } finally {
                 service.isAlternativeResolveEnabled = false

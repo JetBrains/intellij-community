@@ -96,8 +96,13 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   @Override
   protected @Nullable PsiDirectory adjustDirectory(@NotNull PsiDirectory directory) {
+    return adjustDirectory(directory, mySourceRootTypes);
+  }
+
+  @Nullable
+  public static PsiDirectory adjustDirectory(@NotNull PsiDirectory directory, @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
-    if (mySourceRootTypes != null && !index.isUnderSourceRootOfType(directory.getVirtualFile(), mySourceRootTypes)) {
+    if (rootTypes != null && !index.isUnderSourceRootOfType(directory.getVirtualFile(), rootTypes)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(directory);
       if (module == null) return null;
       ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
