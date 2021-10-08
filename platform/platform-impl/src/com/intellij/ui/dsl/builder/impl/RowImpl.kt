@@ -40,9 +40,10 @@ import javax.swing.*
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
-                       val label: JLabel? = null) : Row {
+                       val firstCellLabel: Boolean,
+                       rowLayout: RowLayout) : Row {
 
-  var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
+  var rowLayout = rowLayout
     private set
 
   var resizableRow = false
@@ -71,10 +72,6 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private var visible = true
   private var enabled = true
-
-  init {
-    label?.let { cell(it) }
-  }
 
   override fun layout(rowLayout: RowLayout): RowImpl {
     this.rowLayout = rowLayout

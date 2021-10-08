@@ -29,7 +29,7 @@ import javax.swing.*
  */
 enum class RowLayout {
   /**
-   * All cells of the row including label independent of parent grid.
+   * All cells of the row (including label if present) independent of parent grid.
    * That means the row has own grid
    */
   INDEPENDENT,

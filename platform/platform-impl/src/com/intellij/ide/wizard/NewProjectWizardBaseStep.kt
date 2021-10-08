@@ -79,7 +79,7 @@ open class NewProjectWizardBaseStep(override val context: WizardContext) : NewPr
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
       if (showGitRepositoryCheckbox()) {
-        row("") {
+        row(EMPTY_LABEL) {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
             .bindSelected(gitProperty)
         }.bottomGap(BottomGap.SMALL)

@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -14,11 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.min
-
-/**
- * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
- */
-private const val FAIL_ON_WARN = false
 
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
   AbstractButton::class,
@@ -33,10 +26,6 @@ private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
 
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: Grid) {
-
-  private companion object {
-    private val LOG = Logger.getInstance(PanelBuilder::class.java)
-  }
 
   fun build() {
     if (rows.isEmpty()) {
@@ -69,7 +58,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
 
           subGridBuilder.resizableRow()
-          buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
+          buildRow(cells, row.firstCellLabel, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
 
           buildCommentRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -105,7 +94,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         RowLayout.PARENT_GRID -> {
           buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildRow(row.cells, row.label != null, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
+          buildRow(row.cells, row.firstCellLabel, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
           if (row.resizableRow) {
             rowsGridBuilder.resizableRow()
           }
@@ -425,15 +414,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
-  }
-
-  private fun warn(message: String) {
-    if (FAIL_ON_WARN) {
-      throw UiDslException(message)
-    }
-    else {
-      LOG.warn(message)
-    }
   }
 }
 

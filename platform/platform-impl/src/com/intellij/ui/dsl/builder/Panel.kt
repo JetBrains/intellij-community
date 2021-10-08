@@ -12,6 +12,11 @@ import java.awt.Color
 import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * Empty label parameter for [Panel.row] method
+ */
+val EMPTY_LABEL = String()
+
 @ApiStatus.Experimental
 interface Panel : CellBase<Panel> {
 
@@ -34,8 +39,16 @@ interface Panel : CellBase<Panel> {
    */
   fun indent(init: Panel.() -> Unit)
 
+  /**
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. Use [EMPTY_LABEL] for empty label.
+   * Do not use row(""), because it creates unnecessary label component in layout
+   */
   fun row(@Nls label: String, init: Row.() -> Unit): Row
 
+  /**
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. If label is null then
+   * [RowLayout.INDEPENDENT] layout is used
+   */
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
   /**

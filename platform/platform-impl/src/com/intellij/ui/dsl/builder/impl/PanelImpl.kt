@@ -15,13 +15,14 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ButtonGroup
 import java.awt.Color
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
+                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -40,11 +41,30 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
   private var enabled = true
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
-    return row(Label(label), init)
+    if (label === EMPTY_LABEL) {
+      val result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.LABEL_ALIGNED)
+      result.cell()
+      result.init()
+      _rows.add(result)
+      return result
+    }
+    else {
+      if (label.isEmpty()) {
+        warn("Row is created with empty label")
+      }
+
+      return row(Label(label), init)
+    }
   }
 
   override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
-    val result = RowImpl(dialogPanelConfig, panelContext, this, label)
+    val result: RowImpl
+    if (label == null) {
+      result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.INDEPENDENT)
+    } else {
+      result = RowImpl(dialogPanelConfig, panelContext, this, true, RowLayout.LABEL_ALIGNED)
+      result.cell(label)
+    }
     result.init()
     _rows.add(result)
 
@@ -161,7 +181,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
 
     if (indent) {
       result.indent(init)
-    } else {
+    }
+    else {
       result.init()
     }
 
@@ -357,7 +378,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
     if (topGap == null) {
       row.internalTopGap = dialogPanelConfig.spacing.verticalMediumGap
-    } else {
+    }
+    else {
       row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
     }
   }
@@ -365,7 +387,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig, 
   private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
     if (bottomGap == null) {
       row.internalBottomGap = dialogPanelConfig.spacing.verticalMediumGap
-    } else {
+    }
+    else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
   }
