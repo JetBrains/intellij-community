@@ -44,17 +44,18 @@ object IndexableIteratorBuilders {
     if (builders.isEmpty()) return emptyList()
     val result = ArrayList<IndexableFilesIterator>(builders.size)
     var buildersToProceed = builders
-    IndexableIteratorBuilderHandler.EP_NAME.forEachExtensionSafe { handler ->
+    val handlers = IndexableIteratorBuilderHandler.EP_NAME.extensionList
+    for (handler in handlers) {
       ProgressManager.checkCanceled()
       val partition = buildersToProceed.partition { handler.accepts(it) }
+      buildersToProceed = partition.second
       if (partition.first.isNotEmpty()) {
         result.addAll(handler.instantiate(partition.first, project, entityStorage))
       }
-      buildersToProceed = partition.second
     }
     if (buildersToProceed.isNotEmpty()) {
       logger.error("Failed to find handlers for IndexableIteratorBuilders: ${buildersToProceed};\n" +
-                   "available builders: ${IndexableIteratorBuilderHandler.EP_NAME.extensionList}")
+                   "available handlers: $handlers")
     }
     return result
   }
