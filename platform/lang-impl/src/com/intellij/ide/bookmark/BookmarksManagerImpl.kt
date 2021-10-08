@@ -2,6 +2,7 @@
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
+import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.GroupCreateDialog
 import com.intellij.ide.bookmark.ui.GroupSelectDialog
 import com.intellij.ide.bookmarks.BookmarksListener
@@ -29,12 +30,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       group?.let {
         val index = allGroups.indexOf(it)
         if (index < 0) return@synchronized // group is not added
-        if (index > 0) { // rearrange groups
-          allGroups.removeAt(index)
-          notifier.groupRemoved(it)
-          allGroups.add(0, it)
-          notifier.groupAdded(it)
-        }
+        if (index > 0) moveGroup(index, 0) // rearrange groups
       }
       field = group
       notifier.defaultGroupChanged(old, group)
@@ -228,6 +224,23 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     (group as? Group)?.sortLater()
   }
 
+  private fun addGroupTo(index: Int, group: Group) = allGroups.add(index, group).also { notifier.groupAdded(group) }
+  private fun removeGroupFrom(index: Int) = allGroups.removeAt(index).also { notifier.groupRemoved(it) }
+  private fun moveGroup(fromIndex: Int, toIndex: Int) = addGroupTo(toIndex, removeGroupFrom(fromIndex))
+
+  fun move(group: BookmarkGroup, anchor: BookmarkGroup) = synchronized(notifier) {
+    if (group == defaultGroup || anchor == defaultGroup) return // cannot move default group
+    val fromIndex = allGroups.indexOfFirst { it == group }
+    if (fromIndex < 0) return // first group does not exist
+    val toIndex = allGroups.indexOfFirst { it == anchor }
+    if (toIndex < 0 || toIndex == fromIndex) return // second group does not exist or equal the first one
+    moveGroup(fromIndex, toIndex)
+  }
+
+  fun move(group: BookmarkGroup, bookmark: Bookmark, anchor: Bookmark) {
+    (group as? Group)?.run { move(bookmark, anchor) }
+  }
+
   override fun update(map: MutableMap<Bookmark, Bookmark?>) {
     while (map.isNotEmpty()) {
       val size = map.size
@@ -331,8 +344,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         defaultGroup == null -> 0
         else -> allGroups.size.coerceAtMost(1)
       }
-      allGroups.add(index, this)
-      notifier.groupAdded(this)
+      addGroupTo(index, this)
       this.isDefault = isDefault
     }
 
@@ -364,6 +376,15 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         val hash = bookmark.hashCode()
         groupBookmarks.indexOfFirst { it.hash == hash && it.bookmark == bookmark }
       }
+    }
+
+    private fun indexOf(bookmark: Bookmark, grouped: Boolean): Int {
+      val index = indexOf(bookmark)
+      if (index >= 0 || !grouped || bookmark !is FileBookmark) return index
+      // try to find the first line bookmark of the group with the same file
+      // see com.intellij.ide.bookmark.ui.tree.GroupNode.getChildren
+      val file = bookmark.file
+      return groupBookmarks.indexOfFirst { it.bookmark is LineBookmark && it.bookmark.file == file }
     }
 
     private fun getInfo(bookmark: Bookmark) = indexOf(bookmark).let { if (it < 0) null else groupBookmarks[it] }
@@ -429,8 +450,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         for (bookmark in getBookmarks()) {
           removeFromGroup(this, bookmark)
         }
-        allGroups.removeAt(index)
-        notifier.groupRemoved(this)
+        removeGroupFrom(index)
       }
     }
 
@@ -452,6 +472,18 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       if (weight1 > weight2) return -1
       if (weight1 < weight2) return 1
       return info1.bookmark.provider.compare(info1.bookmark, info2.bookmark)
+    }
+
+    internal fun move(bookmark: Bookmark, anchor: Bookmark) = synchronized(notifier) {
+      val grouped = BookmarksViewState.getInstance(project).groupLineBookmarks
+      val fromIndex = indexOf(bookmark, grouped)
+      if (fromIndex < 0) return // first bookmark does not exist
+      val toIndex = indexOf(anchor, grouped)
+      if (toIndex < 0 || toIndex == fromIndex) return // second bookmark does not exist or equal the first one
+      val info = groupBookmarks.removeAt(fromIndex)
+      notifier.bookmarkRemoved(this, info.bookmark)
+      groupBookmarks.add(toIndex, info)
+      notifier.bookmarkAdded(this, info.bookmark)
     }
 
     internal fun getState() = GroupState().also {
