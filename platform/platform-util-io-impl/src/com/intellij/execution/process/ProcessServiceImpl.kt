@@ -81,6 +81,15 @@ class ProcessServiceImpl: ProcessService {
     }
   }
 
+  override fun hasControllingTerminal(process: Process): Boolean {
+    return if (process is PtyProcess) {
+      !process.isConsoleMode
+    }
+    else {
+      false
+    }
+  }
+
   private fun createWinProcess(process: Process): WinProcess {
     return if (process is WinPtyProcess) {
       WinProcess(process.pid)

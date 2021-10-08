@@ -38,6 +38,8 @@ public interface ProcessService {
   @Nullable
   Integer winPtyChildProcessId(@NotNull Process process);
 
+  boolean hasControllingTerminal(@NotNull Process process);
+
   static @NotNull ProcessService getInstance() {
     return ApplicationManager.getApplication().getService(ProcessService.class);
   }
