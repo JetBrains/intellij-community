@@ -32,6 +32,22 @@ public class DoubleNegationFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("double.negation.quickfix");
   }
 
+  public void testDoubleNegation() {
+    doExpressionTest(myDefaultHint,
+                     "!/**/!(System.currentTimeMillis() > 1_000_000)",
+                     "System.currentTimeMillis() > 1_000_000");
+  }
+
   public void testDoubleDoubleNegation() { doTest(); }
+
   public void testPolyadicParentheses() { doTest(); }
+
+  public void testDoNotCleanupWithSingleNegation() {
+    assertQuickfixNotAvailable(myDefaultHint,
+                               "class X {\n" +
+                               "  boolean test(boolean isValid) {\n" +
+                               "    return !/**/isValid;\n" +
+                               "  }\n" +
+                               "}\n");
+  }
 }
