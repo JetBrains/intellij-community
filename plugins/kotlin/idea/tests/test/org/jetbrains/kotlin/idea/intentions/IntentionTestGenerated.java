@@ -8083,6 +8083,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("hasNoBraces.kt")
+            public void testHasNoBraces() throws Exception {
+                runTest("testData/intentions/convertToForEachFunctionCall/withIndex/hasNoBraces.kt");
+            }
+
             @TestMetadata("implicitReceiver.kt")
             public void testImplicitReceiver() throws Exception {
                 runTest("testData/intentions/convertToForEachFunctionCall/withIndex/implicitReceiver.kt");
