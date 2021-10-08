@@ -76,7 +76,7 @@ fun getOriginFromUrl(url: String): Origin? {
   return null
 }
 
-@State(name = "Trusted.Paths.Settings", storages = [Storage("trusted-paths.xml")])
+@State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
 internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
 
