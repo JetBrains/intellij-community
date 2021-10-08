@@ -45,6 +45,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(myProject)
   private val runWidgetListener = object : RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
     override fun availabilityChanged(value: Boolean) {
+      revalidate()
       repaint()
     }
   }
@@ -83,7 +84,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
     if (myPanel.isVisible) {
       val actionsSchema = CustomActionsSchema.getInstance()
       for ((actionId, layoutConstrains) in mapOf(
-        (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroupNoRunWidget" else "RightToolbarSideGroup") to BorderLayout.EAST,
+        (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget" ) to BorderLayout.EAST,
         "CenterToolbarSideGroup" to BorderLayout.CENTER,
         "LeftToolbarSideGroup" to BorderLayout.WEST,
       )) {
