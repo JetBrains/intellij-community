@@ -43,16 +43,12 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import javax.swing.Icon
 
-private const val RUN_LINE_EVENT = "runLine"
-private const val RUN_BLOCK_EVENT = "runBlock"
-internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBrowserPreviewExtension, ResourceProvider {
+internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
+                                      private val provider: Provider) : MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
-  val icons: List<String> = listOf("run.png", "runrun.png")
-  val commandCache = mutableMapOf<Int, String>()
-
-
+  private val commandCache = mutableMapOf<Int, String>()
   private var splitEditor: MarkdownEditorWithPreview? = null
 
   init {
@@ -62,9 +58,6 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
       splitEditor = MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)
     }
 
-    val resourceProviderRegistration = PreviewStaticServer.instance.registerResourceProvider(this)
-    Disposer.register(this, resourceProviderRegistration)
-
     Disposer.register(this) {
       panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
       panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
@@ -73,34 +66,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
 
   override val resourceProvider: ResourceProvider = this
 
-  override fun canProvide(resourceName: String): Boolean = resourceName in scripts || resourceName in icons || resourceName in styles
+  override fun canProvide(resourceName: String): Boolean = resourceName in scripts || resourceName in styles
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-    if (resourceName in icons) {
-      val icon = when (resourceName) {
-        "run.png" -> AllIcons.RunConfigurations.TestState.Run
-        "runrun.png" -> AllIcons.RunConfigurations.TestState.Run_run
-        else -> return null
-      }
-      val format = resourceName.substringAfterLast(".")
-      return ResourceProvider.Resource(icon2Stream(icon, format))
-    }
     return ResourceProvider.loadInternalResource(this::class, resourceName)
-  }
-
-  private fun icon2Stream(icon: Icon, format: String): ByteArray {
-    val output = ByteArrayOutputStream()
-    val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1).toFloat()
-    //MarkdownExtension.currentProjectSettings.fontSize.toFloat()
-    val scaledIcon = IconUtil.scaleByFont(icon, null, fontSize)
-    val image = ImageUtil.createImage(ScaleContext.create(), scaledIcon.iconWidth.toDouble(), scaledIcon.iconHeight.toDouble(),
-      BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR)
-    scaledIcon.paintIcon(null, image.graphics, 0, 0)
-
-    //val image = IconUtil.toBufferedImage(scaledIcon, true)
-    ImageIO.write(image, format, output)
-    return output.toByteArray()
-
   }
 
 
@@ -112,7 +81,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
       commandCache[index] = rawCodeLine
       val cssClass = "run-icon" + if (inBlock) " code-block" else ""
       return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index'>" +
-             "<img src='${PreviewStaticServer.getStaticUrl(this,"run.png")}'>" +
+             "<img src='${PreviewStaticServer.getStaticUrl(provider,"run.png")}'>" +
              "</a>"
     }
     else return ""
@@ -133,7 +102,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
                "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index' " +
                "data-commandtype='block'" +
                ">" +
-               "<img src='${PreviewStaticServer.getStaticUrl(this,"runrun.png")}'>" +
+               "<img src='${PreviewStaticServer.getStaticUrl(provider,"runrun.png")}'>" +
                "</a>"
 
     return html
@@ -182,18 +151,21 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
   }
 
   override fun dispose() {
-    MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.remove(panel.virtualFile)
+    provider.extensions.remove(panel.virtualFile)
   }
 
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownConfigurableExtension {
-
+  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownConfigurableExtension, ResourceProvider {
     val extensions = mutableMapOf<VirtualFile, CommandRunnerExtension>()
+
+    init {
+      PreviewStaticServer.instance.registerResourceProvider(this)
+    }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       if (!isEnabled || panel.virtualFile == null || panel.project == null) return null
 
-      extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel) }
+      extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel, this) }
       return extensions[panel.virtualFile]
     }
 
@@ -205,20 +177,38 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
 
     override val id: String
       get() = "CommandRunnerExtension"
+
+    val icons: List<String> = listOf("run.png", "runrun.png")
+
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in icons
+    }
+
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+      val icon = when (resourceName) {
+        "run.png" -> AllIcons.RunConfigurations.TestState.Run
+        "runrun.png" -> AllIcons.RunConfigurations.TestState.Run_run
+        else -> return null
+      }
+      val format = resourceName.substringAfterLast(".")
+      return ResourceProvider.Resource(icon2Stream(icon, format))
+    }
   }
 
 
 
   companion object {
+    private const val RUN_LINE_EVENT = "runLine"
+    private const val RUN_BLOCK_EVENT = "runBlock"
 
     fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
       return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
     }
 
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
-      val dataContext = createDataContext(project, localSession, workingDirectory)
       val trimmedCmd = command.trim()
       if (trimmedCmd.isEmpty()) return false
+      val dataContext = createDataContext(project, localSession, workingDirectory)
 
       return RunAnythingProvider.EP_NAME.extensionList
         .asSequence()
@@ -255,6 +245,20 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel) : MarkdownBr
       return (it !is RunAnythingCommandProvider
               && it !is RunAnythingRecentProjectProvider
               && it !is RunAnythingRunConfigurationProvider)
+    }
+
+    fun icon2Stream(icon: Icon, format: String): ByteArray {
+      val output = ByteArrayOutputStream()
+      val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1).toFloat()
+      //MarkdownExtension.currentProjectSettings.fontSize.toFloat()
+      val scaledIcon = IconUtil.scaleByFont(icon, null, fontSize)
+      val image = ImageUtil.createImage(ScaleContext.create(), scaledIcon.iconWidth.toDouble(), scaledIcon.iconHeight.toDouble(),
+        BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR)
+      scaledIcon.paintIcon(null, image.graphics, 0, 0)
+
+      //val image = IconUtil.toBufferedImage(scaledIcon, true)
+      ImageIO.write(image, format, output)
+      return output.toByteArray()
     }
 
     private val LOG = logger<CommandRunnerExtension>()

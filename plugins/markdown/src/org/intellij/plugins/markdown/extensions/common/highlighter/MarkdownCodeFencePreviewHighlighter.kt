@@ -4,12 +4,14 @@ package org.intellij.plugins.markdown.extensions.common.highlighter
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -39,6 +41,14 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
 
   override fun isApplicable(language: String): Boolean {
     return LanguageGuesser.guessLanguageForInjection(language) != null
+  }
+
+  var currentFile: VirtualFile? = null
+  fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
+    currentFile = file
+    val result = generateHtml(language, raw, node)
+    currentFile = null
+    return result
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
@@ -136,6 +146,10 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine)) // process line, need project and file here
+    builder.append(processCodeLine(actualLine) + MarkdownCodeFenceGeneratingProvider.escape(actualLine))
   }
+
+  private fun processCodeLine(rawCodeLine: String): String = currentFile.let { file ->
+    CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
+  } ?: ""
 }

@@ -10,6 +10,7 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
 import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
 
 internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProviders: Array<MarkdownCodeFencePluginGeneratingProvider>,
@@ -24,7 +25,13 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     val html = pluginCacheProviders
       .filter { it.isApplicable(language) }.stream()
       .findFirst()
-      .map { it.generateHtml(language, codeFenceRawContent, node) }
+      .map {
+        if (it is MarkdownCodeFencePreviewHighlighter && file != null) {
+          it.generateHtmlForFile(language, codeFenceRawContent, node, file)
+        } else {
+          it.generateHtml(language, codeFenceRawContent, node)
+        }
+      }
       .orElse(insertCodeOffsets(codeFenceContent, node))
 
     return processCodeBlock(codeFenceRawContent, language) + html
