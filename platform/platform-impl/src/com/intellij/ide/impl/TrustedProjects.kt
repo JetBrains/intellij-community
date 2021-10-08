@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.isDirectory
 
 fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
@@ -30,7 +31,7 @@ fun confirmOpeningUntrustedProject(
 ): OpenUntrustedProjectChoice {
   val systemsPresentation: String = NlsMessages.formatAndList(projectTypeNames)
   return confirmOpeningUntrustedProject(
-    virtualFile,
+    virtualFile.toNioPath(),
     IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),
     IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, projectTypeNames.size),
     IdeBundle.message("untrusted.project.dialog.trust.button"),
@@ -40,15 +41,15 @@ fun confirmOpeningUntrustedProject(
 }
 
 fun confirmOpeningUntrustedProject(
-  virtualFile: VirtualFile,
+  projectFileOrDir: Path,
   @NlsContexts.DialogTitle title: String,
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice {
-  val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  if (isProjectImplicitlyTrusted(projectDir.toNioPath())) {
+  val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
+  if (isProjectImplicitlyTrusted(projectDir)) {
     return OpenUntrustedProjectChoice.IMPORT
   }
 
@@ -56,7 +57,7 @@ fun confirmOpeningUntrustedProject(
     .buttons(trustButtonText, distrustButtonText, cancelButtonText)
     .defaultButton(trustButtonText)
     .focusedButton(distrustButtonText)
-    .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
+    .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent))
     .asWarning()
     .help(TRUSTED_PROJECTS_HELP_TOPIC)
     .show()
@@ -121,7 +122,8 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.DoNotAskOption {
+private fun createDoNotAskOptionForLocation(projectLocation: Path): DialogWrapper.DoNotAskOption {
+  val projectLocationPath = projectLocation.toString()
   return object : DialogWrapper.DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
       if (isSelected && exitCode == Messages.YES) {
