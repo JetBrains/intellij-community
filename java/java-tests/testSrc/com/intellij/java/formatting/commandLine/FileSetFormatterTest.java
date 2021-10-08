@@ -17,8 +17,9 @@ package com.intellij.java.formatting.commandLine;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.commandLine.FileSetCodeStyleProcessor;
+import com.intellij.formatting.commandLine.FileSetFormatValidator;
 import com.intellij.formatting.commandLine.FileSetFormatter;
-import com.intellij.formatting.commandLine.FileSetProcessingStatistics;
 import com.intellij.formatting.commandLine.MessageOutput;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,55 +38,79 @@ import java.io.PrintWriter;
 public class FileSetFormatterTest extends LightPlatformTestCase {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine";
 
-  private static FileSetFormatter createFormatter() {
+  private static CodeStyleSettings createSettings() {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.getIndentOptions().INDENT_SIZE = 2;
     javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    return settings;
+  }
 
-    MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
-    FileSetFormatter formatter = new FileSetFormatter(messageOutput);
+  private static MessageOutput createStdIOMessageOutput() {
+    return new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
+  }
+
+  private static FileSetCodeStyleProcessor createFormatter() {
+    FileSetCodeStyleProcessor formatter = new FileSetFormatter(createSettings(), createStdIOMessageOutput(), true);
     formatter.addFileMask("*.java");
-    formatter.setRecursive();
-    formatter.setCodeStyleSettings(settings);
+    return formatter;
+  }
 
+  private static FileSetCodeStyleProcessor createValidator() {
+    FileSetCodeStyleProcessor formatter = new FileSetFormatValidator(createSettings(), createStdIOMessageOutput(), true);
+    formatter.addFileMask("*.java");
     return formatter;
   }
 
   public void testFormat() throws IOException {
     File sourceDir = createSourceDir("original");
     String fileSpec = sourceDir.getCanonicalPath();
-    FileSetFormatter formatter = createFormatter();
+    FileSetCodeStyleProcessor formatter = createFormatter();
     formatter.addEntry(fileSpec);
-    formatter.processFiles();
+
+    try {
+      formatter.processFiles();
+    }
+    finally {
+      formatter.close();
+    }
+
     compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);
   }
 
   public void testFormatDryRun_needsFormatting() throws IOException {
     File sourceDir = createSourceDir("original");
     String fileSpec = sourceDir.getCanonicalPath();
-    FileSetFormatter formatter = createFormatter();
+    FileSetCodeStyleProcessor formatter = createValidator();
     formatter.addEntry(fileSpec);
-    formatter.setDryRun(true);
-    FileSetProcessingStatistics stats = new FileSetProcessingStatistics();
-    formatter.processFiles(stats);
+
+    try {
+      formatter.processFiles();
+    }
+    finally {
+      formatter.close();
+    }
 
     compareDirs(new File(BASE_PATH + File.separator + "original"), sourceDir);  // No modifications expected
-    assertNotSame(stats.getProcessed(), stats.getValid());
+    assertNotSame(formatter.getProcessed(), formatter.getSucceeded());
   }
 
   public void testFormatDryRun_wellFormatted() throws IOException {
     File sourceDir = createSourceDir("expected");
     String fileSpec = sourceDir.getCanonicalPath();
-    FileSetFormatter formatter = createFormatter();
+    FileSetCodeStyleProcessor formatter = createValidator();
     formatter.addEntry(fileSpec);
-    formatter.setDryRun(true);
-    FileSetProcessingStatistics stats = new FileSetProcessingStatistics();
-    formatter.processFiles(stats);
+
+    try {
+      formatter.processFiles();
+    }
+    finally {
+      formatter.close();
+    }
 
     compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);  // No modifications expected
-    assertEquals(stats.getProcessed(), stats.getValid());
+    assertEquals(formatter.getProcessed(), formatter.getSucceeded());
   }
 
   private static File createSourceDir(@NotNull String subDir) throws IOException {
