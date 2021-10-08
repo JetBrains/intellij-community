@@ -56,7 +56,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         names: NameEnumerator,
     ): List<CompilerRef>? = null
 
-    private fun KtCallableDeclaration.asTopLevelCompilerRefs(names: NameEnumerator): List<CompilerRef>? =
+    private fun KtCallableDeclaration.asTopLevelCompilerRefs(names: NameEnumerator): List<CompilerRef.CompilerMember>? =
         containingKtFile.javaFileFacadeFqName.asString().let { qualifier ->
             when (this) {
                 is KtNamedFunction -> asCompilerRefs(qualifier, names)
@@ -65,11 +65,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             }
         }
 
-    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = jvmFqName
+    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef.CompilerClassHierarchyElementDef? = jvmFqName
         ?.let(names::tryEnumerate)
         ?.let(CompilerRef::JavaCompilerClassRef)
 
-    private fun KtObjectDeclaration.asCompilerRefs(names: NameEnumerator): List<CompilerRef>? {
+    private fun KtObjectDeclaration.asCompilerRefs(names: NameEnumerator): List<CompilerRef.NamedCompilerRef>? {
         val asClassRef = asCompilerRef(names)?.let(::listOf) ?: return null
 
         if (!isCompanion()) return asClassRef
@@ -82,7 +82,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         )
     }
 
-    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef? = getContainingClassOrObject().jvmFqName
+    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef.CompilerMember? = getContainingClassOrObject().jvmFqName
         ?.let { qualifier ->
             CompilerRef.JavaCompilerMethodRef(
                 names.tryEnumerate(qualifier),
@@ -91,8 +91,12 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             )
         }
 
-    private fun KtNamedFunction.asCompilerRefs(qualifier: String, names: NameEnumerator): List<CompilerRef> {
-        val qualifierId = names.tryEnumerate(qualifier)
+    private fun KtNamedFunction.asCompilerRefs(
+        qualifier: String,
+        names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember> = asCompilerRefs(names.tryEnumerate(qualifier), names)
+
+    private fun KtNamedFunction.asCompilerRefs(qualifierId: Int, names: NameEnumerator): List<CompilerRef.CompilerMember> {
         val nameId = names.tryEnumerate(jvmName ?: name)
         val numberOfArguments = numberOfArguments(countReceiver = true)
         if (findAnnotation(JVM_OVERLOADS_FQ_NAME.shortName().asString()) == null) {
@@ -108,7 +112,10 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         }
     }
 
-    private fun KtProperty.asCompilerRefs(qualifier: String, names: NameEnumerator): List<CompilerRef>? = name?.let { propertyName ->
+    private fun KtProperty.asCompilerRefs(
+        qualifier: String,
+        names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember>? = name?.let { propertyName ->
         val qualifierId = names.tryEnumerate(qualifier)
         if (hasModifier(KtTokens.CONST_KEYWORD)) return@let listOf(
             CompilerRef.JavaCompilerFieldRef(
