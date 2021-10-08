@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
-import com.intellij.ide.impl.TrustedCheckResult.Trusted
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -50,8 +48,7 @@ fun confirmOpeningUntrustedProject(
   @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
-  if (trustedCheckResult is Trusted) {
+  if (isProjectImplicitlyTrusted(projectDir.toNioPath())) {
     return OpenUntrustedProjectChoice.IMPORT
   }
 
@@ -84,8 +81,7 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
 ) : Boolean {
-  val trustedCheckResult = getImplicitTrustedCheckResult(project)
-  if (trustedCheckResult is Trusted) {
+  if (isProjectImplicitlyTrusted(project)) {
     project.setTrusted(true)
     return true
   }
@@ -113,7 +109,7 @@ fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 fun Project.getTrustedState(): ThreeState {
   val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) return explicit
-  return if (getImplicitTrustedCheckResult(this) is Trusted) ThreeState.YES else ThreeState.UNSURE
+  return if (isProjectImplicitlyTrusted(this)) ThreeState.YES else ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
@@ -141,31 +137,23 @@ fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.
   }
 }
 
-fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
-  return getImplicitTrustedCheckResult(projectDir) is Trusted
-}
-
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
                                        SystemProperties.`is`("idea.is.integration.test")
 
-private sealed class TrustedCheckResult {
-  object Trusted : TrustedCheckResult()
-  class NotTrusted(val url: String?) : TrustedCheckResult()
-}
+private fun isProjectImplicitlyTrusted(project: Project): Boolean =
+  isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
-private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult =
-  getImplicitTrustedCheckResult(project.basePath?.let { Paths.get(it) }, project)
-
-private fun getImplicitTrustedCheckResult(projectDir: Path?, project: Project? = null): TrustedCheckResult {
+@JvmOverloads
+fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
   if (isTrustedCheckDisabled()) {
-    return Trusted
+    return true
   }
   if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
     TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
-    return Trusted
+    return true
   }
-  return NotTrusted(null)
+  return false
 }
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
