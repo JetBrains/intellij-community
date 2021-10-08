@@ -8051,6 +8051,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
         }
 
+        @TestMetadata("hasBreak.kt")
+        public void testHasBreak() throws Exception {
+            runTest("testData/intentions/convertToForEachFunctionCall/hasBreak.kt");
+        }
+
+        @TestMetadata("hasBreakInNestedLoop.kt")
+        public void testHasBreakInNestedLoop() throws Exception {
+            runTest("testData/intentions/convertToForEachFunctionCall/hasBreakInNestedLoop.kt");
+        }
+
+        @TestMetadata("hasBreakWithLabel.kt")
+        public void testHasBreakWithLabel() throws Exception {
+            runTest("testData/intentions/convertToForEachFunctionCall/hasBreakWithLabel.kt");
+        }
+
         @TestMetadata("iterativeElementTypeSpecified.kt")
         public void testIterativeElementTypeSpecified() throws Exception {
             runTest("testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");

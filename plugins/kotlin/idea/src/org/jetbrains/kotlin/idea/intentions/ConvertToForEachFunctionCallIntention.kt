@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
@@ -27,6 +28,7 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
         val rParen = element.rightParenthesis ?: return false
         if (caretOffset > rParen.endOffset) return false // available only on the loop header, not in the body
         if (element.loopRange == null || element.loopParameter == null || element.body == null) return false
+        if (element.body?.getExpressionsWithLabel<KtBreakExpression>(element.getLabelName())?.isNotEmpty() == true) return false
         val callExpression = element.loopRange?.callExpression()
         val forEachText = if (callExpression?.isCalling(withIndexedFunctionFqNames) == true) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return false
@@ -45,7 +47,7 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
         val forEachText = forEachExpression.calleeText() ?: return
         val labelName = element.getLabelName()
         val result = element.replace(forEachExpression) as KtElement
-        result.findDescendantOfType<KtFunctionLiteral>()?.getContinuesWithLabel(labelName)?.forEach {
+        result.findDescendantOfType<KtFunctionLiteral>()?.getExpressionsWithLabel<KtContinueExpression>(labelName)?.forEach {
             it.replace(psiFactory.createExpression("return@$forEachText"))
         }
         commentSaver.restore(result)
@@ -86,17 +88,17 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
         return callExpression.calleeExpression?.text
     }
 
-    private fun KtElement.getContinuesWithLabel(labelName: String?): List<KtContinueExpression> {
-        val continueElements = ArrayList<KtContinueExpression>()
+    private inline fun <reified T: KtExpressionWithLabel> KtElement.getExpressionsWithLabel(labelName: String?): List<T> {
+        val continueElements = ArrayList<T>()
 
-        forEachDescendantOfType<KtContinueExpression>({ it.shouldEnterForUnqualified(this) }) {
+        forEachDescendantOfType<T>({ it.shouldEnterForUnqualified(this) }) {
             if (it.getLabelName() == null) {
                 continueElements += it
             }
         }
 
         if (labelName != null) {
-            forEachDescendantOfType<KtContinueExpression>({ it.shouldEnterForQualified(this, labelName) }) {
+            forEachDescendantOfType<T>({ it.shouldEnterForQualified(this, labelName) }) {
                 if (it.getLabelName() == labelName) {
                     continueElements += it
                 }
