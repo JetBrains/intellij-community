@@ -162,6 +162,7 @@ public final class TipUIUtil {
 
         retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
         retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
+        retrievers.add(new TipRetriever(tipLoader, "tips", ""));
         retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
 
         String tipContent = null;
@@ -272,6 +273,8 @@ public final class TipUIUtil {
         imagesToTryDark.add(baseImage.dark().retina());
 
         if (hidpi) {
+
+
           Collections.reverse(imagesToTryLight);
           Collections.reverse(imagesToTryDark);
         }
