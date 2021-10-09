@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,10 +22,7 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -347,7 +345,8 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     else {
       String parameterName = leftVar.getName();
       PsiTypeElement typeElement = leftVar.getTypeElement();
-      String parameterDeclaration = typeElement == null ? parameterName : "(" + typeElement.getText() + " " + parameterName + ")";
+      String typeText = typeElement == null ? leftVar.getType().getCanonicalText() : typeElement.getText();
+      String parameterDeclaration = "(" + typeText + " " + parameterName + ")";
       text = "java.util.Comparator." + methodName + "(" +
              (parameterDeclaration + " -> " + left.getText()) + ")";
     }
@@ -540,6 +539,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       PsiLambdaExpression lambda = (PsiLambdaExpression)element;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;
+      boolean keepParameterTypes = parameters[0].getTypeElement() != null;
       if (lambda.getBody() instanceof PsiCodeBlock) {
         PsiStatement[] statements = ((PsiCodeBlock)lambda.getBody()).getStatements();
         if(statements.length > 1) {
@@ -559,11 +559,11 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression replacement = factory.createExpressionFromText(text, element);
       PsiMethodCallExpression result = (PsiMethodCallExpression)lambda.replace(replacement);
-      normalizeLambda(ArrayUtil.getFirstElement(result.getArgumentList().getExpressions()), factory);
+      normalizeLambda(ArrayUtil.getFirstElement(result.getArgumentList().getExpressions()), factory, keepParameterTypes);
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
     }
 
-    private static void normalizeLambda(PsiExpression expression, PsiElementFactory factory) {
+    private static void normalizeLambda(PsiExpression expression, PsiElementFactory factory, boolean keepParameterTypes) {
       if (!(expression instanceof PsiLambdaExpression)) return;
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
@@ -578,6 +578,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
               .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(name)));
             parameter.setName(name);
           }
+        if (!keepParameterTypes) {
+          RedundantLambdaParameterTypeInspection.removeLambdaParameterTypesIfPossible(lambda);
+        }
       }
     }
   }

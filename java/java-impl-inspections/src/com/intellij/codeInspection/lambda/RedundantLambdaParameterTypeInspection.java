@@ -8,12 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
@@ -48,36 +49,34 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     }
     if (parameters.length == 0) return false;
     final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-    if (functionalInterfaceType != null) {
-      final PsiElement lambdaParent = expression.getParent();
-      if (lambdaParent instanceof PsiExpressionList) {
-        final PsiElement gParent = lambdaParent.getParent();
-        if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length == 0) {
-          final JavaResolveResult resolveResult = ((PsiCallExpression)gParent).resolveMethodGenerics();
-          final PsiMethod method = (PsiMethod)resolveResult.getElement();
-          if (method == null) return false;
-          final int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)lambdaParent, expression);
-          if (idx < 0) return false;
-
-          PsiCallExpression copy = (PsiCallExpression)gParent.copy();
-          PsiLambdaExpression lambdaToStripTypeParameters = (PsiLambdaExpression)copy.getArgumentList().getExpressions()[idx];
-          for (PsiParameter parameter : lambdaToStripTypeParameters.getParameterList().getParameters()) {
-            parameter.getTypeElement().delete();
-          }
-
-          return functionalInterfaceType.equals(lambdaToStripTypeParameters.getFunctionalInterfaceType());
-        }
+    if (functionalInterfaceType == null) return false;
+    return LambdaUtil.isSafeLambdaReplacement(expression, () -> {
+      PsiLambdaExpression lambdaWithoutParameters = (PsiLambdaExpression)expression.copy();
+      for (PsiParameter parameter : lambdaWithoutParameters.getParameterList().getParameters()) {
+        PsiTypeElement typeElement = Objects.requireNonNull(parameter.getTypeElement());
+        typeElement.delete();
       }
-      return true;
+      return lambdaWithoutParameters;
+    });
+  }
+
+  /**
+   * Removes lambda parameter types when possible
+   *
+   * @param lambdaExpression lambda expression to process
+   */
+  public static void removeLambdaParameterTypesIfPossible(@NotNull PsiLambdaExpression lambdaExpression) {
+    PsiParameterList list = lambdaExpression.getParameterList();
+    if (isApplicable(list)) {
+      removeTypes(lambdaExpression);
     }
-    return false;
   }
 
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
       if (PsiUtil.isLanguageLevel11OrHigher(lambdaExpression) &&
-          Arrays.stream(parameters).anyMatch(parameter -> keepVarType(parameter))) {
+          ContainerUtil.exists(parameters, parameter -> keepVarType(parameter))) {
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();
           if (element != null) {
@@ -101,8 +100,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
   }
 
   private static boolean keepVarType(PsiParameter parameter) {
-    return parameter.hasModifierProperty(PsiModifier.FINAL) || 
-                                                    parameter.getAnnotations().length > 0;
+    return parameter.hasModifierProperty(PsiModifier.FINAL) || parameter.getAnnotations().length > 0;
   }
 
   private static class LambdaParametersFix implements LocalQuickFix {
