@@ -335,7 +335,7 @@ final class FindInProjectTask {
       else if (obj instanceof FindModelExtension) {
         ((FindModelExtension)obj).iterateAdditionalFiles(myFindModel, myProject, o -> {
           if (o.isDirectory()) return true;
-          if (alreadySearched.contains(o)) {
+          if (!alreadySearched.contains(o)) {
             return fileProcessor.process(o);
           }
           return true;
