@@ -112,26 +112,9 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
 
     for (UField uField : uFields) {
+      // create RefFields for implicit references
       getRefManager().getReference(uField.getSourcePsi());
     }
-
-    setApplet(getRefJavaManager().getApplet() != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
-    if (!isApplet()) {
-      setServlet(JvmInheritanceUtil.isInheritor(javaPsi, getRefJavaManager().getServletQName()));
-    }
-    if (!isApplet() && !isServlet()) {
-      PsiElement psi = uClass.getSourcePsi();
-      if (psi instanceof PsiClass) {
-        final boolean isTestClass = TestFrameworks.getInstance().isTestClass((PsiClass)psi);
-        setTestCase(isTestClass);
-        if (isTestClass) {
-          for (RefClass refBase : getBaseClasses()) {
-            ((RefClassImpl)refBase).setTestCase(true);
-          }
-        }
-      }
-    }
-
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
       RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
@@ -184,6 +167,25 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
 
     setUtilityClass(utilityClass);
+
+    if (!utilityClass) {
+      setApplet(getRefJavaManager().getApplet() != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
+      if (!isApplet()) {
+        setServlet(JvmInheritanceUtil.isInheritor(javaPsi, getRefJavaManager().getServletQName()));
+      }
+      if (!isApplet() && !isServlet()) {
+        PsiElement psi = uClass.getSourcePsi();
+        if (psi instanceof PsiClass) {
+          final boolean isTestClass = TestFrameworks.getInstance().isTestClass((PsiClass)psi);
+          setTestCase(isTestClass);
+          if (isTestClass) {
+            for (RefClass refBase : getBaseClasses()) {
+              ((RefClassImpl)refBase).setTestCase(true);
+            }
+          }
+        }
+      }
+    }
   }
 
   private void initializeSuperReferences(UClass uClass) {
@@ -285,16 +287,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
       UField[] uFields = uClass.getFields();
       for (UField uField : uFields) {
-        getRefManager().getReference(uField.getPsi());
         final UExpression initializer = uField.getUastInitializer();
         if (initializer != null) {
           RefJavaUtil.getInstance().addReferencesTo(uClass, this, initializer);
         }
-      }
-
-      UMethod[] psiMethods = uClass.getMethods();
-      for (UMethod uMethod : psiMethods) {
-        getRefManager().getReference(uMethod.getSourcePsi());
       }
 
       RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
