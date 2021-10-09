@@ -6,15 +6,19 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -85,11 +89,22 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
     getPsiManager().dropPsiCaches();
+    refreshVfsAndProcessPendingEvents(getProject());
     myFixture.doHighlighting();
     if (myDoCompletion) {
       complete();
     }
     callback.doCheck();
+  }
+
+  protected static void refreshVfsAndProcessPendingEvents(@NotNull Project project) {
+    WriteAction.run(() -> VirtualFileManager.getInstance().syncRefresh());
+    JsonSchemaService service = JsonSchemaService.Impl.get(project);
+    if (service instanceof JsonSchemaServiceImpl) {
+      JsonSchemaVfsListener.JsonSchemaUpdater updater = ((JsonSchemaServiceImpl)service).getSchemaUpdater();
+      updater.waitForAllExecuted();
+    }
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   protected void complete() {
