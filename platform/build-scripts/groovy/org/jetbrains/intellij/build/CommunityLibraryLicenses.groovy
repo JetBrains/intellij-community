@@ -563,6 +563,7 @@ final class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/SLP-team/SLP-Core/blob/master/LICENSE").mit(),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", url: "https://objenesis.org/").apache(),
     new LibraryLicense(name: "Okio", libraryName: "okio", url: "https://github.com/square/okio").apache(),
+    new LibraryLicense(libraryName: "opentelemetry", url: "https://opentelemetry.io/").apache(),
     new LibraryLicense(name: "OWASP Java HTML Sanitizer", libraryName: "owasp-java-html-sanitizer",
                        url: "https://github.com/OWASP/java-html-sanitizer/",
                        licenseUrl: "https://github.com/OWASP/java-html-sanitizer/blob/master/COPYING").apache(),
