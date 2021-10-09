@@ -402,7 +402,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       else {
         val row = row {
           label(title)
-            .applyToComponent { putClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY, true) }
+            .applyToComponent { putClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP, true) }
         }
         row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
         if (indent) {

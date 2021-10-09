@@ -46,12 +46,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
       val rowGaps = allRowsGaps[i]
       rowsGridBuilder.setRowGaps(VerticalGaps(top = rowGaps.top))
+      val subRowVerticalAlign = if (row.resizableRow) VerticalAlign.FILL else VerticalAlign.CENTER
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
             horizontalAlign = HorizontalAlign.FILL,
-            verticalAlign = VerticalAlign.FILL,
+            verticalAlign = subRowVerticalAlign,
             gaps = Gaps(left = row.getIndent()))
           val cells = row.cells
 
@@ -77,7 +78,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           if (row.cells.size > 1) {
             val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1,
               horizontalAlign = HorizontalAlign.FILL,
-              verticalAlign = VerticalAlign.FILL)
+              verticalAlign = subRowVerticalAlign)
               .resizableRow()
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
@@ -106,7 +107,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
       row.rowComment?.let {
         val gaps = Gaps(left = row.getIndent(), bottom = dialogPanelConfig.spacing.verticalComponentGap)
-        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
+        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, componentHelper = getComponentHelper(it))
         rowsGridBuilder.row()
       }
 
@@ -206,7 +207,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
-          gaps = gaps, visualPaddings = visualPaddings)
+          gaps = gaps, visualPaddings = visualPaddings,
+          componentHelper = getComponentHelper(cell.viewComponent))
       }
       is PanelImpl -> {
         // todo visualPaddings
@@ -235,7 +237,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   private fun getComponentGaps(left: Int, right: Int, component: JComponent): Gaps {
     val top = getDefaultVerticalGap(component)
     var bottom = top
-    if (component is JLabel && component.getClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY) == true) {
+    if (component is JLabel && component.getClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP) == true) {
       bottom = 0
     }
     return Gaps(top = top, left = left, bottom = bottom, right = right)
@@ -362,7 +364,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     for ((i, data) in columnsAndComponents.withIndex()) {
       val nextColumn = if (i + 1 < columnsAndComponents.size) columnsAndComponents[i + 1].column else maxColumnsCount
-      builder.cell(data.component, nextColumn - data.column, verticalAlign = verticalAlign, baselineAlign = false, gaps = data.gaps)
+      builder.cell(data.component, nextColumn - data.column, verticalAlign = verticalAlign, baselineAlign = false, gaps = data.gaps,
+        componentHelper = getComponentHelper(data.component))
 
     }
     builder.row()
@@ -415,6 +418,20 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     return if (top > 0 || bottom > 0) VerticalGaps(top = top, bottom = bottom) else VerticalGaps.EMPTY
+  }
+
+  private fun getComponentHelper(component: JComponent): ComponentHelper? {
+    if (component.getClientProperty(DslComponentProperty.BASELINE_FROM_FONT) == true) {
+      return FontBaselineComponentHelper(component)
+    }
+    return null
+  }
+}
+
+private class FontBaselineComponentHelper(private val component: JComponent) : ComponentHelper {
+  override fun getBaseline(width: Int, height: Int): Int {
+    val fontMetrics = component.getFontMetrics(component.font)
+    return fontMetrics.ascent
   }
 }
 
