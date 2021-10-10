@@ -2,3 +2,8 @@
 package com.intellij.testFramework
 
 inline fun <reified T> assertInstanceOf(o: Any?): T = UsefulTestCase.assertInstanceOf(o, T::class.java)
+
+inline fun <reified T> requireIs(o: Any?): T {
+  assertInstanceOf<T>(o)
+  return o as T
+}
