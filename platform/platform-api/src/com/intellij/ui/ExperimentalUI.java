@@ -6,6 +6,8 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -84,10 +86,19 @@ public final class ExperimentalUI {
 
   private static void patchUIDefaults(RegistryValue value) {
     UIDefaults defaults = UIManager.getDefaults();
-    defaults.put("EditorTabs.underlineArc", 4);
+    setUIProperty("EditorTabs.underlineArc", 4, defaults);
+    EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
+    setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
+
     if (value.asBoolean() && is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
       installInterFont();
     }
+  }
+
+  private static void setUIProperty(String key, Object value, UIDefaults defaults) {
+    defaults.remove(key);
+    defaults.put(key, value);
   }
 
   private static void installInterFont() {
@@ -111,15 +122,15 @@ public final class ExperimentalUI {
       if (JBColor.isBright()) {
         Color menuBg = new ColorUIResource(0x242933);
         Color menuFg = new ColorUIResource(0xFFFFFF);
-        defaults.put("PopupMenu.background", menuBg);
-        defaults.put("MenuItem.background", menuBg);
-        defaults.put("MenuItem.foreground", menuFg);
-        defaults.put("Menu.background", menuBg);
-        defaults.put("Menu.foreground", menuFg);
-        defaults.put("CheckBoxMenuItem.acceleratorForeground", menuFg);
-        defaults.put("Menu.acceleratorForeground", menuFg);
-        defaults.put("MenuItem.acceleratorForeground", menuFg);
-        defaults.put("RadioButtonMenuItem.acceleratorForeground", menuFg);
+        setUIProperty("PopupMenu.background", menuBg, defaults);
+        setUIProperty("MenuItem.background", menuBg, defaults);
+        setUIProperty("MenuItem.foreground", menuFg, defaults);
+        setUIProperty("Menu.background", menuBg, defaults);
+        setUIProperty("Menu.foreground", menuFg, defaults);
+        setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
+        setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
+        setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
+        setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
       }
     }
 }
