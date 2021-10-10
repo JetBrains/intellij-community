@@ -37,10 +37,10 @@ import java.awt.EventQueue
  *
  * @author Kirill Likhodedov
  */
-internal abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val storage: VcsLogStorage,
-                                                                      private val logProviders: Map<VirtualFile, VcsLogProvider>,
-                                                                      protected val index: VcsLogIndex,
-                                                                      parentDisposable: Disposable) : Disposable, DataGetter<T> {
+abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val storage: VcsLogStorage,
+                                                             private val logProviders: Map<VirtualFile, VcsLogProvider>,
+                                                             protected val index: VcsLogIndex,
+                                                             parentDisposable: Disposable) : Disposable, DataGetter<T> {
   private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, T>()
   private val loader: SequentialLimitedLifoExecutor<TaskDescriptor> = SequentialLimitedLifoExecutor(this,
                                                                                                     MAX_LOADING_TASKS) { task: TaskDescriptor ->
