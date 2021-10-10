@@ -51,8 +51,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
     }
 
     if(hovered) {
-      if (ExperimentalUI.isNewEditorTabs()) return;
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
+      (if (active) theme.hoverSelectedBackground else theme.hoverSelectedInactiveBackground).let{
         g.fill2DRect(rect, it)
       }
     }
