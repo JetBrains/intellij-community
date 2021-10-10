@@ -55,8 +55,8 @@ abstract class ToolWindowHeader internal constructor(
     AccessibleContextUtil.setName(this, IdeBundle.message("toolwindow.header.accessible.name"))
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
-    westPanel.add(contentUi.tabComponent, CC().growY())
-    MouseDragHelper.setComponentDraggable(westPanel, true);
+    westPanel.add(contentUi.tabComponent, CC().grow().pushX())
+    MouseDragHelper.setComponentDraggable(westPanel, true)
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
