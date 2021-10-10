@@ -641,6 +641,15 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color hoverBackground(boolean selected, boolean active) {
+        String key = selected
+                     ? active ? "EditorTabs.hoverSelectedBackground" : "EditorTabs.hoverSelectedInactiveBackground"
+                     : active ? "EditorTabs.hoverBackground" : "EditorTabs.hoverInactiveBackground";
+
+        return JBColor.namedColor(key, Gray.TRANSPARENT);
+      }
+
+      @NotNull
       public static Color inactiveColoredFileBackground() {
         return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", DefaultTabs.inactiveColoredTabBackground());
       }
