@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
@@ -31,7 +32,7 @@ private fun collectNewInterpreterOnTargetActions(project: Project, onSdkCreated:
 private class AddLocalInterpreterAction(private val project: Project,
                                         private val module: Module?,
                                         private val onSdkCreated: Consumer<Sdk>)
-  : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder) {
+  : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val model = PyConfigurableInterpreterList.getInstance(project).model
 
@@ -53,7 +54,8 @@ private class AddLocalInterpreterAction(private val project: Project,
 private class AddInterpreterOnTargetAction(private val project: Project,
                                            private val targetType: TargetEnvironmentType<*>,
                                            private val onSdkCreated: Consumer<Sdk>)
-  : AnAction(PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName), targetType.icon) {
+  : AnAction(PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName), targetType.icon),
+    DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
     if (wizard != null && wizard.showAndGet()) {
