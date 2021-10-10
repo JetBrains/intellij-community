@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.EmptyConsumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.index.IndexedDetails
@@ -237,17 +236,6 @@ abstract class AbstractDataGetterWithSequentialLoader<T : VcsShortCommitDetails>
     }
     else {
       LoadingDetailsImpl(Computable { storage.getCommitId(commitId)!! }, taskNumber) as T
-    }
-  }
-
-  protected fun clear() {
-    EdtInvocationManager.invokeAndWaitIfNeeded {
-      val iterator: MutableIterator<Map.Entry<Int, T>> = cache.asMap().entries.iterator()
-      while (iterator.hasNext()) {
-        if (iterator.next().value !is LoadingDetails) {
-          iterator.remove()
-        }
-      }
     }
   }
 
