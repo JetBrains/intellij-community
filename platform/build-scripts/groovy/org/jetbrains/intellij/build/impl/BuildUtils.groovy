@@ -17,6 +17,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 @CompileStatic
@@ -184,8 +185,12 @@ final class BuildUtils {
       return null
     }
 
-    FileSystems.newFileSystem(pluginJar, null).withCloseable {
-      return XmlDomReader.readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+    try {
+      FileSystems.newFileSystem(pluginJar, null).withCloseable {
+        return XmlDomReader.readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+      }
+    }
+    catch (NoSuchFileException ignore) {
     }
   }
 }

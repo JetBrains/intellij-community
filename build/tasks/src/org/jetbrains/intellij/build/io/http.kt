@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
+import java.io.ByteArrayOutputStream
 import java.lang.Thread.sleep
 import java.net.HttpURLConnection
 import java.net.URI
@@ -24,11 +25,13 @@ fun download(url: String): ByteArray {
       .build()
 
     val response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
-    val encoding = response.headers().firstValue("Content-Encoding").orElse("")
-    val content = (if (encoding == "gzip") GZIPInputStream(response.body()) else response.body()).use {
-      it.readAllBytes()
-    }
     val statusCode = response.statusCode()
+    val encoding = response.headers().firstValue("Content-Encoding").orElse("")
+    val byteOut = ByteArrayOutputStream()
+    (if (encoding == "gzip") GZIPInputStream(response.body()) else response.body()).use {
+      it.transferTo(byteOut)
+    }
+    val content = byteOut.toByteArray()
     if (statusCode == 200) {
       return content
     }

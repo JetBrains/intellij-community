@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -106,8 +105,8 @@ final class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
           exclude(name: "build.txt")
-          for (Pair<Path, String> item : buildContext.distFiles) {
-            exclude(name: item.getSecond() + "/" + item.getFirst().fileName.toString())
+          for (Map.Entry<Path, String> item : buildContext.distFiles) {
+            exclude(name: item.getValue() + "/" + item.getKey().fileName.toString())
           }
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
@@ -225,7 +224,7 @@ final class CrossPlatformDistributionBuilder {
     File root = rootPath.toFile()
     Map<String, File> result = new HashMap<>()
     root.eachFileRecurse(FileType.FILES) {
-      def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(root, it))
+      def relativePath = FileUtilRt.toSystemIndependentName(FileUtilRt.getRelativePath(root, it))
       result[relativePath] = it
     }
     return result

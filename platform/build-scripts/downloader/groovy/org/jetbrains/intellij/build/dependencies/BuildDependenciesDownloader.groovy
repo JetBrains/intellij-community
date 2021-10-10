@@ -161,7 +161,7 @@ final class BuildDependenciesDownloader {
   }
 
   static void extractFile(Path archiveFile, Path target, Path communityRoot) {
-    def flagFile = getProjectLocalDownloadCache(communityRoot)
+    Path flagFile = getProjectLocalDownloadCache(communityRoot)
       .resolve(archiveFile.toString().sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
     extractFileWithFlagFileLocation(archiveFile, target, flagFile)
   }
@@ -179,7 +179,7 @@ final class BuildDependenciesDownloader {
 
     info(" * Downloading $uri -> $target")
 
-    def tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".tmp")
+    Path tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".tmp")
     try {
       def connection = (HttpURLConnection)uri.toURL().openConnection()
       connection.instanceFollowRedirects = true
@@ -189,8 +189,8 @@ final class BuildDependenciesDownloader {
       }
 
       connection.inputStream.withStream { inputStream ->
-        new FileOutputStream(tempFile.toFile()).withStream { outputStream ->
-          BuildDependenciesUtil.copyStream(inputStream, outputStream)
+        Files.newOutputStream(tempFile).withCloseable { outputStream ->
+          inputStream.transferTo(outputStream)
         }
       }
 

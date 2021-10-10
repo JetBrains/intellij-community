@@ -20,6 +20,7 @@ internal class BundledPluginsLister : ApplicationStarter {
 
   override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
 
+  // not premain because FileTypeManager is used to report extensions
   override fun main(args: List<String>) {
     try {
       val out: Writer = if (args.size == 2) {

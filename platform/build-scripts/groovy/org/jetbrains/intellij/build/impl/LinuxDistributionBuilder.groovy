@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -74,7 +74,9 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      if (customizer.buildOnlyBareTarGz) return
+      if (customizer.buildOnlyBareTarGz) {
+        return
+      }
 
       Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
       Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
@@ -92,7 +94,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         RepairUtilityBuilder.generateManifest(buildContext, tempTar.resolve(tarRoot).toString(), tarGzPath.fileName.toString())
       }
       finally {
-        FileUtil.delete(tempTar)
+        NioFiles.deleteRecursively(tempTar)
       }
     }
   }

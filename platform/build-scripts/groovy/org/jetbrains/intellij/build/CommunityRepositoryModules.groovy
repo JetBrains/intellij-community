@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -10,6 +9,7 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
+import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -513,8 +513,8 @@ final class CommunityRepositoryModules {
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext buildContext) {
-          buildContext.project.modules.forEach {
-            JpsModule module -> FileUtil.createDirectory(new File(buildContext.getModuleOutputPath(module)))
+          for (JpsModule module in buildContext.project.modules) {
+            Files.createDirectories(Path.of(buildContext.getModuleOutputPath(module)))
           }
           return null
         }

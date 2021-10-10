@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.Formats
@@ -85,7 +85,7 @@ internal class ImageSvgPreCompiler {
 
       val dbFile = args.getOrNull(0) ?: error("only one parameter is supported")
       val argsFile = args.getOrNull(1) ?: error("only one parameter is supported")
-      val dirs = Files.readAllLines(Paths.get(argsFile)).map { Paths.get(it) }
+      val dirs = Files.readAllLines(Path.of(argsFile)).map { Paths.get(it) }
 
       val productIcons = args.drop(2).toSortedSet()
       println("Expecting product icons: $productIcons")
