@@ -69,6 +69,12 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
     val arc = theme.underlineArc
     val color = if (active) theme.underlineColor else theme.inactiveUnderlineColor
     if (arc > 0) {
+      if (ExperimentalUI.isNewEditorTabs()) {
+        g.color = theme.borderColor
+        val x = rect.x.toDouble()
+        val y = rect.y.toDouble() + rect.height - 1
+        LinePainter2D.paint(g, x, y, x + rect.width, y)
+      }
       g.fill2DRoundRect(underline, arc.toDouble(), color)
     } else {
       g.fill2DRect(underline, color)
