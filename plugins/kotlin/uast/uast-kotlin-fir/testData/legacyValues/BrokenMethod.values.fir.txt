@@ -47,6 +47,6 @@ UFile (package = ) [public final class BrokenMethodKt {...]
                                         UReturnExpression [return <init>(this)] = Nothing
                                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(this)] = external <init>(this)(Undetermined)
                                                 UIdentifier (Identifier (Used)) [UIdentifier (Identifier (Used))]
-                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(this)(Undetermined)
+                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Used) [<init>] = external <init>(this)(Undetermined)
                                                 UThisExpression (label = null) [this] = Undetermined
                                 UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]
