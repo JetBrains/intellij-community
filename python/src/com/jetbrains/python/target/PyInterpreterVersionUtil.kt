@@ -5,11 +5,9 @@ package com.jetbrains.python.target
 
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
@@ -36,11 +34,9 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
             val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
             targetedCommandLineBuilder.setExePath(interpreterPath)
             targetedCommandLineBuilder.addParameter(flavor.versionOption)
-            // TODO [targets] Use meaningful `TargetProgressIndicator` instead of `EMPTY`
-            val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
-            val progressIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+            val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
             val targetedCommandLine = targetedCommandLineBuilder.build()
-            val process = targetEnvironment.createProcess(targetedCommandLine, progressIndicator)
+            val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
             val commandLineString = targetedCommandLine.collectCommandsSynchronously().joinToString(separator = " ")
             val capturingProcessHandler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
             val processOutput = capturingProcessHandler.runProcess()
