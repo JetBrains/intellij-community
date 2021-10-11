@@ -49,12 +49,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtCallableDeclaration.asClassMemberCompilerRefs(
         containingClass: KtClass,
         names: NameEnumerator,
-    ): List<CompilerRef>? = when {
-        this is KtNamedFunction -> containingClass.asCompilerRef(names)?.name?.let { qualifierId ->
-            asCompilerRefs(qualifierId, names)
+    ): List<CompilerRef>? {
+        val qualifierId = containingClass.asCompilerRef(names)?.name ?: return null
+        return when {
+            this is KtNamedFunction -> asCompilerRefs(qualifierId, names)
+            this is KtProperty -> asCompilerRefs(qualifierId, names)
+            else -> null
         }
-
-        else -> null
     }
 
     private fun KtCallableDeclaration.asObjectMemberCompilerRefs(
@@ -123,9 +124,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtProperty.asCompilerRefs(
         qualifier: String,
         names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember>? = asCompilerRefs(names.tryEnumerate(qualifier), names)
+
+    private fun KtProperty.asCompilerRefs(
+        qualifierId: Int,
+        names: NameEnumerator,
     ): List<CompilerRef.CompilerMember>? {
         val propertyName = name ?: return null
-        val qualifierId = names.tryEnumerate(qualifier)
         if (hasModifier(KtTokens.CONST_KEYWORD) || findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName().asString()) != null) {
             return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName)))
         }

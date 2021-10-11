@@ -1,13 +1,20 @@
 {
     "mainFile": "K.kt",
     "usages": [
+        "JJJK.java",
+        "JJK.java",
+        "JK.java",
+        "jjjk_.java",
         "jjjk_.kt",
+        "jjk_.java",
         "jjk_.kt",
         "jjkk_.kt",
+        "jk_.java",
         "jk_.kt",
         "jkjk_.kt",
         "jkk_.kt",
         "jkkk_.kt",
+        "k_.java",
         "k_.kt",
         "kjjk_.kt",
         "kjk_.kt",
@@ -16,5 +23,18 @@
         "kkjk_.kt",
         "kkk_.kt",
         "kkkk_.kt"
+    ],
+    "shouldBeUsage": [
+        "jjkk_.java",
+        "jkjk_.java",
+        "jkk_.java",
+        "jkkk_.java",
+        "kjjk_.java",
+        "kjk_.java",
+        "kjkk_.java",
+        "kk_.java",
+        "kkjk_.java",
+        "kkk_.java",
+        "kkkk_.java"
     ]
 }
