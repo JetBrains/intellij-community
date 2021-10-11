@@ -525,22 +525,23 @@ public final class MavenIndex implements MavenSearchIndex {
 
   public void addArtifact(final File artifactFile) {
     doIndexTask(() -> {
-      IndexedMavenId id = myData.addArtifact(artifactFile);
+      IndexData indexData = myData;
+      IndexedMavenId id = indexData.addArtifact(artifactFile);
       if (id == null) return null;
 
-      myData.hasGroupCache.put(id.groupId, true);
+      indexData.hasGroupCache.put(id.groupId, true);
 
       String groupWithArtifact = id.groupId + ":" + id.artifactId;
 
-      myData.hasArtifactCache.put(groupWithArtifact, true);
-      myData.hasVersionCache.put(groupWithArtifact + ':' + id.version, true);
+      indexData.hasArtifactCache.put(groupWithArtifact, true);
+      indexData.hasVersionCache.put(groupWithArtifact + ':' + id.version, true);
 
-      addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
-      addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+      addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
+      addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
       if ("maven-archetype".equals(id.packaging)) {
-        addToCache(myData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
+        addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
       }
-      myData.flush();
+      indexData.flush();
 
       return null;
     }, null);
