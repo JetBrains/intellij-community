@@ -110,9 +110,9 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
     is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
-                                                        null,
-                                                        requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
-    is PsiRecordComponent  -> convertRecordConstructorParameterAlternatives(element, null, requiredTypes) as Sequence<T>
+        null,
+        requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
+    is PsiRecordComponent -> convertRecordConstructorParameterAlternatives(element, null, requiredTypes) as Sequence<T>
     else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
   }
 
@@ -140,11 +140,9 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
         is PsiClassInitializer -> el<UClassInitializer>(build(::JavaUClassInitializer))
         is PsiEnumConstant -> el<UEnumConstant>(build(::JavaUEnumConstant))
         is PsiLocalVariable -> el<ULocalVariable>(build(::JavaULocalVariable))
-        is PsiRecordComponent -> convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
-        is LightRecordConstructorParameter ->
+        is PsiRecordComponent, is LightRecordConstructorParameter, is LightRecordField ->
           convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
         is PsiParameter -> el<UParameter>(build(::JavaUParameter))
-        is LightRecordField -> convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
         is PsiField -> el<UField>(build(::JavaUField))
         is PsiVariable -> el<UVariable>(build(::JavaUVariable))
         is PsiAnnotation -> el<UAnnotation>(build(::JavaUAnnotation))
