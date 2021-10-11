@@ -13,6 +13,15 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <projectListeners>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+  </projectListeners>
+
   <extensions defaultExtensionNs="com.intellij">
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
