@@ -676,37 +676,6 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  static List<String> addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
-    Path destLibDir = distDir.resolve("lib")
-    Path destProjectorLibDir = destLibDir.resolve("projector")
-    List<String> extraJars = new ArrayList<>()
-    Files.createDirectories(destProjectorLibDir)
-
-    def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
-
-    ArrayList<File> projectorLibsToCopy = new ArrayList<>()
-    ArrayList<String> failedLibs = new ArrayList<>()
-    for (String libName : libNamesToCopy) {
-      try {
-        projectorLibsToCopy.addAll(buildContext.project.libraryCollection.findLibrary(libName).getFiles(JpsOrderRootType.COMPILED))
-      } catch (Throwable ignored) {
-        failedLibs.add(libName)
-      }
-    }
-
-    if (!failedLibs.isEmpty()) {
-      buildContext.messages.error("Failed to get projector libraries: ${failedLibs.join(", ")}")
-    }
-
-    for (File file : projectorLibsToCopy) {
-      Files.copy(file.toPath(), destProjectorLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
-      extraJars += "projector/" + file.name
-    }
-
-    return extraJars
-  }
-
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
