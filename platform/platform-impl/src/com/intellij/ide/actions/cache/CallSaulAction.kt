@@ -45,4 +45,4 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
 
 private val isSaulHere: Boolean
   get() = ApplicationManager.getApplication().isInternal ||
-          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", false)
+          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", true)
