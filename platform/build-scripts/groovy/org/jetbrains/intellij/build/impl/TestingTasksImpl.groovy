@@ -466,7 +466,12 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     else {
+
+      //run all junit 5 tests in default package
+      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
+
       runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
+
     }
   }
   
@@ -501,8 +506,12 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    args.add("com.intellij.tests.JUnit5Runner")
-    args.add(suiteName)
+
+    def runner = suiteName != null ? "com.intellij.tests.JUnit5Runner" : "com.intellij.tests.JUnit5AllRunner"
+    args.add(runner)
+    if (suiteName != null) {
+      args.add(suiteName)
+    }
     if (methodName != null) {
       args.add(methodName)
     }

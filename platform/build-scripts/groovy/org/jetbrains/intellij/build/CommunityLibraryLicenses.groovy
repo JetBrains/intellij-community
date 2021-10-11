@@ -465,6 +465,7 @@ final class CommunityLibraryLicenses {
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", license: "CPL 1.0", url: "https://junit.org/"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit4", url: "https://junit.org/").eplV1(),
     new LibraryLicense(name: "JUnit5", libraryName: "JUnit5", url: "https://junit.org/junit5/").eplV2(),
+    new LibraryLicense(name: "JUnit5Jupiter", libraryName: "JUnit5Jupiter", url: "https://junit.org/junit5/").eplV2(),
     new LibraryLicense(name: "JUnit5Launcher", libraryName: "JUnit5Launcher", url: "https://junit.org/junit5/").eplV2(),
     new LibraryLicense(name: "JUnit5Vintage", libraryName: "JUnit5Vintage", url: "https://junit.org/junit5/").eplV2(),
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet",
