@@ -5,22 +5,28 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.lang.documentation.InlineDocumentation
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS_KEY
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
+import com.intellij.lang.documentation.impl.resolveLink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import java.awt.Point
 import java.lang.ref.WeakReference
 
 @Service
@@ -28,6 +34,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   companion object {
 
+    @JvmStatic
     fun instance(project: Project): DocumentationManager = project.service()
 
     var skipPopup: Boolean by propComponentProperty(name = "documentation.skip.popup", defaultValue = false)
@@ -141,5 +148,43 @@ internal class DocumentationManager(private val project: Project) : Disposable {
         lookup.removeLookupListener(this)
       }
     })
+  }
+
+  fun navigateInlineLink(
+    url: String,
+    documentation: () -> InlineDocumentation?
+  ): Unit = cs.handleUserAction {
+    val navigatable = withContext(Dispatchers.Default) {
+      readAction {
+        val ownerTarget = documentation()?.ownerTarget
+                          ?: return@readAction null
+        val linkResult = resolveLink(ownerTarget, url)
+        linkResult?.target?.navigatable
+      }
+    }
+    if (navigatable != null && navigatable.canNavigate()) {
+      navigatable.navigate(true)
+    }
+  }
+
+  fun activateInlineLink(
+    url: String,
+    documentation: () -> InlineDocumentation?,
+    editor: Editor,
+    popupPosition: Point
+  ): Unit = cs.handleUserAction {
+    val request = withContext(Dispatchers.Default) {
+      readAction {
+        val ownerTarget = documentation()?.ownerTarget
+                          ?: return@readAction null
+        val linkResult = resolveLink(ownerTarget, url)
+        linkResult?.target?.documentationRequest()
+      }
+    }
+    if (request == null) {
+      BrowserUtil.browseAbsolute(url)
+      return@handleUserAction
+    }
+    showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
   }
 }

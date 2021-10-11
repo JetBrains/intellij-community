@@ -13,7 +13,7 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.yield
 
-internal class DefaultPopupContext(
+internal open class DefaultPopupContext(
   private val project: Project,
   private val editor: Editor?,
 ) : PopupContext {

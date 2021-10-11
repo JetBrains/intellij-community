@@ -29,4 +29,12 @@ public interface InlineDocumentation {
   @RequiresReadLock
   @RequiresBackgroundThread
   @Nls @Nullable String renderText();
+
+  /**
+   * @return the target which represents the owner of this inline documentation, e.g. documentation target for a class,
+   * or {@code null} if there is no owner
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Nullable DocumentationTarget getOwnerTarget();
 }

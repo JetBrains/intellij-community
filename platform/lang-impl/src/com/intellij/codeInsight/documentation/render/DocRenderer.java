@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
@@ -64,6 +65,8 @@ import java.awt.image.ImageObserver;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
 class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
@@ -416,16 +419,40 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     }
     if (location == null) return;
 
+    String url = event.getDescription();
+    if (Registry.is("documentation.v2")) {
+      activateLinkV2(url, location);
+      return;
+    }
+
     InlineDocumentation documentation = myItem.getInlineDocumentation();
     if (documentation == null) return;
 
-    String url = event.getDescription();
     PsiElement context = ((PsiCommentInlineDocumentation)documentation).getContext();
     if (isGotoDeclarationEvent()) {
       navigateToDeclaration(context, url);
     }
     else {
       showDocumentation(myItem.editor, context, url, location);
+    }
+  }
+
+  private void activateLinkV2(@NotNull String url, @NotNull Rectangle2D location) {
+    Editor editor = myItem.editor;
+    Project project = editor.getProject();
+    if (project == null) {
+      return;
+    }
+    if (isGotoDeclarationEvent()) {
+      instance(project).navigateInlineLink(
+        url, myItem::getInlineDocumentation
+      );
+    }
+    else {
+      instance(project).activateInlineLink(
+        url, myItem::getInlineDocumentation,
+        editor, popupPosition(location)
+      );
     }
   }
 

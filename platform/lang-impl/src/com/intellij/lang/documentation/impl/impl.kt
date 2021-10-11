@@ -37,16 +37,15 @@ internal suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>
 }
 
 private fun doResolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
-  ApplicationManager.getApplication().assertIsNonDispatchThread()
   val target = targetPointer.dereference() ?: return InternalLinkResult.InvalidTarget
   val result = resolveLink(target, url) ?: return InternalLinkResult.CannotResolve
   return InternalLinkResult.OK(result.target.documentationRequest())
 }
 
-private fun resolveLink(target: DocumentationTarget, link: String): LinkResult? {
+internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
   for (handler in DocumentationLinkResolver.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
-    return handler.resolveLink(target, link) ?: continue
+    return handler.resolveLink(target, url) ?: continue
   }
   return null
 }

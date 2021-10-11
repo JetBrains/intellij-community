@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.lang.documentation.InlineDocumentation;
+import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
@@ -41,5 +43,11 @@ final class PsiCommentInlineDocumentation implements InlineDocumentation {
   @Override
   public @Nls @Nullable String renderText() {
     return DocumentationManager.getProviderFromElement(myComment).generateRenderedDoc(myComment);
+  }
+
+  @Override
+  public DocumentationTarget getOwnerTarget() {
+    PsiElement context = getContext();
+    return new PsiElementDocumentationTarget(context.getProject(), context, null, null);
   }
 }
