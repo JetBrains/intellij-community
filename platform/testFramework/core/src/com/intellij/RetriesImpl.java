@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
-import com.intellij.util.SystemProperties;
+import com.intellij.tests.Retries;
 import com.intellij.util.ThrowableRunnable;
 import junit.extensions.TestDecorator;
 import junit.framework.*;
@@ -16,16 +16,12 @@ import org.junit.runner.notification.StoppedByUserException;
 
 import java.util.Enumeration;
 
-/**
- * TeamCity note: <a href="https://www.jetbrains.com/help/teamcity/2021.1/build-failure-conditions.html#test-retry">test retry support</a> should be enabled for previously failed tests to be muted
- */
-final class Retries {
-  private static final int RETRY_NUMBER = SystemProperties.getIntProperty("intellij.build.test.retries.number", 0);
-  private Retries() { }
+final class RetriesImpl {
+  private RetriesImpl() { }
 
   static JUnit4TestAdapterCache maybeEnable(JUnit4TestAdapterCache cache) {
-    if (RETRY_NUMBER > 0) {
-      return new Retries.JUnit4TestAdapterCacheDelegate(cache);
+    if (Retries.NUMBER > 0) {
+      return new RetriesImpl.JUnit4TestAdapterCacheDelegate(cache);
     }
     else {
       return cache;
@@ -33,17 +29,17 @@ final class Retries {
   }
 
   static TestResult maybeEnable(TestResult testResult) {
-    if (RETRY_NUMBER > 0) {
+    if (Retries.NUMBER > 0) {
       testResult = new RetryingTestResult(testResult);
     }
     return testResult;
   }
 
   private static <T extends Throwable> void retryTest(String description, ThrowableRunnable<T> test) {
-    for (int i = 1; i <= RETRY_NUMBER; i++) {
+    for (int i = 1; i <= Retries.NUMBER; i++) {
       try {
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println(description + " failed, retrying attempt #" + i + " of " + RETRY_NUMBER);
+        System.out.println(description + " failed, retrying attempt #" + i + " of " + Retries.NUMBER);
         test.run();
         break;
       }
@@ -69,8 +65,8 @@ final class Retries {
       return;
     }
     var runner = Request.classWithoutSuiteMethod(testClass).filterWith(testDescription).getRunner();
-    var failureExposingListener = new FailureExposingListener();
-    notifier.addListener(failureExposingListener);
+    var failureExposingListener = new RetryListener();
+    notifier.addFirstListener(failureExposingListener);
     retryTest(testDescription.getDisplayName(), () -> {
       failureExposingListener.failure = null;
       runner.run(notifier);
@@ -78,6 +74,7 @@ final class Retries {
         throw failureExposingListener.failure.getException();
       }
     });
+    notifier.removeListener(failureExposingListener);
   }
 
   private static void retryTest(Test test, TestResult testResult) {
@@ -85,19 +82,21 @@ final class Retries {
       if ("warning".equals(((TestCase)test).getName())) {
         return;
       }
-      var failureExposingListener = new FailureExposingListener();
-      testResult.addListener(failureExposingListener);
+      var testResultDelegate = new TestResultDelegate(testResult);
+      var failureExposingListener = new RetryListener();
+      testResultDelegate.addFirstListener(failureExposingListener);
       retryTest(test.toString(), () -> {
-        synchronized (testResult) {
+        synchronized (testResultDelegate) {
           failureExposingListener.throwable = null;
         }
-        test.run(testResult);
-        synchronized (testResult) {
+        test.run(testResultDelegate);
+        synchronized (testResultDelegate) {
           if (failureExposingListener.throwable != null) {
             throw failureExposingListener.throwable;
           }
         }
       });
+      testResultDelegate.removeListener(failureExposingListener);
     }
     else if (!(test instanceof TestAll) &&
              !(test instanceof TestSuite) &&
@@ -153,7 +152,7 @@ final class Retries {
     @Override
     public void fireTestFinished(Description description) {
       delegate.fireTestFinished(description);
-      if (failure != null) {
+      if (failure != null && !Retries.shouldStop()) {
         retryTest(failure, delegate);
       }
     }
@@ -199,11 +198,52 @@ final class Retries {
     }
   }
 
-  private static class RetryingTestResult extends TestResult {
-    final TestResult delegate;
+  private static class RetryingTestResult extends TestResultDelegate {
     volatile Test failedTest;
 
     RetryingTestResult(TestResult delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void startTest(Test test) {
+      synchronized (this) {
+        failedTest = null;
+      }
+      super.startTest(test);
+    }
+
+    @Override
+    public synchronized void addError(Test test, Throwable e) {
+      super.addError(test, e);
+      if (!(e instanceof AssumptionViolatedException)) {
+        synchronized (this) {
+          failedTest = test;
+        }
+      }
+    }
+
+    @Override
+    public synchronized void addFailure(Test test, AssertionFailedError e) {
+      super.addFailure(test, e);
+      synchronized (this) {
+        failedTest = test;
+      }
+    }
+
+    @Override
+    public void endTest(Test test) {
+      super.endTest(test);
+      if (failedTest != null && !Retries.shouldStop()) {
+        retryTest(failedTest, delegate);
+      }
+    }
+  }
+
+  private static class TestResultDelegate extends TestResult {
+    final TestResult delegate;
+
+    TestResultDelegate(TestResult delegate) {
       this.delegate = delegate;
     }
 
@@ -215,36 +255,26 @@ final class Retries {
 
     @Override
     public void startTest(Test test) {
-      synchronized (this) {
-        failedTest = null;
-      }
       delegate.startTest(test);
     }
 
     @Override
     public synchronized void addError(Test test, Throwable e) {
       delegate.addError(test, e);
-      if (!(e instanceof AssumptionViolatedException)) {
-        synchronized (this) {
-          failedTest = test;
-        }
-      }
     }
 
     @Override
     public synchronized void addFailure(Test test, AssertionFailedError e) {
       delegate.addFailure(test, e);
-      synchronized (this) {
-        failedTest = test;
-      }
     }
 
     @Override
     public void endTest(Test test) {
       delegate.endTest(test);
-      if (failedTest != null) {
-        retryTest(failedTest, delegate);
-      }
+    }
+
+    synchronized void addFirstListener(TestListener listener) {
+      fListeners.add(0, listener);
     }
 
     @Override
@@ -298,13 +328,18 @@ final class Retries {
     }
   }
 
-  private static class FailureExposingListener extends RunListener implements TestListener {
+  private static class RetryListener extends RunListener implements TestListener {
     Failure failure;
     Throwable throwable;
 
     @Override
     public void testFailure(Failure failure) throws Exception {
       this.failure = failure;
+    }
+
+    @Override
+    public void testFinished(Description description) throws Exception {
+      Retries.testFinished(description, failure == null);
     }
 
     @Override
@@ -318,7 +353,9 @@ final class Retries {
     }
 
     @Override
-    public void endTest(Test test) { }
+    public void endTest(Test test) {
+      Retries.testFinished(test, throwable == null);
+    }
 
     @Override
     public void startTest(Test test) { }

@@ -141,6 +141,9 @@ public class JUnit5Runner {
         String message = throwable.getMessage();
         executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, message != null ? message : "");
       }
+      else if (Retries.NUMBER > 0 && testIdentifier.isTest() && Retries.getAndClearSuccessfulStatus(testIdentifier)) {
+        executionFinished(testIdentifier, TestExecutionResult.Status.SUCCESSFUL, null, null);
+      }
       else {
         executionFinished(testIdentifier, testExecutionResult.getStatus(), throwable, null);
       }
