@@ -20,7 +20,7 @@ class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
     if (accessibleRepositories.isEmpty()) return null
 
     return accessibleRepositories
-      .map { GHPathUtil.getFileURL(project, repository.root, it.ghRepositoryCoordinates, virtualFile, editor) }
+      .mapNotNull { GHPathUtil.getFileURL(project, repository.root, it.ghRepositoryCoordinates, virtualFile, editor) }
       .distinct()
       .joinToString("\n")
   }
