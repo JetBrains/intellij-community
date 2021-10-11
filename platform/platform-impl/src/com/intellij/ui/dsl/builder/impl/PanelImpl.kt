@@ -396,21 +396,19 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   private fun buttonGroup(buttonGroup: ButtonGroup, @NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit) {
     dialogPanelConfig.context.addButtonGroup(buttonGroup)
     try {
-      if (title == null) {
-        init()
-      }
-      else {
+      if (title != null) {
         val row = row {
           label(title)
             .applyToComponent { putClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP, true) }
         }
         row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
-        if (indent) {
-          indent(init)
-        }
-        else {
-          init()
-        }
+      }
+
+      if (indent) {
+        indent(init)
+      }
+      else {
+        init()
       }
     }
     finally {

@@ -113,14 +113,16 @@ interface Panel : CellBase<Panel> {
   /**
    * See documentation of overloaded buttonGroup method
    */
-  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit)
+  fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit)
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
    * Note that [Panel.group] provides different gaps around the title
+
+   * @param indent true if left indent is needed. By default, true if title exists and false otherwise
    */
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, indent: Boolean = true,
-                      init: Panel.() -> Unit)
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
+                      indent: Boolean = title != null, init: Panel.() -> Unit)
 
   fun onApply(callback: () -> Unit): Panel
 
@@ -142,18 +144,21 @@ interface Panel : CellBase<Panel> {
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
                                                @NlsContexts.BorderTitle title: String? = null,
+                                               indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), title, init)
+  buttonGroup(PropertyBinding(getter, setter), title, indent, init)
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
+                                               indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBinding(), title, init)
+  buttonGroup(prop.toBinding(), title, indent, init)
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
+                                               indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(binding, T::class.java, title) {
+  buttonGroup(binding, T::class.java, title, indent) {
     init()
   }
 }
