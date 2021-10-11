@@ -7,6 +7,8 @@ package com.intellij.ide.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -25,20 +27,39 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.isDirectory
 
-fun confirmOpeningUntrustedProject(
-  virtualFile: VirtualFile,
-  projectTypeNames: List<String>,
-): OpenUntrustedProjectChoice {
-  val systemsPresentation: String = NlsMessages.formatAndList(projectTypeNames)
-  return confirmOpeningUntrustedProject(
-    virtualFile.toNioPath(),
-    IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),
-    IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, projectTypeNames.size),
-    IdeBundle.message("untrusted.project.dialog.trust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-  )
+/**
+ * Shows the "Trust this project?" dialog, if the user wasn't asked yet if they trust this project,
+ * and sets the project trusted state according to the user choice.
+ *
+ * @return false if the user chose not to open the project at all;
+ *   true otherwise, i.e. if the user chose to open the project either in trust or in the safe mode,
+ *   or if the confirmation wasn't shown because the project trust state was already known.
+ */
+@ApiStatus.Internal
+fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
+  return invokeAndWaitIfNeeded {
+    val trustedPaths = TrustedPaths.getInstance()
+    val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
+    if (trustedState == ThreeState.UNSURE) {
+      val openingUntrustedProjectChoice = confirmOpeningUntrustedProject(projectDir)
+      when (openingUntrustedProjectChoice) {
+        OpenUntrustedProjectChoice.IMPORT -> trustedPaths.setProjectPathTrusted(projectDir, true)
+        OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING -> trustedPaths.setProjectPathTrusted(projectDir, false)
+        OpenUntrustedProjectChoice.CANCEL -> return@invokeAndWaitIfNeeded false
+      }
+    }
+    true
+  }
 }
+
+fun confirmOpeningUntrustedProject(projectFileOrDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
+  projectFileOrDir,
+  IdeBundle.message("untrusted.project.open.dialog.title"),
+  IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+  IdeBundle.message("untrusted.project.dialog.trust.button"),
+  IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+  IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+)
 
 fun confirmOpeningUntrustedProject(
   projectFileOrDir: Path,
@@ -109,16 +130,30 @@ fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
 fun Project.getTrustedState(): ThreeState {
   val explicit = this.service<TrustedProjectSettings>().trustedState
-  if (explicit != ThreeState.UNSURE) return explicit
-  return if (isProjectImplicitlyTrusted(this)) ThreeState.YES else ThreeState.UNSURE
+  if (explicit != ThreeState.UNSURE) {
+    return explicit
+  }
+  if (isProjectImplicitlyTrusted(this)) {
+    return ThreeState.YES
+  }
+  val projectPath = basePath
+  if (projectPath != null) {
+    return TrustedPaths.getInstance().getProjectPathTrustedState(Paths.get(projectPath))
+  }
+  return ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
-  val oldValue = this.service<TrustedProjectSettings>().trustedState
-  this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
+  val projectPath = basePath
+  if (projectPath != null) {
+    val path = Paths.get(projectPath)
+    val trustedPaths = TrustedPaths.getInstance()
+    val oldValue = trustedPaths.getProjectPathTrustedState(path)
+    trustedPaths.setProjectPathTrusted(path, value)
 
-  if (value && oldValue != ThreeState.YES) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
+    if (value && oldValue != ThreeState.YES) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
+    }
   }
 }
 
