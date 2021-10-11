@@ -110,6 +110,8 @@ final class CommunityLibraryLicenses {
                        url: "https://source.android.com/").apache(),
     new LibraryLicense(name: "Android Layout Library (Native)", libraryName: "layoutlib",
                        url: "https://source.android.com/").apache(),
+    new LibraryLicense(name: "Android Layout Library (Native)", libraryName: "jb-layoutlib-native-jdk11",
+                       url: "https://source.android.com/").apache(),
     new LibraryLicense(name: "Android libwebp library", libraryName: "libwebp.jar",
                        url: "https://github.com/webmproject/libwebp",
                        version: LibraryLicense.CUSTOM_REVISION).apache(),
