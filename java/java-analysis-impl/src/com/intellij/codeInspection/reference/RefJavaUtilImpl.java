@@ -116,8 +116,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              if (resolve instanceof PsiMember) {
                                final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
                                refFrom.addReference(refResolved, resolve, decl, false, true, null);
-                               if (refResolved instanceof RefMethod) {
-                                 updateRefMethod(resolve, refResolved, node, decl, refFrom);
+                               if (refResolved instanceof RefMethodImpl) {
+                                 updateRefMethod(resolve, (RefMethodImpl)refResolved, node, decl, refFrom);
                                }
                              }
                            }
@@ -219,8 +219,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          boolean reading = isAccessedForReading(node);
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
-                         if (refResolved instanceof RefMethod) {
-                           updateRefMethod(psiResolved, refResolved, node, decl, refFrom);
+                         if (refResolved instanceof RefMethodImpl) {
+                           updateRefMethod(psiResolved, (RefMethodImpl)refResolved, node, decl, refFrom);
                          }
 
                          if (psiResolved instanceof PsiMember) {
@@ -258,7 +258,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          PsiElement functionalExpr = expression.getSourcePsi();
                          RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
-                         refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, null);
+                         refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
                        @Nullable
@@ -347,7 +347,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                UClass uClass = refClass.getUastElement();
                                if (uClass != null && uClass.getJavaPsi().isEnum()) {
                                  for (RefEntity child : refClass.getChildren()) {
-                                   if (child instanceof RefField) {
+                                   if (child instanceof RefFieldImpl) {
                                      UField uField = ((RefField)child).getUastElement();
                                      if (uField instanceof UEnumConstant) {
                                        ((RefFieldImpl)child).markReferenced(refFrom, false, true, node);
@@ -359,7 +359,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              }
 
                              if (!hasConstructorsMarked) {
-                               refFrom.addReference(refClass, psiClass, from, false, true, null);
+                               refFrom.addReference(refClass, psiClass, from, false, true, node);
                              }
                            }
                          }
@@ -387,8 +387,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node,
-                                                   @NotNull UElement decl) {
+  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node, @NotNull UElement decl) {
     //TODO see KT-25524
     if (node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
       UIdentifier identifier = ((UCallExpression)node).getMethodIdentifier();
@@ -406,12 +405,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   private void updateRefMethod(PsiElement psiResolved,
-                               RefElement refResolved,
+                               RefMethodImpl refMethod,
                                UExpression refExpression,
                                final UElement uFrom,
                                final RefElement refFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
-    RefMethodImpl refMethod = (RefMethodImpl)refResolved;
 
     if (refExpression instanceof UCallableReferenceExpression) {
       PsiType returnType = uMethod.getReturnType();
@@ -714,7 +712,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   private static boolean isAccessedForWriting(@NotNull UElement expression) {
     if (isOnAssignmentLeftHand(expression)) return true;
-    UElement parent = skipParenthesises(expression);
+    UElement parent = skipParentheses(expression);
     return isIncrementDecrement(parent);
   }
 
@@ -728,21 +726,21 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   private static boolean isAccessedForReading(@NotNull UElement expression) {
-    UElement parent = skipParenthesises(expression);
+    UElement parent = skipParentheses(expression);
     return !(parent instanceof UBinaryExpression) ||
            !(((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator) ||
            UastUtils.isUastChildOf(((UBinaryExpression)parent).getRightOperand(), expression, false);
   }
 
   private static boolean isOnAssignmentLeftHand(@NotNull UElement expression) {
-    UExpression parent = ObjectUtils.tryCast(skipParenthesises(expression), UExpression.class);
+    UExpression parent = ObjectUtils.tryCast(skipParentheses(expression), UExpression.class);
     if (parent == null) return false;
     return parent instanceof UBinaryExpression
            && ((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator
            && UastUtils.isUastChildOf(expression, ((UBinaryExpression)parent).getLeftOperand(), false);
   }
 
-  private static UElement skipParenthesises(@NotNull UElement expression) {
+  private static UElement skipParentheses(@NotNull UElement expression) {
     return UastUtils.skipParentOfType(expression, true, UParenthesizedExpression.class);
   }
 }
