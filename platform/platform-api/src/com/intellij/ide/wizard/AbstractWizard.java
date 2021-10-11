@@ -547,7 +547,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
-  private static boolean isNewWizard() {
+  public static boolean isNewWizard() {
     return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 

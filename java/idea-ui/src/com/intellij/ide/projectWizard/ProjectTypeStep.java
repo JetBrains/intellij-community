@@ -226,11 +226,31 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
+  private static List<TemplatesGroup> getUserTemplatesMap(@NotNull WizardContext context) {
+    ArrayList<ProjectTemplate> result = new ArrayList<>();
+    ContainerUtil.addAll(result, new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, context));
+
+    List<TemplatesGroup> templatesGroups = new ArrayList<>();
+    for (ProjectTemplate template : result) {
+      AbstractModuleBuilder builder = template.createModuleBuilder();
+      if (template instanceof ArchivedProjectTemplate && builder instanceof ModuleBuilder) {
+        templatesGroups.add(new TemplatesGroup(template.getName(), template.getDescription(), template.getIcon(), 0, null,
+                                               builder.getBuilderId(), ((ModuleBuilder)builder)));
+      }
+    }
+    return templatesGroups;
+  }
+
   private static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<>();
     for (ProjectTemplatesFactory factory : factories) {
       for (String group : factory.getGroups()) {
+        //don't add "User-defined" node for new project wizard
+        if (isNewWizard() && factory instanceof ArchivedTemplatesFactory) {
+          continue;
+        }
+
         ProjectTemplate[] templates = factory.createTemplates(group, context);
         List<ProjectTemplate> values = Arrays.asList(templates);
         if (!values.isEmpty()) {
@@ -353,6 +373,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       if (context.isCreatingNewProject()) {
         groups.add(0, new TemplatesGroup(NewEmptyProjectType.INSTANCE.createModuleBuilder()));
         groups.add(0, new TemplatesGroup(NewProjectType.INSTANCE.createModuleBuilder()));
+        groups.addAll(getUserTemplatesMap(context));
       }
       else {
         groups.add(0, new TemplatesGroup(NewModuleType.INSTANCE.createModuleBuilder()));
@@ -386,10 +407,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     mySettingsStep = null;
     myHeaderPanel.removeAll();
     if (groupModuleBuilder != null && groupModuleBuilder.getModuleType() != null) {
-      mySettingsStep = groupModuleBuilder.modifyProjectTypeStep(this);
+      if (!isNewWizard()) {
+        mySettingsStep = groupModuleBuilder.modifyProjectTypeStep(this);
+      }
     }
 
-    if (groupModuleBuilder == null || groupModuleBuilder.isTemplateBased()) {
+    if (groupModuleBuilder == null || (!isNewWizard() && groupModuleBuilder.isTemplateBased())) {
       showTemplates(group);
     }
     else if (!showCustomOptions(groupModuleBuilder)){
@@ -470,6 +493,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     ModuleWizardStep customStep;
     if (!myCustomSteps.containsKey(card)) {
       ModuleWizardStep step = builder.getCustomOptionsStep(myContext, this);
+      if (isNewWizard() && builder instanceof TemplateModuleBuilder) {
+        step = new ProjectSettingsStep(myContext);
+        myContext.setProjectBuilder(builder);
+      }
       if (step == null) return false;
       step.updateStep();
       myCustomSteps.put(card, step);
@@ -820,7 +847,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
         @Override
         public String getCaptionAboveOf(TemplatesGroup value) {
-          return isNewWizard() ? UIBundle.message("list.caption.group.generators") : super.getCaptionAboveOf(value);
+          return isNewWizard()
+                 ? value.getModuleBuilder() instanceof TemplateModuleBuilder
+                   ? UIBundle.message("list.caption.group.templates")
+                   : UIBundle.message("list.caption.group.generators")
+                 : super.getCaptionAboveOf(value);
         }
 
         @Override
@@ -829,6 +860,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           if (index < 1) return false;
           TemplatesGroup upper = groups.get(index - 1);
           if (isNewWizard()) {
+            if (value.getModuleBuilder() instanceof TemplateModuleBuilder && !(upper.getModuleBuilder() instanceof TemplateModuleBuilder)) {
+              return true;
+            }
+
             ModuleBuilder builder = upper.getModuleBuilder();
             return builder instanceof NewEmptyProjectBuilder || builder instanceof NewModuleBuilder;
           }
