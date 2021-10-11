@@ -1,8 +1,14 @@
 {
     "mainFile": "KJ.kt",
     "usages": [
+        "JKJ.java",
+        "jkj_.java",
         "jkj_.kt",
+        "kj_.java",
         "kj_.kt",
         "kkj_.kt"
+    ],
+    "shouldBeUsage": [
+        "kkj_.java"
     ]
 }

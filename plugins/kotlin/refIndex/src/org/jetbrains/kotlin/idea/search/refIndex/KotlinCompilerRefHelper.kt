@@ -49,7 +49,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtCallableDeclaration.asClassMemberCompilerRefs(
         containingClass: KtClass,
         names: NameEnumerator,
-    ): List<CompilerRef>? = null
+    ): List<CompilerRef>? = when {
+        this is KtNamedFunction -> containingClass.asCompilerRef(names)?.name?.let { qualifierId ->
+            asCompilerRefs(qualifierId, names)
+        }
+
+        else -> null
+    }
 
     private fun KtCallableDeclaration.asObjectMemberCompilerRefs(
         containingObject: KtObjectDeclaration,
