@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
@@ -139,6 +140,37 @@ class StaticMembersCompletion(
 
         extensionsFromObjects.asSequence()
             .filter { it !in alreadyAdded }
+            .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
+            .forEach { collector.addElement(it) }
+
+        collector.flushToResultSet()
+    }
+
+    /**
+     * Find all extension methods and properties declared in objects or inherited by objects
+     * from their superclasses, and add them to the collector.
+     *
+     * @param indicesHelper an instance of indices helper to look up for candidate objects
+     * @param receiverTypes the receiver types at the completion site
+     * @param callTypeAndReceiver the type of call
+     * @param collector a collector for candidates
+     */
+    fun completeExplicitAndInheritedMemberExtensionsFromIndices(
+        indicesHelper: KotlinIndicesHelper,
+        receiverTypes: Collection<KotlinType>,
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        collector: LookupElementsCollector
+    ) {
+        val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
+
+        val objectMemberExtensions = indicesHelper.getAllCallablesFromSubclassObjects(
+            callTypeAndReceiver,
+            receiverTypes,
+            nameFilter = { prefixMatcher.prefixMatches(it) }
+        )
+
+        objectMemberExtensions
+            .filter { it.isExtension && it !in alreadyAdded }
             .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
             .forEach { collector.addElement(it) }
 

@@ -103,11 +103,16 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexObject(@NotNull KotlinObjectStub stub, @NotNull IndexSink sink) {
-        processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
+        String shortName = stub.getName();
+        processNames(sink, shortName, stub.getFqName(), stub.isTopLevel());
 
         indexSuperNames(stub, sink);
 
         indexPrime(stub, sink);
+
+        if (shortName != null && !stub.isObjectLiteral() && !stub.getSuperNames().isEmpty()) {
+            sink.occurrence(KotlinSubclassObjectNameIndex.getInstance().getKey(), shortName);
+        }
     }
 
     private static void processNames(

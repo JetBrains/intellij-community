@@ -355,9 +355,18 @@ class BasicCompletionSession(
                     }
 
                     if (shouldCompleteExtensionsFromObjects) {
+                        val receiverKotlinTypes = receiverTypes.map { it.type }
+
                         staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
-                            indicesHelper(false),
-                            receiverTypes.map { it.type },
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
+                            callTypeAndReceiver,
+                            collector
+                        )
+
+                        staticMembersCompletion.completeExplicitAndInheritedMemberExtensionsFromIndices(
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
                             callTypeAndReceiver,
                             collector
                         )

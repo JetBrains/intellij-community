@@ -338,7 +338,12 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
         val processor = { descriptor: CallableDescriptor ->
             if (descriptor.canBeReferencedViaImport() && filterByCallType(descriptor)) {
                 if (descriptor.extensionReceiverParameter != null) {
-                    result.addAll(descriptor.substituteExtensionIfCallable(actualReceivers.allReceivers, callTypeAndReceiver.callType))
+                    result.addAll(
+                        descriptor.substituteExtensionIfCallable(
+                            actualReceivers.explicitReceivers.ifEmpty { actualReceivers.allReceivers },
+                            callTypeAndReceiver.callType
+                        )
+                    )
                 } else if (descriptor.isValidByReceiversFor(actualReceivers, checkDispatchReceiver)) {
                     result.add(descriptor)
                 }
@@ -348,6 +353,12 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
         indicesHelper.processKotlinCallablesByName(
             name,
             filter = { declaration -> (declaration.parent as? KtClassBody)?.parent is KtObjectDeclaration },
+            processor = processor
+        )
+
+        indicesHelper.processAllCallablesInSubclassObjects(
+            name,
+            callTypeAndReceiver, element, bindingContext,
             processor = processor
         )
 
