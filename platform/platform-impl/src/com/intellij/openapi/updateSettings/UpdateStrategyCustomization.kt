@@ -1,19 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings
 
+import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.util.BuildNumber
 
-class UpdateStrategyCustomization {
-
+/**
+ * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
+ */
+open class UpdateStrategyCustomization {
   companion object {
     @JvmStatic
-    open fun getInstance(): UpdateStrategyCustomization {
-      return ApplicationManager.getApplication().getService(UpdateStrategyCustomization::class.java)
-    }
+    val instance: UpdateStrategyCustomization
+      get() = ApplicationManager.getApplication().getService(UpdateStrategyCustomization::class.java)
   }
 
   open fun forceEapUpdateChannelForEapBuilds(): Boolean {

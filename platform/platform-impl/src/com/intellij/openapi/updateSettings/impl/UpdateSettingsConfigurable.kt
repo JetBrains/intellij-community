@@ -37,7 +37,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
     val manager = ExternalUpdateManager.ACTUAL
-    val isChannelSelectionHidden = UpdateStrategyCustomization.getInstance().isChannelSelectionDisabled()
+    val isChannelSelectionHidden = UpdateStrategyCustomization.instance.isChannelSelectionDisabled()
     val appInfo = ApplicationInfo.getInstance()
     val channelModel = CollectionComboBoxModel(settings.activeChannels)
 

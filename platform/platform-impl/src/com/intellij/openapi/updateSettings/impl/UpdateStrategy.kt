@@ -12,7 +12,7 @@ class UpdateStrategy @JvmOverloads constructor(
   private val currentBuild: BuildNumber,
   private val product: Product? = null,
   private val settings: UpdateSettings = UpdateSettings.getInstance(),
-  private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
+  private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.instance,
 ) {
 
   @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
