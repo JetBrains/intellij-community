@@ -72,7 +72,6 @@ public class RegistryUi implements Disposable {
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
     myTable.setVisibleRowCount(15);
-    myTable.setCellSelectionEnabled(true);
     myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();
 
@@ -157,6 +156,7 @@ public class RegistryUi implements Disposable {
         }
       },
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+    ScrollingUtil.ensureSelectionExists(myTable);
   }
 
   private final class RevertAction extends AnAction implements DumbAware {
