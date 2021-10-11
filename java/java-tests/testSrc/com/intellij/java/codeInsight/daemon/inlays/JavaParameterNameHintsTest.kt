@@ -23,10 +23,14 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_8_ANNOTATED
+  }
 
   override fun tearDown() {
     val default = ParameterNameHintsSettings()
@@ -458,7 +462,7 @@ public class VarArgTest {
 class Test {
 
   public void main() {
-    String.format("line", "eee", "www");
+    String.format(<hint text="s:"/>"line", <hint text="...objects:"/>"eee", "www");
   }
 
 }
@@ -1164,6 +1168,18 @@ public class Test {
     void foo() {
       new A(/* comment not necessarily related to name */ true, <hint text="middleWithoutComments:"/>false, true /**/);
     }
+}""")
+  }
+
+  fun `test optional empty`() {
+    check("""
+import java.util.Optional;
+public class Test {
+    void main() {
+      foo(<hint text="s:"/>Optional.empty());
+    }
+
+    static void foo(Optional<String> s) {}
 }""")
   }
 

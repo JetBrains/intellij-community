@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
+import com.siyeh.ig.callMatcher.CallMatcher
 
 
 object JavaInlayHintsProvider {
@@ -260,6 +261,9 @@ fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
 }
 
+private val OPTIONAL_EMPTY: CallMatcher = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "empty")
+  .parameterCount(0)
+
 private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
   if (JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.get()) return true
   return when (callArgument) {
@@ -272,6 +276,7 @@ private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
       val isLiteral = callArgument.operand is PsiLiteralExpression
       isLiteral && (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType)
     }
+    is PsiMethodCallExpression -> OPTIONAL_EMPTY.matches(callArgument)
     else -> false
   }
 }
