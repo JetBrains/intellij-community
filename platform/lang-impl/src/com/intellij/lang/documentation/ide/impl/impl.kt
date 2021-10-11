@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 internal fun CoroutineScope.updateFromRequests(requests: Flow<DocumentationRequest?>, browser: DocumentationBrowser) {
   launch(Dispatchers.Default) {
     requests.collectLatest {
-      val request = it ?: DocumentationRequest(EmptyDocumentationTarget, EmptyDocumentationTarget.presentation)
+      val request = it ?: EmptyDocumentationTarget.request
       browser.resetBrowser(request)
     }
   }
