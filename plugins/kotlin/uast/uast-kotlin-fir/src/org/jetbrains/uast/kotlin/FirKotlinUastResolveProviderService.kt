@@ -220,7 +220,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() as? KtConstructorSymbol ?: return false
             val ktType = resolvedAnnotationConstructorSymbol.annotatedType.type
-            val psiClass = toPsiClass(ktType, null, ktCallElement, ktCallElement.typeOwnerKind) ?: return false
+            val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktCallElement
+            val psiClass = toPsiClass(ktType, null, context, ktCallElement.typeOwnerKind) ?: return false
             return psiClass.isAnnotationType
         }
     }
@@ -229,7 +230,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null
             return when (resolvedFunctionLikeSymbol) {
-                is KtConstructorSymbol,
+                is KtConstructorSymbol -> {
+                    val context = containingKtClass(resolvedFunctionLikeSymbol) ?: ktCallElement
+                    toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, source, context, ktCallElement.typeOwnerKind)
+                }
                 is KtSamConstructorSymbol -> {
                     toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, source, ktCallElement, ktCallElement.typeOwnerKind)
                 }
@@ -244,7 +248,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedAnnotationConstructorSymbol =
                 resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
             val ktType = resolvedAnnotationConstructorSymbol.annotatedType.type
-            return toPsiClass(ktType, source, ktAnnotationEntry, ktAnnotationEntry.typeOwnerKind)
+            val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktAnnotationEntry
+            return toPsiClass(ktType, source, context, ktAnnotationEntry.typeOwnerKind)
         }
     }
 
