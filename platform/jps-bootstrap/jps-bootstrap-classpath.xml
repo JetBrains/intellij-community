@@ -4,7 +4,7 @@
   <property name="community.home" value="${jps.bootstrap.dir}/../.."/>
   <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
-  <property name="uber.jar" value="${build.dir}/jps-bootstrap-all.jar" />
+  <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property name="m2.dir" value="${build.dir}/m2" />
   <property environment="env"/>
   <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
@@ -95,34 +95,31 @@
       classpathref="classpath.buildscripts"
     />
 
-    <path id="whole.classpath.id" cache="true">
-      <path refid="classpath.buildscripts" />
-      <pathelement path="${kotlin.home}/Kotlin/lib/jps/kotlin-jps-plugin.jar" />
-      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-jps-common.jar" />
-      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-plugin.jar" />
-      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-common.jar" />
-      <pathelement path="${kotlin.home}/Kotlin/lib/kotlin-reflect.jar" />
-    </path>
+    <!-- Used later in JpsBootstrapMain to compare Kotlin versions -->
+    <echo message="${kotlin.url}" file="${classes.dir}/kotlin.zip.url" />
 
-    <pathconvert pathsep="${path.separator}" property="whole.classpath.property" refid="whole.classpath.id"/>
-    <echo file="${build.dir}/classpath.pathlist" message="&quot;${whole.classpath.property}${path.separator}${classes.dir}&quot;" />
-    <echo message="JpsBootstrapMain classpath: see ${build.dir}/classpath.pathlist" />
+    <delete file="${classes.dir}.jar" />
+    <zip destfile="${classes.dir}.jar">
+      <fileset dir="${classes.dir}" />
+    </zip>
 
+    <mkdir dir="${uber.dir}" />
+    <sync todir="${uber.dir}">
+      <mappedresources>
+        <flattenmapper />
+
+        <resources>
+          <path refid="classpath.buildscripts" />
+
+          <file file="${classes.dir}.jar" />
+
+          <file file="${kotlin.home}/Kotlin/lib/jps/kotlin-jps-plugin.jar" />
+          <file file="${kotlin.home}/Kotlin/lib/kotlin-jps-common.jar" />
+          <file file="${kotlin.home}/Kotlin/lib/kotlin-plugin.jar" />
+          <file file="${kotlin.home}/Kotlin/lib/kotlin-common.jar" />
+          <file file="${kotlin.home}/Kotlin/lib/kotlin-reflect.jar" />
+        </resources>
+      </mappedresources>
+    </sync>
   </target>
-
-  <target name="jps-bootstrap-all-jar" depends="jps-bootstrap-classpath">
-    <delete dir="${build.dir}/libs"/>
-    <mkdir dir="${build.dir}/libs"/>
-    <copy todir="${build.dir}/libs" flatten="true">
-      <path refid="whole.classpath.id" />
-    </copy>
-
-    <jar destfile="${uber.jar}" basedir="${classes.dir}">
-      <manifest>
-        <attribute name="Main-Class" value="JpsBootstrapMain"/>
-      </manifest>
-      <zipgroupfileset dir="${build.dir}/libs"/>
-    </jar>
-  </target>
-
 </project>

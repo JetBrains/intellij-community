@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -35,27 +36,58 @@ import java.util.*;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
 public class JpsBootstrapMain {
 
-  private static final String PROJECT_HOME_ENV = "JPS_BOOTSTRAP_PROJECT_HOME";
+  private static final String COMMUNITY_HOME_ENV = "COMMUNITY_HOME";
+  private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
 
   @SuppressWarnings("ConfusingArgumentToVarargsMethod")
   public static void main(String[] args) throws Throwable {
     long startTime = System.currentTimeMillis();
 
-    String projectHomeString = System.getenv(PROJECT_HOME_ENV);
-    if (projectHomeString == null) {
-      System.err.println("Please set " + PROJECT_HOME_ENV + " environment variable");
-      System.exit(1);
+    if (args.length != 2) {
+      fatal("Usage: jps-bootstrap MODULE_NAME CLASS_NAME");
     }
 
-    Path projectHome = Path.of(projectHomeString);
-    Path buildDir = projectHome.resolve("out").resolve("jps-bootstrap");
+    String moduleName = args[0];
+    String className = args[1];
+
+    String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
+    if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
+
+    Path communityHome = Path.of(communityHomeString);
+
+    Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
+    if (!Files.exists(communityCheckFile)) fatal(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
+
+    Path projectHome;
+
+    Path ultimateCheckFile = communityHome.getParent().resolve("intellij.idea.ultimate.main.iml");
+    if (Files.exists(ultimateCheckFile)) {
+      projectHome = communityHome.getParent();
+    }
+    else {
+      warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
+      projectHome = communityHome;
+    }
+
+    Path workDir;
+
+    if (System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV) != null) {
+      workDir = Path.of(System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV));
+    }
+    else {
+      workDir = communityHome.resolve("out").resolve("jps-bootstrap");
+    }
+
+    info("Working directory: " + workDir);
+
+    Files.createDirectories(workDir);
 
     JpsModel model = JpsElementFactory.getInstance().createModel();
     JpsPathVariablesConfiguration pathVariablesConfiguration =
       JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.getGlobal());
     pathVariablesConfiguration.addPathVariable(
       "MAVEN_REPOSITORY",
-      FileUtilRt.toSystemIndependentName(buildDir.resolve("m2").toAbsolutePath().toString()));
+      FileUtilRt.toSystemIndependentName(workDir.resolve("m2").toAbsolutePath().toString()));
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
@@ -72,50 +104,46 @@ public class JpsBootstrapMain {
 
     addSdk(model, "corretto-11", System.getProperty("java.home"));
 
-    String url = "file://" + FileUtilRt.toSystemIndependentName(buildDir.resolve("out").toString());
+    String url = "file://" + FileUtilRt.toSystemIndependentName(workDir.resolve("out").toString());
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(model.getProject()).setOutputUrl(url);
 
     System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true");
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false");
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true");
-    System.setProperty(GlobalOptions.LOG_DIR_OPTION, buildDir.resolve("log").toString());
+    System.setProperty(GlobalOptions.LOG_DIR_OPTION, workDir.resolve("log").toString());
     System.out.println("Log: " + System.getProperty(GlobalOptions.LOG_DIR_OPTION));
 
     JpsModule module = model.getProject().getModules()
       .stream()
-      .filter(m -> "intellij.idea.community.build".equals(m.getName()))
+      .filter(m -> moduleName.equals(m.getName()))
       .findFirst().orElseThrow();
 
-    final boolean[] errors = {false};
+    final String[] firstError = {null};
 
-    Path dataStorageRoot = buildDir.resolve("jps-build-data");
+    Path dataStorageRoot = workDir.resolve("jps-build-data");
     Standalone.runBuild(
       () -> model,
       dataStorageRoot.toFile(),
       false,
-      //            setOf("intellij.platform.util"),
       ContainerUtil.set(module.getName()),
       false,
       Collections.emptyList(),
       false,
       msg -> {
         BuildMessage.Kind kind = msg.getKind();
-        //if (kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR || kind == BuildMessage.Kind.PROGRESS) {
-        if (kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) {
-          System.out.println(kind + " " + msg.getMessageText());
-        }
 
-        if (kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) {
-          errors[0] = true;
+        System.out.println(kind + " " + msg.getMessageText());
+
+        if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) && firstError[0] == null) {
+          firstError[0] = msg.getMessageText();
         }
       }
     );
 
     System.out.println("Finished build in " + (System.currentTimeMillis() - buildStart) + " ms");
 
-    if (errors[0]) {
-      System.err.println("Build finished with errors");
-      System.exit(1);
+    if (firstError[0] != null) {
+      fatal("Build finished with errors. First error: " + firstError[0]);
     }
 
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
@@ -131,8 +159,10 @@ public class JpsBootstrapMain {
       roots.add(toURL);
     }
 
-    try (URLClassLoader classloader = new URLClassLoader(roots.toArray(new URL[0]), ClassLoader.getSystemClassLoader())) {
-      Class<?> mainClass = classloader.loadClass("org.jetbrains.intellij.build.ExampleGroovyMain");
+    info("Running class " + className + " from module " + moduleName);
+
+    try (URLClassLoader classloader = new URLClassLoader(roots.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
+      Class<?> mainClass = classloader.loadClass(className);
 
       MethodHandles.lookup()
         .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
@@ -163,5 +193,19 @@ public class JpsBootstrapMain {
     for (String moduleUrl : readModulesFromReleaseFile(Path.of(sdkHome))) {
       additionalSdk.addRoot(moduleUrl, JpsOrderRootType.COMPILED);
     }
+  }
+
+  private static void warn(String message) {
+    System.out.println("WARN: " + message);
+  }
+
+  private static void info(String message) {
+    System.out.println(message);
+  }
+
+  @Contract("_->fail")
+  private static void fatal(String message) {
+    System.err.println("FATAL: " + message);
+    System.exit(1);
   }
 }

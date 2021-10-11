@@ -1,0 +1,77 @@
+@echo off
+
+set JPS_BOOTSTRAP_DIR=%~dp0
+
+for %%F in ("%JPS_BOOTSTRAP_DIR%\.") do set COMMUNUTY_PLATFORM_DIR=%%~dpF
+for %%F in ("%COMMUNUTY_PLATFORM_DIR%\.") do set COMMUNITY_HOME=%%~dpF
+for %%F in ("%COMMUNUTY_HOME%\.") do set INTELLIJ_HOME=%%~dpF
+
+if "%JPS_BOOTSTRAP_WORK_DIR%"=="" set JPS_BOOTSTRAP_WORK_DIR=%COMMUNITY_HOME%out\jps-bootstrap\
+
+set SCRIPT_VERSION=jps-bootstrap-cmd-v1
+set COMPANY_NAME=JetBrains
+set TARGET_DIR=%LOCALAPPDATA%\Temp\%COMPANY_NAME%\
+set JVM_TARGET_DIR=%TARGET_DIR%amazon-corretto-11.0.9.12.1-windows-x64-jdk-%SCRIPT_VERSION%\
+set JVM_TEMP_FILE=jvm-windows-x64.zip
+set JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-windows-x64-jdk.zip
+
+set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+
+if not exist "%JVM_TARGET_DIR%" MD "%JVM_TARGET_DIR%"
+
+if not exist "%JVM_TARGET_DIR%.flag" goto downloadAndExtractJvm
+
+set /p CURRENT_FLAG=<"%JVM_TARGET_DIR%.flag"
+if "%CURRENT_FLAG%" == "%JVM_URL%" goto continueWithJvm
+
+:downloadAndExtractJvm
+
+cd /d "%TARGET_DIR%"
+if errorlevel 1 goto fail
+
+echo Downloading %JVM_URL% to %TARGET_DIR%%JVM_TEMP_FILE%
+if exist "%JVM_TEMP_FILE%" DEL /F "%JVM_TEMP_FILE%"
+"%POWERSHELL%" -nologo -noprofile -Command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; (New-Object Net.WebClient).DownloadFile('%JVM_URL%', '%JVM_TEMP_FILE%')"
+if errorlevel 1 goto fail
+
+rmdir /S /Q "%JVM_TARGET_DIR%"
+if errorlevel 1 goto fail
+
+mkdir "%JVM_TARGET_DIR%"
+if errorlevel 1 goto fail
+
+cd /d "%JVM_TARGET_DIR%"
+if errorlevel 1 goto fail
+
+echo Extracting %TARGET_DIR%%JVM_TEMP_FILE% to %JVM_TARGET_DIR%
+"%POWERSHELL%" -nologo -noprofile -command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory('..\\%JVM_TEMP_FILE%', '.');"
+if errorlevel 1 goto fail
+
+del /F "..\%JVM_TEMP_FILE%"
+if errorlevel 1 goto fail
+
+echo %JVM_URL%>"%JVM_TARGET_DIR%.flag"
+if errorlevel 1 goto fail
+
+:continueWithJvm
+
+set JAVA_HOME=
+for /d %%d in ("%JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+if not exist "%JAVA_HOME%\bin\java.exe" (
+  echo Unable to find java.exe under %JVM_TARGET_DIR%
+  goto fail
+)
+
+:continueWithJavaHome
+
+set JAVA_EXE=%JAVA_HOME%\bin\java.exe
+
+"%JAVA_HOME%\bin\java.exe" -jar "%COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
+if errorlevel 1 goto fail
+
+"%JAVA_HOME%\bin\java.exe" -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" JpsBootstrapMain %*
+exit /B %ERRORLEVEL%
+
+:fail
+echo ERROR occurred, see the output above
+exit /B 1
