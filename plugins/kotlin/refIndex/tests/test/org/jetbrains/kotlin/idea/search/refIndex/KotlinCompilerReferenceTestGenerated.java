@@ -87,9 +87,19 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("allWithDefault")
+            public void testAllWithDefault() throws Exception {
+                runTest("testData/compilerIndex/functions/constructors/allWithDefault/");
+            }
+
             @TestMetadata("javaConstructor")
             public void testJavaConstructor() throws Exception {
                 runTest("testData/compilerIndex/functions/constructors/javaConstructor/");
+            }
+
+            @TestMetadata("jvmOverloads")
+            public void testJvmOverloads() throws Exception {
+                runTest("testData/compilerIndex/functions/constructors/jvmOverloads/");
             }
 
             @TestMetadata("nestedPrimaryConstructor")

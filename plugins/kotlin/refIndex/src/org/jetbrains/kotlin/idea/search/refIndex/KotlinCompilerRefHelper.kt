@@ -31,7 +31,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         when (val originalElement = element.unwrapped) {
             is KtClass -> originalElement.asCompilerRef(names)?.let(::listOf)
             is KtObjectDeclaration -> originalElement.asCompilerRefs(names)
-            is KtConstructor<*> -> originalElement.asCompilerRef(names)?.let(::listOf)
+            is KtConstructor<*> -> originalElement.asCompilerRef(names)
             is KtCallableDeclaration -> originalElement.asCompilerRefs(names)
             else -> null
         }
@@ -88,14 +88,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         )
     }
 
-    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef.CompilerMember? = getContainingClassOrObject().jvmFqName
-        ?.let { qualifier ->
-            CompilerRef.JavaCompilerMethodRef(
-                names.tryEnumerate(qualifier),
-                names.tryEnumerate("<init>"),
-                valueParameters.size,
-            )
-        }
+    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): List<CompilerRef.CompilerMember>? {
+        val qualifierId = getContainingClassOrObject().jvmFqName?.let(names::tryEnumerate) ?: return null
+        val nameId = names.tryEnumerate("<init>")
+        return asCompilerRefsWithJvmOverloads(qualifierId, nameId)
+    }
 
     private fun KtNamedFunction.asCompilerRefs(
         qualifier: String,
@@ -104,13 +101,18 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
     private fun KtNamedFunction.asCompilerRefs(qualifierId: Int, names: NameEnumerator): List<CompilerRef.CompilerMember> {
         val nameId = names.tryEnumerate(jvmName ?: name)
+        return asCompilerRefsWithJvmOverloads(qualifierId, nameId)
+    }
+
+    private fun KtCallableDeclaration.asCompilerRefsWithJvmOverloads(qualifierId: Int, nameId: Int): List<CompilerRef.CompilerMember> {
         val numberOfArguments = numberOfArguments(countReceiver = true)
         if (findAnnotation(JVM_OVERLOADS_FQ_NAME.shortName().asString()) == null) {
-            return CompilerRef.JavaCompilerMethodRef(
-                qualifierId,
-                nameId,
-                numberOfArguments,
-            ).let(::listOf)
+            val mainMethodRef = CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, numberOfArguments)
+            return if (this is KtPrimaryConstructor && valueParameters.all(KtParameter::hasDefaultValue)) {
+                listOf(mainMethodRef, CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, 0))
+            } else {
+                listOf(mainMethodRef)
+            }
         }
 
         return numberOfArguments.minus(valueParameters.count(KtParameter::hasDefaultValue)).rangeTo(numberOfArguments).map {
