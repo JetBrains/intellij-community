@@ -12,8 +12,11 @@ import com.intellij.psi.PsiFile
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language
-) : InlayProviderSettingsModel(
-  isParameterHintsEnabledForLanguage(language), "parameter.hints.old", language) {
+) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ParameterInlayProviderSettingsModel.ID, language) {
+  companion object {
+    val ID = "parameter.hints.old"
+  }
+
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String
@@ -42,7 +45,6 @@ class ParameterInlayProviderSettingsModel(
 
   override val cases: List<ImmediateConfigurable.Case> = provider.supportedOptions.mapIndexed { index, option ->
     val state = optionStates[index]
-    @Suppress("HardCodedStringLiteral") // inspection is unable to understand that extendedDescription.get() is safe
     ImmediateConfigurable.Case(option.name,
                                id = option.id,
                                loadFromSettings = { state.state },
