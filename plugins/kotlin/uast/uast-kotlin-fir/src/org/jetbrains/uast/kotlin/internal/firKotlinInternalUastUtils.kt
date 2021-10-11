@@ -8,14 +8,19 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.TypeOwnerKind
@@ -27,12 +32,23 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
         ?: FirKotlinUastLanguagePlugin()
 }
 
+internal fun KtAnalysisSession.containingKtClass(
+    ktConstructorSymbol: KtConstructorSymbol,
+): KtClass? {
+    return when (val psi = ktConstructorSymbol.psi) {
+        is KtClass -> psi
+        is KtConstructor<*> -> psi.containingClass()
+        else -> null
+    }
+}
+
 internal fun KtAnalysisSession.toPsiClass(
     ktType: KtType,
     source: UElement?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind
 ): PsiClass? {
+    (context as? KtClass)?.toLightClass()?.let { return it }
     return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed = true))
 }
 
