@@ -26,6 +26,7 @@ import com.intellij.ui.preview.DescriptorPreview
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
@@ -34,6 +35,8 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 
 class BookmarksView(val project: Project, showToolbar: Boolean?)
   : Disposable, DataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
@@ -56,9 +59,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   val selectedNodes
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
-
-  private val leadSelectionNode
-    get() = TreeUtil.getAbstractTreeNode(tree.leadSelectionPath)
 
   private val previousOccurrence
     get() = selectedNode?.bookmarkOccurrence?.previous { it.bookmark is LineBookmark }
@@ -86,9 +86,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun goNextOccurence() = nextOccurrence?.let { go(it) }
   override fun goPreviousOccurence() = previousOccurrence?.let { go(it) }
   private fun go(occurrence: BookmarkOccurrence): OccurenceNavigator.OccurenceInfo? {
-    TreeUtil.promiseSelect(tree, GroupBookmarkVisitor(occurrence.group, occurrence.bookmark))
+    select(occurrence.group, occurrence.bookmark).onSuccess { OpenSourceUtil.navigateToSource(true, false, selectedNode) }
     return null
   }
+
+  private fun select(group: BookmarkGroup, bookmark: Bookmark? = null) = select(GroupBookmarkVisitor(group, bookmark))
+  private fun select(visitor: TreeVisitor) = TreeUtil.promiseSelect(tree, visitor).onSuccess { if (!tree.hasFocus()) selectionChanged() }
 
   @Suppress("UNNECESSARY_SAFE_CALL")
   override fun saveProportion() = when (isPopup) {
@@ -140,7 +143,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
   val showPreview = object : Option {
     override fun isAlwaysVisible() = !isVertical
-    override fun isEnabled() = !isVertical && leadSelectionNode?.canNavigateToSource() ?: false
+    override fun isEnabled() = !isVertical && selectedNode?.canNavigateToSource() ?: false
     override fun isSelected() = state.showPreview
     override fun setSelected(selected: Boolean) {
       state.showPreview = selected
@@ -148,14 +151,14 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
   }
 
-  private fun selectionChanged(autoScroll: Boolean = true) {
+  private fun selectionChanged(autoScroll: Boolean = tree.hasFocus()) {
     if (isPopup || !openInPreviewTab.isEnabled) {
-      preview.open(leadSelectionNode?.asDescriptor)
+      preview.open(selectedNode?.asDescriptor)
     }
     else {
       preview.close()
       if (autoScroll && (autoScrollToSource.isSelected || openInPreviewTab.isSelected)) {
-        OpenSourceUtil.navigateToSource(false, false, leadSelectionNode)
+        OpenSourceUtil.navigateToSource(false, false, selectedNode)
       }
     }
   }
@@ -191,7 +194,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     tree.emptyText.initialize(tree)
     tree.addTreeSelectionListener(RestoreSelectionListener())
-    tree.addTreeSelectionListener { selectionAlarm.cancelAndRequest() }
+    tree.addTreeSelectionListener { if (tree.hasFocus()) selectionAlarm.cancelAndRequest() }
+    tree.addFocusListener(object : FocusListener {
+      override fun focusLost(event: FocusEvent?) = Unit
+      override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
+    })
 
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
