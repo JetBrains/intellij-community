@@ -252,12 +252,6 @@ public class EditorFactoryImpl extends EditorFactory {
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
-  @Override
-  public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
-    return ClientEditorManager.getCurrentInstance().editors()
-      .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
-  }
-
   @NotNull
   private static Stream<Editor> collectAllEditors() {
     return ClientEditorManager.getAllInstances().stream().flatMap(it -> it.editors());
