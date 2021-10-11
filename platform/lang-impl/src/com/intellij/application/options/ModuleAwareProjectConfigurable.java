@@ -62,8 +62,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     if (myProject.isDefault()) {
       T configurable = createDefaultProjectConfigurable();
       if (configurable != null) {
-        myConfigurablesProviders.put(null, AtomicNotNullLazyValue.createValue(() -> configurable));
-        return configurable.createComponent();
+        var projectConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> configurable);
+        myConfigurablesProviders.put(null, projectConfigurableProvider);
+        return projectConfigurableProvider.getValue().createComponent();
       }
     }
     final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
@@ -73,9 +74,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
 
     if (modules.size() == 1 && projectConfigurable == null) {
       Module module = modules.get(0);
-      final T configurable = createModuleConfigurable(module);
-      myConfigurablesProviders.put(module, AtomicNotNullLazyValue.createValue(() -> configurable));
-      return configurable.createComponent();
+      var onlyModuleConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> createModuleConfigurable(module));
+      myConfigurablesProviders.put(module, onlyModuleConfigurableProvider);
+      return onlyModuleConfigurableProvider.getValue().createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
