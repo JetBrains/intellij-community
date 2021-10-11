@@ -36,7 +36,7 @@ import java.util.*;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
 public class JpsBootstrapMain {
 
-  private static final String COMMUNITY_HOME_ENV = "COMMUNITY_HOME";
+  private static final String COMMUNITY_HOME_ENV = "JBS_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
 
   @SuppressWarnings("ConfusingArgumentToVarargsMethod")
@@ -90,6 +90,7 @@ public class JpsBootstrapMain {
       FileUtilRt.toSystemIndependentName(workDir.resolve("m2").toAbsolutePath().toString()));
 
     System.setProperty("kotlin.incremental.compilation", "true");
+    System.setProperty("kotlin.daemon.enabled", "false");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
 
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
