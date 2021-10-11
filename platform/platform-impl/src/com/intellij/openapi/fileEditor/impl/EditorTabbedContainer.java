@@ -724,8 +724,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
         @Override
         public void paint(Graphics g) {
-          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info) {
-            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.75f);
+          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info && !isHoveredTab(this)) {
+            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
             super.paint(g);
             config.restore();
           } else {
