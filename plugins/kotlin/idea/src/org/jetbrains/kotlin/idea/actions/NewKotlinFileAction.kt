@@ -143,7 +143,10 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)!!
             val project = PlatformDataKeys.PROJECT.getData(dataContext)!!
             val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-            return ideView.directories.any { projectFileIndex.isInContent(it.virtualFile) }
+            return ideView.directories.any {
+                projectFileIndex.isInSourceContent(it.virtualFile) ||
+                CreateTemplateInPackageAction.isInContentRoot(it.virtualFile, projectFileIndex)
+            }
         }
 
         return false
@@ -252,7 +255,6 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             service.isAlternativeResolveEnabled = true
             try {
                 val adjustedDir = CreateTemplateInPackageAction.adjustDirectory(targetDir, JavaModuleSourceRootTypes.SOURCES)
-                if (adjustedDir == null) return null
                 val psiFile = createFromTemplate(adjustedDir, className, template)
                 if (psiFile is KtFile) {
                     val singleClass = psiFile.declarations.singleOrNull() as? KtClass
