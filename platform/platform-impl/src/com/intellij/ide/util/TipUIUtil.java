@@ -58,6 +58,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
@@ -250,7 +251,7 @@ public final class TipUIUtil {
         if (shortcutText == null) {
           shortcutText = "\"" + actionId + "\" " + IdeBundle.message("tips.of.the.day.shortcut.must.define");
         }
-        return shortcutText;
+        return Matcher.quoteReplacement(shortcutText);
       }));
     });
 
