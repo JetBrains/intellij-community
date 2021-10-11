@@ -2275,7 +2275,13 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
 
 fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
   try {
-    return IconLoader.findIcon(bean.icon ?: return null, factory.javaClass, pluginDescriptor.pluginClassLoader, null, true)
+    return IconLoader.findIcon(
+      bean.icon ?: return null,
+      factory.javaClass,
+      pluginDescriptor.classLoader,
+      null,
+      true,
+    )
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -2284,7 +2290,7 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
 }
 
 fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
-  val classLoader = pluginDescriptor.pluginClassLoader
+  val classLoader = pluginDescriptor.classLoader
   val bundleName = when (pluginDescriptor.pluginId) {
     PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
     else -> pluginDescriptor.resourceBundleBaseName ?: return null

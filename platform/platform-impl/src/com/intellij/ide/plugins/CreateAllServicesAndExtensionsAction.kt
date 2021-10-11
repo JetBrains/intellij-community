@@ -146,14 +146,15 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
 private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors: MutableList<Throwable>) {
   for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
     // we don't check classloader for sub descriptors because url set is the same
-    if (plugin.classLoader !is PluginClassLoader) {
+    val pluginClassLoader = plugin.pluginClassLoader
+    if (pluginClassLoader !is PluginClassLoader) {
       continue
     }
 
     ClassGraph()
       .enableAnnotationInfo()
       .ignoreParentClassLoaders()
-      .overrideClassLoaders(plugin.classLoader)
+      .overrideClassLoaders(pluginClassLoader)
       .scan()
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
@@ -209,12 +210,12 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
 
 private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaPluginDescriptorImpl): Class<*> {
   for (item in mainDescriptor.content.modules) {
-    val classLoader = item.requireDescriptor().classLoader as? PluginClassLoader ?: continue
+    val classLoader = item.requireDescriptor().pluginClassLoader as? PluginClassLoader ?: continue
     if (lightService.name.startsWith(classLoader.packagePrefix!!)) {
       return classLoader.loadClass(lightService.name, true)
     }
   }
 
   // ok, or no plugin dependencies at all, or all are disabled, resolve from main
-  return (mainDescriptor.classLoader as PluginClassLoader).loadClass(lightService.name, true)
+  return (mainDescriptor.pluginClassLoader as PluginClassLoader).loadClass(lightService.name, true)
 }

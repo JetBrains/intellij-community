@@ -27,7 +27,7 @@ internal object GraziePlugin {
     get() = descriptor.isBundled
 
   val classLoader: ClassLoader
-    get() = descriptor.pluginClassLoader
+    get() = descriptor.classLoader
 
   val libFolder: Path
     get() = descriptor.pluginPath.resolve("lib")
