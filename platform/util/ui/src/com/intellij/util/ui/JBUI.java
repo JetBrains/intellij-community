@@ -1372,6 +1372,18 @@ public class JBUI {
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
 
+  public static float getFloat(@NonNls @NotNull String propertyName, float defaultValue) {
+    Object value = UIManager.get(propertyName);
+    if (value instanceof Float) return (Float)value;
+    if (value instanceof Double) return ((Double)value).floatValue();
+    if (value instanceof String) {
+      try {
+        return Float.parseFloat((String)value);
+      } catch (NumberFormatException ignore) {}
+    }
+    return defaultValue;
+  }
+
   @NotNull
   private static Icon getIcon(@NonNls @NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
