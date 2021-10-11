@@ -25,9 +25,9 @@ internal fun collectAddInterpreterActions(project: Project, module: Module?, onS
   collectNewInterpreterOnTargetActions(project, onSdkCreated::accept)
 
 private fun collectNewInterpreterOnTargetActions(project: Project, onSdkCreated: Consumer<Sdk>): List<AnAction> =
-  PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList.map { factory ->
-    AddInterpreterOnTargetAction(project, factory.getTargetType(), onSdkCreated)
-  }
+  PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
+    .filter { it.getTargetType().isSystemCompatible() }
+    .map { AddInterpreterOnTargetAction(project, it.getTargetType(), onSdkCreated) }
 
 private class AddLocalInterpreterAction(private val project: Project,
                                         private val module: Module?,
