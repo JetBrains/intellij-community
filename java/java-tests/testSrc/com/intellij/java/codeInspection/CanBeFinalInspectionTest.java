@@ -11,7 +11,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.JavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CanBeFinalTest extends JavaInspectionTestCase {
+public class CanBeFinalInspectionTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";

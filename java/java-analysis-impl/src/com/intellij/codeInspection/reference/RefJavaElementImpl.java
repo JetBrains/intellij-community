@@ -45,13 +45,17 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
     PsiModifierListOwner javaPsi = Objects.requireNonNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
     setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));
-    final boolean isSynth = javaPsi instanceof PsiMethod && psi instanceof SyntheticElement  || psi instanceof PsiSyntheticClass;
+    final boolean isSynth = javaPsi instanceof PsiMethod && psi instanceof SyntheticElement || psi instanceof PsiSyntheticClass;
     if (isSynth) {
       setSyntheticJSP(true);
     }
 
     setIsStatic(elem.isStatic());
     setIsFinal(elem.isFinal());
+  }
+
+  RefJavaElementImpl(@NotNull UElement declaration, @NotNull PsiElement psi, @NotNull RefManager manager) {
+    super(getName(declaration), psi, manager);
   }
 
   @Override
@@ -68,34 +72,51 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   @NotNull
-  public static String getName(UDeclaration declaration) {
+  private static String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
     if (element instanceof PsiAnonymousClass) {
-     PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
-     PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-     if (psiBaseClass == null) {
-       return "anonymous class";
-     } else {
-       return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
-     }
-   }
+      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
+      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
+      if (psiBaseClass == null) {
+        return "anonymous class";
+      }
+      else {
+        return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
+      }
+    }
 
-   if (element instanceof PsiSyntheticClass) {
-     final PsiSyntheticClass jspClass = (PsiSyntheticClass)element;
-     final PsiFile jspxFile = jspClass.getContainingFile();
-     return "<" + jspxFile.getName() + ">";
-   }
+    if (element instanceof PsiSyntheticClass) {
+      final PsiSyntheticClass jspClass = (PsiSyntheticClass)element;
+      final PsiFile jspxFile = jspClass.getContainingFile();
+      return "<" + jspxFile.getName() + ">";
+    }
 
-   if (element instanceof PsiMethod && element instanceof SyntheticElement ) {
-     return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
-   }
+    if (element instanceof PsiMethod && element instanceof SyntheticElement) {
+      return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+    }
 
-   String name = null;
-   if (element instanceof PsiNamedElement) {
-     name = ((PsiNamedElement)element).getName();
-   }
-   return name == null ? AnalysisBundle.message("inspection.reference.anonymous") : name;
- }
+    if (declaration instanceof ULambdaExpression || declaration instanceof UCallableReferenceExpression) {
+      UDeclaration elementDeclaration = UDeclarationKt.getContainingDeclaration(declaration);
+      boolean isMethodReference = declaration instanceof UCallableReferenceExpression;
+      if (elementDeclaration != null) {
+        UAnnotated pDeclaration =
+          UastUtils.getParentOfType(elementDeclaration, false, UMethod.class, UClass.class, ULambdaExpression.class, UField.class);
+        if (pDeclaration != null && pDeclaration.getSourcePsi() instanceof PsiNamedElement) {
+          String name = ((PsiNamedElement)pDeclaration.getSourcePsi()).getName();
+          return JavaAnalysisBundle.message(
+            isMethodReference ? "inspection.reference.method.reference.name" : "inspection.reference.lambda.name", name);
+        }
+      }
+      return JavaAnalysisBundle.message(
+        isMethodReference ? "inspection.reference.default.method.reference.name" : "inspection.reference.default.lambda.name");
+    }
+
+    String name = null;
+    if (element instanceof PsiNamedElement) {
+      name = ((PsiNamedElement)element).getName();
+    }
+    return name == null ? AnalysisBundle.message("inspection.reference.anonymous") : name;
+  }
 
   @Override
   public boolean isFinal() {
@@ -196,7 +217,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   void addReference(RefElement refWhat,
                     PsiElement psiWhat,
-                    UDeclaration from,
+                    UElement from,
                     boolean forWriting,
                     boolean forReading,
                     UExpression expression) {

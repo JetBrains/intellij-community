@@ -7,7 +7,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class RedundantThrowTest extends JavaInspectionTestCase {
+public class RedundantThrowsDeclarationInspectionTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";

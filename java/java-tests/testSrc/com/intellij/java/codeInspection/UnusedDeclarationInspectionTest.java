@@ -7,7 +7,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 
 import java.util.List;
 
-public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
+public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;

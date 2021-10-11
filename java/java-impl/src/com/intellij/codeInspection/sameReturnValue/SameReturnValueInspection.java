@@ -24,7 +24,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
       String returnValue = refMethod.getReturnValueIfSame();
       if (returnValue != null) {
         final String message;
-        if (refMethod.getDerivedMethods().isEmpty()) {
+        if (refMethod.getDerivedReferences().isEmpty()) {
           message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", "<code>" + returnValue + "</code>");
         } else if (refMethod.hasBody()) {
           message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor1", "<code>" + returnValue + "</code>");

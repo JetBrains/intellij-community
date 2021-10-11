@@ -197,17 +197,17 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public RefParameter getParameterReference(UParameter param, int index, RefMethod refMethod) {
+  public RefParameter getParameterReference(UParameter param, int index, RefElement refElement) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
     PsiElement sourcePsi = param.getSourcePsi();
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
-    RefElement refElement = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
-      RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refMethod);
+    RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
+      RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
       ref.initialize();
       return (RefElement)ref;
     });
-    return refElement instanceof RefParameter ? (RefParameter)refElement : null;
+    return result instanceof RefParameter ? (RefParameter)result : null;
   }
 
   @Override
@@ -270,6 +270,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     else if (uElement instanceof UField) {
       return new RefFieldImpl((UField)uElement, psi, myRefManager);
     }
+    else if (uElement instanceof ULambdaExpression || uElement instanceof UCallableReferenceExpression) {
+      return new RefFunctionalExpressionImpl((UExpression)uElement, psi, myRefManager);
+    }
     return null;
   }
 
@@ -330,6 +333,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     if (ref instanceof RefJavaModule) {
       return JAVA_MODULE;
     }
+    if (ref instanceof RefFunctionalExpression) {
+      return FUNCTIONAL_EXPRESSION;
+    }
     return null;
   }
 
@@ -352,6 +358,12 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           super.visitElement(element);
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
+          }
+          else if (element instanceof PsiFunctionalExpression) {
+            RefElement decl = myRefManager.getReference(element);
+            if (decl != null) {
+              myRefManager.addParallelTask(() -> ((RefElementImpl)decl).buildReferences());
+            }
           }
         }
 

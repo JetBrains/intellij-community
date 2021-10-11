@@ -30,7 +30,7 @@ import java.util.Collection;
  *
  * @author anna
  */
-public interface RefMethod extends RefJavaElement {
+public interface RefMethod extends RefJavaElement, RefOverridable {
   /**
    * Returns the collection of the direct super methods of this method in the
    * analysis scope.
@@ -168,6 +168,17 @@ public interface RefMethod extends RefJavaElement {
   @Override
   default UDeclaration getUastElement() {
     throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  default Collection<? extends RefOverridable> getDerivedReferences() {
+    return getDerivedMethods();
+  }
+
+  @Override
+  default void addDerivedReference(@NotNull RefOverridable reference) {
+    // do nothing
   }
 
   boolean isCalledOnSubClass();

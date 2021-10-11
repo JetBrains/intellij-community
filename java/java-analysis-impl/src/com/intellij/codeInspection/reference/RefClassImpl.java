@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -38,7 +39,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000;
 
   private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
-  private Set<RefClass> mySubClasses; // singleton (to conserve memory) or HashSet. guarded by this
+  private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
   private List<RefMethod> myConstructors; // guarded by this
   private RefMethodImpl myDefaultConstructor; //guarded by this
   private List<RefMethod> myOverridingMethods; //guarded by this
@@ -195,7 +196,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
           RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
           if (refClass != null) {
             addBaseClass(refClass);
-            refClass.addSubClass(this);
+            refClass.addDerivedReference(this);
           }
         });
     }
@@ -331,29 +332,35 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Set<RefClass> getSubClasses() {
-    if (mySubClasses == null) return EMPTY_CLASS_SET;
-    return mySubClasses;
+    if (myDerivedReferences == null) return EMPTY_CLASS_SET;
+    return StreamEx.of(myDerivedReferences).select(RefClass.class).toSet();
   }
 
-  private synchronized void addSubClass(@NotNull RefClass refClass) {
-    if (mySubClasses == null) {
-      mySubClasses = Collections.singleton(refClass);
+  @Override
+  public synchronized @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
+    return ObjectUtils.notNull(myDerivedReferences, EMPTY_CLASS_SET);
+  }
+
+  @Override
+  public synchronized void addDerivedReference(@NotNull RefOverridable reference) {
+    if (myDerivedReferences == null) {
+      myDerivedReferences = Collections.singleton(reference);
       return;
     }
-    if (mySubClasses.size() == 1) {
+    if (myDerivedReferences.size() == 1) {
       // convert from singleton
-      mySubClasses = new HashSet<>(mySubClasses);
+      myDerivedReferences = new HashSet<>(myDerivedReferences);
     }
-    mySubClasses.add(refClass);
+    myDerivedReferences.add(reference);
   }
 
   private synchronized void removeSubClass(RefClass refClass) {
-    if (mySubClasses == null) return;
-    if (mySubClasses.size() == 1) {
-      mySubClasses = null;
+    if (myDerivedReferences == null) return;
+    if (myDerivedReferences.size() == 1) {
+      myDerivedReferences = null;
     }
     else {
-      mySubClasses.remove(refClass);
+      myDerivedReferences.remove(refClass);
     }
   }
 
@@ -504,7 +511,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public boolean isReferenced() {
     if (super.isReferenced()) return true;
 
-    if (isInterface() || isAbstract()) {
+    if (isInterface()) {
+      if (!getDerivedReferences().isEmpty()) return true;
+    }
+    else if (isAbstract()) {
       if (!getSubClasses().isEmpty()) return true;
     }
 
@@ -515,7 +525,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public boolean hasSuspiciousCallers() {
     if (super.hasSuspiciousCallers()) return true;
 
-    if (isInterface() || isAbstract()) {
+    if (isInterface()) {
+      if (!getDerivedReferences().isEmpty()) return true;
+    }
+    else if (isAbstract()) {
       if (!getSubClasses().isEmpty()) return true;
     }
 

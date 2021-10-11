@@ -5,7 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class EmptyMethodTest extends JavaInspectionTestCase {
+public class EmptyMethodInspectionTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
@@ -49,6 +49,14 @@ public class EmptyMethodTest extends JavaInspectionTestCase {
   }
 
   public void testEmptyMethodsHierarchy() {
+    doTest();
+  }
+
+  public void testEmptyInLambda() {
+    doTest();
+  }
+
+  public void testNonEmptyInLambda() {
     doTest();
   }
 }

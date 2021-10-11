@@ -1,6 +1,6 @@
 <problems>
   <problem>
-    <file>MethodReturnsAlwaysConstant.java</file>
+    <file>Test.java</file>
     <line>6</line>
     <description>Method &lt;code&gt;getConstant()&lt;/code&gt; and all its derivables always return constants</description>
   </problem>

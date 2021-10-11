@@ -6,16 +6,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UMethod;
 
 public abstract class RefJavaUtil {
+  /**
+   * @deprecated use {@link RefJavaUtil#addReferencesTo} instead
+   */
   @Deprecated
   public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
-  public void addReferencesTo(@NotNull UDeclaration decl, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
+  public void addReferencesTo(@NotNull UElement elem, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
     throw new UnsupportedOperationException("Should be implemented");
   }
 

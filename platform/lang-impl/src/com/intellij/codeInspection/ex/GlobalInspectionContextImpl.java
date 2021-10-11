@@ -14,10 +14,7 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.DelegatedInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -74,6 +71,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -682,6 +680,66 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getProject(),
       () -> processPostRunActivities(needRepeatSearchRequest));
     addProblemsToView(globalTools);
+  }
+
+  // todo move the logic to appropriate place if it's needed
+  @SuppressWarnings("unused")
+  private static void logGraph(RefManager refManager) {
+    List<RefElement> roots = new ArrayList<>();
+    MultiMap<RefElement, RefElement> entitiesWithParents = new MultiMap<>();
+    refManager.iterate(new RefVisitor() {
+      @Override
+      public void visitElement(@NotNull RefEntity elem) {
+        if (elem instanceof RefElement) {
+          RefElement refElement = (RefElement)elem;
+          entitiesWithParents.put(refElement, (refElement).getInReferences());
+          if (refElement.getInReferences().isEmpty() || refElement.getInReferences().contains(refElement)) {
+            roots.add(refElement);
+          }
+        }
+      }
+    });
+    StringBuilder result = new StringBuilder("\n");
+    for (RefElement root : roots) {
+      List<List<RefElement>> paths = new ArrayList<>();
+      paths.add(new ArrayList<>());
+      traverse(root, paths, 0);
+      String rootText = String.format("%s %s (owner: %s, reachable: %s, entry: %s):", root.getClass().getSimpleName(), root.getName(),
+                                      root.getOwner(), root.isReachable(), root.isEntry());
+      result.append(rootText).append("\n");
+      for (List<RefElement> path : paths) {
+        if (path.size() <= 1) continue;
+        StringJoiner pathJoiner = new StringJoiner(" --> ");
+        for (int i = 1; i < path.size(); i++) {
+          RefElement element = path.get(i);
+          String elementText = String.format("%s %s (owner: %s, reachable: %s)", element.getClass().getSimpleName(), element.getName(),
+                                             element.getOwner(), element.isReachable());
+          pathJoiner.add(elementText);
+        }
+        result.append(" --> ").append(pathJoiner).append("\n");
+      }
+    }
+    LOG.warn(result.toString());
+  }
+
+  private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth) {
+    int lastPathsIndex = paths.size() - 1;
+    List<RefElement> path = paths.get(lastPathsIndex);
+    if (path.contains(element)) {
+      return;
+    }
+    path.add(element);
+    List<RefElement> outRefs = new ArrayList<>(element.getOutReferences());
+    for (int i = 0; i < outRefs.size(); i++) {
+      RefElement outRef = outRefs.get(i);
+      if (i > 0) {
+        List<RefElement> pathCopy = new ArrayList<>(path.subList(0, depth + 1));
+        paths.add(pathCopy);
+      }
+      depth++;
+      traverse(outRef, paths, depth);
+      depth--;
+    }
   }
 
   private void processPostRunActivities(List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest) {

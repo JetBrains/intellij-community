@@ -31,8 +31,10 @@ import org.jetbrains.uast.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public final class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
   private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
@@ -260,6 +262,18 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
           }
         }
       }
+      else if (refElement instanceof RefField) {
+        UField field = ((RefField)refElement).getUastElement();
+        if (field != null) {
+          UExpression initializer = field.getUastInitializer();
+          if (initializer != null) {
+            initializer = UastUtils.skipParenthesizedExprDown(initializer);
+            if (initializer instanceof ULambdaExpression) {
+              findUnusedLocalVariables(((ULambdaExpression)initializer).getBody(), refElement);
+            }
+          }
+        }
+      }
     }
 
     private void findUnusedLocalVariables(UExpression body, RefElement refElement) {
@@ -300,14 +314,18 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
         @Override
         public void visitLambdaExpression(PsiLambdaExpression lambdaExpr) {
-          PsiCodeBlock lambdaBody = ObjectUtils.tryCast(lambdaExpr.getBody(), PsiCodeBlock.class);
-          if (lambdaBody != null) {
-            findUnusedLocalVariablesInCodeBlock(lambdaBody, descriptors);
+          RefElement lambdaRef = myContext.getRefManager().getReference(lambdaExpr);
+          if (lambdaRef instanceof RefFunctionalExpression) {
+            ULambdaExpression lambda = ObjectUtils.tryCast(((RefFunctionalExpression)lambdaRef).getUastElement(), ULambdaExpression.class);
+            if (lambda != null) {
+              findUnusedLocalVariables(lambda.getBody(), lambdaRef);
+            }
           }
         }
 
         @Override
         public void visitLocalVariable(PsiLocalVariable variable) {
+          super.visitLocalVariable(variable);
           if (!usedVariables.contains(variable) && variable.getInitializer() == null &&
               !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
             descriptors.add(createProblemDescriptor(variable));
