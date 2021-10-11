@@ -1002,4 +1002,15 @@ public final class JavaCompletionUtil {
     }
     return start + 1;
   }
+
+  static @Nullable PsiExpression getInstanceOfOperand(PsiElement position) {
+    PsiElement parent = position.getParent();
+    while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiInstanceOfExpression) {
+      return ((PsiInstanceOfExpression)parent).getOperand();
+    }
+    return null;
+  }
 }

@@ -176,7 +176,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
-      return new ElementExtractorFilter(ElementClassFilter.CLASS);
+      return new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+          return element instanceof PsiClass && !(element instanceof PsiTypeParameter);
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return PsiClass.class.isAssignableFrom(hintClass) && !PsiTypeParameter.class.isAssignableFrom(hintClass);
+        }
+      };
     }
 
     if (JavaKeywordCompletion.VARIABLE_AFTER_FINAL.accepts(position)) {

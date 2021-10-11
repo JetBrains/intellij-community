@@ -81,7 +81,13 @@ public final class JavaCompletionSorting {
       afterStats.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, true));
     } else {
       if (!afterNew) {
-        afterStats.add(new PreferExpected(false, expectedTypes, position));
+        PsiExpression instanceOfOperand = JavaCompletionUtil.getInstanceOfOperand(position);
+        PsiType instanceOfOperandType = instanceOfOperand == null ? null : instanceOfOperand.getType();
+        if (instanceOfOperandType != null) {
+          afterStats.add(new PreferConvertible(instanceOfOperandType));
+        } else {
+          afterStats.add(new PreferExpected(false, expectedTypes, position));
+        }
       }
       ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
     }
@@ -561,6 +567,40 @@ public final class JavaCompletionSorting {
       }
       return 0;
     }
+  }
+
+  private static class PreferConvertible extends LookupElementWeigher {
+    private final @NotNull PsiType myOrigType;
+
+    private PreferConvertible(@NotNull PsiType type) {
+      super("convertibleType");
+      myOrigType = type;
+    }
+
+    @Override
+    public @Nullable TypeConvertibility weigh(@NotNull LookupElement element) {
+      PsiClass psiClass = ObjectUtils.tryCast(element.getObject(), PsiClass.class);
+      if (psiClass == null) return TypeConvertibility.UNKNOWN;
+      PsiClassType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+      TypeConvertibility typeConvertibility;
+      if (!type.isConvertibleFrom(myOrigType)) {
+        typeConvertibility = TypeConvertibility.NON_CONVERTIBLE;
+      } else if (type.isAssignableFrom(myOrigType)) {
+        typeConvertibility = TypeConvertibility.SUPERTYPE;
+      } else if (myOrigType.isAssignableFrom(type)) {
+        typeConvertibility = TypeConvertibility.SUBTYPE;
+      } else {
+        typeConvertibility = TypeConvertibility.CONVERTIBLE;
+      }
+      if (typeConvertibility.compareTo(TypeConvertibility.HAS_NESTED) > 0 && psiClass.getAllInnerClasses().length > 0) {
+        typeConvertibility = TypeConvertibility.HAS_NESTED;
+      }
+      return typeConvertibility;
+    }
+  }
+
+  enum TypeConvertibility {
+    SUBTYPE, CONVERTIBLE, HAS_NESTED, UNKNOWN, SUPERTYPE, NON_CONVERTIBLE
   }
 
   private static class PreferExpected extends LookupElementWeigher {
