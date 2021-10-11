@@ -4,7 +4,6 @@ package com.intellij.ui.tabs.impl
 import com.intellij.openapi.rd.fill2DRect
 import com.intellij.openapi.rd.fill2DRoundRect
 import com.intellij.openapi.rd.paint2DLine
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
@@ -68,12 +67,6 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
     val arc = theme.underlineArc
     val color = if (active) theme.underlineColor else theme.inactiveUnderlineColor
     if (arc > 0) {
-      if (ExperimentalUI.isNewEditorTabs()) {
-        g.color = theme.borderColor
-        val x = rect.x.toDouble()
-        val y = rect.y.toDouble() + rect.height - 1
-        LinePainter2D.paint(g, x, y, x + rect.width, y)
-      }
       g.fill2DRoundRect(underline, arc.toDouble(), color)
     } else {
       g.fill2DRect(underline, color)

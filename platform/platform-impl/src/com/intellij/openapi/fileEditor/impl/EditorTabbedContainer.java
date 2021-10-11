@@ -41,6 +41,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -700,6 +701,15 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
+      if (!isHideTabs() && ExperimentalUI.isNewEditorTabs()) {
+        TabLabel label = getSelectedLabel();
+        if (label != null) {
+          int h = label.getHeight();
+          Color color = myTabPainter.getTabTheme().getBorderColor();
+          g.setColor(color);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+        }
+      }
       super.paintChildren(g);
       drawBorder(g);
     }
