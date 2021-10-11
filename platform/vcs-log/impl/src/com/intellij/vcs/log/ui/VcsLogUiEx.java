@@ -50,10 +50,12 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
-                  @NotNull SettableFuture<? super Boolean> future,
+                  @NotNull SettableFuture<JumpResult> future,
                   boolean silently,
                   boolean focus);
 
   @ApiStatus.Internal int COMMIT_NOT_FOUND = -1;
   @ApiStatus.Internal int COMMIT_DOES_NOT_MATCH = -2;
+
+  enum JumpResult {SUCCESS, COMMIT_NOT_FOUND, COMMIT_DOES_NOT_MATCH}
 }

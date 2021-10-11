@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
@@ -19,7 +20,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -100,27 +101,28 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus) {
-    SettableFuture<Boolean> future = SettableFuture.create();
+    SettableFuture<JumpResult> future = SettableFuture.create();
     myUi.jumpTo(commitHash, (visiblePack, hash) -> {
       if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
       return getCommitRow(visiblePack, hash, root);
     }, future, false, focus);
-    return future;
+    return mapToJumpSuccess(future);
   }
 
   @NotNull
   private ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash, boolean focus) {
-    SettableFuture<Boolean> future = SettableFuture.create();
+    SettableFuture<JumpResult> future = SettableFuture.create();
     String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
       VcsBalloonProblemNotifier.showOverChangesView(myUi.getLogData().getProject(),
                                                     VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
                                                     MessageType.WARNING);
-      future.set(false);
-      return future;
+      future.set(JumpResult.COMMIT_NOT_FOUND);
     }
-    myUi.jumpTo(trimmed, this::getCommitRow, future, false, focus);
-    return future;
+    else {
+      myUi.jumpTo(trimmed, this::getCommitRow, future, false, focus);
+    }
+    return mapToJumpSuccess(future);
   }
 
   private int getCommitRow(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
@@ -174,5 +176,10 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   private VcsLogGraphTable getTable() {
     return myUi.getTable();
+  }
+
+  @NotNull
+  private static ListenableFuture<Boolean> mapToJumpSuccess(@NotNull ListenableFuture<JumpResult> future) {
+    return Futures.transform(future, result -> result == JumpResult.SUCCESS, MoreExecutors.directExecutor());
   }
 }
