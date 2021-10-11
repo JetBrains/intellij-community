@@ -126,7 +126,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     ): List<CompilerRef.CompilerMember>? {
         val propertyName = name ?: return null
         val qualifierId = names.tryEnumerate(qualifier)
-        if (hasModifier(KtTokens.CONST_KEYWORD)) {
+        if (hasModifier(KtTokens.CONST_KEYWORD) || findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName().asString()) != null) {
             return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName)))
         }
 

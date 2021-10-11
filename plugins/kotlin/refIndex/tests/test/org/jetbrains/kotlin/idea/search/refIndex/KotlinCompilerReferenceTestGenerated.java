@@ -712,9 +712,19 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromCompanion/propertyWithCustomGetterAndSetter/");
             }
 
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithJvmField/");
+            }
+
             @TestMetadata("variable")
             public void testVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/fromCompanion/variable/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/variableWithJvmField/");
             }
         }
 
@@ -929,6 +939,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter/");
             }
 
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/propertyWithJvmField/");
+            }
+
             @TestMetadata("propertyWithReceiver")
             public void testPropertyWithReceiver() throws Exception {
                 runTest("testData/compilerIndex/properties/members/propertyWithReceiver/");
@@ -937,6 +952,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("variable")
             public void testVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/members/variable/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/variableWithJvmField/");
             }
 
             @TestMetadata("variableWithReceiver")
@@ -1012,6 +1032,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter/");
             }
 
+            @TestMetadata("propertyWithJvmField")
+            public void testPropertyWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/propertyWithJvmField/");
+            }
+
             @TestMetadata("variable")
             public void testVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/variable/");
@@ -1030,6 +1055,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("variableWithCustomGetterAndSetterAndMixedJvmName")
             public void testVariableWithCustomGetterAndSetterAndMixedJvmName() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName/");
+            }
+
+            @TestMetadata("variableWithJvmField")
+            public void testVariableWithJvmField() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/variableWithJvmField/");
             }
 
             @TestMetadata("variableWithJvmNameOnProperty")
