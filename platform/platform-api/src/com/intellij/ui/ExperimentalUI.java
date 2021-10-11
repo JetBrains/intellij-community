@@ -85,13 +85,14 @@ public final class ExperimentalUI {
   }
 
   private static void patchUIDefaults(RegistryValue value) {
+    if (!value.asBoolean()) return;
     UIDefaults defaults = UIManager.getDefaults();
     setUIProperty("EditorTabs.underlineArc", 4, defaults);
     EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
     setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
 
-    if (value.asBoolean() && is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
+    if (is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
       installInterFont();
     }
   }
