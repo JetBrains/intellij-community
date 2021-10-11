@@ -21,64 +21,195 @@ class Test {
     notNullable(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
   }
 
-  void nullableDayWithNullLabel(@Nullable Day d) {
-    switch (d) {
-      case MONDAY:
+  void nullableWithNullLabel(@Nullable E e) {
+    switch (e) {
+      case A:
         break;
-      case TUESDAY:
-        break;
-      case WEDNESDAY:
+      case B:
         break;
       case null:
         break;
     }
   }
 
-  void nullableDayWithoutNullLabel(@Nullable Day d) {
-    switch (<warning descr="Dereference of 'd' may produce 'NullPointerException'">d</warning>) {
-      case MONDAY:
+  void nullableWithoutNullLabel(@Nullable E e) {
+    switch (<warning descr="Dereference of 'e' may produce 'NullPointerException'">e</warning>) {
+      case A:
         break;
-      case TUESDAY:
-        break;
-      case WEDNESDAY:
+      case B:
         break;
     }
   }
 
-  void unknownDayWithNullLabel(Day d) {
-    switch (d) {
-      case MONDAY:
+  void nullableSetNullWithNullLabel(@Nullable E e) {
+    e = null;
+    switch (e) {
+      case A:
         break;
-      case TUESDAY:
+      case B:
         break;
-      case WEDNESDAY:
+      case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
+        break;
+    }
+  }
+
+  void nullableSetNotNullWithNullLabel(@Nullable E e) {
+    e = E.A;
+    switch (e) {
+      case <warning descr="Switch label 'A' is the only reachable in the whole switch">A</warning>:
+        break;
+      case B:
         break;
       case null:
         break;
     }
   }
 
-  void unknownDayWithoutNullLabel(Day d) {
-    switch (d) {
-      case MONDAY:
+  void nullableSetNullWithoutNullLabel(@Nullable E e) {
+    e = null;
+    switch (<warning descr="Dereference of 'e' will produce 'NullPointerException'">e</warning>) {
+      case A:
         break;
-      case TUESDAY:
-        break;
-      case WEDNESDAY:
+      case B:
         break;
     }
   }
 
-  void notNullDayWithNullLabel(@NotNull Day d) {
-    switch (d) {
-      case MONDAY, TUESDAY, WEDNESDAY:
+  void nullableSetNotNullWithoutNullLabel(@Nullable E e) {
+    e = E.A;
+    switch (e) {
+      case <warning descr="Switch label 'A' is the only reachable in the whole switch">A</warning>:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void unknownWithNullLabel(E e) {
+    switch (e) {
+      case A:
+        break;
+      case B:
+        break;
+      case null:
+        break;
+    }
+  }
+
+  void unknownWithoutNullLabel(E e) {
+    switch (e) {
+      case A:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void unknownSetNullWithNullLabel(E e) {
+    e = null;
+    switch (e) {
+      case A:
+        break;
+      case B:
+        break;
+      case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
+        break;
+    }
+  }
+
+  void unknownSetNotNullWithNullLabel(E e) {
+    e = E.B;
+    switch (e) {
+      case A:
+        break;
+      case <warning descr="Switch label 'B' is the only reachable in the whole switch">B</warning>:
+        break;
+      case null:
+        break;
+    }
+  }
+
+  void unknownSetNullWithoutNullLabel(E e) {
+    e = null;
+    switch (<warning descr="Dereference of 'e' will produce 'NullPointerException'">e</warning>) {
+      case A:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void unknownSetNotNullWithoutNullLabel(E e) {
+    e = E.B;
+    switch (e) {
+      case A:
+        break;
+      case <warning descr="Switch label 'B' is the only reachable in the whole switch">B</warning>:
+        break;
+    }
+  }
+
+  void notNullWithNullLabel(@NotNull E e) {
+    switch (e) {
+      case A, B:
         break;
       case <warning descr="Switch label 'null' is unreachable">null</warning>:
         break;
     }
   }
-}
 
-enum Day {
-  MONDAY, TUESDAY, WEDNESDAY
+  void notNullWithoutNullLabel(@NotNull E e) {
+    switch (e) {
+      case A, B:
+        break;
+    }
+  }
+
+  void notNullSetNullWithNullLabel(@NotNull E e) {
+    e = null;
+    switch (e) {
+      case A:
+        break;
+      case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void notNullSetNotNullWithNullLabel(@NotNull E e) {
+    e = E.B;
+    switch (e) {
+      case A:
+        break;
+      case <warning descr="Switch label 'B' is the only reachable in the whole switch">B</warning>:
+        break;
+      case null:
+        break;
+    }
+  }
+
+  void notNullSetNullWithoutNullLabel(@NotNull E e) {
+    e = null;
+    switch (<warning descr="Dereference of 'e' will produce 'NullPointerException'">e</warning>) {
+      case A:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void notNullSetNotNullWithoutNullLabel(@NotNull E e) {
+    e = E.B;
+    switch (e) {
+      case A:
+        break;
+      case <warning descr="Switch label 'B' is the only reachable in the whole switch">B</warning>:
+        break;
+    }
+  }
+
+  enum E {
+    A, B
+  }
 }
