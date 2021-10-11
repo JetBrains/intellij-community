@@ -38,7 +38,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   charset?.let { commandLineBuilder.setCharset(it) }
   val interpreterPath = getInterpreterPath(sdk)
   if (!interpreterPath.isNullOrEmpty()) {
-    commandLineBuilder.setExePath(FileUtil.toSystemDependentName(interpreterPath))
+    commandLineBuilder.setExePath(targetEnvironment.targetPlatform.platform.toSystemDependentName(interpreterPath))
   }
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
