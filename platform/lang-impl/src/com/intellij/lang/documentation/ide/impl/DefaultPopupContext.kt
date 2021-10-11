@@ -13,7 +13,10 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.yield
 
-internal class ProjectPopupContext(val project: Project, val editor: Editor?) : PopupContext {
+internal class DefaultPopupContext(
+  private val project: Project,
+  private val editor: Editor?,
+) : PopupContext {
 
   override fun preparePopup(builder: ComponentPopupBuilder) {
     builder.setRequestFocus(true)

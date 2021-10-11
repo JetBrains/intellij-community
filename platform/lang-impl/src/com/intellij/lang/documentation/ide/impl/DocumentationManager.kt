@@ -82,7 +82,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     val popupContext = when {
       lookup != null -> LookupPopupContext(lookup)
       quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
-      else -> ProjectPopupContext(project, editor)
+      else -> DefaultPopupContext(project, editor)
     }
     showDocumentation(request, popupContext)
   }
