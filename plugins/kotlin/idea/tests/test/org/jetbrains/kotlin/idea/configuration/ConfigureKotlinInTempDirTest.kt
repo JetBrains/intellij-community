@@ -49,14 +49,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
     }
 
-    fun testLibraryNonDefault_libExistInDefault() {
-        val module = module
-
-        // Move fake runtime jar to default library path to pretend library is already configured
-        FileUtil.copy(
-            File(project.basePath + "/lib/" + KotlinArtifactNames.KOTLIN_STDLIB),
-            File(jvmConfigurator.getDefaultPathToJarFile(project) + "/" + KotlinArtifactNames.KOTLIN_STDLIB)
-        )
+    fun testSimple() {
         assertNotConfigured(module, jvmConfigurator)
         jvmConfigurator.configure(myProject, emptyList())
         assertProperlyConfigured(module, jvmConfigurator)

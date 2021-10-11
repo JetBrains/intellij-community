@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibraryConfigurator() {
+open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator() {
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !hasBrokenJsRuntime(module)
     }
@@ -43,9 +43,6 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
 
     override val dialogTitle: String
         get() = JavaRuntimeLibraryDescription.DIALOG_TITLE
-
-    override val libraryCaption: String
-        get() = JavaRuntimeLibraryDescription.LIBRARY_CAPTION
 
     override val messageForOverrideDialog: String
         @Nls
@@ -113,15 +110,8 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
         }
     }
 
-    override fun configureModule(
-        module: Module,
-        classesPath: String,
-        sourcesPath: String,
-        collector: NotificationMessageCollector,
-        forceJarState: FileState?,
-        useBundled: Boolean
-    ) {
-        super.configureModule(module, classesPath, sourcesPath, collector, forceJarState, useBundled)
+    override fun configureModule(module: Module, collector: NotificationMessageCollector) {
+        super.configureModule(module, collector)
         addStdlibToJavaModuleInfo(module, collector)
     }
 

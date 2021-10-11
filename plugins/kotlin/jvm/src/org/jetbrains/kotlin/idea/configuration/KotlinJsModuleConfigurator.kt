@@ -43,9 +43,6 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator() {
     override val dialogTitle: String
         get() = JSLibraryStdDescription.DIALOG_TITLE
 
-    override val libraryCaption: String
-        get() = JSLibraryStdDescription.LIBRARY_CAPTION
-
     override val messageForOverrideDialog: String
         get() = JSLibraryStdDescription.JAVA_SCRIPT_LIBRARY_CREATION
 
