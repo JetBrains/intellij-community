@@ -18,6 +18,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
@@ -83,7 +85,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   private String getFileName(TestFileType type) {
-    return getTestName(false) + type.getExtension();
+    String name = getTestName(false) + type.getExtension();
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    assertEquals(type + " file type must be in this test classpath", "."+fileType.getDefaultExtension(), type.getExtension());
+    return name;
   }
 
   protected FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
