@@ -44,6 +44,7 @@
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
+    <action  id="Git.PushUpToCommit" class="git4idea.actions.GitPushUpToCommitAction"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
@@ -254,6 +255,7 @@
       <reference id="Git.Drop.Commits"/>
       <reference id="Git.Squash.Commits" />
       <reference id="Git.Interactive.Rebase"/>
+      <reference id="Git.PushUpToCommit"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
       <reference id="Git.CreateNewBranch"/>
