@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
@@ -11,6 +12,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
@@ -44,6 +47,7 @@ abstract class ToolWindowHeader internal constructor(
   private var image: BufferedImage? = null
   private var activeImage: BufferedImage? = null
   private var imageType: ToolWindowType? = null
+  private var drawBottomLine: Boolean? = null
   private val actionGroup = DefaultActionGroup()
   private val actionGroupWest = DefaultActionGroup()
   private val toolbar: ActionToolbar
@@ -217,15 +221,29 @@ abstract class ToolWindowHeader internal constructor(
     val image: Image?
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
     val drawTopLine = type != ToolWindowType.FLOATING && !UIUtil.isClientPropertyTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
+    var drawBottomLine = true
+
+    if (Registry.`is`("ide.experimental.ui")) {
+      drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
+                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
+                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow))
+
+      if (this.drawBottomLine != drawBottomLine) {
+        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine, drawBottomLine)
+        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
+        this.drawBottomLine = drawBottomLine
+      }
+    }
+
     if (isActive) {
       if (activeImage == null ||  /*myActiveImage.getHeight() != r.height ||*/type != imageType) {
-        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine)
+        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine, drawBottomLine)
       }
       image = activeImage
     }
     else {
       if (this.image == null ||  /*myImage.getHeight() != r.height ||*/type != imageType) {
-        this.image = drawToBuffer(g2d, false, r.height, drawTopLine)
+        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
       }
       image = this.image
     }
@@ -309,11 +327,11 @@ abstract class ToolWindowHeader internal constructor(
   }
 }
 
-private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, drawTopLine: Boolean): BufferedImage {
+private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, drawTopLine: Boolean, drawBottomLine: Boolean): BufferedImage {
   val width = 150
   val image = ImageUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB)
   val g = image.createGraphics()
-  UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, true)
+  UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)
   g.dispose()
   return image
 }
