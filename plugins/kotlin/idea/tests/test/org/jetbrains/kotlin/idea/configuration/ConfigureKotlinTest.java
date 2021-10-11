@@ -95,6 +95,10 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
     }
 
+    public void testStdlibDoesntHaveCompileScope() {
+        doTestSingleJvmModule(KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY);
+    }
+
     public void testTwoModules_exists() {
         Module[] modules = getModules();
         for (Module module : modules) {

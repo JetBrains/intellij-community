@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.*
@@ -242,21 +244,23 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             ModuleRootModificationUtil.addDependency(module, library, expectedDependencyScope, false)
             collector.addMessage(KotlinJvmBundle.message("0.library.was.added.to.module.1", library.name.toString(), module.name))
         } else {
-            val libraryEntry = findLibraryOrderEntry(ModuleRootManager.getInstance(module).orderEntries, kotlinLibrary)
-            if (libraryEntry != null) {
-                val libraryDependencyScope = libraryEntry.scope
-                if (expectedDependencyScope != libraryDependencyScope) {
-                    libraryEntry.scope = expectedDependencyScope
+            ModuleRootModificationUtil.updateModel(module) {
+                val libraryEntry = it.findLibraryOrderEntry(kotlinLibrary)
+                if (libraryEntry != null) {
+                    val libraryDependencyScope = libraryEntry.scope
+                    if (expectedDependencyScope != libraryDependencyScope) {
+                        libraryEntry.scope = expectedDependencyScope
 
-                    collector.addMessage(
-                        KotlinJvmBundle.message(
-                            "0.library.scope.has.changed.from.1.to.2.for.module.3",
-                            kotlinLibrary.name.toString(),
-                            libraryDependencyScope,
-                            expectedDependencyScope,
-                            module.name
+                        collector.addMessage(
+                            KotlinJvmBundle.message(
+                                "0.library.scope.has.changed.from.1.to.2.for.module.3",
+                                kotlinLibrary.name.toString(),
+                                libraryDependencyScope,
+                                expectedDependencyScope,
+                                module.name
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -463,16 +467,6 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             }
 
             return parentDir
-        }
-
-        private fun findLibraryOrderEntry(orderEntries: Array<OrderEntry>, library: Library): LibraryOrderEntry? {
-            for (orderEntry in orderEntries) {
-                if (orderEntry is LibraryOrderEntry && library == orderEntry.library) {
-                    return orderEntry
-                }
-            }
-
-            return null
         }
 
         private fun getDependencyScope(module: Module): DependencyScope =
