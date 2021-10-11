@@ -123,15 +123,18 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtProperty.asCompilerRefs(
         qualifier: String,
         names: NameEnumerator,
-    ): List<CompilerRef.CompilerMember>? = name?.let { propertyName ->
+    ): List<CompilerRef.CompilerMember>? {
+        val propertyName = name ?: return null
         val qualifierId = names.tryEnumerate(qualifier)
-        if (hasModifier(KtTokens.CONST_KEYWORD)) return@let listOf(
-            CompilerRef.JavaCompilerFieldRef(
-                qualifierId,
-                // JvmName for constants isn't supported
-                names.tryEnumerate(propertyName),
-            )
-        )
+        if (hasModifier(KtTokens.CONST_KEYWORD)) {
+            return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName)))
+        }
+
+        val field = if (hasModifier(KtTokens.LATEINIT_KEYWORD)) {
+            CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName))
+        } else {
+            null
+        }
 
         val numberOfArguments = numberOfArguments(countReceiver = true)
         val getter = CompilerRef.JavaCompilerMethodRef(
@@ -149,7 +152,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         else
             null
 
-        listOfNotNull(getter, setter)
+        return listOfNotNull(field, getter, setter)
     }
 
     override fun getHierarchyRestrictedToLibraryScope(

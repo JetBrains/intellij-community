@@ -692,6 +692,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromCompanion/javaStaticField2/");
             }
 
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/lateinit/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/fromCompanion/property/");
@@ -904,6 +909,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/members/javaField/");
             }
 
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/members/lateinit/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/members/property/");
@@ -980,6 +990,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("isVariableWithCustomFileName")
             public void testIsVariableWithCustomFileName() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName/");
+            }
+
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/lateinit/");
             }
 
             @TestMetadata("property")
