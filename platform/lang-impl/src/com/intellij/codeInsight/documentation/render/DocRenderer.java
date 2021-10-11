@@ -456,21 +456,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     Project project = context.getProject();
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     if (QuickDocUtil.getActiveDocComponent(project) == null) {
-      Point rendererPosition;
-      Rectangle relativeBounds;
-      if (useOldBackend()) {
-        Inlay<DocRenderer> inlay = myItem.inlay;
-        rendererPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
-        relativeBounds = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
-      }
-      else {
-        CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
-        rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
-        relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
-      }
-      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT,
-                         new Point(rendererPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
-                                   rendererPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())));
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, popupPosition(linkLocationWithinInlay));
       documentationManager.showJavaDocInfo(editor, context, context, () -> {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
       }, "", false, true);
@@ -495,6 +481,25 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
       }, disposable);
       documentationManager.muteAutoUpdateTill(disposable);
     }
+  }
+
+  private @NotNull Point popupPosition(@NotNull Rectangle2D linkLocationWithinInlay) {
+    Point rendererPosition;
+    Rectangle relativeBounds;
+    if (useOldBackend()) {
+      Inlay<DocRenderer> inlay = myItem.inlay;
+      rendererPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
+      relativeBounds = getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
+    }
+    else {
+      CustomFoldRegion foldRegion = (CustomFoldRegion)myItem.foldRegion;
+      rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
+      relativeBounds = getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());
+    }
+    return new Point(
+      rendererPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
+      rendererPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())
+    );
   }
 
   private static boolean isExternalLink(@NotNull String linkUrl) {
