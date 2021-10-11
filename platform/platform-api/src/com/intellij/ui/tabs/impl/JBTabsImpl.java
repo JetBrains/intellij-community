@@ -590,14 +590,14 @@ public class JBTabsImpl extends JComponent
       Color tabBg = myTabPainter.getBackgroundColor();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
       if (showLeftFadeout) {
-        Rectangle leftSide = new Rectangle(0, more.getY() - 1, width, more.getHeight() + 1);
+        Rectangle leftSide = new Rectangle(0, more.getY() - 1, width, more.getHeight() - 1);
         ((Graphics2D)g).setPaint(
           new GradientPaint(leftSide.x, leftSide.y, tabBg, leftSide.x + leftSide.width,
                             leftSide.y, transparent));
         ((Graphics2D)g).fill(leftSide);
       }
       if (showRightFadeout) {
-        Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, moreY, width, moreHeight);
+        Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, moreY, width, moreHeight - 1);
         ((Graphics2D)g).setPaint(
           new GradientPaint(rightSide.x, rightSide.y, transparent, rightSide.x + rightSide.width, rightSide.y,
                             tabBg));
