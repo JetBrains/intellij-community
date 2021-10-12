@@ -5,7 +5,6 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -17,7 +16,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
@@ -42,8 +40,8 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectDir: Path): Boolean {
     if (trustedState == ThreeState.UNSURE) {
       val openingUntrustedProjectChoice = confirmOpeningUntrustedProject(projectDir)
       when (openingUntrustedProjectChoice) {
-        OpenUntrustedProjectChoice.IMPORT -> trustedPaths.setProjectPathTrusted(projectDir, true)
-        OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING -> trustedPaths.setProjectPathTrusted(projectDir, false)
+        OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
+        OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
         OpenUntrustedProjectChoice.CANCEL -> return@invokeAndWaitIfNeeded false
       }
     }
@@ -70,7 +68,7 @@ fun confirmOpeningUntrustedProject(
 ): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
   val projectDir = if (projectFileOrDir.isDirectory()) projectFileOrDir else projectFileOrDir.parent
   if (isProjectImplicitlyTrusted(projectDir)) {
-    return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.IMPORT
+    return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.TRUST_AND_OPEN
   }
 
   val choice = MessageDialogBuilder.Message(title, message)
@@ -83,8 +81,8 @@ fun confirmOpeningUntrustedProject(
     .show()
 
   val openChoice = when (choice) {
-    trustButtonText -> OpenUntrustedProjectChoice.IMPORT
-    distrustButtonText -> OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING
+    trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
+    distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
     cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
     else -> {
       LOG.error("Illegal choice $choice")
@@ -118,10 +116,10 @@ fun confirmLoadingUntrustedProject(
   return@invokeAndWaitIfNeeded answer
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 enum class OpenUntrustedProjectChoice {
-  IMPORT,
-  OPEN_WITHOUT_IMPORTING,
+  TRUST_AND_OPEN,
+  OPEN_IN_SAFE_MODE,
   CANCEL;
 }
 
