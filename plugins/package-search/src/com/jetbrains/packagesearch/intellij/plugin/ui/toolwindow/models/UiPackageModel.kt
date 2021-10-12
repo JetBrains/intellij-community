@@ -5,6 +5,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal sealed class UiPackageModel<T : PackageModel> {
@@ -147,21 +148,21 @@ private inline fun <reified T : PackageModel> computeActionsFor(
 
     val availableVersions = packageModel.getAvailableVersions(onlyStable)
 
-    val upgradeToVersion = when (packageModel) {
+    val upgradeVersion = when (packageModel) {
         is PackageModel.Installed -> {
             val currentVersion = packageModel.getLatestInstalledVersion()
             if (currentVersion is PackageVersion.Named) {
                 PackageVersionUtils.upgradeCandidateVersionOrNull(NormalizedPackageVersion.parseFrom(currentVersion), availableVersions)
             } else {
-                availableVersions.first()
+                availableVersions.maxOrNull()
             }
         }
         else -> null
     }
 
-    val highestAvailableVersion = availableVersions.firstOrNull()
+    val highestAvailableVersion = PackageVersionUtils.highestSensibleVersionByNameOrNull(availableVersions)
 
-    val primaryOperationType = decidePrimaryOperationTypeFor(packageModel, upgradeToVersion)
+    val primaryOperationType = decidePrimaryOperationTypeFor(packageModel, upgradeVersion)
 
     val primaryOperations = mutableListOf<PackageSearchOperation<*>>()
     val removeOperations = mutableListOf<PackageSearchOperation<*>>()
@@ -170,25 +171,39 @@ private inline fun <reified T : PackageModel> computeActionsFor(
 
         val project = moduleModel.projectModule.nativeModule.project
         primaryOperations += when (primaryOperationType) {
-            PackageOperationType.INSTALL -> operationFactory.computeInstallActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                defaultScope = targetModules.defaultScope(project),
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
-            PackageOperationType.UPGRADE -> operationFactory.computeUpgradeActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
-            PackageOperationType.SET -> operationFactory.computeUpgradeActionsFor(
-                packageModel = packageModel,
-                moduleModel = moduleModel,
-                knownRepositories = knownRepositoriesInTargetModules,
-                onlyStable = onlyStable
-            )
+            PackageOperationType.INSTALL -> {
+                if (highestAvailableVersion != null) {
+                    operationFactory.computeInstallActionsFor(
+                        packageModel = packageModel,
+                        moduleModel = moduleModel,
+                        defaultScope = targetModules.defaultScope(project),
+                        knownRepositories = knownRepositoriesInTargetModules,
+                        targetVersion = highestAvailableVersion
+                    )
+                } else {
+                    logWarn(
+                        "Trying to compute install actions for '${packageModel.identifier.rawValue}' into '${moduleModel.projectModule.name}' " +
+                            "but there's no known version to install"
+                    )
+                    emptyList()
+                }
+            }
+            PackageOperationType.UPGRADE, PackageOperationType.SET -> {
+                if (upgradeVersion != null) {
+                    operationFactory.computeUpgradeActionsFor(
+                        packageModel = packageModel,
+                        moduleModel = moduleModel,
+                        knownRepositories = knownRepositoriesInTargetModules,
+                        targetVersion = upgradeVersion
+                    )
+                } else {
+                    logWarn(
+                        "Trying to compute upgrade/set actions for '${packageModel.identifier.rawValue}' into '${moduleModel.projectModule.name}' " +
+                            "but there's no version to upgrade to"
+                    )
+                    emptyList()
+                }
+            }
             else -> emptyList()
         }
     }
@@ -197,7 +212,7 @@ private inline fun <reified T : PackageModel> computeActionsFor(
         PackageOperationType.INSTALL -> highestAvailableVersion?.let {
             knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
         }
-        PackageOperationType.UPGRADE -> upgradeToVersion?.let {
+        PackageOperationType.UPGRADE -> upgradeVersion?.let {
             knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(packageModel, it.originalVersion)
         }
         else -> null
@@ -207,7 +222,7 @@ private inline fun <reified T : PackageModel> computeActionsFor(
         targetModules = targetModules,
         primaryOperations = primaryOperations,
         removeOperations = removeOperations,
-        targetVersion = highestAvailableVersion?.originalVersion,
+        targetVersion = if (primaryOperationType == PackageOperationType.INSTALL) highestAvailableVersion else upgradeVersion,
         primaryOperationType = primaryOperationType,
         repoToAddWhenInstalling = repoToInstall
     )

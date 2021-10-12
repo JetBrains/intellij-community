@@ -44,9 +44,9 @@ internal class ActionsColumn(
         this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
     }
 
-    override fun valueOf(item: PackagesTableItem<*>): ActionsViewModel {
+    override fun valueOf(item: PackagesTableItem<*>): ActionViewModel {
         val operationType = getOperationTypeFor(item)
-        return ActionsViewModel(
+        return ActionViewModel(
             item.packageModel,
             item.uiPackageModel.packageOperations.primaryOperations,
             operationType,
@@ -87,7 +87,7 @@ internal class ActionsColumn(
         )
     }
 
-    data class ActionsViewModel(
+    data class ActionViewModel(
         val packageModel: PackageModel,
         val operations: List<PackageSearchOperation<*>>,
         val operationType: PackageOperationType?,

@@ -28,7 +28,7 @@ internal sealed class NormalizedPackageVersion(
         override val nonSemanticSuffix: String?
     ) : NormalizedPackageVersion(original), DecoratedVersion {
 
-        private val semanticPartWithStabilityMarker = semanticPart + (stabilityMarker ?: "")
+        val semanticPartWithStabilityMarker = semanticPart + (stabilityMarker ?: "")
 
         override fun compareTo(other: NormalizedPackageVersion): Int =
             when (other) {

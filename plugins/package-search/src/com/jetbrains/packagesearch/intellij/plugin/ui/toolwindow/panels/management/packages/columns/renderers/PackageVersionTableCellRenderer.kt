@@ -66,7 +66,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     }
 
     @Nls
-    private fun versionMessage(packageModel: PackageModel.Installed, PackageOperations: PackageOperations): String {
+    private fun versionMessage(packageModel: PackageModel.Installed, packageOperations: PackageOperations): String {
         val installedVersions = packageModel.usageInfo.asSequence()
             .map { it.version }
             .distinct()
@@ -79,8 +79,8 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         return buildString {
             append(installedVersions)
 
-            if (PackageOperations.canUpgradePackage) {
-                val upgradeVersion = PackageOperations.targetVersion ?: return@buildString
+            if (packageOperations.canUpgradePackage) {
+                val upgradeVersion = packageOperations.targetVersion ?: return@buildString
                 append(" → ")
                 append(upgradeVersion.displayName)
             }

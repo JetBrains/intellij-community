@@ -16,6 +16,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
  */
 internal object VersionNameComparator : Comparator<String> {
 
-    override fun compare(s1: String?, s2: String?): Int =
-        VersionComparatorUtil.compare(s1, s2, ::versionTokenPriorityProvider)
+    override fun compare(first: String?, second: String?): Int =
+        VersionComparatorUtil.compare(first, second, ::versionTokenPriorityProvider)
 }
