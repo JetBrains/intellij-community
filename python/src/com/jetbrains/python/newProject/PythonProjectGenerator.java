@@ -336,12 +336,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
    */
-  protected static void installFrameworkIfNeeded(@NotNull final Project project,
-                                                 @NotNull final String frameworkName,
-                                                 @NotNull final String requirement,
-                                                 @Nullable final Sdk sdk,
-                                                 final boolean forceInstallFramework,
-                                                 @Nullable final Runnable callback) {
+  public static void installFrameworkIfNeeded(@NotNull final Project project,
+                                              @NotNull final String frameworkName,
+                                              @NotNull final String requirement,
+                                              @Nullable final Sdk sdk,
+                                              final boolean forceInstallFramework,
+                                              @Nullable final Runnable callback) {
 
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
