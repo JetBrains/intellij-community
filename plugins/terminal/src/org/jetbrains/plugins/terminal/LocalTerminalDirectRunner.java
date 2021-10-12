@@ -17,10 +17,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,7 +128,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
-      EnvironmentUtil.restoreOverriddenVars(envs);
+      EnvironmentRestorer.restoreOverriddenVars(envs);
     }
 
     if (!SystemInfo.isWindows) {

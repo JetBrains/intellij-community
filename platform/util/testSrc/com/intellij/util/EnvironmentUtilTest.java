@@ -8,7 +8,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
@@ -79,34 +78,5 @@ public class EnvironmentUtilTest {
     catch (Exception e) {
       assertTrue(e.getMessage(), e.getMessage().contains("some error"));
     }
-  }
-
-  @Test
-  public void restoreOverriddenVars() {
-    Map<String, String> envs = new HashMap<>();
-
-    envs.put(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX + "VAR_A", "ORIGINAL_A");
-    envs.put("VAR_A", "OVERRIDDEN_A");
-    envs.put("VAR_B", "ORIGINAL_B");
-    envs.put(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX + "VAR_C", "");
-    envs.put("VAR_C", "CREATED_C");
-    envs.put(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX + "VAR_D", "ORIGINAL_D");
-    envs.put("VAR_D", "OVERRIDDEN_D");
-    envs.put("VAR_E", "ORIGINAL_E");
-    envs.put(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX + "VAR_F", "");
-    envs.put("VAR_F", "CREATED_F");
-
-    EnvironmentUtil.restoreOverriddenVars(envs);
-
-    assertTrue(envs.containsKey("VAR_A"));
-    assertEquals("ORIGINAL_A", envs.get("VAR_A"));
-    assertTrue(envs.containsKey("VAR_B"));
-    assertEquals("ORIGINAL_B", envs.get("VAR_B"));
-    assertTrue(envs.containsKey("VAR_D"));
-    assertEquals("ORIGINAL_D", envs.get("VAR_D"));
-    assertTrue(envs.containsKey("VAR_E"));
-    assertEquals("ORIGINAL_E", envs.get("VAR_E"));
-
-    assertEquals(envs.size(), 4);
   }
 }
