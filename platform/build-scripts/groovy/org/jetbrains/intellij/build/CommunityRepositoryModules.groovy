@@ -469,11 +469,11 @@ final class CommunityRepositoryModules {
       // Profiler downloader will also download instant run transport: /resources/transport
 
       //  "//tools/adt/idea/android/lib:sample-data-bundle",
-      withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.core", "lib/sampleData", "resources/sampleData")
       //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
-      withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
-      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
+      withResourceArchive("../android/annotations", "resources/androidAnnotations.jar")
       //  "//tools/base/app-inspection/inspectors/network:bundle",
       //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
       //  "//tools/base/profiler/transform:profilers-transform",
