@@ -16,10 +16,10 @@
 
 package com.maddyhome.idea.copyright.options;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
@@ -118,7 +118,7 @@ public class Options implements Cloneable {
         }
       }
       if (root != null) {
-        String languageName = StdFileTypes.JAVA.getName();
+        String languageName = JavaFileType.INSTANCE.getName();
         // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
         LanguageOptions opts = new LanguageOptions();
         opts.setFileTypeOverride(LanguageOptions.USE_TEMPLATE);
@@ -126,10 +126,12 @@ public class Options implements Cloneable {
           String name = option.getAttributeValue("name");
           String val = option.getAttributeValue("value");
           if ("body".equals(name)) {
-            //todo opts.setNotice(val);
+            opts.setNotice(val);
           }
           else if ("location".equals(name)) {
-            opts.setFileLocation(Integer.parseInt(val));
+            if(val != null){
+              opts.setFileLocation(Integer.parseInt(val));
+            }
           }
         }
 
