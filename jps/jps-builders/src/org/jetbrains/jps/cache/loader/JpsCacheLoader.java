@@ -36,7 +36,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     myTmpCacheFolder = null;
 
     long start = System.currentTimeMillis();
-    File zipFile = myClient.downloadCacheById(myContext, myContext.getCommitId(), myBuildCacheFolder);
+    File zipFile = myClient.downloadCacheById(myContext, myContext.getCommitId(), myBuildCacheFolder.getParentFile());
     LOG.info("Download of jps caches took: " + (System.currentTimeMillis() - start));
     return zipFile;
   }
@@ -46,7 +46,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     if (!(loadResults instanceof File)) return LoaderStatus.FAILED;
 
     File zipFile = (File)loadResults;
-    File tmpFolder = new File(myBuildCacheFolder, "tmp");
+    File tmpFolder = new File(myBuildCacheFolder.getParentFile(), "tmp");
     try {
       // Start extracting after download
       myContext.sendMainStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
