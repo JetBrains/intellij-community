@@ -21,10 +21,12 @@ import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
@@ -33,8 +35,10 @@ import com.intellij.ui.components.textFieldWithBrowseButton
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.*
+import javax.swing.DefaultListCellRenderer
 import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.text.JTextComponent
 
 
@@ -47,6 +51,25 @@ fun <S : RunConfigurationBase<*>> createBeforeRunFragment(buildTaskKey: Key<*>):
   val beforeRunFragment = BeforeRunFragment.createBeforeRun<S>(beforeRunComponent, buildTaskKey)
   Disposer.register(beforeRunFragment, parentDisposable)
   return beforeRunFragment
+}
+
+inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantFragment(
+  info: LabeledSettingsFragmentInfo,
+  crossinline getter: S.() -> V,
+  crossinline setter: S.(V) -> Unit,
+  crossinline getText: (V) -> String
+) = addLabeledSettingsEditorFragment(
+  ComboBox(CollectionComboBoxModel(EnumSet.allOf(V::class.java).toList())),
+  info,
+  { it, c -> c.selectedItem = it.getter() },
+  { it, c -> it.setter(c.selectedItem!! as V) },
+).applyToComponent {
+  this.component.setRenderer(object : DefaultListCellRenderer() {
+    override fun getListCellRendererComponent(
+      list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean
+    ) = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      .also { setText(getText(value!! as V)) }
+  })
 }
 
 @Suppress("HardCodedStringLiteral")

@@ -107,6 +107,7 @@ class MavenRunConfigurationSettingsEditor(
           val distributionComponent = addDistributionFragment().component().component
           val userSettingsComponent = addUserSettingsFragment().component().component
           addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
+          addOutputLevelFragment()
           addThreadsFragment()
           addUsePluginRegistryTag()
           addPrintStacktracesTag()
@@ -114,7 +115,6 @@ class MavenRunConfigurationSettingsEditor(
           addExecuteNonRecursivelyTag()
           addWorkOfflineTag()
           addCheckSumPolicyTag()
-          addOutputLevelTag()
           addMultiprojectBuildPolicyTag()
         }
       }
@@ -285,16 +285,20 @@ class MavenRunConfigurationSettingsEditor(
     )
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addOutputLevelTag() {
-    addVariantTag(
-      "maven.output.level.tag",
-      MavenConfigurableBundle.message("maven.run.configuration.output.level"),
-      MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addOutputLevelFragment() =
+    addVariantFragment(
+      object : LabeledSettingsFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.output.level.label")
+        override val settingsId: String = "maven.output.level.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.output.level.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
+        override val settingsHint: String? = null
+        override val settingsActionHint: String? = null
+      },
       { generalSettingsOrDefault.outputLevel },
       { generalSettingsOrDefault.outputLevel = it },
       { it.displayString }
     )
-  }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultiprojectBuildPolicyTag() {
     addVariantTag(
