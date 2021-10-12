@@ -302,11 +302,17 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public synchronized RefParameter @NotNull [] getParameters() {
+    LOG.assertTrue(isInitialized(), getName() + " not initialized");
     return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
   }
 
   @Override
   public void buildReferences() {
+    if (!isInitialized()) {
+      // delay task until initialized.
+      getRefManager().executeTask(() -> buildReferences());
+      return;
+    }
     // Work on code block to find what we're referencing...
     UMethod method = (UMethod)getUastElement();
     if (method == null) return;
@@ -362,7 +368,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return isLibraryOverride(new HashSet<>());
   }
 
-  private boolean isLibraryOverride(@NotNull Collection<? super RefMethod> processed) {
+  private synchronized boolean isLibraryOverride(@NotNull Collection<? super RefMethod> processed) {
     if (!processed.add(this)) return false;
 
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
@@ -392,7 +398,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public boolean isReferenced() {
+  public synchronized boolean isReferenced() {
     // Directly called from somewhere...
     for (RefElement refCaller : getInReferences()) {
       if (!getDerivedReferences().contains(refCaller)) return true;
@@ -403,7 +409,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public boolean hasSuspiciousCallers() {
+  public synchronized boolean hasSuspiciousCallers() {
     // Directly called from somewhere...
     for (RefElement refCaller : getInReferences()) {
       if (((RefElementImpl)refCaller).isSuspicious() && !getDerivedReferences().contains(refCaller)) return true;
@@ -583,6 +589,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void updateParameterValues(List<UExpression> args, @Nullable PsiElement elementPlace) {
+    LOG.assertTrue(isInitialized(), getName() + " not initialized");
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {

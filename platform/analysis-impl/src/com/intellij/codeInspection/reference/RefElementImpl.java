@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance(RefElement.class);
 
+  private static final int IS_INITIALIZED_MASK = 0b100000;
   private static final int IS_REACHABLE_MASK = 0b1000000;
   private static final int IS_ENTRY_MASK = 0b10000000;
   private static final int IS_PERMANENT_ENTRY_MASK = 0b1_00000000;
@@ -38,6 +40,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions;
 
   private volatile boolean myIsDeleted;
+
+  private final CountDownLatch myInitSignal = new CountDownLatch(1);
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
@@ -245,6 +249,25 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   protected abstract void initialize();
+
+  @Override
+  public boolean isInitialized() {
+    return checkFlag(IS_INITIALIZED_MASK);
+  }
+
+  public void setInitialized(final boolean initialized) {
+    if (initialized) {
+      myInitSignal.countDown();
+    }
+    setFlag(initialized, IS_INITIALIZED_MASK);
+  }
+
+  public void waitForInitialized() {
+    try {
+      myInitSignal.await();
+    }
+    catch (InterruptedException ignore) {}
+  }
 
   @Override
   public void addSuppression(final String text) {

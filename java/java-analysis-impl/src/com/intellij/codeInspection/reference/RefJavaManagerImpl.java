@@ -205,6 +205,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
       ref.initialize();
+      ref.setInitialized(true);
       return (RefElement)ref;
     });
     return result instanceof RefParameter ? (RefParameter)result : null;

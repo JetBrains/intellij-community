@@ -327,6 +327,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
+                             refClass.waitForInitialized();
 
                              if (defaultConstructorOnly) {
                                WritableRefElement refDefaultConstructor = (WritableRefElement)refClass.getDefaultConstructor();
@@ -485,6 +486,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   @Override
   public RefClass getTopLevelClass(@NotNull RefElement refElement) {
+    LOG.assertTrue(refElement.isInitialized(), refElement.getName() + " not initialized");
     RefEntity refParent = refElement.getOwner();
 
     while (refParent instanceof RefElement && !(refParent instanceof RefFile)) {
@@ -564,6 +566,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   @Override
   @Nullable
   public RefClass getOwnerClass(RefElement refElement) {
+    LOG.assertTrue(refElement.isInitialized(), refElement.getName() + " not initialized");
     RefEntity parent = refElement.getOwner();
 
     while (!(parent instanceof RefClass) && parent instanceof RefElement) {
