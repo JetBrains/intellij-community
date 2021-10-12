@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -207,6 +208,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ShowPopupAutomaticallyAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
     myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true);
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
@@ -248,6 +250,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new ToggleShowDocsOnHoverAction());
     gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
+    gearActions.add(new ShowPopupAutomaticallyAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
@@ -888,6 +891,22 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
       showHint();
+    }
+  }
+
+  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+    ShowPopupAutomaticallyAction() {
+      super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO = state;
     }
   }
 
