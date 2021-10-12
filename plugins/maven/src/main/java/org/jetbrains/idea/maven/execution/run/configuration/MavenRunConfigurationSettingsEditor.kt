@@ -38,10 +38,12 @@ import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -82,6 +84,12 @@ class MavenRunConfigurationSettingsEditor(
     add(LogsGroupFragment())
   }
 
+  private val MavenRunConfiguration.generalSettingsOrDefault: MavenGeneralSettings
+    get() = generalSettings ?: MavenProjectsManager.getInstance(project).generalSettings.clone()
+
+  private val MavenRunConfiguration.runnerSettingsOrDefault: MavenRunnerSettings
+    get() = runnerSettings ?: MavenRunner.getInstance(project).settings.clone()
+
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
     add(object : NestedGroupFragment<MavenRunConfiguration>(
       "maven.runner.group",
@@ -93,8 +101,8 @@ class MavenRunConfigurationSettingsEditor(
         inheritCheckBoxGroup(
           "maven.runner.group.inherit",
           MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
-          { it, c -> c.isSelected = it.isInheritedGeneralSettings },
-          { it, c -> it.isInheritedGeneralSettings = c.isSelected }
+          { it, c -> c.isSelected = it.generalSettings == null },
+          { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
         ) {
           val distributionComponent = addDistributionFragment().component().component
           val userSettingsComponent = addUserSettingsFragment().component().component
@@ -124,8 +132,8 @@ class MavenRunConfigurationSettingsEditor(
       inheritCheckBoxGroup(
         "maven.runner.group.inherit",
         MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
-        { it, c -> c.isSelected = it.isInheritedRunnerSettings },
-        { it, c -> it.isInheritedRunnerSettings = c.isSelected }
+        { it, c -> c.isSelected = it.runnerSettings == null },
+        { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
       ) {
         addJreFragment()
         addEnvironmentFragment()
@@ -195,8 +203,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.runner.skip.tests"),
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
       null,
-      { runnerSettings.isSkipTests },
-      { runnerSettings.isSkipTests = it }
+      { runnerSettingsOrDefault.isSkipTests },
+      { runnerSettingsOrDefault.isSkipTests = it }
     )
   }
 
@@ -206,8 +214,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.general.use.plugin.registry"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       MavenConfigurableBundle.message("maven.settings.general.use.plugin.registry.tooltip"),
-      { generalSettings.isUsePluginRegistry },
-      { generalSettings.isUsePluginRegistry = it }
+      { generalSettingsOrDefault.isUsePluginRegistry },
+      { generalSettingsOrDefault.isUsePluginRegistry = it }
     )
   }
 
@@ -217,8 +225,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.general.print.stacktraces"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       MavenConfigurableBundle.message("maven.settings.general.print.stacktraces.tooltip"),
-      { generalSettings.isPrintErrorStackTraces },
-      { generalSettings.isPrintErrorStackTraces = it }
+      { generalSettingsOrDefault.isPrintErrorStackTraces },
+      { generalSettingsOrDefault.isPrintErrorStackTraces = it }
     )
   }
 
@@ -228,8 +236,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.general.update.snapshots"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       MavenConfigurableBundle.message("maven.settings.general.update.snapshots.tooltip"),
-      { generalSettings.isAlwaysUpdateSnapshots },
-      { generalSettings.isAlwaysUpdateSnapshots = it }
+      { generalSettingsOrDefault.isAlwaysUpdateSnapshots },
+      { generalSettingsOrDefault.isAlwaysUpdateSnapshots = it }
     )
   }
 
@@ -250,8 +258,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.general.execute.non.recursively"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       MavenConfigurableBundle.message("maven.settings.general.execute.recursively.tooltip"),
-      { generalSettings.isNonRecursive },
-      { generalSettings.isNonRecursive = it }
+      { generalSettingsOrDefault.isNonRecursive },
+      { generalSettingsOrDefault.isNonRecursive = it }
     )
   }
 
@@ -261,8 +269,8 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.settings.general.work.offline"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       MavenConfigurableBundle.message("maven.settings.general.work.offline.tooltip"),
-      { generalSettings.isWorkOffline },
-      { generalSettings.isWorkOffline = it }
+      { generalSettingsOrDefault.isWorkOffline },
+      { generalSettingsOrDefault.isWorkOffline = it }
     )
   }
 
@@ -271,8 +279,8 @@ class MavenRunConfigurationSettingsEditor(
       "maven.checksum.policy.tag",
       MavenConfigurableBundle.message("maven.run.configuration.checksum.policy"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      { generalSettings.checksumPolicy },
-      { generalSettings.checksumPolicy = it },
+      { generalSettingsOrDefault.checksumPolicy },
+      { generalSettingsOrDefault.checksumPolicy = it },
       { it.displayString }
     )
   }
@@ -282,8 +290,8 @@ class MavenRunConfigurationSettingsEditor(
       "maven.output.level.tag",
       MavenConfigurableBundle.message("maven.run.configuration.output.level"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      { generalSettings.outputLevel },
-      { generalSettings.outputLevel = it },
+      { generalSettingsOrDefault.outputLevel },
+      { generalSettingsOrDefault.outputLevel = it },
       { it.displayString }
     )
   }
@@ -293,8 +301,8 @@ class MavenRunConfigurationSettingsEditor(
       "maven.multiproject.build.policy.tag",
       MavenConfigurableBundle.message("maven.run.configuration.multiproject.build.policy"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      { generalSettings.failureBehavior },
-      { generalSettings.failureBehavior = it },
+      { generalSettingsOrDefault.failureBehavior },
+      { generalSettingsOrDefault.failureBehavior = it },
       { it.displayString }
     )
   }
@@ -303,10 +311,10 @@ class MavenRunConfigurationSettingsEditor(
     addDistributionFragment(
       project,
       MavenDistributionsInfo(),
-      { asDistributionInfo(generalSettings.mavenHome.ifEmpty { MavenServerManager.BUNDLED_MAVEN_3 }) },
-      { generalSettings.mavenHome = it?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3 }
+      { asDistributionInfo(generalSettingsOrDefault.mavenHome.ifEmpty { MavenServerManager.BUNDLED_MAVEN_3 }) },
+      { generalSettingsOrDefault.mavenHome = it?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3 }
     ).addValidation {
-      if (!MavenUtil.isValidMavenHome(it.generalSettings.mavenHome)) {
+      if (!MavenUtil.isValidMavenHome(it.generalSettingsOrDefault.mavenHome)) {
         throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
       }
     }
@@ -338,10 +346,10 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String = ExecutionBundle.message("environment.variables.fragment.hint")
         override val settingsActionHint: String = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
       },
-      { runnerSettings.environmentProperties },
-      { runnerSettings.environmentProperties = it },
-      { runnerSettings.isPassParentEnv },
-      { runnerSettings.isPassParentEnv = it }
+      { runnerSettingsOrDefault.environmentProperties },
+      { runnerSettingsOrDefault.environmentProperties = it },
+      { runnerSettingsOrDefault.isPassParentEnv },
+      { runnerSettingsOrDefault.isPassParentEnv = it }
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addVmOptionsFragment() =
@@ -354,8 +362,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String = ExecutionBundle.message("run.configuration.java.vm.parameters.hint")
         override val settingsActionHint: String = ExecutionBundle.message("specify.vm.options.for.running.the.application")
       },
-      { runnerSettings.vmOptions.ifEmpty { null } },
-      { runnerSettings.setVmOptions(it) }
+      { runnerSettingsOrDefault.vmOptions.ifEmpty { null } },
+      { runnerSettingsOrDefault.setVmOptions(it) }
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() =
@@ -374,8 +382,8 @@ class MavenRunConfigurationSettingsEditor(
           { getSelectedJdkReference(sdkLookupProvider) },
           { setSelectedJdkReference(sdkLookupProvider, it) },
           { MavenRunnerSettings.USE_PROJECT_JDK },
-          { runnerSettings.jreName },
-          { runnerSettings.setJreName(it) }
+          { runnerSettingsOrDefault.jreName },
+          { runnerSettingsOrDefault.setJreName(it) }
         ))
       }
 
@@ -414,8 +422,8 @@ class MavenRunConfigurationSettingsEditor(
         override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
-      { generalSettings.userSettingsFile },
-      { generalSettings.setUserSettingsFile(it) },
+      { generalSettingsOrDefault.userSettingsFile },
+      { generalSettingsOrDefault.setUserSettingsFile(it) },
       {
         val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
         val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig)
@@ -439,8 +447,8 @@ class MavenRunConfigurationSettingsEditor(
       override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
     },
-    { generalSettings.localRepository },
-    { generalSettings.setLocalRepository(it) },
+    { generalSettingsOrDefault.localRepository },
+    { generalSettingsOrDefault.setLocalRepository(it) },
     {
       val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
       val distributionInfo = distributionComponent.selectedDistribution
@@ -553,8 +561,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
         override val settingsActionHint: String? = null
       },
-      { generalSettings.threads },
-      { generalSettings.threads = it }
+      { generalSettingsOrDefault.threads },
+      { generalSettingsOrDefault.threads = it }
     )
   )
 }

@@ -92,34 +92,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     super(project, factory, name);
   }
 
-  public boolean isInheritedGeneralSettings() {
-    return settings.getGeneralSettings() == null;
-  }
-
-  public void setInheritedGeneralSettings(boolean isInherited) {
-    settings.setGeneralSettings(isInherited ? null : getGeneralSettings());
-  }
-
-  public boolean isInheritedRunnerSettings() {
-    return settings.getRunnerSettings() == null;
-  }
-
-  public void setInheritedRunnerSettings(boolean isInherited) {
-    settings.setRunnerSettings(isInherited ? null : getRunnerSettings());
-  }
-
-  public @NotNull MavenGeneralSettings getGeneralSettings() {
-    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(getProject()).getGeneralSettings().clone();
-    return ObjectUtils.chooseNotNull(settings.getGeneralSettings(), generalSettings);
+  public @Nullable MavenGeneralSettings getGeneralSettings() {
+    return settings.getGeneralSettings();
   }
 
   public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
     this.settings.setGeneralSettings(settings);
   }
 
-  public @NotNull MavenRunnerSettings getRunnerSettings() {
-    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(getProject()).getSettings().clone();
-    return ObjectUtils.chooseNotNull(settings.getRunnerSettings(), runnerSettings);
+  public @Nullable MavenRunnerSettings getRunnerSettings() {
+    return settings.getRunnerSettings();
   }
 
   public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
