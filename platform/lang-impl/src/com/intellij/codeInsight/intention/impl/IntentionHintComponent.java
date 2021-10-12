@@ -613,7 +613,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW = shouldShow;
         if (shouldShow) {
           showPreview(that);
-          advertisePopup(that, false);
         }
         else {
           processor.hide();
@@ -641,6 +640,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
       }
     }
+    advertisePopup(that, false);
   }
 
   private static final class MyComponentHint extends LightweightHint {
