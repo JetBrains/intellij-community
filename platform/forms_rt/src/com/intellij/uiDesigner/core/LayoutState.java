@@ -30,8 +30,8 @@ public final class LayoutState {
 
   public LayoutState(final GridLayoutManager layout, final boolean ignoreInvisibleComponents) {
     // collect all visible components
-    final ArrayList componentsList = new ArrayList(layout.getComponentCount());
-    final ArrayList constraintsList = new ArrayList(layout.getComponentCount());
+    final ArrayList<Component> componentsList = new ArrayList<Component>(layout.getComponentCount());
+    final ArrayList<GridConstraints> constraintsList = new ArrayList<GridConstraints>(layout.getComponentCount());
     for (int i=0; i < layout.getComponentCount(); i++){
       final Component component = layout.getComponent(i);
       if (!ignoreInvisibleComponents || component.isVisible()) {
@@ -41,8 +41,8 @@ public final class LayoutState {
       }
     }
 
-    myComponents = (Component[])componentsList.toArray(new Component[0]);
-    myConstraints = (GridConstraints[])constraintsList.toArray(GridConstraints.EMPTY_ARRAY);
+    myComponents = componentsList.toArray(new Component[0]);
+    myConstraints = constraintsList.toArray(GridConstraints.EMPTY_ARRAY);
 
     myMinimumSizes = new Dimension[myComponents.length];
     myPreferredSizes = new Dimension[myComponents.length];
