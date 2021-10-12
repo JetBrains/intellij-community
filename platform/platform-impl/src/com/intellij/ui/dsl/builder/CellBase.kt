@@ -6,7 +6,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
-  NONE,
   /**
    * See [SpacingConfiguration.horizontalSmallGap]
    */
