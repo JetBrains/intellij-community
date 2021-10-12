@@ -24,7 +24,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
@@ -2111,12 +2110,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.releaseInTests();
     }
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
-                                    "projectProfileXml",
                                     "projectProfile",
                                     "parent1Profile",
-                                    "parent1ProfileXml",
                                     "parent2Profile",
-                                    "parent2ProfileXml",
                                     "settings");
   }
 
