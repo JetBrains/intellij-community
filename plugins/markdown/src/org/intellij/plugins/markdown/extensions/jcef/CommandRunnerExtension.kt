@@ -44,7 +44,8 @@ import javax.imageio.ImageIO
 import javax.swing.Icon
 
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
-                                      private val provider: Provider) : MarkdownBrowserPreviewExtension, ResourceProvider {
+                                      private val provider: Provider)
+  : MarkdownBrowserPreviewExtension, ResourceProvider, MarkdownEditorWithPreview.SplitLayoutListener {
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
@@ -54,15 +55,31 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   init {
     panel.browserPipe?.subscribe(RUN_LINE_EVENT, this::runLine)
     panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, this::runBlock)
+    panel.browserPipe?.subscribe(PAGE_READY_EVENT, this::onPageReady)
     invokeLater {
-      splitEditor = MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)
+      MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)?.let {
+        splitEditor = it
+        it.addLayoutListener(this)
+      }
     }
 
     Disposer.register(this) {
       panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
       panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
+      splitEditor?.removeLayoutListener(this)
     }
   }
+
+  override fun onLayoutChange(oldLayout: TextEditorWithPreview.Layout?, newLayout: TextEditorWithPreview.Layout) {
+    panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, newLayout.name)
+  }
+
+  private fun onPageReady(ready: String) {
+    splitEditor?.let {
+      panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, it.layout.name)
+    }
+  }
+
 
   override val resourceProvider: ResourceProvider = this
 
@@ -76,7 +93,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   fun processCodeLine(rawCodeLine: String, inBlock: Boolean): String {
     val project = panel.project
     val file = panel.virtualFile
-    if (project != null && file != null && previewProcessingEnabled() && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
+    if (project != null && file != null && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
       val index = commandCache.size
       commandCache[index] = rawCodeLine
       val cssClass = "run-icon" + if (inBlock) " code-block" else ""
@@ -88,7 +105,6 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
-    if (!previewProcessingEnabled()) return ""
     val lang = LanguageGuesser.guessLanguageForInjection(language)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
       it.isApplicable(lang)
@@ -108,12 +124,6 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     return html
   }
 
-
-
-  // fixme: dynamic layout change
-  private fun previewProcessingEnabled(): Boolean {
-    return splitEditor?.layout  == TextEditorWithPreview.Layout.SHOW_PREVIEW
-  }
 
   private fun runLine(encodedLine: String) {
     val executorId = encodedLine.substringBefore(":")
@@ -200,6 +210,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   companion object {
     private const val RUN_LINE_EVENT = "runLine"
     private const val RUN_BLOCK_EVENT = "runBlock"
+    private const val PAGE_READY_EVENT = "pageReady"
+    private const val LAYOUT_CHANGE_EVENT = "layoutChange"
 
     fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
       return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
