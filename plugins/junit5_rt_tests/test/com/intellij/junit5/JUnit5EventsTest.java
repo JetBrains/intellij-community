@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit5;
 
 import com.intellij.openapi.util.Pair;
@@ -17,8 +17,6 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
@@ -30,7 +28,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@RunWith(JUnitPlatform.class)
 public class JUnit5EventsTest {
 
   private JUnit5TestExecutionListener myExecutionListener;
