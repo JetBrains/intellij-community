@@ -158,6 +158,7 @@ fun createAggregateHtml(
                 }
                 else {
                   printUnified(eventsToUnify)
+                  eventsToUnify.clear()
                   print(event)
                 }
               }
