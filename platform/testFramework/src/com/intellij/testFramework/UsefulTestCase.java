@@ -122,7 +122,6 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
@@ -131,15 +130,6 @@ public abstract class UsefulTestCase extends TestCase {
 
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
-
-    try {
-      Element oldS = new Element("temp");
-      defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /**
@@ -399,17 +389,10 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll(
       () -> {
         try {
-          checkCodeInsightSettingsEqual(defaultSettings, settings);
+          checkCodeInsightSettingsNotOverwritten(settings);
         }
         catch (AssertionError error) {
-          CodeInsightSettings clean = new CodeInsightSettings();
-          for (Field field : clean.getClass().getFields()) {
-            try {
-              ReflectionUtil.copyFieldValue(clean, settings, field);
-            }
-            catch (Exception ignored) {
-            }
-          }
+          restoreCodeInsightSettingsToAvoidInducedErrors(settings);
           throw error;
         }
       },
@@ -423,6 +406,17 @@ public abstract class UsefulTestCase extends TestCase {
         }
       }
     ).run();
+  }
+
+  private static void restoreCodeInsightSettingsToAvoidInducedErrors(@NotNull CodeInsightSettings settings) {
+    CodeInsightSettings clean = new CodeInsightSettings();
+    for (Field field : clean.getClass().getFields()) {
+      try {
+        ReflectionUtil.copyFieldValue(clean, settings, field);
+      }
+      catch (Exception ignored) {
+      }
+    }
   }
 
   /**
@@ -1022,11 +1016,13 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@SuppressWarnings("SameParameterValue") @NotNull CodeInsightSettings oldSettings,
-                                                    @NotNull CodeInsightSettings settings) {
-    if (!oldSettings.equals(settings)) {
+  private static void checkCodeInsightSettingsNotOverwritten(@NotNull CodeInsightSettings settings) {
+    if (!settings.equals(defaultSettings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);
+      Element oldS = new Element("temp");
+      defaultSettings.writeExternal(oldS);
+      String DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
       Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
     }
   }
