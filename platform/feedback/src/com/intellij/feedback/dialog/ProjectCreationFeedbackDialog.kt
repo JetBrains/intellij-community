@@ -17,15 +17,14 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.GridLayout
-import java.awt.Insets
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.BoxLayout
@@ -61,6 +60,9 @@ class ProjectCreationFeedbackDialog(
 
   private val textAreaRowSize = 4
   private val textFieldEmailColumnSize = 25
+  private val textFieldNoFrameworkColumnSize = 41
+  private val textFieldOtherColumnSize = 41
+  private val textAreaOverallFeedbackColumnSize = 42
 
   init {
     init()
@@ -94,131 +96,121 @@ class ProjectCreationFeedbackDialog(
   private fun createInnerPanel(): DialogPanel {
     return panel {
       row {
-        label(FeedbackBundle.message("dialog.creation.project.title")).also {
-          it.component.font = JBFont.h1()
+        label(FeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
+          font = JBFont.h1()
         }
       }
       row {
         label(FeedbackBundle.message("dialog.creation.project.description"))
-        largeGapAfter()
-      }
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        label(FeedbackBundle.message("dialog.created.project.rating.label"))
-      }
-      row {
-        cell {
-          ratingComponent = RatingComponent().also {
-            it.requestFocus()
-            it.rating = ratingProperty.get()
-            it.addPropertyChangeListener(RatingComponent.RATING_PROPERTY) { _ ->
-              ratingProperty.set(it.rating)
-              missingRatingTooltip?.isVisible = false
-            }
-            it()
+        ratingComponent = RatingComponent().also {
+          it.requestFocus()
+          it.rating = ratingProperty.get()
+          it.addPropertyChangeListener(RatingComponent.RATING_PROPERTY) { _ ->
+            ratingProperty.set(it.rating)
+            missingRatingTooltip?.isVisible = false
           }
-
-          missingRatingTooltip = JBLabel(FeedbackBundle.message("dialog.created.project.rating.required")).apply {
-            border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
-              JBUI.Borders.empty(4, 8))
-            background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
-            isVisible = false
-            isOpaque = true
-          }
+          cell(it).label(FeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
         }
-        largeGapAfter()
-      }
+
+        missingRatingTooltip = label(FeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
+          border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
+            JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
+          background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
+          isVisible = false
+          isOpaque = true
+        }.component
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        label("")
-      }
-
+        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.1.label")).bindSelected(checkBoxNoProblemProperty)
+          .label(FeedbackBundle.message("dialog.created.project.group.checkbox.title"), LabelPosition.TOP)
+      }.topGap(TopGap.MEDIUM)
       row {
-        label(FeedbackBundle.message("dialog.created.project.group.checkbox.title"))
-      }
-
-      row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.1.label"), checkBoxNoProblemProperty)
+        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.2.label")).bindSelected(checkBoxEmptyProjectDontWorkProperty)
       }
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.2.label"), checkBoxEmptyProjectDontWorkProperty)
+        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.3.label")).bindSelected(checkBoxHardFindDesireProjectProperty)
       }
-      row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.3.label"), checkBoxHardFindDesireProjectProperty)
-      }
-      row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label"), checkBoxFrameworkProperty)
-        if (checkBoxFrameworkProperty.get()) {
+      if (checkBoxFrameworkProperty.get()) {
+        row {
+          checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
+        }
+        indent {
           row {
-            textField(textFieldFrameworkProperty).apply {
-              this.component.emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.4.textfield.placeholder")
-            }
+            textField()
+              .bindText(textFieldFrameworkProperty)
+              .columns(textFieldNoFrameworkColumnSize).applyToComponent {
+                this.emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.4.textfield.placeholder")
+              }
           }
         }
       }
+      else {
+        row {
+          checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
+        }
+      }
+
       row {
-        cell {
-          checkBox("", checkBoxOtherProperty).also {
-            checkBoxOther = it.component
-          }
-          textField(textFieldOtherProblemProperty).also {
-            it.component.isEnabled = checkBoxOtherProperty.get()
-            it.component.emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.5.placeholder")
-            checkBoxOther?.addChangeListener { _ ->
-              it.component.isEnabled = checkBoxOtherProperty.get()
-            }
-          }.withErrorOnApplyIf(FeedbackBundle.message("dialog.created.project.checkbox.5.required")) {
+        checkBox("").bindSelected(checkBoxOtherProperty).applyToComponent {
+          checkBoxOther = this
+        }.customize(Gaps(right = JBUI.scale(4)))
+
+        textField()
+          .bindText(textFieldOtherProblemProperty)
+          .columns(textFieldOtherColumnSize)
+          .errorOnApply(FeedbackBundle.message("dialog.created.project.checkbox.5.required")) {
             checkBoxOtherProperty.get() && it.text.isBlank()
           }
-        }
-        largeGapAfter()
-      }
-
-      row {
-        label("")
-      }
-
-      row {
-        cell(isVerticalFlow = true) {
-          label(FeedbackBundle.message("dialog.created.project.textarea.label"))
-          scrollableTextArea(textAreaOverallFeedbackProperty, rows = textAreaRowSize).apply {
-            this.component.wrapStyleWord = true
-            this.component.lineWrap = true
-            this.component.margin = Insets(2, 6, 2, 6)
+          .applyToComponent {
+            isEnabled = checkBoxOtherProperty.get()
+            emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.5.placeholder")
+            checkBoxOther?.addChangeListener { _ ->
+              isEnabled = checkBoxOtherProperty.get()
+            }
           }
-        }
-        largeGapAfter()
-      }
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        label("")
-      }
+        textArea()
+          .bindText(textAreaOverallFeedbackProperty)
+          .rows(textAreaRowSize)
+          .columns(textAreaOverallFeedbackColumnSize)
+          .label(FeedbackBundle.message("dialog.created.project.textarea.label"), LabelPosition.TOP)
+          .applyToComponent {
+            wrapStyleWord = true
+            lineWrap = true
+          }
+      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
 
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.email"), checkBoxEmailProperty).also {
-          checkBoxEmail = it.component
-        }
-
+        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.email"))
+          .bindSelected(checkBoxEmailProperty).applyToComponent {
+            checkBoxEmail = this
+          }
+      }.topGap(TopGap.MEDIUM)
+      indent {
         row {
-          textField(textFieldEmailProperty, columns = textFieldEmailColumnSize).also {
-            it.component.emptyText.text = FeedbackBundle.message("dialog.created.project.textfield.email.placeholder")
-            it.component.isEnabled = checkBoxEmailProperty.get()
+          textField().bindText(textFieldEmailProperty).columns(textFieldEmailColumnSize).applyToComponent {
+            emptyText.text = FeedbackBundle.message("dialog.created.project.textfield.email.placeholder")
+            isEnabled = checkBoxEmailProperty.get()
 
             checkBoxEmail?.addActionListener { _ ->
-              it.component.isEnabled = checkBoxEmailProperty.get()
+              isEnabled = checkBoxEmailProperty.get()
             }
-          }.withErrorOnApplyIf(FeedbackBundle.message("dialog.created.project.textfield.email.required")) {
+          }.errorOnApply(FeedbackBundle.message("dialog.created.project.textfield.email.required")) {
             checkBoxEmailProperty.get() && it.text.isBlank()
-          }.withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.invalid")) {
+          }.errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) {
             checkBoxEmailProperty.get() && it.text.isNotBlank() && !it.text.matches(Regex(".+@.+\\..+"))
           }
-
-          largeGapAfter()
-        }
-        largeGapAfter()
+        }.bottomGap(BottomGap.MEDIUM)
       }
+
       row {
-        JPanel().apply {
+        cell(JPanel().apply {
           layout = GridLayout(3, 1, 0, 0)
 
           add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
@@ -238,11 +230,10 @@ class ProjectCreationFeedbackDialog(
             FeedbackBundle.message("dialog.created.project.consent.3.3")) {
             BrowserUtil.browse(PRIVACY_POLICY_URL, project)
           })
-        }()
-        largeGapAfter()
-      }
+        })
+      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
     }.also {
-      it.border = JBEmptyBorder(15, 10, 0, 10)
+      it.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
   }
 
