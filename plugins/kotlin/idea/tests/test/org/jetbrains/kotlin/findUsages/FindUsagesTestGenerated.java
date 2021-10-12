@@ -725,6 +725,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInTopLevel.0.kt");
             }
 
+            @TestMetadata("privateKotlinClass.0.kt")
+            public void testPrivateKotlinClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");
+            }
+
             @TestMetadata("usagesOfBaseForFunction.0.kt")
             public void testUsagesOfBaseForFunction() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/usagesOfBaseForFunction.0.kt");
