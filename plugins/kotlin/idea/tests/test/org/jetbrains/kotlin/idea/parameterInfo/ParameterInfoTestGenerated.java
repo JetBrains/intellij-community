@@ -312,6 +312,21 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/OtherConstructorFromSecondary.kt");
         }
 
+        @TestMetadata("ParameterNameAnnotationConflict.kt")
+        public void testParameterNameAnnotationConflict() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationConflict.kt");
+        }
+
+        @TestMetadata("ParameterNameAnnotationInFunctionType.kt")
+        public void testParameterNameAnnotationInFunctionType() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationInFunctionType.kt");
+        }
+
+        @TestMetadata("ParameterNameAnnotationInNonFunctionType.kt")
+        public void testParameterNameAnnotationInNonFunctionType() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationInNonFunctionType.kt");
+        }
+
         @TestMetadata("Println.kt")
         public void testPrintln() throws Exception {
             runTest("testData/parameterInfo/functionCall/Println.kt");
