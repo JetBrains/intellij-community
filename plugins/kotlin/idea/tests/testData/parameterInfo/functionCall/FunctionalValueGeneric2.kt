@@ -1,4 +1,3 @@
-// IGNORE_FIR
 interface I<T> {
     fun foo(t: T): (item: T) -> Unit{}
 }
