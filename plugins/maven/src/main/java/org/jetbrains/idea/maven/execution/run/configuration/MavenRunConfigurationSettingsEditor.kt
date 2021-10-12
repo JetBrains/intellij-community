@@ -163,7 +163,7 @@ class MavenRunConfigurationSettingsEditor(
     label: @NlsContexts.Checkbox String,
     reset: (S, JCheckBox) -> Unit,
     apply: (S, JCheckBox) -> Unit,
-  ) = add(createSettingsEditorFragment(
+  ) = addSettingsEditorFragment(
     JCheckBox(label),
     object : SettingsFragmentInfo {
       override val settingsId: String = id
@@ -177,7 +177,7 @@ class MavenRunConfigurationSettingsEditor(
     reset,
     apply,
     { true }
-  )).apply { isRemovable = false }
+  ).apply { isRemovable = false }
 
   private fun JCheckBox.bind(fragments: List<SettingsEditorFragment<*, *>>) {
     addItemListener {
@@ -369,7 +369,7 @@ class MavenRunConfigurationSettingsEditor(
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() =
     SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
       .let { sdkLookupProvider ->
-        add(createLabeledSettingsEditorFragment(
+        addLabeledSettingsEditorFragment(
           SdkComboBox(createProjectJdkComboBoxModel(project, this@MavenRunConfigurationSettingsEditor)),
           object : LabeledSettingsFragmentInfo {
             override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
@@ -384,28 +384,26 @@ class MavenRunConfigurationSettingsEditor(
           { MavenRunnerSettings.USE_PROJECT_JDK },
           { runnerSettingsOrDefault.jreName },
           { runnerSettingsOrDefault.setJreName(it) }
-        ))
+        )
       }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
-  ) = add(
-    createLabeledSettingsEditorFragment(
-      MavenProfilesFiled(project, workingDirectoryFragment.component().component),
-      object : LabeledSettingsFragmentInfo {
-        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
+  ) = addLabeledSettingsEditorFragment(
+    MavenProfilesFiled(project, workingDirectoryFragment.component().component),
+    object : LabeledSettingsFragmentInfo {
+      override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
 
-        override val settingsId: String = "maven.profiles.fragment"
-        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.name")
-        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
-        override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
-        override val settingsActionHint: String? = null
-      },
-      { profiles },
-      { profiles = it },
-      { runnerParameters.profilesMap.ifEmpty { null } },
-      { runnerParameters.profilesMap = it ?: emptyMap() }
-    )
+      override val settingsId: String = "maven.profiles.fragment"
+      override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.name")
+      override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
+      override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
+      override val settingsActionHint: String? = null
+    },
+    { profiles },
+    { profiles = it },
+    { runnerParameters.profilesMap.ifEmpty { null } },
+    { runnerParameters.profilesMap = it ?: emptyMap() }
   )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
@@ -473,12 +471,12 @@ class MavenRunConfigurationSettingsEditor(
     getPath: MavenRunConfiguration.() -> String,
     setPath: MavenRunConfiguration.(String) -> Unit,
     defaultPath: () -> String
-  ) = add(createLabeledSettingsEditorFragment(
+  ) = addLabeledSettingsEditorFragment(
     OverridablePathComponent(project, info, defaultPath),
     info,
     { it, c -> c.path = it.getPath() },
     { it, c -> it.setPath(c.path) }
-  ))
+  )
 
   private class OverridablePathComponent(
     project: Project,
@@ -550,8 +548,8 @@ class MavenRunConfigurationSettingsEditor(
     ) { getPresentablePath(it.path) }
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() = add(
-    createLabeledTextSettingsEditorFragment(
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() =
+    addLabeledTextSettingsEditorFragment(
       JBTextField(),
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.threads.label")
@@ -564,5 +562,4 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.threads },
       { generalSettingsOrDefault.threads = it }
     )
-  )
 }

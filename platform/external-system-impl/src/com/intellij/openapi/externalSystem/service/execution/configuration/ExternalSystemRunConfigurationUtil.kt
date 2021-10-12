@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -39,13 +38,13 @@ import javax.swing.JComponent
 import javax.swing.text.JTextComponent
 
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addBeforeRunFragment(buildTaskKey: Key<*>) =
+fun <S : RunConfigurationBase<*>> SettingsFragmentsContainer<S>.addBeforeRunFragment(buildTaskKey: Key<*>) =
   add(createBeforeRunFragment(buildTaskKey))
 
-fun <C : RunConfigurationBase<*>> createBeforeRunFragment(buildTaskKey: Key<*>): BeforeRunFragment<C> {
+fun <S : RunConfigurationBase<*>> createBeforeRunFragment(buildTaskKey: Key<*>): BeforeRunFragment<S> {
   val parentDisposable = Disposer.newDisposable()
   val beforeRunComponent = BeforeRunComponent(parentDisposable)
-  val beforeRunFragment = BeforeRunFragment.createBeforeRun<C>(beforeRunComponent, buildTaskKey)
+  val beforeRunFragment = BeforeRunFragment.createBeforeRun<S>(beforeRunComponent, buildTaskKey)
   Disposer.register(beforeRunFragment, parentDisposable)
   return beforeRunFragment
 }
@@ -58,7 +57,7 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   crossinline getter: S.() -> V,
   crossinline setter: S.(V) -> Unit,
   crossinline getText: (V) -> String
-): VariantTagFragment<S, V?> = add(VariantTagFragment.createFragment(
+) = add(VariantTagFragment.createFragment(
   id,
   name,
   group,
@@ -66,57 +65,40 @@ inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   { it.getter() },
   { it, v -> it.setter(v) },
   { it.getter() != EnumSet.allOf(V::class.java).first() }
-)).apply {
+)!!).apply {
   setVariantNameProvider { getText(it) }
 }
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addTag(
+fun <S> SettingsFragmentsContainer<S>.addTag(
   id: String,
   @Nls name: String,
   @Nls group: String,
   @Nls hint: String?,
-  getter: C.() -> Boolean,
-  setter: C.(Boolean) -> Unit
-) = add(createTag(id, name, group, hint, getter, setter))
+  getter: S.() -> Boolean,
+  setter: S.(Boolean) -> Unit
+) = add(SettingsEditorFragment.createTag(
+  id,
+  name,
+  group,
+  { it.getter() },
+  { it, v -> it.setter(v) }
+)!!).apply {
+  actionHint = hint
+}
 
-fun <C : RunConfigurationBase<*>> createTag(
-  id: String,
-  @Nls name: String,
-  @Nls group: String,
-  @Nls hint: String?,
-  getter: C.() -> Boolean,
-  setter: C.(Boolean) -> Unit
-): SettingsEditorFragment<C, TagButton> =
-  SettingsEditorFragment.createTag<C>(
-    id,
-    name,
-    group,
-    { it.getter() },
-    { it, v -> it.setter(v) }
-  ).apply {
-    actionHint = hint
-  }
-
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addCommandLineFragment(
+fun <S> SettingsFragmentsContainer<S>.addCommandLineFragment(
   project: Project,
   commandLineInfo: CommandLineInfo,
-  getCommandLine: C.() -> String,
-  setCommandLine: C.(String) -> Unit
-) = add(createCommandLineFragment(project, commandLineInfo, getCommandLine, setCommandLine))
-
-fun <C : RunConfigurationBase<*>> createCommandLineFragment(
-  project: Project,
-  commandLineInfo: CommandLineInfo,
-  getCommandLine: C.() -> String,
-  setCommandLine: C.(String) -> Unit
-) = createSettingsEditorFragment<C, CommandLineField>(
+  getCommandLine: S.() -> String,
+  setCommandLine: S.(String) -> Unit
+) = addSettingsEditorFragment(
   CommandLineField(project, commandLineInfo),
   commandLineInfo,
   { it, c -> c.commandLine = it.getCommandLine() },
   { it, c -> it.setCommandLine(c.commandLine) },
 )
 
-fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
+fun <S : ExternalSystemRunConfiguration> SettingsFragmentsContainer<S>.addWorkingDirectoryFragment(
   project: Project,
   workingDirectoryInfo: WorkingDirectoryInfo
 ) = addWorkingDirectoryFragment(
@@ -126,19 +108,12 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addWorkin
   { settings.externalProjectPath = it }
 )
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
+fun <S> SettingsFragmentsContainer<S>.addWorkingDirectoryFragment(
   project: Project,
   workingDirectoryInfo: WorkingDirectoryInfo,
-  getWorkingDirectory: C.() -> String,
-  setWorkingDirectory: C.(String) -> Unit
-) = add(createWorkingDirectoryFragment(project, workingDirectoryInfo, getWorkingDirectory, setWorkingDirectory))
-
-fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
-  project: Project,
-  workingDirectoryInfo: WorkingDirectoryInfo,
-  getWorkingDirectory: C.() -> String,
-  setWorkingDirectory: C.(String) -> Unit
-) = createLabeledSettingsEditorFragment<C, WorkingDirectoryField>(
+  getWorkingDirectory: S.() -> String,
+  setWorkingDirectory: S.(String) -> Unit
+) = addLabeledSettingsEditorFragment(
   WorkingDirectoryField(project, workingDirectoryInfo),
   workingDirectoryInfo,
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
@@ -151,19 +126,12 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
   }
 }
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addDistributionFragment(
+fun <S> SettingsFragmentsContainer<S>.addDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo?,
-  setDistribution: C.(DistributionInfo?) -> Unit
-) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution))
-
-fun <C : RunConfigurationBase<*>> createDistributionFragment(
-  project: Project,
-  distributionsInfo: DistributionsInfo,
-  getDistribution: C.() -> DistributionInfo?,
-  setDistribution: C.(DistributionInfo?) -> Unit
-) = createLabeledSettingsEditorFragment<C, DistributionComboBox>(
+  getDistribution: S.() -> DistributionInfo?,
+  setDistribution: S.(DistributionInfo?) -> Unit
+) = addLabeledSettingsEditorFragment(
   DistributionComboBox(project, distributionsInfo).apply {
     specifyLocationActionName = distributionsInfo.comboBoxActionName
     distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
@@ -173,7 +141,7 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
   { it, c -> it.setDistribution(c.selectedDistribution) },
 )
 
-fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
+fun <S : ExternalSystemRunConfiguration> SettingsFragmentsContainer<S>.addVmOptionsFragment() =
   addVmOptionsFragment(
     object : LabeledSettingsFragmentInfo {
       override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
@@ -187,17 +155,11 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOpti
     { settings.vmOptions = it }
   )
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addVmOptionsFragment(
+fun <S> SettingsFragmentsContainer<S>.addVmOptionsFragment(
   info: LabeledSettingsFragmentInfo,
-  getVmOptions: C.() -> String?,
-  setVmOptions: C.(String?) -> Unit
-) = add(createVmOptionsFragment(info, getVmOptions, setVmOptions))
-
-fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
-  info: LabeledSettingsFragmentInfo,
-  getVmOptions: C.() -> String?,
-  setVmOptions: C.(String?) -> Unit
-) = createLabeledTextSettingsEditorFragment(
+  getVmOptions: S.() -> String?,
+  setVmOptions: S.(String?) -> Unit
+) = addLabeledTextSettingsEditorFragment(
   RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
   },
@@ -223,21 +185,13 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnviro
     { settings.isPassParentEnvs = it }
   )
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addEnvironmentFragment(
+fun <S> SettingsFragmentsContainer<S>.addEnvironmentFragment(
   info: LabeledSettingsFragmentInfo,
-  getEnvs: C.() -> Map<String, String>,
-  setEnvs: C.(Map<String, String>) -> Unit,
-  isPassParentEnvs: C.() -> Boolean,
-  setPassParentEnvs: C.(Boolean) -> Unit
-) = add(createEnvironmentFragment(info, getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
-
-fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
-  info: LabeledSettingsFragmentInfo,
-  getEnvs: C.() -> Map<String, String>,
-  setEnvs: C.(Map<String, String>) -> Unit,
-  isPassParentEnvs: C.() -> Boolean,
-  setPassParentEnvs: C.(Boolean) -> Unit
-) = createLabeledSettingsEditorFragment<C, EnvironmentVariablesTextFieldWithBrowseButton>(
+  getEnvs: S.() -> Map<String, String>,
+  setEnvs: S.(Map<String, String>) -> Unit,
+  isPassParentEnvs: S.() -> Boolean,
+  setPassParentEnvs: S.(Boolean) -> Unit
+) = addLabeledSettingsEditorFragment(
   EnvironmentVariablesTextFieldWithBrowseButton(),
   info,
   { it, c ->
@@ -250,19 +204,12 @@ fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
   }
 )
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addPathFragment(
+fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   project: Project,
   pathFragmentInfo: PathFragmentInfo,
-  getPath: C.() -> String?,
-  setPath: C.(String?) -> Unit
-) = add(createPathFragment(project, pathFragmentInfo, getPath, setPath))
-
-fun <C : RunConfigurationBase<*>> createPathFragment(
-  project: Project,
-  pathFragmentInfo: PathFragmentInfo,
-  getPath: C.() -> String?,
-  setPath: C.(String?) -> Unit
-) = createLabeledTextSettingsEditorFragment<C, TextFieldWithBrowseButton>(
+  getPath: S.() -> String?,
+  setPath: S.(String?) -> Unit
+) = addLabeledTextSettingsEditorFragment(
   textFieldWithBrowseButton(
     project,
     pathFragmentInfo.fileChooserTitle,
@@ -280,12 +227,12 @@ fun <C : RunConfigurationBase<*>> createPathFragment(
   { setPath(it?.let(::getCanonicalPath)) }
 )
 
-fun <S, C> createLabeledTextSettingsEditorFragment(
+fun <S, C> SettingsFragmentsContainer<S>.addLabeledTextSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getter: S.() -> String?,
   setter: S.(String?) -> Unit
-) where C : JComponent, C : TextAccessor = createLabeledSettingsEditorFragment(
+) where C : JComponent, C : TextAccessor = addLabeledSettingsEditorFragment(
   component,
   info,
   TextAccessor::getText,
@@ -294,17 +241,17 @@ fun <S, C> createLabeledTextSettingsEditorFragment(
   setter
 )
 
-fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getterC: C.() -> V,
   setterC: C.(V) -> Unit,
   getterS: S.() -> V?,
   setterS: S.(V?) -> Unit
-) = createLabeledSettingsEditorFragment(
+) = addLabeledSettingsEditorFragment(
   component, info, getterC, setterC, { null }, getterS, setterS)
 
-fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getterC: C.() -> V,
@@ -314,7 +261,7 @@ fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
   setterS: S.(V?) -> Unit
 ): SettingsEditorFragment<S, LabeledComponent<C>> {
   val ref = Ref<SettingsEditorFragment<S, LabeledComponent<C>>>()
-  return createLabeledSettingsEditorFragment<S, C>(
+  return addLabeledSettingsEditorFragment(
     component,
     info,
     { it, c -> (it.getterS() ?: it.defaultS())?.let { c.setterC(it) } },
@@ -326,29 +273,29 @@ fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
   }
 }
 
-fun <S, C : JComponent> createLabeledSettingsEditorFragment(
+fun <S, C : JComponent> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
   component: C,
   settingsFragmentInfo: LabeledSettingsFragmentInfo,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
-) = createLabeledSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+) = addLabeledSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
   .apply { isRemovable = false }
 
-fun <S, C : JComponent> createSettingsEditorFragment(
+fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
   component: C,
   settingsFragmentInfo: SettingsFragmentInfo,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
-) = createSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+) = addSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
   .apply { isRemovable = false }
 
-fun <S, C : JComponent> createLabeledSettingsEditorFragment(
+fun <S, C : JComponent> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean
-) = createSettingsEditorFragment(
+) = addSettingsEditorFragment(
   LabeledComponent.create(component, info.editorLabel, BorderLayout.WEST),
   info,
   { it, c -> reset(it, c.component) },
@@ -356,13 +303,13 @@ fun <S, C : JComponent> createLabeledSettingsEditorFragment(
   initialSelection
 )
 
-fun <S, C : JComponent> createSettingsEditorFragment(
+fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
   component: C,
   settingsFragmentInfo: SettingsFragmentInfo,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean,
-) = SettingsEditorFragment(
+) = add(SettingsEditorFragment(
   settingsFragmentInfo.settingsId,
   settingsFragmentInfo.settingsName,
   settingsFragmentInfo.settingsGroup,
@@ -384,7 +331,7 @@ fun <S, C : JComponent> createSettingsEditorFragment(
   if (editorComponent is JBTextField) {
     FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
   }
-}
+})
 
 fun <S, C : JComponent, F : SettingsEditorFragment<S, C>> F.applyToComponent(action: C.() -> Unit): F = apply {
   component().action()
