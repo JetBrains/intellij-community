@@ -30,6 +30,22 @@ import java.util.stream.Stream;
 
 public class JUnit5EventsTest {
 
+  public static final ConfigurationParameters EMPTY_PARAMETER = new ConfigurationParameters() {
+    @Override
+    public Optional<String> get(String key) {
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Boolean> getBoolean(String key) {
+      return Optional.empty();
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+  };
   private JUnit5TestExecutionListener myExecutionListener;
   private StringBuffer myBuf;
 
@@ -41,7 +57,7 @@ public class JUnit5EventsTest {
       public void write(int b) {
         myBuf.append(new String(new byte[]{(byte)b}, StandardCharsets.UTF_8));
       }
-    })) {
+    }, false, StandardCharsets.UTF_8)) {
       @Override
       protected long getDuration() {
         return 0;
@@ -71,7 +87,7 @@ public class JUnit5EventsTest {
                                                                  jupiterConfiguration);
     c.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
-    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
+    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     myExecutionListener.testPlanExecutionStarted(testPlan);
     myExecutionListener.executionStarted(identifier);
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
@@ -92,23 +108,7 @@ public class JUnit5EventsTest {
   }
 
   public static DefaultJupiterConfiguration createJupiterConfiguration() {
-    return new DefaultJupiterConfiguration(
-      new ConfigurationParameters() {
-        @Override
-        public Optional<String> get(String key) {
-          return Optional.empty();
-        }
-
-        @Override
-        public Optional<Boolean> getBoolean(String key) {
-          return Optional.empty();
-        }
-
-        @Override
-        public int size() {
-          return 0;
-        }
-      });
+    return new DefaultJupiterConfiguration(EMPTY_PARAMETER);
   }
 
   @Test
@@ -123,7 +123,8 @@ public class JUnit5EventsTest {
                                                                   jupiterConfiguration);
     classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
-    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
+    
+    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
     myExecutionListener.setSendTree();
     myExecutionListener.testPlanExecutionStarted(testPlan);
     myExecutionListener.executionStarted(identifier);
@@ -142,7 +143,6 @@ public class JUnit5EventsTest {
   }
 
   // This class is actually the test-data
-  @SuppressWarnings({"JUnitTestCaseWithNoTests", "NewClassNamingConvention"})
   private static class TestClass {
     @Test
     void test1() {

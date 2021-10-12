@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="JUnit5Launcher" type="repository">
-    <properties maven-id="org.junit.platform:junit-platform-launcher:1.7.0">
+    <properties maven-id="org.junit.platform:junit-platform-launcher:1.8.1">
       <exclude>
         <dependency maven-id="org.apiguardian:apiguardian-api" />
         <dependency maven-id="org.opentest4j:opentest4j" />
@@ -8,13 +8,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.7.0/junit-platform-launcher-1.7.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.7.0/junit-platform-engine-1.7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.8.1/junit-platform-launcher-1.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.1/junit-platform-engine-1.8.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.7.0/junit-platform-launcher-1.7.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.7.0/junit-platform-engine-1.7.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.8.1/junit-platform-launcher-1.8.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.1/junit-platform-engine-1.8.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
