@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -176,6 +177,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     private static DefaultActionGroup getCommonActionGroup(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       DefaultActionGroup commonActionGroup = null;
+      boolean first = true;
       for (MergeableLineMarkerInfo<?> marker : markers) {
         GutterIconRenderer renderer = marker.createGutterRenderer();
         if (renderer != null) {
@@ -184,6 +186,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             if (commonActionGroup == null) {
               commonActionGroup = new DefaultActionGroup();
             }
+            if (!first) {
+              commonActionGroup.add(Separator.getInstance());
+            }
+            first = false;
             commonActionGroup.addAll(actions);
           }
         }
