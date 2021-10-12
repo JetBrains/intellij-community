@@ -9,6 +9,8 @@ import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -193,6 +195,7 @@ final class FindInProjectTask {
     String stringToFind = !myFindModel.isRegularExpressions() ? myFindModel.getStringToFind() :
                           FindInProjectUtil.buildStringToFindForIndicesFromRegExp(myFindModel.getStringToFind(), myProject);
     StringSearcher searcher = stringToFind.isEmpty() ? null : new StringSearcher(stringToFind, myFindModel.isCaseSensitive(), true);
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
     //noinspection UnnecessaryLocalVariable
     Processor<VirtualFile> processor = virtualFile -> {
@@ -222,9 +225,12 @@ final class FindInProjectTask {
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
 
-      CharSequence s = searcher == null ? null : LoadTextUtil.loadText(sourceVirtualFile, -1);
-      if (s != null && (s.length() == 0 || searcher.scan(s) < 0)) {
-        return true;
+      if (searcher != null) {
+        Document document = fileDocumentManager.getCachedDocument(sourceVirtualFile);
+        CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
+        if (s.length() == 0 || searcher.scan(s) < 0) {
+          return true;
+        }
       }
       AtomicBoolean projectFileUsagesFound = new AtomicBoolean();
       if (!FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> {
