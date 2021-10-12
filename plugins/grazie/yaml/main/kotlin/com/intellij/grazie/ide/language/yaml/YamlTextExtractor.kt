@@ -17,7 +17,7 @@ class YamlTextExtractor : TextExtractor() {
     when (root.node.elementType) {
       COMMENT -> {
         val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
-        return TextContent.joinWithWhitespace(siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
+        return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
       }
       TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT ->
         return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)

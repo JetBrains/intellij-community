@@ -2,6 +2,7 @@ package com.intellij.grazie.text;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -190,18 +191,32 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
 
   /**
    * @return a concatenation of several text contents (which must have the same domains)
-   * with a single synthetic space character inserted between each pair of adjacent components.
+   * with a single synthetic ' ' character inserted between each pair of adjacent components.
+   * @deprecated use {@link #joinWithWhitespace(char, List)}
    */
   @Nullable
+  @Deprecated
   static TextContent joinWithWhitespace(List<? extends @NotNull TextContent> components) {
+    return joinWithWhitespace(' ', components);
+  }
+
+  /**
+   * @return a concatenation of several text contents (which must have the same domains)
+   * with the given whitespace character inserted between each pair of adjacent components.
+   */
+  @Nullable
+  static TextContent joinWithWhitespace(char whitespace, List<? extends @NotNull TextContent> components) {
+    if (!Character.isWhitespace(whitespace)) {
+      throw new IllegalArgumentException("Whitespace expected, got " + StringUtil.escapeStringCharacters(String.valueOf(whitespace)));
+    }
     if (components.isEmpty()) return null;
     if (components.size() == 1) return components.get(0);
 
-    return new TextContentImpl(commonDomain(components),
-      StreamEx.of(components)
-        .map(c -> ((TextContentImpl) c).tokens)
-        .intersperse(Collections.singletonList(TextContentImpl.WS_TOKEN))
-        .toFlatList(Function.identity()));
+    TextContentImpl.WSTokenInfo wsToken = new TextContentImpl.WSTokenInfo(whitespace);
+    return new TextContentImpl(commonDomain(components), StreamEx.of(components)
+      .map(c -> ((TextContentImpl) c).tokens)
+      .intersperse(Collections.singletonList(wsToken))
+      .toFlatList(Function.identity()));
   }
 
   private static TextDomain commonDomain(List<? extends TextContent> components) {

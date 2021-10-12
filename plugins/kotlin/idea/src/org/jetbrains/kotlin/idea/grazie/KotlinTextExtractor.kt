@@ -37,7 +37,7 @@ internal class KotlinTextExtractor : TextExtractor() {
       val roots = getNotSoDistantSimilarSiblings(root) {
         it == root || root.elementType == KtTokens.EOL_COMMENT && it.elementType == KtTokens.EOL_COMMENT
       }
-      return TextContent.joinWithWhitespace(roots.mapNotNull {
+      return TextContent.joinWithWhitespace('\n', roots.mapNotNull {
           TextContentBuilder.FromPsi.removingIndents(" \t*/").build(it, COMMENTS)
       })
     }

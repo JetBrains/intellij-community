@@ -44,15 +44,15 @@ public class TextExtractionTest extends BasePlatformTestCase {
     String text = extractText("a.java", "//Hello. I are a very humble\n//persons.\n\nclass C {}", 4).toString();
     assertTrue(text, text.matches("Hello\\. I are a very humble\\spersons\\."));
 
-    assertEquals("First line. Third line.", extractText("a.java",
+    assertEquals("First line.\nThird line.", extractText("a.java",
       "// First line.\n" +
       "// \n" +
       "//   Third line.\n"
       , 4).toString());
 
     text = "//1\n//2\n//3\n//4";
-    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("1")).toString());
-    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("3")).toString());
+    assertEquals("1\n2\n3\n4", extractText("a.java", text, text.indexOf("1")).toString());
+    assertEquals("1\n2\n3\n4", extractText("a.java", text, text.indexOf("3")).toString());
   }
 
   public void testIgnorePropertyCommentStarts() {
@@ -72,7 +72,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testMultiLineCommentInProperties() {
-    assertEquals("line1 line2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
+    assertEquals("line1\nline2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
   }
 
   public void testJavadoc() {
