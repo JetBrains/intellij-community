@@ -153,18 +153,6 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("a b<caret>");
   }
 
-  public void testDeleteToWordStartWithEscapeChars() {
-    init("class Foo { String s = \"a\\nb<caret>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
-    checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
-  }
-
-  public void testDeleteToWordEndWithEscapeChars() {
-    init("class Foo { String s = \"a\\<caret>nb\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
-    checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
-  }
-  
   public void testUpWithSelectionOnCaretInsideSelection() {
     initText("blah blah\n" +
              "blah <selection>bl<caret>ah</selection>\n" +
@@ -281,18 +269,6 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText(" <caret>text with [multiline\nfold region]");
   }
 
-  public void testToggleCaseForTextAfterEscapedSlash() {
-    init("class C { String s = \"<selection>ab\\\\cd<caret></selection>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
-    checkResultByText("class C { String s = \"<selection>AB\\\\CD<caret></selection>\"; }");
-  }
-
-  public void testToggleCaseForEscapedChar() {
-    init("class C { String s = \"<selection>ab\\ncd<caret></selection>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
-    checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
-  }
-
   public void testToggleCaseForEszett() {
     init("<selection>\u00df</selection>", TestFileType.TEXT);
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
@@ -324,12 +300,6 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("a" + SURROGATE_PAIR + "<caret>b");
     left();
     checkResultByText("a<caret>" + SURROGATE_PAIR + "b");
-  }
-
-  public void testDeleteToWordStartWithEscapedQuote() {
-    init("class Foo { String s = \"\\\"a<caret>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
-    checkResultByText("class Foo { String s = \"\\\"<caret>\"; }");
   }
 
   public void testSortLinesNoSelection() {
