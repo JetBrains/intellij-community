@@ -21,17 +21,22 @@ public final class ActionGroupUtil {
     return getActiveActions(actionGroup, e).isEmpty();
   }
 
-  @Nullable
-  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+  public static @Nullable AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
     return getActiveActions(actionGroup, e).single();
   }
 
-  @NotNull
-  public static JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
-                                                                @NotNull AnActionEvent e) {
+  public static @NotNull JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
+                                                                         @NotNull AnActionEvent e) {
     UpdateSession updater = Utils.getOrCreateUpdateSession(e);
     return JBIterable.from(updater.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
+  }
+
+  public static @NotNull JBIterable<? extends AnAction> getVisibleActions(@NotNull ActionGroup actionGroup,
+                                                                          @NotNull AnActionEvent e) {
+    UpdateSession updater = Utils.getOrCreateUpdateSession(e);
+    return JBIterable.from(updater.expandedChildren(actionGroup))
+      .filter(o -> !(o instanceof Separator) && updater.presentation(o).isVisible());
   }
 
 }
