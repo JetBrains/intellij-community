@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -87,7 +86,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1090,7 +1088,7 @@ public class MavenUtil {
     for (MavenProjectReaderResult result : results) {
       if (result.mavenModel.getDependencies() != null) {
         for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!artifact.isResolved()) {
+          if (!MavenArtifactUtilKt.resolved(artifact)) {
             unresolvedArtifacts.add(artifact);
           }
         }

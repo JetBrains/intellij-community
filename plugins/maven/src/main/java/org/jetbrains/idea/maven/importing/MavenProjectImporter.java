@@ -36,10 +36,7 @@ import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
@@ -425,7 +422,7 @@ public class MavenProjectImporter {
 
     final Set<File> files = new HashSet<>();
     for (MavenArtifact each : artifacts) {
-      if (each.isResolved()) files.add(each.getFile());
+      if (MavenArtifactUtilKt.resolved(each)) files.add(each.getFile());
     }
 
     if (MavenUtil.isMavenUnitTestModeEnabled()) {

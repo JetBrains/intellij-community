@@ -33,6 +33,7 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -40,7 +41,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
@@ -301,7 +301,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       MavenProject mavenProject = findMavenProject(context);
       if (mavenProject != null) {
         MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
-        if (artifact != null && artifact.isResolved()) {
+        if (artifact != null && MavenArtifactUtilKt.resolved(artifact)) {
           return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
         }
       }

@@ -1381,7 +1381,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateDependency() {
-      setErrorLevel(myArtifact.isResolved() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(MavenArtifactUtilKt.resolved(myArtifact) ? ErrorLevel.NONE : ErrorLevel.ERROR);
     }
 
     @Override
