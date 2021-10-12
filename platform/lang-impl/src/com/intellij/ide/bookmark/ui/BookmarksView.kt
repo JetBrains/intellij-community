@@ -90,7 +90,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     return null
   }
 
-  private fun select(group: BookmarkGroup, bookmark: Bookmark? = null) = select(GroupBookmarkVisitor(group, bookmark))
+  fun select(group: BookmarkGroup) = select(GroupBookmarkVisitor(group))
+  fun select(group: BookmarkGroup, bookmark: Bookmark) = select(GroupBookmarkVisitor(group, bookmark))
   private fun select(visitor: TreeVisitor) = TreeUtil.promiseSelect(tree, visitor).onSuccess { if (!tree.hasFocus()) selectionChanged() }
 
   @Suppress("UNNECESSARY_SAFE_CALL")

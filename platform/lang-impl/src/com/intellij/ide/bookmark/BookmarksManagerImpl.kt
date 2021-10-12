@@ -115,7 +115,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   override fun addGroup(name: String, isDefault: Boolean): BookmarkGroup? = when {
     name.isBlank() -> null
     else -> synchronized(notifier) { if (findGroup(name) != null) null else Group(name, isDefault, true) }
-  }
+  }?.apply { notifier.selectLater { it.select(this) } }
 
   private fun addOrReuseGroup(name: String, isDefaultState: Boolean? = null) = synchronized(notifier) {
     findGroup(name)?.apply { isDefaultState?.let { isDefault = it } } ?: Group(name, isDefaultState ?: false, false)
@@ -147,20 +147,19 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
   }
 
-  private fun canToggle(bookmark: Bookmark, type: BookmarkType) = getType(bookmark)?.let { it != type || canRemove(bookmark) } ?: canAdd(
-    bookmark)
+  private fun canToggle(bookmark: Bookmark, type: BookmarkType) =
+    getType(bookmark)?.let { it != type || canRemove(bookmark) } ?: canAdd(bookmark)
 
-  override fun toggle(bookmark: Bookmark, type: BookmarkType) = getType(bookmark)?.let {
-    if (it != type) setType(bookmark, type)
-    else remove(bookmark)
-  } ?: add(bookmark, type)
+  override fun toggle(bookmark: Bookmark, type: BookmarkType) =
+    getType(bookmark)?.let { if (it != type) setType(bookmark, type) else remove(bookmark) } ?: add(bookmark, type)
 
   private fun canAdd(bookmark: Bookmark) = null != findGroupsToAdd(bookmark)
 
   override fun add(bookmark: Bookmark, type: BookmarkType) {
     val groups = findGroupsToAdd(bookmark) ?: return
     val group = chooseGroupToAdd(groups) ?: return
-    group.add(bookmark, type, null, 0)
+    val added = group.add(bookmark, type, null, 0)
+    if (added) notifier.selectLater { it.select(group, bookmark) }
   }
 
   private fun findGroupsToAdd(bookmark: Bookmark) = synchronized(notifier) {
@@ -418,7 +417,11 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
       contains(this) && indexOf(bookmark) < 0 && !(bookmark is LineBookmark && allBookmarks.contains(bookmark))
     }
 
-    override fun add(bookmark: Bookmark, type: BookmarkType, description: String) = add(bookmark, type, description, 0)
+    override fun add(bookmark: Bookmark, type: BookmarkType, description: String): Boolean {
+      val added = add(bookmark, type, description, 0)
+      if (added) notifier.selectLater { it.select(this, bookmark) }
+      return added
+    }
 
     internal fun add(bookmark: Bookmark, type: BookmarkType, description: String?, index: Int): Boolean = synchronized(notifier) {
       if (!canAdd(bookmark)) return false // bookmark is already exist
