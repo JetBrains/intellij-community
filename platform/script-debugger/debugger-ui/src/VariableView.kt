@@ -142,7 +142,9 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    computeChildren(0, node)
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      computeChildren(0, node)
+    }
   }
 
   private fun computeChildren(remainingChildrenOffset: Int, node: XCompositeNode) {
