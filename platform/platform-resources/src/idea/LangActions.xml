@@ -248,6 +248,10 @@
                 class="com.intellij.ide.bookmark.actions.NodeEditAction"/>
         <action id="BookmarksView.Delete" use-shortcut-of="$Delete"
                 class="com.intellij.ide.bookmark.actions.NodeDeleteAction"/>
+        <action id="BookmarksView.DeleteType"
+                class="com.intellij.ide.bookmark.actions.NodeDeleteTypeAction"/>
+        <action id="BookmarksView.ChooseType" use-shortcut-of="ToggleBookmarkWithMnemonic"
+                class="com.intellij.ide.bookmark.actions.NodeChooseTypeAction"/>
         <action id="BookmarksView.MoveUp" icon="AllIcons.Actions.MoveUp" use-shortcut-of="PreviousOccurence"
                 class="com.intellij.ide.bookmark.actions.NodeMoveUpAction"/>
         <action id="BookmarksView.MoveDown" icon="AllIcons.Actions.MoveDown" use-shortcut-of="NextOccurence"
