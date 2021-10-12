@@ -10,7 +10,6 @@ import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.SelfSeedingTestCase;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestSorter;
-import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -31,6 +30,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
@@ -52,6 +52,8 @@ public class TestCaseLoader {
 
   private static final int TEST_RUNNERS_COUNT = Integer.valueOf(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   private static final int TEST_RUNNER_INDEX = Integer.valueOf(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
+  private static AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
+  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -171,18 +173,29 @@ public class TestCaseLoader {
   }
 
   /**
-   * @return true iff this {@code testIdentifier} matches current testing settings: number of buckets and bucket index. {@code testIdentifier} may
+   * @return true if this {@code testIdentifier} matches current testing settings: number of buckets and bucket index. {@code testIdentifier} may
    * be something identifying a test: test class or feature file name
    * @apiNote logic for bucketing tests into different bucket configurations.
    * @see TestCaseLoader#TEST_RUNNERS_COUNT
    * @see TestCaseLoader#TEST_RUNNER_INDEX
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
-    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+    var value = BUCKETS.get(testIdentifier);
+
+    if (value != null) {
+      return value == TEST_RUNNER_INDEX;
+    }
+    else {
+      BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
+    }
+
+    if (CYCLIC_BUCKET_COUNTER.get() == TEST_RUNNERS_COUNT) CYCLIC_BUCKET_COUNTER.set(0);
+
+    return BUCKETS.get(testIdentifier) == TEST_RUNNER_INDEX;
   }
 
   /**
-   * @return true iff tests supposed to be separated into buckets using {@link #matchesCurrentBucket(String)} method
+   * @return true if tests supposed to be separated into buckets using {@link #matchesCurrentBucket(String)} method
    */
   public static boolean shouldBucketTests() {
     return TEST_RUNNERS_COUNT > 1;
@@ -360,7 +373,7 @@ public class TestCaseLoader {
 
   private static TestClassesFilter ourFilter;
   public static boolean isClassIncluded(String className) {
-    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS && 
+    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
       return false;
     }
@@ -372,7 +385,7 @@ public class TestCaseLoader {
            matchesCurrentBucket(className) &&
            ourFilter.matches(className);
   }
-  
+
   public void fillTestCases(String rootPackage, List<Path> classesRoots) {
     long t = System.nanoTime();
 
