@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -23,7 +23,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -112,7 +111,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
@@ -719,29 +717,6 @@ public final class ExternalSystemUtil {
              IdeBundle.message("untrusted.project.dialog.trust.button"),
              IdeBundle.message("untrusted.project.dialog.distrust.button")
            );
-  }
-
-  public static @NotNull OpenUntrustedProjectChoice confirmOpeningUntrustedProject(
-    @NotNull VirtualFile virtualFile,
-    ProjectSystemId... systemIds
-  ) {
-    return confirmOpeningUntrustedProject(virtualFile, Arrays.asList(systemIds));
-  }
-
-  public static @NotNull OpenUntrustedProjectChoice confirmOpeningUntrustedProject(
-    @NotNull VirtualFile virtualFile,
-    @NotNull Collection<ProjectSystemId> systemIds
-  ) {
-    if (executesTrustedCodeOnly(systemIds)) {
-      return OpenUntrustedProjectChoice.IMPORT;
-    }
-    return TrustedProjects.confirmOpeningUntrustedProject(
-      virtualFile,
-      new HashSet<>(systemIds)
-        .stream()
-        .map(it -> it.getReadableName())
-        .sorted(NaturalComparator.INSTANCE)
-        .collect(Collectors.toList()));
   }
 
   public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
