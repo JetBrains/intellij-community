@@ -16,15 +16,15 @@ internal class NodeMoveDownAction : NodeMoveAction(true, messagePointer("move.do
 internal abstract class NodeMoveAction(val next: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
 
   override fun update(event: AnActionEvent) = with(event.presentation) {
-    isEnabledAndVisible = perform(event, false)
+    isEnabledAndVisible = process(event, false)
     if (!isVisible) isVisible = !ActionPlaces.isPopupPlace(event.place)
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    perform(event, true)
+    process(event, true)
   }
 
-  private fun perform(event: AnActionEvent, perform: Boolean): Boolean {
+  private fun process(event: AnActionEvent, perform: Boolean): Boolean {
     val manager = event.bookmarksManager as? BookmarksManagerImpl ?: return false
     val tree = event.bookmarksViewFromToolWindow?.tree ?: return false
     val path = TreeUtil.getSelectedPathIfOne(tree)
