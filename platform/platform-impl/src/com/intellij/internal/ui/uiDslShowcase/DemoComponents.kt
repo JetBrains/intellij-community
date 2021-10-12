@@ -73,6 +73,10 @@ fun demoComponents(): DialogPanel {
       browserLink("jetbrains.com", "https://www.jetbrains.com")
     }
 
+    row("dropDownLink:") {
+      dropDownLink("Item 1", listOf("Item 1", "Item 2", "Item 3"))
+    }
+
     row("icon:") {
       icon(AllIcons.Actions.QuickfixOffBulb)
     }
