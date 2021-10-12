@@ -182,7 +182,8 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnviro
     { settings.env },
     { settings.env = it },
     { settings.isPassParentEnvs },
-    { settings.isPassParentEnvs = it }
+    { settings.isPassParentEnvs = it },
+    hideWhenEmpty = false
   )
 
 fun <S> SettingsFragmentsContainer<S>.addEnvironmentFragment(
@@ -190,19 +191,21 @@ fun <S> SettingsFragmentsContainer<S>.addEnvironmentFragment(
   getEnvs: S.() -> Map<String, String>,
   setEnvs: S.(Map<String, String>) -> Unit,
   isPassParentEnvs: S.() -> Boolean,
-  setPassParentEnvs: S.(Boolean) -> Unit
+  setPassParentEnvs: S.(Boolean) -> Unit,
+  hideWhenEmpty: Boolean
 ) = addLabeledSettingsEditorFragment(
   EnvironmentVariablesTextFieldWithBrowseButton(),
   info,
   { it, c ->
-    c.envs = getEnvs(it)
-    c.isPassParentEnvs = isPassParentEnvs(it)
+    c.envs = it.getEnvs()
+    c.isPassParentEnvs = it.isPassParentEnvs()
   },
   { it, c ->
-    setEnvs(it, c.envs)
-    setPassParentEnvs(it, c.isPassParentEnvs)
-  }
-)
+    it.setEnvs(c.envs)
+    it.setPassParentEnvs(c.isPassParentEnvs)
+  },
+  { !hideWhenEmpty || it.getEnvs().isNotEmpty() || !it.isPassParentEnvs() }
+).apply { isRemovable = hideWhenEmpty }
 
 fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   project: Project,

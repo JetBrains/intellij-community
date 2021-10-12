@@ -349,7 +349,8 @@ class MavenRunConfigurationSettingsEditor(
       { runnerSettingsOrDefault.environmentProperties },
       { runnerSettingsOrDefault.environmentProperties = it },
       { runnerSettingsOrDefault.isPassParentEnv },
-      { runnerSettingsOrDefault.isPassParentEnv = it }
+      { runnerSettingsOrDefault.isPassParentEnv = it },
+      hideWhenEmpty = true
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addVmOptionsFragment() =
