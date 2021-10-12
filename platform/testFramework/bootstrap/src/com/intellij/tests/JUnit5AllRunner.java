@@ -22,10 +22,6 @@ import java.util.ServiceLoader;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class JUnit5AllRunner {
   
-  static {
-    ExternalClasspathClassLoader.install();
-  }
-  
   public static void main(String[] args) {
     Launcher launcher = LauncherFactory.create();
     
