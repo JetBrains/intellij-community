@@ -49,7 +49,7 @@ internal class JcefBrowserPipeImpl(private val browser: JBCefBrowserBase): Brows
   }
 
   override fun send(type: String, data: String) {
-    val raw = JacksonFactory.getDefaultInstance().toString(PackedMessage(type, data))
+    val raw = jacksonObjectMapper().writeValueAsString(PackedMessage(type, data))
     logger.debug("Sending message: $raw")
     browser.cefBrowser.executeJavaScript(postToBrowserFunctionCall(raw), null, 0)
   }
