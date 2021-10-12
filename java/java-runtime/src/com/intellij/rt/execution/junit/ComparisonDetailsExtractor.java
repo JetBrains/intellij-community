@@ -27,8 +27,8 @@ import java.util.Map;
 public class ComparisonDetailsExtractor  {
   private static final Map EXPECTED = new HashMap();
   private static final Map ACTUAL = new HashMap();
-  protected String myActual = "";
-  protected String myExpected = "";
+  protected String myActual;
+  protected String myExpected;
   private final Throwable myAssertion;
   static {
     try {
@@ -36,6 +36,7 @@ public class ComparisonDetailsExtractor  {
       init(org.junit.ComparisonFailure.class);
     }
     catch (Throwable e) {
+      System.err.println(e.getMessage());
     }
   }
 
