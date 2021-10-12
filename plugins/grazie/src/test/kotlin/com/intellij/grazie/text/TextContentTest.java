@@ -81,7 +81,7 @@ public class TextContentTest extends BasePlatformTestCase {
     var f1 = psiFragment(file, 0, 1);
     var f2 = psiFragment(file, 4, 5).markUnknown(new TextRange(1, 1));
 
-    var joined = TextContent.joinWithWhitespace(List.of(f1, f2));
+    var joined = TextContent.joinWithWhitespace(' ', List.of(f1, f2));
     assertNotNull(joined);
     assertEquals("a c|", unknownOffsets(joined));
     assertEquals(List.of(0, 1, 4, 5), IntStreamEx.range(4).mapToObj(joined::textOffsetToFile).toList());
