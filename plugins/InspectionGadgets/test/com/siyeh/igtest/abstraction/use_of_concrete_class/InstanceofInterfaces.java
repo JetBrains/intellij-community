@@ -37,5 +37,12 @@ class InstanceofInterfaces {
     if(!<warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class.equals(a.getClass())) {}
     if(a.getClass() == XYZ.class) {}
   }
+
+  void testRecord(XYZ xyz) {
+    if (xyz instanceof X x) {}
+    if (xyz instanceof <warning descr="'instanceof' concrete class 'Y'">Y</warning> y) {}
+  }
 }
 interface XYZ {}
+record X() implements XYZ {}
+class Y implements XYZ {}
