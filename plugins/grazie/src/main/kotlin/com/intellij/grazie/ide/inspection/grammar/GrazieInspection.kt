@@ -39,12 +39,14 @@ class GrazieInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
 
-        val extracted = TextExtractor.findUniqueTextAt(element, checkedDomains) ?: return
-        if (extracted.length > 50_000) return // too large text
+        val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
+        if (texts.sumOf { it.length } > 50_000) return // too large text
 
-        val runner = CheckerRunner(extracted)
-        runner.run(checkers) { problem ->
-          runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
+        for (extracted in texts) {
+          val runner = CheckerRunner(extracted)
+          runner.run(checkers) { problem ->
+            runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
+          }
         }
       }
     }

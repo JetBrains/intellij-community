@@ -29,8 +29,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (areChecksDisabled(element)) return
-        val text = TextExtractor.findUniqueTextAt(element, domains) ?: return
-        LangDetector.updateContext(text, context)
+        TextExtractor.findTextsAt(element, domains).forEach { LangDetector.updateContext(it, context) }
       }
 
       override fun visitFile(file: PsiFile) {

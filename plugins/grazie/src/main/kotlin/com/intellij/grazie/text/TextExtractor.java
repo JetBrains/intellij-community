@@ -9,10 +9,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,9 +23,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -36,7 +31,7 @@ import java.util.regex.Pattern;
  */
 public abstract class TextExtractor {
   private static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
-  private static final Key<CachedValue<Set<TextContent>>> CACHE = Key.create("TextExtractor cache");
+  private static final Key<CachedValue<Cache>> CACHE = Key.create("TextExtractor cache");
   private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
 
   /**
@@ -49,26 +44,61 @@ public abstract class TextExtractor {
    *                       to improve the performance,
    *                       but it's not necessary.
    * @see TextContentBuilder
+   * @see #buildTextContents
    */
-  protected abstract @Nullable TextContent buildTextContent(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains);
+  protected @Nullable TextContent buildTextContent(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    throw new UnsupportedOperationException("Please implement either buildTextContent or buildTextContents");
+  }
 
   /**
-   * @return a text content intersecting the given PSI element with the domain from the allowed set.
-   * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
+   * Same as {@link #buildTextContent}, but may return several texts intersecting (most often embedded into) the given PSI element.
+   * If any of those contents include other PSI elements (e.g. adjacent comments),
+   * this extension should return equal {@code List<TextContent>} for all such "other" PSI elements.
    */
-  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+  protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    return ContainerUtil.createMaybeSingletonList(buildTextContent(element, allowedDomains));
+  }
+
+  /** Find a text content compatible with the given domain set intersecting with the given offset in a file. */
+  public static @Nullable TextContent findTextAt(@NotNull PsiFile file, int offset, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    PsiElement leaf = file.findElementAt(offset);
+    TextContent result = leaf == null ? null :
+                         ContainerUtil.find(findTextsAt(leaf, allowedDomains), c -> c.fileOffsetToText(offset) != null);
+    if (result != null) {
+      return result;
+    }
+    if (leaf == null || offset == leaf.getTextRange().getStartOffset()) {
+      leaf = file.findElementAt(offset - 1);
+      if (leaf != null) {
+        return ContainerUtil.find(findTextsAt(leaf, allowedDomains), c -> c.fileOffsetToText(offset) != null);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link #findTextsAt}
+   * @return the first of {@link #findTextsAt} or null if it's empty
+   */
+  @Deprecated
   @Nullable
   public static TextContent findTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    return ContainerUtil.getFirstItem(findTextsAt(psi, allowedDomains));
+  }
+
+  /**
+   * @return text contents intersecting the given PSI element with the domains from the allowed set.
+   * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
+   */
+  public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     JBIterable<PsiElement> hierarchy = SyntaxTraverser.psiApi().parents(psi);
     for (PsiElement each : hierarchy) {
-      CachedValue<Set<TextContent>> cache = each.getUserData(CACHE);
+      CachedValue<Cache> cache = each.getUserData(CACHE);
       if (cache != null) {
-        synchronized (cache) {
-          for (TextContent content : cache.getValue()) {
-            if (allowedDomains.contains(content.getDomain()) && isSuitable(content, psi)) {
-              return content;
-            }
-          }
+        List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
+          isSuitable(c, psi) && allowedDomains.contains(c.getDomain()));
+        if (!cached.isEmpty()) {
+          return cached;
         }
       }
     }
@@ -79,26 +109,40 @@ public abstract class TextExtractor {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       Language psiLanguage = each.getLanguage();
-      TextContent content = doExtract(each, allowedDomains, psiLanguage);
-      if (content == null && fileLanguage != psiLanguage) {
-        content = doExtract(each, allowedDomains, fileLanguage);
+      List<TextContent> contents = doExtract(each, allowedDomains, psiLanguage);
+      if (contents.isEmpty() && fileLanguage != psiLanguage) {
+        contents = doExtract(each, allowedDomains, fileLanguage);
       }
-      if (content != null && stamp.mayCacheNow()) {
-        PsiElement parent = content.getCommonParent();
-        CachedValue<Set<TextContent>> cache = CachedValuesManager.getManager(parent.getProject()).createCachedValue(
-          () -> CachedValueProvider.Result.create(new LinkedHashSet<>(), PsiModificationTracker.MODIFICATION_COUNT));
-        cache = ((UserDataHolderEx) parent).putUserDataIfAbsent(CACHE, cache);
-        synchronized (cache) {
-          cache.getValue().add(content);
+      if (stamp.mayCacheNow()) {
+        for (TextContent content : contents) {
+          PsiElement parent = content.getCommonParent();
+          CachedValue<Cache> cache = CachedValuesManager.getManager(parent.getProject()).createCachedValue(
+            () -> CachedValueProvider.Result.create(new Cache(), PsiModificationTracker.MODIFICATION_COUNT));
+          cache = ((UserDataHolderEx) parent).putUserDataIfAbsent(CACHE, cache);
+          cache.getValue().register(allowedDomains, content);
         }
       }
 
-      if (content != null) {
-        return isSuitable(content, psi) ? content : null;
+      if (!contents.isEmpty()) {
+        return ContainerUtil.filter(contents, c -> isSuitable(c, psi) && allowedDomains.contains(c.getDomain()));
       }
     }
 
-    return null;
+    return Collections.emptyList();
+  }
+
+  private static class Cache {
+    final EnumSet<TextContent.TextDomain> checkedDomains = EnumSet.noneOf(TextContent.TextDomain.class);
+    final LinkedHashSet<TextContent> foundContents = new LinkedHashSet<>();
+
+    synchronized void register(Set<TextContent.TextDomain> allowedDomains, TextContent content) {
+      checkedDomains.addAll(allowedDomains);
+      foundContents.add(content);
+    }
+
+    synchronized Collection<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains) {
+      return checkedDomains.containsAll(allowedDomains) ? foundContents : Collections.emptyList();
+    }
   }
 
   private static boolean isSuitable(TextContent content, PsiElement psi) {
@@ -125,16 +169,25 @@ public abstract class TextExtractor {
   }
 
   /**
-   * The same as {@link #findTextAt}, but each text content is returned only once even if it covers several PSI elements
+   * @deprecated use {@link #findUniqueTextsAt}
+   * @return the first of {@link #findUniqueTextsAt} or null if it's empty
+   */
+  @Deprecated
+  public static @Nullable TextContent findUniqueTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    return ContainerUtil.getFirstItem(findUniqueTextsAt(psi, allowedDomains));
+  }
+
+  /**
+   * The same as {@link #findTextsAt}, but each text content is returned only once even if it covers several PSI elements
    * (one of those elements is chosen as an anchor).
    * That's useful if you iterate over PSI elements and want to process each of their contents just once
    * (e.g. during highlighting).
    */
-  public static @Nullable TextContent findUniqueTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    if (psi.getFirstChild() != null) return null;
+  public static @NotNull List<TextContent> findUniqueTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    if (psi.getFirstChild() != null) return Collections.emptyList();
 
-    var extracted = findTextAt(psi, allowedDomains);
-    return extracted != null && psi.getTextRange().contains(extracted.textOffsetToFile(0)) ? extracted : null;
+    TextRange psiRange = psi.getTextRange();
+    return ContainerUtil.filter(findTextsAt(psi, allowedDomains), c -> psiRange.contains(c.textOffsetToFile(0)));
   }
 
   private static boolean hasIntersectingInjection(TextContent content, PsiFile file) {
@@ -142,11 +195,12 @@ public abstract class TextExtractor {
   }
 
   @SuppressWarnings("deprecation")
-  private static TextContent doExtract(@NotNull PsiElement anyRoot, @NotNull Set<TextContent.TextDomain> allowedDomains, @NotNull Language language) {
+  private static @NotNull List<TextContent> doExtract(@NotNull PsiElement anyRoot,
+                                                      @NotNull Set<TextContent.TextDomain> allowedDomains,
+                                                      @NotNull Language language) {
     TextExtractor extractor = EP.forLanguage(language);
     if (extractor != null) {
-      TextContent roots = extractor.buildTextContent(anyRoot, allowedDomains);
-      return roots != null && allowedDomains.contains(roots.getDomain()) ? roots : null;
+      return extractor.buildTextContents(anyRoot, allowedDomains);
     }
 
     // legacy extraction
@@ -155,12 +209,12 @@ public abstract class TextExtractor {
         GrammarCheckingStrategy.TextDomain oldDomain = strategy.getContextRootTextDomain(anyRoot);
         TextContent.TextDomain domain = StrategyTextExtractor.convertDomain(oldDomain);
         if (domain != null && allowedDomains.contains(domain)) {
-          return new StrategyTextExtractor(strategy).extractText(strategy.getRootsChain(anyRoot));
+          return ContainerUtil.createMaybeSingletonList(new StrategyTextExtractor(strategy).extractText(strategy.getRootsChain(anyRoot)));
         }
       }
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   /**
