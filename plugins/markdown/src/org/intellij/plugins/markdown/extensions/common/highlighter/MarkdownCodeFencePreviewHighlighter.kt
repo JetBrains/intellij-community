@@ -11,7 +11,7 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
-import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -149,7 +149,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     builder.append(processCodeLine(actualLine) + MarkdownCodeFenceGeneratingProvider.escape(actualLine))
   }
 
-  private fun processCodeLine(rawCodeLine: String): String = currentFile.let { file ->
+  private fun processCodeLine(rawCodeLine: String): String = currentFile?.let { file ->
     CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
   } ?: ""
 }

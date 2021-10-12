@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.extensions.common.highlighter
+package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
@@ -10,10 +10,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
-import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
-import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension.Companion.execute
-import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension.Companion.matches
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownRunner
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes

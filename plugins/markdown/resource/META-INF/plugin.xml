@@ -42,7 +42,7 @@ Includes the following features:</p>
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
-                    interface="org.intellij.plugins.markdown.extensions.jcef.MarkdownRunner"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -78,7 +78,7 @@ Includes the following features:</p>
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
 
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
-    <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownRunLineMarkersProvider"/>
+    <runLineMarkerContributor language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunLineMarkersProvider"/>
 
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
@@ -237,7 +237,7 @@ Includes the following features:</p>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension$Provider"/>
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>

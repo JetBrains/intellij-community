@@ -11,7 +11,7 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
-import org.intellij.plugins.markdown.extensions.jcef.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 
 internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProviders: Array<MarkdownCodeFencePluginGeneratingProvider>,
                                                    private val project: Project? = null,

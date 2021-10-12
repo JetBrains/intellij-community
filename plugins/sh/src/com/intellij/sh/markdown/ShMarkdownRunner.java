@@ -21,7 +21,7 @@ import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownRunner;
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

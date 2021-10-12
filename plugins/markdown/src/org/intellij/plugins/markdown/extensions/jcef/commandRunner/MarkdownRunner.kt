@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.extensions.jcef
+package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
 import com.intellij.execution.Executor
 import com.intellij.lang.Language
