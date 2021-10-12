@@ -12,6 +12,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FastUtilHashingStrategies;
@@ -467,6 +468,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
       environment.putAll(getParentEnvironment());
+      EnvironmentRestorer.restoreOverriddenVars(environment);
     }
 
     if (SystemInfo.isUnix) {
