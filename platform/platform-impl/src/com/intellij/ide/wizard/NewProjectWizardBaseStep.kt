@@ -6,7 +6,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -14,12 +13,10 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
@@ -30,21 +27,17 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 
-class NewProjectWizardBaseStep(context: WizardContext) : GitNewProjectWizardStep(context)
+class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
 
-open class GitNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
+  override val propertyGraph = PropertyGraph("New project wizard")
 
-  final override val propertyGraph = PropertyGraph("New project wizard")
+  override val nameProperty = propertyGraph.graphProperty { suggestName() }
+  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
 
-  final override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  final override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
-  final override val gitProperty = propertyGraph.graphProperty { false }
+  override var name by nameProperty
+  override var path by pathProperty
 
-  final override var name by nameProperty
-  final override var path by pathProperty
-  final override var git by gitProperty
-
-  final override val projectPath: Path get() = Path.of(path, name)
+  override val projectPath: Path get() = Path.of(path, name)
 
   private fun suggestName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
@@ -81,12 +74,6 @@ open class GitNewProjectWizardStep(override val context: WizardContext) : NewPro
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
-      if (showGitRepositoryCheckbox()) {
-        row(EMPTY_LABEL) {
-          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-            .bindSelected(gitProperty)
-        }.bottomGap(BottomGap.SMALL)
-      }
 
       onApply {
         context.projectName = name
@@ -94,8 +81,6 @@ open class GitNewProjectWizardStep(override val context: WizardContext) : NewPro
       }
     }
   }
-
-  protected open fun showGitRepositoryCheckbox() = context.isCreatingNewProject && GitRepositoryInitializer.getInstance() != null
 
   private fun getBuilderId(): String? {
     val projectBuilder = context.projectBuilder
@@ -150,14 +135,5 @@ open class GitNewProjectWizardStep(override val context: WizardContext) : NewPro
     return null
   }
 
-  override fun setupProject(project: Project) {
-    if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
-      if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
-        }
-      }
-    }
-  }
+  override fun setupProject(project: Project) {}
 }

@@ -4,10 +4,11 @@ package com.intellij.ide.wizard
 import com.intellij.ui.UIBundle
 
 class NewProjectWizardLanguageStep(
-  parent: NewProjectWizardBaseStep
+  parent: NewProjectWizardStep,
+  baseData: NewProjectWizardBaseData
 ) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
     NewProjectWizardLanguageData,
-    NewProjectWizardBaseData by parent {
+    NewProjectWizardBaseData by baseData {
 
   override val self = this
 

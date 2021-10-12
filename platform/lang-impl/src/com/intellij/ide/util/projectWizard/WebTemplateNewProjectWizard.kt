@@ -11,13 +11,10 @@ abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
   override val groupName: String = WebModuleBuilder.GROUP_NAME
 
   override fun createStep(context: WizardContext): NewProjectWizardStep =
-    object : GitNewProjectWizardStep(context) {
-      override fun showGitRepositoryCheckbox(): Boolean {
-        return false
-      }
-    }.chain { createTemplateStep(it) }
+    NewProjectWizardBaseStep(context)
+      .chain { createTemplateStep(it) }
 
-  abstract fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep
+  abstract fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep
 }
 
 class WebTemplateNewProjectWizard(val template: WebProjectTemplate<*>) : WebTemplateNewProjectWizardBase() {
@@ -25,14 +22,14 @@ class WebTemplateNewProjectWizard(val template: WebProjectTemplate<*>) : WebTemp
   override val name: String = StringUtil.capitalizeWords(template.name, true)
   override val icon: Icon = template.icon
 
-  override fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep =
+  override fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep =
     WebTemplateProjectWizardStep(parent, template)
 }
 
 abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<WebProjectTemplate<*>>) : WebTemplateNewProjectWizardBase() {
   override val id: String = templates.joinToString { it.javaClass.name }
 
-  override fun createTemplateStep(parent: GitNewProjectWizardStep): NewProjectWizardStep {
+  override fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep {
     return object : AbstractNewProjectWizardMultiStepBase(parent) {
       override val label: String
         get() = UIBundle.message("label.project.wizard.new.project.project.type")

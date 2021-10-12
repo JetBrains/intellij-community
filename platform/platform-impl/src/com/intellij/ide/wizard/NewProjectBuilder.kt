@@ -10,5 +10,5 @@ class NewProjectBuilder : AbstractNewProjectWizardBuilder() {
 
   override fun createStep(context: WizardContext) =
     NewProjectWizardBaseStep(context)
-      .chain(::NewProjectWizardLanguageStep)
+      .chain(::GitNewProjectWizardStep) { NewProjectWizardLanguageStep(it, it) }
 }

@@ -8,11 +8,9 @@ interface NewProjectWizardBaseData {
 
   val nameProperty: GraphProperty<String>
   val pathProperty: GraphProperty<String>
-  val gitProperty: GraphProperty<Boolean>
 
   var name: String
   var path: String
-  var git: Boolean
 
   val projectPath: Path
 }
