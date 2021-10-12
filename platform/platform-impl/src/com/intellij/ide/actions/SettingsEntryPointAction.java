@@ -45,6 +45,10 @@ import java.util.concurrent.TimeUnit;
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private boolean myShowPopup = true;
 
+  public SettingsEntryPointAction() {
+    super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
@@ -59,7 +63,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText("");
+    if (e.isFromActionToolbar()) presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
   }
