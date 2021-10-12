@@ -2,6 +2,7 @@
 
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +22,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
   private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final VfsAwareIndexStorage<Key, Value> myBackendStorage;
@@ -51,7 +53,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
 
   public void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled;
-    assert wasEnabled != enabled;
+    LOG.assertTrue(wasEnabled != enabled);
 
     myBufferingEnabled = enabled;
     for (BufferingStateListener listener : myListeners) {

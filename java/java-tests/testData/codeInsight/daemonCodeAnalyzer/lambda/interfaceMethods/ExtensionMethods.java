@@ -50,7 +50,7 @@ class D {
 }
 
 interface IllegalMods {
-  <error descr="Class member declared outside of a class">void m1()</error><error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Not allowed in interface">{ }</error>
+  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Not allowed in interface">{ }</error>
 
   <error descr="Static methods in interfaces should have a body">static void m2()</error>;
   <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers: 'default' and 'static'">default</error> void m3() { }

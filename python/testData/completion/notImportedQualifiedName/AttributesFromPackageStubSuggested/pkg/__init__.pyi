@@ -1,0 +1,3 @@
+foo: Any
+bar: int
+

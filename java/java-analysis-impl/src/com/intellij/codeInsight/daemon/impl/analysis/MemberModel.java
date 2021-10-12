@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class MemberModel {
   }
 
   public static @Nullable MemberModel create(@NotNull PsiErrorElement errorElement) {
-    if (hasClassesWithUnclosedBraces(errorElement.getContainingFile())) return null;
+    if (inClass(errorElement) || hasClassesWithUnclosedBraces(errorElement.getContainingFile())) return null;
     List<PsiElement> children = new ArrayList<>();
     PsiElement prevSibling = errorElement.getPrevSibling();
     while (isMemberPart(prevSibling)) {
@@ -52,7 +53,19 @@ public class MemberModel {
     Collections.addAll(children, errorElement.getChildren());
     return new MemberParser(ContainerUtil.filter(children, c -> !isWsOrComment(c))).parse();
   }
-  
+
+  private static boolean inClass(@NotNull PsiErrorElement psiErrorElement) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(psiErrorElement, PsiClass.class);
+    if (psiClass == null) return false;
+    PsiElement lBrace = psiClass.getLBrace();
+    if (lBrace == null) return true;
+    PsiElement rBrace = psiClass.getRBrace();
+    if (rBrace == null) return true;
+    TextRange errorRange = psiErrorElement.getTextRange();
+    return lBrace.getTextOffset() <= errorRange.getStartOffset() &&
+           rBrace.getTextOffset() + 1 >= errorRange.getEndOffset();
+  }
+
   private static boolean hasClassesWithUnclosedBraces(@Nullable PsiFile psiFile) {
     PsiJavaFile javaFile = tryCast(psiFile, PsiJavaFile.class);
     return javaFile == null || ContainerUtil.exists(javaFile.getClasses(), c -> c.getRBrace() == null);

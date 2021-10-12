@@ -5,10 +5,12 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PySdkBundle
@@ -27,6 +29,8 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   private var packages: List<PyPackage>? = null
 
   init {
+    val parentDisposable = sdk as? Disposable ?: PyPackageManagers.getInstance()
+    Disposer.register(parentDisposable, this)
     PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
       PythonSdkType.getInstance().setupSdkPaths(sdk)
     })

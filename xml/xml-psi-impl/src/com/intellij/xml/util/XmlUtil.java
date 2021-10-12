@@ -3,6 +3,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -14,12 +15,11 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -1252,21 +1252,15 @@ public final class XmlUtil {
     return (XmlComment)curElement;
   }
 
-  public static boolean hasInjectionShredBoundaryAt(XmlAttribute attribute, int offset) {
+  public static boolean hasNonEditableInjectionFragmentAt(@NotNull XmlAttribute attribute, int offset) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(attribute.getProject());
     PsiElement host = manager.getInjectionHost(attribute);
     if (host == null) return false;
-    Ref<Boolean> result = new Ref<>(false);
-    manager.enumerate(host, (injectedPsi, places) -> {
-      if (ContainerUtil.exists(places, place -> {
-        TextRange range = place.getRange();
-        return (range.getStartOffset() <= offset && offset <= range.getStartOffset() + place.getPrefix().length())
-               || (range.getEndOffset() - place.getSuffix().length() <= offset && offset <= range.getEndOffset());
-      })) {
-        result.set(true);
-      }
+    Document doc = PsiDocumentManager.getInstance(attribute.getProject()).getDocument(attribute.getContainingFile());
+    if (!(doc instanceof DocumentWindow)) return false;
+    return ContainerUtil.exists(manager.getNonEditableFragments((DocumentWindow)doc), range -> {
+      return range.getStartOffset() <= offset && offset <= (range.getEndOffset() + 1);
     });
-    return result.get();
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

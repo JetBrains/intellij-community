@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem
 
 
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingDefaultValue
 import org.jetbrains.kotlin.tools.projectWizard.core.service.BuildSystemAvailabilityWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
@@ -38,17 +40,23 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
             KotlinNewProjectWizardBundle.message("plugin.buildsystem.setting.type"),
             GenerationPhase.FIRST_STEP,
         ) {
+            fun Reader.isBuildSystemAvailable(type: BuildSystemType): Boolean =
+                service<BuildSystemAvailabilityWizardService>().isAvailable(type)
+
             isSavable = true
-            filter = { _, type ->
-                val service = service<BuildSystemAvailabilityWizardService>()
-                service.isAvailable(type)
+            values = BuildSystemType.ALL_BY_PRIORITY.toImmutableList()
+            defaultValue = SettingDefaultValue.Dynamic {
+                values.firstOrNull { isBuildSystemAvailable(it) }
             }
+
+            filter = { _, type -> isBuildSystemAvailable(type) }
 
             validate { buildSystemType ->
                 val projectKind = KotlinPlugin.projectKind.notRequiredSettingValue ?: ProjectKind.Multiplatform
-                when (buildSystemType) {
-                    in projectKind.supportedBuildSystems -> ValidationResult.OK
-                    else -> ValidationResult.ValidationError(
+                if (buildSystemType in projectKind.supportedBuildSystems && isBuildSystemAvailable(buildSystemType)) {
+                    ValidationResult.OK
+                } else {
+                    ValidationResult.ValidationError(
                         KotlinNewProjectWizardBundle.message(
                             "plugin.buildsystem.setting.type.error.wrong.project.kind",
                             projectKind.shortName.capitalize(),
@@ -178,15 +186,14 @@ enum class BuildSystemType(
     Maven(
         text = KotlinNewProjectWizardBundle.message("buildsystem.type.maven"),
         id = "maven"
-    )
-
-    ;
+    );
 
     override val greyText: String?
         get() = null
 
     companion object {
         val ALL_GRADLE = setOf(GradleKotlinDsl, GradleGroovyDsl)
+        val ALL_BY_PRIORITY = setOf(GradleKotlinDsl, GradleGroovyDsl, Maven, Jps)
     }
 }
 

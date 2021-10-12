@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -93,7 +94,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myIsToolWindowContextMenu;
   }
 
-  private class MyMenu extends JBPopupMenu {
+  private class MyMenu extends JBPopupMenu implements PlaceProvider {
     @NotNull
     private final String myPlace;
     @NotNull
@@ -117,6 +118,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         }
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
+    }
+
+    @Override
+    public @NotNull String getPlace() {
+      return myPlace;
     }
 
     @Override

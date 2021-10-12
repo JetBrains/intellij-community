@@ -120,10 +120,9 @@ public class IntentionDescriptionPanel {
       readHTML(toHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory)));
       setupPoweredByPanel(null);
 
-      String pathForPackage = getClass().getPackage().getName().replace('.', '/');
-      TextDescriptor beforeTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + AFTER_TEMPLATE);
+      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());

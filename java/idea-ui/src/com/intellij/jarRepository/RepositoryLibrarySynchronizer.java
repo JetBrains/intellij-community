@@ -138,17 +138,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
       return;
     }
 
-    final Runnable syncTask = () -> {
-      final Collection<Library> toSync = collectLibrariesToSync(project);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        for (Library library : toSync) {
-          if (LibraryTableImplUtil.isValidLibrary(library)) {
-            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-          }
-        }
-      }, project.getDisposed());
-
-    };
+    Runnable syncTask = () -> syncLibraries(project);
 
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
@@ -165,6 +155,17 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
       removeDuplicatedUrlsFromRepositoryLibraries(project);
       syncTask.run();
     });
+  }
+
+  public static void syncLibraries(@NotNull Project project) {
+    Collection<Library> toSync = collectLibrariesToSync(project);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (Library library : toSync) {
+        if (LibraryTableImplUtil.isValidLibrary(library)) {
+          RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+        }
+      }
+    }, project.getDisposed());
   }
 
   @NotNull

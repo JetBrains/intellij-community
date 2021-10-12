@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -89,7 +89,7 @@ public class XDebuggerTestUtil {
     });
   }
 
-  public static XExecutionStack getActiveThread(@NotNull XDebugSession session) {
+  public static @Nullable XExecutionStack getActiveThread(@NotNull XDebugSession session) {
     return session.getSuspendContext().getActiveExecutionStack();
   }
 
@@ -108,7 +108,7 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session) {
-    return collectFrames(thread == null ? getActiveThread(session) : thread);
+    return collectFrames(thread == null ? Objects.requireNonNull(getActiveThread(session)) : thread);
   }
 
   public static String getFramePresentation(XStackFrame frame) {
@@ -132,7 +132,7 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(@NotNull XDebugSession session, long timeout) {
-    return collectFramesWithSelected(getActiveThread(session), timeout);
+    return collectFramesWithSelected(Objects.requireNonNull(getActiveThread(session)), timeout);
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout) {
@@ -143,8 +143,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XStackFrame getFrameAt(@NotNull XDebugSession session, int frameIndex) {
-    final XExecutionStack activeThread = getActiveThread(session);
-    return getFrameAt(activeThread, frameIndex);
+    return getFrameAt(Objects.requireNonNull(getActiveThread(session)), frameIndex);
   }
 
   public static XStackFrame getFrameAt(@NotNull XExecutionStack thread, int frameIndex) {

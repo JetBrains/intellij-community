@@ -103,7 +103,7 @@ internal class ApplicationStoreTest {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
-  private suspend fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
+  private suspend fun doRemoveDeprecatedStorageOnWrite(component: FooComponent) {
     val oldFile = writeConfig("old.xml", "<application>${createComponentData("old")}</application>")
 
     // test BOM
@@ -182,6 +182,47 @@ internal class ApplicationStoreTest {
     }
     finally {
       (ApplicationManager.getApplication().picoContainer as MutablePicoContainer).unregisterComponent(A::class.java)
+    }
+  }
+
+  @Test
+  fun `import deprecated settings`() {
+
+    @State(name = "Comp", storages = [
+      Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+      Storage("new.xml", roamingType = RoamingType.PER_OS)])
+    class Comp : FooComponent()
+
+    val storageManager = componentStore.storageManager
+    val configDir = storageManager.expandMacro(ROOT_CONFIG)
+    fun fileSpec(spec: String) = FileSpec(configDir.resolve(spec).toString())
+
+    val component = Comp()
+    ApplicationManager.getApplication().registerServiceInstance(Comp::class.java, component)
+    val os = getPerOsSettingsStorageFolderName()
+    try {
+      val allItems = getExportableComponentsMap(isComputePresentableNames = false,
+                                                storageManager = storageManager,
+                                                withDeprecated = true)
+      assertThat(allItems).containsKeys(
+        fileSpec("old.xml"),
+        fileSpec("$os/old.xml"),
+        fileSpec("new.xml"),
+        fileSpec("$os/new.xml")
+      )
+
+      val nonDeprecatedItems = getExportableComponentsMap(isComputePresentableNames = false,
+                                                          storageManager = storageManager,
+                                                          withDeprecated = false)
+      assertThat(nonDeprecatedItems).containsKeys(fileSpec("$os/new.xml"))
+      assertThat(nonDeprecatedItems).doesNotContainKeys(
+        fileSpec("old.xml"),
+        fileSpec("$os/old.xml"),
+        fileSpec("new.xml")
+      )
+    }
+    finally {
+      (ApplicationManager.getApplication() as ComponentManagerImpl).unregisterComponent(Comp::class.java)
     }
   }
 
@@ -421,13 +462,7 @@ internal class ApplicationStoreTest {
   }
 
   @State(name = "A", storages = [Storage(value = "peros.xml", roamingType = RoamingType.PER_OS)])
-  private class PerOsComponent : Foo(), PersistentStateComponent<PerOsComponent> {
-    override fun getState() = this
-
-    override fun loadState(state: PerOsComponent) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  private class PerOsComponent : FooComponent()
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
@@ -476,28 +511,32 @@ internal class ApplicationStoreTest {
     }
   }
 
-  abstract class Foo {
+  abstract class FooComponent() : PersistentStateComponent<Foo> {
+    private val myState = Foo()
+
+    var foo
+      get() = myState.foo
+      set(value) {
+        myState.foo = value
+      }
+
+    override fun getState() = myState
+
+    override fun loadState(state: Foo) {
+      XmlSerializerUtil.copyBean(state, myState)
+    }
+  }
+
+  class Foo {
     @Attribute
     var foo = "defaultValue"
   }
 
   @State(name = "A", storages = [(Storage("new.xml")), (Storage(value = "old.xml", deprecated = true))])
-  class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
-    override fun getState() = this
-
-    override fun loadState(state: SeveralStoragesConfigured) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  class SeveralStoragesConfigured : FooComponent()
 
   @State(name = "A", storages = [(Storage(value = "old.xml", deprecated = true)), (Storage("new.xml"))])
-  class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
-    override fun getState() = this
-
-    override fun loadState(state: ActualStorageLast) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  class ActualStorageLast : FooComponent()
 }
 
 internal data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")

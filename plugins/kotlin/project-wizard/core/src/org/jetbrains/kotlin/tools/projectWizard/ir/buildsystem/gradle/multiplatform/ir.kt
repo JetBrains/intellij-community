@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.IRsListBuilderFunction
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.build
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.withIrs
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.render
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 
@@ -55,8 +56,9 @@ fun TargetConfigurationIR.addWithJavaIntoJvmTarget() = when {
 
 data class DefaultTargetConfigurationIR(
     val targetAccess: TargetAccessIR,
-    override val irs: PersistentList<BuildSystemIR>
-) : TargetConfigurationIR {
+    override val irs: PersistentList<BuildSystemIR>,
+    val parameters: List<BuildSystemIR> = emptyList()
+    ) : TargetConfigurationIR {
     override val targetName: String
         get() = targetAccess.nonDefaultName ?: targetAccess.type.name
 
@@ -67,7 +69,13 @@ data class DefaultTargetConfigurationIR(
         copy(irs = irs)
 
     override fun GradlePrinter.renderGradle() {
-        +targetAccess.type.toString()
+        if (!parameters.isEmpty()) {
+            call(targetAccess.type.toString(), forceBrackets = false) {
+                parameters.list { it.render(this) }
+            }
+        } else {
+            +targetAccess.type.toString()
+        }
         if (irs.isEmpty() || targetAccess.nonDefaultName != null || targetAccess.additionalParams.isNotEmpty()) par {
             targetAccess.nonDefaultName?.let {
                 +it.quotified

@@ -43,7 +43,6 @@ class ComposeMppModuleTemplate : Template() {
         +GradleImportIR("org.jetbrains.compose.compose")
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
         +RepositoryIR(DefaultRepository.GOOGLE)
     }
 
@@ -61,6 +60,9 @@ class ComposeMppModuleTemplate : Template() {
             AndroidSinglePlatformModuleConfigurator.DEPENDENCIES.APP_COMPAT.withDependencyKind(DependencyKind.api),
             DEPENDENCIES.ANDROID_KTX.withDependencyKind(DependencyKind.api)
         ).withoutIrs { it == AndroidModuleConfigurator.DEPENDENCIES.MATERIAL }
+        JvmTargetConfigurator -> module.withIrs(
+            CustomGradleDependencyDependencyIR("compose.preview", DependencyType.MAIN, DependencyKind.api),
+        )
         else -> module
     }
 
@@ -76,6 +78,9 @@ class ComposeMppModuleTemplate : Template() {
             }
             filesFor(ModuleSubType.common) {
                 file(FileTemplateDescriptor("composeMpp/App.kt.vm", relativePath = null), "App.kt", SourcesetType.main)
+            }
+            filesFor(ModuleSubType.jvm) {
+                file(FileTemplateDescriptor("composeMpp/DesktopApp.kt.vm", relativePath = null), "DesktopApp.kt", SourcesetType.main)
             }
         }
         applyMppStructure(mpp, module.originalModule, module.path)

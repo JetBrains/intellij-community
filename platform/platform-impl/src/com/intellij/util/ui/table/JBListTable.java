@@ -150,6 +150,7 @@ public abstract class JBListTable {
         @Override
         public void addNotify() {
           super.addNotify();
+          validate();
           int height = getPreferredSize().height;
           if (height > table.getRowHeight(row)) {
             myRowResizeAnimator.resize(row, height);

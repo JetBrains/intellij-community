@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -73,7 +72,7 @@ class GradleModuleTransformer : ModuleTransformer {
         project: Project,
         buildVirtualFile: VirtualFile
     ) =
-        runReadAction { PsiManager.getInstance(project).findFile(buildVirtualFile) }
+        PsiManager.getInstance(project).findFile(buildVirtualFile)
             ?.language
             ?.displayName
             ?.contains("kotlin", ignoreCase = true) == true
@@ -157,7 +156,7 @@ class GradleModuleTransformer : ModuleTransformer {
         for (externalProject in childProjects.values) {
             val projectBuildFile = externalProject.buildFile?.absolutePath?.let(localFileSystem::findFileByPath)
                 ?: continue
-            val nativeModule = runReadAction { ModuleUtilCore.findModuleForFile(projectBuildFile, project) }
+            val nativeModule = ModuleUtilCore.findModuleForFile(projectBuildFile, project)
                 ?: continue
 
             val projectModule = ProjectModule(

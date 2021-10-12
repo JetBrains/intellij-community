@@ -177,7 +177,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
                 ideLibrary is LibraryEx &&
                 (ideLibrary.kind === JSLibraryKind || ideLibrary.kind === NativeLibraryKind || ideLibrary.kind === CommonLibraryKind)
             ) {
-                modifiableModel.kind = null
+                modifiableModel.forgetKind()
             }
         }
     }

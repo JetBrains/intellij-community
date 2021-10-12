@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,13 +48,13 @@ internal object ReadActionsCoroutineDispatcher : CoroutineDispatcher() {
     }
 }
 
-internal fun <T> Flow<T>.replayOnSignal(signal: Flow<Any>) = channelFlow {
+internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlow {
     var lastValue: T? = null
     onEach { send(it) }
         .onEach { lastValue = it }
         .launchIn(this)
 
-    signal.mapNotNull { lastValue }
+    merge(*signals).mapNotNull { lastValue }
         .onEach { send(it) }
         .launchIn(this)
 }

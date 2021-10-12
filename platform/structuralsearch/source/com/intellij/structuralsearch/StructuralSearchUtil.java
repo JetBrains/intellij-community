@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -38,11 +38,22 @@ public final class StructuralSearchUtil {
   private static List<Configuration> ourPredefinedConfigurations;
   static {
     StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
-      ourPredefinedConfigurations = null;
-      ourDefaultFileType = null;
-      ourNames2FileTypes = null;
-      cache.clear();
+      clearCaches();
     }, null);
+    final Application application = ApplicationManager.getApplication();
+    application.getMessageBus().connect(application).subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      @Override
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
+        clearCaches();
+      }
+    });
+  }
+
+  private static void clearCaches() {
+    ourPredefinedConfigurations = null;
+    ourDefaultFileType = null;
+    ourNames2FileTypes = null;
+    cache.clear();
   }
 
   private StructuralSearchUtil() {}

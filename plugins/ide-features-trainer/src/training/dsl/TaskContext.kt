@@ -124,9 +124,10 @@ abstract class TaskContext : LearningDslBase {
   /** [action] What should be done to pass the current task */
   open fun test(waitEditorToBeReady: Boolean = true, action: TaskTestContext.() -> Unit) = Unit
 
-  fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false, usePulsation: Boolean = false,
+  fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
+                                     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                      checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     triggerByFoundPathAndHighlight(options) { tree ->
       TreeUtil.visitVisibleRows(tree, TreeVisitor { path ->
         if (checkPath(tree, path)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
@@ -139,12 +140,13 @@ abstract class TaskContext : LearningDslBase {
                                                     checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) = Unit
 
   inline fun <reified T : Component> triggerByPartOfComponent(highlightBorder: Boolean = true, highlightInside: Boolean = false,
-                                                              usePulsation: Boolean = false,
+                                                              usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                                               noinline selector: ((candidates: Collection<T>) -> T?)? = null,
                                                               crossinline rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     val componentClass = T::class.java
     @Suppress("DEPRECATION")
-    triggerByFoundPathAndHighlightImpl(componentClass, highlightBorder, highlightInside, usePulsation, selector) { rectangle(it) }
+    triggerByFoundPathAndHighlightImpl(componentClass, highlightBorder, highlightInside,
+      usePulsation, clearPreviousHighlights, selector) { rectangle(it) }
   }
 
   @Deprecated("Use inline version")
@@ -152,12 +154,14 @@ abstract class TaskContext : LearningDslBase {
                                                               highlightBorder: Boolean,
                                                               highlightInside: Boolean,
                                                               usePulsation: Boolean,
+                                                              clearPreviousHighlights: Boolean,
                                                               selector: ((candidates: Collection<T>) -> T?)?,
                                                               rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
 
-  fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false, usePulsation: Boolean = false,
+  fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
+                                    usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                     checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     triggerByFoundListItemAndHighlight(options) { ui: JList<*> ->
       LessonUtil.findItem(ui) { checkList(it) }
     }
@@ -168,13 +172,15 @@ abstract class TaskContext : LearningDslBase {
                                                         checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) = Unit
 
   inline fun <reified ComponentType : Component> triggerByUiComponentAndHighlight(
-    highlightBorder: Boolean = true, highlightInside: Boolean = true, usePulsation: Boolean = false,
+    highlightBorder: Boolean = true, highlightInside: Boolean = true,
+    usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
     noinline selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
     crossinline finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
   ) {
     val componentClass = ComponentType::class.java
     @Suppress("DEPRECATION")
-    triggerByUiComponentAndHighlightImpl(componentClass, highlightBorder, highlightInside, usePulsation, selector) { finderFunction(it) }
+    triggerByUiComponentAndHighlightImpl(componentClass, highlightBorder, highlightInside,
+      usePulsation, clearPreviousHighlights, selector) { finderFunction(it) }
   }
 
   @Deprecated("Use inline version")
@@ -183,6 +189,7 @@ abstract class TaskContext : LearningDslBase {
                                          highlightBorder: Boolean,
                                          highlightInside: Boolean,
                                          usePulsation: Boolean,
+                                         clearPreviousHighlights: Boolean,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) = Unit
 

@@ -412,7 +412,7 @@ public class SwitchBlockHighlightingModel {
       if (!results.isEmpty()) return results;
 
       if (needToCheckCompleteness(elementsToCheckCompleteness)) {
-        checkCompleteness(elementsToCheckCompleteness, results);
+        checkCompleteness(elementsToCheckCompleteness, results, true);
       }
       return results;
     }
@@ -644,15 +644,18 @@ public class SwitchBlockHighlightingModel {
      *
      * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
      */
-    private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results) {
-      PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
-      PsiElement defaultElement = findDefaultElement();
-      if (defaultElement != null && elementCoversType != null) {
-        results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
-        results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
-        return;
+    private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results,
+                                   boolean inclusiveTotalAndDefault) {
+      if (inclusiveTotalAndDefault) {
+        PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
+        PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
+        if (defaultElement != null && elementCoversType != null) {
+          results.add(createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          return;
+        }
+        if (defaultElement != null || elementCoversType != null) return;
       }
-      if (defaultElement != null || elementCoversType != null) return;
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<String> enumElements = new SmartList<>();
@@ -729,27 +732,6 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private PsiElement findDefaultElement() {
-      PsiCodeBlock body = myBlock.getBody();
-      if (body == null) return null;
-      for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiSwitchLabelStatementBase)) continue;
-        PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)statement;
-        if (switchLabel.isDefaultCase()) {
-          return switchLabel;
-        }
-        PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        for (PsiCaseLabelElement element : labelElementList.getElements()) {
-          if (element instanceof PsiDefaultCaseLabelElement) {
-            return element;
-          }
-        }
-      }
-      return null;
-    }
-
-    @Nullable
     private static PsiElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
       return ContainerUtil.find(labelElements, element ->
         element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
@@ -774,10 +756,11 @@ public class SwitchBlockHighlightingModel {
 
     /**
      * @param switchBlock
-     * @return {@link CompletenessResult#UNEVALUATED}, if switch contains total pattern or switch is incomplete and it produces a compilation error
+     * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-     * <p>{@link CompletenessResult#COMPLETE}, if switch is complete
+     * <p>{@link CompletenessResult#COMPLETE_WITH_TOTAL}, if switch is complete because a total pattern exists
+     * <p>{@link CompletenessResult#COMPLETE_WITHOUT_TOTAL}, if switch is complete and doesn't contain a total pattern
      */
     @NotNull
     public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
@@ -803,9 +786,9 @@ public class SwitchBlockHighlightingModel {
       boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
       boolean isEnumSelector = switchModel.getSwitchSelectorKind() == SelectorKind.ENUM;
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
-        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return UNEVALUATED;
+        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_TOTAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
-        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
+        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results, false);
       }
       else {
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
@@ -817,16 +800,16 @@ public class SwitchBlockHighlightingModel {
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE : UNEVALUATED;
-      return results.isEmpty() ? COMPLETE : INCOMPLETE;
+      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : UNEVALUATED;
+      return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : INCOMPLETE;
     }
 
     public enum CompletenessResult {
       UNEVALUATED,
       INCOMPLETE,
-      COMPLETE
+      COMPLETE_WITH_TOTAL,
+      COMPLETE_WITHOUT_TOTAL
     }
-
   }
 }
 

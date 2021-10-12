@@ -27,6 +27,7 @@ import training.learn.course.LearningModule
 import training.learn.course.LessonType
 import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
+import training.learn.lesson.general.assistance.LocalHistoryLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
@@ -98,6 +99,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
+        LocalHistoryLesson(),
         CodeFormatLesson(ls("CodeFormat.py.sample"), true),
         ParameterInfoLesson(ls("ParameterInfo.py.sample")),
         QuickPopupsLesson(ls("QuickPopups.py.sample")),

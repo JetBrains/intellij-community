@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.caches.resolve.JvmLibraryInfo
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
@@ -116,6 +117,19 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
             return KotlinSourceFilterScope.libraryClassFiles(
                 ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope(), project
             )
+        }
+
+        companion object {
+            fun createIfRequired(project: Project, moduleInfos: List<IdeaModuleInfo>): IdeaModuleInfo? =
+                if (moduleInfos.any { gradleApiPresentInModule(it) }) ForProject(project) else null
+
+            private fun gradleApiPresentInModule(moduleInfo: IdeaModuleInfo) =
+                moduleInfo is JvmLibraryInfo && moduleInfo.getLibraryRoots().any {
+                    // TODO: it's ugly ugly hack as Script (Gradle) SDK has to be provided in case of providing script dependencies.
+                    //  So far the indication of usages of  script dependencies by module is `gradleApi`
+                    //  Note: to be deleted with https://youtrack.jetbrains.com/issue/KTIJ-19276
+                    it.contains("gradle-api")
+                }
         }
     }
 }

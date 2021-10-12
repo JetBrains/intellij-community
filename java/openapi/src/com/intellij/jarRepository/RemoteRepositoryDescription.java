@@ -26,18 +26,18 @@ public final class RemoteRepositoryDescription {
     MAVEN_CENTRAL, JBOSS_COMMUNITY
   );
 
-  private final String myId;
-  private final String myName;
-  private final @NlsSafe String myUrl;
+  private final @NotNull String myId;
+  private final @NotNull String myName;
+  private final @NlsSafe @NotNull String myUrl;
   private final boolean myAllowSnapshots;
 
-  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NotNull String url) {
+  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NlsSafe @NotNull String url) {
     this(id, name, url, true);
   }
 
   public RemoteRepositoryDescription(@NotNull String id,
                                      @NotNull String name,
-                                     @NotNull String url,
+                                     @NlsSafe @NotNull String url,
                                      boolean allowSnapshots) {
     myId = id;
     myName = name;
@@ -45,15 +45,15 @@ public final class RemoteRepositoryDescription {
     myAllowSnapshots = allowSnapshots;
   }
 
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  public @NlsSafe String getUrl() {
+  public @NlsSafe @NotNull String getUrl() {
     return myUrl;
   }
 

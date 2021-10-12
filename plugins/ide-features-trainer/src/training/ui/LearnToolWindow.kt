@@ -80,7 +80,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
       val needToFindButton = restartAction() ?: return
       ApplicationManager.getApplication().executeOnPooledThread {
         val button = LearningUiUtil.findShowingComponentWithTimeout(
-          null, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
+          project, ActionButton::class.java, Timeout.timeout(500, TimeUnit.MILLISECONDS)
         ) { it.action == needToFindButton }
         invokeLater {
           gotIt.show(button, GotItTooltip.BOTTOM_MIDDLE)

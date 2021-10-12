@@ -14,12 +14,14 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ComposeDesktopApplicationProjectTemplate.withConfiguratorSettings
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeAndroidTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeWebModuleTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
 abstract class ProjectTemplate : DisplayableSettingItem {
@@ -86,6 +88,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             NodeJsApplicationProjectTemplate,
             ComposeDesktopApplicationProjectTemplate,
             ComposeMultiplatformApplicationProjectTemplate,
+            ComposeWebApplicationProjectTemplate
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
@@ -573,3 +576,40 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             +common
         }
 }
+
+object ComposeWebApplicationProjectTemplate : ProjectTemplate() {
+    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.web.title")
+    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.web.description")
+    override val id = "composeWebApplication"
+
+    @NonNls
+    override val suggestedProjectName = "myComposeWebApplication"
+    override val projectKind = ProjectKind.COMPOSE
+
+    override val setsPluginSettings: List<SettingWithValue<*, *>>
+        get() = listOf(
+            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
+            StructurePlugin.version withValue "1.0",
+        )
+
+
+    override val setsModules: List<Module>
+        get() = listOf(
+            Module(
+                "web",
+                MppModuleConfigurator,
+                template = null,
+                sourcesets = createDefaultSourcesets(),
+                subModules = listOf(
+                    Module(
+                        name = "js",
+                        JsComposeMppConfigurator,
+                        template = ComposeWebModuleTemplate,
+                        sourcesets = createDefaultSourcesets(),
+                        subModules = emptyList()
+                    )
+                )
+            )
+        )
+}
+

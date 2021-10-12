@@ -111,7 +111,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    myExpandableItemsHandler = createExpandableItemsHandler();
 
     setFillsViewportHeight(true);
 
@@ -187,6 +187,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         e.getType() == TableModelEvent.UPDATE) {
       UIUtil.repaintViewport(this);
     }
+  }
+
+  @NotNull
+  protected ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
+    return ExpandableItemsHandlerFactory.install(this);
   }
 
   public int getVisibleRowCount() {

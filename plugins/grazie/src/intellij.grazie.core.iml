@@ -46,17 +46,19 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library">
-      <library name="tanvd.grazi:grazi-language-detector:0.1.13" type="repository">
-        <properties include-transitive-deps="false" maven-id="tanvd.grazi:grazi-language-detector:0.1.13" />
+      <library name="ai.grazie:nlp-detector:0.0.2" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie:nlp-detector-jvm:0.0.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.13/grazi-language-detector-0.1.13.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp-detector-jvm/0.0.2/nlp-detector-jvm-0.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.13/grazi-language-detector-0.1.13-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp-detector-jvm/0.0.2/nlp-detector-jvm-0.0.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />

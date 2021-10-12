@@ -459,9 +459,11 @@ private object KotlinResolveDataProvider {
 
             val targetPlatform = moduleInfo.platform
 
-            callback?.let { trace.setCallback(it) }
-
             try {
+                trace.resetCallback()
+                callback?.let {
+                    trace.setCallback(it)
+                }
                 /*
                 Note that currently we *have* to re-create LazyTopDownAnalyzer with custom trace in order to disallow resolution of
                 bodies in top-level trace (trace from DI-container).

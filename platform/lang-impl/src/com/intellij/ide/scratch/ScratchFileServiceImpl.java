@@ -189,7 +189,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     RootType rootType = getRootType(file);
     if (rootType == null || rootType.isHidden()) return false;
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    return document != null && document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText());
+    return document != null && document.getTextLength() < 10240 && StringUtil.isEmptyOrSpaces(document.getText());
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {

@@ -1171,6 +1171,31 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON310);
   }
 
+  // PY-49990
+  public void testPatternMatchingVariableTypeDeclarationLooksLikeIncompleteMatchStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-49990
+  public void testPatternMatchingAnnotatedAssignmentLooksLikeIncompleteMatchStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-49990
+  public void testPatternMatchingRecoveryMatchWithColonParsedAsVariableTypeDeclaration() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-48940
+  public void testAssignmentExpressionsInSet() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-48940
+  public void testAssignmentExpressionsInIndexes() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

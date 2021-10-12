@@ -8,15 +8,11 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleImportIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.AndroidConfigIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.addWithJavaIntoJvmTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidSinglePlatformModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -27,9 +23,9 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
-import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptorWithPath
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
-import org.jetbrains.kotlin.tools.projectWizard.templates.asSrcOf
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+
 
 class ComposeAndroidTemplate : Template() {
     @NonNls
@@ -50,15 +46,24 @@ class ComposeAndroidTemplate : Template() {
     ) = irsList {
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
         +RepositoryIR(DefaultRepository.GOOGLE)
         +Dependencies.ACTIVITY_COMPOSE
     }
 
-    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
-        it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
+        val androidIR = irs.firstIsInstanceOrNull<AndroidConfigIR>()
+        if (androidIR != null) {
+            androidIR.androidSdkVersion = "30"
+        }
+        return irs.filterNot {
+            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+        }
     }
 
+
+    override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> = buildList {
+        +Dependencies.ACTIVITY_COMPOSE
+    }
 
     override fun Reader.updateModuleIR(module: ModuleIR): ModuleIR {
         val irs = module.irs.filterNot { ir ->
@@ -70,7 +75,7 @@ class ComposeAndroidTemplate : Template() {
     }
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> = compute {
-        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV).ensure()
+        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV, DefaultRepository.GOOGLE).ensure()
 
         //TODO hacky!
         TemplatesPlugin.fileTemplatesToRender.update { templates ->

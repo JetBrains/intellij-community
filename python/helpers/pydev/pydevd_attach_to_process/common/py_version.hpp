@@ -18,7 +18,8 @@ enum PythonVersion {
     PythonVersion_35 = 0x0305,
     PythonVersion_36 = 0x0306,
     PythonVersion_37 = 0x0307,
-    PythonVersion_38 = 0x0308
+    PythonVersion_38 = 0x0308,
+    PythonVersion_39 = 0x0309
 };
 
 
@@ -67,6 +68,7 @@ static PythonVersion GetPythonVersion(void *module) {
             case '6': return PythonVersion_36;
             case '7': return PythonVersion_37;
             case '8': return PythonVersion_38;
+            case '9': return PythonVersion_39;
             }
         }
     }
