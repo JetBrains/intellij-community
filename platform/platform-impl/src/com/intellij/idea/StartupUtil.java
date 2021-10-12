@@ -407,7 +407,7 @@ public final class StartupUtil {
 
     activity.end();
 
-    if (!PlatformUtils.isRider() || (PlatformUtils.isRider() && ConfigImportHelper.isConfigImported())) {
+    if (!PlatformUtils.isRider() || ConfigImportHelper.isConfigImported()) {
       PluginManagerCore.scheduleDescriptorLoading();
     }
   }
