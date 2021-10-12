@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,7 +37,10 @@ public final class FilesScanExecutor {
         ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress));
       }));
     }
-    runnable.run();
+    // avoid thread starvation due to recursive invocations
+    for (Future<?> result : results) {
+      ((FutureTask<?>)result).run();
+    }
     for (Future<?> result : results) {
       ProgressIndicatorUtils.awaitWithCheckCanceled(result);
     }
