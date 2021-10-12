@@ -86,12 +86,12 @@ class YAMLFormattingContext {
     getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
-  private static final TokenSet NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE =
+  private static final TokenSet NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE =
     TokenSet.create(TokenType.WHITE_SPACE, YAMLTokenTypes.SEQUENCE_MARKER);
 
   private static boolean isAfterKey(ASTNode node) {
     List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, TreeUtil::prevLeaf).skip(1)
-      .dropWhile(n -> NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE.contains(n.getElementType())).limit(2).toList();
+      .dropWhile(n -> NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(n.getElementType())).limit(2).toList();
     if (nodes.size() != 2) return false;
     return YAMLTokenTypes.COLON.equals(nodes.get(0).getElementType()) && YAMLTokenTypes.SCALAR_KEY.equals(nodes.get(1).getElementType());
   }
@@ -160,7 +160,7 @@ class YAMLFormattingContext {
   private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
     while (astNode != null) {
       if (astNode instanceof OuterLanguageElement) return true;
-      if (NON_SIGNIFICANT_TOKES_BEFORE_TEMPLATE.contains(astNode.getElementType())) {
+      if (NON_SIGNIFICANT_TOKENS_BEFORE_TEMPLATE.contains(astNode.getElementType())) {
         astNode = astNode.getTreeNext();
       }
       else {
