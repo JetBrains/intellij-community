@@ -763,6 +763,20 @@ fun <C : JLabel> C.bind(property: ObservableClearableProperty<@Label String>): C
   }
 }
 
+fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      isSelected = it
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(isSelected)
+    }
+  }
+}
+
 fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
   textField.bind(property)
 }

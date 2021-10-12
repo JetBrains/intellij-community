@@ -7,6 +7,9 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
+import com.intellij.ide.macro.MacrosDialog
+import com.intellij.ide.wizard.getCanonicalPath
+import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
@@ -17,22 +20,35 @@ import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicLazyProperty
+import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenWslUtil
+import java.awt.BorderLayout
 import javax.swing.JCheckBox
+import javax.swing.JPanel
 
 class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
@@ -54,18 +70,16 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> {
-    return SettingsFragmentsContainer.fragments {
-      add(CommonParameterFragments.createRunHeader())
-      addBeforeRunFragment(CompileStepBeforeRun.ID)
-      addAll(BeforeRunFragment.createGroup())
-      add(CommonTags.parallelRun())
-      val workingDirectoryFragment = addWorkingDirectoryFragment()
-      addCommandLineFragment(workingDirectoryFragment)
-      addMavenOptionsGroupFragment()
-      addJavaOptionsGroupFragment(workingDirectoryFragment)
-      add(LogsGroupFragment())
-    }
+  override fun createRunFragments() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
+    add(CommonParameterFragments.createRunHeader())
+    addBeforeRunFragment(CompileStepBeforeRun.ID)
+    addAll(BeforeRunFragment.createGroup())
+    add(CommonTags.parallelRun())
+    val workingDirectoryFragment = addWorkingDirectoryFragment()
+    addCommandLineFragment(workingDirectoryFragment)
+    addMavenOptionsGroupFragment()
+    addJavaOptionsGroupFragment(workingDirectoryFragment)
+    add(LogsGroupFragment())
   }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
@@ -82,9 +96,9 @@ class MavenRunConfigurationSettingsEditor(
           { it, c -> c.isSelected = it.isInheritedGeneralSettings },
           { it, c -> it.isInheritedGeneralSettings = c.isSelected }
         ) {
-          addDistributionFragment()
-          addUserSettingsFragment()
-          addLocalRepositoryFragment()
+          val distributionComponent = addDistributionFragment().component().component
+          val userSettingsComponent = addUserSettingsFragment().component().component
+          addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
           addThreadsFragment()
           addUsePluginRegistryTag()
           addPrintStacktracesTag()
@@ -387,7 +401,7 @@ class MavenRunConfigurationSettingsEditor(
   )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
-    addPathFragment(
+    addOverridablePathFragment(
       project,
       object : PathFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.label")
@@ -401,26 +415,132 @@ class MavenRunConfigurationSettingsEditor(
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { generalSettings.userSettingsFile },
-      { generalSettings.setUserSettingsFile(it) }
+      { generalSettings.setUserSettingsFile(it) },
+      {
+        val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
+        val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig)
+        getCanonicalPath(userSettings.path)
+      }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment() =
-    addPathFragment(
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment(
+    distributionComponent: DistributionComboBox,
+    userSettingsComponent: OverridablePathComponent
+  ) = addOverridablePathFragment(
+    project,
+    object : PathFragmentInfo {
+      override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.label")
+
+      override val settingsId: String = "maven.local.repository.fragment"
+      override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.name")
+      override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
+
+      override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.title")
+      override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
+    },
+    { generalSettings.localRepository },
+    { generalSettings.setLocalRepository(it) },
+    {
+      val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
+      val distributionInfo = distributionComponent.selectedDistribution
+      val distribution = distributionInfo?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3
+      val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsComponent.path, mavenConfig)
+      val userSettings = getCanonicalPath(userSettingsFile.path)
+      val localRepository = MavenWslUtil.getLocalRepo(project, "", distribution, userSettings, mavenConfig)
+      getCanonicalPath(localRepository.path)
+    }
+  ).applyToComponent {
+    distributionComponent.addItemListener {
+      component.updatePathState()
+    }
+    userSettingsComponent.addStateListener {
+      component.updatePathState()
+    }
+  }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addOverridablePathFragment(
+    project: Project,
+    info: PathFragmentInfo,
+    getPath: MavenRunConfiguration.() -> String,
+    setPath: MavenRunConfiguration.(String) -> Unit,
+    defaultPath: () -> String
+  ) = add(createLabeledSettingsEditorFragment(
+    OverridablePathComponent(project, info, defaultPath),
+    info,
+    { it, c -> c.path = it.getPath() },
+    { it, c -> it.setPath(c.path) }
+  ))
+
+  private class OverridablePathComponent(
+    project: Project,
+    info: PathFragmentInfo,
+    private val defaultPath: () -> String
+  ) : JPanel() {
+    private val textField = textFieldWithBrowseButton(project, info)
+    private val checkBox = JCheckBox(MavenConfigurableBundle.message("maven.run.configuration.override.checkbox"))
+
+    private val overrideProperty = AtomicBooleanProperty(false)
+    private val pathProperty = AtomicObservableProperty("")
+    private val overriddenPathProperty = AtomicLazyProperty(defaultPath)
+
+    private var isOverride by overrideProperty
+    private var overriddenPath by overriddenPathProperty
+    var path: String
+      get() = if (isOverride) overriddenPath else ""
+      set(path) {
+        isOverride = path.isNotEmpty()
+        updateOverriddenPathState(path)
+        updatePathState()
+      }
+
+    init {
+      layout = BorderLayout()
+      add(textField, BorderLayout.CENTER)
+      add(checkBox, BorderLayout.EAST)
+      checkBox.bind(overrideProperty)
+      textField.bind(pathProperty.transform(::getPresentablePath, ::getCanonicalPath))
+      pathProperty.afterChange { updateOverriddenPathState(it) }
+      overrideProperty.afterChange { updatePathState() }
+      addStateListener { updateEnableState() }
+      checkBox.addPropertyChangeListener("enabled") { updateEnableState() }
+    }
+
+    fun addStateListener(listener: () -> Unit) {
+      pathProperty.afterChange { listener() }
+      overrideProperty.afterChange { listener() }
+    }
+
+    fun updatePathState() {
+      pathProperty.set(if (isOverride) overriddenPath else defaultPath())
+    }
+
+    private fun updateOverriddenPathState(path: String) {
+      if (isOverride) {
+        overriddenPath = path
+      }
+    }
+
+    private fun updateEnableState() {
+      textField.isEnabled = checkBox.isEnabled && isOverride
+    }
+
+    fun textFieldWithBrowseButton(
+      project: Project,
+      info: FileChooserInfo,
+    ) = textFieldWithBrowseButton(
       project,
-      object : PathFragmentInfo {
-        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.label")
-
-        override val settingsId: String = "maven.local.repository.fragment"
-        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.name")
-        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
-
-        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.title")
-        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
+      info.fileChooserTitle,
+      info.fileChooserDescription,
+      ExtendableTextField(10).apply {
+        val fileChooserMacroFilter = info.fileChooserMacroFilter
+        if (fileChooserMacroFilter != null) {
+          MacrosDialog.addMacroSupport(this, fileChooserMacroFilter) { false }
+        }
       },
-      { generalSettings.localRepository },
-      { generalSettings.setLocalRepository(it) }
-    )
+      info.fileChooserDescriptor
+    ) { getPresentablePath(it.path) }
+  }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() = add(
     createLabeledTextSettingsEditorFragment(
