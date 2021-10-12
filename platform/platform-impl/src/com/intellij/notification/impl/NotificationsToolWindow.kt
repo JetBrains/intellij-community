@@ -19,6 +19,9 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.NullableComponent
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.ex.MultiLineLabel
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -100,8 +103,6 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     val panel = JBPanelWithEmptyText(BorderLayout())
     panel.background = NotificationComponent.BG_COLOR
 
-    panel.emptyText.appendLine(AllIcons.Ide.Notification.NoEvents, "", SimpleTextAttributes.REGULAR_ATTRIBUTES, null)
-    panel.emptyText.appendLine("")
     panel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.first.line"))
     @Suppress("DialogTitleCapitalization")
     panel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
@@ -217,7 +218,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val myTitle = JBLabel(
     IdeBundle.message(if (mySuggestionType) "notifications.toolwindow.suggestions" else "notifications.toolwindow.timeline"))
 
-  private val myList = JPanel(VerticalLayout(JBUI.scale(8)))
+  private val myList = JPanel(VerticalLayout(JBUI.scale(18)))
   private val myScrollPane = object : JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
     override fun setupCorners() {
@@ -250,14 +251,14 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
     val mainPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     mainPanel.isOpaque = false
-    mainPanel.border = JBUI.Borders.empty(8, 8, 8, 0)
+    mainPanel.border = JBUI.Borders.empty(8, 8, 0, 0)
     add(mainPanel)
 
     myTitle.font = JBFont.medium()
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      mySuggestionGotItPanel.background = JBColor(0xE7EEF6, 0xE7EEF6)
+      mySuggestionGotItPanel.background = JBColor(0xE6EEF7, 0xE6EEF7)
       mySuggestionGotItPanel.isVisible = false
       mySuggestionGotItPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
       add(mySuggestionGotItPanel, BorderLayout.NORTH)
@@ -350,7 +351,8 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     val component = NotificationComponent(notification, myTimeComponents)
     component.setNew(true)
 
-    myList.add(component)
+    myList.add(component, 0)
+    updateLayout()
     myEventHandler.add(component)
 
     if (mySuggestionType && !PropertiesComponent.getInstance().getBoolean("notification.suggestion.dont.show.gotit")) {
@@ -360,6 +362,16 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     updateContent()
+  }
+
+  private fun updateLayout() {
+    val layout = myList.layout
+    val count = myList.componentCount
+    for (i in 0 until count) {
+      val component = myList.getComponent(i)
+      layout.removeLayoutComponent(component)
+      layout.addLayoutComponent(null, component)
+    }
   }
 
   fun remove(notification: Notification) {
@@ -458,12 +470,13 @@ private class NotificationComponent(val notification: Notification, timeComponen
   private var myIsNew = false
   private var myHoverState = false
   private val myMoreButton: Component?
+  private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
 
   init {
     isOpaque = true
     background = BG_COLOR
-    border = JBUI.Borders.empty(5, 10, 5, 0)
+    border = JBUI.Borders.empty(10, 10, 10, 0)
 
     val iconPanel = JPanel(BorderLayout())
     iconPanel.isOpaque = false
@@ -473,9 +486,21 @@ private class NotificationComponent(val notification: Notification, timeComponen
     val centerPanel = JPanel(VerticalLayout(JBUI.scale(8)))
     centerPanel.isOpaque = false
 
+    var titlePanel: JPanel? = null
+
     if (notification.hasTitle()) {
       val titleContent = NotificationsUtil.buildHtml(notification, "white-space:nowrap;", false, null, null)
-      centerPanel.add(JBLabel(titleContent))
+      val title = JBLabel(titleContent)
+
+      if (notification.isSuggestionType) {
+        centerPanel.add(title)
+      }
+      else {
+        titlePanel = JPanel(BorderLayout())
+        titlePanel.isOpaque = false
+        titlePanel.add(title, BorderLayout.WEST)
+        centerPanel.add(titlePanel)
+      }
     }
 
     if (notification.hasContent()) {
@@ -544,7 +569,19 @@ private class NotificationComponent(val notification: Notification, timeComponen
       presentation.icon = AllIcons.Actions.More
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
 
-      val button = ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+      val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
+          myMorePopupVisible = true
+          val popup = super.createAndShowActionGroupPopup(actionGroup, event)
+          popup.addListener(object : JBPopupListener {
+            override fun onClosed(event: LightweightWindowEvent) {
+              myMorePopupVisible = false
+              isVisible = myHoverState
+            }
+          })
+          return popup
+        }
+      }
       button.border = JBUI.Borders.emptyRight(5)
       button.isVisible = false
       myMoreButton = button
@@ -555,11 +592,11 @@ private class NotificationComponent(val notification: Notification, timeComponen
       timeComponent.putClientProperty(TIME_KEY, notification.timestamp)
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
-      timeComponent.font = JBFont.medium()
+      timeComponent.font = JBFont.small()
       timeComponent.foreground = INFO_COLOR
 
       timeComponents.add(timeComponent)
-      panel.add(timeComponent, BorderLayout.NORTH)
+      titlePanel!!.add(timeComponent, BorderLayout.EAST)
 
       myMoreButton = null
     }
@@ -617,7 +654,11 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
   fun setHover(state: Boolean) {
     myHoverState = state
-    myMoreButton?.isVisible = state
+    if (myMoreButton != null) {
+      if (!myMorePopupVisible) {
+        myMoreButton.isVisible = state
+      }
+    }
     updateColor()
   }
 

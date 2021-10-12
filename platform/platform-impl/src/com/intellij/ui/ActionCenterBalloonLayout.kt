@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -203,6 +204,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
         override fun getTextColor(): Color = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
       }
       titleLabel.setPaintUnderline(false)
+      titleLabel.font = JBFont.medium()
       titleLabel.horizontalAlignment = SwingConstants.CENTER
       titleLabel.border = JBUI.Borders.empty(10, 0, 4, 0)
       titleLabel.icon = null

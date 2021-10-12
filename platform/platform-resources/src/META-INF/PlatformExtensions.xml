@@ -806,7 +806,7 @@
                 factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
 
     <toolWindow id="Notifications" anchor="right" secondary="true"
-                icon="AllIcons.Toolwindows.NoEvents"
+                icon="AllIcons.Toolwindows.Notifications"
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
