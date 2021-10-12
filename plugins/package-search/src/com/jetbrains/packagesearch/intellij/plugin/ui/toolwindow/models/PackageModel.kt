@@ -4,7 +4,6 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import org.apache.commons.lang3.StringUtils
 
 internal sealed class PackageModel(
@@ -70,13 +69,13 @@ internal sealed class PackageModel(
         fun copyWithUsages(usages: List<DependencyUsageInfo>) =
             Installed(groupId, artifactId, remoteInfo, usages)
 
-        fun getLatestInstalledVersion(): PackageVersion = PackageVersionUtils.highestSensibleVersionByNameOrNull(
+        fun getLatestInstalledVersion(): PackageVersion =
             usageInfo.asSequence()
                 .map { it.version }
-                .toList()
-        )
-            ?: usageInfo.maxByOrNull { it.version }?.version
-            ?: error("An installed package must always have at least one usage")
+                .filterIsInstance<PackageVersion.Named>()
+                .map { NormalizedPackageVersion.parseFrom(it) }
+                .maxOrNull()?.originalVersion
+                ?: error("An installed package must always have at least one usage")
 
         override val searchableInfo =
             buildString {
