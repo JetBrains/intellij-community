@@ -603,6 +603,9 @@
           <group id="UIToggleActions">
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
+            <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
+            <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
             <group id="ViewToolbarActionsGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup">
               <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
             </group>
@@ -611,15 +614,6 @@
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
-        </group>
-
-        <group id="ViewToolbarNewGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarNewActionGroup" popup="true">
-          <add-to-group group-id="UIToggleActions" relative-to-action="ViewToolButtons" anchor="before"/>
-          <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
-          <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
-          <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
-          <separator/>
-          <action id="CustomizeToolbarAction" class="com.intellij.ide.actions.CustomizeToolbarAction"/>
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
