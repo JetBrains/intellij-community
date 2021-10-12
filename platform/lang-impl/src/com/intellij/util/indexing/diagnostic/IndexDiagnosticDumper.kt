@@ -52,7 +52,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
       get() =
-        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 50)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
