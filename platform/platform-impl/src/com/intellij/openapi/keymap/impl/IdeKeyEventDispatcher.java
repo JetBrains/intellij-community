@@ -619,9 +619,7 @@ public final class IdeKeyEventDispatcher {
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
     for (AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
-
       Presentation presentation = session.presentation(action);
-
       if (dumb && !action.isDumbAware()) {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
           wouldBeEnabledIfNotDumb.add(action);
@@ -629,11 +627,11 @@ public final class IdeKeyEventDispatcher {
         logTimeMillis(startedAt, action);
         continue;
       }
-      if (!presentation.isEnabled()) {
+      AnActionEvent event = events.apply(presentation);
+      if (event == null || !presentation.isEnabled()) {
         logTimeMillis(startedAt, action);
         continue;
       }
-      AnActionEvent event = Objects.requireNonNull(events.apply(presentation));
       return Trinity.create(action, event, startedAt);
     }
     return null;
