@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -379,6 +380,7 @@ internal object IDELightClassContexts {
             useInstance(GlobalSearchScope.EMPTY_SCOPE)
             useInstance(LookupTracker.DO_NOTHING)
             useInstance(ExpectActualTracker.DoNothing)
+            useInstance(InlineConstTracker.DoNothing)
             useImpl<FileScopeProviderImpl>()
             useInstance(FileBasedDeclarationProviderFactory(sm, files))
 
