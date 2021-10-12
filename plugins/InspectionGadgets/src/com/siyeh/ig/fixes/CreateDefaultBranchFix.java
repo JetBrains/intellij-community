@@ -70,22 +70,22 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     generateStatements(switchBlock, isRuleBasedFormat).stream()
       .map(text -> factory.createStatementFromText(text, parent))
       .forEach(statement -> parent.addBefore(statement, anchor));
-    adjustEditor(switchBlock);
+    PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
+    adjustEditor(switchBlock, lastStatement);
   }
 
-  private static void adjustEditor(@NotNull PsiSwitchBlock block) {
+  public static void adjustEditor(@NotNull PsiSwitchBlock block, @Nullable PsiStatement statementToAdjust) {
     if (!block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
     Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
     if (editor == null) return;
-    PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
-    if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {
-      lastStatement = ((PsiSwitchLabeledRuleStatement)lastStatement).getBody();
+    if (statementToAdjust instanceof PsiSwitchLabeledRuleStatement) {
+      statementToAdjust = ((PsiSwitchLabeledRuleStatement)statementToAdjust).getBody();
     }
-    if (lastStatement != null) {
+    if (statementToAdjust != null) {
       TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-      builder.replaceElement(lastStatement, new ConstantNode(lastStatement.getText()));
+      builder.replaceElement(statementToAdjust, new ConstantNode(statementToAdjust.getText()));
       builder.run(editor, true);
     }
   }

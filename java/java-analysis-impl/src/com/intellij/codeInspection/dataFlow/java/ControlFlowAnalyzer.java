@@ -932,25 +932,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processSwitch(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
-    DfaVariableValue expressionValue = null;
+    DfaValue initialSelectorValue = null;
+    DfaVariableValue selectorValue = null;
     boolean syntheticVar = true;
     if (selector != null) {
       PsiType targetType = selector.getType();
+      initialSelectorValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, selector);
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(targetType);
       if (unboxedType != null) {
         targetType = unboxedType;
-      } else {
-        DfaValue selectorValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, selector);
-        if (selectorValue instanceof DfaVariableValue && !((DfaVariableValue)selectorValue).isFlushableByCalls()) {
-          expressionValue = (DfaVariableValue)selectorValue;
+      }
+      else {
+        if (initialSelectorValue instanceof DfaVariableValue && !((DfaVariableValue)initialSelectorValue).isFlushableByCalls()) {
+          selectorValue = (DfaVariableValue)initialSelectorValue;
           syntheticVar = false;
         }
       }
       selector.accept(this);
       generateBoxingUnboxingInstructionFor(selector, targetType);
       if (syntheticVar) {
-        expressionValue = createTempVariable(targetType);
-        addInstruction(new SimpleAssignmentInstruction(null, expressionValue));
+        selectorValue = createTempVariable(targetType);
+        addInstruction(new SimpleAssignmentInstruction(null, selectorValue));
       }
       addInstruction(new PopInstruction());
     }
@@ -982,9 +984,30 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 PsiExpression expr = ((PsiExpression)labelElement);
                 boolean enumConstant = expr instanceof PsiReferenceExpression &&
                                        ((PsiReferenceExpression)expr).resolve() instanceof PsiEnumConstant;
-                if (expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(expr) ||
-                                                TypeConversionUtil.isNullType(expr.getType()))) {
-                  addInstruction(new JvmPushInstruction(expressionValue, null));
+                if (selectorValue != null && (enumConstant || PsiUtil.isConstantExpression(expr))) {
+                  ConditionalGotoInstruction condGotoInstruction = null;
+                  GotoInstruction gotoInstruction = null;
+                  if (syntheticVar && initialSelectorValue != null) {
+                    addInstruction(new JvmPushInstruction(initialSelectorValue, null));
+                    addInstruction(new PushValueInstruction(DfTypes.NULL));
+                    addInstruction(new BooleanBinaryInstruction(RelationType.NE, true, null));
+                    condGotoInstruction = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
+                    addInstruction(condGotoInstruction);
+                    addInstruction(new JvmPushInstruction(initialSelectorValue, null));
+                    gotoInstruction = new GotoInstruction(offset);
+                    addInstruction(gotoInstruction);
+                  }
+                  JvmPushInstruction pushOp = new JvmPushInstruction(selectorValue, null);
+                  addInstruction(pushOp);
+                  if (condGotoInstruction != null) {
+                    condGotoInstruction.setOffset(pushOp.getIndex());
+                    gotoInstruction.setOffset(pushOp.getIndex() + 1);
+                  }
+                  expr.accept(this);
+                  addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                }
+                else if (initialSelectorValue != null && TypeConversionUtil.isNullType(((PsiExpression)labelElement).getType())) {
+                  addInstruction(new JvmPushInstruction(initialSelectorValue, null));
                   expr.accept(this);
                   addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
                 }
@@ -1014,8 +1037,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    if (syntheticVar && expressionValue != null) {
-      addInstruction(new FlushVariableInstruction(expressionValue));
+    if (syntheticVar && selectorValue != null) {
+      addInstruction(new FlushVariableInstruction(selectorValue));
     }
   }
 
