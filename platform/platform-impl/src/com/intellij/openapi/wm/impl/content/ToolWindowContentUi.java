@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
@@ -399,6 +400,14 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           }
         }
         ui.window.fireActivated(ToolWindowEventSource.ToolWindowHeader);
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+          ToolWindowManagerEx manager = ui.window.getToolWindowManager();
+          manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
+        }
       }
 
       @Override
