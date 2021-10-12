@@ -458,10 +458,14 @@ final class DistributionJARsBuilder {
       Path moduleOutDir = Path.of(buildContext.getModuleOutputPath(buildContext.findRequiredModule("intellij.platform.core")))
       Path patchedClassFileRoot = buildContext.paths.tempDir.resolve("appInfoData")
       Path classRelativeFile = Path.of("com/intellij/openapi/application/ApplicationNamesInfo.class")
+      /* Android Studio: do not patch ApplicationNamesInfo yet
       BuildHelper.getInstance(buildContext).setAppInfo.invokeWithArguments(
+      */ BuildHelper.copyFile(
         moduleOutDir.resolve(classRelativeFile),
         patchedClassFileRoot.resolve(classRelativeFile),
+        /* Android Studio: do not patch ApplicationNamesInfo yet
         patchedApplicationInfo
+        */
       )
       layoutBuilder.patchModuleOutput("intellij.platform.core", patchedClassFileRoot)
     }
