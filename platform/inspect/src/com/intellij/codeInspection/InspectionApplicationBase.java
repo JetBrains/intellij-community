@@ -829,7 +829,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
+      reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
     }
     return inspectionProfile;
   }
@@ -839,14 +839,14 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded shared project profile '" + profileName + "'");
+      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
     }
     else {
       //check if ide profile is used for project
       for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
-          reportMessage(1, "Loaded local profile '" + profileName + "'");
+          reportMessage(1, "Loaded the '" + profileName + "' local profile");
           break;
         }
       }
