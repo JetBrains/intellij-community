@@ -115,12 +115,21 @@ private class ModuleTemplateComponent(
     uiEditorUsagesStats: UiEditorUsageStats,
     onTemplateChanged: () -> Unit
 ) : TitledComponent(context) {
+
+    private val templatesFilter: (Template) -> Boolean = { template: Template -> read { template.isApplicableTo(this, module) } }
+
+    init {
+        if (module.template == null) {
+            module.template = templates.first(templatesFilter)
+        }
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     private val dropDown = DropDownComponent(
         context,
         initialValues = templates,
-        initiallySelectedValue = module.template ?: NoneTemplate,
-        filter = { template: Template -> read { template.isApplicableTo(this, module) } },
+        initiallySelectedValue = module.template,
+        filter = templatesFilter,
         labelText = null,
     ) { value, isByUser ->
         if (isByUser) {
