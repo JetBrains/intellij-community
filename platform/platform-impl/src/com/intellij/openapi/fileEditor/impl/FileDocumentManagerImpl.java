@@ -4,15 +4,13 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -697,51 +695,53 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
 
-    VirtualFile file = getFile(document);
-    assert file != null;
-    if (!file.isValid()) return;
+      VirtualFile file = getFile(document);
+      assert file != null;
+      if (!file.isValid()) return;
 
-    if (!fireBeforeFileContentReload(file, document)) {
-      return;
-    }
+      if (!fireBeforeFileContentReload(file, document)) {
+        return;
+      }
 
-    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    boolean[] isReloadable = {isReloadable(file, document, project)};
-    if (isReloadable[0]) {
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-        new ExternalChangeAction.ExternalDocumentChange(document, project) {
-          @Override
-          public void run() {
-            if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.clearCharsetAutoDetectionReason(file);
-              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              file.setCharset(null, null, false);
-              boolean wasWritable = document.isWritable();
-              document.setReadOnly(false);
-              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-              isReloadable[0] = isReloadable(file, document, project);
-              if (isReloadable[0]) {
-                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                setDocumentTooLarge(document, tooLarge);
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+      boolean[] isReloadable = {isReloadable(file, document, project)};
+      if (isReloadable[0]) {
+        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+          new ExternalChangeAction.ExternalDocumentChange(document, project) {
+            @Override
+            public void run() {
+              if (!isBinaryWithoutDecompiler(file)) {
+                LoadTextUtil.clearCharsetAutoDetectionReason(file);
+                file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+                file.setCharset(null, null, false);
+                boolean wasWritable = document.isWritable();
+                document.setReadOnly(false);
+                boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+                isReloadable[0] = isReloadable(file, document, project);
+                if (isReloadable[0]) {
+                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
+                  ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+                  setDocumentTooLarge(document, tooLarge);
+                }
+                document.setReadOnly(!wasWritable);
               }
-              document.setReadOnly(!wasWritable);
             }
           }
-        }
-      ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+        ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+      }
+      if (isReloadable[0]) {
+        myMultiCaster.fileContentReloaded(file, document);
+      }
+      else {
+        unbindFileFromDocument(file, document);
+        myMultiCaster.fileWithNoDocumentChanged(file);
+        myMultiCaster.afterDocumentUnbound(file, document);
+      }
+      myUnsavedDocuments.remove(document);
     }
-    if (isReloadable[0]) {
-      myMultiCaster.fileContentReloaded(file, document);
-    }
-    else {
-      unbindFileFromDocument(file, document);
-      myMultiCaster.fileWithNoDocumentChanged(file);
-      myMultiCaster.afterDocumentUnbound(file, document);
-    }
-    myUnsavedDocuments.remove(document);
   }
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
