@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.navigation;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.navigation.CtrlMouseHandler;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ui.UIUtil;
@@ -20,7 +22,7 @@ import java.util.stream.Stream;
 
 public class CtrlMouseHandlerTest extends AbstractEditorTest {
   public void testHighlighterDisappearsOnMouseMovingAway() {
-    init("class A {}", TestFileType.JAVA);
+    init("class A {}", JavaFileType.INSTANCE);
     EditorMouseFixture mouse = mouse();
     mouse.ctrl().moveTo(0, 6);
     assertHighlighted(6, 7);
@@ -51,6 +53,9 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
   }
 
   private void waitForHighlighting() {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
+
     CtrlMouseHandler handler = getProject().getService(CtrlMouseHandler.class);
     TestTimeOut t = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     while (handler.isCalculationInProgress()) {

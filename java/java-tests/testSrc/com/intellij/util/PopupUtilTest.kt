@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.TestFileType
 import org.junit.Test
 import java.awt.Dimension
 import java.awt.Point
@@ -15,13 +15,13 @@ import java.awt.Point
 class PopupUtilTest : AbstractEditorTest() {
 
   @Test
-  fun `test popups positions inside editor`() {
+  fun testPopupPositionsInsideEditor() {
     init("""
       import org.junit.Test
       class TestCase {
         @Test fun tes<caret>t() {}
       }
-    """.trimIndent(), TestFileType.TEXT)
+    """.trimIndent(), JavaFileType.INSTANCE)
     val editor = editor as EditorEx
     editor.scrollPane.viewport.apply {
       viewPosition = Point(0, 0)

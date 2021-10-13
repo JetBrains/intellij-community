@@ -20,11 +20,12 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,18 +78,24 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   protected void initText(@NotNull @NonNls String fileText) {
-    init(fileText, TestFileType.TEXT);
+    init(fileText, PlainTextFileType.INSTANCE);
   }
   
-  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) {
-    configureFromFileText(getFileName(type), fileText);
+  protected void init(@NotNull @NonNls String fileText, @NotNull FileType type) {
+    String name = getFileName(type);
+    assertFileTypeResolved(type, name);
+    configureFromFileText(name, fileText);
   }
 
-  private String getFileName(TestFileType type) {
-    String name = getTestName(false) + type.getExtension();
+  private String getFileName(@NotNull FileType type) {
+    return getTestName(false) + "."+type.getDefaultExtension();
+  }
+
+  protected static void assertFileTypeResolved(@NotNull FileType type, @NotNull String path) {
+    String name = PathUtil.getFileName(path);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
-    assertEquals(type + " file type must be in this test classpath", "."+fileType.getDefaultExtension(), type.getExtension());
-    return name;
+    assertEquals(type + " file type must be in this test classpath, but only " + fileType + " was found by '" +
+                 name + "' file name (with default extension '" + fileType.getDefaultExtension() + "')", type, fileType);
   }
 
   protected FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {

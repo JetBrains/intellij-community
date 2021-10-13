@@ -1,20 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.editor.impl.softwrap.mapping;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -844,7 +844,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "    }\n" +
       "\n" +
       "}";
-    init(511, text, TestFileType.JAVA, 10);
+    init(511, text, JavaFileType.INSTANCE, 10);
     
     addCollapsedFoldRegion(text.indexOf("new Runnable"), text.indexOf("System"), "Runnable() { ");
     
@@ -975,7 +975,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testOnlyMinimalRangeIsRecalculatedOnDocumentChange() {
-    init("aa bb cc dd ee ff<caret> gg hh ii jj", TestFileType.TEXT);
+    init("aa bb cc dd ee ff<caret> gg hh ii jj", PlainTextFileType.INSTANCE);
     EditorTestUtil.configureSoftWraps(getEditor(), 8);
     verifySoftWrapPositions(8, 15, 21);
     
@@ -1056,7 +1056,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
 
   private void init(final int visibleWidthInColumns, @NotNull String fileText, boolean useCustomSoftWrapIndent) {
-    init(visibleWidthInColumns * DEFAULT_SYMBOL_WIDTH_PX, fileText, TestFileType.TEXT, DEFAULT_SYMBOL_WIDTH_PX, useCustomSoftWrapIndent);
+    init(visibleWidthInColumns * DEFAULT_SYMBOL_WIDTH_PX, fileText, PlainTextFileType.INSTANCE, DEFAULT_SYMBOL_WIDTH_PX, useCustomSoftWrapIndent);
   }
 
   private void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) {
@@ -1064,14 +1064,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
   
   private void init(final int visibleWidth, @NotNull String fileText, int symbolWidth) {
-    init(visibleWidth, fileText, TestFileType.TEXT, symbolWidth);
+    init(visibleWidth, fileText, PlainTextFileType.INSTANCE, symbolWidth);
   }
 
-  private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType, final int symbolWidth) {
+  private void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth) {
     init(visibleWidth, fileText, fileType, symbolWidth, true);
   }
 
-  private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType, final int symbolWidth, boolean useCustomSoftWrapIndent) {
+  private void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth, boolean useCustomSoftWrapIndent) {
     init(fileText, fileType);
     EditorTestUtil.configureSoftWraps(getEditor(), visibleWidth, 1000, symbolWidth, useCustomSoftWrapIndent);
   }
