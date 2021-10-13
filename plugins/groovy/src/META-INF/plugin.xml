@@ -135,7 +135,6 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.autoClone.AutoCloneTransformationSupport"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport"/>
@@ -155,6 +154,10 @@
     <astTransformationSupport id="recordSupport"
                               order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.RecordTransformationSupport"/>
+    <astTransformationSupport id="constructors"
+                              order="after recordSupport"
+                              implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
+
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
     <astTransformationSupport order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>

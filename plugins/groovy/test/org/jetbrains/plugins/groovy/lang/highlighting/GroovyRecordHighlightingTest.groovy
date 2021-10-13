@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrPOJOInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 
@@ -25,5 +26,21 @@ class A {}
   void 'test record definition'() {
     highlightingTest '''
 record R(int a) {}'''
+  }
+
+  void 'test record field'() {
+    highlightingTest '''
+record R(int a) {}
+def x = new R(10)
+x.a()
+'''
+  }
+
+  void 'test final record field'() {
+    highlightingTest '''
+record R(int a) {}
+def x = new R(10)
+<warning>x.a</warning> = 20
+''', GrFinalVariableAccessInspection
   }
 }

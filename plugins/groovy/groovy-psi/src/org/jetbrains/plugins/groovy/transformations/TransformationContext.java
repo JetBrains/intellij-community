@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
@@ -113,6 +114,8 @@ public interface TransformationContext {
   void addInterface(@NotNull PsiClassType type);
 
   void addModifier(@NotNull GrModifierList modifierList, @GrModifierConstant @NotNull String modifier);
+
+  void addAnnotation(@NotNull GrAnnotation annotation);
 
   @NotNull
   MemberBuilder getMemberBuilder();

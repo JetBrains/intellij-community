@@ -3,12 +3,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
 /**
  * According to Groovy compiler, no record transformation is done when there is no property handler.
  */
-fun isRecordTransformationApplied(typedef : GrTypeDefinition) : Boolean {
-  return typedef.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_RECORD_BASE) &&
-         typedef.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS)
+fun isRecordTransformationApplied(context: TransformationContext): Boolean {
+  return context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_RECORD_BASE) != null &&
+         context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS) != null
 }

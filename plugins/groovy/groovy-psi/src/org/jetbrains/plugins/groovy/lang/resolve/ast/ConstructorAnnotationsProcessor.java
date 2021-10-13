@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -38,10 +38,10 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     PsiModifierList modifierList = typeDefinition.getModifierList();
     if (modifierList == null) return;
 
-    final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    final PsiAnnotation mapConstructorAnno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
+    final PsiAnnotation tupleConstructor = context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    final PsiAnnotation mapConstructorAnno = context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
     final boolean immutable = GrImmutableUtils.hasImmutableAnnotation(typeDefinition);
-    final boolean canonical = modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL);
+    final boolean canonical = context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL) != null;
     if (!immutable && !canonical && tupleConstructor == null && mapConstructorAnno == null) {
       return;
     }

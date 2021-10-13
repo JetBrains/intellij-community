@@ -21,7 +21,7 @@ public class DefaultTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    if (GrRecordUtils.isRecordTransformationApplied(context.getCodeClass())) {
+    if (GrRecordUtils.isRecordTransformationApplied(context)) {
       // record's properties have their own names, so default property syntax is inapplicable
       return;
     }
