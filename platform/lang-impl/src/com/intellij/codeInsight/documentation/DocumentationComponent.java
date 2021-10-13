@@ -113,10 +113,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private AbstractPopup myHint;
 
-  @NotNull
-  public static DocumentationComponent createAndFetch(@NotNull Project project,
-                                                      @NotNull PsiElement element,
-                                                      @NotNull Disposable disposable) {
+  public static @NotNull JComponent createAndFetch(
+    @NotNull Project project,
+    @NotNull PsiElement element,
+    @NotNull Disposable disposable
+  ) {
     DocumentationManager manager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(manager);
     Disposer.register(disposable, component);
