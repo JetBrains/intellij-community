@@ -47,7 +47,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
             is UiPackageModel.SearchResult -> viewModel.selectedVersion.displayName
         }
 
-        val hasVersionsToChooseFrom = viewModel.packageModel.getAvailableVersions(onlyStable).isNotEmpty()
+        val hasVersionsToChooseFrom = viewModel.sortedVersions.isNotEmpty()
         val labelComponent = if (hasVersionsToChooseFrom) {
             JBComboBoxLabel().apply {
                 icon = AllIcons.General.LinkDropTriangle

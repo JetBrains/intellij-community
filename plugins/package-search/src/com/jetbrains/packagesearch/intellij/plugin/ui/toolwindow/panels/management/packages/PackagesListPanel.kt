@@ -256,7 +256,7 @@ internal class PackagesListPanel(
             val filteredInstalledPackagesUiModels = filteredInstalledPackages
                 .let { list -> if (onlyMultiplatform) list.filter { it.isKotlinMultiplatform } else list }
                 .map { it.toUiPackageModel(targetModules, project, knownRepositoriesInTargetModules, onlyStable) }
-                .filter { it.packageModel.searchableInfo.contains(searchQuery) }
+                .filter { it.sortedVersions.isNotEmpty() && it.packageModel.searchableInfo.contains(searchQuery) }
 
             val searchResultModels = computeSearchResultModels(
                 apiSearchResults,
