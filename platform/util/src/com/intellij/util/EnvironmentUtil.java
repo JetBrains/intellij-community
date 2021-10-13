@@ -44,8 +44,6 @@ public final class EnvironmentUtil {
 
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
 
-  static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
-
   public static final String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";

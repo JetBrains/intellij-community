@@ -15,25 +15,27 @@ import java.util.Map;
 @ApiStatus.Experimental
 public class EnvironmentRestorer {
 
+  static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
+
   /**
    * For each variable from {@code envs} which name matches
-   * the template "{@link EnvironmentUtil#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}"
+   * the template "{@link EnvironmentRestorer#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}"
    * the next actions will be done:
    * <ul>
    *   <li>
-   *     if the value of the variable "{@link EnvironmentUtil#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}" is not empty,
+   *     if the value of the variable "{@link EnvironmentRestorer#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}" is not empty,
    *     then the value of the variable {@code <VAR_NAME>} in {@code envs} will be set
-   *     to the value of the variable "{@link EnvironmentUtil#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}",
+   *     to the value of the variable "{@link EnvironmentRestorer#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}",
    *     otherwise the variable "{@code <VAR_NAME>}" will be removed from {@code envs}
    *   </li>
    *   <li>
-   *     the variable "{@link EnvironmentUtil#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}"
+   *     the variable "{@link EnvironmentRestorer#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}"
    *     will be removed from the {@code envs}
    *   </li>
    * </ul>
    * This method can be useful, when the current IDE process was run with some overridden environment variables
    * and the original values of these variables were stored in corresponding created extra variables named
-   * with "{@link EnvironmentUtil#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}",
+   * with "{@link EnvironmentRestorer#RESERVED_ORIGINAL_VARIABLE_PREFIX}+{@code <VAR_NAME>}",
    * but you need to run a new child process with original variables values,
    * because overridden variables values shouldn't be passed to child process environment.
    * So this method will restore the original variables values and remove all extra ones.
@@ -45,18 +47,18 @@ public class EnvironmentRestorer {
    */
   public static void restoreOverriddenVars(@NotNull Map<String, String> envs) {
     List<Pair<String, String>> reserved = ContainerUtil.mapNotNull(envs.entrySet(), entry -> {
-      if (entry.getKey().startsWith(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX)) {
+      if (entry.getKey().startsWith(RESERVED_ORIGINAL_VARIABLE_PREFIX)) {
         return new Pair<>(entry.getKey(), entry.getValue());
       }
       return null;
     });
 
     for (Pair<String, String> pair : reserved) {
-      String originalName = pair.first.substring(EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX.length());
+      String originalName = pair.first.substring(RESERVED_ORIGINAL_VARIABLE_PREFIX.length());
       if (originalName.length() == 0) {
         Logger.getInstance(EnvironmentRestorer.class).warn(
           "the name of the reserved environment variable consists only of the prefix \"" +
-          EnvironmentUtil.RESERVED_ORIGINAL_VARIABLE_PREFIX + "\". name=" + pair.first + " value=" + pair.second);
+          RESERVED_ORIGINAL_VARIABLE_PREFIX + "\". name=" + pair.first + " value=" + pair.second);
         continue;
       }
 
