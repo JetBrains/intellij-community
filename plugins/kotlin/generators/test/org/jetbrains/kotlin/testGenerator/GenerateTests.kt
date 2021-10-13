@@ -1073,6 +1073,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("quickfix/toString", pattern = pattern)
+            model("quickfix/specifySuperType", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
