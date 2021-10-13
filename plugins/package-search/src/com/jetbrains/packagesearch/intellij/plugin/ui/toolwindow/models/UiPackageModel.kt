@@ -130,7 +130,7 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
         declaredScopes = declaredScopes,
         defaultScope = defaultScope,
         selectedVersion = searchResultUiState?.selectedVersion
-            ?: getAvailableVersions(onlyStable).first().originalVersion,
+            ?: getAvailableVersions(onlyStable).firstOrNull()?.originalVersion ?: PackageVersion.Missing,
         selectedScope = searchResultUiState?.selectedScope
             ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems,
