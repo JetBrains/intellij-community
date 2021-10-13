@@ -85,9 +85,6 @@ enum class LibraryJarDescriptor(
 
     RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
 
-    REFLECT_SRC_JAR(PathUtil.KOTLIN_REFLECT_SRC_JAR, OrderRootType.SOURCES, false, PathUtil.KOTLIN_JAVA_REFLECT_NAME),
-    TEST_SRC_JAR(PathUtil.KOTLIN_TEST_SRC_JAR, OrderRootType.SOURCES, false, PathUtil.KOTLIN_TEST_NAME),
-
     JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, PathUtil.JS_LIB_NAME, { it.kotlinStdlibJs.toPath() });
 
     open fun findExistingJar(library: Library): VirtualFile? {

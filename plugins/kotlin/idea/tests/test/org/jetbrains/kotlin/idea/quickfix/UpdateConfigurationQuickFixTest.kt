@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.ide.IdeEventQueue
+import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
@@ -17,7 +20,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -26,7 +28,10 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
+import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -114,11 +119,18 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
             """
         )
         myFixture.launchAction(myFixture.findSingleIntention("Add 'kotlin-reflect.jar' to the classpath"))
-        val kotlinRuntime = KotlinJavaModuleConfigurator.instance.getKotlinLibrary(module)!!
-        val classes = kotlinRuntime.getFiles(OrderRootType.CLASSES).map { it.name }
-        assertContainsElements(classes, "kotlin-reflect.jar")
-        val sources = kotlinRuntime.getFiles(OrderRootType.SOURCES)
-        assertContainsElements(sources.map { it.name }, "kotlin-reflect-sources.jar")
+        var i = 0
+        while (JarRepositoryManager.hasRunningTasks()) {
+            Thread.sleep(100)
+            if (i++ > 100) {
+                error("Timeout error")
+            }
+        }
+        IdeEventQueue.getInstance().flushQueue()
+        val kotlinRuntime = module.findLibrary { LibraryJarDescriptor.REFLECT_JAR.findExistingJar(it) != null }
+        assertNotNull(kotlinRuntime)
+        val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
+        assertContainsElements(sources.map { it.name }, "kotlin-reflect-${kotlinCompilerVersionShort()}-sources.jar")
     }
 
     private fun configureRuntime(path: String) {
@@ -159,7 +171,11 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                     FacetUtil.deleteFacet(it)
                 }
             },
-            ThrowableRunnable { ConfigLibraryUtil.removeLibrary(module, "KotlinJavaRuntime") },
+            ThrowableRunnable {
+                OrderEnumerator.orderEntries(module).forEachLibrary {
+                    ConfigLibraryUtil.removeLibrary(module, it.name!!)
+                }
+            },
             ThrowableRunnable { ZipHandler.clearFileAccessorCache() },
             ThrowableRunnable { super.tearDown() }
         )

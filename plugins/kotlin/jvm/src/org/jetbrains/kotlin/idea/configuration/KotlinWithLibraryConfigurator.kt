@@ -3,19 +3,23 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.*
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryProperties
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.psi.PsiElement
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
@@ -30,10 +34,13 @@ import org.jetbrains.kotlin.idea.quickfix.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.findAllUsedLibraries
 import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
     protected abstract val libraryName: String
@@ -280,21 +287,31 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         module: Module,
         element: PsiElement,
         library: ExternalLibraryDescriptor,
-        libraryJarDescriptors: List<LibraryJarDescriptor>
+        libraryJarDescriptor: LibraryJarDescriptor,
+        scope: DependencyScope
     ) {
         val project = module.project
 
-        for (lib in findAllUsedLibraries(project).keySet()) {
-            val model = lib.modifiableModel
-            for (libraryJarDescriptor in libraryJarDescriptors) {
-                if (libraryJarDescriptor.findExistingJar(lib) != null) continue
-
-                val libFile = libraryJarDescriptor.getPathInPlugin()
-                model.addRoot(VfsUtil.getUrlForLibraryRoot(libFile.toFile()), libraryJarDescriptor.orderRootType)
+        // TODO: in our case any PROJECT (not module) library (especially unused)
+        //  would fit but I failed to find API for traversing such libraries.
+        //  Current solution traverses only used project libraries
+        findAllUsedLibraries(project).keySet()
+            .firstOrNull { libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true }
+            ?.let {
+                ModuleRootModificationUtil.addDependency(module, it, scope, false)
+                return
             }
 
-            model.commit()
-        }
+        val kotlinStdlibVersion = module.findLibrary { isKotlinLibrary(it, project) }
+            ?.safeAs<LibraryEx>()?.properties?.safeAs<RepositoryLibraryProperties>()?.version
+        RepositoryAddLibraryAction.addLibraryToModule(
+            RepositoryLibraryDescription.findDescription(libraryJarDescriptor.repositoryLibraryProperties),
+            module,
+            kotlinStdlibVersion ?: kotlinCompilerVersionShort(),
+            scope,
+            /* downloadSources = */ true,
+            /* downloadJavaDocs = */ true
+        )
     }
 
     companion object {
