@@ -16,6 +16,20 @@ public final class EditorTabPresentationUtil {
   @NotNull
   public static @NlsContexts.TabTitle String getEditorTabTitle(@NotNull Project project,
                                                                @NotNull VirtualFile file) {
+    String overriddenTitle = getOverriddenEditorTabTitle(project, file);
+    if (overriddenTitle != null) {
+      return overriddenTitle;
+    }
+    String uniqueTitle = new UniqueNameEditorTabTitleProvider().getEditorTabTitle(project, file);
+    if (uniqueTitle != null) {
+      return uniqueTitle;
+    }
+    return file.getPresentableName();
+  }
+
+  @Nullable
+  public static @NlsContexts.TabTitle String getOverriddenEditorTabTitle(@NotNull Project project,
+                                                                         @NotNull VirtualFile file) {
     for (EditorTabTitleProvider provider : DumbService.getDumbAwareExtensions(project, EditorTabTitleProvider.EP_NAME)) {
       String result = provider.getEditorTabTitle(project, file);
       if (StringUtil.isNotEmpty(result)) {
@@ -23,7 +37,7 @@ public final class EditorTabPresentationUtil {
       }
     }
 
-    return file.getPresentableName();
+    return null;
   }
 
   @NotNull
