@@ -11,4 +11,3 @@ public interface AI {
     }
 }
 
-// CRI_IGNORE

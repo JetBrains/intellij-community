@@ -1,7 +1,9 @@
 {
     "mainFile": "Main.kt",
     "usages": [
+        "ChildOfMainAsParameterUsage.java",
         "ChildOfMainAsParameterUsage.kt",
+        "ChildOfMainUsage.java",
         "ChildOfMainUsage.kt",
         "JavaChildOfMain.java",
         "JavaChildOfMainUsage.java",
@@ -10,11 +12,7 @@
         "JavaReuseMainUsage.kt",
         "MainUsage.java",
         "MainUsage.kt",
+        "ReuseMainUsage.java",
         "ReuseMainUsage.kt"
-    ],
-    "shouldBeUsage": [
-        "ChildOfMainAsParameterUsage.java",
-        "ChildOfMainUsage.java",
-        "ReuseMainUsage.java"
     ]
 }

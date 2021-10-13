@@ -3,21 +3,20 @@
     "usages": [
         "JJKK.java",
         "JKK.java",
+        "JKKK.java",
         "jjkk_.java",
         "jjkk_.kt",
         "jkk_.java",
         "jkk_.kt",
+        "jkkk_.java",
         "jkkk_.kt",
+        "kjkk_.java",
         "kjkk_.kt",
         "kk_.java",
         "kk_.kt",
-        "kkk_.kt",
-        "kkkk_.kt"
-    ],
-    "shouldBeUsage": [
-        "jkkk_.java",
-        "kjkk_.java",
         "kkk_.java",
-        "kkkk_.java"
+        "kkk_.kt",
+        "kkkk_.java",
+        "kkkk_.kt"
     ]
 }

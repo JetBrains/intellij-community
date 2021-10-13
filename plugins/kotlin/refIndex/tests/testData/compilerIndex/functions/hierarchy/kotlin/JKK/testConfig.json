@@ -7,9 +7,7 @@
         "jjkk_.kt",
         "jkk_.java",
         "jkk_.kt",
+        "kjkk_.java",
         "kjkk_.kt"
-    ],
-    "shouldBeUsage": [
-        "kjkk_.java"
     ]
 }

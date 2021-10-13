@@ -18,7 +18,7 @@ package com.intellij.compiler.backwardRefs;
 import org.jetbrains.annotations.Nullable;
 
 public class SearchId {
-  private final String myDeserializedName;
+  private final @Nullable String myDeserializedName;
   private final int myId;
 
   SearchId(@Nullable String deserializedName, int id) {
@@ -34,7 +34,7 @@ public class SearchId {
     this(null, id);
   }
 
-  public String getDeserializedName() {
+  public @Nullable String getDeserializedName() {
     return myDeserializedName;
   }
 

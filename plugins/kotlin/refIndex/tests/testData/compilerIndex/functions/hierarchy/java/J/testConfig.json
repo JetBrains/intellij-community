@@ -4,20 +4,18 @@
         "J.java",
         "JJ.java",
         "JJJ.java",
+        "JKJ.java",
         "jj_.java",
         "jj_.kt",
         "jjj_.java",
         "jjj_.kt",
-        "jkj_.kt",
-        "kj_.kt",
-        "kjj_.kt",
-        "kkj_.kt"
-    ],
-    "shouldBeUsage": [
-        "JKJ.java",
         "jkj_.java",
+        "jkj_.kt",
         "kj_.java",
+        "kj_.kt",
         "kjj_.java",
-        "kkj_.java"
+        "kjj_.kt",
+        "kkj_.java",
+        "kkj_.kt"
     ]
 }

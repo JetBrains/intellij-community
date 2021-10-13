@@ -4,9 +4,7 @@
         "JJKK.java",
         "JKK.java",
         "jjkk_.java",
-        "jkk_.java"
-    ],
-    "shouldBeUsage": [
+        "jkk_.java",
         "kjkk_.java"
     ]
 }
