@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -195,16 +196,25 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
     }
 
-    task("EditorEscape") {
+    task {
+      val showChangesAsTab = Registry.`is`("vcs.show.affected.files.as.tab")
       before {
-        if (backupRevisionsLocation == null) {
+        if (!showChangesAsTab && backupRevisionsLocation == null) {
           backupRevisionsLocation = adjustPopupPosition(ChangeListViewerDialog.DIMENSION_SERVICE_KEY)
         }
       }
-      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName),
-                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
+      val actionText = if (showChangesAsTab) action("HideActiveWindow") else action("EditorEscape")
+      text(GitLessonsBundle.message("git.annotate.close.changes", code(editedPropertyName), actionText))
       stateCheck {
-        previous.ui?.isShowing != true && firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
+        previous.ui?.isShowing != true
+      }
+    }
+
+    task("EditorEscape") {
+      text(GitLessonsBundle.message("git.annotate.close.all.windows",
+        if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
+      stateCheck {
+        firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }
     }
 
@@ -214,7 +224,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
              + GitLessonsBundle.message("git.annotate.close.by.shortcut", action(it)))
         stateCheck { !isAnnotationsShown(editor) }
       }
-    } else {
+    }
+    else {
       task("Annotate") {
         val closeAnnotationsText = EditorBundle.message("close.editor.annotations.action.name")
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
