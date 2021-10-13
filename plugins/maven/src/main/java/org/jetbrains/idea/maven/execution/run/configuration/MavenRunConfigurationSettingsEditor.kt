@@ -79,8 +79,9 @@ class MavenRunConfigurationSettingsEditor(
     add(CommonTags.parallelRun())
     val workingDirectoryFragment = addWorkingDirectoryFragment()
     addCommandLineFragment(workingDirectoryFragment)
+    addProfilesFragment(workingDirectoryFragment)
     addMavenOptionsGroupFragment()
-    addJavaOptionsGroupFragment(workingDirectoryFragment)
+    addJavaOptionsGroupFragment()
     add(LogsGroupFragment())
   }
 
@@ -120,30 +121,29 @@ class MavenRunConfigurationSettingsEditor(
       }
     }).apply { isRemovable = false }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment(
-    workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
-  ) = add(object : NestedGroupFragment<MavenRunConfiguration>(
-    "maven.runner.group",
-    MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
-    MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
-    { true }
-  ) {
-    override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-      inheritCheckBoxGroup(
-        "maven.runner.group.inherit",
-        MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
-        { it, c -> c.isSelected = it.runnerSettings == null },
-        { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
-      ) {
-        addJreFragment()
-        addEnvironmentFragment()
-        addVmOptionsFragment()
-        addProfilesFragment(workingDirectoryFragment)
-        addSkipTestsTag()
-        addResolveWorkspaceArtifactsTag()
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
+    add(object : NestedGroupFragment<MavenRunConfiguration>(
+      "maven.runner.group",
+      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
+      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
+      { true }
+    ) {
+      override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
+        inheritCheckBoxGroup(
+          "maven.runner.group.inherit",
+          MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
+          { it, c -> c.isSelected = it.runnerSettings == null },
+          { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
+        ) {
+          addJreFragment()
+          addEnvironmentFragment()
+          addVmOptionsFragment()
+          addPropertiesFragment()
+          addSkipTestsTag()
+          addResolveWorkspaceArtifactsTag()
+        }
       }
-    }
-  }).apply { isRemovable = false }
+    }).apply { isRemovable = false }
 
   private fun <S> SettingsFragmentsContainer<S>.inheritCheckBoxGroup(
     id: String,
@@ -401,7 +401,7 @@ class MavenRunConfigurationSettingsEditor(
 
       override val settingsId: String = "maven.profiles.fragment"
       override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.name")
-      override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
+      override val settingsGroup: String? = null
       override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
       override val settingsActionHint: String? = null
     },
