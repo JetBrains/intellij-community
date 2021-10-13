@@ -15,6 +15,8 @@ fun isRecordTransformationApplied(context: TransformationContext): Boolean {
          context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS) != null
 }
 
-fun getCompactConstructor(typedef : GrTypeDefinition) : GrMethod? {
-  return typedef.codeConstructors.find { it.isConstructor && it.parameterList.text == "" }
-}
+fun getCompactConstructor(typedef : GrTypeDefinition) : GrMethod? =
+  typedef.codeConstructors.find(GrMethod::isCompactConstructor)
+
+fun GrMethod.isCompactConstructor(): Boolean =
+  isConstructor && parameterList.text == ""
