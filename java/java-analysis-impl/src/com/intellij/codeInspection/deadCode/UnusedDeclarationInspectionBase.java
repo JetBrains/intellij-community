@@ -589,6 +589,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private final Set<RefClass> myInstantiatedClasses = new HashSet<>();
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
+    private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
 
     @Override
     public void visitMethod(@NotNull RefMethod method) {
@@ -632,7 +633,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     @Override
     public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
-      makeContentReachable((RefJavaElementImpl)functionalExpression);
+      if (myProcessedFunctionalExpressions.add(functionalExpression)) {
+        makeContentReachable((RefJavaElementImpl)functionalExpression);
+      }
     }
 
     @Override public void visitClass(@NotNull RefClass refClass) {
