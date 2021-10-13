@@ -369,10 +369,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    boolean isFirstLoad = ThreeState.UNSURE.equals(TrustedProjects.getTrustedState(project));
-    boolean isTrustedProject = confirmLoadingUntrustedProject(project, isFirstLoad, externalSystemId);
-
-    if (!isPreviewMode && !isTrustedProject) {
+    if (!isPreviewMode && !isTrusted(project, externalSystemId)) {
       LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
       return;
     }
