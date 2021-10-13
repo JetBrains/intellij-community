@@ -68,7 +68,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is Language -> textRenderer.append(item.displayName)
           is InlayProviderSettingsModel -> textRenderer.append(
             if ((value.parent as DefaultMutableTreeNode).userObject is String) item.language.displayName else item.name)
-          is ImmediateConfigurable.Case -> textRenderer.append(item.name)
+          is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }
     }, root, CheckboxTreeBase.CheckPolicy(false, true, false, false))
