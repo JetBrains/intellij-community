@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrPOJOInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
@@ -42,5 +43,35 @@ record R(int a) {}
 def x = new R(10)
 <warning>x.a</warning> = 20
 ''', GrFinalVariableAccessInspection
+  }
+
+  void 'test default getter'() {
+    highlightingTest '''
+record X(String a) {}
+
+def x = new X(a: "200")
+println x.a()
+'''
+  }
+
+  void 'test custom getter'() {
+    highlightingTest '''
+record X(String a) {
+    String a() {
+        return a + "20"
+    }
+}
+
+def x = new X(a: "200")
+println x.a()
+'''
+  }
+
+  void 'test private record field'() {
+    highlightingTest '''
+record R(int a) {}
+def x = new R(10)
+x.<warning>a</warning>
+''', GroovyAccessibilityInspection
   }
 }

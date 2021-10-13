@@ -39,6 +39,7 @@ class RecordTransformationSupport : AstTransformationSupport {
     for (formalParameter in record.parameters) {
       val field = GrLightField(record, formalParameter.name, formalParameter.type, formalParameter)
       field.modifierList.addModifier(GrModifierFlags.FINAL_MASK)
+      field.modifierList.addModifier(GrModifierFlags.PRIVATE_MASK)
       addField(field)
     }
     val modifierList = record.modifierList
