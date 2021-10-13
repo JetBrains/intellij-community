@@ -289,7 +289,7 @@ public final class CommandMerger {
 
         // if undo is block by other global command, trying to split global command and undo only local change in editor
         if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
-          if (myManager.splitGlobalCommand(editor, undoRedo)) {
+          if (myManager.splitGlobalCommand(undoRedo)) {
             var splittedUndo = createUndoOrRedo(editor, true);
             if (splittedUndo != null) undoRedo = splittedUndo;
           }

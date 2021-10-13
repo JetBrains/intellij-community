@@ -510,9 +510,9 @@ public class UndoManagerImpl extends UndoManager {
   /**
    * In case of global group blocking undo we can perform undo locally and separate undone changes from others stacks
    */
-  public boolean splitGlobalCommand(@NotNull FileEditor editor, @NotNull UndoRedo undoRedo) {
+  public boolean splitGlobalCommand(@NotNull UndoRedo undoRedo) {
     var group = undoRedo.myUndoableGroup;
-    Collection<DocumentReference> refs = getDocRefs(editor);
+    Collection<DocumentReference> refs = undoRedo.getDocRefs();
     if (refs == null || refs.size() != 1) return false;
     var docRef = refs.iterator().next();
 
@@ -584,7 +584,7 @@ public class UndoManagerImpl extends UndoManager {
     UndoableGroup.UndoableGroupOriginalContext context = group.getGroupOriginalContext();
     if (context == null) return;
 
-    Collection<DocumentReference> refs = group.getAffectedDocuments();
+    Collection<DocumentReference> refs = undoRedo.getDocRefs();
     if (refs.size() > 1) return;
     var docRef = refs.iterator().next();
 
