@@ -230,6 +230,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       .expireWith(this)
       .finishOnUiThread(ModalityState.stateForComponent(this), filters -> {
         myPredefinedFilters = filters;
+        rehighlightHyperlinksAndFoldings();
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
