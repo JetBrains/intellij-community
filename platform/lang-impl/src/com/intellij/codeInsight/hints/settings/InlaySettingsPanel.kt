@@ -71,7 +71,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is ImmediateConfigurable.Case -> textRenderer.append(item.name)
         }
       }
-    }, root, CheckboxTreeBase.CheckPolicy(false, false, false, false))
+    }, root, CheckboxTreeBase.CheckPolicy(false, true, false, false))
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
@@ -175,7 +175,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun reset(node: CheckedTreeNode, settings: InlayHintsSettings) {
-    node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
         val enabled = isModelEnabled(item, settings)
@@ -198,6 +197,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         }
       }
     }
+    node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
   }
 
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
