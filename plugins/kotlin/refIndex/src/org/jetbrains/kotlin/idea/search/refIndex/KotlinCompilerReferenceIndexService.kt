@@ -50,13 +50,13 @@ import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
@@ -457,8 +457,15 @@ private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
     val listOfFqName = listOf(fqName)
     if (psiMethod.hasModifier(JvmModifier.STATIC)) return listOfFqName
 
-    val name = psiMethod.name.takeIf { canBePropertyAccessor(it) }?.let(Name::identifier) ?: return listOfFqName
-    val parentFqName = fqName.parent()
+    val name = psiMethod.name
+    val parametersSize = psiMethod.parameters.size
+    if (psiMethod.hasTypeParameters() ||
+        JvmAbi.isGetterName(name) && parametersSize != 0 ||
+        JvmAbi.isSetterName(name) && parametersSize != 1
+    ) {
+        return listOfFqName
+    }
 
-    return listOfFqName + getPropertyNamesCandidatesByAccessorName(name).map { parentFqName.child(name) }
+    val parentFqName = fqName.parent()
+    return listOfFqName + getPropertyNamesCandidatesByAccessorName(Name.identifier(name)).map { parentFqName.child(it) }
 }
