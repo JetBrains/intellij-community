@@ -33,17 +33,21 @@ import java.util.*;
 
 public class JUnit5Runner {
   public static void main(String[] args) throws ClassNotFoundException {
-    Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
-    Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
-    DiscoverySelector selector;
-    if (args.length == 1) {
-      selector = DiscoverySelectors.selectClass(aClass);
+    try {
+      Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
+      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
+      DiscoverySelector selector;
+      if (args.length == 1) {
+        selector = DiscoverySelectors.selectClass(aClass);
+      }
+      else {
+        selector = DiscoverySelectors.selectMethod(aClass, args[1]);
+      }
+      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
     }
-    else {
-      selector = DiscoverySelectors.selectMethod(aClass, args[1]);
+    finally {
+      System.exit(0);
     }
-    launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), new TCExecutionListener());
-    System.exit(0);
   }
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {

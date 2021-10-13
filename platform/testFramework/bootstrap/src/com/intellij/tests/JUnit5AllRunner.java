@@ -20,27 +20,31 @@ import java.util.ServiceLoader;
 public class JUnit5AllRunner {
   
   public static void main(String[] args) {
-    Launcher launcher = LauncherFactory.create();
-    
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    ClassNameFilter nameFilter;
     try {
-      nameFilter = createClassNameFilter(classLoader);
+      Launcher launcher = LauncherFactory.create();
+
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      ClassNameFilter nameFilter;
+      try {
+        nameFilter = createClassNameFilter(classLoader);
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+        return;
+      }
+      System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
+
+      LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+        .selectors(DiscoverySelectors.selectPackage(""))
+        .filters(nameFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
+      TestPlan testPlan = launcher.discover(discoveryRequest);
+      if (testPlan.containsTests()) {
+        launcher.execute(testPlan, new JUnit5Runner.TCExecutionListener());
+      }
     }
-    catch (Throwable e) {
-      e.printStackTrace();
-      return;
+    finally {
+      System.exit(0);
     }
-    System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
-    
-    LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
-      .selectors(DiscoverySelectors.selectPackage(""))
-      .filters(nameFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
-    TestPlan testPlan = launcher.discover(discoveryRequest);
-    if (testPlan.containsTests()) {
-      launcher.execute(testPlan, new JUnit5Runner.TCExecutionListener());
-    }
-    System.exit(0);
   }
 
   private static ClassNameFilter createClassNameFilter(ClassLoader classLoader) throws NoSuchMethodException, ClassNotFoundException {
