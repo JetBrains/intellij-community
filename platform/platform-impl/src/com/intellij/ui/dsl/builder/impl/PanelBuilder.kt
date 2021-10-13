@@ -131,7 +131,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         if (cell is CellImpl<*>) {
           cell.label?.let {
             if (cell.labelPosition == LabelPosition.LEFT) {
-              val labelCell = CellImpl(dialogPanelConfig, it, row)
+              val labelCell = CellImpl(dialogPanelConfig, it, row, visualPaddings = null)
                 .gap(RightGap.SMALL)
               row.cells.add(i, labelCell)
               i++
@@ -186,9 +186,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
       val label = (cell as? CellImpl<*>)?.component as? JLabel
-      if (label != null && cell.rightGap == RightGap.SMALL && cellIndex < cells.size - 1 &&
-          isAllowedLabel(cells[cellIndex + 1]) && (cells[cellIndex + 1] as? CellImpl<*>)?.label == null &&
-          cell.verticalAlign == VerticalAlign.CENTER && cell.horizontalAlign == HorizontalAlign.LEFT) {
+      val nextComponent = cells.getOrNull(cellIndex + 1) as? CellImpl<*>
+      if (label != null && label.getClientProperty(DslComponentProperty.LABEL) == true &&
+          cell.rightGap == RightGap.SMALL && cell.verticalAlign == VerticalAlign.CENTER && cell.horizontalAlign == HorizontalAlign.LEFT &&
+          isAllowedLabel(nextComponent) && nextComponent?.label == null) {
         warn("Panel.row(label) or Cell.label should be used for labeled components, label = ${label.text}")
       }
 
@@ -202,12 +203,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     when (cell) {
       is CellImpl<*> -> {
-        val insets = cell.component.origin.insets
-        val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
-          gaps = gaps, visualPaddings = visualPaddings,
+          gaps = gaps, visualPaddings = cell.visualPaddings,
           componentHelper = getComponentHelper(cell.viewComponent))
       }
       is PanelImpl -> {

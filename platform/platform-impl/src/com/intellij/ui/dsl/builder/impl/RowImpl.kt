@@ -24,9 +24,12 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -89,9 +92,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
-    cells.add(result)
-    return result
+    return cell(component, viewComponent, null)
   }
 
   override fun cell() {
@@ -265,7 +266,9 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun label(text: String): CellImpl<JLabel> {
-    return cell(Label(text))
+    val result = Label(text)
+    result.putClientProperty(DslComponentProperty.LABEL, true)
+    return cell(result)
   }
 
   override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
@@ -368,7 +371,13 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun textArea(): Cell<JBTextArea> {
     val textArea = JBTextArea()
-    return cell(textArea, JBScrollPane(textArea))
+    // Text area should have same margins as TextField. When margin is TestArea used then border is MarginBorder and margins are taken
+    // into account twice, which is hard to workaround in current API. So use border instead
+    textArea.border = JBEmptyBorder(3, 5, 3, 5)
+    textArea.columns = COLUMNS_SHORT
+    textArea.font = JBFont.regular()
+    textArea.emptyText.setFont(JBFont.regular())
+    return cell(textArea, JBScrollPane(textArea), Gaps.EMPTY)
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
@@ -414,5 +423,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       }
     }
     rowComment?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun <T : JComponent> cell(component: T, viewComponent: JComponent, visualPaddings: Gaps?): CellImpl<T> {
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent, visualPaddings = visualPaddings)
+    cells.add(result)
+    return result
   }
 }

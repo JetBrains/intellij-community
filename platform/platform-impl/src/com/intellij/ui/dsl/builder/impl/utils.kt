@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.htmlComponent
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.util.ui.JBUI
@@ -29,7 +30,12 @@ internal enum class DslComponentProperty {
   /**
    * Baseline for component should be obtained from [JComponent.font] property
    */
-  BASELINE_FROM_FONT
+  BASELINE_FROM_FONT,
+
+  /**
+   * A mark that component is created by [Row.label]. Used for validation
+   */
+  LABEL
 }
 
 /**

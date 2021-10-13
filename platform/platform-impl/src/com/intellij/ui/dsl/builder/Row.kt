@@ -236,6 +236,9 @@ interface Row {
    */
   fun spinner(range: ClosedRange<Double>, step: Double = 1.0): Cell<JSpinner>
 
+  /**
+   * Creates text area with [columns] set to [COLUMNS_SHORT]
+   */
   fun textArea(): Cell<JBTextArea>
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
