@@ -3,6 +3,7 @@ package com.intellij.codeWithMe
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
@@ -137,12 +138,16 @@ data class ClientId(val value: String) {
      * Invokes a runnable under the given [ClientId]
      */
     @JvmStatic
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated("Consider using an overload that returns a AccessToken to follow java try-with-resources pattern")
     fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
 
     /**
      * Computes a value under given [ClientId]
      */
     @JvmStatic
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated("Consider using an overload that returns an AccessToken to follow java try-with-resources pattern")
     fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
     /**
@@ -167,6 +172,29 @@ data class ClientId(val value: String) {
       }
       finally {
         service.clientIdValue = oldClientIdValue
+      }
+    }
+
+    @JvmStatic
+    fun withClientId(clientId: ClientId?) = object : AccessToken() {
+      private val service = ClientIdService.tryGetInstance()
+      private var oldClientIdValue: String? = null
+
+      init {
+        if (service != null) {
+          val newClientIdValue = if (!service.isValid(clientId)) {
+            LOG.trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
+            null
+          }
+          else clientId?.value
+
+          oldClientIdValue = service.clientIdValue
+          service.clientIdValue = newClientIdValue
+        }
+      }
+
+      override fun finish() {
+        service?.clientIdValue = oldClientIdValue
       }
     }
 

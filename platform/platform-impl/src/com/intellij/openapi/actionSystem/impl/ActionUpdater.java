@@ -299,23 +299,21 @@ final class ActionUpdater extends UserDataHolderBase {
     ClientId clientId = ClientId.getCurrent();
     ourExecutor.execute(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
-      try {
-        ClientId.withClientId(clientId, () -> {
-          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
-            if (ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-              applicationEx,
-              () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
-                                           "nested write-action requested by " + myInEDTActionOperation),
-              () -> applicationEx.tryRunReadAction(() -> applyRunnableRef.set(computable.compute()))) &&
-                !applyRunnableRef.isNull() && !promise.isDone()) {
-              computeOnEdt(applyRunnableRef.get());
-            }
-            else if (!promise.isDone()) {
-              cancelPromise(promise, "read-action unavailable");
-            }
-          }, indicator);
-        });
+      try (AccessToken ignored = ClientId.withClientId(clientId)) {
+        ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
+          if (ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+            applicationEx,
+            () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
+                                         "nested write-action requested by " + myInEDTActionOperation),
+            () -> applicationEx.tryRunReadAction(() -> applyRunnableRef.set(computable.compute()))) &&
+              !applyRunnableRef.isNull() && !promise.isDone()) {
+            computeOnEdt(applyRunnableRef.get());
+          }
+          else if (!promise.isDone()) {
+            cancelPromise(promise, "read-action unavailable");
+          }
+        }, indicator);
       }
       catch (Throwable e) {
         if (!promise.isDone()) {
