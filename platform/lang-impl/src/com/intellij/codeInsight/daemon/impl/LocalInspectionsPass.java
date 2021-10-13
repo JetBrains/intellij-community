@@ -442,6 +442,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                   resultCount = -1; // mark as "new favorite element is stored"
                 }
               }
+              afterProcessCallback.accept(context);
             })) {
               throw new ProcessCanceledException();
             }
@@ -454,7 +455,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             runnable.run();
           }
           advanceProgress(1);
-          afterProcessCallback.accept(context);
           return true;
         }))
       );
