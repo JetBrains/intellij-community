@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
@@ -645,6 +646,14 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyEmptyStubElementTypes.TYPE_PARAMETER_LIST) {
       createSpaceInCode(true);
     }
+  }
+
+  @Override
+  public void visitRecordDefinition(@NotNull GrRecordDefinition recordDefinition) {
+    if (myType2 == PARAMETER_LIST) {
+      createSpaceInCode(myGroovySettings.SPACE_BEFORE_RECORD_PARENTHESES);
+    }
+    visitTypeDefinition(recordDefinition);
   }
 
   @Override
