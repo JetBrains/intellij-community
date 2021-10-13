@@ -17,6 +17,7 @@ intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
 intellij.textmate
+intellij.toml
 intellij.vcs.changeReminder
 intellij.vcs.git
 intellij.vcs.git.featuresTrainer
