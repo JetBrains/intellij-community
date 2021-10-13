@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * @see com.intellij.ide.actions.NonTrivialActionGroup
  */
 @ApiStatus.Experimental
-public interface UpdateSession {
+public interface UpdateSession extends UserDataHolder {
 
   @NotNull Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup);
 

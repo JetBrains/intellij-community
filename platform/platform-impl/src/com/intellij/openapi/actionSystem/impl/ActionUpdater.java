@@ -22,10 +22,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -109,7 +106,7 @@ final class ActionUpdater {
                   Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, updateOp),
-      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
+      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
 
@@ -126,7 +123,7 @@ final class ActionUpdater {
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
-    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), isBeforePerformed);
+    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation), isBeforePerformed);
     boolean success = callAction(action, operation, doUpdate);
     return success ? presentation : null;
   }
@@ -522,7 +519,7 @@ final class ActionUpdater {
     return result;
   }
 
-  private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
+  private AnActionEvent createActionEvent(@NotNull Presentation presentation) {
     AnActionEvent event = new AnActionEvent(
       null, myDataContext, myPlace, presentation,
       ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
@@ -689,7 +686,7 @@ final class ActionUpdater {
     return ((UpdateSessionImpl)session).updater;
   }
 
-  private static class UpdateSessionImpl implements UpdateSession {
+  private static class UpdateSessionImpl extends UserDataHolderBase implements UpdateSession {
     final ActionUpdater updater;
     final UpdateStrategy strategy;
 
