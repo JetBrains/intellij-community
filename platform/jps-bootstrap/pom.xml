@@ -45,6 +45,11 @@
       <artifactId>groovy-rt</artifactId>
       <version>${bootstrap.intellij.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>serviceMessages</artifactId>
+      <version>2019.1.4</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -65,6 +70,10 @@
     <repository>
       <id>kotlin-ide-plugin-dependencies</id>
       <url>https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies</url>
+    </repository>
+    <repository>
+      <id>teamcity-repository</id>
+      <url>https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository</url>
     </repository>
   </repositories>
 
