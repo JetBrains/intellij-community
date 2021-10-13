@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
@@ -157,6 +157,9 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(CastExpressionFixFactories.initializerTypeMismatch)
     }
 
+    private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
+    }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
@@ -166,6 +169,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         mutability,
         expressions,
         whenStatements,
-        typeMismatch
+        typeMismatch,
+        superKeyword,
     )
 }
