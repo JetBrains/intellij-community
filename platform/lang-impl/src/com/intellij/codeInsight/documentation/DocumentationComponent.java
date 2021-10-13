@@ -14,6 +14,12 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ide.DocumentationUtil;
+import com.intellij.lang.documentation.impl.DocumentationRequest;
+import com.intellij.lang.documentation.impl.ImplKt;
+import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
+import com.intellij.model.Pointer;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -21,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -49,6 +56,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
@@ -113,11 +121,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private AbstractPopup myHint;
 
+  /**
+   * @deprecated This method is executed on the EDT, but at the same time it works with PSI.
+   * To migrate: compute pointer and presentation on a BG thread, then transfer to the EDT
+   * and call {@link DocumentationUtil#documentationComponent(Project, Pointer, TargetPresentation, Disposable)} with the prepared data.
+   */
+  @Deprecated
   public static @NotNull JComponent createAndFetch(
     @NotNull Project project,
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
+    if (Registry.is("documentation.v2") && Registry.is("documentation.v2.component")) {
+      DocumentationRequest request;
+      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      }
+      return DocumentationUtil.documentationComponent(project, request, disposable);
+    }
     DocumentationManager manager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(manager);
     Disposer.register(disposable, component);
