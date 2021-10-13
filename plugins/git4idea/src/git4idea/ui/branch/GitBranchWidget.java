@@ -9,6 +9,7 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -146,7 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !RegistryManager.getInstance().is("vcs.new.widget") &&
+      return !ToolbarSettings.getInstance().isVisible() &&
              !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 
@@ -157,7 +158,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return !RegistryManager.getInstance().is("ide.new.navbar");
+      return !ToolbarSettings.getInstance().isVisible();
     }
 
     @Override

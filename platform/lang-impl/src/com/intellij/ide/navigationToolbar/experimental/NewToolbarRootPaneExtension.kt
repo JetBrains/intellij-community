@@ -13,8 +13,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.util.application
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -98,7 +101,10 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
         )
         toolbar.targetComponent = myPanel
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-
+        application.invokeLater {
+          toolbar.component.revalidate()
+          toolbar.component.repaint()
+        }
         myPanel.add(toolbar as JComponent, layoutConstrains)
       }
     }
@@ -116,6 +122,13 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
     myPanel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
 
     repaint()
+    updateStatusBar()
+  }
+
+  private fun updateStatusBar() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+    }
   }
 
   private fun repaint() {

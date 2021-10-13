@@ -25,10 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 internal class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                                    Disposable {
   companion object {
-
     private val logger = logger<ExperimentalToolbarSettings>()
-
-    private val NewToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
+    private var newToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
   }
 
   private var toolbarState = ExperimentalToolbarSettingsState()
@@ -36,6 +34,8 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
   private inner class ToolbarRegistryListener : RegistryValueListener {
 
     override fun afterValueChanged(value: RegistryValue) {
+      newToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
+
       val booleanValue = value.asBoolean()
       logger.info("New registry value: $booleanValue")
 
@@ -55,7 +55,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     }
 
     Disposer.register(application, this)
-    NewToolbarEnabled.addListener(ToolbarRegistryListener(), this)
+    newToolbarEnabled.addListener(ToolbarRegistryListener(), this)
   }
 
   override fun getState(): ExperimentalToolbarSettingsState = toolbarState
@@ -71,8 +71,8 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
   override fun dispose() {}
 
   override var isEnabled: Boolean
-    get() = NewToolbarEnabled.asBoolean()
-    set(value) = NewToolbarEnabled.setValue(value)
+    get() = newToolbarEnabled.asBoolean()
+    set(value) = newToolbarEnabled.setValue(value)
 
   override var isVisible: Boolean
     get() = toolbarState.showNewMainToolbar
