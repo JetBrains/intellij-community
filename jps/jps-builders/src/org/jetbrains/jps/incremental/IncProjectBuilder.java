@@ -891,6 +891,7 @@ public final class IncProjectBuilder {
 
   private static final class BuildChunkTask {
     private final BuildTargetChunk myChunk;
+    private final AtomicInteger myNotBuildDependenciesCount = new AtomicInteger(0);
     private final Set<BuildChunkTask> myNotBuiltDependencies = new HashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
@@ -910,11 +911,12 @@ public final class IncProjectBuilder {
     }
 
     public boolean isReady() {
-      return myNotBuiltDependencies.isEmpty();
+      return myNotBuildDependenciesCount.get() == 0;
     }
 
     public void addDependency(BuildChunkTask dependency) {
       if (myNotBuiltDependencies.add(dependency)) {
+        myNotBuildDependenciesCount.incrementAndGet();
         dependency.myTasksDependsOnThis.add(this);
       }
     }
@@ -922,10 +924,9 @@ public final class IncProjectBuilder {
     public List<BuildChunkTask> markAsFinishedAndGetNextReadyTasks() {
       List<BuildChunkTask> nextTasks = new SmartList<>();
       for (BuildChunkTask task : myTasksDependsOnThis) {
-        final boolean removed = task.myNotBuiltDependencies.remove(this);
-        LOG.assertTrue(removed, task.getChunk().toString() + " didn't have " + getChunk().toString());
+        int dependenciesCount = task.myNotBuildDependenciesCount.decrementAndGet();
 
-        if (task.isReady()) {
+        if (dependenciesCount == 0) {
           nextTasks.add(task);
         }
       }
@@ -943,7 +944,6 @@ public final class IncProjectBuilder {
     private final CompileContext myContext;
     private final BuildProgress myBuildProgress;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
-    private final Object myQueueLock = new Object();
     private final CountDownLatch myTasksCountDown;
     private final List<BuildChunkTask> myTasks;
     private final Runnable myFlushCommand;
@@ -1109,9 +1109,7 @@ public final class IncProjectBuilder {
             LOG.debug("Finished compilation of " + task.getChunk().toString());
             myTasksCountDown.countDown();
             List<BuildChunkTask> nextTasks;
-            synchronized (myQueueLock) {
-              nextTasks = task.markAsFinishedAndGetNextReadyTasks();
-            }
+            nextTasks = task.markAsFinishedAndGetNextReadyTasks();
             if (!nextTasks.isEmpty()) {
               queueTasks(nextTasks);
             }
