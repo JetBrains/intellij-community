@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
@@ -369,6 +370,28 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
+   * Adds handler that opens any links clicked by user in external browser
+   */
+  public final void openLinksInExternalBrowser() {
+    var handler = new CefRequestHandlerAdapter() {
+      @Override
+      public boolean onBeforeBrowse(CefBrowser browser,
+                                    CefFrame frame,
+                                    CefRequest request,
+                                    boolean user_gesture,
+                                    boolean is_redirect) {
+        if (user_gesture) {
+          BrowserUtil.open(request.getURL());
+          return true;
+        }
+        return false;
+      }
+    };
+    this.myCefClient.addRequestHandler(handler, myCefBrowser);
+    Disposer.register(this, () -> myCefClient.removeRequestHandler(handler, myCefBrowser));
+  }
+
+  /**
    * Returns the component representing the browser in the UI hierarchy.
    */
   public abstract @Nullable JComponent getComponent();
@@ -387,7 +410,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     // [tav] todo: this can be thread race prone
     return isCefBrowserCreated(myCefBrowser);
   }
-  
+
   static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
     return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0;
   }
