@@ -287,6 +287,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
 
                          if (refConstructor != null) {
+                           refConstructor.waitForInitialized();
                            refConstructor.updateParameterValues(argumentList, javaConstructor);
                          }
                          return refConstructor;
@@ -426,7 +427,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                final UElement uFrom,
                                final RefElement refFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
-
+    refMethod.waitForInitialized();
     if (refExpression instanceof UCallableReferenceExpression) {
       PsiType returnType = uMethod.getReturnType();
       if (!uMethod.isConstructor() &&
