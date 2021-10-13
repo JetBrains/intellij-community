@@ -95,8 +95,7 @@ public abstract class TextExtractor {
     for (PsiElement each : hierarchy) {
       CachedValue<Cache> cache = each.getUserData(CACHE);
       if (cache != null) {
-        List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
-          isSuitable(c, psi) && allowedDomains.contains(c.getDomain()));
+        List<TextContent> cached = cache.getValue().getCached(allowedDomains, psi);
         if (!cached.isEmpty()) {
           return cached;
         }
@@ -140,8 +139,10 @@ public abstract class TextExtractor {
       foundContents.add(content);
     }
 
-    synchronized Collection<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains) {
-      return checkedDomains.containsAll(allowedDomains) ? foundContents : Collections.emptyList();
+    synchronized List<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains, PsiElement psi) {
+      return checkedDomains.containsAll(allowedDomains)
+             ? ContainerUtil.filter(foundContents, c -> allowedDomains.contains(c.getDomain()) && isSuitable(c, psi))
+             : Collections.emptyList();
     }
   }
 
