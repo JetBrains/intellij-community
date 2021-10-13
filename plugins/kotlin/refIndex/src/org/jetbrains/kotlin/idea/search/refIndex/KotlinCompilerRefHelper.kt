@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -176,6 +177,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         names: NameEnumerator,
         libraryScope: GlobalSearchScope
     ): List<CompilerRef> {
+        val baseClass = when (basePsi) {
+            is KtClassOrObject, is PsiClass -> basePsi
+            is PsiMember -> basePsi.containingClass
+            is KtCallableDeclaration -> basePsi.containingClassOrObject?.takeUnless { it is KtObjectDeclaration }
+            else -> null
+        } ?: return emptyList()
+
         val overridden = mutableListOf<CompilerRef>()
         val processor = Processor { psiClass: PsiClass ->
             psiClass.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
@@ -187,7 +195,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         }
 
         HierarchySearchRequest(
-            originalElement = basePsi,
+            originalElement = baseClass,
             searchScope = libraryScope,
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
