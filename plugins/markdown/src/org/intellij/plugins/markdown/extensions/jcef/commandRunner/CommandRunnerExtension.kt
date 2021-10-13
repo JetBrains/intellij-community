@@ -38,6 +38,7 @@ import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -49,7 +50,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
-  private val commandCache = mutableMapOf<Int, String>()
+  private val hash2Cmd = mutableMapOf<String, String>()
   private var splitEditor: MarkdownEditorWithPreview? = null
 
   init {
@@ -94,10 +95,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val project = panel.project
     val file = panel.virtualFile
     if (project != null && file != null && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
-      val index = commandCache.size
-      commandCache[index] = rawCodeLine
+      val hash = MarkdownUtil.md5(rawCodeLine, "")
+      hash2Cmd[hash] = rawCodeLine
       val cssClass = "run-icon" + if (inBlock) " code-block" else ""
-      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index'>" +
+      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
              "<img src='${PreviewStaticServer.getStaticUrl(provider,"run.png")}'>" +
              "</a>"
     }
@@ -111,11 +112,11 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     }
     if (runner == null) return ""
 
-    val index = commandCache.size
-    commandCache[index] = codeFenceRawContent
+    val hash = MarkdownUtil.md5(codeFenceRawContent, "")
+    hash2Cmd[hash] = codeFenceRawContent
     val cssClass = "run-icon code-block"
     val html = "<a class='${cssClass}' href='#' role='button' " +
-               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$index' " +
+               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
                "data-commandtype='block'" +
                ">" +
                "<img src='${PreviewStaticServer.getStaticUrl(provider,"runrun.png")}'>" +
@@ -127,10 +128,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
   private fun runLine(encodedLine: String) {
     val executorId = encodedLine.substringBefore(":")
-    val cmdIndex = encodedLine.substringAfter(":").toInt()
-    val command = commandCache[cmdIndex]
+    val cmdHash: String = encodedLine.substringAfter(":")
+    val command = hash2Cmd[cmdHash]
     if (command == null) {
-      LOG.error("Command index $cmdIndex not found. Please attach .md file to error report. commandCache = ${commandCache}")
+      LOG.error("Command index $cmdHash not found. Please attach .md file to error report. commandCache = ${hash2Cmd}")
       return
     }
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
@@ -143,10 +144,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
   private fun runBlock(encodedLine: String) {
     val executorId = encodedLine.substringBefore(":")
-    val cmdIndex = encodedLine.substringAfter(":").toInt()
-    val command = commandCache[cmdIndex]
+    val cmdHash: String = encodedLine.substringAfter(":")
+    val command = hash2Cmd[cmdHash]
     if (command == null) {
-      LOG.error("Command index $cmdIndex not found. Please attach .md file to error report. ${commandCache}")
+      LOG.error("Command index $cmdHash not found. Please attach .md file to error report. ${hash2Cmd}")
       return
     }
     val runner = MarkdownRunner.EP_NAME.extensionList.first()
