@@ -269,13 +269,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }
 
           if (Registry.`is`("ide.experimental.ui")) {
-            val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
             if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
+              val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
               val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
               toolWindowManager.activateToolWindow(toolWindowId, null, true)
             }
 
             if (event.place == ActionPlaces.TOOLWINDOW_POPUP) {
+              val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
               val toolWindowId = toolWindowManager.lastActiveToolWindowId ?: return
               val activeEntry = toolWindowManager.idToEntry[toolWindowId] ?: return
               activeEntry.toolWindow.decorator.headerToolbar.component.isVisible = true
