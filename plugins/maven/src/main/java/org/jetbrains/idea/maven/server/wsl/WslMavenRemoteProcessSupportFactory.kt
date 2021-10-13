@@ -59,6 +59,10 @@ class WslRemotePathTransformFactory : RemotePathTransformerFactory {
       override fun toIdePath(remotePath: String): String? {
         return wslDistribution.getWindowsPath(remotePath)
       }
+
+      override fun canBeRemotePath(s: String?): Boolean {
+        return s?.startsWith("/") ?: false
+      }
     }
 
   }

@@ -186,7 +186,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
         for (MavenServerExecutionResult result : results) {
           MavenServerExecutionResult.ProjectData data = result.projectData;
           if (data == null) continue;
-          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(data.mavenModel);
+          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(data.mavenModel);
         }
       }
       return results;

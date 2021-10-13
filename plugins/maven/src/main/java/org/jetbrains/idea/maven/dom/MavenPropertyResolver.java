@@ -246,7 +246,8 @@ public final class MavenPropertyResolver {
     }
 
     if (unprefixed.equals("basedir") || (hasPrefix && mavenProject == selectedProject && unprefixed.equals("baseUri"))) {
-      return selectedProject.getDirectory();
+      return "fuckfuck";
+      //return selectedProject.getDirectory();
     }
 
     if ("java.home".equals(propName)) {
