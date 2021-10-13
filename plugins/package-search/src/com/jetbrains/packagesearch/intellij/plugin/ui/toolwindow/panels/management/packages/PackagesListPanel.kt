@@ -43,7 +43,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.logError
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
@@ -304,7 +304,7 @@ internal class PackagesListPanel(
                 packagesPanel.updateAndRepaint()
             }
             isLoadingStateFlow.emit(false)
-        }.catch { logError("Error in PackagesListPanel main flow", it) }
+        }.catch { logWarn("Error in PackagesListPanel main flow", it) }
             .launchIn(project.lifecycleScope)
 
         combineTransform(

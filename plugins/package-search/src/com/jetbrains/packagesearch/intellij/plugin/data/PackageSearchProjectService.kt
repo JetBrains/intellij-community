@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
@@ -32,11 +33,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -146,6 +150,14 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             retryChannel = retryFromErrorChannel
         )
         .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+
+    init {
+        // allows rerunning PKGS inspections on already opened files
+        // when the data is finally available or changes for PackageUpdateInspection
+        packageUpgradesStateFlow.filter { it.allUpgrades.allUpdates.isNotEmpty() }
+            .onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
+            .launchIn(this)
+    }
 
     fun notifyOperationExecuted() {
         operationExecutedChannel.trySend(Unit)

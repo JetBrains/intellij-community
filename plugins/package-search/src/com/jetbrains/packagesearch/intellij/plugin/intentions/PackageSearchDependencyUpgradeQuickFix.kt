@@ -19,7 +19,7 @@ internal class PackageSearchDependencyUpgradeQuickFix(
 
     override fun getText() = PackageSearchBundle.message(
         "packagesearch.quickfix.upgrade.action",
-        uiPackageModel.identifier,
+        uiPackageModel.identifier.rawValue,
         uiPackageModel.selectedVersion
     )
 
