@@ -3,7 +3,6 @@ package com.intellij.codeWithMe
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
@@ -150,39 +149,26 @@ data class ClientId(val value: String) {
      * Computes a value under given [ClientId]
      */
     @JvmStatic
-    inline fun <T> withClientId(clientIdRaw: ClientId?, action: () -> T): T {
-      val clientIdService = ClientIdService.tryGetInstance() ?: return action()
+    inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
+      val service = ClientIdService.tryGetInstance() ?: return action()
 
-      val clientId = if (!clientIdService.isValid(clientIdRaw)) {
-        getClientIdLogger().trace { "Invalid ClientId $clientIdRaw replaced with null at ${Throwable().fillInStackTrace()}" }
+      val newClientIdValue = if (!service.isValid(clientId)) {
+        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
-      else clientIdRaw
+      else {
+        clientId?.value
+      }
 
-      val foreignMainThreadActivity = clientIdService.checkLongActivity &&
-                                      ApplicationManager.getApplication().isDispatchThread &&
-                                      !clientId.isLocal
-      val old = clientIdService.clientIdValue
+      val oldClientIdValue = service.clientIdValue
       try {
-        clientIdService.clientIdValue = clientId?.value
-        if (foreignMainThreadActivity) {
-          val beforeActionTime = System.currentTimeMillis()
-          val result = action()
-          val delta = System.currentTimeMillis() - beforeActionTime
-          if (delta > 10000) {
-            getClientIdLogger().warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
-          }
-          return result
-        }
-        else {
-          return action()
-        }
+        service.clientIdValue = newClientIdValue
+        return action()
       }
       finally {
-        clientIdService.clientIdValue = old
+        service.clientIdValue = oldClientIdValue
       }
     }
-
 
     @JvmStatic
     fun <T> decorateFunction(action: () -> T): () -> T {
@@ -236,7 +222,7 @@ data class ClientId(val value: String) {
     }
 
     /** Sets current [ClientId].
-     * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
+     * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no other ways.
      * In most cases it's convenient and preferable to use [withClientId].
      */
     @JvmStatic
@@ -255,14 +241,4 @@ fun isForeignClientOnServer(): Boolean {
 
 fun isOnGuest(): Boolean {
   return ClientId.localId != ClientId.defaultLocalId
-}
-
-fun getStackTrace(): String {
-  val builder = StringBuilder()
-  val trace = Thread.currentThread().stackTrace
-  for (element in trace) {
-    with(builder) { append("\tat $element\n") }
-  }
-
-  return builder.toString()
 }
