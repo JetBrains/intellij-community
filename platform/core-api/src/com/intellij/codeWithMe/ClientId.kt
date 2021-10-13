@@ -19,246 +19,249 @@ import java.util.function.Function
  * It's up to the application to preserve and propagate the current value across background threads and asynchronous activities.
  */
 data class ClientId(val value: String) {
-    enum class AbsenceBehavior {
-        /**
-         * Return localId if ClientId is not set
-         */
-        RETURN_LOCAL,
-        /**
-         * Throw an exception if ClientId is not set
-         */
-        THROW
+  enum class AbsenceBehavior {
+    /**
+     * Return localId if ClientId is not set
+     */
+    RETURN_LOCAL,
+
+    /**
+     * Throw an exception if ClientId is not set
+     */
+    THROW
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ClientId::class.java)
+    fun getClientIdLogger() = LOG
+
+    /**
+     * Default client id for local application
+     */
+    val defaultLocalId = ClientId("Host")
+
+    /**
+     * Specifies behavior for [ClientId.current]
+     */
+    var AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL
+
+    /**
+     * Controls propagation behavior. When false, decorateRunnable does nothing.
+     */
+    var propagateAcrossThreads = false
+
+    /**
+     * The ID considered local to this process. All other IDs (except for null) are considered remote
+     */
+    @JvmStatic
+    var localId = defaultLocalId
+      private set
+
+    /**
+     * True if and only if the current [ClientId] is local to this process
+     */
+    @JvmStatic
+    val isCurrentlyUnderLocalId: Boolean
+      get() = currentOrNull.isLocal
+
+    /**
+     * Gets the current [ClientId]. Subject to [AbsenceBehaviorValue]
+     */
+    @JvmStatic
+    val current: ClientId
+      get() = when (AbsenceBehaviorValue) {
+        AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
+        AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
+      }
+
+    /**
+     * Gets the current [ClientId]. Can be null if none was set.
+     */
+    @JvmStatic
+    val currentOrNull: ClientId?
+      get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
+
+    /**
+     * Overrides the ID that is considered to be local to this process. Can be only invoked once.
+     */
+    @JvmStatic
+    fun overrideLocalId(newId: ClientId) {
+      require(localId == defaultLocalId)
+      localId = newId
     }
 
-    companion object {
+    /**
+     * Returns true if and only if the given ID is considered to be local to this process
+     */
+    @JvmStatic
+    @Deprecated("Use ClientId.isLocal", ReplaceWith("clientId.isLocal", "com.intellij.codeWithMe.ClientId.Companion.isLocal"))
+    fun isLocalId(clientId: ClientId?): Boolean {
+      return clientId.isLocal
+    }
 
-        private val LOG = Logger.getInstance(ClientId::class.java)
-        fun getClientIdLogger() = LOG
+    /**
+     * Is true if and only if the given ID is considered to be local to this process
+     */
+    @JvmStatic
+    val ClientId?.isLocal: Boolean
+      get() = this == null || this == localId
 
-        /**
-         * Default client id for local application
-         */
-        val defaultLocalId = ClientId("Host")
+    /**
+     * Returns true if the given ID is local or a client is still in the session.
+     * Consider subscribing to a proper lifetime instead of this check.
+     */
+    @JvmStatic
+    @Deprecated("Use ClientId.isValid", ReplaceWith("clientId.isValid", "com.intellij.codeWithMe.ClientId.Companion.isValid"))
+    fun isValidId(clientId: ClientId?): Boolean {
+      return clientId.isValid
+    }
 
-        /**
-         * Specifies behavior for ClientId.current
-         */
-        var AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL
+    /**
+     * Is true if the given ID is local or a client is still in the session.
+     * Consider subscribing to a proper lifetime instead of this check
+     */
+    @JvmStatic
+    val ClientId?.isValid: Boolean
+      get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
 
+    /**
+     * Returns a disposable object associated with the given ID.
+     * Consider using a lifetime that is usually passed along with the ID
+     */
+    @JvmStatic
+    fun ClientId?.toDisposable(): Disposable {
+      return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
+    }
 
-        /**
-         * Controls propagation behavior. When false, decorateRunnable does nothing.
-         */
-        var propagateAcrossThreads = false
+    /**
+     * Invokes a runnable under the given [ClientId]
+     */
+    @JvmStatic
+    fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
 
-        /**
-         * The ID considered local to this process. All other IDs (except for null) are considered remote
-         */
-        @JvmStatic
-        var localId = defaultLocalId
-            private set
+    /**
+     * Computes a value under given [ClientId]
+     */
+    @JvmStatic
+    fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
-        /**
-         * True if and only if the current ClientID is local to this process
-         */
-        @JvmStatic
-        val isCurrentlyUnderLocalId: Boolean
-            get() = currentOrNull.isLocal
+    /**
+     * Computes a value under given [ClientId]
+     */
+    @JvmStatic
+    inline fun <T> withClientId(clientIdRaw: ClientId?, action: () -> T): T {
+      val clientIdService = ClientIdService.tryGetInstance() ?: return action()
 
-        /**
-         * Gets the current ClientId. Subject to AbsenceBehaviorValue
-         */
-        @JvmStatic
-        val current: ClientId
-            get() = when (AbsenceBehaviorValue) {
-                AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
-                AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
-            }
+      val clientId = if (!clientIdService.isValid(clientIdRaw)) {
+        getClientIdLogger().trace { "Invalid ClientId $clientIdRaw replaced with null at ${Throwable().fillInStackTrace()}" }
+        null
+      }
+      else clientIdRaw
 
-        /**
-         * Gets the current ClientId. Can be null if none was set.
-         */
-        @JvmStatic
-        val currentOrNull: ClientId?
-            get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
-
-        /**
-         * Overrides the ID that is considered to be local to this process. Can be only invoked once.
-         */
-        @JvmStatic
-        fun overrideLocalId(newId: ClientId) {
-            require(localId == defaultLocalId)
-            localId = newId
-        }
-
-        /**
-         * Returns true if and only if the given ID is considered to be local to this process
-         */
-        @JvmStatic
-        @Deprecated("Use ClientId.isLocal", ReplaceWith("clientId.isLocal", "com.intellij.codeWithMe.ClientId.Companion.isLocal"))
-        fun isLocalId(clientId: ClientId?): Boolean {
-            return clientId.isLocal
-        }
-
-        /**
-         * Is true if and only if the given ID is considered to be local to this process
-         */
-        @JvmStatic
-        val ClientId?.isLocal: Boolean
-            get() = this == null || this == localId
-
-        /**
-         * Returns true if the given ID is local or a client is still in the session.
-         * Consider subscribing to a proper lifetime instead of this check.
-         */
-        @JvmStatic
-        @Deprecated("Use ClientId.isValid", ReplaceWith("clientId.isValid", "com.intellij.codeWithMe.ClientId.Companion.isValid"))
-        fun isValidId(clientId: ClientId?): Boolean {
-            return clientId.isValid
-        }
-
-        /**
-         * Is true if the given ID is local or a client is still in the session.
-         * Consider subscribing to a proper lifetime instead of this check
-         */
-        @JvmStatic
-        val ClientId?.isValid: Boolean
-            get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
-
-        /**
-         * Returns a disposable object associated with the given ID.
-         * Consider using a lifetime that is usually passed along with the ID
-         */
-        @JvmStatic
-        fun ClientId?.toDisposable(): Disposable {
-            return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
-        }
-
-        /**
-         * Invokes a runnable under the given ClientId
-         */
-        @JvmStatic
-        fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
-
-        /**
-         * Computes a value under given ClientId
-         */
-        @JvmStatic
-        fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
-
-        /**
-         * Computes a value under given ClientId
-         */
-        @JvmStatic
-        inline fun <T> withClientId(clientIdRaw: ClientId?, action: () -> T): T {
-            val clientIdService = ClientIdService.tryGetInstance() ?: return action()
-
-            val clientId = if (!clientIdService.isValid(clientIdRaw)) {
-              getClientIdLogger().trace { "Invalid ClientId $clientIdRaw replaced with null at ${Throwable().fillInStackTrace()}" }
-              null
-            } else clientIdRaw
-
-            val foreignMainThreadActivity = clientIdService.checkLongActivity &&
-                                            ApplicationManager.getApplication().isDispatchThread &&
-                                            !clientId.isLocal
-            val old = clientIdService.clientIdValue
-            try {
-                clientIdService.clientIdValue = clientId?.value
-                if (foreignMainThreadActivity) {
-                    val beforeActionTime = System.currentTimeMillis()
-                    val result = action()
-                    val delta = System.currentTimeMillis() - beforeActionTime
-                    if (delta > 10000) {
-                        getClientIdLogger().warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
-                    }
-                    return result
-                } else
-                    return action()
-            } finally {
-                clientIdService.clientIdValue = old
-            }
-        }
-
-        @JvmStatic
-        fun <T> decorateFunction(action: () -> T): () -> T {
-          if (propagateAcrossThreads) return action
-          val currentId = currentOrNull
-          return {
-            withClientId(currentId) {
-              return@withClientId action()
-            }
+      val foreignMainThreadActivity = clientIdService.checkLongActivity &&
+                                      ApplicationManager.getApplication().isDispatchThread &&
+                                      !clientId.isLocal
+      val old = clientIdService.clientIdValue
+      try {
+        clientIdService.clientIdValue = clientId?.value
+        if (foreignMainThreadActivity) {
+          val beforeActionTime = System.currentTimeMillis()
+          val result = action()
+          val delta = System.currentTimeMillis() - beforeActionTime
+          if (delta > 10000) {
+            getClientIdLogger().warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
           }
+          return result
         }
-
-        @JvmStatic
-        fun decorateRunnable(runnable: Runnable) : Runnable {
-            if (!propagateAcrossThreads) {
-                return runnable
-            }
-
-            val currentId = currentOrNull
-            return Runnable {
-                withClientId(currentId) { runnable.run() }
-            }
+        else {
+          return action()
         }
-
-        @JvmStatic
-        fun <T> decorateCallable(callable: Callable<T>) : Callable<T> {
-            if (!propagateAcrossThreads) return callable
-            val currentId = currentOrNull
-            return Callable { withClientId(currentId, callable) }
-        }
-
-        @JvmStatic
-        fun <T, R> decorateFunction(function: Function<T, R>) : Function<T, R> {
-            if (!propagateAcrossThreads) return function
-            val currentId = currentOrNull
-            return Function { withClientId(currentId) { function.apply(it) } }
-        }
-
-        @JvmStatic
-        fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>) : BiConsumer<T, U> {
-            if (!propagateAcrossThreads) return biConsumer
-            val currentId = currentOrNull
-            return BiConsumer { t, u -> withClientId(currentId) { biConsumer.accept(t, u) } }
-        }
-
-        @JvmStatic
-        fun <T> decorateProcessor(processor: Processor<T>) : Processor<T> {
-            if (!propagateAcrossThreads) return processor
-            val currentId = currentOrNull
-            return Processor { withClientId(currentId) { processor.process(it) } }
-        }
-
-        /** Sets current ClientId.
-         * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
-         * In most cases it's convenient and preferable to use [withClientId].
-         */
-        @JvmStatic
-        fun trySetCurrentClientId(clientId: ClientId?) {
-            val clientIdService = ClientIdService.tryGetInstance()
-            if (clientIdService != null) {
-                clientIdService.clientIdValue = clientId?.value
-            }
-        }
-
+      }
+      finally {
+        clientIdService.clientIdValue = old
+      }
     }
+
+
+    @JvmStatic
+    fun <T> decorateFunction(action: () -> T): () -> T {
+      if (propagateAcrossThreads) return action
+      val currentId = currentOrNull
+      return {
+        withClientId(currentId) {
+          return@withClientId action()
+        }
+      }
+    }
+
+    @JvmStatic
+    fun decorateRunnable(runnable: Runnable): Runnable {
+      if (!propagateAcrossThreads) {
+        return runnable
+      }
+
+      val currentId = currentOrNull
+      return Runnable {
+        withClientId(currentId) { runnable.run() }
+      }
+    }
+
+    @JvmStatic
+    fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
+      if (!propagateAcrossThreads) return callable
+      val currentId = currentOrNull
+      return Callable { withClientId(currentId, callable) }
+    }
+
+    @JvmStatic
+    fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
+      if (!propagateAcrossThreads) return function
+      val currentId = currentOrNull
+      return Function { withClientId(currentId) { function.apply(it) } }
+    }
+
+    @JvmStatic
+    fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
+      if (!propagateAcrossThreads) return biConsumer
+      val currentId = currentOrNull
+      return BiConsumer { t, u -> withClientId(currentId) { biConsumer.accept(t, u) } }
+    }
+
+    @JvmStatic
+    fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
+      if (!propagateAcrossThreads) return processor
+      val currentId = currentOrNull
+      return Processor { withClientId(currentId) { processor.process(it) } }
+    }
+
+    /** Sets current [ClientId].
+     * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
+     * In most cases it's convenient and preferable to use [withClientId].
+     */
+    @JvmStatic
+    fun trySetCurrentClientId(clientId: ClientId?) {
+      val clientIdService = ClientIdService.tryGetInstance()
+      if (clientIdService != null) {
+        clientIdService.clientIdValue = clientId?.value
+      }
+    }
+  }
 }
 
 fun isForeignClientOnServer(): Boolean {
-    return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
+  return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
 }
 
 fun isOnGuest(): Boolean {
-    return ClientId.localId != ClientId.defaultLocalId
+  return ClientId.localId != ClientId.defaultLocalId
 }
 
 fun getStackTrace(): String {
-    val builder = StringBuilder()
-    val trace = Thread.currentThread().stackTrace
-    for (element in trace) {
-        with(builder) { append("\tat $element\n") }
-    }
+  val builder = StringBuilder()
+  val trace = Thread.currentThread().stackTrace
+  for (element in trace) {
+    with(builder) { append("\tat $element\n") }
+  }
 
-    return builder.toString()
+  return builder.toString()
 }
