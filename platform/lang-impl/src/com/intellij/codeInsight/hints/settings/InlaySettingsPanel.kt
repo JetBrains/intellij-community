@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.hints.settings.language.NewInlayProviderSettingsModel
-import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
@@ -28,27 +26,15 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
 
   init {
-    val settings = InlayHintsSettings.instance()
-    val providerInfos = InlayHintsProviderFactory.EP.extensionList.flatMap {
-      it.getProvidersInfo(project)
-    }.filter { it.provider.isLanguageSupported(it.language) }
-    val groups = providerInfos.groupBy { it.provider.groupId }.mapValues {
-      it.value.map { info ->
-        NewInlayProviderSettingsModel(info.provider.withSettings(info.language, settings), settings) as InlayProviderSettingsModel
-      }
-    }.toMutableMap()
-    val parameterModels = PARAMETER_NAME_HINTS_EP.extensionList.map {
-      ParameterInlayProviderSettingsModel(it.instance, Language.findLanguageByID(it.language)!!)
+    val models = InlaySettingsProvider.EP.getExtensions().flatMap { provider ->
+      provider.getSupportedLanguages(project).flatMap { provider.createModels(project, it) }
     }
-    if (parameterModels.isNotEmpty()) {
-      groups[PARAMETERS_GROUP] = parameterModels
-    }
-    val sortedMap = groups.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+    val groups = models.groupBy { it.groupId }.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
 
     val root = CheckedTreeNode()
-    val lastSelected = settings.getLastViewedProviderId()
+    val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
-    for (group in sortedMap) {
+    for (group in groups) {
       val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
