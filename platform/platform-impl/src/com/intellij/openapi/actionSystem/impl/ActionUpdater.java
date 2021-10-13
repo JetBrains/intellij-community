@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-final class ActionUpdater {
+final class ActionUpdater extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
@@ -686,7 +686,7 @@ final class ActionUpdater {
     return ((UpdateSessionImpl)session).updater;
   }
 
-  private static class UpdateSessionImpl extends UserDataHolderBase implements UpdateSession {
+  private static class UpdateSessionImpl implements UpdateSession {
     final ActionUpdater updater;
     final UpdateStrategy strategy;
 
@@ -710,6 +710,16 @@ final class ActionUpdater {
     @Override
     public Presentation presentation(@NotNull AnAction action) {
       return updater.orDefault(action, updater.update(action, strategy));
+    }
+
+    @Override
+    public <T> @Nullable T getUserData(@NotNull Key<T> key) {
+      return updater.getUserData(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      updater.putUserData(key, value);
     }
   }
 }
