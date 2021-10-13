@@ -34,7 +34,6 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 class YAMLFormattingContext {
@@ -96,17 +95,35 @@ class YAMLFormattingContext {
     return YAMLTokenTypes.COLON.equals(nodes.get(0).getElementType()) && YAMLTokenTypes.SCALAR_KEY.equals(nodes.get(1).getElementType());
   }
 
+  private static boolean isAfterSequenceMarker(ASTNode node) {
+    List<ASTNode> nodes = StreamEx.iterate(node, Objects::nonNull, n -> n.getTreePrev()).skip(1)
+      .filter(n -> !YAMLElementTypes.SPACE_ELEMENTS.contains(n.getElementType()))
+      .takeWhile(n -> !YAMLTokenTypes.EOL.equals(n.getElementType())).limit(2).toList();
+    if (nodes.size() != 1) return false;
+    return YAMLTokenTypes.SEQUENCE_MARKER.equals(nodes.get(0).getElementType());
+  }
+
+  private static boolean isAdjectiveToMinus(ASTNode node) {
+    ASTNode prevLeaf = TreeUtil.prevLeaf(node);
+    // we don't consider`-` before template as a seq marker if there is no space before it, because it could be a `-1` value for instance
+    return prevLeaf != null && YAMLTokenTypes.SEQUENCE_MARKER.equals(prevLeaf.getElementType());
+  }
+
   @Nullable
   Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && endsWithTemplate(((ASTBlock)child1).getNode())) {
       return null;
     }
-    
+
     if (child2 instanceof ASTBlock && startsWithTemplate(((ASTBlock)child2).getNode())) {
-      if (isAfterKey(((ASTBlock)child2).getNode())) {
-        IElementType parentType = Optional.of(parent)
-          .map(it -> ObjectUtils.tryCast(it, ASTBlock.class)).map(it -> it.getNode()).map(it -> it.getElementType()).orElse(null);
-        return mySpaceBuilder.getSpacing(parent, parentType, YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+      ASTNode astNode = ((ASTBlock)child2).getNode();
+      if (!isAdjectiveToMinus(astNode)) {
+        if (isAfterKey(astNode)) {
+          return mySpaceBuilder.getSpacing(parent, getNodeElementType(parent), YAMLTokenTypes.COLON, YAMLTokenTypes.SCALAR_TEXT);
+        }
+        if (isAfterSequenceMarker(astNode)) {
+          return getSpacingAfterSequenceMarker(child1, child2);
+        }
       }
       return null;
     }
@@ -116,6 +133,10 @@ class YAMLFormattingContext {
       return simpleSpacing;
     }
 
+    return getSpacingAfterSequenceMarker(child1, child2);
+  }
+
+  private Spacing getSpacingAfterSequenceMarker(Block child1, Block child2) {
     if (!(child1 instanceof ASTBlock && child2 instanceof ASTBlock)) {
       return null;
     }
@@ -155,6 +176,15 @@ class YAMLFormattingContext {
       }
     }
     return Spacing.createSpacing(spaces, spaces, minLineFeeds, false, 0);
+  }
+
+  private static @Nullable IElementType getNodeElementType(Block parent) {
+    if (parent == null) return null;
+    ASTBlock it = ObjectUtils.tryCast(parent, ASTBlock.class);
+    if (it == null) return null;
+    ASTNode node = it.getNode();
+    if (node == null) return null;
+    return node.getElementType();
   }
 
   private static boolean startsWithTemplate(@Nullable ASTNode astNode) {
