@@ -77,6 +77,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun reset()
 
+  var isMergedNode: Boolean = false
+
   @get:NlsContexts.Checkbox
   abstract val mainCheckBoxLabel: String
 
