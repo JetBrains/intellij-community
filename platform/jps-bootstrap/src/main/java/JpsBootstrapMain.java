@@ -150,15 +150,12 @@ public class JpsBootstrapMain {
     final long buildStart = System.currentTimeMillis();
     final String[] firstError = {null};
 
-    // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
-    // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
-
     Path dataStorageRoot = workDir.resolve("jps-build-data");
     Standalone.runBuild(
             () -> model,
             dataStorageRoot.toFile(),
             false,
-            ContainerUtil.set("kotlin.util.compiler-dependencies", moduleName),
+            ContainerUtil.set(moduleName),
             false,
             Collections.emptyList(),
             false,
