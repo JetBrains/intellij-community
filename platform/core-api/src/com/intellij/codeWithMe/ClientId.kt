@@ -48,6 +48,7 @@ data class ClientId(val value: String) {
     /**
      * Controls propagation behavior. When false, decorateRunnable does nothing.
      */
+    @JvmStatic
     var propagateAcrossThreads = false
 
     /**

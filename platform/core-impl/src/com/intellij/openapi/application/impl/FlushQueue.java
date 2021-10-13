@@ -77,7 +77,7 @@ final class FlushQueue {
 
   // Extracted to have a capture point
   private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
-    if (ClientId.Companion.getPropagateAcrossThreads()) {
+    if (ClientId.getPropagateAcrossThreads()) {
       ClientId.withClientId(info.clientId, info.runnable);
     }
     else {

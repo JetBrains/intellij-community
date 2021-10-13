@@ -384,7 +384,7 @@ public class Alarm implements Disposable {
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {
-          if (ClientId.Companion.getPropagateAcrossThreads()) {
+          if (ClientId.getPropagateAcrossThreads()) {
             ClientId.withClientId(myClientId, () -> QueueProcessor.runSafely(task));
           }
           else {

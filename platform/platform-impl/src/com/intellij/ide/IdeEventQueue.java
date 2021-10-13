@@ -1322,7 +1322,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.Companion.getPropagateAcrossThreads()) {
+    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.getPropagateAcrossThreads()) {
       // only do wrapping trickery with non-local events to preserve correct behaviour - local events will get dispatched under local ID anyways
       ClientId clientId = ClientId.getCurrent();
       super.postEvent(new InvocationEvent(event.getSource(), () -> ClientId.withClientId(clientId, () -> {
