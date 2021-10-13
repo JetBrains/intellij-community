@@ -146,7 +146,7 @@ class EventLogConfiguration {
 
 class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
                                                          private val eventLogConfiguration: EventLogConfiguration,
-val sessionId: String = generateSessionId()) {
+                                                         val sessionId: String = generateSessionId()) {
 
   val deviceId: String = getOrGenerateDeviceId()
   val bucket: Int = deviceId.asBucket()
