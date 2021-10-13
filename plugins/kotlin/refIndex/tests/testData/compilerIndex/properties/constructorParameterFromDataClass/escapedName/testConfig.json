@@ -3,11 +3,9 @@
     "usages": [
         "Explicit.kt",
         "Explicit2.kt",
-        "FirstComponentOnly.kt",
         "Implicit.kt",
         "Implicit2.kt",
         "Main.kt",
-        "Property.kt",
         "Property2.kt"
     ]
 }

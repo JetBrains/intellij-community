@@ -2,9 +2,7 @@
     "mainFile": "JAnn.java",
     "usages": [
         "ExplicitParameter.java",
-        "ExplicitParameter.kt",
         "ImplicitParameter.java",
-        "ImplicitParameter.kt",
         "JAnn.java",
         "Usage.java",
         "Usage.kt"

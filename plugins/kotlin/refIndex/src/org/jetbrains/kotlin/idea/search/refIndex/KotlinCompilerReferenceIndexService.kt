@@ -438,10 +438,9 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
-    val ownerFqName = parameter.ownerFunction?.let(::extractFqName)
-    val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return ownerFqName?.let(::listOf)
+    val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return null
     val componentFunctionName = parameter.asComponentFunctionName?.let { FqName(parameterFqName.parent().asString() + ".$it") }
-    return listOfNotNull(parameterFqName, componentFunctionName, ownerFqName)
+    return listOfNotNull(parameterFqName, componentFunctionName)
 }
 
 internal val KtParameter.asComponentFunctionName: String?
@@ -452,14 +451,9 @@ internal val KtParameter.asComponentFunctionName: String?
     }
 
 private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
-    val containingClass = psiMethod.containingClass
-    if (psiMethod.isConstructor) return containingClass?.getKotlinFqName()?.let(::listOf)
+    if (psiMethod.isConstructor) return psiMethod.containingClass?.getKotlinFqName()?.let(::listOf)
 
     val fqName = psiMethod.getKotlinFqName() ?: return null
-    if (containingClass?.isAnnotationType == true) {
-        return listOfNotNull(fqName, containingClass.getKotlinFqName())
-    }
-    
     val listOfFqName = listOf(fqName)
     if (psiMethod.hasModifier(JvmModifier.STATIC)) return listOfFqName
 
