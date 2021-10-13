@@ -14,6 +14,8 @@
   <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
   <property name="maven.resolver.ant.tasks.file.path" value="${build.dir}/${maven.resolver.ant.tasks.file.name}"/>
 
+  <xmlproperty file="${jps.bootstrap.dir}/pom.xml" prefix="jps.bootstrap.pom.xml"/>
+
   <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
 
   <loadresource property="kotlin.channel">
@@ -94,6 +96,9 @@
 
     <!-- Used later in JpsBootstrapMain to compare Kotlin versions -->
     <echo message="${kotlin.url}" file="${classes.dir}/kotlin.zip.url" />
+
+    <!-- Used later in JpsBootstrapMain to compare bootstrap intellij versions -->
+    <echo message="${jps.bootstrap.pom.xml.project.properties.bootstrap.intellij.version}" file="${classes.dir}/intellij.version" />
 
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">
