@@ -105,8 +105,8 @@ final class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
           exclude(name: "build.txt")
-          for (Map.Entry<Path, String> item : buildContext.distFiles) {
-            exclude(name: item.getValue() + "/" + item.getKey().fileName.toString())
+          buildContext.distFiles.each {
+            exclude(name: it.second + "/" + it.first.fileName.toString())
           }
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
