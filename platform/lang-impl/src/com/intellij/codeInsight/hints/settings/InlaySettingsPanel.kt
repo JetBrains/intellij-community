@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
@@ -153,7 +154,12 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun addPreview(previewText: String?, language: Language) {
     if (previewText != null) {
       val usagePanel = ActionUsagePanel()
-      usagePanel.editor.settings.isLineNumbersShown = false
+      usagePanel.editor.setBorder(JBUI.Borders.empty(10))
+      usagePanel.editor.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      usagePanel.editor.settings.apply {
+        isLineNumbersShown = false
+        isCaretRowShown = false
+      }
       usagePanel.reset(previewText, language.associatedFileType)
       rightPanel.add(usagePanel, "growx")
     }
