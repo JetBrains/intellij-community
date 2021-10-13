@@ -4,8 +4,8 @@
 set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
-JBS_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
-JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$JBS_COMMUNITY_HOME/out/jps-bootstrap}
+JPS_BOOTSTRAP_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
+JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$JPS_BOOTSTRAP_COMMUNITY_HOME/out/jps-bootstrap}
 
 SCRIPT_VERSION=jps-bootstrap-cmd-v1
 
@@ -27,15 +27,14 @@ case "$(uname)" in
     ;;
 esac
 
+ZULU_PREFIX=zulu11.50.19-ca-jdk11.0.12
 if [ "$darwin" = "true" ]; then
     case $(uname -m) in
       x86_64)
-        JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-macosx-x64.tar.gz
-        JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/amazon-corretto-11.0.9.12.1-macosx-x64-$SCRIPT_VERSION"
+        ZULU_ARCH=macosx_x64
         ;;
       arm64)
-        JVM_URL=https://cdn.azul.com/zulu/bin/zulu11.45.27-ca-jdk11.0.10-macosx_aarch64.tar.gz
-        JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/zulu-11.0.10-macosx-arm64-$SCRIPT_VERSION"
+        ZULU_ARCH=macosx_aarch64
         ;;
       *)
         die "Unknown architecture $(uname -m)"
@@ -44,18 +43,18 @@ if [ "$darwin" = "true" ]; then
 else
     case $(uname -m) in
       x86_64)
-        JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-x64.tar.gz
-        JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/amazon-corretto-11.0.9.12.1-linux-x64-$SCRIPT_VERSION"
+        ZULU_ARCH=linux_x64
         ;;
       aarch64)
-        JVM_URL=https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-aarch64.tar.gz
-        JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/amazon-corretto-11.0.9.12.1-linux-aarch64-$SCRIPT_VERSION"
+        ZULU_ARCH=aarch64
         ;;
       *)
         die "Unknown architecture $(uname -m)"
         ;;
     esac
 fi
+JVM_URL=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/$ZULU_PREFIX-$ZULU_ARCH.tar.gz
+JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
 
 mkdir -p "$JPS_BOOTSTRAP_WORK_DIR/jvm"
 
@@ -101,7 +100,8 @@ fi
 
 set -x
 
-"$JAVA_HOME/bin/java" -jar "$JBS_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
+"$JAVA_HOME/bin/java" -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
-export JBS_COMMUNITY_HOME
+export JPS_BOOTSTRAP_COMMUNITY_HOME
+export JPS_BOOTSTRAP_WORK_DIR
 exec "$JAVA_HOME/bin/java" -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" JpsBootstrapMain "$@"

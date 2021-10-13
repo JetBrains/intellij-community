@@ -1,12 +1,11 @@
 @echo off
 
-set JBS_DIR=%~dp0
+set JPS_BOOTSTRAP_DIR=%~dp0
 
-for %%F in ("%JBS_DIR%\.") do set JBS_COMMUNUTY_PLATFORM_DIR=%%~dpF
-for %%F in ("%JBS_COMMUNUTY_PLATFORM_DIR%\.") do set JBS_COMMUNITY_HOME=%%~dpF
-for %%F in ("%JBS_COMMUNUTY_HOME%\.") do set JBS_INTELLIJ_HOME=%%~dpF
+for %%F in ("%JPS_BOOTSTRAP_DIR%\.") do set JPS_BOOTSTRAP_COMMUNITY_PLATFORM_DIR=%%~dpF
+for %%F in ("%JPS_BOOTSTRAP_COMMUNITY_PLATFORM_DIR%\.") do set JPS_BOOTSTRAP_COMMUNITY_HOME=%%~dpF
 
-if "%JPS_BOOTSTRAP_WORK_DIR%"=="" set JPS_BOOTSTRAP_WORK_DIR=%JBS_COMMUNITY_HOME%out\jps-bootstrap\
+if "%JPS_BOOTSTRAP_WORK_DIR%"=="" set JPS_BOOTSTRAP_WORK_DIR=%JPS_BOOTSTRAP_COMMUNITY_HOME%out\jps-bootstrap\
 
 setlocal
 
@@ -68,7 +67,7 @@ if not exist "%JAVA_HOME%\bin\java.exe" (
 
 endlocal
 
-"%JAVA_HOME%\bin\java.exe" -jar "%JBS_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JBS_DIR%jps-bootstrap-classpath.xml"
+"%JAVA_HOME%\bin\java.exe" -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
 "%JAVA_HOME%\bin\java.exe" -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" JpsBootstrapMain %*

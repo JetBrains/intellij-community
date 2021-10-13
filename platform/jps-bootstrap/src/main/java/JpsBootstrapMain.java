@@ -36,7 +36,7 @@ import java.util.*;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
 public class JpsBootstrapMain {
 
-  private static final String COMMUNITY_HOME_ENV = "JBS_COMMUNITY_HOME";
+  private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
 
   @SuppressWarnings("ConfusingArgumentToVarargsMethod")
