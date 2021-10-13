@@ -14,6 +14,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
+import com.jetbrains.python.sdk.poetry.isPoetry
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
 val Project.sdks get() = modules.mapNotNull(Module::getSdk)
@@ -41,6 +42,7 @@ private val Sdk.interpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> "pipenv"
+    isPoetry -> "poetry"
     PythonSdkUtil.isConda(this) -> "condavenv"
     PythonSdkUtil.isVirtualEnv(this) -> "virtualenv"
     else -> "regular"
