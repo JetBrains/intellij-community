@@ -35,20 +35,27 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
     for (group in groups) {
-      val groupNode = CheckedTreeNode(ApplicationBundle.message("settings.hints.group." + group.key))
+      val groupName = ApplicationBundle.message("settings.hints.group." + group.key)
+      val groupNode = CheckedTreeNode(groupName)
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
-        if (lang.value.size == 1 && OTHER_GROUP != group.key) {
-          val model = lang.value.first()
-          nodeToSelect = addModelNode(model, groupNode, lastSelected, nodeToSelect)
-          model.isMergedNode = true
+        val firstModel = lang.value.first()
+        val langNode: CheckedTreeNode
+        val startFrom: Int
+        if ((lang.value.size == 1 || groupName == firstModel.name) && OTHER_GROUP != group.key) {
+          nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
+          firstModel.isMergedNode = true
+          langNode = groupNode.firstChild as CheckedTreeNode
+          startFrom = 1
         }
         else {
-          val langNode = CheckedTreeNode(lang.key)
+          langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
-          lang.value.forEach {
-            nodeToSelect = addModelNode(it, langNode, lastSelected, nodeToSelect)
-          }
+          startFrom = 0
+        }
+
+        for (it in startFrom until lang.value.size) {
+          nodeToSelect = addModelNode(lang.value[it], langNode, lastSelected, nodeToSelect)
         }
       }
     }
