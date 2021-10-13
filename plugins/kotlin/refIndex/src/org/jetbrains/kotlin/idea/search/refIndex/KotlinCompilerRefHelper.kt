@@ -104,7 +104,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
     private fun KtCallableDeclaration.asCompilerRefsWithJvmOverloads(qualifierId: Int, nameId: Int): List<CompilerRef.CompilerMember> {
         val numberOfArguments = numberOfArguments(countReceiver = true)
-        if (findAnnotation(JVM_OVERLOADS_FQ_NAME.shortName().asString()) == null) {
+        if (!hasAnnotationWithShortName(JVM_OVERLOADS_FQ_NAME.shortName().asString())) {
             val mainMethodRef = CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, numberOfArguments)
             return if (this is KtPrimaryConstructor && valueParameters.all(KtParameter::hasDefaultValue)) {
                 listOf(mainMethodRef, CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, 0))
@@ -140,9 +140,9 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         qualifierId: Int,
         names: NameEnumerator,
         isMutable: Boolean,
-    ): List<CompilerRef.CompilerMember>? where T: KtCallableDeclaration, T: KtValVarKeywordOwner {
+    ): List<CompilerRef.CompilerMember>? where T : KtCallableDeclaration, T : KtValVarKeywordOwner {
         val name = name ?: return null
-        if (hasModifier(KtTokens.CONST_KEYWORD) || findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName().asString()) != null) {
+        if (hasModifier(KtTokens.CONST_KEYWORD) || hasAnnotationWithShortName(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName().asString())) {
             return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name)))
         }
 
