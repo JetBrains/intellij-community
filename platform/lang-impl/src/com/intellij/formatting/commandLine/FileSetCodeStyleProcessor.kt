@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -50,7 +51,7 @@ class FileSetFormatter(
 ) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive) {
 
   override val operationContinuous = "Formatting"
-  override val operationPerfect = "Formatted"
+  override val operationPerfect = "formatted"
 
   override fun processFileInternal(virtualFile: VirtualFile): String {
     val document = FileDocumentManager.getInstance().getDocument(virtualFile)
@@ -60,7 +61,6 @@ class FileSetFormatter(
     }
 
     try {
-      VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
       NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
       if (psiFile == null) {
@@ -116,7 +116,7 @@ class FileSetFormatValidator(
 ) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive) {
 
   override val operationContinuous = "Checking"
-  override val operationPerfect = "Checked"
+  override val operationPerfect = "checked"
 
   override fun printReport() {
     super.printReport()
@@ -131,7 +131,6 @@ class FileSetFormatValidator(
       LOG.warn("No document available for " + virtualFile.path)
       return RESULT_MESSAGE_FAILED
     }
-
     val originalContent = document.text
 
     val psiCopy = createPsiCopy(virtualFile, originalContent)
@@ -192,7 +191,13 @@ abstract class FileSetCodeStyleProcessor(
   override fun processVirtualFile(virtualFile: VirtualFile) {
     messageOutput.info("$operationContinuous ${virtualFile.canonicalPath}...")
 
-    val resultMessage = if (virtualFile.fileType.isBinary) RESULT_MESSAGE_BINARY_FILE else processFileInternal(virtualFile)
+    val resultMessage = if (virtualFile.fileType.isBinary) {
+      RESULT_MESSAGE_BINARY_FILE
+    }
+    else {
+      VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+      processFileInternal(virtualFile)
+    }
     messageOutput.info("$resultMessage\n")
   }
 

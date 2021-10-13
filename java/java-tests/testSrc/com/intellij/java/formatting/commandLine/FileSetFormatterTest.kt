@@ -10,7 +10,7 @@ class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
   override fun setUp() {
     super.setUp()
     processor = FileSetFormatter(codeStyleSettings!!, messageOutput!!, true).also {
-      it.addFileMask("*.java")
+      it.addFileMask(Regex(".*\\.java"))
     }
   }
 

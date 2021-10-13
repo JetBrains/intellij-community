@@ -33,18 +33,12 @@ abstract class FileSetProcessor(
   fun addEntry(filePath: String) = addEntry(File(filePath))
 
   fun addEntry(file: File) =
-    file.takeIf { it.exists() }
-      ?.also { topEntries.add(it) }
+    file
+      .takeIf { it.exists() }
+      ?.let { topEntries.add(it) }
     ?: throw IOException("File $file not found.")
 
-  fun addFileMask(mask: String) =
-    mask
-      .replace(".", "\\.")
-      .replace("*", ".*")
-      .replace("?", ".")
-      .replace("+", "\\+")
-      .also { LOG.info("File mask regexp: $it") }
-      .let { fileMasks.add(Regex(it)) }
+  fun addFileMask(mask: Regex) = fileMasks.add(mask)
 
   private fun File.matchesFileMask() =
     fileMasks.isEmpty() || fileMasks.any { mask -> mask.matches(name) }
@@ -71,5 +65,8 @@ abstract class FileSetProcessor(
   }
 
   abstract fun processVirtualFile(virtualFile: VirtualFile)
+
+  fun getFileMasks() = fileMasks.toList()
+  fun getEntries() = topEntries.toList()
 
 }

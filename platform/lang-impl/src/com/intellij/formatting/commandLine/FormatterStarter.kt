@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
 import java.io.File
 import java.io.IOException
@@ -19,6 +19,7 @@ import kotlin.system.exitProcess
 const val FORMAT_COMMAND_NAME = "format"
 
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
+
 
 /**
  * A launcher class for command-line formatter.
@@ -38,7 +39,7 @@ class FormatterStarter : ApplicationStarter {
         formatter.processFiles()
         formatter.printReport()
         if (!formatter.isResultSuccessful()) {
-            exitProcess(1)
+          exitProcess(1)
         }
       }
     }
@@ -59,67 +60,56 @@ class FormatterStarter : ApplicationStarter {
     exitProcess(1)
   }
 
-  private fun createFormatter(args: Array<String>): FileSetCodeStyleProcessor {
+  fun createFormatter(args: Array<String>): FileSetCodeStyleProcessor {
     if (args.size < 2) {
       showUsageAndExit()
     }
 
     var skipNext = false
 
-    var isRecursive = false
-    var isDryRun = false
-    var codeStyleSettings = CodeStyleSettingsManager.getInstance().createSettings()
-    val masks = arrayListOf<String>()
-    val entries = arrayListOf<String>()
+    val builder = CodeStyleProcessorBuilder(messageOutput)
 
     args
       .asSequence()
+
+      // Skip first argument "format" -- routing from the top level
+      .drop(1)
+
+      // try to treat every two arguments as an argument and its param.
+      // If param is not needed we'll take it as an arg on the next iteration,
+      // otherwise we'll skip using a boolean flag `skipNext`
       .windowed(size = 2, step = 1, partialWindows = true)
-      .forEach { pair ->
+
+      .forEach { argAndParam ->
+        val arg = argAndParam[0]
+        val param = argAndParam.getOrNull(1)
 
         if (skipNext) {
           skipNext = false
           return@forEach
         }
 
-        val arg = pair[0]
-        val argParam = pair.getOrNull(1)
-
         when (arg) {
           "-h", "-help" -> showUsageAndExit()
-          "-r", "-R" -> isRecursive = true
-          "-d", "-dry" -> isDryRun = true
+          "-r", "-R" -> builder.recursive()
+          "-d", "-dry" -> builder.dryRun()
           "-s", "-settings" -> {
-            argParam ?: throw fatalError("Missing settings file path.")
-            val settings = readSettings(argParam) ?: throw fatalError("Cannot find file $argParam")
-            codeStyleSettings = settings
+            param ?: throw fatalError("Missing settings file path.")
+            builder.withCodeStyleSettings(readSettings(param) ?: throw fatalError("Cannot find file $param"))
             skipNext = true
           }
           "-m", "-mask" -> {
-            argParam ?: throw fatalError("Missing file mask(s).")
-            argParam.split(',')
-              .filter { it.isNotBlank() }
-              .forEach { masks.add(it) }
+            builder.withFileMasks(param ?: throw fatalError("Missing file mask(s)."))
             skipNext = true
           }
           else -> {
             if (arg.startsWith("-")) throw fatalError("Unknown option $arg")
-            entries.add(arg)
+            builder.withEntry(arg)
           }
         }
       }
 
-    try {
-      val createProcessor = if (isDryRun) ::FileSetFormatValidator else ::FileSetFormatter
-
-      return createProcessor(codeStyleSettings, messageOutput, isRecursive).apply {
-        masks.forEach(this::addFileMask)
-        entries.forEach(this::addEntry)
-      }
-    }
-    catch (e: IOException) {
-      throw fatalError(e.localizedMessage)
-    }
+    return builder.build()
   }
 
 }
@@ -134,10 +124,11 @@ Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] path1 path2...
   path<n>        A path to a file or a directory.  
 """
 
-private fun readSettings(settingsPath: String) =
+private fun readSettings(settingsPath: String): CodeStyleSettings? =
   VfsUtil.findFileByIoFile(File(settingsPath), true)
     ?.let { CodeStyleSettingsLoader().loadSettings(it) }
 
-private val appInfo =
+
+private val appInfo: String =
   (ApplicationInfoEx.getInstanceEx() as ApplicationInfoImpl)
-    .apply { "$fullApplicationName, build ${build.asString()}" }
+    .let { "${it.fullApplicationName}, build ${it.build.asString()}" }

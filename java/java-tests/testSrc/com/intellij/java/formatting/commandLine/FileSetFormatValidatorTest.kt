@@ -11,7 +11,7 @@ class FileSetFormatValidatorTest : FileSetCodeStyleProcessorTestBase() {
   override fun setUp() {
     super.setUp()
     processor = FileSetFormatValidator(codeStyleSettings!!, messageOutput!!, true).also {
-      it.addFileMask("*.java")
+      it.addFileMask(Regex(".*\\.java"))
     }
   }
 
