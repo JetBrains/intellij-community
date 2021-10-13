@@ -7,6 +7,8 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -51,7 +53,12 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
               }
             }
             else {
-              throw RemoteSdkException("Python interpreter process exited with non-zero exit code")
+              throw RemoteSdkException("Python interpreter process exited with non-zero exit code").also {
+                it.addSuppressed(RuntimeExceptionWithAttachments(
+                  "Exit code $${processOutput.exitCode}",
+                  Attachment("stdout.txt", processOutput.stdout),
+                  Attachment("stderr.txt", processOutput.stderr)))
+              }
             }
           }
           catch (e: Exception) {
