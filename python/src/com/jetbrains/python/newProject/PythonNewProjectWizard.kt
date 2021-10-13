@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
@@ -61,6 +62,16 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
    * The Python module after it has been created during [NewProjectWizardStep.setupProject].
    */
   val module: Module?
+
+  companion object {
+    val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
+
+    val NewProjectWizardStep.pythonData get() = data.getUserData(KEY)!!
+
+    val NewProjectWizardStep.pythonSdkProperty get() = pythonData.pythonSdkProperty
+    val NewProjectWizardStep.pythonSdk get() = pythonData.pythonSdk
+    val NewProjectWizardStep.module get() = pythonData.module
+  }
 }
 
 /**
@@ -120,6 +131,10 @@ class NewPythonProjectStep<P>(parent: P)
     else {
       SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
     }
+  }
+
+  init {
+    data.putUserData(NewProjectWizardPythonData.KEY, this)
   }
 }
 

@@ -15,4 +15,6 @@ abstract class AbstractNewProjectWizardStep(parentStep: NewProjectWizardStep) : 
   final override val context by parentStep::context
 
   final override val propertyGraph by parentStep::propertyGraph
+
+  final override val data by parentStep::data
 }

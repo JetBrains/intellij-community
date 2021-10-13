@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.util.Key
 import java.nio.file.Path
 
 interface NewProjectWizardBaseData {
@@ -13,4 +14,16 @@ interface NewProjectWizardBaseData {
   var path: String
 
   val projectPath: Path
+
+  companion object {
+    val KEY = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
+
+    val NewProjectWizardStep.baseData get() = data.getUserData(KEY)!!
+
+    val NewProjectWizardStep.nameProperty get() = baseData.nameProperty
+    val NewProjectWizardStep.pathProperty get() = baseData.pathProperty
+    val NewProjectWizardStep.name get() = baseData.name
+    val NewProjectWizardStep.path get() = baseData.path
+    val NewProjectWizardStep.projectPath get() = baseData.projectPath
+  }
 }

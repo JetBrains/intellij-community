@@ -97,5 +97,9 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
         override val buildSystemProperty by ::stepProperty
         override val buildSystem by ::step
+
+        init {
+            data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+        }
     }
 }

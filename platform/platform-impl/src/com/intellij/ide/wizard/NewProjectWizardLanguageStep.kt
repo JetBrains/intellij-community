@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ui.UIBundle
 
-class NewProjectWizardLanguageStep(
-  parent: NewProjectWizardStep,
-  baseData: NewProjectWizardBaseData
-) : AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
-    NewProjectWizardLanguageData,
-    NewProjectWizardBaseData by baseData {
+class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
+  AbstractNewProjectWizardMultiStep<NewProjectWizardLanguageStep>(parent, LanguageNewProjectWizard.EP_NAME),
+  NewProjectWizardLanguageData,
+  NewProjectWizardBaseData by parent.baseData {
 
   override val self = this
 
@@ -16,4 +15,8 @@ class NewProjectWizardLanguageStep(
 
   override val languageProperty by ::stepProperty
   override val language by ::step
+
+  init {
+    data.putUserData(NewProjectWizardLanguageData.KEY, this)
+  }
 }

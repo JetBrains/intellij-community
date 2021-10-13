@@ -16,6 +16,7 @@ import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
@@ -28,6 +29,8 @@ import java.nio.file.Path
 
 
 class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
+
+  override val data = UserDataHolderBase()
 
   override val propertyGraph = PropertyGraph("New project wizard")
 
@@ -136,4 +139,8 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
   }
 
   override fun setupProject(project: Project) {}
+
+  init {
+    data.putUserData(NewProjectWizardBaseData.KEY, this)
+  }
 }

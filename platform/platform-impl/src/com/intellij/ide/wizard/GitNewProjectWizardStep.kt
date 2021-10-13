@@ -14,13 +14,14 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 
 class GitNewProjectWizardStep(
-  private val parent: NewProjectWizardBaseStep
+  parent: NewProjectWizardBaseStep
 ) : AbstractNewProjectWizardStep(parent),
-    NewProjectWizardBaseData by parent {
+    NewProjectWizardBaseData by parent,
+    GitNewProjectWizardData {
 
-  private val gitProperty = propertyGraph.graphProperty { false }
+  override val gitProperty = propertyGraph.graphProperty { false }
 
-  private var git by gitProperty
+  override var git by gitProperty
 
   override fun setupUI(builder: Panel) {
     with(builder) {
@@ -33,12 +34,16 @@ class GitNewProjectWizardStep(
 
   override fun setupProject(project: Project) {
     if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(parent.projectPath)
+      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
       if (projectBaseDirectory != null) {
         runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
           GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
         }
       }
     }
+  }
+
+  init {
+    data.putUserData(GitNewProjectWizardData.KEY, this)
   }
 }
