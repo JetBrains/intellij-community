@@ -128,6 +128,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         names: NameEnumerator,
     ): List<CompilerRef.CompilerMember>? {
         if (!hasValOrVar()) return null
+        if (containingClassOrObject?.isAnnotation() == true) {
+            val name = name ?: return null
+            return listOf(CompilerRef.JavaCompilerMethodRef(qualifierId, names.tryEnumerate(name), 0))
+        }
+
         val compilerMembers = asCompilerRefs(qualifierId, names, isMutable)
         val componentFunctionMember = asComponentFunctionName?.let {
             CompilerRef.JavaCompilerMethodRef(qualifierId, names.tryEnumerate(it), 0)

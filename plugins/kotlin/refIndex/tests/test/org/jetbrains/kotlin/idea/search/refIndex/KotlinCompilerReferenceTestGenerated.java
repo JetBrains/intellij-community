@@ -619,6 +619,16 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotation")
+            public void testAnnotation() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/annotation/");
+            }
+
+            @TestMetadata("annotationWithCustomParameter")
+            public void testAnnotationWithCustomParameter() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter/");
+            }
+
             @TestMetadata("hierarchy")
             public void testHierarchy() throws Exception {
                 runTest("testData/compilerIndex/properties/constructorParameter/hierarchy/");
