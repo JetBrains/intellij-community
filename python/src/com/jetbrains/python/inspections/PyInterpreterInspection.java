@@ -36,6 +36,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
@@ -68,14 +69,14 @@ public final class PyInterpreterInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
 
     public Visitor(@Nullable ProblemsHolder holder,
-                   @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+                   @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

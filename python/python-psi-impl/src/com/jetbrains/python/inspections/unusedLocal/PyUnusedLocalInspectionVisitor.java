@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +45,12 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final HashSet<PsiElement> myUsedElements;
 
   public PyUnusedLocalInspectionVisitor(@NotNull ProblemsHolder holder,
-                                        @NotNull LocalInspectionToolSession session,
                                         boolean ignoreTupleUnpacking,
                                         boolean ignoreLambdaParameters,
                                         boolean ignoreRangeIterationVariables,
-                                        boolean ignoreVariablesStartingWithUnderscore) {
-    super(holder, session);
+                                        boolean ignoreVariablesStartingWithUnderscore,
+                                        @NotNull TypeEvalContext context) {
+    super(holder, context);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
