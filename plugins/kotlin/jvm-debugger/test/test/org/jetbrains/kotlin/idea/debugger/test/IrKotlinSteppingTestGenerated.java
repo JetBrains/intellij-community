@@ -1110,6 +1110,41 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/crossinlineLiteral.kt");
         }
 
+        @TestMetadata("filterChainedFunctionCalls.kt")
+        public void testFilterChainedFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsFromClass.kt")
+        public void testFilterFunctionCallsFromClass() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsFromClass.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsFromInlineClass.kt")
+        public void testFilterFunctionCallsFromInlineClass() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsFromInlineClass.kt");
+        }
+
+        @TestMetadata("filterFunctionCallsInTryCatchBlock.kt")
+        public void testFilterFunctionCallsInTryCatchBlock() throws Exception {
+            runTest("testData/stepping/custom/filterFunctionCallsInTryCatchBlock.kt");
+        }
+
+        @TestMetadata("filterInlineFunctionCalls.kt")
+        public void testFilterInlineFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterInlineFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterNestedFunctionCalls.kt")
+        public void testFilterNestedFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/filterNestedFunctionCalls.kt");
+        }
+
+        @TestMetadata("filterProperties.kt")
+        public void testFilterProperties() throws Exception {
+            runTest("testData/stepping/custom/filterProperties.kt");
+        }
+
         @TestMetadata("finallyBlock.kt")
         public void testFinallyBlock() throws Exception {
             runTest("testData/stepping/custom/finallyBlock.kt");
@@ -1373,6 +1408,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("smartStepIntoWithOverrides.kt")
         public void testSmartStepIntoWithOverrides() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoWithOverrides.kt");
+        }
+
+        @TestMetadata("smartStepWithInlineClass.kt")
+        public void testSmartStepWithInlineClass() throws Exception {
+            runTest("testData/stepping/custom/smartStepWithInlineClass.kt");
         }
 
         @TestMetadata("stepIntoLibWithSources.kt")

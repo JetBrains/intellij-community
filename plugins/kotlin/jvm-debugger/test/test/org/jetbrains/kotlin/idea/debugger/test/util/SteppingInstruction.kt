@@ -11,7 +11,9 @@ enum class SteppingInstructionKind(val directiveName: String) {
     ForceStepOver("STEP_OVER_FORCE"),
     SmartStepInto("SMART_STEP_INTO"),
     SmartStepIntoByIndex("SMART_STEP_INTO_BY_INDEX"),
-    Resume("RESUME")
+    Resume("RESUME"),
+    // Mock instruction to check the number of smart step targets in various stepping scenarios
+    SmartStepTargetsExpectedNumber("SMART_STEP_TARGETS_EXPECTED_NUMBER")
 }
 
 class SteppingInstruction(val kind: SteppingInstructionKind, val arg: Int) {

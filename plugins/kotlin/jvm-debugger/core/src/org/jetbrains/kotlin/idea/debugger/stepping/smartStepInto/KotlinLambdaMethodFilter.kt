@@ -10,6 +10,7 @@ import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.isResumeImplMethodNameFromAnyLanguageSettings
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getMethodNameWithoutMangling
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.safeMethod
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 class KotlinLambdaMethodFilter(
     lambda: KtFunction,
     private val callingExpressionLines: Range<Int>?,
-    private val info: KotlinLambdaInfo
+    private val lambdaInfo: KotlinLambdaInfo
 ) : BreakpointStepMethodFilter {
     private val lambdaPtr = lambda.createSmartPointer()
     private val firstStatementPosition: SourcePosition?
@@ -40,8 +41,8 @@ class KotlinLambdaMethodFilter(
     override fun getLastStatementLine() = lastStatementLine
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
-        val lambda = runReadAction { lambdaPtr.element } ?: return true
-        if (info.isInline) {
+        val lambda = lambdaPtr.getElementInReadAction() ?: return true
+        if (lambdaInfo.isInline) {
             return isInsideInlineArgument(lambda, location, process)
         }
 
@@ -50,7 +51,8 @@ class KotlinLambdaMethodFilter(
             return false
         }
 
-        return isTargetLambdaName(method.name()) &&
+        val methodName = method.name() ?: return false
+        return isTargetLambdaName(methodName) &&
                location.matchesExpression(process, lambda.bodyExpression)
     }
 
@@ -61,14 +63,19 @@ class KotlinLambdaMethodFilter(
     }
 
     override fun getCallingExpressionLines() =
-        if (info.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
 
-    fun isTargetLambdaName(name: String?) =
-        when {
-            name == null -> false
-            info.isSuspend -> isResumeImplMethodNameFromAnyLanguageSettings(name)
-            else -> name == info.methodName || name.isGeneratedIrBackendLambdaMethodName()
-        }
+    fun isTargetLambdaName(name: String): Boolean {
+        val actualName =
+            if (lambdaInfo.isNameMangledInBytecode)
+                name.getMethodNameWithoutMangling()
+            else
+                name
+
+        if (lambdaInfo.isSuspend)
+            return isResumeImplMethodNameFromAnyLanguageSettings(actualName)
+        return actualName == lambdaInfo.methodName || actualName.isGeneratedIrBackendLambdaMethodName()
+    }
 }
 
 fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair<SourcePosition?, SourcePosition?> {
