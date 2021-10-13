@@ -16,9 +16,8 @@
 
   <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
 
-  <xmlproperty file="${community.home}/.idea/libraries/kotlinc_kotlin_compiler.xml" prefix="kotlinc.library.xml"/>
   <loadresource property="kotlin.channel">
-  <string value="${dependencies.kotlinCompilerBuild}" />
+    <string value="${dependencies.kotlinCompilerBuild}"/>
     <filterchain>
       <tokenfilter>
         <replaceregex pattern="^.*:([a-zA-Z\-0-9.]+)$" replace="\1"/>
@@ -26,7 +25,7 @@
     </filterchain>
   </loadresource>
   <loadresource property="kotlin.version">
-    <string value="${dependencies.kotlinCompilerBuild}" />
+    <string value="${dependencies.kotlinCompilerBuild}"/>
     <filterchain>
       <tokenfilter>
         <replaceregex pattern="^([a-zA-Z\-0-9.]+):.*$" replace="\1"/>
