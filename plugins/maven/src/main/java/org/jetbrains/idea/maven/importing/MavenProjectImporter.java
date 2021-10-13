@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -29,7 +30,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
@@ -519,12 +524,23 @@ public class MavenProjectImporter {
     }
   }
 
-  private static void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
+  private void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    for (Module m : modules) {
-      if (m.isDisposed()) continue;
-      ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
+    WorkspaceEntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    WorkspaceEntityStorageBuilder storageBuilder = WorkspaceEntityStorageBuilder.from(initialStorage);
+    for (Module module : modules) {
+      if (module.isDisposed()) continue;
+      ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+      if (modulePropertyManager instanceof ExternalSystemModulePropertyManagerBridge && module instanceof ModuleBridge && ((ModuleBridge)module).getDiff() == null) {
+        ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, storageBuilder);
+      } else {
+        modulePropertyManager.setMavenized(mavenized);
+      }
     }
+    WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
+      builder.addDiff(storageBuilder);
+      return null;
+    });
   }
 
   private boolean ensureModuleCreated(MavenProject project) {
