@@ -6,10 +6,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Provides a way to reorder context actions (quick-fixes, intentions, etc.) in a specific language context.
+ * @see CachedIntentions#getAllActions()
+ */
 public interface IntentionsOrderProvider {
   LanguageExtension<IntentionsOrderProvider> EXTENSION =
     new LanguageExtension<>("com.intellij.intentionsOrderProvider", new DefaultIntentionsOrderProvider());
 
+  /**
+   * Returns context actions in order they are going to be displayed in popup.
+   */
   @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
                                                                     @NotNull List<IntentionActionWithTextCaching> intentions);
 }
