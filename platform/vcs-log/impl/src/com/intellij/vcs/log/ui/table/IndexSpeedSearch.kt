@@ -14,31 +14,31 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, co
   VcsLogSpeedSearch(component) {
 
   private val userRegistry: VcsUserRegistry
-  private var matchedByUserCommits: Set<Int>? = null
-  private var matchedUsers: Collection<VcsUser>? = null
+  private var matchResult: MatchResult? = null
 
   init {
     userRegistry = project.getService(VcsUserRegistry::class.java)
     addChangeListener { evt: PropertyChangeEvent ->
       if (evt.propertyName == ENTERED_PREFIX_PROPERTY_NAME) {
-        val newValue = evt.newValue as? String
-        val dataGetter = index.dataGetter
-        if (newValue != null && dataGetter != null) {
-          val oldValue = evt.oldValue as? String
-          var usersToExamine: Collection<VcsUser> = userRegistry.users
-          if (oldValue != null && matchedUsers != null && newValue.contains(oldValue)) {
-            if (matchedUsers!!.isEmpty()) return@addChangeListener
-            usersToExamine = matchedUsers!!
-          }
-          matchedUsers = usersToExamine.filter { user: VcsUser -> compare(VcsUserUtil.getShortPresentation(user), newValue) }
-          matchedByUserCommits = dataGetter.filter(listOf<VcsLogDetailsFilter>(SimpleVcsLogUserFilter(matchedUsers!!)))
-        }
-        else {
-          matchedByUserCommits = null
-          matchedUsers = null
-        }
+        matchResult = matchUsers(matchResult, evt.newValue as? String)
       }
     }
+  }
+
+  private fun matchUsers(oldMatchResult: MatchResult?, newPattern: String?): MatchResult? {
+    val dataGetter = index.dataGetter
+    if (newPattern.isNullOrEmpty() || dataGetter == null) {
+      return null
+    }
+
+    val oldPattern = oldMatchResult?.pattern
+    val usersToExamine = if (oldPattern != null && newPattern.contains(oldPattern)) oldMatchResult.matchingUsers else userRegistry.users
+    val matchedUsers = usersToExamine.filter { user -> compare(VcsUserUtil.getShortPresentation(user), newPattern) }
+    if (matchedUsers.isEmpty()) return null
+
+    val matchedByUserCommits = dataGetter.filter(listOf<VcsLogDetailsFilter>(SimpleVcsLogUserFilter(matchedUsers)))
+
+    return MatchResult(newPattern, matchedByUserCommits, matchedUsers)
   }
 
   override fun isSpeedSearchEnabled(): Boolean {
@@ -62,10 +62,16 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, co
 
   override fun isMatchingElement(row: Any, pattern: String): Boolean {
     val str = getCommitSubject(row as Int)
-    return str != null && compare(str, pattern) ||
-           matchedByUserCommits?.isNotEmpty() == true &&  // getting id from row takes time, so optimizing a little here
-           matchedByUserCommits!!.contains(myComponent.model.getIdAtRow(row))
+    if (str != null && compare(str, pattern)) return true
+    return matchResult?.run {
+      commitsForUsers.isNotEmpty() &&  // getting id from row takes time, so optimizing a little here
+      commitsForUsers.contains(myComponent.model.getIdAtRow(row))
+    } ?: false
   }
+
+  private data class MatchResult(val pattern: String,
+                                 val commitsForUsers: Set<Int> = emptySet(),
+                                 val matchingUsers: Collection<VcsUser> = emptySet())
 
   private class SimpleVcsLogUserFilter(private val users: Collection<VcsUser>) : VcsLogUserFilter {
     override fun getUsers(root: VirtualFile): Collection<VcsUser> = users
