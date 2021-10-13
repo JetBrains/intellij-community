@@ -5,9 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -17,6 +15,13 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -24,9 +29,7 @@ internal class ModuleVcsDetector(private val project: Project) {
   private fun startDetection() {
     val busConnection = project.messageBus.connect()
 
-    val moduleListener = MyModuleListener()
-    busConnection.subscribe(ProjectTopics.MODULES, moduleListener)
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, moduleListener)
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings()) {
       val initialDetectionListener = InitialMappingsDetectionListener()
@@ -43,10 +46,10 @@ internal class ModuleVcsDetector(private val project: Project) {
     val usedVcses = mutableSetOf<AbstractVcs?>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val roots = ModuleManager.getInstance(project).modules.asSequence()
+    val contentRoots = ModuleManager.getInstance(project).modules.asSequence()
       .flatMap { it.rootManager.contentRoots.asSequence() }
       .filter { it.isDirectory }.distinct().toList()
-    for (root in roots) {
+    for (root in contentRoots) {
       val moduleVcs = vcsManager.findVersioningVcs(root)
       if (moduleVcs != null) {
         detectedRoots.add(Pair(root, moduleVcs))
@@ -57,7 +60,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null) {
       // Remove existing mappings that will duplicate added <Project> mapping.
-      val rootPaths = roots.map { it.path }.toSet()
+      val rootPaths = contentRoots.map { it.path }.toSet()
       val additionalMappings = vcsManager.directoryMappings.filter { it.directory !in rootPaths }
 
       vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
@@ -68,11 +71,11 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private fun autoDetectModuleVcsMapping(module: Module) {
+  private fun autoDetectModuleVcsMapping(contentRoots: List<VirtualFile>) {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val newMappings = mutableListOf<VcsDirectoryMapping>()
-    module.rootManager.contentRoots
+    contentRoots
       .filter { it.isDirectory }
       .forEach { file ->
         val vcs = vcsManager.findVersioningVcs(file)
@@ -86,32 +89,47 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class MyModuleListener : ModuleRootListener, ModuleListener {
-    private val mappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
+  private inner class MyWorkspaceModelChangeListener : WorkspaceModelChangeListener {
+    override fun changed(event: VersionedStorageChange) {
+      val removedUrls = mutableSetOf<VirtualFileUrl>()
+      val addedUrls = mutableSetOf<VirtualFileUrl>()
 
-    override fun beforeRootsChange(event: ModuleRootEvent) {
-      mappingsForRemovedModules.clear()
-    }
+      val changes = event.getChanges(ContentRootEntity::class.java)
+      for (change in changes) {
+        when (change) {
+          is EntityChange.Removed<ContentRootEntity> -> {
+            removedUrls.add(change.entity.url)
+            addedUrls.remove(change.entity.url)
+          }
+          is EntityChange.Added<ContentRootEntity> -> {
+            addedUrls.add(change.entity.url)
+            removedUrls.remove(change.entity.url)
+          }
+          is EntityChange.Replaced<ContentRootEntity> -> {
+            if (change.oldEntity.url != change.newEntity.url) {
+              removedUrls.add(change.oldEntity.url)
+              addedUrls.remove(change.oldEntity.url)
 
-    override fun beforeModuleRemoved(project: Project, module: Module) {
-      mappingsForRemovedModules.addAll(getMappings(module))
-    }
+              addedUrls.add(change.newEntity.url)
+              removedUrls.remove(change.newEntity.url)
+            }
+          }
+        }
+      }
 
-    override fun moduleAdded(project: Project, module: Module) {
-      mappingsForRemovedModules.removeAll(getMappings(module))
+      val fileManager = VirtualFileManager.getInstance()
+      val removed = removedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
+      val added = addedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
 
-      autoDetectModuleVcsMapping(module)
-    }
+      if (added.isNotEmpty()) {
+        autoDetectModuleVcsMapping(added)
+      }
 
-    override fun rootsChanged(event: ModuleRootEvent) {
-      mappingsForRemovedModules.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
-      mappingsForRemovedModules.clear()
-    }
-
-    private fun getMappings(module: Module): List<VcsDirectoryMapping> {
-      return module.rootManager.contentRoots
-        .filter { it.isDirectory }
-        .mapNotNull { root -> vcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
+      if (removed.isNotEmpty()) {
+        val remotedPaths = removed.map { it.path }.toSet()
+        val removedMappings = vcsManager.directoryMappings.filter { it.directory in remotedPaths }
+        removedMappings.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
+      }
     }
   }
 
