@@ -181,6 +181,7 @@ public interface GroovyTokenTypes {
   IElementType kPROTECTED = KW_PROTECTED;
   IElementType kPUBLIC = KW_PUBLIC;
   IElementType kRETURN = KW_RETURN;
+  IElementType kRECORD = KW_RECORD;
   IElementType kSEALED = KW_SEALED;
   IElementType kSHORT = KW_SHORT;
   IElementType kSTATIC = KW_STATIC;

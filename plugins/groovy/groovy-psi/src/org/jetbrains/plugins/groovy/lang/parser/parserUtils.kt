@@ -79,6 +79,7 @@ private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.pars
 private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
 private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
 private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
+private val contractedConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -579,4 +580,20 @@ fun forbidLambdaExpressions(builder: PsiBuilder, level: Int, parser : Parser): B
 
 fun isLambdaExpressionAllowed(builder : PsiBuilder, level: Int) : Boolean {
   return !builder[forbidLambdaExpression]
+}
+
+fun enableContractedConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(contractedConstructors, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun disableContractedConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(contractedConstructors, false) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isContractedConstructorAllowed(builder: PsiBuilder, level : Int) : Boolean {
+  return builder[contractedConstructors]
 }

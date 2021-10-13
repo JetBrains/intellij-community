@@ -141,6 +141,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "interface"     { return storeToken(KW_INTERFACE); }
   "enum"          { return storeToken(KW_ENUM); }
   "trait"         { return storeToken(KW_TRAIT); }
+  "record"        { return storeToken(KW_RECORD); }
   "extends"       { return storeToken(KW_EXTENDS); }
   "super"         { return storeToken(KW_SUPER); }
   "void"          { return storeToken(KW_VOID); }

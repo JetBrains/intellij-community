@@ -283,6 +283,10 @@ public abstract class GroovyElementVisitor {
     visitTypeDefinition(classDefinition);
   }
 
+  public void visitRecordDefinition(@NotNull GrRecordDefinition recordDefinition) {
+    visitTypeDefinition(recordDefinition);
+  }
+
   public void visitEnumDefinition(@NotNull GrEnumTypeDefinition enumDefinition) {
     visitTypeDefinition(enumDefinition);
   }
