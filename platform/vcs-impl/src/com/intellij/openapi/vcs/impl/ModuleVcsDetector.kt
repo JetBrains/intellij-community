@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
@@ -16,6 +17,9 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.Alarm
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.EntityChange
@@ -25,6 +29,11 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
+
+  private val queue = MergingUpdateQueue("ModuleVcsDetector", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD).also {
+    it.setRestartTimerOnAdd(true)
+  }
+  private val dirtyContentRoots: MutableSet<VirtualFile> = mutableSetOf()
 
   private fun startDetection() {
     val busConnection = project.messageBus.connect()
@@ -36,7 +45,7 @@ internal class ModuleVcsDetector(private val project: Project) {
       busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, initialDetectionListener)
       busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, initialDetectionListener)
 
-      autoDetectVcsMappings(true)
+      queue.queue(InitialFullScan())
     }
   }
 
@@ -46,9 +55,11 @@ internal class ModuleVcsDetector(private val project: Project) {
     val usedVcses = mutableSetOf<AbstractVcs?>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val contentRoots = ModuleManager.getInstance(project).modules.asSequence()
-      .flatMap { it.rootManager.contentRoots.asSequence() }
-      .filter { it.isDirectory }.distinct().toList()
+    val contentRoots = runReadAction {
+      ModuleManager.getInstance(project).modules.asSequence()
+        .flatMap { it.rootManager.contentRoots.asSequence() }
+        .filter { it.isDirectory }.distinct().toList()
+    }
     for (root in contentRoots) {
       val moduleVcs = vcsManager.findVersioningVcs(root)
       if (moduleVcs != null) {
@@ -89,6 +100,32 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
+  private inner class InitialFullScan : Update("initial scan") {
+    override fun run() {
+      autoDetectVcsMappings(true)
+    }
+
+    override fun canEat(update: Update?): Boolean = update is DelayedFullScan
+  }
+
+  private inner class DelayedFullScan : Update("delayed scan") {
+    override fun run() {
+      autoDetectVcsMappings(false)
+    }
+  }
+
+  private inner class ContentRootsScan : Update("modules scan") {
+    override fun run() {
+      val contentRoots: List<VirtualFile>
+      synchronized(dirtyContentRoots) {
+        contentRoots = dirtyContentRoots.toList()
+        dirtyContentRoots.clear()
+      }
+
+      autoDetectModuleVcsMapping(contentRoots)
+    }
+  }
+
   private inner class MyWorkspaceModelChangeListener : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       val removedUrls = mutableSetOf<VirtualFileUrl>()
@@ -121,8 +158,12 @@ internal class ModuleVcsDetector(private val project: Project) {
       val removed = removedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
       val added = addedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
 
-      if (added.isNotEmpty()) {
-        autoDetectModuleVcsMapping(added)
+      if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
+        synchronized(dirtyContentRoots) {
+          dirtyContentRoots.addAll(added)
+          dirtyContentRoots.removeAll(removed)
+        }
+        queue.queue(ContentRootsScan())
       }
 
       if (removed.isNotEmpty()) {
@@ -135,19 +176,19 @@ internal class ModuleVcsDetector(private val project: Project) {
 
   private inner class InitialMappingsDetectionListener : ModuleRootListener, AdditionalLibraryRootsListener {
     override fun rootsChanged(event: ModuleRootEvent) {
-      onRootsChanged()
+      scheduleRescan()
     }
 
     override fun libraryRootsChanged(presentableLibraryName: String?,
                                      oldRoots: MutableCollection<out VirtualFile>,
                                      newRoots: MutableCollection<out VirtualFile>,
                                      libraryNameForDebug: String) {
-      onRootsChanged()
+      scheduleRescan()
     }
 
-    private fun onRootsChanged() {
+    private fun scheduleRescan() {
       if (vcsManager.needAutodetectMappings()) {
-        autoDetectVcsMappings(false)
+        queue.queue(DelayedFullScan())
       }
     }
   }
