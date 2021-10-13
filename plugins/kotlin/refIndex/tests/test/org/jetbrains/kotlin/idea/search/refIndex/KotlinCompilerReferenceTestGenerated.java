@@ -380,6 +380,21 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/functions/members/function/");
             }
 
+            @TestMetadata("javaAnnotation")
+            public void testJavaAnnotation() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotation/");
+            }
+
+            @TestMetadata("javaAnnotationWithCustomName")
+            public void testJavaAnnotationWithCustomName() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotationWithCustomName/");
+            }
+
+            @TestMetadata("javaAnnotationWithSeveralParameters")
+            public void testJavaAnnotationWithSeveralParameters() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters/");
+            }
+
             @TestMetadata("javaMethod")
             public void testJavaMethod() throws Exception {
                 runTest("testData/compilerIndex/functions/members/javaMethod/");

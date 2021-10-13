@@ -1,3 +1,6 @@
 {
-    "mainFile": "Main.kt"
+    "mainFile": "Main.kt",
+    "usages": [
+        "Main.kt"
+    ]
 }

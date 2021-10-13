@@ -13,5 +13,3 @@ class Test {
     void test2() {
     }
 }
-
-// CRI_IGNORE

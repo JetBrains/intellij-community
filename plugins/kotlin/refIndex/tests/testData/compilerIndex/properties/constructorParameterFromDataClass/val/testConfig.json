@@ -4,8 +4,11 @@
         "ImplicitComponent.kt",
         "JavaReadComponent.java",
         "JavaReadGetter.java",
+        "Main.kt",
         "Usage.kt",
         "UsageOfComponent1.kt",
-        "fromFun.kt"
+        "WrongUsageOfComponent2.kt",
+        "fromFun.kt",
+        "usageOfB.kt"
     ]
 }

@@ -2,7 +2,10 @@
     "mainFile": "Main.kt",
     "usages": [
         "ExplicitNamedParameter.java",
+        "ExplicitNamedParameter.kt",
         "ImplicitNamedParameter.java",
+        "ImplicitNamedParameter.kt",
+        "Main.kt",
         "Usage.java",
         "Usage.kt"
     ]

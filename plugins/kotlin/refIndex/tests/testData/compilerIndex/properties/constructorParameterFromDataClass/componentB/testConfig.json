@@ -3,11 +3,13 @@
     "usages": [
         "Explicit.kt",
         "Explicit2.kt",
+        "FirstComponentOnly.kt",
         "Implicit.kt",
         "Implicit2.kt",
         "JavaClass.java",
         "JavaClass4.java",
         "Main.kt",
+        "Property.kt",
         "Property2.kt"
     ]
 }

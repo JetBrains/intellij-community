@@ -2,7 +2,9 @@
     "mainFile": "Main.kt",
     "usages": [
         "JavaReadGetter.java",
+        "Main.kt",
         "Usage.kt",
-        "fromFun.kt"
+        "fromFun.kt",
+        "usageOfB.kt"
     ]
 }

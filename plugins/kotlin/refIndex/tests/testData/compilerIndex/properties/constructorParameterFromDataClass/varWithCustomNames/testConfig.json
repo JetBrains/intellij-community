@@ -5,9 +5,12 @@
         "JavaReadComponent.java",
         "JavaReadGetter.java",
         "JavaSetter.java",
+        "Main.kt",
         "Usage.kt",
         "UsageOfComponent1.kt",
         "Write.kt",
-        "fromFun.kt"
+        "WrongUsageOfComponent2.kt",
+        "fromFun.kt",
+        "usageOfB.kt"
     ]
 }

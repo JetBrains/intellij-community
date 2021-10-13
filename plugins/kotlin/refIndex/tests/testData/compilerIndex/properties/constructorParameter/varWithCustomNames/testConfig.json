@@ -3,6 +3,7 @@
     "usages": [
         "JavaReadGetter.java",
         "JavaSetter.java",
+        "Main.kt",
         "Usage.kt",
         "Write.kt",
         "fromFun.kt"
