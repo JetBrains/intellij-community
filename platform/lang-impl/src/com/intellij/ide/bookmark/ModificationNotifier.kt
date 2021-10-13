@@ -23,7 +23,7 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
     invokeLater {
       val window = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(BOOKMARKS)
       val view = window?.contentManagerIfCreated?.selectedContent?.component as? BookmarksView
-      view?.let(select)
+      view?.let { if (it.isShowing) select(it) }
     }
   }
 
