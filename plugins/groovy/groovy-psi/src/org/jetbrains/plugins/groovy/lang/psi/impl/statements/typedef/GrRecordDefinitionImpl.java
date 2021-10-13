@@ -3,7 +3,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -12,6 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD;
 
 public class GrRecordDefinitionImpl extends GrTypeDefinitionImpl implements GrRecordDefinition {
 
@@ -49,5 +54,14 @@ public class GrRecordDefinitionImpl extends GrTypeDefinitionImpl implements GrRe
   @Override
   public boolean isVarArgs() {
     return PsiImplUtil.isVarArgs(getParameters());
+  }
+
+  private static final TokenSet RECORD_NAME_TOKEN_SET = TokenSet.andNot(TokenSets.PROPERTY_NAMES, TokenSet.create(KW_RECORD));
+
+  @Override
+  public @NotNull PsiElement getNameIdentifierGroovy() {
+    PsiElement result = findChildByType(RECORD_NAME_TOKEN_SET);
+    assert result != null;
+    return result;
   }
 }

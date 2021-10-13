@@ -420,7 +420,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl <<disableContractedConstructors annotation_members>> '}'
+  // '{' mb_nl <<disableCompactConstructors annotation_members>> '}'
   public static boolean annotation_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotation_body")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
@@ -429,7 +429,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, disableContractedConstructors(b, l + 1, GroovyGeneratedParser::annotation_members)) && r;
+    r = p && report_error_(b, disableCompactConstructors(b, l + 1, GroovyGeneratedParser::annotation_members)) && r;
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -2061,7 +2061,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' <<disableContractedConstructors class_body_inner>> '}'
+  // '{' <<disableCompactConstructors class_body_inner>> '}'
   public static boolean class_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_body")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
@@ -2069,7 +2069,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CLASS_BODY, null);
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
-    r = r && report_error_(b, disableContractedConstructors(b, l + 1, GroovyGeneratedParser::class_body_inner));
+    r = r && report_error_(b, disableCompactConstructors(b, l + 1, GroovyGeneratedParser::class_body_inner));
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -2673,7 +2673,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // constructor_identifier empty_parameter_list [mb_nl lazy_constructor_block]
+  // constructor_identifier empty_parameter_list empty_throws_clause [mb_nl lazy_constructor_block]
   public static boolean compact_constructor(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compact_constructor")) return false;
     boolean r, p;
@@ -2681,21 +2681,22 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = constructor_identifier(b, l + 1);
     r = r && empty_parameter_list(b, l + 1);
     p = r; // pin = 2
-    r = r && compact_constructor_2(b, l + 1);
+    r = r && report_error_(b, empty_throws_clause(b, l + 1));
+    r = p && compact_constructor_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // [mb_nl lazy_constructor_block]
-  private static boolean compact_constructor_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compact_constructor_2")) return false;
-    compact_constructor_2_0(b, l + 1);
+  private static boolean compact_constructor_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compact_constructor_3")) return false;
+    compact_constructor_3_0(b, l + 1);
     return true;
   }
 
   // mb_nl lazy_constructor_block
-  private static boolean compact_constructor_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "compact_constructor_2_0")) return false;
+  private static boolean compact_constructor_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compact_constructor_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
@@ -2928,7 +2929,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // method_lookahead | (<<isContractedConstructorAllowed>> compact_constructor_lookahead) | variable_lookahead
+  // method_lookahead | (<<isCompactConstructorAllowed>> compact_constructor_lookahead) | variable_lookahead
   static boolean declaration_lookahead(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declaration_lookahead")) return false;
     boolean r;
@@ -2940,12 +2941,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // <<isContractedConstructorAllowed>> compact_constructor_lookahead
+  // <<isCompactConstructorAllowed>> compact_constructor_lookahead
   private static boolean declaration_lookahead_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declaration_lookahead_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = isContractedConstructorAllowed(b, l + 1);
+    r = isCompactConstructorAllowed(b, l + 1);
     r = r && compact_constructor_lookahead(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -3357,7 +3358,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl <<disableContractedConstructors enum_members>> '}'
+  // '{' mb_nl <<disableCompactConstructors enum_members>> '}'
   public static boolean enum_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enum_body")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
@@ -3366,7 +3367,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, disableContractedConstructors(b, l + 1, GroovyGeneratedParser::enum_members)) && r;
+    r = p && report_error_(b, disableCompactConstructors(b, l + 1, GroovyGeneratedParser::enum_members)) && r;
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -4967,7 +4968,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // constructor
   //                        | method
-  //                        | <<isContractedConstructorAllowed>> compact_constructor
+  //                        | <<isCompactConstructorAllowed>> compact_constructor
   static boolean methods_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "methods_tail")) return false;
     boolean r;
@@ -4979,12 +4980,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // <<isContractedConstructorAllowed>> compact_constructor
+  // <<isCompactConstructorAllowed>> compact_constructor
   private static boolean methods_tail_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "methods_tail_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = isContractedConstructorAllowed(b, l + 1);
+    r = isCompactConstructorAllowed(b, l + 1);
     r = r && compact_constructor(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -6182,7 +6183,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' <<enableContractedConstructors class_body_inner>> '}'
+  // '{' <<enableCompactConstructors class_body_inner>> '}'
   public static boolean record_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "record_body")) return false;
     if (!nextTokenIs(b, T_LBRACE)) return false;
@@ -6190,7 +6191,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CLASS_BODY, null);
     r = consumeToken(b, T_LBRACE);
     p = r; // pin = 1
-    r = r && report_error_(b, enableContractedConstructors(b, l + 1, GroovyGeneratedParser::class_body_inner));
+    r = r && report_error_(b, enableCompactConstructors(b, l + 1, GroovyGeneratedParser::class_body_inner));
     r = p && consumeToken(b, T_RBRACE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;

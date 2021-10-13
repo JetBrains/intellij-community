@@ -79,7 +79,7 @@ private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.pars
 private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
 private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
 private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
-private val contractedConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
+private val compactConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -582,18 +582,18 @@ fun isLambdaExpressionAllowed(builder : PsiBuilder, level: Int) : Boolean {
   return !builder[forbidLambdaExpression]
 }
 
-fun enableContractedConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
-  return builder.withKey(contractedConstructors, true) {
+fun enableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, true) {
     parser.parse(builder, level)
   }
 }
 
-fun disableContractedConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
-  return builder.withKey(contractedConstructors, false) {
+fun disableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, false) {
     parser.parse(builder, level)
   }
 }
 
-fun isContractedConstructorAllowed(builder: PsiBuilder, level : Int) : Boolean {
-  return builder[contractedConstructors]
+fun isCompactConstructorAllowed(builder: PsiBuilder, level : Int) : Boolean {
+  return builder[compactConstructors]
 }

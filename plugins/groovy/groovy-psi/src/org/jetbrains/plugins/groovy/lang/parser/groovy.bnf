@@ -342,23 +342,23 @@ left record_type_definition ::= 'record' record_definition_header mb_nl record_b
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrRecordDefinitionElementType'
 }
 
-class_body ::= '{' <<disableContractedConstructors class_body_inner>> '}'
+class_body ::= '{' <<disableCompactConstructors class_body_inner>> '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType'
 }
 class_body_inner ::= mb_separators class_members { elementType = '' name = '' }
-enum_body ::= '{' mb_nl <<disableContractedConstructors enum_members>> '}'
+enum_body ::= '{' mb_nl <<disableCompactConstructors enum_members>> '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrEnumDefinitionBodyElementType'
 }
-annotation_body ::= '{' mb_nl <<disableContractedConstructors annotation_members>> '}'
+annotation_body ::= '{' mb_nl <<disableCompactConstructors annotation_members>> '}'
 {
   pin = 1
   elementType = class_body
 }
-record_body ::= '{' <<enableContractedConstructors class_body_inner>> '}'
+record_body ::= '{' <<enableCompactConstructors class_body_inner>> '}'
 {
   pin = 1
   elementType = class_body
@@ -401,7 +401,7 @@ private mb_declaration_type_element ::= [mb_nl declaration_type_element]
 private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
 private definitely_type_element ::= <<definitelyTypeElement type_element declaration_lookahead>>
 
-private declaration_lookahead ::= method_lookahead | (<<isContractedConstructorAllowed>> compact_constructor_lookahead) | variable_lookahead
+private declaration_lookahead ::= method_lookahead | (<<isCompactConstructorAllowed>> compact_constructor_lookahead) | variable_lookahead
 private variable_lookahead ::= &(weak_keyword | IDENTIFIER)
 private method_lookahead ::= &(method_identifier '(')
 private compact_constructor_lookahead ::= &(<<constructorIdentifier>>)
@@ -423,7 +423,7 @@ private naked_method_declaration_start ::= empty_modifier_list (method_lookahead
 private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
 private methods_tail ::= constructor
                        | method
-                       | <<isContractedConstructorAllowed>> compact_constructor
+                       | <<isCompactConstructorAllowed>> compact_constructor
 
 private parse_annotation_declaration ::= <<parseTailLeftFlat class_declaration_start annotation_tails>>
                                        | <<parseTailLeftFlat naked_method_declaration_start annotation_method>>
@@ -476,7 +476,7 @@ constructor ::= constructor_identifier method_parameter_list nl_throws [mb_nl la
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrConstructorElementType'
   pin = 2
 }
-compact_constructor ::= constructor_identifier empty_parameter_list [mb_nl lazy_constructor_block]
+compact_constructor ::= constructor_identifier empty_parameter_list empty_throws_clause [mb_nl lazy_constructor_block]
 {
   elementType = constructor
   pin = 2

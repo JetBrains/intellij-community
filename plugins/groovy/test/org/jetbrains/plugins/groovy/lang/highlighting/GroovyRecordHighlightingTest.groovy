@@ -21,4 +21,9 @@ import groovy.transform.stc.POJO
 class A {}
 ''', GrPOJOInspection
   }
+
+  void 'test record definition'() {
+    highlightingTest '''
+record R(int a) {}'''
+  }
 }
