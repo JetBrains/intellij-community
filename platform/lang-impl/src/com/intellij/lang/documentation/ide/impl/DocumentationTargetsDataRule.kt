@@ -32,7 +32,7 @@ class DocumentationTargetsDataRule : GetDataRule {
     }
     val target = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)
     if (target != null) {
-      return listOf(PsiElementDocumentationTarget(project, target, sourceElement = null, anchor = null))
+      return listOf(PsiElementDocumentationTarget(project, target))
     }
     return null
   }

@@ -32,7 +32,7 @@ internal fun quickSearchComponent(project: Project): QuickSearchComponent? {
 internal class QuickSearchPopupContext(
   private val project: Project,
   private val searchComponent: QuickSearchComponent,
-  ) : SecondaryPopupContext() {
+) : SecondaryPopupContext() {
 
   private val items = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -65,7 +65,7 @@ private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {
       if (!targetElement.isValid) {
         return@readAction null
       }
-      PsiElementDocumentationTarget(targetElement.project, targetElement, sourceElement = null, anchor = null).documentationRequest()
+      PsiElementDocumentationTarget(targetElement.project, targetElement).documentationRequest()
     }
   }.flowOn(Dispatchers.Default)
 }

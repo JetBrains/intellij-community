@@ -48,6 +48,6 @@ final class PsiCommentInlineDocumentation implements InlineDocumentation {
   @Override
   public DocumentationTarget getOwnerTarget() {
     PsiElement context = getContext();
-    return new PsiElementDocumentationTarget(context.getProject(), context, null, null);
+    return new PsiElementDocumentationTarget(context.getProject(), context);
   }
 }
