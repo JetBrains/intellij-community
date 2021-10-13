@@ -5,7 +5,6 @@
   <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
-  <property name="m2.dir" value="${build.dir}/m2" />
   <property environment="env"/>
   <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
 
@@ -78,7 +77,6 @@
     <resolver:pom file="${jps.bootstrap.dir}/pom.xml" id="jps.bootstrap.pom"/>
 
     <resolver:resolve failOnMissingAttachments="true">
-      <resolver:localrepo dir="${m2.dir}" />
       <resolver:remoterepos refid="remoterepos.buildscript"/>
       <resolver:dependencies pomRef="jps.bootstrap.pom" />
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>

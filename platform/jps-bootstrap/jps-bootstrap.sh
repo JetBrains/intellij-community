@@ -4,8 +4,8 @@
 set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
-COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
-JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$COMMUNITY_HOME/out/jps-bootstrap}
+JBS_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
+JPS_BOOTSTRAP_WORK_DIR=${JPS_BOOTSTRAP_WORK_DIR:-$JBS_COMMUNITY_HOME/out/jps-bootstrap}
 
 SCRIPT_VERSION=jps-bootstrap-cmd-v1
 
@@ -63,10 +63,10 @@ if [ -e "$JVM_TARGET_DIR/.flag" ] && [ -n "$(ls "$JVM_TARGET_DIR")" ] && [ "x$(c
     # Everything is up-to-date in $JVM_TARGET_DIR, do nothing
     true
 else
-  warn "Downloading $JVM_URL to $JVM_TEMP_FILE"
-
   JVM_TEMP_FILE=$(mktemp "$JPS_BOOTSTRAP_WORK_DIR/jvm.tar.gz.XXXXXXXXX")
   trap 'echo "Removing $JVM_TEMP_FILE"; rm -f "$JVM_TEMP_FILE"; trap - EXIT' EXIT INT HUP
+
+  warn "Downloading $JVM_URL to $JVM_TEMP_FILE"
 
   if command -v curl >/dev/null 2>&1; then
       if [ -t 1 ]; then CURL_PROGRESS="--progress-bar"; else CURL_PROGRESS="--silent --show-error"; fi
@@ -101,6 +101,7 @@ fi
 
 set -x
 
-"$JAVA_HOME/bin/java" -jar "$COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
+"$JAVA_HOME/bin/java" -jar "$JBS_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
-exec "$JAVA_HOME/bin/java" -classpath "@$JPS_BOOTSTRAP_WORK_DIR/classpath.pathlist" JpsBootstrapMain "$@"
+export JBS_COMMUNITY_HOME
+exec "$JAVA_HOME/bin/java" -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" JpsBootstrapMain "$@"

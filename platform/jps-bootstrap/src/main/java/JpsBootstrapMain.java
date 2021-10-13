@@ -82,12 +82,12 @@ public class JpsBootstrapMain {
 
     Files.createDirectories(workDir);
 
+    Path m2LocalRepository = Path.of(System.getProperty("user.home"), ".m2", "repository");
     JpsModel model = JpsElementFactory.getInstance().createModel();
     JpsPathVariablesConfiguration pathVariablesConfiguration =
-      JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.getGlobal());
+            JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.getGlobal());
     pathVariablesConfiguration.addPathVariable(
-      "MAVEN_REPOSITORY",
-      FileUtilRt.toSystemIndependentName(workDir.resolve("m2").toAbsolutePath().toString()));
+            "MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(m2LocalRepository.toAbsolutePath().toString()));
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty("kotlin.daemon.enabled", "false");
@@ -96,12 +96,10 @@ public class JpsBootstrapMain {
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome.toString());
     System.out.println(
-      "Loaded project " + projectHome + ": " +
-        model.getProject().getModules().size() + " modules, " +
-        model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
-        (System.currentTimeMillis() - startTime) + " ms");
-
-    long buildStart = System.currentTimeMillis();
+            "Loaded project " + projectHome + ": " +
+                    model.getProject().getModules().size() + " modules, " +
+                    model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
+                    (System.currentTimeMillis() - startTime) + " ms");
 
     addSdk(model, "corretto-11", System.getProperty("java.home"));
 
@@ -114,45 +112,22 @@ public class JpsBootstrapMain {
     System.setProperty(GlobalOptions.LOG_DIR_OPTION, workDir.resolve("log").toString());
     System.out.println("Log: " + System.getProperty(GlobalOptions.LOG_DIR_OPTION));
 
+    // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
+    // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
+    runBuild(model, workDir, "kotlin.util.compiler-dependencies");
+
+    runBuild(model, workDir, moduleName);
+
     JpsModule module = model.getProject().getModules()
-      .stream()
-      .filter(m -> moduleName.equals(m.getName()))
-      .findFirst().orElseThrow();
-
-    final String[] firstError = {null};
-
-    Path dataStorageRoot = workDir.resolve("jps-build-data");
-    Standalone.runBuild(
-      () -> model,
-      dataStorageRoot.toFile(),
-      false,
-      ContainerUtil.set(module.getName()),
-      false,
-      Collections.emptyList(),
-      false,
-      msg -> {
-        BuildMessage.Kind kind = msg.getKind();
-
-        System.out.println(kind + " " + msg.getMessageText());
-
-        if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) && firstError[0] == null) {
-          firstError[0] = msg.getMessageText();
-        }
-      }
-    );
-
-    System.out.println("Finished build in " + (System.currentTimeMillis() - buildStart) + " ms");
-
-    if (firstError[0] != null) {
-      fatal("Build finished with errors. First error: " + firstError[0]);
-    }
-
+            .stream()
+            .filter(m -> moduleName.equals(m.getName()))
+            .findFirst().orElseThrow();
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
-      .dependencies(module)
-      .runtimeOnly()
-      .productionOnly()
-      .recursively()
-      .withoutSdk();
+            .dependencies(module)
+            .runtimeOnly()
+            .productionOnly()
+            .recursively()
+            .withoutSdk();
 
     List<URL> roots = new ArrayList<>();
     for (File file : enumerator.classes().getRoots()) {
@@ -166,8 +141,42 @@ public class JpsBootstrapMain {
       Class<?> mainClass = classloader.loadClass(className);
 
       MethodHandles.lookup()
-        .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
-        .invokeExact(args);
+              .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
+              .invokeExact(args);
+    }
+  }
+
+  private static void runBuild(JpsModel model, Path workDir, String moduleName) throws Exception {
+    final long buildStart = System.currentTimeMillis();
+    final String[] firstError = {null};
+
+    // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
+    // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
+
+    Path dataStorageRoot = workDir.resolve("jps-build-data");
+    Standalone.runBuild(
+            () -> model,
+            dataStorageRoot.toFile(),
+            false,
+            ContainerUtil.set("kotlin.util.compiler-dependencies", moduleName),
+            false,
+            Collections.emptyList(),
+            false,
+            msg -> {
+              BuildMessage.Kind kind = msg.getKind();
+
+              System.out.println(kind + " " + msg.getMessageText());
+
+              if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) && firstError[0] == null) {
+                firstError[0] = msg.getMessageText();
+              }
+            }
+    );
+
+    System.out.println("Finished building '" + moduleName + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
+
+    if (firstError[0] != null) {
+      fatal("Build finished with errors. First error: " + firstError[0]);
     }
   }
 
@@ -178,8 +187,8 @@ public class JpsBootstrapMain {
       p.load(is);
     }
     String jbrBaseUrl = URLUtil.JRT_PROTOCOL + URLUtil.SCHEME_SEPARATOR +
-      FileUtil.toSystemIndependentName(jdkDir.toFile().getAbsolutePath()) +
-      URLUtil.JAR_SEPARATOR;
+            FileUtil.toSystemIndependentName(jdkDir.toFile().getAbsolutePath()) +
+            URLUtil.JAR_SEPARATOR;
     String modules = p.getProperty("MODULES");
     return ContainerUtil.map(StringUtil.split(StringUtil.unquoteString(modules), " "), s -> jbrBaseUrl + s);
   }
