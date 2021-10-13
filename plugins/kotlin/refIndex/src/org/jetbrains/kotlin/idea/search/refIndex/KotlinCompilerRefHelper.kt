@@ -51,9 +51,10 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         names: NameEnumerator,
     ): List<CompilerRef>? {
         val qualifierId = containingClass.qualifierId(names) ?: return null
-        return when {
-            this is KtNamedFunction -> asCompilerRefs(qualifierId, names)
-            this is KtProperty -> asCompilerRefs(qualifierId, names)
+        return when (this) {
+            is KtNamedFunction -> asCompilerRefs(qualifierId, names)
+            is KtProperty -> asCompilerRefs(qualifierId, names)
+            is KtParameter -> asCompilerRefs(qualifierId, names)
             else -> null
         }
     }
@@ -119,14 +120,33 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtProperty.asCompilerRefs(
         qualifierId: Int,
         names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember>? = asCompilerRefs(qualifierId, names, isVar)
+
+    private fun KtParameter.asCompilerRefs(
+        qualifierId: Int,
+        names: NameEnumerator,
     ): List<CompilerRef.CompilerMember>? {
-        val propertyName = name ?: return null
+        if (!hasValOrVar()) return null
+        val compilerMembers = asCompilerRefs(qualifierId, names, isMutable)
+        val componentFunctionMember = asComponentFunctionName?.let {
+            CompilerRef.JavaCompilerMethodRef(qualifierId, names.tryEnumerate(it), 0)
+        } ?: return compilerMembers
+
+        return compilerMembers?.plus(componentFunctionMember) ?: listOf(componentFunctionMember)
+    }
+
+    private fun <T> T.asCompilerRefs(
+        qualifierId: Int,
+        names: NameEnumerator,
+        isMutable: Boolean,
+    ): List<CompilerRef.CompilerMember>? where T: KtCallableDeclaration, T: KtValVarKeywordOwner {
+        val name = name ?: return null
         if (hasModifier(KtTokens.CONST_KEYWORD) || findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName().asString()) != null) {
-            return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName)))
+            return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name)))
         }
 
         val field = if (hasModifier(KtTokens.LATEINIT_KEYWORD)) {
-            CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(propertyName))
+            CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name))
         } else {
             null
         }
@@ -134,14 +154,14 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         val numberOfArguments = numberOfArguments(countReceiver = true)
         val getter = CompilerRef.JavaCompilerMethodRef(
             qualifierId,
-            names.tryEnumerate(jvmGetterName ?: JvmAbi.getterName(propertyName)),
+            names.tryEnumerate(jvmGetterName ?: JvmAbi.getterName(name)),
             numberOfArguments,
         )
 
-        val setter = if (isVar)
+        val setter = if (isMutable)
             CompilerRef.JavaCompilerMethodRef(
                 qualifierId,
-                names.tryEnumerate(jvmSetterName ?: JvmAbi.setterName(propertyName)),
+                names.tryEnumerate(jvmSetterName ?: JvmAbi.setterName(name)),
                 numberOfArguments + 1,
             )
         else

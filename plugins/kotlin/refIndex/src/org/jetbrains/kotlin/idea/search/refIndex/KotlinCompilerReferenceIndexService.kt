@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
@@ -434,11 +433,16 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
     val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return null
-    if (parameter.containingClass()?.isData() == false) return parameterFqName.let(::listOf)
-
-    val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return null
-    return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))
+    val componentFunctionName = parameter.asComponentFunctionName?.let { FqName(parameterFqName.parent().asString() + ".$it") }
+    return listOfNotNull(parameterFqName, componentFunctionName)
 }
+
+internal val KtParameter.asComponentFunctionName: String?
+    get() {
+        if (containingClassOrObject?.safeAs<KtClass>()?.isData() != true) return null
+        val parameterIndex = parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return null
+        return "component$parameterIndex"
+    }
 
 private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
     if (psiMethod.isConstructor) return psiMethod.containingClass?.getKotlinFqName()?.let(::listOf)

@@ -1,1 +1,1 @@
-class Main(val a<caret>: Int)
+class Main(val a<caret>: Int, val b: String)

@@ -5,6 +5,8 @@
         "Explicit2.kt",
         "Implicit.kt",
         "Implicit2.kt",
+        "JavaClass.java",
+        "JavaClass4.java",
         "Property2.kt"
     ]
 }
