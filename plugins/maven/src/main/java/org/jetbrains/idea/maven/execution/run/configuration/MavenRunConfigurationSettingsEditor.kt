@@ -115,7 +115,7 @@ class MavenRunConfigurationSettingsEditor(
           addExecuteNonRecursivelyTag()
           addWorkOfflineTag()
           addCheckSumPolicyTag()
-          addMultiprojectBuildPolicyTag()
+          addMultiProjectBuildPolicyTag()
         }
       }
     }).apply { isRemovable = false }
@@ -300,10 +300,10 @@ class MavenRunConfigurationSettingsEditor(
       { it.displayString }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultiprojectBuildPolicyTag() {
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultiProjectBuildPolicyTag() {
     addVariantTag(
-      "maven.multiproject.build.policy.tag",
-      MavenConfigurableBundle.message("maven.run.configuration.multiproject.build.policy"),
+      "maven.multi.project.build.policy.tag",
+      MavenConfigurableBundle.message("maven.run.configuration.multi.project.build.policy"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
       { generalSettingsOrDefault.failureBehavior },
       { generalSettingsOrDefault.failureBehavior = it },
