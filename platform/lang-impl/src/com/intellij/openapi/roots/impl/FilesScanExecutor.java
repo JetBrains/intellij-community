@@ -37,11 +37,12 @@ public final class FilesScanExecutor {
         ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress));
       }));
     }
-    // avoid thread starvation due to recursive invocations
+    // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
+    // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
+    runnable.run();
     for (Future<?> result : results) {
+      // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
       ((FutureTask<?>)result).run();
-    }
-    for (Future<?> result : results) {
       ProgressIndicatorUtils.awaitWithCheckCanceled(result);
     }
   }
