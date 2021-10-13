@@ -2,12 +2,16 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 final class TextFragmentFactory {
   public static TextFragment createTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
-    if (isRtl || fontInfo.getFont().hasLayoutAttributes() || isComplexText(lineChars, start, end)) {
+    if (isRtl ||
+        fontInfo.getFont().hasLayoutAttributes() ||
+        containsSurrogatePairs(lineChars, start, end) ||
+        Font.textRequiresLayout(lineChars, start, end)) {
       return new ComplexTextFragment(lineChars, start, end, isRtl, fontInfo);
     }
     else {
@@ -15,8 +19,8 @@ final class TextFragmentFactory {
     }
   }
 
-  private static boolean isComplexText(char[] chars, int start, int end) {
-    // replace with Font.textRequiresLayout in Java 9
-    return UIUtilities.isComplexLayout(chars, start, end);
+  private static boolean containsSurrogatePairs(char[] chars, int start, int end) {
+    int length = end - start;
+    return Character.codePointCount(chars, start, length) != length;
   }
 }
