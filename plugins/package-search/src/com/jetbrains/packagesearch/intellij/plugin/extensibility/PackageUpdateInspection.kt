@@ -4,22 +4,26 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
-import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.addSelectionChangedListener
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
-import java.awt.BorderLayout
+import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
 /**
@@ -39,16 +43,36 @@ import javax.swing.JPanel
  */
 abstract class PackageUpdateInspection : LocalInspectionTool() {
 
+    @JvmField
     var onlyStable: Boolean = true
 
-    override fun createOptionsPanel() = object : JPanel() {
-        init {
-            layout = BorderLayout()
-            val checkBox = PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"))
-            checkBox.isSelected = onlyStable
-            checkBox.addSelectionChangedListener { onlyStable = it }
-            add(checkBox, BorderLayout.NORTH)
+    var excludeList: MutableList<String> = mutableListOf()
+
+    companion object {
+
+        private fun isMavenNotation(notation: String) = notation.split(":").size == 2
+
+        private fun isExcluded(packageIdentifier: PackageIdentifier, exclusionRule: String): Boolean {
+            val (groupId, artifactId) = packageIdentifier.rawValue.split(":")
+            val (exclusionGroupId, exclusionArtifactId) = exclusionRule.split(":")
+
+            return when {
+                exclusionGroupId == "*" -> artifactId == exclusionArtifactId
+                groupId == exclusionGroupId -> exclusionArtifactId == "*" || artifactId == exclusionArtifactId
+                else -> false
+            }
         }
+    }
+
+    override fun createOptionsPanel(): JPanel {
+        val panel = MultipleCheckboxOptionsPanel(this)
+
+        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.quickfix.packagesearch.addExclusion"), excludeList)
+
+        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
+        panel.addGrowing(injectionListTable.contentPanel)
+
+        return panel
     }
 
     protected abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
@@ -75,9 +99,16 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             return null
         }
 
+        val isNotExcluded = { packageIdentifier: PackageIdentifier ->
+            excludeList.filter { isMavenNotation(it) }
+                .none { isExcluded(packageIdentifier, it) }
+        }
+
         val availableUpdates = service.packageUpgradesStateFlow.value
             .getPackagesToUpgrade(onlyStable)
-            .upgradesByModule[fileModule] ?: return null
+            .upgradesByModule[fileModule]
+            ?.filter { isNotExcluded(it.packageModel.identifier) }
+            ?: return null
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
         for (packageUpdateInfo in availableUpdates) {
@@ -99,6 +130,15 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             problemsHolder.registerProblem(
                 versionElement,
                 PackageSearchBundle.message("packagesearch.inspection.upgrade.description", packageUpdateInfo.targetVersion),
+                LocalQuickFix(
+                    PackageSearchBundle.message(
+                        "packagesearch.quickfix.upgrade.exclude",
+                        packageUpdateInfo.packageModel.identifier.rawValue
+                    )
+                ) {
+                    excludeList.add(packageUpdateInfo.packageModel.identifier.rawValue)
+                    ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+                },
                 PackageSearchDependencyUpgradeQuickFix(versionElement, uiPackageModel)
             )
         }
@@ -119,4 +159,9 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     }
 
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
+}
+
+internal fun LocalQuickFix(@Nls familyName: String, action: Project.(ProblemDescriptor) -> Unit) = object : LocalQuickFix {
+    override fun getFamilyName() = familyName
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) = project.action(descriptor)
 }
