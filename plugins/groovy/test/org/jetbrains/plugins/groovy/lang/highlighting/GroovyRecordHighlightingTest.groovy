@@ -72,6 +72,7 @@ println x.a()
 record R(int a) {}
 def x = new R(10)
 x.<warning>a</warning>
+x.a()
 ''', GroovyAccessibilityInspection
   }
 }

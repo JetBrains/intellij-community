@@ -3,6 +3,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
 /**
@@ -11,4 +13,8 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 fun isRecordTransformationApplied(context: TransformationContext): Boolean {
   return context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_RECORD_BASE) != null &&
          context.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS) != null
+}
+
+fun getCompactConstructor(typedef : GrTypeDefinition) : GrMethod? {
+  return typedef.codeConstructors.find { it.isConstructor && it.parameterList.text == "" }
 }

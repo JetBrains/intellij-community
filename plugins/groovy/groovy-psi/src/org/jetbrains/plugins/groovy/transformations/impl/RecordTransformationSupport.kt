@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
@@ -11,9 +12,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.getCompactConstructor
 import org.jetbrains.plugins.groovy.lang.psi.util.isRecordTransformationApplied
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
@@ -22,7 +25,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 class RecordTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) = with(context) {
     if (codeClass is GrRecordDefinition) {
-      transformSyntacticRecord(codeClass as GrRecordDefinition)
+      prepareSyntacticRecord(codeClass as GrRecordDefinition)
     }
     if (!isRecordTransformationApplied(context)) {
       return
@@ -30,12 +33,12 @@ class RecordTransformationSupport : AstTransformationSupport {
     performClassTransformation()
     val currentFields = fields.toList()
     for (field in currentFields) {
-      generateRecordProperty(field)
+      generateRecordProperty(codeClass, field)
     }
   }
 
 
-  private fun TransformationContext.transformSyntacticRecord(record: GrRecordDefinition) {
+  private fun TransformationContext.prepareSyntacticRecord(record: GrRecordDefinition) {
     for (formalParameter in record.parameters) {
       val field = GrLightField(record, formalParameter.name, formalParameter.type, formalParameter)
       field.modifierList.addModifier(GrModifierFlags.FINAL_MASK)
@@ -53,6 +56,8 @@ class RecordTransformationSupport : AstTransformationSupport {
       doAddAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_KNOWN_IMMUTABLE, emptyMap())
       doAddAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_STC_POJO, emptyMap())
     }
+    val actualNavigationElement : PsiElement = getCompactConstructor(record) ?: record
+
     val formalParameters = record.parameters
     val constructor = GrLightMethodBuilder(record.manager, record.name).apply {
       isConstructor = true
@@ -60,7 +65,7 @@ class RecordTransformationSupport : AstTransformationSupport {
       for (formalParameter in formalParameters) {
         addParameter(GrLightParameter(formalParameter.name, formalParameter.type, record))
       }
-      navigationElement = parameterList
+      navigationElement = actualNavigationElement
     }
     addMethod(constructor)
     val mapConstructor = GrLightMethodBuilder(record.manager, record.name).apply {
@@ -70,7 +75,7 @@ class RecordTransformationSupport : AstTransformationSupport {
       namedParameters = formalParameters.associate { param -> param.name to object : NamedArgumentDescriptorImpl(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP, param.navigationElement) {
         override fun checkType(type: PsiType, context: GroovyPsiElement): Boolean = TypesUtil.isAssignableByParameter(param.type, type, context)
       } }
-      navigationElement = parameterList
+      navigationElement = actualNavigationElement
     }
     addMethod(mapConstructor)
   }
@@ -85,8 +90,9 @@ class RecordTransformationSupport : AstTransformationSupport {
     }
   }
 
-  private fun TransformationContext.generateRecordProperty(field: GrField) {
-    addMethod(GrAccessorMethodImpl(field, false, field.name, GrModifierFlags.FINAL_MASK or getVisibilityMask(field)))
+  private fun TransformationContext.generateRecordProperty(codeClass: GrTypeDefinition, field: GrField) {
+    val visibilityMask = if (codeClass is GrRecordDefinition) 0 else getVisibilityMask(field)
+    addMethod(GrAccessorMethodImpl(field, false, field.name, GrModifierFlags.FINAL_MASK or visibilityMask))
   }
 
   private fun getVisibilityMask(owner: PsiModifierListOwner): Int {
