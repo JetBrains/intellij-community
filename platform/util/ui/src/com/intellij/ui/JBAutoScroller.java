@@ -79,7 +79,7 @@ public final class JBAutoScroller implements ActionListener {
 
         myVerticalScrollDelta = handler.getVerticalScrollDelta(e);
         myHorizontalScrollDelta = handler.getHorizontalScrollDelta(e);
-        myLatestDragEvent = new SyntheticDragEvent(c, e.getID(), e.getWhen(), e.getModifiers(),
+        myLatestDragEvent = new SyntheticDragEvent(c, e.getID(), e.getWhen(), e.getModifiersEx(),
                                                    c.getX(), c.getY(), e.getXOnScreen(), e.getYOnScreen(),
                                                    e.getClickCount(), e.isPopupTrigger(), e.getButton());
       }
