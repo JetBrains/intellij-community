@@ -161,8 +161,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }));
     JsonSchemaService.Impl.get(getProject()).reset();
 
-    refreshVfsAndProcessPendingEvents(getProject());
-
     myFixture.doHighlighting();
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
