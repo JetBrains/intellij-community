@@ -17,9 +17,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWi
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.Application
@@ -267,6 +265,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           process { manager ->
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
+            }
+          }
+
+          if (Registry.`is`("ide.experimental.ui")) {
+            val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
+            if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
+              val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
+              toolWindowManager.activateToolWindow(toolWindowId, null, true)
+            }
+
+            if (event.place == ActionPlaces.TOOLWINDOW_POPUP) {
+              val toolWindowId = toolWindowManager.lastActiveToolWindowId ?: return
+              val activeEntry = toolWindowManager.idToEntry[toolWindowId] ?: return
+              activeEntry.toolWindow.decorator.headerToolbar.component.isVisible = true
             }
           }
         }
