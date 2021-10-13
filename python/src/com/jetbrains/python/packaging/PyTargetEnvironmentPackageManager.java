@@ -239,7 +239,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     getPythonProcessResult(pythonExecution, false, true, targetEnvironmentRequest);
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
-    final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
+    final char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
+    final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 
     return (binary != null) ? binary : binaryFallback;
   }
