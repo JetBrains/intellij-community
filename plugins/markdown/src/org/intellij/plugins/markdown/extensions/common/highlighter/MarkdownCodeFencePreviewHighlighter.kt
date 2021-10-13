@@ -38,16 +38,15 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   private val values = ConcurrentHashMap<String, CachedHTMLResult>()
+  private val currentFile: ThreadLocal<VirtualFile?> = ThreadLocal()
 
   override fun isApplicable(language: String): Boolean {
     return LanguageGuesser.guessLanguageForInjection(language) != null
   }
-
-  var currentFile: VirtualFile? = null
   fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
-    currentFile = file
+    currentFile.set(file)
     val result = generateHtml(language, raw, node)
-    currentFile = null
+    currentFile.set(null)
     return result
   }
 
@@ -98,6 +97,10 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       val right = left + line.length + 1
       lines.add(buildString {
         append("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${left + baseOffset}..${right + baseOffset}'>")
+        if (lines.isNotEmpty()) {
+          // skip first line processing since there is always run marker for whole block
+          append(processCodeLine(line))
+        }
         appendWithReplacements(line, targets, this)
         append("</span>")
       })
@@ -146,10 +149,10 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(processCodeLine(actualLine) + MarkdownCodeFenceGeneratingProvider.escape(actualLine))
+    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
   }
 
-  private fun processCodeLine(rawCodeLine: String): String = currentFile?.let { file ->
+  private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->
     CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true)
   } ?: ""
 }

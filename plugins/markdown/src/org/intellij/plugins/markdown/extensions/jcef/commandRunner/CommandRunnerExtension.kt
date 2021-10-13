@@ -97,9 +97,9 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     if (project != null && file != null && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
       val hash = MarkdownUtil.md5(rawCodeLine, "")
       hash2Cmd[hash] = rawCodeLine
-      val cssClass = "run-icon" + if (inBlock) " code-block" else ""
+      val cssClass = "run-icon hidden" + if (inBlock) " code-block" else ""
       return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-             "<img src='${PreviewStaticServer.getStaticUrl(provider,"run.png")}'>" +
+             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
              "</a>"
     }
     else return ""
@@ -114,15 +114,14 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
     val hash = MarkdownUtil.md5(codeFenceRawContent, "")
     hash2Cmd[hash] = codeFenceRawContent
-    val cssClass = "run-icon code-block"
-    val html = "<a class='${cssClass}' href='#' role='button' " +
-               "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
-               "data-commandtype='block'" +
-               ">" +
-               "<img src='${PreviewStaticServer.getStaticUrl(provider,"runrun.png")}'>" +
-               "</a>"
+    val cssClass = "run-icon hidden code-block"
 
-    return html
+    return "<a class='${cssClass}' href='#' role='button' " +
+           "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
+           "data-commandtype='block'" +
+           ">" +
+           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
+           "</a>"
   }
 
 
@@ -147,7 +146,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val cmdHash: String = encodedLine.substringAfter(":")
     val command = hash2Cmd[cmdHash]
     if (command == null) {
-      LOG.error("Command index $cmdHash not found. Please attach .md file to error report. ${hash2Cmd}")
+      LOG.error("Command hash $cmdHash not found. Please attach .md file to error report.\n${hash2Cmd}")
       return
     }
     val runner = MarkdownRunner.EP_NAME.extensionList.first()
@@ -189,7 +188,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     override val id: String
       get() = "CommandRunnerExtension"
 
-    val icons: List<String> = listOf("run.png", "runrun.png")
+    val icons: List<String> = listOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
 
     override fun canProvide(resourceName: String): Boolean {
       return resourceName in icons
@@ -197,8 +196,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? {
       val icon = when (resourceName) {
-        "run.png" -> AllIcons.RunConfigurations.TestState.Run
-        "runrun.png" -> AllIcons.RunConfigurations.TestState.Run_run
+        RUN_LINE_ICON -> AllIcons.RunConfigurations.TestState.Run
+        RUN_BLOCK_ICON -> AllIcons.RunConfigurations.TestState.Run_run
         else -> return null
       }
       val format = resourceName.substringAfterLast(".")
@@ -213,6 +212,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     private const val RUN_BLOCK_EVENT = "runBlock"
     private const val PAGE_READY_EVENT = "pageReady"
     private const val LAYOUT_CHANGE_EVENT = "layoutChange"
+    private const val RUN_LINE_ICON = "run.png"
+    private const val RUN_BLOCK_ICON = "runrun.png"
 
     fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
       return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
