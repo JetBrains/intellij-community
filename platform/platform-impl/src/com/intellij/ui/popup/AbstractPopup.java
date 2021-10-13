@@ -977,10 +977,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
         myComponent,
-        myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
+        myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
         null) {
         private Cursor myCursor;
 
