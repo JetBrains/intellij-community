@@ -2,7 +2,6 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,13 +11,13 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.BaseSwitchFix;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -78,12 +77,6 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
 
   private static @NonNls List<String> generateStatements(@NotNull PsiSwitchBlock switchBlock, boolean isRuleBasedFormat,
                                                          @Nullable PsiElement defaultElement) {
-    Project project = switchBlock.getProject();
-    PsiStatement statement =
-      JavaPsiFacade.getElementFactory(project).createStatementFromText("throw new java.lang.NullPointerException();", switchBlock);
-    if (isRuleBasedFormat) {
-      return Collections.singletonList("case null -> " + statement.getText());
-    }
     PsiStatement previousStatement;
     if (defaultElement == null) {
       previousStatement = ArrayUtil.getLastElement(Objects.requireNonNull(switchBlock.getBody()).getStatements());
@@ -91,9 +84,11 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     else {
       previousStatement = PsiTreeUtil.getPrevSiblingOfType(defaultElement, PsiStatement.class);
     }
-    if (previousStatement != null && ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-      return Arrays.asList("break;", "case null:", statement.getText());
+    List<String> result = new ArrayList<>();
+    if (!isRuleBasedFormat && previousStatement != null && ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
+      result.add("break;");
     }
-    return Arrays.asList("case null:", statement.getText());
+    result.addAll(CreateSwitchBranchesUtil.generateStatements("null", switchBlock, isRuleBasedFormat, false));
+    return result;
   }
 }

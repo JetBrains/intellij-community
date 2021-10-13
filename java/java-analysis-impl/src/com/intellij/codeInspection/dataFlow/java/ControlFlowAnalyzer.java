@@ -932,27 +932,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processSwitch(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
-    DfaValue initialSelectorValue = null;
-    DfaVariableValue selectorValue = null;
+    DfaVariableValue expressionValue = null;
     boolean syntheticVar = true;
+    PsiType targetType = null;
     if (selector != null) {
-      PsiType targetType = selector.getType();
-      initialSelectorValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, selector);
-      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(targetType);
-      if (unboxedType != null) {
-        targetType = unboxedType;
-      }
-      else {
-        if (initialSelectorValue instanceof DfaVariableValue && !((DfaVariableValue)initialSelectorValue).isFlushableByCalls()) {
-          selectorValue = (DfaVariableValue)initialSelectorValue;
-          syntheticVar = false;
-        }
+      targetType = selector.getType();
+      DfaValue selectorValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, selector);
+      if (selectorValue instanceof DfaVariableValue && !((DfaVariableValue)selectorValue).isFlushableByCalls()) {
+        expressionValue = (DfaVariableValue)selectorValue;
+        syntheticVar = false;
       }
       selector.accept(this);
-      generateBoxingUnboxingInstructionFor(selector, targetType);
       if (syntheticVar) {
-        selectorValue = createTempVariable(targetType);
-        addInstruction(new SimpleAssignmentInstruction(null, selectorValue));
+        expressionValue = createTempVariable(targetType);
+        addInstruction(new SimpleAssignmentInstruction(null, expressionValue));
       }
       addInstruction(new PopInstruction());
     }
@@ -984,37 +977,49 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 PsiExpression expr = ((PsiExpression)labelElement);
                 boolean enumConstant = expr instanceof PsiReferenceExpression &&
                                        ((PsiReferenceExpression)expr).resolve() instanceof PsiEnumConstant;
-                if (selectorValue != null && (enumConstant || PsiUtil.isConstantExpression(expr))) {
-                  ConditionalGotoInstruction condGotoInstruction = null;
-                  GotoInstruction gotoInstruction = null;
-                  if (syntheticVar && initialSelectorValue != null) {
-                    addInstruction(new JvmPushInstruction(initialSelectorValue, null));
+                if (expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(expr))) {
+                  if (PsiPrimitiveType.getUnboxedType(targetType) == null) {
+                    addInstruction(new JvmPushInstruction(expressionValue, null));
+                    expr.accept(this);
+                    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                    addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  }
+                  else {
+                    // if selector != null
+                    addInstruction(new JvmPushInstruction(expressionValue, null));
                     addInstruction(new PushValueInstruction(DfTypes.NULL));
                     addInstruction(new BooleanBinaryInstruction(RelationType.NE, true, null));
-                    condGotoInstruction = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
-                    addInstruction(condGotoInstruction);
-                    addInstruction(new JvmPushInstruction(initialSelectorValue, null));
-                    gotoInstruction = new GotoInstruction(offset);
-                    addInstruction(gotoInstruction);
+                    ConditionalGotoInstruction condGotoInstr = new ConditionalGotoInstruction(new ControlFlow.DeferredOffset(), DfTypes.TRUE);
+                    addInstruction(condGotoInstr);
+
+                    // if selector == null, we set false explicitly and jump to GOTO instruction that exits from the switch branch
+                    addInstruction(new PushValueInstruction(DfTypes.FALSE, new JavaSwitchLabelTakenAnchor(expr)));
+                    GotoInstruction gotoInstr = new GotoInstruction(new ControlFlow.DeferredOffset());
+                    addInstruction(gotoInstr);
+
+                    JvmPushInstruction pushSelectorInstr = new JvmPushInstruction(expressionValue, null);
+                    addInstruction(pushSelectorInstr);
+                    generateBoxingUnboxingInstructionFor(selector, PsiPrimitiveType.getUnboxedType(targetType));
+                    expr.accept(this);
+                    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+
+                    ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
+                    addInstruction(exitFromSwitchBranchInstr);
+
+                    condGotoInstr.setOffset(pushSelectorInstr.getIndex());
+                    gotoInstr.setOffset(exitFromSwitchBranchInstr.getIndex());
                   }
-                  JvmPushInstruction pushOp = new JvmPushInstruction(selectorValue, null);
-                  addInstruction(pushOp);
-                  if (condGotoInstruction != null) {
-                    condGotoInstruction.setOffset(pushOp.getIndex());
-                    gotoInstruction.setOffset(pushOp.getIndex() + 1);
-                  }
-                  expr.accept(this);
-                  addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
                 }
-                else if (initialSelectorValue != null && TypeConversionUtil.isNullType(((PsiExpression)labelElement).getType())) {
-                  addInstruction(new JvmPushInstruction(initialSelectorValue, null));
+                else if (expressionValue != null && TypeConversionUtil.isNullType(((PsiExpression)labelElement).getType())) {
+                  addInstruction(new JvmPushInstruction(expressionValue, null));
                   expr.accept(this);
                   addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
                 else {
                   pushUnknown();
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
-                addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
               }
             }
           }
@@ -1037,8 +1042,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    if (syntheticVar && selectorValue != null) {
-      addInstruction(new FlushVariableInstruction(selectorValue));
+    if (syntheticVar && expressionValue != null) {
+      addInstruction(new FlushVariableInstruction(expressionValue));
     }
   }
 

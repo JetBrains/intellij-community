@@ -74,6 +74,10 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     adjustEditor(switchBlock, lastStatement);
   }
 
+  /**
+   * Method selects the statement inside the switch block and offers a user to replace the selected statement
+   * with his own value.
+   */
   public static void adjustEditor(@NotNull PsiSwitchBlock block, @Nullable PsiStatement statementToAdjust) {
     if (!block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();

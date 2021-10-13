@@ -7,7 +7,7 @@ class Test {
         System.out.println();
         break;
         case null:
-            throw new NullPointerException();
+            break;
     }
   }
 }

@@ -189,6 +189,76 @@ class Test {
     }
   }
 
+  void nullableCallWithNullLabel() {
+    switch (createNullEnumValue()) {
+      case A:
+        break;
+      case B:
+        break;
+      case null:
+        break;
+    }
+  }
+
+  void nullableCallWithoutNullLabel() {
+    switch (<warning descr="Dereference of 'createNullEnumValue()' may produce 'NullPointerException'">createNullEnumValue()</warning>) {
+      case A:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void unknownCallWithNullLabel() {
+    switch (createEnumValue()) {
+      case A:
+        break;
+      case B:
+        break;
+      case null:
+        break;
+    }
+  }
+
+  void unknownCallWithoutNullLabel() {
+    switch (createEnumValue()) {
+      case A:
+        break;
+      case B:
+        break;
+    }
+  }
+
+  void notNullCallWithNullLabel() {
+    switch (createNotNullEnumValue()) {
+      case A, B:
+        break;
+      case <warning descr="Switch label 'null' is unreachable">null</warning>:
+        break;
+    }
+  }
+
+  void notNullCallWithoutNullLabel() {
+    switch (createNotNullEnumValue()) {
+      case A, B:
+        break;
+    }
+  }
+
+  @Nullable
+  E createNullEnumValue() {
+    return null;
+  }
+
+  E createEnumValue() {
+    return E.A;
+  }
+
+  @NotNull
+  E createNotNullEnumValue() {
+    return E.A;
+  }
+
   enum E {
     A, B
   }

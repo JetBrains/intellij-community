@@ -204,4 +204,78 @@ class Test {
         break;
     }
   }
+
+  void nullableCallWithNullLabel() {
+    switch (createNullValue()) {
+      case 1:
+        break;
+      case null:
+        break;
+      case default:
+        break;
+    }
+  }
+
+  void nullableCallWithoutNullLabel() {
+    switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
+      case 1:
+        break;
+      case default:
+        break;
+    }
+  }
+
+  void unknownCallWithNullLabel() {
+    switch (createValue()) {
+      case 1:
+        break;
+      case null:
+        break;
+      case default:
+        break;
+    }
+  }
+
+  void unknownCallWithoutNullLabel() {
+    switch (createValue()) {
+      case 1:
+        break;
+      case default:
+        break;
+    }
+  }
+
+  void notNullCallWithNullLabel() {
+    switch (createNotNullValue()) {
+      case 1, 2:
+        break;
+      case <warning descr="Switch label 'null' is unreachable">null</warning>:
+        break;
+      case default:
+        break;
+    }
+  }
+
+  void notNullCallWithoutNullLabel() {
+    switch (createNotNullValue()) {
+      case 1, 2:
+        break;
+      default:
+        break;
+    }
+  }
+  
+  @Nullable
+  Integer createNullValue() {
+    return null;
+  }
+
+  Integer createValue() {
+    return 1;
+  }
+
+  @NotNull
+  Integer createNotNullValue() {
+    return 1;
+  }
 }
