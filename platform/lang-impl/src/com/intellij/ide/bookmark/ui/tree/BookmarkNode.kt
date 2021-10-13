@@ -9,12 +9,14 @@ import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.presentation.FilePresentationService
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.IconManager
+import com.intellij.ui.SimpleTextAttributes
 import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
@@ -46,13 +48,31 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
   }
 
   override fun update(presentation: PresentationData) {
-    val project = value?.provider?.project ?: return
     val file = virtualFile ?: return
     presentation.setIcon(wrapIcon(findIcon(PsiUtilCore.findFileSystemItem(project, file), 0)))
-    presentation.tooltip = bookmarkDescription
-    presentation.presentableText = file.presentableName
-    presentation.locationString = ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.let {
-      VfsUtil.getRelativeLocation(file.parent, it)
+    addTextTo(presentation, file)
+  }
+
+  protected fun addTextTo(presentation: PresentationData, file: VirtualFile, line: Int = 0) {
+    val description = bookmarkDescription
+    if (description == null) {
+      val location = file.parent?.let { getRelativePath(it) }
+      presentation.addText(file.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
+    else {
+      val location = getRelativePath(file) ?: file.presentableName
+      presentation.addText(description, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      presentation.addText("  $location", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    }
+  }
+
+  private fun getRelativePath(file: VirtualFile): @NlsSafe String? {
+    val project = project ?: return null
+    if (project.isDisposed) return null
+    val root = ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) ?: return null
+    return VfsUtil.getRelativePath(file, root) ?: file.presentableName
   }
 }
