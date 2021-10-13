@@ -39,8 +39,20 @@ public class JpsBootstrapMain {
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
 
-  @SuppressWarnings("ConfusingArgumentToVarargsMethod")
-  public static void main(String[] args) throws Throwable {
+  public static void main(String[] args) {
+    try {
+      mainImpl(args);
+      System.exit(0);
+    }
+    catch (Throwable t) {
+      t.printStackTrace(System.err);
+      fatal("Fatal error occurred, see exception above");
+      System.exit(1);
+    }
+  }
+
+    @SuppressWarnings("ConfusingArgumentToVarargsMethod")
+  private static void mainImpl(String[] args) throws Throwable {
     long startTime = System.currentTimeMillis();
 
     if (args.length != 2) {
