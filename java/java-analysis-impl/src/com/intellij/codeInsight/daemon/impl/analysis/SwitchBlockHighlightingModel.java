@@ -730,7 +730,7 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null) {
+      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED) && selectorClass.hasModifierProperty(ABSTRACT)) {
         checkSealedClassCompleteness(selectorClass, elements, results);
       }
       else {
