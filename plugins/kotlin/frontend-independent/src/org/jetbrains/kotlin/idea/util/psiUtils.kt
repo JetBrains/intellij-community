@@ -76,17 +76,20 @@ fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElemen
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }
 
-fun KtAnnotated.findAnnotation(
+fun KtAnnotated.findAnnotationWithShortName(
     shortName: String,
-    useSiteTarget: AnnotationUseSiteTarget?,
+    useSiteTarget: AnnotationUseSiteTarget? = null,
 ): KtAnnotationEntry? = annotationEntries.firstOrNull {
     it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget && it.shortName?.asString() == shortName
 }
 
 private fun KtAnnotated.findJvmName(useSiteTarget: AnnotationUseSiteTarget? = null): String? =
-    findAnnotation(JvmFileClassUtil.JVM_NAME_SHORT, useSiteTarget)?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
+    findAnnotationWithShortName(JvmFileClassUtil.JVM_NAME_SHORT, useSiteTarget)?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
 
-fun KtAnnotated.hasAnnotationWithShortName(shortName: String): Boolean = findAnnotation(shortName, null) != null
+fun KtAnnotated.hasAnnotationWithShortName(
+    shortName: String,
+    useSiteTarget: AnnotationUseSiteTarget? = null,
+): Boolean = findAnnotationWithShortName(shortName, useSiteTarget) != null
 
 val KtNamedFunction.jvmName: String? get() = findJvmName()
 val KtPropertyAccessor.jvmName: String? get() = findJvmName()
