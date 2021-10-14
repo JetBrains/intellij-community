@@ -87,42 +87,39 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
 
   @Override
   public @NotNull JComponent createCompoundEditor() {
+    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
+    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getPriority));
+
+    SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.isBeforeRun());
+    SettingsEditorFragment<Settings, ?> header = ContainerUtil.find(fragments, fragment -> fragment.isHeader());
+    List<SettingsEditorFragment<Settings, ?>> commandLine = ContainerUtil.filter(fragments, fragment -> fragment.isCommandLine());
+    List<SettingsEditorFragment<Settings, ?>> subGroups = ContainerUtil.filter(fragments, fragment -> !fragment.getChildren().isEmpty());
+    List<SettingsEditorFragment<Settings, ?>> tags = ContainerUtil.filter(fragments, it -> it.isTag());
+
+    fragments.remove(beforeRun);
+    fragments.remove(header);
+    fragments.removeAll(commandLine);
+    fragments.removeAll(subGroups);
+    fragments.removeAll(tags);
+
     if (myMain == null) {
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
       addLine(new JSeparator());
     }
-    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
-    List<SettingsEditorFragment<Settings, ?>> subGroups = ContainerUtil.filter(fragments, fragment -> !fragment.getChildren().isEmpty());
-    fragments.removeAll(subGroups);
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getPriority));
-    buildBeforeRun(fragments);
-    addLine(buildHeader(fragments));
+
+    addBeforeRun(beforeRun);
+    addHeader(header);
+
     myGroupInset = myMain == null ? 0 : GROUP_INSET;
     if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
-    buildCommandLinePanel(fragments);
 
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, TAG_HGAP, TAG_VGAP));
-    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
-      JComponent component = fragment.getComponent();
-      if (fragment.isTag()) {
-        tagsPanel.add(component);
-      }
-      else {
-        addLine(component);
-        if (fragment.getHintComponent() != null) {
-          addLine(fragment.getHintComponent(), 0, getLeftInset(component), TOP_INSET);
-        }
-      }
-    }
-    if (tagsPanel.getComponentCount() > 0) {
-      addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
-    }
+    addCommandLinePanel(commandLine);
+    addFragments(fragments);
+    addTagPanel(tags);
+    addSubGroups(subGroups);
 
-    for (SettingsEditorFragment<Settings, ?> group : subGroups) {
-      addLine(group.getComponent());
-    }
     myGroupInset = 0;
     if (myMain == null) {
       myConstraints.weighty = 1;
@@ -142,21 +139,17 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     addLine(component, TOP_INSET, 0, 0);
   }
 
-  private void buildBeforeRun(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
-    SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.isBeforeRun());
+  private void addBeforeRun(@Nullable SettingsEditorFragment<Settings, ?> beforeRun) {
     if (beforeRun != null) {
       addLine(beforeRun.getComponent(), TOP_INSET, 0, TOP_INSET * 2);
-      fragments.remove(beforeRun);
     }
   }
 
-  private JComponent buildHeader(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
+  private void addHeader(@Nullable SettingsEditorFragment<Settings, ?> header) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(5, 0));
-    SettingsEditorFragment<Settings, ?> label = ContainerUtil.find(fragments, fragment -> fragment.isHeader());
-    if (label != null) {
-      panel.add(label.getComponent(), BorderLayout.WEST);
-      fragments.remove(label);
+    if (header != null) {
+      panel.add(header.getComponent(), BorderLayout.WEST);
     }
     if (myMain != null) {
       panel.add(SeparatorFactory.createSeparator(myMain.getGroup(), null), BorderLayout.CENTER);
@@ -176,7 +169,33 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       linkPanel.add(shortcutLabel, BorderLayout.EAST);
     }
     panel.add(linkPanel, BorderLayout.EAST);
-    return panel;
+    addLine(panel);
+  }
+
+  private void addFragments(@NotNull List<SettingsEditorFragment<Settings, ?>> fragments) {
+    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+      JComponent component = fragment.getComponent();
+      addLine(component);
+      if (fragment.getHintComponent() != null) {
+        addLine(fragment.getHintComponent(), 0, getLeftInset(component), TOP_INSET);
+      }
+    }
+  }
+
+  private void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
+    for (SettingsEditorFragment<Settings, ?> group : subGroups) {
+      addLine(group.getComponent());
+    }
+  }
+
+  private void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, TAG_HGAP, TAG_VGAP));
+    for (SettingsEditorFragment<Settings, ?> tag : tags) {
+      tagsPanel.add(tag.getComponent());
+    }
+    if (tagsPanel.getComponentCount() > 0) {
+      addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+    }
   }
 
   private void registerShortcuts() {
@@ -284,12 +303,11 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     return result;
   }
 
-  private void buildCommandLinePanel(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
-    List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.isCommandLine());
-    if (list.isEmpty()) return;
-    fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, this);
-    addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
+  private void addCommandLinePanel(@NotNull List<SettingsEditorFragment<Settings, ?>> commandLine) {
+    if (!commandLine.isEmpty()) {
+      CommandLinePanel panel = new CommandLinePanel(commandLine, myConfigId, this);
+      addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
+    }
   }
 
   static int getLeftInset(JComponent component) {
