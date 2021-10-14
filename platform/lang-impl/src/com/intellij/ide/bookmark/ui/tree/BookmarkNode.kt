@@ -10,6 +10,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.presentation.FilePresentationService
@@ -62,9 +63,9 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
       location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
     else {
-      val location = getRelativePath(file) ?: file.presentableName
+      val location = getRelativePath(file) ?: if (line > 0) file.presentableName else null
       presentation.addText(description, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      presentation.addText("  $location", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
   }
@@ -72,7 +73,14 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
   private fun getRelativePath(file: VirtualFile): @NlsSafe String? {
     val project = project ?: return null
     if (project.isDisposed) return null
-    val root = ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) ?: return null
-    return VfsUtil.getRelativePath(file, root) ?: file.presentableName
+    val index = ProjectFileIndex.getInstance(project)
+    index.getModuleForFile(file, false) ?: return FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+    var root = file
+    while (true) {
+      val parent = root.parent ?: break
+      index.getModuleForFile(parent, false) ?: break
+      root = parent
+    }
+    return if (file == root) null else VfsUtil.getRelativePath(file, root)
   }
 }
