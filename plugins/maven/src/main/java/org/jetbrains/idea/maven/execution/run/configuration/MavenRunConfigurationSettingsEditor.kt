@@ -13,6 +13,8 @@ import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesFiled
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesInfo
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
@@ -391,6 +393,28 @@ class MavenRunConfigurationSettingsEditor(
           { runnerSettingsOrDefault.setJreName(it) }
         )
       }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addPropertiesFragment() =
+    addLabeledSettingsEditorFragment(
+      PropertiesFiled(project, object : PropertiesInfo {
+        override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.title")
+        override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.tooltip")
+        override val dialogLabel: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.label")
+        override val dialogEmptyState: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.empty.state")
+        override val dialogOkButton: String = MavenConfigurableBundle.message("maven.run.configuration.properties.dialog.ok.button")
+      }),
+      object : LabeledSettingsFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.properties.label")
+        override val settingsId: String = "maven.properties.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.properties.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
+        override val settingsHint: String? = null
+        override val settingsActionHint: String? = null
+      },
+      { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesFiled.Property(it.key, it.value) } },
+      { it, c -> it.runnerSettingsOrDefault.mavenProperties = c.properties.associate { it.name to it.value } },
+      { it.runnerSettingsOrDefault.mavenProperties.isNotEmpty() }
+    )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
