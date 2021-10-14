@@ -4,19 +4,16 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.io.CorruptedException
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.io.PersistentMapBuilder
-import com.intellij.util.io.externalizer.StringCollectionExternalizer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -30,7 +27,6 @@ import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.Companion.CACHE_E
 import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.Future
@@ -185,41 +181,3 @@ private fun createKotlinDataReader(storagePath: Path): PersistentHashMap<String,
     EnumeratorStringDescriptor.INSTANCE,
     CollectionExternalizer<String>(EnumeratorStringDescriptor.INSTANCE, ::SmartList),
 ).readonly().build()
-
-@IntellijInternalApi
-class ClassOneToManyStorage(storagePath: Path) {
-    init {
-        val storageName = storagePath.name
-        storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
-            forEach { it.deleteIfExists() }
-            LOG.warn("'$storageName' was deleted")
-        }
-    }
-
-    private val storage = PersistentMapBuilder.newBuilder(
-        storagePath,
-        EnumeratorStringDescriptor.INSTANCE,
-        externalizer,
-    ).build()
-
-    fun closeAndClean(): Unit = storage.closeAndClean()
-
-    fun put(key: String, values: Collection<String>) {
-        storage.put(key, values)
-    }
-
-    operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = get(key.asString(), deep).map(::FqName)
-    operator fun get(key: String, deep: Boolean): Sequence<String> {
-        val values = storage[key]?.asSequence() ?: emptySequence()
-        if (!deep) return values
-
-        return generateRecursiveSequence(values) {
-            storage[it]?.asSequence() ?: emptySequence()
-        }
-    }
-
-    companion object {
-        private val externalizer = StringCollectionExternalizer<Collection<String>>(::ArrayList)
-        private val LOG = logger<ClassOneToManyStorage>()
-    }
-}
