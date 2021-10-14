@@ -27,7 +27,7 @@ internal fun createLogData(repo: GitRepository, logProvider: GitLogProvider, dis
   }, disposable)
 }
 
-internal fun VcsLogData.refreshAndWait(repo: GitRepository, withIndex: Boolean) {
+internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: Boolean) {
   val logWaiter = CompletableFuture<VcsLogData>()
   val dataPackChangeListener = DataPackChangeListener { newDataPack ->
     if (newDataPack.isFull) {
@@ -38,7 +38,7 @@ internal fun VcsLogData.refreshAndWait(repo: GitRepository, withIndex: Boolean) 
   refresh(listOf(repo.root))
   try {
     logWaiter.get(5, TimeUnit.SECONDS)
-    if (withIndex) {
+    if (waitIndexFinishing) {
       waitIndexFinishing(repo)
     }
   }
@@ -52,13 +52,17 @@ internal fun VcsLogData.refreshAndWait(repo: GitRepository, withIndex: Boolean) 
 
 private fun VcsLogData.waitIndexFinishing(repo: GitRepository) {
   val indexWaiter = CompletableFuture<VirtualFile>()
+  val repositoryRoot = repo.root
   val indexFinishedListener = VcsLogIndex.IndexingFinishedListener { root ->
-    if (repo.root == root) {
+    if (repositoryRoot == root) {
       indexWaiter.complete(root)
     }
   }
   index.addListener(indexFinishedListener)
   try {
+    if (index.isIndexed(repositoryRoot)) {
+      indexWaiter.complete(repositoryRoot)
+    }
     indexWaiter.get(5, TimeUnit.SECONDS)
   }
   catch (e: Exception) {
