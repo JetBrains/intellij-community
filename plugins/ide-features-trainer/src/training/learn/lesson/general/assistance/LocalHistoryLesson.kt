@@ -174,8 +174,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item -> item.text?.contains(localHistoryActionText) == true }.click()
-          jMenuItem { item -> item.text == showHistoryActionText }.click()
+          jMenuItem { item: ActionMenu -> item.text?.contains(localHistoryActionText) == true }.click()
+          jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
         }
       }
     }

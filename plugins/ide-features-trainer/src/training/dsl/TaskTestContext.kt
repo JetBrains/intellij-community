@@ -97,9 +97,11 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return ActionButtonFixture(robot(), actionButton)
   }
 
-  fun <C : Container> ContainerFixture<C>.jMenuItem(timeout: Timeout = defaultTimeout,
-                                                    finderFunction: (JMenuItem) -> Boolean): JMenuItemFixture {
-    val item = findComponentWithTimeout(timeout) { item: JMenuItem -> finderFunction(item) }
+  inline fun <C : Container, reified MenuItemType : JMenuItem> ContainerFixture<C>.jMenuItem(
+    timeout: Timeout = defaultTimeout,
+    crossinline finderFunction: (MenuItemType) -> Boolean
+  ): JMenuItemFixture {
+    val item = findComponentWithTimeout(timeout) { item: MenuItemType -> item.isShowing && finderFunction(item) }
     return JMenuItemFixture(robot(), item)
   }
 
