@@ -10,7 +10,9 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Function
 import kotlin.io.path.name
 
@@ -103,7 +105,7 @@ private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String)
   this as TargetEnvironment
   val targetFileSeparator = targetPlatform.platform.fileSeparator
   val (volume, relativePath) = synchronizedVolumes.firstNotNullOfOrNull { volume ->
-    getRelativePathIfAncestor(ancestor = volume.localPath.toString(), file = localPath)?.let { relativePath ->
+    getRelativePathIfAncestor(ancestor = volume.localPath, file = localPath)?.let { relativePath ->
       volume to if (File.separatorChar != targetFileSeparator) {
         relativePath.replace(File.separatorChar, targetFileSeparator)
       }
@@ -118,7 +120,7 @@ private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String)
 fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
   val targetFileSeparator = targetPlatform.platform.fileSeparator
   return uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(), file = localPath)?.let { relativePath ->
+    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
       uploadRoot to if (File.separatorChar != targetFileSeparator) {
         relativePath.replace(File.separatorChar, targetFileSeparator)
       }
@@ -129,11 +131,15 @@ fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<
   }.firstOrNull()
 }
 
-private fun getRelativePathIfAncestor(ancestor: String, file: String): String? =
-  if (FileUtil.isAncestor(ancestor, file, false)) {
-    FileUtil.getRelativePath(ancestor, file, File.separatorChar)
+private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
+  try {
+    ancestor.relativize(Paths.get(file)).takeIf { !it.startsWith("..") }?.toString()
   }
-  else {
+  catch (ignored: InvalidPathException) {
+    null
+  }
+  catch (ignored: IllegalArgumentException) {
+    // It should not happen, but some tests use relative paths, and they fail trying to call `Paths.get("\\").relativize(Paths.get("."))`
     null
   }
 
