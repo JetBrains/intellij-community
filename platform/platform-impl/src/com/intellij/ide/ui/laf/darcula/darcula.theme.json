@@ -500,6 +500,13 @@
       "background": "#4c5052"
     },
 
+    "ToolbarComboWidget": {
+      "background": "#3C3F41",
+      "hoverBackground": "#4C5052",
+      "borderInsets": "3,5,3,5",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
     "activeCaption": "#434E60",
     "control": "#3c3f41",
     "controlText": "#bbbbbb",

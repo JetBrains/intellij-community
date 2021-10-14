@@ -395,6 +395,13 @@
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
     },
 
+    "ToolbarComboWidget": {
+      "background": "#f2f2f2",
+      "hoverBackground": "#dfdfdf",
+      "borderInsets": "3,5,3,5",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
     "control": "#f2f2f2",
     "darcula.selectionBackground": "#4A6EB7",
     "darcula.selectionForeground": "#ffffff",

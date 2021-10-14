@@ -52,6 +52,11 @@ public final class ExperimentalUI {
     return isEnabled("ide.experimental.ui.vcs.branch.popup");
   }
 
+  public static boolean isNewToolbar() {
+    return false;
+    //return isEnabled("ide.experimental.ui.main.toolbar");
+  }
+
   private static boolean isEnabled(@NonNls @NotNull String key) {
     return ApplicationManager.getApplication().isEAP()
            && (isNewUI() || is(key));

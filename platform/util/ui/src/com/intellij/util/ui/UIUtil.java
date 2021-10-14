@@ -906,6 +906,10 @@ public final class UIUtil {
     return JBColor.namedColor("Label.disabledForeground", JBColor.GRAY);
   }
 
+  public static @NotNull Color getLabelInfoForeground() {
+    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
+  }
+
   public static @NotNull Color getContextHelpForeground() {
     return JBUI.CurrentTheme.ContextHelp.FOREGROUND;
   }

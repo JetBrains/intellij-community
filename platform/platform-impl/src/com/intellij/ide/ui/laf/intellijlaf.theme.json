@@ -890,6 +890,13 @@
       "separatorColor": "border"
     },
 
+    "ToolbarComboWidget": {
+      "background": "#f2f2f2",
+      "hoverBackground": "#dfdfdf",
+      "borderInsets": "3,5,3,5",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
+    },
+
     "Tag": {
       "background": "#dfdfdf"
     },
