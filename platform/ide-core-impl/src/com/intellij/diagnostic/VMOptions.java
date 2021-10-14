@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SmartList;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,16 +31,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
-
-  private static final NotNullLazyValue<Charset> JNU_CHARSET = NotNullLazyValue.createValue(() -> {
-    try {
-      return Charset.forName(System.getProperty("sun.jnu.encoding"));
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      return Charset.defaultCharset();
-    }
-  });
 
   public enum MemoryKind {
     HEAP("Xmx", "", "change.memory.max.heap"),
@@ -285,7 +276,7 @@ public final class VMOptions {
    * but when unavoidable, this charset must be used for reading and writing the file.
    */
   public static @NotNull Charset getFileCharset() {
-    return JNU_CHARSET.getValue();
+    return CharsetToolkit.getPlatformCharset();
   }
 
   //<editor-fold desc="Deprecated stuff.">
