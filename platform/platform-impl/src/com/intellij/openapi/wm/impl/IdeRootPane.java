@@ -93,7 +93,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        mySelectedEditorFilePath = CustomDecorationPath.Companion.createInstance(frame);
+        mySelectedEditorFilePath = CustomDecorationPath.Companion.createMainInstance(frame);
         myCustomFrameTitlePane = new MenuFrameHeader(frame, mySelectedEditorFilePath, IdeMenuBar.createMenuBar());
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
       }
