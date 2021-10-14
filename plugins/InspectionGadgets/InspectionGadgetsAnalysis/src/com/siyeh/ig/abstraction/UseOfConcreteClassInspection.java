@@ -198,20 +198,20 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     }
 
     @Override
-    public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    public void visitTypeTestPattern(@NotNull PsiTypeTestPattern pattern) {
       PsiTypeElement typeElement = pattern.getCheckType();
       processInstanceOfCheck(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.pattern.problem.descriptor"));
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       super.visitInstanceOfExpression(expression);
       if (expression.getPattern() == null) {
         processInstanceOfCheck(expression.getCheckType(), InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor"));
       }
     }
 
-    private void processInstanceOfCheck(PsiTypeElement typeElement, @NotNull @Nls String message) {
+    private void processInstanceOfCheck(@Nullable PsiTypeElement typeElement, @NotNull @Nls String message) {
       if (!reportInstanceOf) return;
       if (!typeIsConcreteClass(typeElement)) return;
       PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
