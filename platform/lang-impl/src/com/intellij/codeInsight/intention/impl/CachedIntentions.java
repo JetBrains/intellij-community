@@ -27,16 +27,12 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
@@ -227,7 +223,7 @@ public final class CachedIntentions {
       injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
     }
 
-    Set<IntentionActionWithTextCaching> wrappedNew = Collections.newSetFromMap(new LinkedHashMap<>(newDescriptors.size()));
+    Set<IntentionActionWithTextCaching> wrappedNew = new LinkedHashSet<>(newDescriptors.size());
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
       final IntentionAction action = descriptor.getAction();
       if (element != null &&
