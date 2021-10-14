@@ -5,16 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.TimerUtil
 import java.awt.*
 import java.util.*
-import javax.swing.JList
-import javax.swing.JTree
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
 import kotlin.math.max
@@ -162,7 +160,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
     val newPainter = LearningHighlightPainter(startDate, options, bounds)
     Disposer.newDisposable("RepaintHighlightingDisposable").let {
       disposable = it
-      IdeGlassPaneUtil.find(original).addPainter(null, newPainter, it)
+      findIdeGlassPane(original).addPainter(null, newPainter, it)
     }
 
     listLocationOnScreen = original.locationOnScreen
@@ -212,3 +210,15 @@ internal class LearningHighlightPainter(
 
   override fun needsRepaint(): Boolean = true
 }
+
+private fun findIdeGlassPane(component: Component): IdeGlassPane {
+  val root = when (component) {
+    is JComponent -> component.rootPane
+    is RootPaneContainer -> component.rootPane
+    else -> null
+  } ?: throw IllegalArgumentException("Component must be visible in order to find glass pane for it")
+  val gp = root.glassPane
+  require(gp is IdeGlassPane) { "Glass pane should be " + IdeGlassPane::class.java.name }
+  return gp
+}
+
