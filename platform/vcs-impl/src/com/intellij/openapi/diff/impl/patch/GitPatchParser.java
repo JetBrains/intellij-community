@@ -25,8 +25,8 @@ public final class GitPatchParser {
   @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
   @NonNls private static final Pattern ourIndexHeaderLinePattern =
     Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
-  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s+(\\S+)\\s*");
-  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s+(\\S+)\\s*");
+  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s(.*)");
+  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s(.*)");
   @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
   @NonNls private static final Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
 
@@ -96,7 +96,7 @@ public final class GitPatchParser {
         else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
           Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
           if (fileRenameToMatcher.matches()) {
-            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1), fileRenameToMatcher.group(1));
+            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1).trim(), fileRenameToMatcher.group(1).trim());
           }
           else {
             iterator.previous();
