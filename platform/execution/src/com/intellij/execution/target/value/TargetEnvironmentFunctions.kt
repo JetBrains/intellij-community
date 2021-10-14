@@ -36,7 +36,7 @@ typealias TargetEnvironmentFunction<R> = Function<TargetEnvironment, R>
  * to ease debugging in case of raised exceptions.
  */
 @ApiStatus.Experimental
-abstract class TraceableTargetEnvironmentFunction<R> : Function<TargetEnvironment, R> {
+abstract class TraceableTargetEnvironmentFunction<R> : TargetEnvironmentFunction<R> {
   private val creationStack: Throwable = Throwable("Creation stack")
 
   final override fun apply(t: TargetEnvironment): R =
@@ -51,7 +51,7 @@ abstract class TraceableTargetEnvironmentFunction<R> : Function<TargetEnvironmen
   abstract fun applyInner(t: TargetEnvironment): R
 
   override fun <V> andThen(after: Function<in R, out V>): TraceableTargetEnvironmentFunction<V> =
-    invoke { targetEnvironment ->
+    TraceableTargetEnvironmentFunction { targetEnvironment ->
       after.apply(apply(targetEnvironment))
     }
 
