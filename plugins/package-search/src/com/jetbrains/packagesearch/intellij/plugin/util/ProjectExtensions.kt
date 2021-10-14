@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
@@ -92,6 +93,9 @@ internal val Project.dumbService: DumbService
 
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
+
+internal val Project.coroutineModuleTransformer: List<CoroutineModuleTransformer>
+    get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
 
 internal val Project.lookAndFeelFlow
     get() = callbackFlow {

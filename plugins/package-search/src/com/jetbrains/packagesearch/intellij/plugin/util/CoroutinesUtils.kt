@@ -4,6 +4,9 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -90,4 +93,12 @@ fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combineTyped(
         args[6] as T7,
         args[7] as T8
     )
+}
+
+internal suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
+    map { async { transform(it) } }.awaitAll()
+}
+
+internal suspend fun <T, R, K> Map<T, R>.parallelMap(transform: suspend (Map.Entry<T, R>) -> K) = coroutineScope {
+    map { async { transform(it) } }.awaitAll()
 }
