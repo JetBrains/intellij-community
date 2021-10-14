@@ -75,4 +75,15 @@ x.<warning>a</warning>
 x.a()
 ''', GroovyAccessibilityInspection
   }
+
+  void 'test GROOVY-10305'() {
+    highlightingTest """
+record X(String a, int s) {
+    private X {
+        println 20
+    }
+
+    public X(String a, int s) {}
+}"""
+  }
 }

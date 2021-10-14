@@ -93,6 +93,11 @@ public interface TransformationContext {
     addMethod(method, false);
   }
 
+  /**
+   * Adds method to the context class
+   * @param method the method to add
+   * @param prepend if true, adds method before others
+   */
   void addMethod(@NotNull PsiMethod method, boolean prepend);
 
   void addMethods(PsiMethod @NotNull [] methods);

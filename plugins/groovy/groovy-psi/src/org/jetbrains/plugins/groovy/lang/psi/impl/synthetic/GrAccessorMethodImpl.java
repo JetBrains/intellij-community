@@ -147,4 +147,9 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     }
     return super.hasModifierProperty(name);
   }
+
+  @Override
+  public @NotNull LightModifierList getModifierList() {
+    return (LightModifierList)super.getModifierList();
+  }
 }

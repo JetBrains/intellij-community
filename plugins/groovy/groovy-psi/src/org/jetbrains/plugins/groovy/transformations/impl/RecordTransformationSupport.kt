@@ -91,13 +91,15 @@ class RecordTransformationSupport : AstTransformationSupport {
   }
 
   private fun TransformationContext.generateRecordProperty(codeClass: GrTypeDefinition, field: GrField) {
-    val visibilityMask = if (codeClass is GrRecordDefinition) 0 else getVisibilityMask(field)
-    addMethod(GrAccessorMethodImpl(field, false, field.name, GrModifierFlags.FINAL_MASK or visibilityMask))
+    val accessor = GrAccessorMethodImpl(field, false, field.name)
+    accessor.modifierList.addModifier(GrModifier.FINAL)
+    if (codeClass !is GrRecordDefinition) accessor.modifierList.addModifier(getFieldVisibility(field))
+    addMethod(accessor)
   }
 
-  private fun getVisibilityMask(owner: PsiModifierListOwner): Int {
-    return if (owner.modifierList?.hasExplicitModifier(GrModifier.PRIVATE) == true) GrModifierFlags.PRIVATE_MASK
-    else if (owner.modifierList?.hasExplicitModifier(GrModifier.PROTECTED) == true) GrModifierFlags.PROTECTED_MASK
-    else GrModifierFlags.PUBLIC_MASK
+  private fun getFieldVisibility(owner: PsiModifierListOwner): String {
+    return if (owner.modifierList?.hasExplicitModifier(GrModifier.PRIVATE) == true) GrModifier.PRIVATE
+    else if (owner.modifierList?.hasExplicitModifier(GrModifier.PROTECTED) == true) GrModifier.PROTECTED
+    else GrModifier.PUBLIC
   }
 }
