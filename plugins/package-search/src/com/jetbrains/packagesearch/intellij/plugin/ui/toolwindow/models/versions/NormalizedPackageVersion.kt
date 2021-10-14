@@ -155,13 +155,13 @@ internal sealed class NormalizedPackageVersion(
     companion object {
 
         fun parseFrom(version: PackageVersion.Named): NormalizedPackageVersion =
-            PackageVersionNormalizer.parse(version)
+            PackageVersionNormalizer.getInstance().parse(version)
 
         fun parseFrom(rawVersionName: String): NormalizedPackageVersion {
             require(rawVersionName.isNotBlank()) { "Can only normalize non-blank version names" }
             val isStable = PackageVersionUtils.evaluateStability(rawVersionName)
             val version = PackageVersion.Named(rawVersionName, isStable, releasedAt = null)
-            return PackageVersionNormalizer.parse(version)
+            return PackageVersionNormalizer.getInstance().parse(version)
         }
     }
 }
