@@ -131,7 +131,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     }
   }
   val autoScrollToSource = object : Option {
-    override fun isEnabled() = openInPreviewTab.run { !isSelected && isEnabled }
+    override fun isEnabled() = openInPreviewTab.isEnabled
     override fun isSelected() = state.autoscrollToSource
     override fun setSelected(selected: Boolean) {
       state.autoscrollToSource = selected
