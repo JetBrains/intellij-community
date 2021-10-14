@@ -22,10 +22,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.transformations.immutable.isImmutable
 
 class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
@@ -57,7 +59,23 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
 
   override fun visitRecordDefinition(recordDefinition: GrRecordDefinition) {
     recordDefinition.modifierList?.let { checkRecordModifiers(it) }
+    for (formalParameter in recordDefinition.parameters) {
+      checkFormalRecordParameters(formalParameter, recordDefinition)
+    }
     super.visitRecordDefinition(recordDefinition)
+  }
+
+  private fun checkFormalRecordParameters(formalParameter: GrParameter, record : GrRecordDefinition) {
+    if (formalParameter.hasModifierProperty(GrModifier.STATIC)) {
+      return
+    }
+    val field = record.fields.find { it.name == formalParameter.name } ?: return
+    if (!isImmutable(field)) {
+      holder
+        .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.record.parameter.should.be.immutable", formalParameter.name))
+        .range(formalParameter.nameIdentifierGroovy)
+        .create()
+    }
   }
 
   private fun checkRecordModifiers(recordDefinition: GrModifierList) {

@@ -130,4 +130,20 @@ record X(static int a, String b)
 new X(b : "")
 """
   }
+
+  void 'test non-immutable field'() {
+    highlightingTest """
+record X(<error>b</error>) {}
+"""
+  }
+
+
+  void 'test forced immutable field'() {
+    highlightingTest """
+import groovy.transform.ImmutableOptions
+
+@ImmutableOptions(knownImmutables = ['b'])
+record X(b) {}
+"""
+  }
 }
