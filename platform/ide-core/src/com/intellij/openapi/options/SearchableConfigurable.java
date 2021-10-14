@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -13,16 +16,6 @@ import java.util.List;
  * @see SearchableOptionContributor
  */
 public interface SearchableConfigurable extends ConfigurableWithId {
-
-  /**
-   * Unique configurable id.
-   * Note this id should be THE SAME as the one specified in XML.
-   * @see ConfigurableEP#id
-   */
-  @Override
-  @NotNull
-  @NonNls
-  String getId();
 
   /**
    * @param option setting search query
