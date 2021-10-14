@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -47,7 +48,7 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   override fun visitTypeDefinition(typeDefinition: GrTypeDefinition) {
-    checkModifiers(typeDefinition)
+    checkSealingModifiers(typeDefinition)
     typeDefinition.permitsClause?.let { typeDefinition.checkPermitsClause(it) }
     typeDefinition.extendsClause?.let { typeDefinition.checkExtendsClause(it) }
     typeDefinition.implementsClause?.let { typeDefinition.checkImplementsClause(it) }
@@ -75,7 +76,7 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
       .create()
   }
 
-  private fun checkModifiers(owner: GrTypeDefinition) {
+  private fun checkSealingModifiers(owner: GrTypeDefinition) {
     val modifierList = owner.modifierList ?: return
     if (owner is GrEnumTypeDefinition) {
       checkEnum(modifierList)
@@ -198,6 +199,25 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
   override fun visitSwitchExpression(switchExpression: GrSwitchExpression) {
     visitSwitchElement(switchExpression)
     super.visitSwitchExpression(switchExpression)
+  }
+
+  override fun visitMethod(method: GrMethod) {
+    if (method.containingClass is GrRecordDefinition && method.isCompactConstructor()) {
+      checkCompactConstructor(method)
+    }
+    super.visitMethod(method)
+  }
+
+  private fun checkCompactConstructor(method : GrMethod) {
+    if (method.modifierList.getModifier(GrModifier.PUBLIC) == null &&
+        method.modifierList.getModifier(GrModifier.PRIVATE) == null &&
+        method.modifierList.getModifier(GrModifier.PROTECTED) == null) {
+      holder
+        .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.compact.constructor.should.have.explicit.visibility.modifier"))
+        .range(method.nameIdentifierGroovy)
+        .withFix(GrChangeModifiersFix(emptyList(), GrModifier.PUBLIC, GroovyBundle.message("intention.name.make.compact.constructor.public")))
+        .create()
+    }
   }
 
   private fun visitSwitchElement(switchElement : GrSwitchElement) {

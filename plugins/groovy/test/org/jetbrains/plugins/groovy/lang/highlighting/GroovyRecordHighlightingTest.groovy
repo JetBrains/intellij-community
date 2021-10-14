@@ -93,4 +93,12 @@ record X(String a, int s) {
     record RR() {}
 }"""
   }
+
+  void 'test compact constructor'() {
+    highlightingTest """
+record X(int a) {
+  <error>X</error> {}
+}
+"""
+  }
 }

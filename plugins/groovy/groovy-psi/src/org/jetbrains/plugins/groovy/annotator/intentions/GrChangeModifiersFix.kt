@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 
 class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
                            val modifierToInsert: String?,
@@ -38,9 +40,9 @@ class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
     editor ?: return
     file ?: return
     val elementUnderCaret = file.findElementAt(editor.caretModel.offset) ?: return
-    val owner = elementUnderCaret.parentOfType<GrTypeDefinition>() ?: return
+    val owner = elementUnderCaret.parentOfType<PsiModifierListOwner>() ?: return
     val elementUnderCaretRepresentation = elementUnderCaret.text
-    val modifiers = owner.modifierList?.modifiers ?: return
+    val modifiers = owner.modifierList?.castSafelyTo<GrModifierList>()?.modifiers ?: return
 
     var hasRequiredModifier = false
 

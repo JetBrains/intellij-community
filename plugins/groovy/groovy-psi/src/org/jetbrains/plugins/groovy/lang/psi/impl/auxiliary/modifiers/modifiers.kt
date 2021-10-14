@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
 private val visibilityModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
@@ -129,6 +130,7 @@ private fun getImplicitVisibility(grModifierList: GrModifierList): String? {
     is GrMethod -> {
       val containingClass = owner.containingClass as? GrTypeDefinition ?: return null
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
+      if (containingClass is GrRecordDefinition && owner.isCompactConstructor()) return null
       val targetName = if (owner.isConstructor) "CONSTRUCTORS" else "METHODS"
       return if (grModifierList.hasPackageScope(containingClass, targetName)) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
     }
