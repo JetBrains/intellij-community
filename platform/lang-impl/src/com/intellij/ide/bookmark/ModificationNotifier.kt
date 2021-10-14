@@ -19,12 +19,10 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
       else -> project.messageBus.syncPublisher(BookmarksListener.TOPIC)
     }
 
-  internal fun selectLater(select: (BookmarksView) -> Unit) {
-    invokeLater {
-      val window = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(BOOKMARKS)
-      val view = window?.contentManagerIfCreated?.selectedContent?.component as? BookmarksView
-      view?.let { if (it.isShowing) select(it) }
-    }
+  internal fun selectLater(select: (BookmarksView) -> Unit) = invokeLater {
+    val window = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(BOOKMARKS)
+    val view = window?.contentManagerIfCreated?.selectedContent?.component as? BookmarksView
+    view?.let { if (it.isShowing) select(it) }
   }
 
   private fun notifyLater(notify: (BookmarksListener) -> Unit) {
