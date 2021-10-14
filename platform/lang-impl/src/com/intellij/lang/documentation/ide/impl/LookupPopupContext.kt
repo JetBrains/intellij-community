@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import java.awt.Component
 
@@ -21,15 +22,13 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
 }
 
 private fun cancelPopupWhenLookupIsClosed(lookup: Lookup, popup: AbstractPopup) {
-  lookup.addLookupListener(object : LookupListener {
-
+  val listener = object : LookupListener {
     override fun itemSelected(event: LookupEvent): Unit = lookupClosed()
-
     override fun lookupCanceled(event: LookupEvent): Unit = lookupClosed()
-
-    private fun lookupClosed() {
-      lookup.removeLookupListener(this)
-      popup.cancel()
-    }
-  })
+    private fun lookupClosed(): Unit = popup.cancel()
+  }
+  lookup.addLookupListener(listener)
+  Disposer.register(popup) {
+    lookup.removeLookupListener(listener)
+  }
 }
