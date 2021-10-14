@@ -157,10 +157,14 @@ final class CompilationTasksImpl extends CompilationTasks {
   }
 
   private void unpackCompiledClasses(Path classesOutput) {
-    context.messages.block("Unpack compiled classes archive") {
-      NioFiles.deleteRecursively(classesOutput)
-      new Decompressor.Zip(Path.of(context.options.pathToCompiledClassesArchive)).extract(classesOutput)
-    }
+    context.messages.block("Unpack compiled classes archive", new Supplier<Void>() {
+      @Override
+      Void get() {
+        NioFiles.deleteRecursively(classesOutput)
+        new Decompressor.Zip(Path.of(context.options.pathToCompiledClassesArchive)).extract(classesOutput)
+        return null
+      }
+    })
   }
 
   private void cleanOutput() {
