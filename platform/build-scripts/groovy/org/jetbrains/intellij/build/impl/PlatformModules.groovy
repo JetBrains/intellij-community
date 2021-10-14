@@ -251,6 +251,7 @@ final class PlatformModules {
       // jna uses native lib
       "jna", PackMode.STANDALONE_MERGED,
       "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+      "intellij-coverage", PackMode.STANDALONE_SEPARATE,
     )
 
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
