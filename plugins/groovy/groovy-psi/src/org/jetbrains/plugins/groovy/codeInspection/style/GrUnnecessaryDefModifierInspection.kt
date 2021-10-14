@@ -27,7 +27,7 @@ class GrUnnecessaryDefModifierInspection : GrUnnecessaryModifierInspection("def"
   }
 
   override fun isRedundant(element: PsiElement): Boolean {
-    val modifierList = element as? GrModifierList ?: return false
+    val modifierList = element.parent as? GrModifierList ?: return false
     return isModifierUnnecessary(modifierList)
   }
 

@@ -82,7 +82,7 @@ private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defe
 private val compactConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType === IDENTIFIER) {
+  if (builder.tokenType === IDENTIFIER || builder.tokenType === KW_RECORD) {
     builder[currentClassNames]!!.push(builder.tokenText)
     builder.advanceLexer()
     return true
