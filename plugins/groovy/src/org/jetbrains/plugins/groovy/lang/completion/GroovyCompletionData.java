@@ -231,7 +231,7 @@ public final class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, GroovyTokenTypes.kTRAIT.toString());
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, PsiKeyword.RECORD, GroovyTokenTypes.kTRAIT.toString());
     }
   }
 
