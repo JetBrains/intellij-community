@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -18,7 +17,9 @@ import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -27,8 +28,6 @@ import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.event.ActionEvent
 import javax.swing.Action
-import javax.swing.BoxLayout
-import javax.swing.BoxLayout.Y_AXIS
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -64,6 +63,18 @@ class ProjectCreationFeedbackDialog(
   private val textFieldOtherColumnSize = 41
   private val textAreaOverallFeedbackColumnSize = 42
 
+  private val checkBoxFrameworkComponentPredicate = object : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) {
+      checkBoxFrameworkProperty.afterChange {
+        listener(checkBoxFrameworkProperty.get())
+      }
+    }
+
+    override fun invoke(): Boolean {
+      return checkBoxFrameworkProperty.get()
+    }
+  }
+
   init {
     init()
     title = FeedbackBundle.message("dialog.creation.project.top.title")
@@ -76,24 +87,6 @@ class ProjectCreationFeedbackDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    val wrapperPanel = JPanel().apply {
-      layout = BoxLayout(this, Y_AXIS)
-      add(createInnerPanel())
-      checkBoxFrameworkProperty.afterChange { _ ->
-        this.requestFocus()
-        this.removeAll()
-        this.add(createInnerPanel())
-        pack()
-        this.revalidate()
-        this.repaint()
-        this.requestFocus()
-      }
-    }
-
-    return wrapperPanel
-  }
-
-  private fun createInnerPanel(): DialogPanel {
     return panel {
       row {
         label(FeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
@@ -134,24 +127,17 @@ class ProjectCreationFeedbackDialog(
       row {
         checkBox(FeedbackBundle.message("dialog.created.project.checkbox.3.label")).bindSelected(checkBoxHardFindDesireProjectProperty)
       }
-      if (checkBoxFrameworkProperty.get()) {
-        row {
-          checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
-        }
-        indent {
-          row {
-            textField()
-              .bindText(textFieldFrameworkProperty)
-              .columns(textFieldNoFrameworkColumnSize).applyToComponent {
-                this.emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.4.textfield.placeholder")
-              }
-          }
-        }
+      row {
+        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
       }
-      else {
+      indent {
         row {
-          checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
-        }
+          textField()
+            .bindText(textFieldFrameworkProperty)
+            .columns(textFieldNoFrameworkColumnSize).applyToComponent {
+              emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.4.textfield.placeholder")
+            }
+        }.visibleIf(checkBoxFrameworkComponentPredicate)
       }
 
       row {
