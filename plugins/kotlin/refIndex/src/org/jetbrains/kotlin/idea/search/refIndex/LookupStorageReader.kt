@@ -2,24 +2,50 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
+import com.intellij.util.io.*
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.buildDataPaths
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.kotlinDataContainer
-import org.jetbrains.kotlin.incremental.LookupStorage
 import org.jetbrains.kotlin.incremental.LookupSymbol
-import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner
-import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
+import org.jetbrains.kotlin.incremental.storage.*
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.exists
 
-class LookupStorageReader private constructor(private val lookupStorage: LookupStorage) {
-    fun close(): Unit = lookupStorage.close()
-    fun get(lookupSymbol: LookupSymbol): Collection<String> = lookupStorage.get(lookupSymbol)
+class LookupStorageReader private constructor(
+    private val lookupStorage: PersistentHashMap<LookupSymbolKey, Collection<Int>>,
+    private val idToFileStorage: PersistentHashMap<Int, String>,
+    projectPath: String,
+) {
+    private val pathConverter = RelativeFileToPathConverter(File(projectPath))
+
+    fun close() {
+        lookupStorage.close()
+        idToFileStorage.close()
+    }
+    
+    fun get(lookupSymbol: LookupSymbol): Collection<String> {
+        val key = LookupSymbolKey(lookupSymbol.name, lookupSymbol.scope)
+        return lookupStorage[key]?.mapNotNull { idToFileStorage[it]?.let(pathConverter::toFile)?.path }.orEmpty()
+    }
 
     companion object {
-        fun create(kotlinDataContainerPath: Path, projectPath: String): LookupStorageReader? = LookupStorageReader(
-            LookupStorage(kotlinDataContainerPath.toFile(), RelativeFileToPathConverter(File(projectPath)))
-        )
+        fun create(kotlinDataContainerPath: Path, projectPath: String): LookupStorageReader? {
+            val lookupStoragePath = kotlinDataContainerPath.resolve(LOOKUP_STORAGE_NAME).takeIf { it.exists() } ?: return null
+            val idToFileStoragePath = kotlinDataContainerPath.resolve(ID_TO_FILE_STORAGE_NAME).takeIf { it.exists() } ?: return null
+            val lookupStorage = openReadOnlyPersistentHashMap(
+                lookupStoragePath,
+                LookupSymbolKeyDescriptor,
+                IntCollectionExternalizer,
+            )
+
+            val idToFileStorage = openReadOnlyPersistentHashMap(
+                idToFileStoragePath,
+                ExternalIntegerKeyDescriptor.INSTANCE,
+                EnumeratorStringDescriptor.INSTANCE,
+            )
+
+            return LookupStorageReader(lookupStorage, idToFileStorage, projectPath)
+        }
 
         fun hasStorage(project: Project): Boolean = project.buildDataPaths
             ?.kotlinDataContainer
@@ -27,5 +53,12 @@ class LookupStorageReader private constructor(private val lookupStorage: LookupS
             ?.exists() == true
 
         private val LOOKUP_STORAGE_NAME = "lookups.${BasicMapsOwner.CACHE_EXTENSION}"
+        private val ID_TO_FILE_STORAGE_NAME = "id-to-file.${BasicMapsOwner.CACHE_EXTENSION}"
     }
 }
+
+internal fun <K, D> openReadOnlyPersistentHashMap(
+    storagePath: Path,
+    keyDescriptor: KeyDescriptor<K>,
+    dataExternalizer: DataExternalizer<D>,
+): PersistentHashMap<K, D> = PersistentMapBuilder.newBuilder(storagePath, keyDescriptor, dataExternalizer).readonly().build()

@@ -13,7 +13,6 @@ import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.io.CorruptedException
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentMapBuilder
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -176,8 +175,8 @@ private fun initializeStorage(destinationMap: MultiMap<String, String>, subtypes
     }
 }
 
-private fun createKotlinDataReader(storagePath: Path): PersistentHashMap<String, Collection<String>> = PersistentMapBuilder.newBuilder(
+private fun createKotlinDataReader(storagePath: Path): PersistentHashMap<String, Collection<String>> = openReadOnlyPersistentHashMap(
     storagePath,
     EnumeratorStringDescriptor.INSTANCE,
     CollectionExternalizer<String>(EnumeratorStringDescriptor.INSTANCE, ::SmartList),
-).readonly().build()
+)
