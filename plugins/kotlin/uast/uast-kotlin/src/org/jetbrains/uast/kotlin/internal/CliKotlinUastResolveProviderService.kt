@@ -4,7 +4,6 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.AnalysisResult
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.container.ComponentProvider
@@ -41,7 +40,6 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
 class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
     private var context: BindingContext? = null
-    private var typeMapper: KotlinTypeMapper? = null
     private var languageVersionSettings: LanguageVersionSettings? = null
 
     fun getBindingContext() = context
