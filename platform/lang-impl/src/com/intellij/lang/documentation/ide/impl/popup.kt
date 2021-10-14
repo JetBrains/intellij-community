@@ -9,6 +9,8 @@ import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.DimensionService
@@ -47,7 +49,8 @@ private fun createDocumentationPopup(
 }
 
 private fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
-  launch {
+  EDT.assertIsEdt()
+  launch(ModalityState.current().asContextElement()) {
     browseJob.tryJoin() // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed)
