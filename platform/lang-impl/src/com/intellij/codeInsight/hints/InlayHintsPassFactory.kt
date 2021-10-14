@@ -30,8 +30,8 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     val language = file.language
     val collectors = if (isHintsEnabledForEditor(editor)) {
       HintUtils.getHintProvidersForLanguage(language, file.project)
+        .filter { settings.hintsShouldBeShown(it.provider.groupId, language, it.provider.key) || isProviderAlwaysEnabledForEditor(editor, it.provider.key) }
         .mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
-        .filter { settings.hintsShouldBeShown(it.key, language) || isProviderAlwaysEnabledForEditor(editor, it.key) }
     }
     else {
       emptyList()

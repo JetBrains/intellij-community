@@ -5,8 +5,8 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.messages.Topic
@@ -45,6 +45,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var isEnabled: Boolean = true
 
     var disabledLanguages: TreeSet<String> = sortedSetOf()
+
+    var disabledGroups: TreeSet<String> = sortedSetOf()
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -70,6 +72,21 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       }
       else {
         myState.disabledLanguages.add(id)
+      }
+    }
+    if (settingsChanged) {
+      listener.languageStatusChanged()
+      listener.settingsChanged()
+    }
+  }
+
+  fun enableGroup(group: String, enabled: Boolean) {
+    val settingsChanged = synchronized(lock) {
+      if (enabled) {
+        myState.disabledGroups.remove(group)
+      }
+      else {
+        myState.disabledGroups.add(group)
       }
     }
     if (settingsChanged) {
@@ -136,6 +153,10 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     return language.id !in myState.disabledLanguages
   }
 
+  fun hintsEnabled(group: String) : Boolean = synchronized(lock) {
+    return group !in myState.disabledGroups
+  }
+
   fun hintsShouldBeShown(language: Language) : Boolean = synchronized(lock) {
     if (!hintsEnabledGlobally()) return false
     return hintsEnabled(language)
@@ -152,10 +173,11 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     return true
   }
 
-  fun hintsShouldBeShown(key: SettingsKey<*>, language: Language): Boolean = synchronized(lock) {
-    if (!hintsEnabledGlobally()) return false
-    if (!hintsEnabled(language)) return false
-    return hintsEnabled(key, language)
+  fun hintsShouldBeShown(group: String, language: Language, key: SettingsKey<*>): Boolean = synchronized(lock) {
+    return hintsEnabledGlobally() &&
+           hintsEnabled(language) &&
+           hintsEnabled(key, language) &&
+           hintsEnabled(group)
   }
 
   override fun getState(): State = synchronized(lock) {

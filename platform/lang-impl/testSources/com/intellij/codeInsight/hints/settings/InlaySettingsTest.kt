@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.OTHER_GROUP
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
@@ -55,9 +56,10 @@ class InlaySettingsTest : LightPlatformTestCase() {
     val language = Language.ANY
     val key = SettingsKey<Any>("foo")
     assertTrue(settings.hintsEnabled(key, language))
+    assertTrue(settings.hintsShouldBeShown(OTHER_GROUP, language, key))
     settings.setHintsEnabledForLanguage(language, false)
     assertTrue(settings.hintsEnabled(key, language))
-    assertFalse(settings.hintsShouldBeShown(key, language))
+    assertFalse(settings.hintsShouldBeShown(OTHER_GROUP, language, key))
   }
 
   fun testAllProviders() {
