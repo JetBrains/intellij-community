@@ -148,6 +148,7 @@ public class JpsBootstrapMain {
     for (File file : enumerator.classes().getRoots()) {
       URL toURL = file.toURI().toURL();
       roots.add(toURL);
+      verbose("CLASSPATH: " + toURL);
     }
 
     info("Running class " + className + " from module " + moduleName);
@@ -176,8 +177,24 @@ public class JpsBootstrapMain {
       false,
       msg -> {
         BuildMessage.Kind kind = msg.getKind();
+        String textAndKind = kind + " " + msg.getMessageText();
 
-        System.out.println(kind + " " + msg.getMessageText());
+        switch (kind) {
+          case PROGRESS:
+            verbose(textAndKind);
+            break;
+          case WARNING:
+            warn(textAndKind);
+          case ERROR:
+          case INTERNAL_BUILDER_ERROR:
+            error(textAndKind);
+            break;
+          default:
+            if (!msg.getMessageText().isBlank()) {
+              info(textAndKind);
+            }
+            break;
+        }
 
         if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) && firstError[0] == null) {
           firstError[0] = msg.getMessageText();
