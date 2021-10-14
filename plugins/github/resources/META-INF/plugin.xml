@@ -23,7 +23,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
-    <plugin id="org.intellij.plugins.markdown"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
