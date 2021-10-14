@@ -90,9 +90,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     return null
   }
 
-  fun select(group: BookmarkGroup) = select(GroupBookmarkVisitor(group))
-  fun select(group: BookmarkGroup, bookmark: Bookmark) = select(GroupBookmarkVisitor(group, bookmark))
-  private fun select(visitor: TreeVisitor) = TreeUtil.promiseSelect(tree, visitor).onSuccess { if (!tree.hasFocus()) selectionChanged() }
+  fun select(group: BookmarkGroup) = select(GroupBookmarkVisitor(group), true)
+  fun select(group: BookmarkGroup, bookmark: Bookmark) = select(GroupBookmarkVisitor(group, bookmark), false)
+  private fun select(visitor: TreeVisitor, centered: Boolean) = TreeUtil.promiseMakeVisible(tree, visitor).onSuccess {
+    tree.selectionPath = it
+    TreeUtil.scrollToVisible(tree, it, centered)
+    if (!tree.hasFocus()) selectionChanged()
+  }
 
   @Suppress("UNNECESSARY_SAFE_CALL")
   override fun saveProportion() = when (isPopup) {
@@ -177,6 +181,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
     firstComponent = panel
 
+    tree.isHorizontalAutoScrollingEnabled = false
     tree.isRootVisible = false
     tree.showsRootHandles = true // TODO: fix auto-expand
     if (isPopup) {

@@ -14,10 +14,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.tree.LeafState.ASYNC
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 
 internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeNode<BookmarkGroup>(project, group) {
   private val cache = AbstractTreeNodeCache<Bookmark, AbstractTreeNode<*>>(this) { it.createNode() }
+
+  override fun getLeafState() = ASYNC
 
   override fun getChildren(): List<AbstractTreeNode<*>> {
     var bookmarks = value.getBookmarks()
