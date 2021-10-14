@@ -83,9 +83,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   fun findOutputVariables(): List<PsiVariable> {
-    val exitPoints = IntArrayList()
-    ControlFlowUtil.findExitPointsAndStatements(flow, flowRange.first, flowRange.last, exitPoints, *DEFAULT_EXIT_STATEMENTS_CLASSES)
-    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toIntArray()).distinct()
+    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, findExitPoints().toIntArray()).distinct()
   }
 
   fun findUndeclaredVariables(): List<PsiVariable> {
