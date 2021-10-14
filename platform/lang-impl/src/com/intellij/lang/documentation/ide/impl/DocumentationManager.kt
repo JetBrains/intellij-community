@@ -139,9 +139,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     val autoShowRequests = autoShowRequestFlow(lookup) ?: return
     val showDocJob = cs.launch(Dispatchers.EDT) {
       autoShowRequests.collectLatest { request: DocumentationRequest ->
-        if (!toolWindowManager.updateVisiblePreview(request)) {
-          showDocumentation(request, LookupPopupContext(lookup))
-        }
+        handleAutoShowRequest(lookup, request)
       }
     }
     lookup.addLookupListener(object : LookupListener {
@@ -150,6 +148,12 @@ internal class DocumentationManager(private val project: Project) : Disposable {
         lookup.removeLookupListener(this)
       }
     })
+  }
+
+  private fun handleAutoShowRequest(lookup: LookupEx, request: DocumentationRequest) {
+    if (!toolWindowManager.updateVisiblePreview(request)) {
+      showDocumentation(request, LookupPopupContext(lookup))
+    }
   }
 
   fun navigateInlineLink(
