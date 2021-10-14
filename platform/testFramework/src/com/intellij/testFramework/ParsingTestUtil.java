@@ -4,7 +4,6 @@ package com.intellij.testFramework;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
@@ -123,28 +122,19 @@ public final class ParsingTestUtil {
 
     WriteAction.run(() -> fileDocument.setText(newFileText));
     psiDocumentManager.commitDocument(fileDocument);
-    testSamePsiTreeAfterReparse(psiFile);
-    if (checkFinalTreeForErrors) {
-      ensureNoErrorElementsInAllSubTrees(psiFile);
-    }
-    UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
-  }
-
-  public static void testSamePsiTreeAfterReparse(@NotNull PsiFile psiFile) {
-    Project project = psiFile.getProject();
     var psiBeforeCommit = psiFileToString(psiFile);
-    var psiDocumentManager = PsiDocumentManager.getInstance(project);
-    var fileDocument = psiDocumentManager.getDocument(psiFile);
-    TestCase.assertNotNull(fileDocument);
-    String text = fileDocument.getText();
     WriteCommandAction.runWriteCommandAction(project, () -> {
       fileDocument.setText("");
       psiDocumentManager.commitDocument(fileDocument);
-      fileDocument.setText(text);
+      fileDocument.setText(newFileText);
       psiDocumentManager.commitDocument(fileDocument);
     });
 
     TestCase.assertEquals("Reparsing error", psiFileToString(psiFile), psiBeforeCommit);
+    if (checkFinalTreeForErrors) {
+      ensureNoErrorElementsInAllSubTrees(psiFile);
+    }
+    UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
   }
 
   private static void serializeReparseableRoots(@Nullable Couple<ASTNode> reparseableRoots,
