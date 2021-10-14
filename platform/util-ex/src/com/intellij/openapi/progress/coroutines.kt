@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -94,8 +95,9 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
   return runUnderIndicator(ctx.job, ctx.progressSink, action)
 }
 
+@Internal
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
+fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
   val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
   try {
