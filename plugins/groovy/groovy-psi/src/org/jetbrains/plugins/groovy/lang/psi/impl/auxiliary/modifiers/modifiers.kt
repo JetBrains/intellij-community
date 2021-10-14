@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
@@ -100,7 +101,7 @@ private fun GrModifierList.isFinal(): Boolean {
 }
 
 private fun GrTypeDefinition.isFinalClass(): Boolean {
-  return isEnum && codeFields.none { it is GrEnumConstant && it.initializingClass != null }
+  return this is GrRecordDefinition || (isEnum && codeFields.none { it is GrEnumConstant && it.initializingClass != null })
 }
 
 private fun GrVariableDeclaration.isFinalField(modifierList: GrModifierList): Boolean {

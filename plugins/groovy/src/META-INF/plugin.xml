@@ -908,6 +908,9 @@
                      key="inspection.display.name.unnecessary.def.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     key="inspection.display.name.unnecessary.final.modifier" cleanupTool="true" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryFinalModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.sealed.modifier" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySealedModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
