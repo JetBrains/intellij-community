@@ -104,7 +104,10 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
                 }
               }
               val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for border
-              actionButton(resetAction, Dimension(minSize, minSize))
+              actionButton(resetAction)
+                .applyToComponent {
+                  setMinimumButtonSize(Dimension(minSize, minSize))
+                }
                 .visibleIf(advancedSetting.isDefault.not())
             }
             extension.description()?.let {

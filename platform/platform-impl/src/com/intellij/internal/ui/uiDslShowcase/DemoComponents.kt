@@ -41,8 +41,8 @@ fun demoComponents(): DialogPanel {
       actionButton(action)
     }
 
-    row("gearButton:") {
-      gearButton(object : DumbAwareAction("Action one") {
+    row("actionsButton:") {
+      actionsButton(object : DumbAwareAction("Action one") {
         override fun actionPerformed(e: AnActionEvent) {
         }
       },

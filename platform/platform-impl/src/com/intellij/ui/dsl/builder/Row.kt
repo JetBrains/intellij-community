@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipTitle
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -20,7 +20,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
 
@@ -155,9 +154,9 @@ interface Row {
 
   fun button(@NlsContexts.Button text: String, @NonNls actionPlace: String, action: AnAction): Cell<JButton>
 
-  fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): Cell<ActionButton>
+  fun actionButton(action: AnAction): Cell<ActionButton>
 
-  fun gearButton(vararg actions: AnAction): Cell<JComponent>
+  fun actionsButton(vararg actions: AnAction, icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
 

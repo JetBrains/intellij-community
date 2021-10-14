@@ -2,11 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -16,9 +12,13 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.ui.ContextHelpLabel
+import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
@@ -27,16 +27,15 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import javax.swing.*
 
 @ApiStatus.Internal
@@ -219,30 +218,15 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun actionButton(action: AnAction, dimension: Dimension): CellImpl<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
+  override fun actionButton(action: AnAction): CellImpl<ActionButton> {
+    val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     return cell(component)
   }
 
-  override fun gearButton(vararg actions: AnAction): CellImpl<JComponent> {
-    val label = JLabel(LayeredIcon.GEAR_WITH_DROPDOWN)
-    label.disabledIcon = AllIcons.General.GearPlain
-    object : ClickListener() {
-      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
-        if (!label.isEnabled) return true
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, DefaultActionGroup(*actions), { dataId ->
-            when (dataId) {
-              PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> label
-              else -> null
-            }
-          }, true, null, 10)
-          .showUnderneathOf(label)
-        return true
-      }
-    }.installOn(label)
-
-    return cell(label)
+  override fun actionsButton(vararg actions: AnAction, icon: Icon): CellImpl<ActionButton> {
+    val actionGroup = PopupActionGroup(arrayOf(*actions))
+    actionGroup.templatePresentation.icon = icon
+    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
@@ -429,5 +413,34 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent, visualPaddings = visualPaddings)
     cells.add(result)
     return result
+  }
+}
+
+private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup() {
+
+  private val popupState = PopupState.forPopup()
+
+  init {
+    isPopup = true
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+    actions
+
+  override fun isDumbAware(): Boolean =
+    true
+
+  override fun canBePerformed(context: DataContext): Boolean =
+    actions.isNotEmpty()
+
+  override fun actionPerformed(e: AnActionEvent) {
+    if (popupState.isRecentlyHidden) {
+      return
+    }
+
+    val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext,
+      JBPopupFactory.ActionSelectionAid.MNEMONICS, true)
+    popupState.prepareToShow(popup)
+    PopupUtil.showForActionButtonEvent(popup, e)
   }
 }
