@@ -15,7 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 
 class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
                            val modifierToInsert: String?,
-                           @Nls private val textRepresentation: String)
+                           @Nls private val textRepresentation: String,
+                           val removeModifierUnderCaret : Boolean = false)
   : IntentionAction {
   val modifiersToRemoveSet = modifiersToRemove.toSet()
 
@@ -48,7 +49,7 @@ class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
       if (modifierRepresentation == modifierToInsert) {
         hasRequiredModifier = true
       }
-      if (modifierRepresentation == elementUnderCaretRepresentation) {
+      if (!removeModifierUnderCaret && modifierRepresentation == elementUnderCaretRepresentation) {
         continue
       }
       if (modifierRepresentation in modifiersToRemove) {

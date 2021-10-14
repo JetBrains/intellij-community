@@ -86,4 +86,11 @@ record X(String a, int s) {
     public X(String a, int s) {}
 }"""
   }
+
+  void 'test sealed record'() {
+    highlightingTest """
+<error>sealed</error> record X(int a) {
+    record RR() {}
+}"""
+  }
 }
