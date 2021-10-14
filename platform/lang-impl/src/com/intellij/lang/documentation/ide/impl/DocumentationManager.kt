@@ -93,7 +93,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
       else -> DefaultPopupContext(project, editor)
     }
-    showDocumentation(request, popupContext)
+    cs.showDocumentation(request, popupContext)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -123,16 +123,20 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
+  private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
     if (skipPopup) {
       toolWindowManager.previewInToolWindow(request)
       return
     }
+
     if (getPopup() != null) {
       return
     }
-    val popup = showDocumentationPopup(project, request, popupContext)
+    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
+    val popup = createDocumentationPopup(project, browser, popupContext)
     setPopup(popup)
+
+    showPopupLater(popup, browseJob, popupContext)
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
@@ -152,7 +156,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     })
   }
 
-  private fun handleAutoShowRequest(lookup: LookupEx, request: DocumentationRequest) {
+  private suspend fun handleAutoShowRequest(lookup: LookupEx, request: DocumentationRequest): Unit = coroutineScope {
     if (!toolWindowManager.updateVisiblePreview(request)) {
       showDocumentation(request, LookupPopupContext(lookup))
     }
