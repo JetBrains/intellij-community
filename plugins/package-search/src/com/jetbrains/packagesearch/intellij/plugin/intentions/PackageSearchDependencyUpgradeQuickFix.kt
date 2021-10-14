@@ -6,12 +6,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 
 internal class PackageSearchDependencyUpgradeQuickFix(
     element: PsiElement,
-    private val uiPackageModel: UiPackageModel.Installed
+    private val identifier: PackageIdentifier,
+    private val targetVersion: PackageVersion.Named,
+    private val operations: List<PackageSearchOperation<*>>
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
 
     @Suppress("DialogTitleCapitalization")
@@ -19,13 +23,11 @@ internal class PackageSearchDependencyUpgradeQuickFix(
 
     override fun getText() = PackageSearchBundle.message(
         "packagesearch.quickfix.upgrade.action",
-        uiPackageModel.identifier.rawValue,
-        uiPackageModel.selectedVersion
+        identifier.rawValue,
+        targetVersion
     )
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val operations = uiPackageModel.packageOperations.primaryOperations
-
         NotifyingOperationExecutor(project).executeOperations(operations)
     }
 }

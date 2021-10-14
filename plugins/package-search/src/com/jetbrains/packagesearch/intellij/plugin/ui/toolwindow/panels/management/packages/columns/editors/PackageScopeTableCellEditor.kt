@@ -19,13 +19,13 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
     override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component {
         val editor = when (val item = value as PackagesTableItem<*>) {
             is PackagesTableItem.InstalledPackage -> {
-                val scopeViewModels = item.scopes
+                val scopeViewModels = item.allScopes
                     .map { item.copy(uiPackageModel = item.uiPackageModel.copy(selectedScope = it)) }
 
                 createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope)
             }
             is PackagesTableItem.InstallablePackage -> {
-                val scopeViewModels = item.scopes
+                val scopeViewModels = item.allScopes
                     .map { item.copy(uiPackageModel = item.uiPackageModel.copy(selectedScope = it)) }
 
                 createComboBoxEditor(table, scopeViewModels, item.uiPackageModel.selectedScope)

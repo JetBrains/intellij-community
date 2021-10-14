@@ -26,8 +26,8 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         val viewModel = value as UiPackageModel<*>
 
         val versionViewModels = when (viewModel) {
-            is UiPackageModel.Installed -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it) }
-            is UiPackageModel.SearchResult -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it) }
+            is UiPackageModel.Installed -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it.originalVersion) }
+            is UiPackageModel.SearchResult -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it.originalVersion) }
         }
 
         val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion).apply {

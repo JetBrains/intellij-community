@@ -20,7 +20,8 @@ import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDepen
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsFor
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import org.jetbrains.annotations.Nls
@@ -115,12 +116,19 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
             val targetModules = TargetModules.One(moduleModel)
             val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
-            val uiPackageModel = packageUpdateInfo.packageModel.toUiPackageModel(
-                targetModules,
-                project,
-                allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
-                onlyStable
+
+            val packageOperations = computeActionsFor(
+                packageModel = packageUpdateInfo.packageModel,
+                targetModules = targetModules,
+                knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
+                onlyStable = onlyStable
             )
+
+            val identifier = packageUpdateInfo.packageModel.identifier
+            if (!packageOperations.canUpgradePackage) {
+                logWarn { "Expecting to have upgrade actions for package ${identifier.rawValue} to $targetModules" }
+                continue
+            }
 
             problemsHolder.registerProblem(
                 versionElement,
@@ -128,13 +136,18 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 LocalQuickFix(
                     PackageSearchBundle.message(
                         "packagesearch.quickfix.upgrade.exclude",
-                        packageUpdateInfo.packageModel.identifier.rawValue
+                        identifier.rawValue
                     )
                 ) {
-                    excludeList.add(packageUpdateInfo.packageModel.identifier.rawValue)
+                    excludeList.add(identifier.rawValue)
                     ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
                 },
-                PackageSearchDependencyUpgradeQuickFix(versionElement, uiPackageModel)
+                PackageSearchDependencyUpgradeQuickFix(
+                    element = versionElement,
+                    identifier = identifier,
+                    targetVersion = packageUpdateInfo.targetVersion,
+                    operations = packageOperations.primaryOperations
+                )
             )
         }
 
