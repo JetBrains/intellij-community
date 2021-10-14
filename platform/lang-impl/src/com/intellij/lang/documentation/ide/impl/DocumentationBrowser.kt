@@ -10,6 +10,8 @@ import com.intellij.lang.documentation.impl.computeDocumentationAsync
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -79,8 +81,9 @@ internal class DocumentationBrowser private constructor(
   }
 
   fun navigateByLink(url: String) {
+    EDT.assertIsEdt()
     cs.coroutineContext.cancelChildren()
-    cs.handleUserAction {
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       handleLink(url)
     }
   }

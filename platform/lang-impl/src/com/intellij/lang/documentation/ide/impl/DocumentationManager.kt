@@ -16,6 +16,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -153,17 +155,20 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   fun navigateInlineLink(
     url: String,
     documentation: () -> InlineDocumentation?
-  ): Unit = cs.handleUserAction {
-    val navigatable = withContext(Dispatchers.Default) {
-      readAction {
+  ) {
+    EDT.assertIsEdt()
+    cs.launch(ModalityState.current().asContextElement()) {
+      val navigatable = readAction {
         val ownerTarget = documentation()?.ownerTarget
                           ?: return@readAction null
         val linkResult = resolveLink(ownerTarget, url)
         linkResult?.target?.navigatable
       }
-    }
-    if (navigatable != null && navigatable.canNavigate()) {
-      navigatable.navigate(true)
+      withContext(Dispatchers.EDT) { // will use context modality state
+        if (navigatable != null && navigatable.canNavigate()) {
+          navigatable.navigate(true)
+        }
+      }
     }
   }
 
@@ -172,19 +177,22 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     documentation: () -> InlineDocumentation?,
     editor: Editor,
     popupPosition: Point
-  ): Unit = cs.handleUserAction {
-    val request = withContext(Dispatchers.Default) {
-      readAction {
+  ) {
+    EDT.assertIsEdt()
+    cs.launch(ModalityState.current().asContextElement()) {
+      val request = readAction {
         val ownerTarget = documentation()?.ownerTarget
                           ?: return@readAction null
         val linkResult = resolveLink(ownerTarget, url)
         linkResult?.target?.documentationRequest()
       }
+      withContext(Dispatchers.EDT) {
+        if (request == null) {
+          BrowserUtil.browseAbsolute(url)
+          return@withContext
+        }
+        showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
+      }
     }
-    if (request == null) {
-      BrowserUtil.browseAbsolute(url)
-      return@handleUserAction
-    }
-    showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
   }
 }
