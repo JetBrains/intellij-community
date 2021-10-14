@@ -210,7 +210,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(button)
   }
 
-  override fun button(text: String, actionPlace: String, action: AnAction): CellImpl<JButton> {
+  override fun button(text: String, action: AnAction, actionPlace: String): Cell<JButton> {
     lateinit var result: CellImpl<JButton>
     result = button(text) {
       ActionUtil.invokeAction(action, result.component, actionPlace, null, null)
@@ -218,15 +218,15 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun actionButton(action: AnAction): CellImpl<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+  override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
+    val component = ActionButton(action, action.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     return cell(component)
   }
 
-  override fun actionsButton(vararg actions: AnAction, icon: Icon): CellImpl<ActionButton> {
+  override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
     val actionGroup = PopupActionGroup(arrayOf(*actions))
     actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
+    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {

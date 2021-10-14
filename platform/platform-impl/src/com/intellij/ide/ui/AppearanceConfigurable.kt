@@ -9,7 +9,6 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -249,7 +248,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           row {
-            button(message("background.image.button"), ActionPlaces.UNKNOWN, backgroundImageAction)
+            button(message("background.image.button"), backgroundImageAction)
               .enabled(ProjectManager.getInstance().openProjects.isNotEmpty())
           }
         }

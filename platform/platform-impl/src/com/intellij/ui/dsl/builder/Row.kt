@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipTitle
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -152,11 +153,16 @@ interface Row {
 
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
-  fun button(@NlsContexts.Button text: String, @NonNls actionPlace: String, action: AnAction): Cell<JButton>
+  fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
 
-  fun actionButton(action: AnAction): Cell<ActionButton>
+  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton>
 
-  fun actionsButton(vararg actions: AnAction, icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
+  /**
+   * Creates an [ActionButton] with [icon] and menu with provided [actions]
+   */
+  fun actionsButton(vararg actions: AnAction,
+                    @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
+                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
 
