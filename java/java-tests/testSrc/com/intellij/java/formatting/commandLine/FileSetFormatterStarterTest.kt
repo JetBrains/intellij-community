@@ -1,66 +1,42 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.formatting.commandLine
 
+import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
+import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
 import com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
 import com.intellij.formatting.commandLine.FileSetFormatValidator
 import com.intellij.formatting.commandLine.FileSetFormatter
-import com.intellij.formatting.commandLine.FormatterStarter
+import com.intellij.formatting.commandLine.createFormatter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.LightPlatformTestCase
 import java.io.File
-import java.security.Permission
-
-
-private class ExitTrappedException(val status: Int) : SecurityException("System.exit has been fired with status $status")
-
-private object SystemExitTrapper : SecurityManager() {
-  override fun checkPermission(permission: Permission?) {
-    permission
-      ?.name
-      ?.takeIf { it.startsWith("exitVM.") }
-      ?.removePrefix("exitVM.")
-      ?.toIntOrNull()
-      ?.let {
-        throw ExitTrappedException(it)
-      }
-  }
-}
 
 
 class FileSetFormatterStarterTest : LightPlatformTestCase() {
 
-  private fun expectSystemExit(expectedStatus: Int, body: () -> Unit) {
-    val oldSecurityManager = System.getSecurityManager()
-    System.setSecurityManager(SystemExitTrapper)
+  private inline fun <reified T : Exception> expectExceptionsOnArgs(vararg args: String) {
     try {
-      body()
-      fail("Missing expected System.exit($expectedStatus)")
+      createFormatter(args.toList().toTypedArray())
+      fail("Missing expected exception ${T::class}")
     }
-    catch (e: ExitTrappedException) {
-      assertEquals("System.exit() has been called with an unexpected status", expectedStatus, e.status)
-    }
-    finally {
-      System.setSecurityManager(oldSecurityManager)
+    catch (e: Exception) {
+      assertInstanceOf(e, T::class.java)
     }
   }
 
-  private fun expectSystemExitOnArgs(expectedStatus: Int, vararg args: String) = expectSystemExit(expectedStatus) {
-    FormatterStarter().createFormatter(args.toList().toTypedArray())
-  }
+  fun testHelp_noArgs0() = expectExceptionsOnArgs<ShowUsageException>()
+  fun testHelp_noArgs1() = expectExceptionsOnArgs<ShowUsageException>("format")
+  fun testHelp_explicit_only() = expectExceptionsOnArgs<ShowUsageException>("format", "-help")
+  fun testHelp_explicit_withOthers() = expectExceptionsOnArgs<ShowUsageException>("format", "-r", "src", "-h")
 
-  fun testHelp_noArgs0() = expectSystemExitOnArgs(0)
-  fun testHelp_noArgs1() = expectSystemExitOnArgs(0, "format")
-  fun testHelp_explicit_only() = expectSystemExitOnArgs(0, "format", "-help")
-  fun testHelp_explicit_withOthers() = expectSystemExitOnArgs(0, "format", "-r", "src", "-h")
-
-  fun testUnknownArgumentFails() = expectSystemExitOnArgs(1, "format", "-r", "src", "-unknown_arg")
-
-  fun testMissingParamForMasks() = expectSystemExitOnArgs(1, "format", "-r", "src", "-m")
-  fun testMissingParamForSettings() = expectSystemExitOnArgs(1, "format", "-r", "src", "-s")
-  fun testMissingSettingsFile() = expectSystemExitOnArgs(1, "format", "-s", "really_hope_noone_adds_file_with_this_name_in_future", "src")
+  fun testUnknownArgumentFails() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-unknown_arg")
+  fun testMissingParamForMasks() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-m")
+  fun testMissingParamForSettings() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-s")
+  fun testMissingSettingsFile() = expectExceptionsOnArgs<ArgumentsException>("format", "-s",
+    "really_hope_noone_adds_file_with_this_name_in_future", "src")
 
   fun testDefaultArgs() {
-    val processor: FileSetCodeStyleProcessor = FormatterStarter().createFormatter(arrayOf("format", "."))
+    val processor: FileSetCodeStyleProcessor = createFormatter(arrayOf("format", "."))
     assertInstanceOf(processor, FileSetFormatter::class.java)
     assertFalse(processor.isRecursive)
     assertEmpty(processor.getFileMasks())
@@ -70,7 +46,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
   }
 
   fun testNonDefaultArgs() {
-    val processor: FileSetCodeStyleProcessor = FormatterStarter().createFormatter(arrayOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", ".."))
+    val processor: FileSetCodeStyleProcessor = createFormatter(arrayOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", ".."))
     assertInstanceOf(processor, FileSetFormatValidator::class.java)
     assertTrue(processor.isRecursive)
 
