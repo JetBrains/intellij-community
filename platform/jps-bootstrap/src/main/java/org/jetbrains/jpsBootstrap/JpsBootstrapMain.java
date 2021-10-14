@@ -2,6 +2,7 @@
 
 package org.jetbrains.jpsBootstrap;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,6 +84,9 @@ public class JpsBootstrapMain {
       warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
       projectHome = communityHome;
     }
+
+    // Workaround for KTIJ-19065
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, projectHome.toString());
 
     Path workDir;
 
