@@ -99,11 +99,6 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             return null
         }
 
-        val isNotExcluded = { packageIdentifier: PackageIdentifier ->
-            excludeList.filter { isMavenNotation(it) }
-                .none { isExcluded(packageIdentifier, it) }
-        }
-
         val availableUpdates = service.packageUpgradesStateFlow.value
             .getPackagesToUpgrade(onlyStable)
             .upgradesByModule[fileModule]
@@ -155,6 +150,9 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
         return provider.hasSupportFor(file.project, file)
     }
+
+    private fun isNotExcluded(packageIdentifier: PackageIdentifier) =
+        excludeList.filter { isMavenNotation(it) }.none { isExcluded(packageIdentifier, it) }
 
     override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
