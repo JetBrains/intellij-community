@@ -208,4 +208,10 @@ switch (10) {
 <error>.5555d</error>
 """
   }
+
+  void 'test record definition'() {
+    highlightingTest """
+<error>record</error> X() {}
+"""
+  }
 }
