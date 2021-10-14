@@ -524,9 +524,17 @@ class TestingTasksImpl extends TestingTasks {
     def builder = new ProcessBuilder(javaPath, '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
-    new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()
-    new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start()
+
+    def errorReader = new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output")
+    errorReader.start()
+
+    def outputReader = new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output")
+    outputReader.start()
+
     def exitCode = exec.waitFor()
+    
+    errorReader.join(360_000)
+    outputReader.join(360_000)
     if (exitCode != 0) {
       context.messages.error("Tests failed with exit code $exitCode")
     }
