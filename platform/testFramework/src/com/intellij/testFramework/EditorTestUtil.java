@@ -513,8 +513,10 @@ public final class EditorTestUtil {
 
   /**
    * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and comparing them with file from {@code answerFilePath}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
    */
-  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath) {
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
     TestCase.assertNotNull("Fixture has no file", testFile);
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
                                                                                               testFile.getProject(),
@@ -551,7 +553,7 @@ public final class EditorTestUtil {
       }
       highlightingLexer.advance();
     }
-    if (!notHighlightedTokens.isEmpty()) {
+    if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
       TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
     }
     UsefulTestCase.assertSameLinesWithFile(answerFilePath, sb.toString());
