@@ -26,7 +26,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
                                                                    Disposable {
   companion object {
     private val logger = logger<ExperimentalToolbarSettings>()
-    private var newToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
+    private var newToolbarEnabled = RegistryManager.getInstance().get("ide.widget.toolbar")
   }
 
   private var toolbarState = ExperimentalToolbarSettingsState()
@@ -34,7 +34,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
   private inner class ToolbarRegistryListener : RegistryValueListener {
 
     override fun afterValueChanged(value: RegistryValue) {
-      newToolbarEnabled = RegistryManager.getInstance().get("ide.new.navbar")
+      newToolbarEnabled = RegistryManager.getInstance().get("ide.widget.toolbar")
 
       val booleanValue = value.asBoolean()
       logger.info("New registry value: $booleanValue")
