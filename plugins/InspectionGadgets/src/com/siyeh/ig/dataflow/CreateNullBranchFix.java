@@ -88,7 +88,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (!isRuleBasedFormat && previousStatement != null && ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
       result.add("break;");
     }
-    result.addAll(CreateSwitchBranchesUtil.generateStatements("null", switchBlock, isRuleBasedFormat, false));
+    result.addAll(CreateSwitchBranchesUtil.generateStatements("null", switchBlock, isRuleBasedFormat));
     return result;
   }
 }

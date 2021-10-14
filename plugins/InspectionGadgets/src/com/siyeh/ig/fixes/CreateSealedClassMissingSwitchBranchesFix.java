@@ -22,7 +22,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   private final List<String> myAllNames;
 
   public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
-    super(block, names, true);
+    super(block, names);
     myAllNames = allNames;
   }
 
@@ -40,7 +40,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(PsiClass ignored) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored) {
     return myAllNames;
   }
 
