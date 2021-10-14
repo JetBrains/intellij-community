@@ -17,19 +17,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-
-private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
-    val index = this.text.indexOf(text)
-    return if (index >= 0) getElementAtOffsetOrNull(index) else null
-}
-
-private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
-    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
 
 internal class GradleModuleTransformer : ModuleTransformer {
 
@@ -40,7 +31,7 @@ internal class GradleModuleTransformer : ModuleTransformer {
                 && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
             val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
             val searchableText = if (isKotlinDependency) kotlinDependencyImport else "$groupId:$artifactId"
-            return file.firstElementContaining(searchableText)
+            return file.firstElementContainingExactly(searchableText)
         }
     }
 
@@ -173,7 +164,8 @@ internal class GradleModuleTransformer : ModuleTransformer {
                 buildFile = projectBuildFile,
                 buildSystemType = BuildSystemType.GRADLE_GROOVY,
                 moduleType = GradleProjectModuleType,
-                navigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile)
+                navigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile),
+                availableScopes = emptyList()
             )
 
             modules += projectModule
@@ -191,3 +183,13 @@ internal class GradleModuleTransformer : ModuleTransformer {
             }
         }
 }
+
+private fun PsiFile.firstElementContainingExactly(value: String): PsiElement? {
+    val index = text.indexOf(value)
+    if (index < 0) return null
+    if (text.length > value.length && text[value.length] != ':') return null
+    return getElementAtOffsetOrNull(index)
+}
+
+private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
+    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
