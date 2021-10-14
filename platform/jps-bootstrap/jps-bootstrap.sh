@@ -104,4 +104,4 @@ set -x
 
 export JPS_BOOTSTRAP_COMMUNITY_HOME
 export JPS_BOOTSTRAP_WORK_DIR
-exec "$JAVA_HOME/bin/java" -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" JpsBootstrapMain "$@"
+exec "$JAVA_HOME/bin/java" -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "$@"
