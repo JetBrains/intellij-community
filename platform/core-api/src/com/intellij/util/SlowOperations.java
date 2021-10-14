@@ -106,6 +106,9 @@ public final class SlowOperations {
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (activityName == activity) {
         return true;
       }
