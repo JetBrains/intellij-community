@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.io.*
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.buildDataPaths
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.kotlinDataContainer
-import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.*
+import org.jetbrains.kotlin.name.FqName
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -22,10 +22,14 @@ class LookupStorageReader private constructor(
         lookupStorage.close()
         idToFileStorage.close()
     }
-    
-    fun get(lookupSymbol: LookupSymbol): Collection<String> {
-        val key = LookupSymbolKey(lookupSymbol.name, lookupSymbol.scope)
-        return lookupStorage[key]?.mapNotNull { idToFileStorage[it]?.let(pathConverter::toFile)?.path }.orEmpty()
+
+    operator fun get(fqName: FqName): List<Path> {
+        val key = LookupSymbolKey(
+            name = fqName.shortName().asString(),
+            scope = fqName.parent().takeUnless(FqName::isRoot)?.asString() ?: "",
+        )
+
+        return lookupStorage[key]?.mapNotNull { idToFileStorage[it]?.let(pathConverter::toFile)?.toPath() }.orEmpty()
     }
 
     companion object {

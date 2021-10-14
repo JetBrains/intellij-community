@@ -20,7 +20,6 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.KOTLIN_CACHE_DIRECTORY_NAME
-import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner
 import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
 import org.jetbrains.kotlin.name.FqName
@@ -155,10 +154,7 @@ class KotlinCompilerReferenceIndexStorage private constructor(
         subtypesStorage.closeAndClean()
     }
 
-    fun getUsages(fqName: FqName): List<VirtualFile> = LookupSymbol(
-        name = fqName.shortName().asString(),
-        scope = fqName.parent().takeUnless(FqName::isRoot)?.asString() ?: "",
-    ).let(lookupStorageReader::get).mapNotNull { VfsUtil.findFile(Path(it), true) }
+    fun getUsages(fqName: FqName): List<VirtualFile> = lookupStorageReader[fqName].mapNotNull { VfsUtil.findFile(it, true) }
 
     fun getSubtypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = subtypesStorage[fqName, deep]
 }
