@@ -143,7 +143,9 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       }
     }
     lookup.addLookupListener(object : LookupListener {
-      override fun lookupCanceled(event: LookupEvent) {
+      override fun itemSelected(event: LookupEvent): Unit = lookupClosed()
+      override fun lookupCanceled(event: LookupEvent): Unit = lookupClosed()
+      private fun lookupClosed() {
         showDocJob.cancel()
         lookup.removeLookupListener(this)
       }
