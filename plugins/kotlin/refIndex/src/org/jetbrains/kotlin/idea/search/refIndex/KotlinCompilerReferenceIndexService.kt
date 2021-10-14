@@ -113,7 +113,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     init {
         dirtyScopeHolder.installVFSListener(this)
 
-        val isUpToDate = if (KotlinCompilerReferenceIndexStorage.hasIndexStorage(project)) {
+        val isUpToDate = if (KotlinCompilerReferenceIndexStorage.hasIndex(project)) {
             val compilerManager = CompilerManager.getInstance(project)
             compilerManager.createProjectCompileScope(project).let(compilerManager::isUpToDate)
         } else {
