@@ -45,6 +45,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
+import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
 import java.time.Duration;
@@ -90,7 +91,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
                                boolean startSuspended,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable @NonNls String indexingReason) {
-    super(project);
+    super(predefinedIndexableFilesIterators == null ? project : new Pair<>(project, predefinedIndexableFilesIterators));
     myProject = project;
     myStartSuspended = startSuspended;
     myIndexingReason = indexingReason;

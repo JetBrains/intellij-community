@@ -88,6 +88,7 @@ public class DumbServiceMergingTaskQueue {
     }
 
     if (olderTask != null) {
+      LOG.warn("Removed from queue " + olderTask);
       Disposer.dispose(olderTask);
     }
   }
