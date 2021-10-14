@@ -1604,7 +1604,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         .withFix(new ChangeExtendsImplementsQuickFix(typeDefinition)).create();
     }
     else {
-      checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"),
+                         typeDefinition instanceof GrRecordDefinition ? null : new ChangeExtendsImplementsQuickFix(typeDefinition));
       checkForWildCards(myHolder, implementsClause);
     }
   }
