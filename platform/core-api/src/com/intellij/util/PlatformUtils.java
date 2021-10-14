@@ -22,7 +22,7 @@ import java.util.Set;
  * </p>
  * <p>
  * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
- * plugin or IDE module.
+ * plugin or IDE module. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules
  * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
