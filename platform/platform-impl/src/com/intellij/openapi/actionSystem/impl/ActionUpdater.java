@@ -118,8 +118,7 @@ final class ActionUpdater {
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
-  @Nullable
-  private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
+  private @Nullable Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
@@ -548,13 +547,11 @@ final class ActionUpdater {
     return updater.asUpdateSession();
   }
 
-  @NotNull
-  private UpdateSession asUpdateSession(UpdateStrategy strategy) {
+  private @NotNull UpdateSession asUpdateSession(UpdateStrategy strategy) {
     return new UpdateSessionImpl(this, strategy);
   }
 
-  @NotNull
-  private JBIterable<AnAction> iterateGroupChildren(@NotNull ActionGroup group, @NotNull UpdateStrategy strategy) {
+  private @NotNull JBIterable<AnAction> iterateGroupChildren(@NotNull ActionGroup group, @NotNull UpdateStrategy strategy) {
     boolean isDumb = myProject != null && DumbService.getInstance(myProject).isDumb();
     return JBTreeTraverser.<AnAction>from(o -> {
       if (o == group) return null;
@@ -694,9 +691,8 @@ final class ActionUpdater {
       this.strategy = strategy;
     }
 
-    @NotNull
     @Override
-    public Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup) {
+    public @NotNull Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup) {
       return updater.iterateGroupChildren(actionGroup, strategy);
     }
 
@@ -705,14 +701,13 @@ final class ActionUpdater {
       return updater.getGroupChildren(actionGroup, strategy);
     }
 
-    @NotNull
     @Override
-    public Presentation presentation(@NotNull AnAction action) {
+    public @NotNull Presentation presentation(@NotNull AnAction action) {
       return updater.orDefault(action, updater.update(action, strategy));
     }
 
     @Override
-    public <T> @Nullable T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider) {
+    public <T> @NotNull T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider) {
       T existing = updater.myUserDataHolder.getUserData(key);
       return existing != null ? existing :
              updater.myUserDataHolder.putUserDataIfAbsent(key, provider.get());

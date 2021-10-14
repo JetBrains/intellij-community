@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -23,5 +22,5 @@ public interface UpdateSession {
 
   @NotNull Presentation presentation(@NotNull AnAction action);
 
-  @Nullable <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider);
+  @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider);
 }
