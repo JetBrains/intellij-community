@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,8 +131,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
       boolean report = methodParameter && reportMethodParameters ||
                        !methodParameter && !catchParameter && reportLocalVariables;
       if (!report) return;
-      if (parameter instanceof PsiPatternVariable &&
-          PsiTreeUtil.skipParentsOfType(parameter, PsiPattern.class) instanceof PsiInstanceOfExpression) {
+      if (parameter instanceof PsiPatternVariable) {
         // Will be reported in instanceof check
         return;
       }
@@ -198,13 +198,25 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     }
 
     @Override
-    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
+    public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+      PsiTypeElement typeElement = pattern.getCheckType();
+      processInstanceOfCheck(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.pattern.problem.descriptor"));
+    }
+
+    @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      super.visitInstanceOfExpression(expression);
+      if (expression.getPattern() == null) {
+        processInstanceOfCheck(expression.getCheckType(), InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor"));
+      }
+    }
+
+    private void processInstanceOfCheck(PsiTypeElement typeElement, @NotNull @Nls String message) {
       if (!reportInstanceOf) return;
-      PsiTypeElement typeElement = expression.getCheckType();
       if (!typeIsConcreteClass(typeElement)) return;
       PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (MethodUtils.isEquals(method)) return;
-      registerError(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor"));
+      registerError(typeElement, message);
     }
 
     @Override
