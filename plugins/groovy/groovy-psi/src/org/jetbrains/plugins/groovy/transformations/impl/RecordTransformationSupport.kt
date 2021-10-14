@@ -43,6 +43,9 @@ class RecordTransformationSupport : AstTransformationSupport {
       val field = GrLightField(record, formalParameter.name, formalParameter.type, formalParameter)
       field.modifierList.addModifier(GrModifierFlags.FINAL_MASK)
       field.modifierList.addModifier(GrModifierFlags.PRIVATE_MASK)
+      if (hasModifierProperty(formalParameter.modifierList, "static")) {
+        field.modifierList.addModifier(GrModifierFlags.STATIC_MASK)
+      }
       addField(field)
     }
     val modifierList = record.modifierList
@@ -63,6 +66,9 @@ class RecordTransformationSupport : AstTransformationSupport {
       isConstructor = true
       returnType = record.type()
       for (formalParameter in formalParameters) {
+        if (hasModifierProperty(formalParameter.modifierList, "static")) {
+          continue
+        }
         addParameter(GrLightParameter(formalParameter.name, formalParameter.type, record))
       }
       navigationElement = actualNavigationElement
@@ -72,9 +78,14 @@ class RecordTransformationSupport : AstTransformationSupport {
       isConstructor = true
       returnType = record.type()
       addParameter("args", CommonClassNames.JAVA_UTIL_MAP)
-      namedParameters = formalParameters.associate { param -> param.name to object : NamedArgumentDescriptorImpl(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP, param.navigationElement) {
-        override fun checkType(type: PsiType, context: GroovyPsiElement): Boolean = TypesUtil.isAssignableByParameter(param.type, type, context)
-      } }
+      namedParameters = formalParameters
+        .filter { !hasModifierProperty(it.modifierList, "static") }
+        .associate { param ->
+          param.name to object : NamedArgumentDescriptorImpl(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP, param.navigationElement) {
+            override fun checkType(type: PsiType, context: GroovyPsiElement): Boolean = TypesUtil.isAssignableByParameter(param.type, type,
+              context)
+          }
+        }
       navigationElement = actualNavigationElement
     }
     addMethod(mapConstructor)
@@ -91,6 +102,9 @@ class RecordTransformationSupport : AstTransformationSupport {
   }
 
   private fun TransformationContext.generateRecordProperty(codeClass: GrTypeDefinition, field: GrField) {
+    if (field.modifierList != null && hasModifierProperty(field.modifierList!!, "static")) {
+      return
+    }
     val accessor = GrAccessorMethodImpl(field, false, field.name)
     accessor.modifierList.addModifier(GrModifier.FINAL)
     if (codeClass !is GrRecordDefinition) accessor.modifierList.addModifier(getFieldVisibility(field))

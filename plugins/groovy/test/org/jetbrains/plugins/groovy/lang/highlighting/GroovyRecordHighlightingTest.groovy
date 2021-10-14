@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrPOJOInspection
@@ -99,6 +100,34 @@ record X(String a, int s) {
 record X(int a) {
   <error>X</error> {}
 }
+"""
+  }
+
+  void 'test static field'() {
+    highlightingTest """
+record X(static int a, String b)
+{}
+
+new X("")
+"""
+  }
+
+  void 'test no accessor for static field'() {
+    highlightingTest """
+record X(static int a, String b)
+{}
+
+new X("").a<warning>()</warning>
+""", GroovyAssignabilityCheckInspection
+  }
+
+
+  void 'test map constructor'() {
+    highlightingTest """
+record X(static int a, String b)
+{}
+
+new X(b : "")
 """
   }
 }
