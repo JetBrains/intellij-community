@@ -3248,7 +3248,8 @@ public final class HighlightUtil {
 
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
     final PsiElement parent = list.getParent();
-    if (PsiUtil.isAnnotationMethod(parent) && !list.isEmpty()) {
+    if (PsiUtil.isAnnotationMethod(parent) && 
+        (!list.isEmpty() || PsiTreeUtil.getChildOfType(list, PsiReceiverParameter.class) != null)) {
       final String message = JavaErrorBundle.message("annotation.interface.members.may.not.have.parameters");
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(message).create();
