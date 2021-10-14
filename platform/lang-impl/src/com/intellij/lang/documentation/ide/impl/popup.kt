@@ -14,6 +14,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.DimensionService
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -50,14 +51,15 @@ private fun createDocumentationPopup(
 
 private fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
   EDT.assertIsEdt()
-  launch(ModalityState.current().asContextElement()) {
+  val showJob = launch(ModalityState.current().asContextElement()) {
     browseJob.tryJoin() // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withContext(Dispatchers.EDT) {
-      check(!popup.isDisposed)
-      check(popup.canShow())
+      check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
+      check(popup.canShow()) // sanity check
       popupContext.showPopup(popup)
     }
   }
+  Disposer.register(popup, showJob::cancel)
 }
 
 /**
