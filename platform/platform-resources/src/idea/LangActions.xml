@@ -1247,9 +1247,9 @@
       <reference ref="XDebugger.MoveWatchUp"/>
       <reference ref="XDebugger.MoveWatchDown"/>
       <reference ref="XDebugger.CopyWatch"/>
-      <reference ref="XDebugger.SwitchWatchesInVariables"/>
       <group id="XDebugger.Watches.Presentation" icon="AllIcons.General.InspectionsEye" popup="true">
         <reference ref="XDebugger.ToggleEvaluateExpressionField"/>
+        <reference ref="XDebugger.SwitchWatchesInVariables"/>
       </group>
     </group>
 
