@@ -41,7 +41,10 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
       }
     }
     if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
-          || element.hasType(MarkdownElementTypes.CODE_SPAN))) {
+          || (element.hasType(MarkdownTokenTypes.BACKTICK)
+              && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
+              && element.parent.firstChild == element)
+         )) {
       return null
     }
 
@@ -52,19 +55,13 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
     }
 
 
-    val a1 = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
+    val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
       AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
         execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance())
       }
     }
-    val a2 = object : AnAction({ "Debug $text" },
-      AllIcons.RunConfigurations.TestState.Run) {
-      override fun actionPerformed(e: AnActionEvent) {
-        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance())
-      }
-    }
-    return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(a1)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
+    return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
 
   }
 
@@ -89,9 +86,9 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
   private fun getText(element: PsiElement): @NlsSafe String {
     if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return element.text.trim()
-    if (element.hasType(MarkdownElementTypes.CODE_SPAN)) {
-      val parentText = element.text
-      return parentText.substring(1, parentText.length - 1).trim()
+    if (element.hasType(MarkdownTokenTypes.BACKTICK)) {
+      val codeSpanText = element.parent.text
+      return codeSpanText.substring(1, codeSpanText.length - 1).trim()
     }
     return ""
   }
