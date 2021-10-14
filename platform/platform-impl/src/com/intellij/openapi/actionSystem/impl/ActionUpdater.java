@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-final class ActionUpdater extends UserDataHolderBase {
+final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
@@ -60,6 +60,7 @@ final class ActionUpdater extends UserDataHolderBase {
   private final boolean myToolbarAction;
   private final @Nullable Project myProject;
 
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
   private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
@@ -711,13 +712,10 @@ final class ActionUpdater extends UserDataHolderBase {
     }
 
     @Override
-    public <T> @Nullable T getUserData(@NotNull Key<T> key) {
-      return updater.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      updater.putUserData(key, value);
+    public <T> @Nullable T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider) {
+      T existing = updater.myUserDataHolder.getUserData(key);
+      return existing != null ? existing :
+             updater.myUserDataHolder.putUserDataIfAbsent(key, provider.get());
     }
   }
 }
