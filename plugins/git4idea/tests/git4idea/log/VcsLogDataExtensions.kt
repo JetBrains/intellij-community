@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -27,7 +27,7 @@ internal fun createLogData(repo: GitRepository, logProvider: GitLogProvider, dis
   }, disposable)
 }
 
-internal fun VcsLogData.refreshAndWait(repo: GitRepository, withIndex: Boolean = false) {
+internal fun VcsLogData.refreshAndWait(repo: GitRepository, withIndex: Boolean) {
   val logWaiter = CompletableFuture<VcsLogData>()
   val dataPackChangeListener = DataPackChangeListener { newDataPack ->
     if (newDataPack.isFull) {
