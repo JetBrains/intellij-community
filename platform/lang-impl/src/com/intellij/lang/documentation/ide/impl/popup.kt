@@ -15,7 +15,6 @@ import com.intellij.openapi.util.DimensionService
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.selects.select
 
 internal fun showDocumentationPopup(project: Project, request: DocumentationRequest, popupContext: PopupContext): AbstractPopup {
   EDT.assertIsEdt()
@@ -49,16 +48,21 @@ private fun createDocumentationPopup(
 
 private fun CoroutineScope.showPopupLater(popup: AbstractPopup, browseJob: Job, popupContext: PopupContext) {
   launch {
-    // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
-    select<Unit> {
-      browseJob.onJoin {}
-      launch { delay(DEFAULT_UI_RESPONSE_TIMEOUT) }.onJoin {}
-    }
+    browseJob.tryJoin() // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed)
       check(popup.canShow())
       popupContext.showPopup(popup)
     }
+  }
+}
+
+/**
+ * Suspends until the job is done, or timeout is exceeded.
+ */
+private suspend fun Job.tryJoin() {
+  withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+    this@tryJoin.join()
   }
 }
 
