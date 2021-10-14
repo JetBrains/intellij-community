@@ -429,6 +429,10 @@
                     interface="com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="Pythonid.decoratorIndexer"
+                    interface="com.jetbrains.python.PyCustomDecoratorIndexer"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="Pythonid.visitorFilter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
