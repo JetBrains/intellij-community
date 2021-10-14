@@ -2,18 +2,20 @@
 
 package org.jetbrains.kotlin.idea.framework
 
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.DummyLibraryProperties
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.VersionView
@@ -24,7 +26,6 @@ import org.jetbrains.kotlin.idea.configuration.KotlinWithLibraryConfigurator
 import org.jetbrains.kotlin.idea.configuration.createConfigureKotlinNotificationCollector
 import org.jetbrains.kotlin.idea.configuration.getConfiguratorByName
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
-import java.nio.file.Path
 import javax.swing.JComponent
 
 /**
@@ -61,19 +62,16 @@ abstract class CustomLibraryDescriptorWithDeferredConfig(
             val classFiles = library.getFiles(OrderRootType.CLASSES).toList()
 
             libraryPresentationManager.isLibraryOfKind(classFiles, libraryKind)
-        } ?: return
+        } as? LibraryEx ?: return
 
         val model = library.modifiableModel
         try {
             val collector = createConfigureKotlinNotificationCollector(module.project)
 
             // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
-            val descriptorsWithSdk = configurator.getLibraryJarDescriptors(rootModel.sdk)
-            for (jarDescriptor in descriptorsWithSdk) {
-                if (model.getFiles(jarDescriptor.orderRootType).any { it.name == jarDescriptor.jarName })
-                    continue
-
-                configurator.configureLibraryJar(model, jarDescriptor, collector)
+            val descriptorWithSdk = configurator.libraryJarDescriptor
+            if (model.getFiles(descriptorWithSdk.orderRootType).any { it.name == descriptorWithSdk.jarName }) {
+                configurator.configureLibraryJar(module.project, model, descriptorWithSdk, collector)
             }
 
             collector.showNotification()
@@ -89,33 +87,28 @@ abstract class CustomLibraryDescriptorWithDeferredConfig(
         return createConfigurationFromPluginPaths()
     }
 
-    private val configurator: KotlinWithLibraryConfigurator
-        get() = getConfiguratorByName(configuratorName) as KotlinWithLibraryConfigurator?
+    private val configurator: KotlinWithLibraryConfigurator<*>
+        get() = getConfiguratorByName(configuratorName) as KotlinWithLibraryConfigurator<*>?
             ?: error("Configurator with name $configuratorName should exists")
 
     override fun createNewLibraryWithDefaultSettings(contextDirectory: VirtualFile?): NewLibraryConfiguration? {
         return createConfigurationFromPluginPaths()
     }
 
-    fun createConfigurationFromPluginPaths() = createConfiguration(
-        collectPathsInPlugin(OrderRootType.CLASSES),
-        collectPathsInPlugin(OrderRootType.SOURCES)
-    )
+    protected fun createConfigurationFromPluginPaths(): NewLibraryConfiguration {
+        return MyLibraryConfiguration(project ?: ProjectManager.getInstance().defaultProject, libraryName, configurator)
+    }
 
-    private fun collectPathsInPlugin(rootType: OrderRootType): List<Path> = configurator.getLibraryJarDescriptors(null)
-        .filter { it.orderRootType == rootType }
-        .map { it.getPathInPlugin() }
-
-    protected fun createConfiguration(libraryFiles: List<Path>, librarySourceFiles: List<Path>): NewLibraryConfiguration =
-        object : NewLibraryConfiguration(libraryName, configurator.libraryType, DummyLibraryProperties.INSTANCE) {
-            override fun addRoots(editor: LibraryEditor) {
-                for (libraryFile in libraryFiles) {
-                    editor.addRoot(VfsUtil.getUrlForLibraryRoot(libraryFile.toFile()), OrderRootType.CLASSES)
-                }
-
-                for (librarySrcFile in librarySourceFiles) {
-                    editor.addRoot(VfsUtil.getUrlForLibraryRoot(librarySrcFile.toFile()), OrderRootType.SOURCES)
-                }
+    private class MyLibraryConfiguration<P : LibraryProperties<*>>(
+        val project: Project,
+        libraryName: String,
+        private val configurator: KotlinWithLibraryConfigurator<P>
+    ) : NewLibraryConfiguration(libraryName, configurator.libraryType, configurator.libraryProperties) {
+        override fun addRoots(editor: LibraryEditor) {
+            val repositoryLibraryProperties = configurator.libraryJarDescriptor.repositoryLibraryProperties
+            JarRepositoryManager.loadDependenciesModal(project, repositoryLibraryProperties, true, true, null, null).forEach {
+                editor.addRoot(it.file, it.type)
             }
         }
+    }
 }

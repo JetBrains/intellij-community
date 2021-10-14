@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.*;
+import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
@@ -55,20 +56,20 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         ModuleRootManager.getInstance(getModule()).orderEntries().forEachLibrary(library -> {
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.CLASSES)).map(VirtualFile::getName).toArray(),
-                    KotlinArtifactNames.KOTLIN_STDLIB,
-                    KotlinArtifactNames.KOTLIN_REFLECT,
-                    KotlinArtifactNames.KOTLIN_TEST,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK7,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK8
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + ".jar",
+                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + ".jar",
+                    "annotations-13.0.jar"
             );
 
             assertSameElements(
                     Arrays.stream(library.getRootProvider().getFiles(OrderRootType.SOURCES)).map(VirtualFile::getName).toArray(),
-                    KotlinArtifactNames.KOTLIN_STDLIB_SOURCES,
-                    PathUtil.KOTLIN_TEST_SRC_JAR,
-                    PathUtil.KOTLIN_REFLECT_SRC_JAR,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES,
-                    KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES
+                    PathUtil.KOTLIN_JAVA_STDLIB_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME + "-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    "kotlin-stdlib-common-" + kotlinCompilerVersionShort() + "-sources.jar",
+                    "annotations-13.0-sources.jar"
             );
 
             return true;

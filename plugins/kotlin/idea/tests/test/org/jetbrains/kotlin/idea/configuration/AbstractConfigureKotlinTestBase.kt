@@ -56,7 +56,7 @@ abstract class AbstractConfigureKotlinTestBase : HeavyPlatformTestCase() {
         myModule = modules.first()
     }
 
-    protected fun getOppositeConfigurator(configurator: KotlinWithLibraryConfigurator): KotlinWithLibraryConfigurator {
+    protected fun getOppositeConfigurator(configurator: KotlinWithLibraryConfigurator<*>): KotlinWithLibraryConfigurator<*> {
         if (configurator === jvmConfigurator) return jsConfigurator
         if (configurator === jsConfigurator) return jvmConfigurator
 

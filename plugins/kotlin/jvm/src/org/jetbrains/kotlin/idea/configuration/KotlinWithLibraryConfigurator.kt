@@ -2,15 +2,18 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.*
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
@@ -32,16 +35,18 @@ import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.findAllUsedLibraries
 import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
 
-abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinProjectConfigurator {
+abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
     protected abstract val libraryName: String
 
     protected abstract val messageForOverrideDialog: String
 
     protected abstract val dialogTitle: String
 
-    open val libraryType: LibraryType<DummyLibraryProperties>? = null
+    abstract val libraryType: LibraryType<P>
 
-    protected val libraryKind: PersistentLibraryKind<*>? = libraryType?.kind
+    abstract val libraryJarDescriptor: LibraryJarDescriptor
+
+    abstract val libraryProperties: P
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
         val module = moduleSourceRootGroup.baseModule
@@ -111,46 +116,35 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     private fun configureModuleWithLibrary(module: Module, collector: NotificationMessageCollector) {
         val project = module.project
 
-        val library = findAndFixBrokenKotlinLibrary(module, collector)
+        val library = (findAndFixBrokenKotlinLibrary(module, collector)
             ?: getKotlinLibrary(module)
             ?: getKotlinLibrary(project)
-            ?: createNewLibrary(project, collector)
+            ?: createNewLibrary(project, collector)) as LibraryEx
 
         val sdk = module.sdk
         val model = library.modifiableModel
 
-        for (descriptor in getLibraryJarDescriptors(sdk)) {
-            configureLibraryJar(model, descriptor, collector)
-        }
+        configureLibraryJar(project, model, libraryJarDescriptor, collector)
         ApplicationManager.getApplication().runWriteAction { model.commit() }
 
         addLibraryToModuleIfNeeded(module, library, collector)
     }
 
     fun configureLibraryJar(
-        library: Library.ModifiableModel,
+        project: Project,
+        library: LibraryEx.ModifiableModelEx,
         libraryJarDescriptor: LibraryJarDescriptor,
         collector: NotificationMessageCollector
     ) {
-        val jarFile = libraryJarDescriptor.getPathInPlugin()
-
-        val jarVFile = LocalFileSystem.getInstance().findFileByNioFile(jarFile)
-        if (jarVFile == null) {
-            collector.addMessage(KotlinJvmBundle.message("can.t.find.library.jar.file.0", jarFile))
-            return
+        library.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+        val properties = libraryJarDescriptor.repositoryLibraryProperties
+        library.properties = properties
+        JarRepositoryManager.loadDependenciesModal(project, properties, true, true, null, null).forEach {
+            library.addRoot(it.file, it.type)
         }
 
-        val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarVFile)
-        if (jarRoot == null) {
-            collector.addMessage(KotlinJvmBundle.message("couldn.t.configure.library.jar.file.0.may.be.corrupted", jarVFile))
-            return
-        }
-
-        if (jarRoot !in library.getFiles(libraryJarDescriptor.orderRootType)) {
-            library.addRoot(jarRoot, libraryJarDescriptor.orderRootType)
-
-            collector.addMessage(KotlinJvmBundle.message("added.0.to.library.configuration", jarFile))
-        }
+        collector.addMessage(KotlinJvmBundle.message("added.0.to.library.configuration", libraryJarDescriptor.jarName))
+        return
     }
 
     private fun getKotlinLibrary(project: Project): Library? {
@@ -194,7 +188,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         val table = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
         val library = runWriteAction {
             table.modifiableModel.run {
-                val library = createLibrary(libraryName, libraryKind)
+                val library = createLibrary(libraryName, libraryType.kind)
                 commit()
                 library
             }
@@ -209,8 +203,6 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     fun getKotlinLibrary(module: Module): Library? = findKotlinRuntimeLibrary(module, this::isKotlinLibrary)
 
     private fun isKotlinLibrary(library: Library, project: Project) = library.name == libraryName || libraryMatcher(library, project)
-
-    abstract fun getLibraryJarDescriptors(sdk: Sdk?): List<LibraryJarDescriptor>
 
     protected open fun configureKotlinSettings(modules: List<Module>) {
     }

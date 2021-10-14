@@ -9,10 +9,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
@@ -24,6 +21,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ScalarIndexExtension
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -71,55 +69,38 @@ enum class LibraryJarDescriptor(
     val jarName: String,
     val orderRootType: OrderRootType,
     val shouldExist: Boolean,
-    val getPath: (KotlinArtifacts) -> Path = { artifacts -> artifacts.kotlincLibDirectory.toPath().resolve(jarName) }
+    private val mavenArtifactId: String,
+    val getPath: (KotlinArtifacts) -> Path = { artifacts -> artifacts.kotlincLibDirectory.toPath().resolve(jarName) },
 ) {
-    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, true, { it.kotlinStdlib.toPath() }) {
+    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, true, PathUtil.KOTLIN_JAVA_STDLIB_NAME, { it.kotlinStdlib.toPath() }) {
         override fun findExistingJar(library: Library): VirtualFile? {
             if (isExternalLibrary(library)) return null
             return JavaRuntimeDetectionUtil.getRuntimeJar(listOf(*library.getFiles(OrderRootType.CLASSES)))
         }
     },
 
-    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, false, { it.kotlinReflect.toPath() }),
-    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, true, { it.kotlinScriptRuntime.toPath() }),
-    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, false, { it.kotlinTest.toPath() }),
+    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_JAVA_REFLECT_NAME, { it.kotlinReflect.toPath() }),
+    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, true, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME, { it.kotlinScriptRuntime.toPath() }),
+    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_TEST_NAME, { it.kotlinTest.toPath() }),
 
-    @Deprecated("RUNTIME_JDK7_JAR should be used since 1.2")
-    RUNTIME_JRE7_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_JAR, OrderRootType.CLASSES, false),
-    RUNTIME_JDK7_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_JAR, OrderRootType.CLASSES, false),
+    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
 
-    @Deprecated("RUNTIME_JDK8_JAR should be used since 1.2")
-    RUNTIME_JRE8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE8_JAR, OrderRootType.CLASSES, false),
-    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, false),
+    REFLECT_SRC_JAR(PathUtil.KOTLIN_REFLECT_SRC_JAR, OrderRootType.SOURCES, false, PathUtil.KOTLIN_JAVA_REFLECT_NAME),
+    TEST_SRC_JAR(PathUtil.KOTLIN_TEST_SRC_JAR, OrderRootType.SOURCES, false, PathUtil.KOTLIN_TEST_NAME),
 
-    @Deprecated("RUNTIME_JDK7_SOURCES_JAR should be used since 1.2")
-    RUNTIME_JRE7_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_SRC_JAR, OrderRootType.SOURCES, false),
-    RUNTIME_JDK7_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_SRC_JAR, OrderRootType.SOURCES, false),
-
-    @Deprecated("RUNTIME_JDK8_SOURCES_JAR should be used since 1.2")
-    RUNTIME_JRE8_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE8_SRC_JAR, OrderRootType.SOURCES, false),
-    RUNTIME_JDK8_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_SRC_JAR, OrderRootType.SOURCES, false),
-
-    RUNTIME_SRC_JAR(PathUtil.KOTLIN_JAVA_STDLIB_SRC_JAR, OrderRootType.SOURCES, false, { it.kotlinStdlibSources.toPath() }) {
-        override fun findExistingJar(library: Library): VirtualFile? {
-            return super.findExistingJar(library) ?: LibraryUtils.getJarFile(
-                library.getFiles(orderRootType).toList(),
-                PathUtil.KOTLIN_JAVA_STDLIB_SRC_JAR_OLD
-            )
-        }
-    },
-    REFLECT_SRC_JAR(PathUtil.KOTLIN_REFLECT_SRC_JAR, OrderRootType.SOURCES, false),
-    TEST_SRC_JAR(PathUtil.KOTLIN_TEST_SRC_JAR, OrderRootType.SOURCES, false),
-
-    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, { it.kotlinStdlibJs.toPath() }),
-    JS_STDLIB_SRC_JAR(PathUtil.JS_LIB_SRC_JAR_NAME, OrderRootType.SOURCES, false, { it.kotlinStdlibJsSources.toPath() });
+    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, PathUtil.JS_LIB_NAME, { it.kotlinStdlibJs.toPath() });
 
     open fun findExistingJar(library: Library): VirtualFile? {
         if (isExternalLibrary(library)) return null
-        return LibraryUtils.getJarFile(listOf(*library.getFiles(orderRootType)), jarName)
+        return library.getFiles(orderRootType).firstOrNull { it.name.startsWith(mavenArtifactId) }
     }
 
-    fun getPathInPlugin() = getPath(KotlinArtifacts.instance)
+    fun getPathInPlugin(): Path {
+        return getPath(KotlinArtifacts.instance)
+    }
+
+    val repositoryLibraryProperties: RepositoryLibraryProperties get() =
+        RepositoryLibraryProperties("org.jetbrains.kotlin", mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
 }
 
 @NlsSafe

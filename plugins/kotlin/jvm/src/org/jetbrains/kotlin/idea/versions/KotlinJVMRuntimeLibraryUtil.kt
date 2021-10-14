@@ -41,28 +41,19 @@ fun updateLibraries(project: Project, libraries: Collection<Library>) {
             ?: error("Configurator with given name doesn't exists: " + KotlinJsModuleConfigurator.NAME)
 
     val collector = createConfigureKotlinNotificationCollector(project)
-    val sdk = ProjectRootManager.getInstance(project).projectSdk
-    // TODO use module SDK
 
     for (library in libraries) {
-        val libraryJarDescriptors = if (JavaRuntimeDetectionUtil.getJavaRuntimeVersion(library) != null)
-            kJvmConfigurator.getLibraryJarDescriptors(sdk)
-        else
-            kJsConfigurator.getLibraryJarDescriptors(sdk)
+        val libraryJarDescriptor =
+            if (JavaRuntimeDetectionUtil.getJavaRuntimeVersion(library) != null) kJvmConfigurator.libraryJarDescriptor
+            else kJsConfigurator.libraryJarDescriptor
 
-        for (libraryJarDescriptor in libraryJarDescriptors) {
-            updateJar(project, library, libraryJarDescriptor)
-        }
+        updateJar(project, library, libraryJarDescriptor)
     }
 
     collector.showNotification()
 }
 
-private fun updateJar(
-    project: Project,
-    library: Library,
-    libraryJarDescriptor: LibraryJarDescriptor
-) {
+private fun updateJar(project: Project, library: Library, libraryJarDescriptor: LibraryJarDescriptor) {
     val fileToReplace = libraryJarDescriptor.findExistingJar(library)
     if (fileToReplace == null) {
         if (libraryJarDescriptor.shouldExist) {
