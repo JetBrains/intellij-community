@@ -3,7 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.version
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal sealed class NormalizedPackageVersion(
     val originalVersion: PackageVersion.Named
@@ -156,12 +155,5 @@ internal sealed class NormalizedPackageVersion(
 
         fun parseFrom(version: PackageVersion.Named): NormalizedPackageVersion =
             PackageVersionNormalizer.getInstance().parse(version)
-
-        fun parseFrom(rawVersionName: String): NormalizedPackageVersion {
-            require(rawVersionName.isNotBlank()) { "Can only normalize non-blank version names" }
-            val isStable = PackageVersionUtils.evaluateStability(rawVersionName)
-            val version = PackageVersion.Named(rawVersionName, isStable, releasedAt = null)
-            return PackageVersionNormalizer.getInstance().parse(version)
-        }
     }
 }
