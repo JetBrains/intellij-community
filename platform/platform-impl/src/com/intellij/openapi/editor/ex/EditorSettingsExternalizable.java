@@ -688,6 +688,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 
+  public boolean isShowIntentionPreview() {
+    return myOptions.SHOW_INTENTION_PREVIEW;
+  }
+
+  public void setShowIntentionPreview(boolean show) {
+    myOptions.SHOW_INTENTION_PREVIEW = show;
+  }
+
   /**
    * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
    */

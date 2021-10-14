@@ -129,7 +129,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myPopup.showInBestPositionFor(myEditor);
       }
 
-      if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW) {
+      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
         ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
       }
 
@@ -610,7 +610,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       public void actionPerformed(ActionEvent e) {
         IntentionPreviewPopupUpdateProcessor processor = that.myPreviewPopupUpdateProcessor;
         boolean shouldShow = !processor.isShown();
-        EditorSettingsExternalizable.getInstance().getOptions().SHOW_INTENTION_PREVIEW = shouldShow;
+        EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
         if (shouldShow) {
           showPreview(that);
         }
