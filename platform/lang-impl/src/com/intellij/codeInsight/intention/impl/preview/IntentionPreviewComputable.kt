@@ -48,7 +48,7 @@ internal class IntentionPreviewComputable(private val project: Project,
       md -> IntentionActionDelegate.unwrap(md.action) === originalAction
     } ?: return null
     return try {
-      IntentionPreviewHtmlResult(actionMetaData.description.text.replace(Regex("<!--.+-->"), ""))
+      IntentionPreviewHtmlResult(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
     } catch(ex: IOException) {
       null
     }
@@ -135,6 +135,7 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(IntentionPreviewComputable::class.java)
+    private val HTML_COMMENT_REGEX = Regex("<!--.+-->")
 
     private fun getFixes(cachedIntentions: CachedIntentions): Sequence<IntentionActionWithTextCaching> =
       sequenceOf<IntentionActionWithTextCaching>()
