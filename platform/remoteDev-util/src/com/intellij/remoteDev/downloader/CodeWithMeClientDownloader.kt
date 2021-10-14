@@ -71,7 +71,7 @@ object CodeWithMeClientDownloader {
 
   private data class DownloadableFileData(
     val fileName: String,
-    val url: String,
+    val url: URI,
     val archivePath: Path,
     val targetPath: Path,
     val includeInManifest: (Path) -> Boolean,
@@ -199,7 +199,7 @@ object CodeWithMeClientDownloader {
     val guestFileName = "$guestName.${archiveExtensionFromUrl(sessionInfoResponse.compatibleClientUrl)}"
     val guestData = DownloadableFileData(
       fileName = guestFileName,
-      url = sessionInfoResponse.compatibleClientUrl,
+      url = URI(sessionInfoResponse.compatibleClientUrl),
       archivePath = tempDir.resolve(guestFileName),
       targetPath = getCwmGuestCachesDir() / (guestName + extractDirSuffix),
       includeInManifest = cwmGuestManifestFilter
@@ -209,7 +209,7 @@ object CodeWithMeClientDownloader {
     val jdkFileName = "$jdkFullName.${archiveExtensionFromUrl(sessionInfoResponse.compatibleJreUrl)}"
     val jdkData = DownloadableFileData(
       fileName = jdkFileName,
-      url = sessionInfoResponse.compatibleJreUrl,
+      url = URI(sessionInfoResponse.compatibleJreUrl),
       archivePath = tempDir.resolve(jdkFileName),
       targetPath = getCwmGuestCachesDir() / (jdkFullName + extractDirSuffix),
       includeInManifest = cwmJbrManifestFilter
@@ -304,18 +304,18 @@ object CodeWithMeClientDownloader {
               downloadingDataProgressIndicator.fraction = 1.0
             }
             else {
-              fun download(url: String, path: Path) {
+              fun download(url: URI, path: Path) {
                 LOG.info("Downloading $url -> $path")
-                HttpRequests.request(url).saveToFile(path, downloadingDataProgressIndicator)
+                HttpRequests.request(url.toString()).saveToFile(path, downloadingDataProgressIndicator)
               }
 
               download(data.url, data.archivePath)
 
               if (Registry.`is`("codewithme.check.guest.signature")) {
-                download(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL,
+                download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL),
                   tempDir.resolve("KEYS"))
-                download(data.url + SHA256_SUFFIX, data.archivePath.addSuffix(SHA256_SUFFIX))
-                download(data.url + SHA256_ASC_SUFFIX, data.archivePath.addSuffix(SHA256_ASC_SUFFIX))
+                download(data.url.addPathSuffix(SHA256_SUFFIX), data.archivePath.addSuffix(SHA256_SUFFIX))
+                download(data.url.addPathSuffix(SHA256_ASC_SUFFIX), data.archivePath.addSuffix(SHA256_ASC_SUFFIX))
 
                 val pgpVerifier = PgpSignaturesVerifier(object : PgpSignaturesVerifierLogger {
                   override fun info(message: String) {
@@ -327,7 +327,7 @@ object CodeWithMeClientDownloader {
                   file = data.archivePath,
                   detachedSignatureFile = data.archivePath.addSuffix(SHA256_ASC_SUFFIX),
                   checksumFile = data.archivePath.addSuffix(SHA256_SUFFIX),
-                  expectedFileName = data.fileName,
+                  expectedFileName = data.url.path.substringAfterLast('/'),
                   untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(tempDir.resolve("KEYS"))),
                   trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
                 )

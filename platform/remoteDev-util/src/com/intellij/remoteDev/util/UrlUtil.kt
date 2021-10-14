@@ -4,8 +4,17 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.util.application
+import com.intellij.util.withPath
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
+
+fun URI.addPathSuffix(suffix: String): URI {
+  val currentPath = path
+  if (currentPath == null || currentPath.isEmpty()) {
+    error("Expected URI path to be present: $this")
+  }
+  return withPath(currentPath + suffix)
+}
 
 @ApiStatus.Experimental
 object UrlUtil {
