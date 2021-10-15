@@ -2594,11 +2594,18 @@ public final class UIUtil {
   }
 
   public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels) {
+    return mergeComponentsWithAnchor(panels, false);
+  }
+
+  public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels, boolean visibleOnly) {
     JComponent maxWidthAnchor = null;
     int maxWidth = 0;
     for (PanelWithAnchor panel : panels) {
-      JComponent anchor = panel != null ? panel.getAnchor() : null;
+      if (visibleOnly && (panel instanceof JComponent) && !((JComponent)panel).isVisible())
+        continue;
+      JComponent anchor = panel != null ? panel.getOwnAnchor() : null;
       if (anchor != null) {
+        panel.setAnchor(null); // to get own preferred size
         int anchorWidth = anchor.getPreferredSize().width;
         if (maxWidth < anchorWidth) {
           maxWidth = anchorWidth;
@@ -2609,6 +2616,10 @@ public final class UIUtil {
     for (PanelWithAnchor panel : panels) {
       if (panel != null) {
         panel.setAnchor(maxWidthAnchor);
+        if (panel instanceof JComponent) {
+          ((JComponent)panel).revalidate();
+          ((JComponent)panel).repaint();
+        }
       }
     }
     return maxWidthAnchor;

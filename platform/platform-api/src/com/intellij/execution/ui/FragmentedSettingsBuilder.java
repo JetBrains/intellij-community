@@ -23,12 +23,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
@@ -131,10 +128,6 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       myConstraints.weighty = 1;
       myPanel.add(new JPanel(), myConstraints);
     }
-
-    List<PanelWithAnchor> panels = Arrays.stream(myPanel.getComponents()).filter(component -> component instanceof PanelWithAnchor)
-        .map(component -> (PanelWithAnchor)component).collect(Collectors.toList());
-    UIUtil.mergeComponentsWithAnchor(panels);
     return myPanel;
   }
 
