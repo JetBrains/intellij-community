@@ -12,9 +12,11 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ShadowAction
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.util.BitUtil
 import com.intellij.util.ObjectUtils
 import java.awt.event.InputEvent
@@ -80,6 +82,13 @@ class CloseTab(c: JComponent,
           mgr.closeFile(file, window)
         }
       }
+    }
+    (editorWindow.tabbedPane.tabs as MorePopupAware).let {
+      val popup = PopupUtil.getPopupContainerFor(e.inputEvent?.component)
+      if (popup != null && it.canShowMorePopup()) {
+        it.showMorePopup()
+      }
+      popup?.cancel()
     }
   }
 }

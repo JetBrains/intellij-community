@@ -10,20 +10,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -1033,22 +1033,53 @@ public class JBTabsImpl extends JComponent
     Rectangle rect = getMoreRect();
     if (rect == null) return;
 
-    JBPopupMenu menu = new JBPopupMenu();
-    for (final TabInfo each : getVisibleInfos()) {
-      if (!mySingleRowLayout.isTabHidden(each)) continue;
-      menu.add(createMenuItem(each));
+    List<TabInfo> hiddenInfos = ContainerUtil.filter(getVisibleInfos(), tabInfo -> mySingleRowLayout.isTabHidden(tabInfo));
+    JPanel gridPanel = new JPanel(new GridLayout(hiddenInfos.size(), 1));
+    JScrollPane scrollPane = new JBScrollPane(gridPanel) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (ScreenUtil.getScreenRectangle(JBTabsImpl.this).height < gridPanel.getPreferredSize().height) {
+          size.width += UIUtil.getScrollBarWidth();
+        }
+        return size;
+      }
+    };
+    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, null).createPopup();
+    for (TabInfo info : hiddenInfos) {
+      TabLabel label = createTabLabel(info);
+      label.setDoubleBuffered(true);
+      label.setText(info.getColoredText());
+      label.setIcon(info.getIcon());
+      label.setTabActions(info.getTabLabelActions());
+      label.setAlignmentToCenter(false);
+      label.apply(myUiDecorator != null ? myUiDecorator.getDecoration() : ourDefaultDecorator.getDecoration());
+      label.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (e.isShiftDown() && !e.isPopupTrigger()) {
+            removeTab(info);
+            if (canShowMorePopup()) {
+              showMorePopup();
+            }
+            popup.cancel();
+          }
+          else {
+            select(info, true);
+          }
+        }
+      });
+      add(label);
+      try {
+        label.updateTabActions();
+      }
+      finally {
+        remove(label);
+      }
+      gridPanel.add(label);
     }
-    menu.show(this, rect.x, rect.y + rect.height);
+    popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
   }
-
-  private JBMenuItem createMenuItem(@NotNull TabInfo tabInfo) {
-    final JBMenuItem item = new JBMenuItem(tabInfo.getText(), tabInfo.getIcon());
-    item.setForeground(tabInfo.getDefaultForeground());
-    item.setBackground(tabInfo.getTabColor());
-    item.addActionListener(__ -> select(tabInfo, true));
-    return item;
-  }
-
 
   @Nullable
   private JComponent getToFocus() {
