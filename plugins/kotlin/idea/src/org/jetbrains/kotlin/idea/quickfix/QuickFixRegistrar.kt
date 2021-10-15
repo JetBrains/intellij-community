@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateP
 import org.jetbrains.kotlin.idea.quickfix.expectactual.AddActualFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateActualFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateExpectedFix
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrateTypeParameterListFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
@@ -439,8 +440,18 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNRESOLVED_REFERENCE.registerFactory(ReplaceObsoleteLabelSyntaxFix)
 
-        DEPRECATION.registerFactory(DeprecatedSymbolUsageFix, DeprecatedSymbolUsageInWholeProjectFix, MigrateExternalExtensionFix)
-        DEPRECATION_ERROR.registerFactory(DeprecatedSymbolUsageFix, DeprecatedSymbolUsageInWholeProjectFix, MigrateExternalExtensionFix)
+        DEPRECATION.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix,
+            MigrateExperimentalToRequiresOptInFix
+        )
+        DEPRECATION_ERROR.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix,
+            MigrateExperimentalToRequiresOptInFix
+        )
         TYPEALIAS_EXPANSION_DEPRECATION.registerFactory(
             DeprecatedSymbolUsageFix,
             DeprecatedSymbolUsageInWholeProjectFix,
