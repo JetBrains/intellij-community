@@ -28,11 +28,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
+  private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
 
   public enum MemoryKind {
     HEAP("Xmx", "", "change.memory.max.heap"),
@@ -127,11 +130,15 @@ public final class VMOptions {
 
       Path userFile = getUserOptionsFile();
       if (userFile != null && Files.exists(userFile)) {
+        ourUserFileLock.readLock().lock();
         try {
           userOptions = Files.readAllLines(userFile, getFileCharset());
         }
         catch (IOException e) {
           LOG.warn(e);
+        }
+        finally {
+          ourUserFileLock.readLock().unlock();
         }
       }
 
@@ -232,7 +239,13 @@ public final class VMOptions {
 
     if (modified) {
       NioFiles.createDirectories(file.getParent());
-      Files.write(file, lines, getFileCharset());
+      ourUserFileLock.writeLock().lock();
+      try {
+        Files.write(file, lines, getFileCharset());
+      }
+      finally {
+        ourUserFileLock.writeLock().unlock();
+      }
     }
   }
 
