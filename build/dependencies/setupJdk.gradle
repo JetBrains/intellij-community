@@ -158,8 +158,6 @@ static def currentArch() {
     return 'aarch64'
   }
   else {
-    def os = OperatingSystem.current()
-    if (os.isWindows()) return System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
     throw new IllegalStateException("Unknown arch '$arch'")
   }
 }
@@ -168,6 +166,8 @@ static def jbrArch() {
   def arch = System.getProperty("intellij.jdk.arch", "")
   if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
+  def os = OperatingSystem.current()
+  if (os.isWindows()) return System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
   return currentArch()
 }
 
