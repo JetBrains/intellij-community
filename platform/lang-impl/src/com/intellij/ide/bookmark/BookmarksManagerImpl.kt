@@ -221,7 +221,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     if (bookmark == allowed) return true
     return MessageDialogBuilder
       .okCancel(message("bookmark.type.confirmation.title"), when (bookmark) {
-        is LineBookmark -> message("bookmark.type.confirmation.line.bookmark", type.mnemonic, bookmark.file.presentableName, bookmark.line)
+        is LineBookmark -> message("bookmark.type.confirmation.line.bookmark", type.mnemonic, bookmark.file.presentableName, bookmark.line + 1)
         is FileBookmark -> message("bookmark.type.confirmation.file.bookmark", type.mnemonic, bookmark.file.presentableName)
         else -> message("bookmark.type.confirmation.bookmark", type.mnemonic)
       })

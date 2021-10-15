@@ -277,12 +277,12 @@
         <action id="BookmarksView.RewriteBookmarkType"
                 class="com.intellij.ide.bookmark.actions.RewriteBookmarkTypeToggleAction"/>
         <separator/>
-        <action id="BookmarksView.AutoscrollFromSource" icon="AllIcons.General.AutoscrollFromSource"
-                class="com.intellij.ide.bookmark.actions.AutoscrollFromSourceToggleAction"/>
-        <action id="BookmarksView.AutoscrollToSource" icon="AllIcons.General.AutoscrollToSource"
-                class="com.intellij.ide.bookmark.actions.AutoscrollToSourceToggleAction"/>
         <action id="BookmarksView.OpenInPreviewTab"
                 class="com.intellij.ide.bookmark.actions.OpenInPreviewTabToggleAction"/>
+        <action id="BookmarksView.AutoscrollToSource" icon="AllIcons.General.AutoscrollToSource"
+                class="com.intellij.ide.bookmark.actions.AutoscrollToSourceToggleAction"/>
+        <action id="BookmarksView.AutoscrollFromSource" icon="AllIcons.General.AutoscrollFromSource"
+                class="com.intellij.ide.bookmark.actions.AutoscrollFromSourceToggleAction"/>
         <separator/>
       </group>
 
