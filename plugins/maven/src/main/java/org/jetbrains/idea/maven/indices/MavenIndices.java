@@ -124,7 +124,7 @@ public class MavenIndices {
     }
   }
 
-  public static void updateOrRepair(MavenSearchIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  public static void updateOrRepair(MavenSearchIndex index, boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     index.updateOrRepair(fullUpdate, settings, progress);
   }

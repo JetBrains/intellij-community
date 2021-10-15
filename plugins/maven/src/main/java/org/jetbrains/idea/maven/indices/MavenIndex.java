@@ -323,7 +323,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   @Override
-  public void updateOrRepair(boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  public void updateOrRepair(boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     try {
       indexUpdateLock.lock();
@@ -402,7 +402,7 @@ public final class MavenIndex implements MavenSearchIndex {
     );
   }
 
-  private void updateContext(MavenIndexId indexId, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  private void updateContext(@NotNull MavenIndexId indexId, @Nullable MavenGeneralSettings settings, @NotNull MavenProgressIndicator progress)
     throws MavenServerIndexerException, MavenProcessCanceledException {
     myNexusIndexer.updateIndex(indexId, settings, progress);
   }
