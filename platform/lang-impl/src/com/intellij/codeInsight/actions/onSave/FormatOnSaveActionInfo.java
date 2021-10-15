@@ -58,20 +58,20 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
   @Override
   public boolean isActionOnSaveEnabled() {
     FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
-    return options.isFormatOnSaveEnabled();
+    return options.isRunOnSaveEnabled();
   }
 
   @Override
   public void setActionOnSaveEnabled(boolean enabled) {
     FormatOnSaveOptions options = getOrCreateOptionsObjectStoringUiState();
-    options.setFormatOnSaveEnabled(enabled);
+    options.setRunOnSaveEnabled(enabled);
   }
 
   @Override
   public @Nullable ActionOnSaveComment getComment() {
     FormatOnSaveOptions options = ObjectUtils.notNull(getOptionsObjectStoringUiState(), FormatOnSaveOptions.getInstance(getProject()));
 
-    if (options.isFormatOnSaveEnabled() && !options.isAllFileTypesSelected() && options.getSelectedFileTypes().isEmpty()) {
+    if (options.isRunOnSaveEnabled() && !options.isAllFileTypesSelected() && options.getSelectedFileTypes().isEmpty()) {
       return ActionOnSaveComment.warning(CodeInsightBundle.message("actions.on.save.page.warning.no.file.types.selected"));
     }
 
@@ -253,18 +253,19 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
     FormatOnSaveOptions options = getOrCreateOptionsObjectStoringUiState();
 
     if (root.isChecked()) {
-      options.setAllFileTypesSelected(true);
+      options.setRunForAllFileTypes();
     }
     else {
-      options.setAllFileTypesSelected(false);
-
+      Collection<FileType> fileTypes = new ArrayList<>();
       Enumeration<TreeNode> fileTypesEnum = root.children();
       while (fileTypesEnum.hasMoreElements()) {
         CheckedTreeNode node = (CheckedTreeNode)fileTypesEnum.nextElement();
-        FileType fileType = (FileType)node.getUserObject();
-
-        options.setFileTypeSelected(fileType, node.isChecked());
+        if (node.isChecked()) {
+          fileTypes.add((FileType)node.getUserObject());
+        }
       }
+
+      options.setRunForSelectedFileTypes(fileTypes);
     }
 
     link.setText(getFileTypesLinkText());

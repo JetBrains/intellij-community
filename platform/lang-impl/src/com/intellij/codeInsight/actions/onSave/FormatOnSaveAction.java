@@ -18,7 +18,7 @@ import java.util.List;
 public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener.ActionOnSave {
   @Override
   public boolean isEnabledForProject(@NotNull Project project) {
-    return FormatOnSaveOptions.getInstance(project).isFormatOnSaveEnabled() ||
+    return FormatOnSaveOptions.getInstance(project).isRunOnSaveEnabled() ||
            OptimizeImportsOnSaveActionInfo.isOptimizeImportsOnSaveEnabled(project) ||
            RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project) ||
            CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project);
@@ -36,7 +36,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
       PsiFile psiFile = manager.getPsiFile(document);
       if (psiFile == null) continue;
 
-      if (formatOnSaveOptions.isFormatOnSaveEnabled() &&
+      if (formatOnSaveOptions.isRunOnSaveEnabled() &&
           (formatOnSaveOptions.isAllFileTypesSelected() || formatOnSaveOptions.isFileTypeSelected(psiFile.getFileType()))) {
         filesToProcessFully.add(psiFile);
       }
