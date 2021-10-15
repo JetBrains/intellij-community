@@ -117,7 +117,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
 
 class DummyIndexer : MavenServerIndexer {
 
-  override fun releaseIndex(id: String, token: MavenToken?) {
+  override fun releaseIndex(id: MavenIndexId, token: MavenToken?) {
   }
 
   override fun getIndexCount(token: MavenToken?): Int {

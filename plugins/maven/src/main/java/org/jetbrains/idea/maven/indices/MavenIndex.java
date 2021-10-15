@@ -353,7 +353,7 @@ public final class MavenIndex implements MavenSearchIndex {
             updateContext(mavenIndexId, settings, progress);
           }
           finally {
-            myNexusIndexer.releaseIndex(mavenIndexId.indexId);
+            myNexusIndexer.releaseIndex(mavenIndexId);
           }
         }
       }
@@ -524,7 +524,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   public void addArtifact(final File artifactFile) {
-    doIndexTask(() -> {
+    doIndexAndRecoveryTask(() -> {
       IndexData indexData = myData;
       IndexedMavenId id = indexData.addArtifact(artifactFile);
       if (id == null) return null;
@@ -557,18 +557,18 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   public Collection<String> getGroupIds() {
-    return doIndexReadTask(() -> {
+    return doIndexTask(() -> {
       return getGroupIdsRaw();
     }, Collections.emptySet());
   }
 
   public Set<String> getArtifactIds(final String groupId) {
-    return doIndexReadTask(() -> notNullize(myData.groupToArtifactMap.get(groupId)), Collections.emptySet());
+    return doIndexTask(() -> notNullize(myData.groupToArtifactMap.get(groupId)), Collections.emptySet());
   }
 
   @TestOnly
   public synchronized void printInfo() {
-    doIndexReadTask(() -> {
+    doIndexTask(() -> {
       MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap);
       MavenLog.LOG.debug("All data objects: " + getGroupIdsRaw());
       return null;
@@ -577,7 +577,7 @@ public final class MavenIndex implements MavenSearchIndex {
 
   public Set<String> getVersions(final String groupId, final String artifactId) {
     String ga = groupId + ":" + artifactId;
-    return doIndexReadTask(() -> notNullize(myData.groupWithArtifactToVersionMap.get(ga)), Collections.emptySet());
+    return doIndexTask(() -> notNullize(myData.groupWithArtifactToVersionMap.get(ga)), Collections.emptySet());
   }
 
   public boolean hasGroupId(String groupId) {
@@ -600,23 +600,23 @@ public final class MavenIndex implements MavenSearchIndex {
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
     String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
     IndexData indexData = myData;
-    return indexData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexReadTask(
+    return indexData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexTask(
       () -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version),
       false));
   }
 
   private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    return cache.computeIfAbsent(value, v -> doIndexReadTask(() -> map.containsMapping(v), false));
+    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.containsMapping(v), false));
   }
 
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
     if (myNotNexusIndexer != null) return Collections.emptySet();
 
-    return doIndexReadTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
+    return doIndexAndRecoveryTask(() -> myData.search(pattern, maxResult), Collections.emptySet());
   }
 
   public Set<MavenArchetype> getArchetypes() {
-    return doIndexReadTask(() -> {
+    return doIndexAndRecoveryTask(() -> {
       Set<MavenArchetype> archetypes = new HashSet<>();
       IndexData indexData = myData;
       for (String ga : indexData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
@@ -639,7 +639,7 @@ public final class MavenIndex implements MavenSearchIndex {
     }, Collections.emptySet());
   }
 
-  private <T> T doIndexReadTask(IndexTask<T> task, T defaultValue) {
+  private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
     if (!isBroken) {
       try {
         return task.doTask();
@@ -652,7 +652,7 @@ public final class MavenIndex implements MavenSearchIndex {
     return defaultValue;
   }
 
-  private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
+  private <T> T doIndexAndRecoveryTask(IndexTask<T> task, T defaultValue) {
     if (!isBroken) {
       try {
         return task.doTask();
@@ -718,7 +718,7 @@ public final class MavenIndex implements MavenSearchIndex {
       MavenIndexException[] exceptions = new MavenIndexException[1];
 
       try {
-        if (releaseIndexContext) myNexusIndexer.releaseIndex(mavenIndexId.indexId);
+        if (releaseIndexContext) myNexusIndexer.releaseIndex(mavenIndexId);
       }
       catch (MavenServerIndexerException e) {
         MavenLog.LOG.warn(e);

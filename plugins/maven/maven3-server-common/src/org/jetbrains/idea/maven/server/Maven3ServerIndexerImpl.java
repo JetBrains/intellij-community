@@ -58,10 +58,10 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public void releaseIndex(String indexId, MavenToken token) throws MavenServerIndexerException {
+  public void releaseIndex(MavenIndexId mavenIndexId, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
-      IndexingContext context = myIndexer.getIndexingContexts().get(indexId);
+      IndexingContext context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
       if (context != null) myIndexer.removeIndexingContext(context, false);
     }
     catch (Exception e) {
@@ -282,32 +282,30 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
-      synchronized (index) {
-        TopDocs docs = null;
-        try {
-          BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-          Query query = StringUtils.isEmpty(pattern) ? new MatchAllDocsQuery() : getWildcardQuery(pattern);
-          docs = index.getIndexSearcher().search(query, null, maxResult);
-        }
-        catch (BooleanQuery.TooManyClauses ignore) {
-          // this exception occurs when too wide wildcard is used on too big data.
-        }
-
-        if (docs == null || docs.scoreDocs.length == 0) return Collections.emptySet();
-
-        Set<MavenArtifactInfo> result = new HashSet<MavenArtifactInfo>();
-
-        for (int i = 0; i < docs.scoreDocs.length; i++) {
-          int docIndex = docs.scoreDocs[i].doc;
-          Document doc = index.getIndexReader().document(docIndex);
-          ArtifactInfo a = IndexUtils.constructArtifactInfo(doc, index);
-          if (a == null) continue;
-
-          a.repository = getRepositoryPathOrUrl(index);
-          result.add(MavenModelConverter.convertArtifactInfo(a));
-        }
-        return result;
+      TopDocs docs = null;
+      try {
+        BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+        Query query = StringUtils.isEmpty(pattern) ? new MatchAllDocsQuery() : getWildcardQuery(pattern);
+        docs = index.getIndexSearcher().search(query, null, maxResult);
       }
+      catch (BooleanQuery.TooManyClauses ignore) {
+        // this exception occurs when too wide wildcard is used on too big data.
+      }
+
+      if (docs == null || docs.scoreDocs.length == 0) return Collections.emptySet();
+
+      Set<MavenArtifactInfo> result = new HashSet<MavenArtifactInfo>();
+
+      for (int i = 0; i < docs.scoreDocs.length; i++) {
+        int docIndex = docs.scoreDocs[i].doc;
+        Document doc = index.getIndexReader().document(docIndex);
+        ArtifactInfo a = IndexUtils.constructArtifactInfo(doc, index);
+        if (a == null) continue;
+
+        a.repository = getRepositoryPathOrUrl(index);
+        result.add(MavenModelConverter.convertArtifactInfo(a));
+      }
+      return result;
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
