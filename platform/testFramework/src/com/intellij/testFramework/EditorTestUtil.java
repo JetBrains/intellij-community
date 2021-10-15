@@ -537,8 +537,8 @@ public final class EditorTestUtil {
           sb.append("\n");
         }
         String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());
+        token = token.replace(' ', '␣');
         if (StringUtil.isEmptyOrSpaces(token)) {
-          token = token.replace(' ', '␣'); // to improve test data readability
           token = token.replace("\n", "\\n");
         }
         sb.append(token).append("\n");
