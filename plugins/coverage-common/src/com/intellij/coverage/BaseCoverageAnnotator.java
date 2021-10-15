@@ -42,7 +42,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
         public void onSuccess() {
           final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getToolwindow(suite);
           if (coverageView != null) {
-            coverageView.updateParentTitle();
+            coverageView.resetView();
           }
         }
 

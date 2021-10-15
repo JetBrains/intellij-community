@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class CoverageListRootNode extends CoverageListNode {
@@ -31,7 +30,7 @@ public class CoverageListRootNode extends CoverageListNode {
 
   @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public List<? extends AbstractTreeNode<?>> getChildren() {
     if (myStateBean.myFlattenPackages) {
       return getTopLevelPackages(myBundle, myStateBean, myProject);
     }
