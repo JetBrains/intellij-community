@@ -312,7 +312,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     DumbService dumbService = DumbService.getInstance(project);
-    PsiClass classFromCommon = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope)));
+    PsiClass classFromCommon = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.nonBlocking(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope)).executeSynchronously());
 
     String launcherVersion = getVersion(classFromCommon);
     if (launcherVersion == null) {
@@ -322,7 +322,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     boolean isModularized = ensureOnModulePath &&
                             JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
-                            ReadAction.compute(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).length > 0) &&
+                            ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).length > 0).executeSynchronously() &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph
@@ -344,7 +344,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //add standard engines only if no engine api is present
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
-      PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.compute(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope)));
+      PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.nonBlocking(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope)).executeSynchronously());
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
       if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
         if (!hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
@@ -359,7 +359,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (!hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope)) {
         if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
           PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(
-            () -> ReadAction.compute(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)));
+            () -> ReadAction.nonBlocking(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope)).executeSynchronously());
           if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
             String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
                              ? jupiterVersion
