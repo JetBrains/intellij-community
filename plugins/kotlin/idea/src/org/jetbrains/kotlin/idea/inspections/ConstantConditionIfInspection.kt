@@ -51,7 +51,7 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
             return constant.value as? Boolean
         }
 
-        private fun collectFixes(
+        fun collectFixes(
             expression: KtIfExpression,
             constantValue: Boolean? = expression.getConditionConstantValueIfAny()
         ): List<ConstantConditionIfFix> {
@@ -79,7 +79,7 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
         }
     }
 
-    private interface ConstantConditionIfFix : LocalQuickFix {
+    interface ConstantConditionIfFix : LocalQuickFix {
         fun applyFix(ifExpression: KtIfExpression)
     }
 

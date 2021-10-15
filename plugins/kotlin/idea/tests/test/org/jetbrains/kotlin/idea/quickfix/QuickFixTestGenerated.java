@@ -7610,6 +7610,26 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheck.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckInIf.kt")
+        public void testRemoveUselessIsCheckInIf() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInIf.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInIf2.kt")
+        public void testRemoveUselessIsCheckInIf2() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInIf2.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInIfNegate.kt")
+        public void testRemoveUselessIsCheckInIfNegate() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInIfNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInIfNegate2.kt")
+        public void testRemoveUselessIsCheckInIfNegate2() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckInIfNegate2.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckInWhen.kt")
         public void testRemoveUselessIsCheckInWhen() throws Exception {
             runTest("testData/quickfix/expressions/removeUselessIsCheckInWhen.kt");
