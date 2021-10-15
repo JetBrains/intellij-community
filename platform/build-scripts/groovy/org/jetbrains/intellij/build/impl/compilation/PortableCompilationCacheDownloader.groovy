@@ -164,6 +164,9 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
 
       new Decompressor.Zip(outputArchive).overwrite(true).extract(new File(compilationOutput.path))
     }
+    catch (Exception e) {
+      throw new Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
+    }
     finally {
       outputArchive?.delete()
     }
