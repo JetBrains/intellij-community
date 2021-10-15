@@ -308,12 +308,23 @@ fun LessonContext.firstLessonCompletedMessage() {
 
 fun LessonContext.highlightDebugActionsToolbar() {
   task {
-    val needAction = ActionManager.getInstance().getAction("Resume")
-    triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-      val b = ui.size.let { it.width > 0 && it.height > 0 } && ui.place == ActionPlaces.DEBUGGER_TOOLBAR
-      if (!b) return@triggerByUiComponentAndHighlight false
+    before {
+      LearningUiHighlightingManager.clearHighlights()
+    }
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", clearPreviousHighlights = false)
+    if (!Registry.`is`("debugger.new.tool.window.layout")) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
+    }
+  }
+}
+
+private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
+  val needAction = ActionManager.getInstance().getAction(actionId)
+  triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
+    if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
+    else false
   }
 }
 
