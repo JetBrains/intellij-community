@@ -96,7 +96,7 @@ public final class VMOptions {
   }
 
   /**
-   * Returns a (possibly empty) list of values of the given option.
+   * Returns a (possibly empty) list of the given option's values.
    *
    * @see #readOption(String, boolean)
    */
@@ -150,7 +150,7 @@ public final class VMOptions {
   }
 
   /**
-   * Parses a Java VM memory option (such as "-Xmx") string value and returns its numeric value, in bytes.
+   * Parses VM memory option (such as "-Xmx") string value and returns its numeric value (in bytes).
    * See <a href="https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java">'java' command manual</a>
    * for the syntax.
    *
@@ -201,7 +201,7 @@ public final class VMOptions {
   public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options) throws IOException {
     Path file = getUserOptionsFile();
     if (file == null) {
-      throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ")");
+      throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');
     }
 
     List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<>();
