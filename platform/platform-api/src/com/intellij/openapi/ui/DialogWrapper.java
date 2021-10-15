@@ -636,7 +636,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF() ? JBInsets.create(0, 8) : JBUI.emptyInsets();
+    Insets insets = JBUI.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -1074,7 +1074,7 @@ public abstract class DialogWrapper {
   /**
    * Creates actions for dialog.
    * <p/>
-   * By default "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
+   * By default, "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
    * {@link #getHelpId()} returns non-null value.
    * <p/>
    * Each action is represented by {@code JButton} created by {@link #createJButtonForAction(Action)}.
