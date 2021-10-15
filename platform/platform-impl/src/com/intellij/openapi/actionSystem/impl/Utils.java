@@ -98,6 +98,12 @@ public final class Utils extends DataContextUtils {
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
   }
 
+  static void clearAllCachesAndUpdates() {
+    ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
+    ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext.clearAllCaches();
+  }
+
   @ApiStatus.Internal
   public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
                                                                           @NotNull ActionGroup group,
