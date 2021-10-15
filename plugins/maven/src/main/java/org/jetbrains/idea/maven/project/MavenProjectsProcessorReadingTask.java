@@ -22,8 +22,6 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-
-import java.io.File;
 import java.util.List;
 
 public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessorTask {
@@ -76,8 +74,8 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
 
   private void checkOrInstallMavenWrapper(Project project) {
     if (myFilesToUpdate == null && myTree.getExistingManagedFiles().size() == 1) {
-      File baseDir = MavenUtil.getBaseDir(myTree.getExistingManagedFiles().get(0));
-      MavenDistributionsCache.getInstance(project).checkOrInstallMavenWrapper(baseDir.getPath());
+      String baseDir = MavenUtil.getBaseDir(myTree.getExistingManagedFiles().get(0)).toString();
+      MavenDistributionsCache.getInstance(project).checkOrInstallMavenWrapper(baseDir);
     }
   }
 }

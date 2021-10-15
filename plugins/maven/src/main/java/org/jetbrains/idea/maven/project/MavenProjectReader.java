@@ -48,7 +48,7 @@ public final class MavenProjectReader {
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    File basedir = getBaseDir(file);
+    File basedir = getBaseDir(file).toFile();
 
     Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
       doReadProjectModel(generalSettings, basedir, file, explicitProfiles, new HashSet<>(), locator);
@@ -93,7 +93,7 @@ public final class MavenProjectReader {
     model = resolveInheritance(generalSettings, model, projectPomDir, file, explicitProfiles, recursionGuard, locator, problems);
     addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems);
 
-    ProfileApplicationResult applied = applyProfiles(model, projectPomDir, getBaseDir(file), explicitProfiles, alwaysOnProfiles);
+    ProfileApplicationResult applied = applyProfiles(model, projectPomDir, getBaseDir(file).toFile(), explicitProfiles, alwaysOnProfiles);
     model = applied.getModel();
 
     repairModelBody(model);
@@ -109,9 +109,9 @@ public final class MavenProjectReader {
 
     String fileExtension = file.getExtension();
     if (!"pom".equalsIgnoreCase(fileExtension) && !"xml".equalsIgnoreCase(fileExtension)) {
-      File basedir = getBaseDir(file);
+      String basedir = getBaseDir(file).toString();
       MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-      MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.getPath(), basedir.getPath());
+      MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir, basedir);
       try {
         result = embedder.readModel(VfsUtilCore.virtualToIoFile(file));
       }

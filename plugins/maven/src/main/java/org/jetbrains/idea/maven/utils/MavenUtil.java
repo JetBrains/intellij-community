@@ -263,8 +263,9 @@ public class MavenUtil {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
-  public static File getBaseDir(@NotNull VirtualFile file) {
-    return VfsUtilCore.virtualToIoFile(getVFileBaseDir(file));
+  public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
+    VirtualFile virtualBaseDir = getVFileBaseDir(file);
+    return virtualBaseDir.toNioPath();
   }
 
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
