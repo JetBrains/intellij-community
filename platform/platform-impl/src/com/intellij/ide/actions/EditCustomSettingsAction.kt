@@ -153,11 +153,11 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
 
 class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   private companion object {
-    val file: Lazy<Path?> = lazy { VMOptions.getWriteFile() }
+    val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }
   }
 
   override fun file(): Path? = file.value
-  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
+  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n"
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null

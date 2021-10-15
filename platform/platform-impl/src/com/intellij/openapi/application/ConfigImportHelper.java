@@ -254,7 +254,7 @@ public final class ConfigImportHelper {
   }
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
-    return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
+    return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
   }
 
   private static void restart() {
@@ -967,7 +967,7 @@ public final class ConfigImportHelper {
 
   /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version. */
   private static void updateVMOptions(Path newConfigDir, Logger log) {
-    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
+    Path vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());

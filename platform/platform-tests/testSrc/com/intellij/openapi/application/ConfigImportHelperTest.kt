@@ -343,14 +343,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     @Suppress("SpellCheckingInspection") val outlaws = listOf(
       "-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts")
-    Files.write(oldConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()), outlaws)
+    Files.write(oldConfigDir.resolve(VMOptions.getFileName()), outlaws)
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
 
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
-    assertThat(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
+    assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
   }
 
   @Test fun `finding related directories`() {
