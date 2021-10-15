@@ -585,8 +585,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsId: String = "maven.threads.fragment"
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.threads.name")
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
-        override val settingsHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
-        override val settingsActionHint: String? = null
+        override val settingsHint: String? = null
+        override val settingsActionHint: String = MavenConfigurableBundle.message("maven.settings.general.thread.count.tooltip")
       },
       { generalSettingsOrDefault.threads },
       { generalSettingsOrDefault.threads = it }
