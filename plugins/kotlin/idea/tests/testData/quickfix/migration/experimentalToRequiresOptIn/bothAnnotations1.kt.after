@@ -1,0 +1,6 @@
+// "Remove deprecated '@Experimental' annotation" "true"
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
+// WITH_RUNTIME
+
+@RequiresOptIn
+annotation class Marker
