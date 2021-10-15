@@ -324,56 +324,62 @@ NSString *getDefaultFilePath(NSString *fileName) {
 
 NSArray *parseVMOptions() {
     NSString *vmOptionsFile = nil;
-    NSMutableArray *vmOptions = nil;
+    NSMutableArray *vmOptions = nil, *userVmOptions = nil;
 
-    // 1. $<IDE_NAME>_VM_OPTIONS
     NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_VM_OPTIONS"];
-    NSString *value = [[[NSProcessInfo processInfo] environment] objectForKey:variable];
-    if (value != nil) {
-        vmOptions = [VMOptionsReader readFile:value];
-        if (vmOptions != nil) {
-            vmOptionsFile = value;
-        }
-    }
-
-    // 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
-    if (vmOptionsFile == nil) {
-        NSString *candidate = [NSString stringWithFormat:@"%@.vmoptions", [[NSBundle mainBundle] bundlePath]];
+    NSString *candidate = [[[NSProcessInfo processInfo] environment] objectForKey:variable];
+    NSLog(@"parseVMOptions: %@ = %@", variable, candidate);
+    if (candidate != nil) {
+        // 1. $<IDE_NAME>_VM_OPTIONS
         vmOptions = [VMOptionsReader readFile:candidate];
         if (vmOptions != nil) {
             vmOptionsFile = candidate;
-            if (![vmOptions containsObject:@"-ea"]) {
-                candidate = getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
-                NSMutableArray *mainOptions = [VMOptionsReader readFile:candidate];
-                if (mainOptions != nil) {
-                    [mainOptions addObjectsFromArray:vmOptions];
-                    vmOptions = mainOptions;
-                }
+        }
+    }
+    else {
+        // 2. <IDE_HOME>/bin/<bin_name>.vmoptions ...
+        candidate = getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
+        NSLog(@"parseVMOptions: %@", candidate);
+        vmOptions = [VMOptionsReader readFile:candidate];
+        if (vmOptions != nil) {
+            vmOptionsFile = candidate;
+        }
+        // ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
+        candidate = [NSString stringWithFormat:@"%@.vmoptions", [[NSBundle mainBundle] bundlePath]];
+        NSLog(@"parseVMOptions: %@", candidate);
+        userVmOptions = [VMOptionsReader readFile:candidate];
+        if (userVmOptions != nil) {
+            vmOptionsFile = candidate;
+        } else {
+            candidate = [NSString stringWithFormat:@"%@/%@.vmoptions", getPreferencesFolderPath(), getExecutable()];
+            NSLog(@"parseVMOptions: %@", candidate);
+            userVmOptions = [VMOptionsReader readFile:candidate];
+            if (userVmOptions != nil) {
+                vmOptionsFile = candidate;
             }
         }
     }
 
-    // 3. <config_directory>/<bin_name>.vmoptions
-    if (vmOptionsFile == nil) {
-        NSString *candidate = [NSString stringWithFormat:@"%@/%@.vmoptions", getPreferencesFolderPath(), getExecutable()];
-        vmOptions = [VMOptionsReader readFile:candidate];
-        if (vmOptions != nil) {
-            vmOptionsFile = candidate;
-        }
-    }
+    NSLog(@"parseVMOptions: platform=%d user=%d file=%@",
+          vmOptions == nil ? -1 : (int)[vmOptions count], userVmOptions == nil ? -1 : (int)[userVmOptions count], vmOptionsFile);
 
-    // 4. <IDE_HOME>/bin/<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
-    if (vmOptionsFile == nil) {
-        NSString *candidate = getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
-        vmOptions = [VMOptionsReader readFile:candidate];
-        if (vmOptions != nil) {
-            vmOptionsFile = candidate;
-        }
-        candidate = [NSString stringWithFormat:@"%@/user.vmoptions", getPreferencesFolderPath()];
-        NSMutableArray *userVmOptions = [VMOptionsReader readFile:candidate];
-        if (userVmOptions != nil) {
+    if (userVmOptions != nil) {
+        if (vmOptions == nil) {
+            vmOptions = userVmOptions;
+        } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+            BOOL (^GC_lookup)(NSString *, NSUInteger, BOOL *) = ^BOOL(NSString *s, NSUInteger i, BOOL *stop) {
+                return [s hasPrefix:@"-XX:+Use"] == YES && [s hasSuffix:@"GC"] == YES ? YES : NO;
+            };
+#pragma clang diagnostic pop
+            if ([userVmOptions indexOfObjectPassingTest:GC_lookup] != NSNotFound) {
+                NSUInteger gc = [vmOptions indexOfObjectPassingTest:GC_lookup];
+                if (gc != NSNotFound) {
+                    [vmOptions removeObjectAtIndex:gc];
+                }
+            }
             [vmOptions addObjectsFromArray:userVmOptions];
-            vmOptionsFile = candidate;
         }
     }
 
