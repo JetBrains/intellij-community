@@ -32,11 +32,11 @@ import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.cr
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
-import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -79,9 +79,9 @@ class MavenRunConfigurationSettingsEditor(
     addBeforeRunFragment(CompileStepBeforeRun.ID)
     addAll(BeforeRunFragment.createGroup())
     add(CommonTags.parallelRun())
-    val workingDirectoryFragment = addWorkingDirectoryFragment()
-    addCommandLineFragment(workingDirectoryFragment)
-    addProfilesFragment(workingDirectoryFragment)
+    val workingDirectoryField = addWorkingDirectoryFragment().component().component
+    addCommandLineFragment(workingDirectoryField)
+    addProfilesFragment(workingDirectoryField)
     addMavenOptionsGroupFragment()
     addJavaOptionsGroupFragment()
     add(LogsGroupFragment())
@@ -300,7 +300,7 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.outputLevel },
       { generalSettingsOrDefault.outputLevel = it },
       { it.displayString }
-    )
+    ).modifyLabeledComponentSize { columns(10) }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMultiProjectBuildPolicyTag() {
     addVariantTag(
@@ -334,10 +334,10 @@ class MavenRunConfigurationSettingsEditor(
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addCommandLineFragment(
-    workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
+    workingDirectoryField: WorkingDirectoryField
   ) = addCommandLineFragment(
     project,
-    MavenCommandLineInfo(project, workingDirectoryFragment.component().component),
+    MavenCommandLineInfo(project, workingDirectoryField),
     { runnerParameters.commandLine },
     { runnerParameters.commandLine = it }
   )
@@ -417,9 +417,9 @@ class MavenRunConfigurationSettingsEditor(
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
-    workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
+    workingDirectoryField: WorkingDirectoryField
   ) = addLabeledSettingsEditorFragment(
-    MavenProfilesFiled(project, workingDirectoryFragment.component().component),
+    MavenProfilesFiled(project, workingDirectoryField),
     object : LabeledSettingsFragmentInfo {
       override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
 
@@ -590,5 +590,5 @@ class MavenRunConfigurationSettingsEditor(
       },
       { generalSettingsOrDefault.threads },
       { generalSettingsOrDefault.threads = it }
-    )
+    ).modifyLabeledComponentSize { columns(10) }
 }

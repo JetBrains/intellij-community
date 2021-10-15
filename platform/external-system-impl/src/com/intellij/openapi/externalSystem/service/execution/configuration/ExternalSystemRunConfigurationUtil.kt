@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.RawCommandLineEditor
@@ -32,8 +33,12 @@ import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.WrapLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.FlowLayout
 import java.util.*
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComboBox
@@ -285,8 +290,8 @@ fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addLabeledSettingsEdito
   defaultS: S.() -> V?,
   getterS: S.() -> V?,
   setterS: S.(V?) -> Unit
-): SettingsEditorFragment<S, LabeledComponent<C>> {
-  val ref = Ref<SettingsEditorFragment<S, LabeledComponent<C>>>()
+): SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>> {
+  val ref = Ref<SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>>>()
   return addLabeledSettingsEditorFragment(
     component,
     info,
@@ -322,7 +327,7 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addLabeledSettingsEditorFr
   apply: (S, C) -> Unit,
   initialSelection: (S) -> Boolean
 ) = addSettingsEditorFragment(
-  LabeledComponent.create(component, info.editorLabel, BorderLayout.WEST),
+  SettingsEditorLabeledComponent(info.editorLabel, component),
   info,
   { it, c -> reset(it, c.component) },
   { it, c -> apply(it, c.component) },
@@ -364,3 +369,20 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
 fun <S, C : JComponent, F : SettingsEditorFragment<S, C>> F.applyToComponent(action: C.() -> Unit): F = apply {
   component().action()
 }
+
+class SettingsEditorLabeledComponent<C : JComponent>(label: @NlsContexts.Label String, component: C) : LabeledComponent<C>() {
+  fun modifyComponentSize(configure: C.() -> Unit) {
+    layout = WrapLayout(FlowLayout.LEADING, UIUtil.DEFAULT_HGAP, 2)
+    border = JBUI.Borders.empty(0, -UIUtil.DEFAULT_HGAP, 0, 0)
+    component.configure()
+  }
+
+  init {
+    text = label
+    labelLocation = BorderLayout.WEST
+    setComponent(component)
+  }
+}
+
+fun <C : JComponent, F : SettingsEditorFragment<*, SettingsEditorLabeledComponent<C>>> F.modifyLabeledComponentSize(configure: C.() -> Unit) =
+  apply { component().modifyComponentSize(configure) }
