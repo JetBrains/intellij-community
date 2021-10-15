@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -733,13 +734,28 @@ public final class ConfigImportHelper {
                        @NotNull ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     if (Files.isRegularFile(oldConfigDir)) {
-      new Decompressor.Zip(oldConfigDir.toFile()).extract(newConfigDir);
+      new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
       return;
     }
 
     // Copy everything except plugins.
     // The filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.).
-    FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
+    Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir)) {
+          Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+          NioFiles.createDirectories(target.getParent());
+          Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
