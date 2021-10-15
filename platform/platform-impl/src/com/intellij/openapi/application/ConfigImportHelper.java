@@ -362,14 +362,13 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that current user is "new" (i.e. this is the very first launch of the IDE on this machine).
+   * Checks that current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
   }
 
   /** Simple check by file type, content is not checked. */
-  @SuppressWarnings("IdentifierGrammar")
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
@@ -759,7 +758,7 @@ public final class ConfigImportHelper {
 
     List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
-    // Copy plugins, unless the new plugin directory is not empty (the plugin manager will sort out incompatible ones).
+    // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!options.importPlugins) {
       log.info("plugins are not imported.");
     }
@@ -777,7 +776,7 @@ public final class ConfigImportHelper {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
 
-    // apply stale plugin updates
+    // applying prepared updates to copied plugins
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
     updateVMOptions(newConfigDir, log);
@@ -840,7 +839,7 @@ public final class ConfigImportHelper {
           });
         }
 
-        // Migrate plugins for which we couldn't download updates
+        // migrating plugins for which we weren't able to download updates
         migratePlugins(newPluginsDir, incompatiblePlugins, pendingUpdates, log);
       }
     }
