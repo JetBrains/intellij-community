@@ -168,7 +168,7 @@ public final class MavenExternalParameters {
                               @NotNull String workingDirPath,
                               @NotNull MavenGeneralSettings coreSettings) {
     return (project != null && MavenUtil.isWrapper(coreSettings))
-           ? MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome() : null;
+           ? MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome().toFile() : null;
   }
 
   static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,

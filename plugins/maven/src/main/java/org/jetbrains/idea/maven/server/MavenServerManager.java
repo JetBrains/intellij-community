@@ -42,6 +42,7 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -334,7 +335,7 @@ public final class MavenServerManager implements Disposable {
   public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     if (!distribution.isValid()) {
       MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().getAbsolutePath() + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
     }
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
@@ -350,7 +351,7 @@ public final class MavenServerManager implements Disposable {
       prepareClassPathForProduction(distribution.getVersion(), classpath, root);
     }
 
-    addMavenLibs(classpath, distribution.getMavenHome());
+    addMavenLibs(classpath, distribution.getMavenHome().toFile());
     MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
   }
@@ -539,11 +540,11 @@ public final class MavenServerManager implements Disposable {
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && MavenUtil.isMavenUnitTestModeEnabled()) {
-      return resolveEmbeddedMaven2HomeForTests().getMavenHome();
+      return resolveEmbeddedMaven2HomeForTests().getMavenHome().toFile();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
         StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
@@ -558,8 +559,8 @@ public final class MavenServerManager implements Disposable {
 
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     if (pluginFileOrDir.isDirectory()) {
-      File parentFile = MavenUtil.getMavenPluginParentFile();
-      return new LocalMavenDistribution(new File(parentFile, "maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
+      Path parentPath = MavenUtil.getMavenPluginParentFile().toPath();
+      return new LocalMavenDistribution(parentPath.resolve("maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
     }
     else {
       throw new IllegalStateException("Maven2 is not bundled anymore, please do not try to use it in tests");

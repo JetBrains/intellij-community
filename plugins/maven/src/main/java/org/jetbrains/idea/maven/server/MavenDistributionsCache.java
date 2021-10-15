@@ -24,6 +24,8 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,17 +158,17 @@ public class MavenDistributionsCache {
 
   @NotNull
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final String root = pluginFileOrDir.getParent();
-    if (pluginFileOrDir.isDirectory()) {
-      File parentFile = MavenUtil.getMavenPluginParentFile();
-      File mavenFile = new File(parentFile, "maven36-server-impl/lib/maven3");
-      if (mavenFile.isDirectory()) {
-        return new LocalMavenDistribution(mavenFile, MavenServerManager.BUNDLED_MAVEN_3);
+    final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
+    final Path root = pluginFileOrDir.getParent();
+    if (Files.isDirectory(pluginFileOrDir)) {
+      Path parentPath = MavenUtil.getMavenPluginParentFile().toPath();
+      Path mavenPath = parentPath.resolve("maven36-server-impl/lib/maven3");
+      if (Files.isDirectory(mavenPath)) {
+        return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
       }
     }
     else {
-      return new LocalMavenDistribution(new File(root, "maven3"), MavenServerManager.BUNDLED_MAVEN_3);
+      return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
     }
 
     throw new RuntimeException("run setupBundledMaven.gradle task. Cannot resolve embedded maven home without it");
