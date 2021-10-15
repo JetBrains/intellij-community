@@ -1944,7 +1944,7 @@ public final class TreeUtil {
    * @param lead a starting tree path
    * @return next tree path with the same parent, or {@code null} if it is not found
    */
-  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, TreePath lead) {
+  public static @Nullable TreePath nextVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
     TreePath parent = lead == null ? null : lead.getParentPath();
     return parent == null ? null : nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
@@ -1998,7 +1998,7 @@ public final class TreeUtil {
    * @param lead a starting tree path
    * @return previous tree path with the same parent, or {@code null} if it is not found
    */
-  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, TreePath lead) {
+  public static @Nullable TreePath previousVisibleSibling(@NotNull JTree tree, @Nullable TreePath lead) {
     TreePath parent = lead == null ? null : lead.getParentPath();
     return parent == null ? null : previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
   }
