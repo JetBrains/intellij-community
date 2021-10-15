@@ -353,6 +353,29 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
   }
 
+  @Test fun `de-duplicating custom VM options`() {
+    val platformOptions = listOf("-Xms128m", "-Xmx750m", "-XX:ReservedCodeCacheSize=512m", "-XX:+UseG1GC")
+    val userOptions = listOf("-Xms512m", "-Xmx2g", "-XX:ReservedCodeCacheSize=240m", "-XX:+UseZGC")
+    @Suppress("SpellCheckingInspection") val commonOptions = listOf(
+      "-XX:SoftRefLRUPolicyMSPerMB=50", "-XX:CICompilerCount=2", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow",
+      "-ea", "-Dsun.io.useCanonCaches=false", "-Djdk.http.auth.tunneling.disabledSchemes=\"\"", "-Djdk.attach.allowAttachSelf=true",
+      "-Djdk.module.illegalAccess.silent=true", "-Dkotlinx.coroutines.debug=off")
+
+    val platformFile = memoryFs.fs.getPath(VMOptions.getPlatformOptionsFile().toString())
+    Files.createDirectories(platformFile.parent)
+    Files.write(platformFile, platformOptions + commonOptions)
+
+    val oldConfigDir = createConfigDir("2021.2")
+    Files.write(oldConfigDir.resolve(VMOptions.getFileName()), userOptions + commonOptions)
+    val newConfigDir = createConfigDir("2021.3")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+
+    assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-Xms512m\n-Xmx2g\n-XX:+UseZGC")
+  }
+
   @Test fun `finding related directories`() {
     fun populate(config: Path, plugins: Path?, system: Path?, logs: Path?) {
       writeStorageFile(config, System.currentTimeMillis())

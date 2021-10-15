@@ -981,13 +981,15 @@ public final class ConfigImportHelper {
     }
   }
 
-  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version. */
+  /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
   private static void updateVMOptions(Path newConfigDir, Logger log) {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
+        Collection<String> platformLines = new LinkedHashSet<>(readPlatformOptions(newConfigDir, log));
         boolean updated = false;
+
         for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
           String line = i.next().trim();
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
@@ -996,10 +998,12 @@ public final class ConfigImportHelper {
           else if ("-XX:+UseConcMarkSweepGC".equals(line) && JavaVersion.current().isAtLeast(17) ||
                    "-Xverify:none".equals(line) || "-noverify".equals(line) ||
                    line.startsWith("-agentlib:yjpagent") ||
-                   line.startsWith("-agentpath:") && line.contains("yjpagent")) {
+                   line.startsWith("-agentpath:") && line.contains("yjpagent") ||
+                   isDuplicateOrLowerValue(line, platformLines)) {
             i.remove(); updated = true;
           }
         }
+
         if (updated) {
           Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
@@ -1008,6 +1012,46 @@ public final class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static List<String> readPlatformOptions(Path newConfigDir, Logger log) {
+    Path platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
+    try {
+      return Files.readAllLines(platformVmOptionsFile, VMOptions.getFileCharset());
+    }
+    catch (IOException e) {
+      log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
+      return List.of();
+    }
+  }
+
+  private static boolean isDuplicateOrLowerValue(String line, Collection<String> platformLines) {
+    if (platformLines.isEmpty()) {
+      return false;
+    }
+    if (platformLines.contains(line)) {
+      return true;
+    }
+    if (line.startsWith("-Xms") || line.startsWith("-Xmx") || line.startsWith("-Xss")) {
+      return isLowerValue(line.substring(0, 4), line.substring(4), platformLines);
+    }
+    if (line.startsWith("-XX:")) {
+      int p = line.indexOf('=', 4);
+      if (p > 0) return isLowerValue(line.substring(0, p + 1), line.substring(p + 1), platformLines);
+    }
+    return false;
+  }
+
+  private static boolean isLowerValue(String prefix, String userValue, Collection<String> platformLines) {
+    for (String line : platformLines) {
+      if (line.startsWith(prefix)) {
+        try {
+          return VMOptions.parseMemoryOption(userValue) <= VMOptions.parseMemoryOption(line.substring(prefix.length()));
+        }
+        catch (IllegalArgumentException ignored) { }
+      }
+    }
+    return false;
   }
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
