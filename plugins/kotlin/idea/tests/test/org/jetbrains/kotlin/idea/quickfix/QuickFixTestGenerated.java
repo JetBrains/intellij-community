@@ -8965,6 +8965,69 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/migration/experimentalToRequiresOptIn")
+        public static class ExperimentalToRequiresOptIn extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("anotherAnnotationExists.kt")
+            public void testAnotherAnnotationExists() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/anotherAnnotationExists.kt");
+            }
+
+            @TestMetadata("bothAnnotations1.kt")
+            public void testBothAnnotations1() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/bothAnnotations1.kt");
+            }
+
+            @TestMetadata("bothAnnotations2.kt")
+            public void testBothAnnotations2() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/bothAnnotations2.kt");
+            }
+
+            @TestMetadata("namedArgumentError1.kt")
+            public void testNamedArgumentError1() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/namedArgumentError1.kt");
+            }
+
+            @TestMetadata("namedArgumentError2.kt")
+            public void testNamedArgumentError2() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/namedArgumentError2.kt");
+            }
+
+            @TestMetadata("namedArgumentWarning.kt")
+            public void testNamedArgumentWarning() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/namedArgumentWarning.kt");
+            }
+
+            @TestMetadata("newAnnotationImportShortenedName.kt")
+            public void testNewAnnotationImportShortenedName() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/newAnnotationImportShortenedName.kt");
+            }
+
+            @TestMetadata("noArguments.kt")
+            public void testNoArguments() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/noArguments.kt");
+            }
+
+            @TestMetadata("noArgumentsEmptyParens.kt")
+            public void testNoArgumentsEmptyParens() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/noArgumentsEmptyParens.kt");
+            }
+
+            @TestMetadata("unnamedArgumentError.kt")
+            public void testUnnamedArgumentError() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/unnamedArgumentError.kt");
+            }
+
+            @TestMetadata("unnamedArgumentWarning.kt")
+            public void testUnnamedArgumentWarning() throws Exception {
+                runTest("testData/quickfix/migration/experimentalToRequiresOptIn/unnamedArgumentWarning.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/migration/jsExternal")
         public static class JsExternal extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
