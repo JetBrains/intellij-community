@@ -50,7 +50,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         queryLength, providersCaches)
     }
 
-    if (prevState != null && isMLSupportedTab(tabId)) {
+    if (prevState != null && isMLSupportedTab(prevState.tabId)) {
       logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
         prevTimeToResult, previousElementsProvider)
     }
