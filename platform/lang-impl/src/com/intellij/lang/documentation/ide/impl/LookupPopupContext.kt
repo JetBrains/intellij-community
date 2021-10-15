@@ -6,8 +6,11 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.awt.Component
 
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
@@ -16,9 +19,10 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
-    popupUI.coroutineScope.updateFromLookup(popupUI.browser, lookup)
     cancelPopupWhenLookupIsClosed(lookup, popup)
   }
+
+  override fun requestFlow(): Flow<DocumentationRequest?> = lookup.elementFlow().map(lookupElementToRequestMapper(lookup))
 }
 
 private fun cancelPopupWhenLookupIsClosed(lookup: Lookup, popup: AbstractPopup) {

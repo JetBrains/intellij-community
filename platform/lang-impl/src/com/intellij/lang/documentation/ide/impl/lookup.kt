@@ -13,16 +13,10 @@ import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-
-internal fun CoroutineScope.updateFromLookup(browser: DocumentationBrowser, lookup: Lookup) {
-  val documentationRequests = lookup.elementFlow().asRequestFlow(lookup)
-  updateFromRequests(documentationRequests, browser)
-}
 
 internal fun autoShowRequestFlow(lookup: Lookup): Flow<DocumentationRequest>? {
   val settings = CodeInsightSettings.getInstance()
@@ -46,7 +40,7 @@ private fun Flow<LookupElement>.asRequestFlow(lookup: Lookup): Flow<Documentatio
   return map(lookupElementToRequestMapper(lookup)).flowOn(Dispatchers.Default)
 }
 
-private fun Lookup.elementFlow(): Flow<LookupElement> {
+internal fun Lookup.elementFlow(): Flow<LookupElement> {
   EDT.assertIsEdt()
   val items = MutableSharedFlow<LookupElement>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   addLookupListener(object : LookupListener {
