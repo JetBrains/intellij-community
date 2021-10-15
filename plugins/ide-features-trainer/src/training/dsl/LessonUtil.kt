@@ -56,8 +56,7 @@ import javax.swing.KeyStroke
 
 object LessonUtil {
   val productName: String get() {
-    val name = ApplicationNamesInfo.getInstance().fullProductName
-    return if (name == "DataSpell") "JetBrains DataSpell" else name
+      return ApplicationNamesInfo.getInstance().fullProductName
     }
 
   fun hideStandardToolwindows(project: Project) {
