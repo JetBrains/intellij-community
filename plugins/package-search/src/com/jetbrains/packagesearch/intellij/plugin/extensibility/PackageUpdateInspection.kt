@@ -68,7 +68,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     override fun createOptionsPanel(): JPanel {
         val panel = MultipleCheckboxOptionsPanel(this)
 
-        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.configuration.excluded.dependencies"), excludeList)
+        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
 
         panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
         panel.addGrowing(injectionListTable.contentPanel)
@@ -132,7 +132,16 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
 
             problemsHolder.registerProblem(
                 versionElement,
-                PackageSearchBundle.message("packagesearch.inspection.upgrade.description", packageUpdateInfo.targetVersion),
+                PackageSearchBundle.message(
+                    "packagesearch.inspection.upgrade.description",
+                    packageUpdateInfo.targetVersion.originalVersion.displayName
+                ),
+                PackageSearchDependencyUpgradeQuickFix(
+                    element = versionElement,
+                    identifier = identifier,
+                    targetVersion = packageUpdateInfo.targetVersion.originalVersion,
+                    operations = packageOperations.primaryOperations
+                ),
                 LocalQuickFix(
                     PackageSearchBundle.message(
                         "packagesearch.quickfix.upgrade.exclude",
@@ -141,13 +150,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 ) {
                     excludeList.add(identifier.rawValue)
                     ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
-                },
-                PackageSearchDependencyUpgradeQuickFix(
-                    element = versionElement,
-                    identifier = identifier,
-                    targetVersion = packageUpdateInfo.targetVersion.originalVersion,
-                    operations = packageOperations.primaryOperations
-                )
+                }
             )
         }
 

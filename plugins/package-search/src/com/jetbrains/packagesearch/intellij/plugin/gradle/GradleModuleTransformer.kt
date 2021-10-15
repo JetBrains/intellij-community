@@ -27,11 +27,15 @@ internal class GradleModuleTransformer : ModuleTransformer {
     companion object {
 
         fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
-            val isKotlinDependency = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
+            val isKotlinDependencyInKts = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
                 && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
-            val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
-            val searchableText = if (isKotlinDependency) kotlinDependencyImport else "$groupId:$artifactId"
-            return file.firstElementContainingExactly(searchableText)
+
+            val textToSearchFor = if (isKotlinDependencyInKts) {
+                "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
+            } else {
+                "$groupId:$artifactId"
+            }
+            return file.firstElementContainingExactly(textToSearchFor)
         }
     }
 
@@ -187,8 +191,9 @@ internal class GradleModuleTransformer : ModuleTransformer {
 private fun PsiFile.firstElementContainingExactly(value: String): PsiElement? {
     val index = text.indexOf(value)
     if (index < 0) return null
-    if (text.length > value.length && text[value.length] != ':') return null
-    return getElementAtOffsetOrNull(index)
+    if (text.length > value.length && text[index + value.length] != ':') return null
+    val element = getElementAtOffsetOrNull(index)
+    return element
 }
 
 private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
