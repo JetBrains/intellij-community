@@ -730,6 +730,11 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");
             }
 
+            @TestMetadata("privateKotlinObject.0.kt")
+            public void testPrivateKotlinObject() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/privateKotlinObject.0.kt");
+            }
+
             @TestMetadata("usagesOfBaseForFunction.0.kt")
             public void testUsagesOfBaseForFunction() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/usagesOfBaseForFunction.0.kt");
