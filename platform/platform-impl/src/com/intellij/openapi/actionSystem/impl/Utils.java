@@ -67,15 +67,20 @@ public final class Utils extends DataContextUtils {
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
-      return new PreCachedDataContext(component);
+      return newPreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {
-      PreCachedDataContext wrapped = new PreCachedDataContext(component);
+      DataContext wrapped = newPreCachedDataContext(component);
       LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
       LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
       return wrapped;
     }
     return dataContext;
+  }
+
+  private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
+    if (Registry.is("actionSystem.update.actions.async.data-context2")) return new PreCachedDataContext2(component);
+    return new PreCachedDataContext(component);
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
@@ -85,7 +90,9 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).frozenCopy(missedKeys) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
+           dataContext;
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
@@ -94,13 +101,15 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).getRawDataIfCached(dataId) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
   }
 
   static void clearAllCachesAndUpdates() {
     ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
     ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext2.clearAllCaches();
     PreCachedDataContext.clearAllCaches();
   }
 
