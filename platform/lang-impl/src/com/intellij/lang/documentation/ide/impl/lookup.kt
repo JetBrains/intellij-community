@@ -1,44 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
-
-internal fun autoShowRequestFlow(lookup: Lookup): Flow<DocumentationRequest>? {
-  val settings = CodeInsightSettings.getInstance()
-  if (!settings.AUTO_POPUP_JAVADOC_INFO) {
-    return null
-  }
-  val timeout = settings.JAVADOC_INFO_DELAY.toLong()
-  return lookup
-    .elementFlow()
-    .filter { lookupElement: LookupElement ->
-      LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)
-    }
-    .onEach {
-      delay(timeout)
-    }
-    .asRequestFlow(lookup)
-    .filterNotNull()
-}
-
-private fun Flow<LookupElement>.asRequestFlow(lookup: Lookup): Flow<DocumentationRequest?> {
-  return map(lookupElementToRequestMapper(lookup)).flowOn(Dispatchers.Default)
-}
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 internal fun Lookup.elementFlow(): Flow<LookupElement> {
   EDT.assertIsEdt()

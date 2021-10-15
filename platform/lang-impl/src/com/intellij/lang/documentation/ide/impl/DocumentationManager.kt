@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.codeInsight.lookup.LookupEx
-import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.InlineDocumentation
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import java.awt.Point
 import java.lang.ref.WeakReference
@@ -140,12 +140,12 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
-    val autoShowRequests = autoShowRequestFlow(lookup) ?: return
-    val showDocJob = cs.launch(Dispatchers.EDT) {
-      autoShowRequests.collectLatest { request: DocumentationRequest ->
-        handleAutoShowRequest(lookup, request)
-      }
+    val settings = CodeInsightSettings.getInstance()
+    if (!settings.AUTO_POPUP_JAVADOC_INFO) {
+      return
     }
+    val delay = settings.JAVADOC_INFO_DELAY.toLong()
+    val showDocJob = autoShowDocumentationOnItemChange(lookup, delay)
     lookup.addLookupListener(object : LookupListener {
       override fun itemSelected(event: LookupEvent): Unit = lookupClosed()
       override fun lookupCanceled(event: LookupEvent): Unit = lookupClosed()
@@ -156,8 +156,43 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     })
   }
 
-  private suspend fun handleAutoShowRequest(lookup: LookupEx, request: DocumentationRequest): Unit = coroutineScope {
-    if (!toolWindowManager.updateVisiblePreview(request)) {
+  private fun autoShowDocumentationOnItemChange(lookup: LookupEx, delay: Long): Job {
+    val elements: Flow<LookupElement> = lookup.elementFlow()
+    val mapper = lookupElementToRequestMapper(lookup)
+    return cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+      elements.collectLatest {
+        handleElementChange(lookup, it, delay, mapper)
+      }
+    }
+  }
+
+  private suspend fun handleElementChange(
+    lookup: LookupEx,
+    lookupElement: LookupElement,
+    delay: Long,
+    mapper: suspend (LookupElement) -> DocumentationRequest?
+  ) {
+    if (getPopup() != null) {
+      return // return here to avoid showing another popup if the current one gets cancelled during the delay
+    }
+    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)) {
+      return
+    }
+    delay(delay)
+    if (getPopup() != null) {
+      // the user might've explicitly invoked the action during the delay
+      return // return here to not compute the request unnecessarily
+    }
+    val request = withContext(Dispatchers.Default) {
+      mapper(lookupElement)
+    }
+    if (request == null) {
+      return
+    }
+    if (toolWindowManager.updateVisiblePreview(request)) {
+      return
+    }
+    coroutineScope {
       showDocumentation(request, LookupPopupContext(lookup))
     }
   }
