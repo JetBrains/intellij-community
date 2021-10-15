@@ -43,19 +43,7 @@ internal fun autoShowRequestFlow(lookup: Lookup): Flow<DocumentationRequest>? {
 }
 
 private fun Flow<LookupElement>.asRequestFlow(lookup: Lookup): Flow<DocumentationRequest?> {
-  val project = lookup.project
-  val editor = lookup.editor
-  val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
-  return map { lookupElement ->
-    readAction {
-      if (!lookupElement.isValid) {
-        return@readAction null
-      }
-      val file = PsiUtilBase.getPsiFileInEditor(editor, project)
-                 ?: return@readAction null
-      ideTargetProvider.documentationTarget(editor, file, lookupElement)?.documentationRequest()
-    }
-  }.flowOn(Dispatchers.Default)
+  return map(lookupElementToRequestMapper(lookup)).flowOn(Dispatchers.Default)
 }
 
 private fun Lookup.elementFlow(): Flow<LookupElement> {
@@ -82,4 +70,20 @@ private fun Lookup.elementFlow(): Flow<LookupElement> {
     check(items.tryEmit(currentItem))
   }
   return items.asSharedFlow()
+}
+
+internal fun lookupElementToRequestMapper(lookup: Lookup): suspend (LookupElement) -> DocumentationRequest? {
+  val project = lookup.project
+  val editor = lookup.editor
+  val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
+  return { lookupElement: LookupElement ->
+    readAction {
+      if (!lookupElement.isValid) {
+        return@readAction null
+      }
+      val file = PsiUtilBase.getPsiFileInEditor(editor, project)
+                 ?: return@readAction null
+      ideTargetProvider.documentationTarget(editor, file, lookupElement)?.documentationRequest()
+    }
+  }
 }
