@@ -93,11 +93,20 @@ public final class InspectionEngine {
                                                                         @NotNull InspectionManager iManager,
                                                                         boolean isOnTheFly,
                                                                         @NotNull ProgressIndicator indicator) {
+    TextRange restrictRange = file.getTextRange();
+    return inspectEx(toolWrappers, file, restrictRange, iManager, isOnTheFly, indicator);
+  }
+
+  @NotNull
+  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                @NotNull PsiFile file,
+                                                                @NotNull TextRange restrictRange, @NotNull InspectionManager iManager,
+                                                                boolean isOnTheFly,
+                                                                @NotNull ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
-    TextRange range = file.getTextRange();
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, range, range, __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, file.getTextRange(), __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
