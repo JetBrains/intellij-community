@@ -57,4 +57,8 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
       }
     }
   }
+
+  private void showTooltipForEmptyProject(Project project) {
+//    new GotItTooltip("", "", null).withShortcut()
+  }
 }

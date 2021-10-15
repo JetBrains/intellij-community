@@ -61,7 +61,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
 
-    tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true, false) {
+    tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true, true) {
       override fun customizeRenderer(tree: JTree?,
                                      value: Any?,
                                      selected: Boolean,
@@ -79,7 +79,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }
-    }, root, CheckboxTreeBase.CheckPolicy(false, false, false, false))
+    }, root)
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
@@ -114,7 +114,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           it.value = checked
         }
       }
-      caseNode.isChecked = it.value
       node.add(caseNode)
       if (nodeToSelect == null && getProviderId(caseNode) == lastId) {
         nodeToSelect = caseNode
@@ -194,23 +193,20 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         item.reset()
       }
       is ImmediateConfigurable.Case -> {
-        resetNode(node, item.value)
+        resetNode(node, item.value && settings.hintsEnabledGlobally())
       }
       is Language -> {
-        resetNode(node, settings.hintsEnabled(item))
-      }
-      is String -> {
-        resetNode(node, isGroupEnabled(item, settings))
+        resetNode(node, isLanguageEnabled(settings, item))
       }
     }
     node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
   }
 
-  private fun isGroupEnabled(item: String, settings: InlayHintsSettings) =
-    settings.hintsEnabled(item) && settings.hintsEnabledGlobally()
+  private fun isGroupEnabled(settings: InlayHintsSettings) =
+    settings.hintsEnabledGlobally()
 
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
-    return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language))
+    return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
   }
 
   private fun resetNode(node: CheckedTreeNode, value: Boolean) {
@@ -239,22 +235,19 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
       is ImmediateConfigurable.Case -> {
         item.value = node.isChecked
-      }
-      is Language -> {
-        enableHintsForLanguage(item, settings, node)
-      }
-      is String -> {
         if (node.isChecked) {
           settings.setEnabledGlobally(true)
         }
-        settings.enableGroup(item, node.isChecked)
+      }
+      is Language -> {
+        enableHintsForLanguage(item, settings, node)
       }
     }
     node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
   }
 
   private fun enableHintsForLanguage(language: Language, settings: InlayHintsSettings, node: CheckedTreeNode) {
-    if (node.isChecked && !settings.hintsEnabled(language)) {
+    if (node.isChecked && !isLanguageEnabled(settings, language)) {
       settings.setHintsEnabledForLanguage(language, true)
     }
   }
@@ -266,18 +259,21 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        if ((node.isChecked != isModelEnabled(item, settings)) || item.isModified())
+        if ((node.isChecked != isModelEnabled(item, settings)) || settings.hintsEnabledGlobally() && item.isModified())
           return true
+      }
+      is ImmediateConfigurable.Case -> {
+        if (node.isChecked && !settings.hintsEnabledGlobally()) {
+          return true;
+        }
       }
       is Language -> {
-        if (settings.hintsEnabled(item) != node.isChecked)
-          return true
-      }
-      is String -> {
-        if (isGroupEnabled(item, settings) != node.isChecked)
+        if (isLanguageEnabled(settings, item) != node.isChecked)
           return true
       }
     }
     return node.children().toList().any { isModified(it as CheckedTreeNode, settings) }
   }
+
+  private fun isLanguageEnabled(settings: InlayHintsSettings, item: Language) = settings.hintsEnabled(item)
 }

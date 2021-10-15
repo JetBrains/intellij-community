@@ -34,11 +34,11 @@ private fun isCodeAuthorEnabledForApplication(): Boolean =
 private fun isCodeAuthorEnabledInSettings(): Boolean =
   InlayHintsProviderExtension.findProviders()
     .filter { it.provider.key == KEY }
-    .any { InlayHintsSettings.instance().hintsShouldBeShown(it.provider.groupId, it.language, it.provider.key) }
+    .any { InlayHintsSettings.instance().hintsShouldBeShown(it.provider.key, it.language) }
 
 private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
   val hasProviderForLanguage = InlayHintsProviderExtension.allForLanguage(language).any { it.key == KEY }
-  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(CODE_AUTHOR_GROUP, language, KEY)
+  return hasProviderForLanguage && InlayHintsSettings.instance().hintsShouldBeShown(KEY, language)
 }
 
 internal fun isCodeAuthorInlayHintsEnabled(): Boolean = isCodeAuthorEnabledForApplication() && isCodeAuthorEnabledInSettings()
