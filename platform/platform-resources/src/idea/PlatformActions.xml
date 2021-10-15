@@ -880,6 +880,11 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
+    <group id="ExperimentalToolbarActions">
+      <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
+    </group>
+
     <group id="NavBarVcsGroup"/>
     <group id="SegmentedVcsActionsBarGroup"/>
 
