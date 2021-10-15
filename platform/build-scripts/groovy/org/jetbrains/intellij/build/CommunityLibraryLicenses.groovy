@@ -214,6 +214,8 @@ final class CommunityLibraryLicenses {
                        licenseUrl: "https://asm.objectweb.org/license.html").newBsd(),
     new LibraryLicense(name: "AssertJ fluent assertions", libraryName: "assertJ",
                        url: "https://joel-costigliola.github.io/assertj/").apache(),
+    new LibraryLicense(name: "AssertJ Swing", libraryName: "assertj-swing",
+                       url: "https://github.com/assertj/assertj-swing").apache(),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", url: "https://www.brics.dk/automaton/").simplifiedBsd(),
     new LibraryLicense(name: "batik", libraryName: "batik-transcoder", url: "https://xmlgraphics.apache.org/batik/").apache(),
     new LibraryLicense(name: "batik", libraryName: "batik-codec", url: "https://xmlgraphics.apache.org/batik/").apache(),

@@ -24,13 +24,13 @@ import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
-import org.fest.swing.core.MouseButton
-import org.fest.swing.fixture.ContainerFixture
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.timing.Timeout
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LearnBundle
+import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import java.awt.Component
 import java.awt.Point
@@ -416,9 +416,9 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
   }
 
-  private fun ContainerFixture<IdeFrameImpl>.findGutterComponent(splitter: DiffSplitter?,
-                                                                 partOfEditorText: String,
-                                                                 timeout: Timeout): EditorGutterComponentEx {
+  private fun IftTestContainerFixture<IdeFrameImpl>.findGutterComponent(splitter: DiffSplitter?,
+                                                                        partOfEditorText: String,
+                                                                        timeout: Timeout): EditorGutterComponentEx {
     return findComponentWithTimeout(timeout) l@{ ui: EditorGutterComponentEx ->
       ui.checkInsideSplitterAndRightEditor(splitter, partOfEditorText)
     }

@@ -9,7 +9,7 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
-import org.fest.swing.fixture.JTreeFixture
+import org.assertj.swing.fixture.JTreeFixture
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson

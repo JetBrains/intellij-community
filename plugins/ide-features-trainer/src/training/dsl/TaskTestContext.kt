@@ -12,19 +12,16 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.tree.TreeUtil
-import org.fest.swing.core.GenericTypeMatcher
-import org.fest.swing.core.Robot
-import org.fest.swing.driver.BasicJListCellReader
-import org.fest.swing.driver.ComponentDriver
-import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.AbstractComponentFixture
-import org.fest.swing.fixture.JButtonFixture
-import org.fest.swing.fixture.JListFixture
-import org.fest.swing.fixture.JMenuItemFixture
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.core.GenericTypeMatcher
+import org.assertj.swing.core.Robot
+import org.assertj.swing.driver.BasicJListCellReader
+import org.assertj.swing.driver.ComponentDriver
+import org.assertj.swing.exception.ComponentLookupException
+import org.assertj.swing.exception.WaitTimedOutError
+import org.assertj.swing.fixture.*
+import org.assertj.swing.timing.Condition
+import org.assertj.swing.timing.Pause
+import org.assertj.swing.timing.Timeout
 import training.ui.IftTestContainerFixture
 import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -90,7 +87,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
    *
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  inline fun <C : Container> ContainerFixture<C>.jTree(timeout: Timeout = defaultTimeout,
+  inline fun <C : Container> IftTestContainerFixture<C>.jTree(timeout: Timeout = defaultTimeout,
                                                        crossinline checkPath: (TreePath) -> Boolean): JTreeFixture {
     val tree = findComponentWithTimeout(timeout) { ui: JTree ->
       ui.isShowing && TreeUtil.treePathTraverser(ui).any { path -> checkPath(path) }
@@ -107,7 +104,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return button(timeout) { b: JButton -> b.text == name }
   }
 
-  inline fun <C : Container, reified ButtonType : JButton> ContainerFixture<C>.button(
+  inline fun <C : Container, reified ButtonType : JButton> IftTestContainerFixture<C>.button(
     timeout: Timeout = defaultTimeout,
     crossinline finderFunction: (ButtonType) -> Boolean
   ): JButtonFixture {
@@ -116,7 +113,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
   }
 
   fun <C : Container> IftTestContainerFixture<C>.actionButton(actionName: String, timeout: Timeout = defaultTimeout)
-    : AbstractComponentFixture<*, ActionButton, ComponentDriver<*>> {
+    : AbstractComponentFixture<*, ActionButton, ComponentDriver> {
     val actionButton: ActionButton = findComponentWithTimeout(timeout) {
       it.isShowing && it.isEnabled && actionName == it.action.templatePresentation.text
     }
@@ -143,7 +140,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
              predicate: (String, String) -> Boolean = { found: String, wanted: String -> found == wanted },
              timeout: Timeout = defaultTimeout,
              func: IftTestContainerFixture<JDialog>.() -> Unit = {})
-    : AbstractComponentFixture<*, JDialog, ComponentDriver<*>> {
+    : AbstractComponentFixture<*, JDialog, ComponentDriver> {
     val jDialogFixture = if (title == null) {
       val jDialog = LearningUiUtil.waitUntilFound(robot, typeMatcher(JDialog::class.java) { true }, timeout) {
         LearningUiUtil.getUiRootsForProject(project)
@@ -171,7 +168,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     return jDialogFixture
   }
 
-  fun IftTestContainerFixture<*>.jComponent(target: Component): AbstractComponentFixture<*, Component, ComponentDriver<*>> {
+  fun IftTestContainerFixture<*>.jComponent(target: Component): AbstractComponentFixture<*, Component, ComponentDriver> {
     return SimpleComponentFixture(robot(), target)
   }
 
@@ -328,10 +325,10 @@ private fun <ComponentType : Component> findAllWithBFS(container: Container, cla
 }
 
 private open class ComponentFixture<S, C : Component>(selfType: Class<S>, robot: Robot, target: C)
-  : AbstractComponentFixture<S, C, ComponentDriver<*>>(selfType, robot, target) {
+  : AbstractComponentFixture<S, C, ComponentDriver>(selfType, robot, target) {
 
-  override fun createDriver(robot: Robot): ComponentDriver<*> {
-    return ComponentDriver<Component>(robot)
+  override fun createDriver(robot: Robot): ComponentDriver {
+    return ComponentDriver(robot)
   }
 }
 

@@ -4,7 +4,7 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
-import org.fest.swing.timing.Timeout
+import org.assertj.swing.timing.Timeout
 import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved

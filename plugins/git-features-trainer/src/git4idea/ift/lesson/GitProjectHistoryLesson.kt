@@ -26,8 +26,8 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import org.fest.swing.fixture.JPanelFixture
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.fixture.JPanelFixture
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout

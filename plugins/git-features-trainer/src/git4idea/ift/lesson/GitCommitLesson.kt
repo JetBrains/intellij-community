@@ -39,10 +39,10 @@ import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
-import org.fest.swing.core.MouseButton
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JCheckBoxFixture
-import org.fest.swing.fixture.JTableFixture
+import org.assertj.swing.core.MouseButton
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JCheckBoxFixture
+import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
@@ -166,7 +166,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       test {
         ideFrame {
           val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text == reformatCodeButtonText }
-          JCheckBoxFixture(robot, checkBox).select()
+          JCheckBoxFixture(robot, checkBox).check()
         }
       }
     }
@@ -243,7 +243,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       test {
         ideFrame {
           val checkBox = findComponentWithTimeout(defaultTimeout) { ui: JBCheckBox -> ui.text?.contains(amendCheckboxText) == true }
-          JCheckBoxFixture(robot, checkBox).select()
+          JCheckBoxFixture(robot, checkBox).check()
         }
       }
     }
