@@ -111,7 +111,9 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
 
         @OptIn(ExperimentalStdlibApi::class)
         fun createForPosition(position: PsiElement): HLIndexHelper {
-            val allScopes = position.getKtModule().allDirectDependencies().mapTo(mutableSetOf()) { it.contentScope }
+            val module = position.getKtModule()
+            val allScopes = module.allDirectDependencies().mapTo(mutableSetOf()) { it.contentScope }
+            allScopes.add(module.contentScope)
             return HLIndexHelper(position.project, GlobalSearchScope.union(allScopes))
         }
     }
