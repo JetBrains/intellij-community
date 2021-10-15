@@ -1400,7 +1400,7 @@ public class MavenUtil {
   }
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
-    if (!FileUtil.isAbsolute(path)) {
+    if (!Paths.get(path).isAbsolute()) {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
