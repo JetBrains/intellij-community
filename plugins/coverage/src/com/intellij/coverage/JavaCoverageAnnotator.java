@@ -121,7 +121,8 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       };
       final long startNs = System.nanoTime();
 
-      new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
+      final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
+      new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
       dataManager.triggerPresentationUpdate();
 
       final long endNs = System.nanoTime();
