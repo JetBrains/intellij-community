@@ -99,10 +99,10 @@ public final class InspectionEngine {
 
   @NotNull
   public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                @NotNull PsiFile file,
-                                                                @NotNull TextRange restrictRange, @NotNull InspectionManager iManager,
-                                                                boolean isOnTheFly,
-                                                                @NotNull ProgressIndicator indicator) {
+                                                               @NotNull PsiFile file,
+                                                               @NotNull TextRange restrictRange, @NotNull InspectionManager iManager,
+                                                               boolean isOnTheFly,
+                                                               @NotNull ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
@@ -116,13 +116,13 @@ public final class InspectionEngine {
   }
 
   // returns map tool.shortName -> list of descriptors found
-  static @NotNull Map<String, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                       @NotNull PsiFile file,
-                                                                       @NotNull InspectionManager iManager,
-                                                                       boolean isOnTheFly,
-                                                                       @NotNull ProgressIndicator indicator,
-                                                                       @NotNull List<? extends PsiElement> elements,
-                                                                       @NotNull Set<String> elementDialectIds) {
+  public static @NotNull Map<String, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                              @NotNull PsiFile file,
+                                                                              @NotNull InspectionManager iManager,
+                                                                              boolean isOnTheFly,
+                                                                              @NotNull ProgressIndicator indicator,
+                                                                              @NotNull List<? extends PsiElement> elements,
+                                                                              @NotNull Set<String> elementDialectIds) {
     TextRange range = file.getTextRange();
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
 
