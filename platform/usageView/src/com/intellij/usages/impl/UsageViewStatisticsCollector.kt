@@ -65,7 +65,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", SCOPE_RULE_ID)
 
     private val scopeChanged = GROUP.registerEvent("scope.changed", PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
-
+    private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window")
     private val USER_ACTION = EventFields.Enum("userAction", TooManyUsagesUserAction::class.java)
     private val tooManyUsagesDialog = GROUP.registerVarargEvent("tooManyResultsDialog",
       USER_ACTION,
@@ -138,6 +138,10 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
         SYMBOL_CLASS.with(targetClass),
         SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)),
         EventFields.Language.with(language))
+
+    @JvmStatic
+    fun logOpenInFindToolWindow(project: Project?) =
+      OPEN_IN_FIND_TOOL_WINDOW.log(project)
   }
 }
 
