@@ -140,20 +140,10 @@ final class ActionUpdater {
         customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
       }
       orig.copyFrom(copy, customComponent);
-      reflectSubsequentChangesInOriginalPresentation(orig, copy);
       if (customComponent != null && orig.isVisible()) {
         ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
       }
     }
-  }
-
-  // some actions remember the presentation passed to "update" and modify it later, in hope that menu will change accordingly
-  private static void reflectSubsequentChangesInOriginalPresentation(@NotNull Presentation original, @NotNull Presentation cloned) {
-    cloned.addPropertyChangeListener(e -> {
-      if (EDT.isCurrentThreadEdt()) {
-        original.copyFrom(cloned);
-      }
-    });
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
