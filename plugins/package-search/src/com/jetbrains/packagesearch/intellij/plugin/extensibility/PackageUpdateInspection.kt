@@ -68,7 +68,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
     override fun createOptionsPanel(): JPanel {
         val panel = MultipleCheckboxOptionsPanel(this)
 
-        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.quickfix.packagesearch.addExclusion"), excludeList)
+        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.configuration.excluded.dependencies"), excludeList)
 
         panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), "onlyStable")
         panel.addGrowing(injectionListTable.contentPanel)
@@ -145,7 +145,7 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
                 PackageSearchDependencyUpgradeQuickFix(
                     element = versionElement,
                     identifier = identifier,
-                    targetVersion = packageUpdateInfo.targetVersion,
+                    targetVersion = packageUpdateInfo.targetVersion.originalVersion,
                     operations = packageOperations.primaryOperations
                 )
             )

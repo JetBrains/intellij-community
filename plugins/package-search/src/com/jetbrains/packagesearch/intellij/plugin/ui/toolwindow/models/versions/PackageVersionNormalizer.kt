@@ -59,8 +59,9 @@ internal class PackageVersionNormalizer private constructor() {
             "(?:[._\\-]?\\d{1,5})?){1,2})(?:\\b|_)")
             .toRegex(option = RegexOption.IGNORE_CASE)
 
-    fun parse(version: PackageVersion.Named): NormalizedPackageVersion {
-        val cachedValue = versionsCache[version] as NormalizedPackageVersion?
+    fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
+        @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
+        val cachedValue = versionsCache[version] as NormalizedPackageVersion<PackageVersion.Named>?
         if (cachedValue != null) return cachedValue
 
         // Before parsing, we rule out git commit hashes — those are garbage as far as we're concerned.
@@ -105,7 +106,7 @@ internal class PackageVersionNormalizer private constructor() {
         }
     }
 
-    private fun parseTimestampVersion(version: PackageVersion.Named, timestampPrefix: String): NormalizedPackageVersion =
+    private fun parseTimestampVersion(version: PackageVersion.Named, timestampPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         TimestampLike(
             original = version,
             timestampPrefix = timestampPrefix,
@@ -124,7 +125,7 @@ internal class PackageVersionNormalizer private constructor() {
         return hasHexChars
     }
 
-    private fun parseSemanticVersion(version: PackageVersion.Named, semanticVersionPrefix: String): NormalizedPackageVersion =
+    private fun parseSemanticVersion(version: PackageVersion.Named, semanticVersionPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         Semantic(
             original = version,
             semanticPart = semanticVersionPrefix,

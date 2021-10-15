@@ -19,12 +19,8 @@ internal inline fun <reified T : PackageModel> computeActionsFor(
 
     val upgradeVersion = when (packageModel) {
         is PackageModel.Installed -> {
-            val currentVersion = packageModel.getLatestInstalledVersion()
-            if (currentVersion is PackageVersion.Named) {
-                PackageVersionUtils.upgradeCandidateVersionOrNull(NormalizedPackageVersion.parseFrom(currentVersion), availableVersions)
-            } else {
-                availableVersions.maxOrNull()
-            }
+            val currentVersion = packageModel.latestInstalledVersion
+            PackageVersionUtils.upgradeCandidateVersionOrNull(currentVersion, availableVersions)
         }
         else -> null
     }
@@ -99,7 +95,7 @@ internal inline fun <reified T : PackageModel> computeActionsFor(
 
 private fun <T : PackageModel> decidePrimaryOperationTypeFor(
     packageModel: T,
-    targetVersion: NormalizedPackageVersion?
+    targetVersion: NormalizedPackageVersion<*>?
 ): PackageOperationType? =
     when (packageModel) {
         is PackageModel.SearchResult -> PackageOperationType.INSTALL

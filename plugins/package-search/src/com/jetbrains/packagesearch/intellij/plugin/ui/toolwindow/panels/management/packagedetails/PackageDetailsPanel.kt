@@ -89,7 +89,7 @@ internal class PackageDetailsPanel(
         infoPanel.display(
             PackageDetailsInfoPanel.ViewModel(
                 viewModel.selectedPackageModel.packageModel,
-                viewModel.selectedPackageModel.selectedVersion,
+                viewModel.selectedPackageModel.selectedVersion.originalVersion,
                 viewModel.knownRepositoriesInTargetModules.allKnownRepositories
             )
         )

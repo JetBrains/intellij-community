@@ -29,9 +29,9 @@ import kotlin.math.sign
  * @see VersionNameComparator
  */
 internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
-    currentVersion: NormalizedPackageVersion,
-    availableVersions: List<NormalizedPackageVersion>
-): NormalizedPackageVersion? {
+    currentVersion: NormalizedPackageVersion<*>,
+    availableVersions: List<NormalizedPackageVersion<*>>
+): NormalizedPackageVersion<*>? {
     require(availableVersions.isNotEmpty()) { "Cannot find upgrades when there are no available versions" }
 
     val availableSemanticVersions = availableVersions.filterIsInstance<NormalizedPackageVersion.Semantic>()
@@ -83,7 +83,9 @@ internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
  * @throws IllegalArgumentException If [availableVersions] is empty.
  * @see NormalizedPackageVersion
  */
-internal fun PackageVersionUtils.highestSensibleVersionByNameOrNull(availableVersions: List<NormalizedPackageVersion>): NormalizedPackageVersion? {
+internal fun PackageVersionUtils.highestSensibleVersionByNameOrNull(
+    availableVersions: List<NormalizedPackageVersion<*>>
+): NormalizedPackageVersion<*>? {
     require(availableVersions.isNotEmpty()) { "Cannot find highest version in an empty list" }
 
     return availableVersions.asSequence()

@@ -12,32 +12,30 @@ internal sealed class PackageModel(
     val remoteInfo: ApiStandardPackage?
 ) : Comparable<PackageModel> {
 
+    val remoteVersions = remoteInfo?.versions?.asSequence()
+        ?.map { PackageVersion.from(it) }
+        ?.filterIsInstance<PackageVersion.Named>()
+        ?.map { NormalizedPackageVersion.parseFrom(it) }
+        ?.toList()
+        ?: emptyList()
+
     val identifier = PackageIdentifier("$groupId:$artifactId")
 
     val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
-    fun getAvailableVersions(onlyStable: Boolean): List<NormalizedPackageVersion> {
-        val remoteVersions = remoteInfo?.versions?.asSequence()
-            ?.map { PackageVersion.from(it) }
-            ?.filterIsInstance<PackageVersion.Named>()
-            ?.toList()
-            ?: emptyList()
-
-        val allVersions = allDeclaredVersions()
-            .union(remoteVersions).toList()
-            .toList()
+    fun getAvailableVersions(onlyStable: Boolean): List<NormalizedPackageVersion<*>> {
+        val allVersions = declaredVersions.union(remoteVersions)
 
         return allVersions.asSequence()
             .filter { if (onlyStable) it.isStable else true }
             .distinctBy { it.versionName }
-            .map { NormalizedPackageVersion.parseFrom(it) }
             .sortedDescending()
             .toList()
     }
 
-    protected abstract fun allDeclaredVersions(): List<PackageVersion.Named>
+    protected abstract val declaredVersions: List<NormalizedPackageVersion<*>>
 
     override fun compareTo(other: PackageModel): Int = sortKey.compareTo(other.sortKey)
 
@@ -54,9 +52,15 @@ internal sealed class PackageModel(
             require(usageInfo.isNotEmpty()) { "An installed package must always have at least one usage" }
         }
 
-        override fun allDeclaredVersions(): List<PackageVersion.Named> =
+        val latestInstalledVersion = usageInfo.asSequence()
+            .map { it.version }
+            .map { NormalizedPackageVersion.parseFrom(it) }
+            .maxOrNull()
+            ?: error("An installed package must always have at least one usage")
+
+        override val declaredVersions: List<NormalizedPackageVersion<*>> =
             usageInfo.map { it.version }
-                .filterIsInstance<PackageVersion.Named>()
+                .map { NormalizedPackageVersion.parseFrom(it) }
 
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
@@ -68,14 +72,6 @@ internal sealed class PackageModel(
 
         fun copyWithUsages(usages: List<DependencyUsageInfo>) =
             Installed(groupId, artifactId, remoteInfo, usages)
-
-        fun getLatestInstalledVersion(): PackageVersion =
-            usageInfo.asSequence()
-                .map { it.version }
-                .filterIsInstance<PackageVersion.Named>()
-                .map { NormalizedPackageVersion.parseFrom(it) }
-                .maxOrNull()?.originalVersion
-                ?: error("An installed package must always have at least one usage")
 
         override val searchableInfo =
             buildString {
@@ -115,7 +111,7 @@ internal sealed class PackageModel(
         remoteInfo: ApiStandardPackage
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
-        override fun allDeclaredVersions(): List<PackageVersion.Named> = emptyList()
+        override val declaredVersions: List<NormalizedPackageVersion<*>> = emptyList()
 
         override val searchableInfo =
             buildString {

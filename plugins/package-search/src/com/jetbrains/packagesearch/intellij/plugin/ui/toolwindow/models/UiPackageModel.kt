@@ -9,11 +9,12 @@ internal sealed class UiPackageModel<T : PackageModel> {
     abstract val declaredScopes: List<PackageScope>
     abstract val userDefinedScopes: List<PackageScope>
     abstract val defaultScope: PackageScope
-    abstract val selectedVersion: PackageVersion
+    abstract val defaultVersion: NormalizedPackageVersion<*>
+    abstract val selectedVersion: NormalizedPackageVersion<*>
     abstract val selectedScope: PackageScope
     abstract val mixedBuildSystemTargets: Boolean
     abstract val packageOperations: PackageOperations
-    abstract val sortedVersions: List<NormalizedPackageVersion>
+    abstract val sortedVersions: List<NormalizedPackageVersion<*>>
 
     val identifier
         get() = packageModel.identifier
@@ -22,24 +23,26 @@ internal sealed class UiPackageModel<T : PackageModel> {
         override val packageModel: PackageModel.Installed,
         override val declaredScopes: List<PackageScope>,
         override val userDefinedScopes: List<PackageScope>,
+        override val defaultVersion: NormalizedPackageVersion<*>,
         override val defaultScope: PackageScope,
-        override val selectedVersion: PackageVersion,
+        override val selectedVersion: NormalizedPackageVersion<*>,
         override val selectedScope: PackageScope,
         override val mixedBuildSystemTargets: Boolean,
         override val packageOperations: PackageOperations,
-        override val sortedVersions: List<NormalizedPackageVersion>
+        override val sortedVersions: List<NormalizedPackageVersion<*>>
     ) : UiPackageModel<PackageModel.Installed>()
 
     data class SearchResult(
         override val packageModel: PackageModel.SearchResult,
         override val declaredScopes: List<PackageScope>,
         override val userDefinedScopes: List<PackageScope>,
+        override val defaultVersion: NormalizedPackageVersion<*>,
         override val defaultScope: PackageScope,
-        override val selectedVersion: PackageVersion,
+        override val selectedVersion: NormalizedPackageVersion<*>,
         override val selectedScope: PackageScope,
         override val mixedBuildSystemTargets: Boolean,
         override val packageOperations: PackageOperations,
-        override val sortedVersions: List<NormalizedPackageVersion>
+        override val sortedVersions: List<NormalizedPackageVersion<*>>
     ) : UiPackageModel<PackageModel.SearchResult>()
 }
 
@@ -51,15 +54,8 @@ internal fun PackageModel.Installed.toUiPackageModel(
 ): UiPackageModel.Installed {
     val declaredScopes = declaredScopes(targetModules)
     val defaultScope = targetModules.defaultScope(project)
-    val selectedVersion = getLatestInstalledVersion()
-    val normalizedPackageVersion = selectedVersion.asNamedOrNull()
-        ?.let { NormalizedPackageVersion.parseFrom(it) }
 
-    val sortedVersions = if (normalizedPackageVersion != null) {
-        getAvailableVersions(onlyStable) + normalizedPackageVersion
-    } else {
-        getAvailableVersions(onlyStable)
-    }
+    val sortedVersions = (getAvailableVersions(onlyStable) + latestInstalledVersion)
         .distinct()
         .sortedDescending()
 
@@ -67,8 +63,9 @@ internal fun PackageModel.Installed.toUiPackageModel(
         packageModel = this,
         declaredScopes = declaredScopes,
         userDefinedScopes = userDefinedScopes(project),
+        defaultVersion = sortedVersions.first(),
         defaultScope = defaultScope,
-        selectedVersion = selectedVersion,
+        selectedVersion = latestInstalledVersion,
         selectedScope = declaredScopes.firstOrNull() ?: defaultScope,
         mixedBuildSystemTargets = targetModules.isMixedBuildSystems,
         packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
@@ -92,9 +89,6 @@ private fun PackageModel.Installed.userDefinedScopes(project: Project) =
         .flatMap { it.moduleType.userDefinedScopes(project) }
         .map { PackageScope.from(it) }
         .toList()
-
-private fun PackageVersion.asNamedOrNull(): PackageVersion.Named? =
-    if (this is PackageVersion.Named) this else null
 
 internal fun PackageModel.SearchResult.toUiPackageModel(
     targetModules: TargetModules,
@@ -120,17 +114,18 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     onlyStable: Boolean,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-): UiPackageModel.SearchResult =
-    UiPackageModel.SearchResult(
+): UiPackageModel.SearchResult {
+    val sortedVersions = getAvailableVersions(onlyStable).sortedDescending()
+    return UiPackageModel.SearchResult(
         packageModel = this,
         declaredScopes = declaredScopes,
-        defaultScope = defaultScope,
         userDefinedScopes = emptyList(),
-        selectedVersion = searchResultUiState?.selectedVersion
-            ?: getAvailableVersions(onlyStable).firstOrNull()?.originalVersion ?: PackageVersion.Missing,
-        selectedScope = searchResultUiState?.selectedScope
-            ?: defaultScope,
+        defaultVersion = sortedVersions.first(),
+        defaultScope = defaultScope,
+        selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing,
+        selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems,
         packageOperations = computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
-        sortedVersions = getAvailableVersions(onlyStable).sortedDescending()
+        sortedVersions = sortedVersions
     )
+}

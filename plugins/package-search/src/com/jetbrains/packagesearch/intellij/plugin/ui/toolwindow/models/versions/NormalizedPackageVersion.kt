@@ -4,9 +4,9 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
 
-internal sealed class NormalizedPackageVersion(
-    val originalVersion: PackageVersion.Named
-) : Comparable<NormalizedPackageVersion> {
+internal sealed class NormalizedPackageVersion<T : PackageVersion>(
+    val originalVersion: T
+) : Comparable<NormalizedPackageVersion<*>> {
 
     val versionName: String
         get() = originalVersion.versionName
@@ -25,14 +25,14 @@ internal sealed class NormalizedPackageVersion(
         val semanticPart: String,
         override val stabilityMarker: String?,
         override val nonSemanticSuffix: String?
-    ) : NormalizedPackageVersion(original), DecoratedVersion {
+    ) : NormalizedPackageVersion<PackageVersion.Named>(original), DecoratedVersion {
 
         val semanticPartWithStabilityMarker = semanticPart + (stabilityMarker ?: "")
 
-        override fun compareTo(other: NormalizedPackageVersion): Int =
+        override fun compareTo(other: NormalizedPackageVersion<*>): Int =
             when (other) {
                 is Semantic -> compareByNameAndThenByTimestamp(other)
-                is TimestampLike, is Garbage -> 1
+                is TimestampLike, is Garbage, is Missing -> 1
             }
 
         private fun compareByNameAndThenByTimestamp(other: Semantic): Int {
@@ -81,15 +81,15 @@ internal sealed class NormalizedPackageVersion(
         val timestampPrefix: String,
         override val stabilityMarker: String?,
         override val nonSemanticSuffix: String?
-    ) : NormalizedPackageVersion(original), DecoratedVersion {
+    ) : NormalizedPackageVersion<PackageVersion.Named>(original), DecoratedVersion {
 
         private val timestampPrefixWithStabilityMarker = timestampPrefix + (stabilityMarker ?: "")
 
-        override fun compareTo(other: NormalizedPackageVersion): Int =
+        override fun compareTo(other: NormalizedPackageVersion<*>): Int =
             when (other) {
                 is TimestampLike -> compareByNameAndThenByTimestamp(other)
                 is Semantic -> -1
-                is Garbage -> 1
+                is Garbage, is Missing -> 1
             }
 
         private fun compareByNameAndThenByTimestamp(other: TimestampLike): Int {
@@ -109,10 +109,11 @@ internal sealed class NormalizedPackageVersion(
 
     data class Garbage(
         private val original: PackageVersion.Named
-    ) : NormalizedPackageVersion(original) {
+    ) : NormalizedPackageVersion<PackageVersion.Named>(original) {
 
-        override fun compareTo(other: NormalizedPackageVersion): Int =
+        override fun compareTo(other: NormalizedPackageVersion<*>): Int =
             when (other) {
+                is Missing -> 1
                 is Garbage -> compareByNameAndThenByTimestamp(other)
                 is Semantic, is TimestampLike -> -1
             }
@@ -125,6 +126,15 @@ internal sealed class NormalizedPackageVersion(
                 nameComparisonResult
             }
         }
+    }
+
+    object Missing : NormalizedPackageVersion<PackageVersion.Missing>(PackageVersion.Missing) {
+
+        override fun compareTo(other: NormalizedPackageVersion<*>): Int =
+            when (other) {
+                is Missing -> 0
+                else -> -1
+            }
     }
 
     // If only one of them has a releasedAt, it wins. If neither does, they're equal.
@@ -141,7 +151,7 @@ internal sealed class NormalizedPackageVersion(
         when (this) {
             is Semantic -> nonSemanticSuffix
             is TimestampLike -> nonSemanticSuffix
-            is Garbage -> null
+            is Garbage, is Missing -> null
         }
 
     interface DecoratedVersion {
@@ -153,7 +163,14 @@ internal sealed class NormalizedPackageVersion(
 
     companion object {
 
-        fun parseFrom(version: PackageVersion.Named): NormalizedPackageVersion =
+        fun parseFrom(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> =
             PackageVersionNormalizer.getInstance().parse(version)
+
+        fun <T: PackageVersion> parseFrom(version: T): NormalizedPackageVersion<*> =
+            when (version) {
+                is PackageVersion.Missing -> Missing
+                is PackageVersion.Named -> parseFrom(version)
+                else -> error("Unknown version type: ${version.javaClass.simpleName}")
+            }
     }
 }

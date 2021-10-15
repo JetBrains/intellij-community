@@ -15,12 +15,12 @@ import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 
 internal class PackageSearchOperationFactory {
 
-    inline fun <reified T : PackageModel> computeInstallActionsFor(
+    inline fun <reified T : PackageModel, V : PackageVersion> computeInstallActionsFor(
         packageModel: T,
         moduleModel: ModuleModel,
         defaultScope: PackageScope,
         knownRepositories: KnownRepositories.InTargetModules,
-        targetVersion: NormalizedPackageVersion
+        targetVersion: NormalizedPackageVersion<V>
     ): List<PackageSearchOperation<*>> {
         if (packageModel !is PackageModel.SearchResult) return emptyList()
 
@@ -34,11 +34,11 @@ internal class PackageSearchOperationFactory {
         )
     }
 
-    inline fun <reified T : PackageModel> computeUpgradeActionsFor(
+    inline fun <reified T : PackageModel, V : PackageVersion> computeUpgradeActionsFor(
         packageModel: T,
         moduleModel: ModuleModel,
         knownRepositories: KnownRepositories.InTargetModules,
-        targetVersion: NormalizedPackageVersion
+        targetVersion: NormalizedPackageVersion<V>
     ): List<PackageSearchOperation<*>> {
         if (packageModel !is PackageModel.Installed) return emptyList()
 

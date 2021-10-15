@@ -26,14 +26,15 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         val viewModel = value as UiPackageModel<*>
 
         val versionViewModels = when (viewModel) {
-            is UiPackageModel.Installed -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it.originalVersion) }
-            is UiPackageModel.SearchResult -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it.originalVersion) }
+            is UiPackageModel.Installed -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it) }
+            is UiPackageModel.SearchResult -> viewModel.sortedVersions.map { viewModel.copy(selectedVersion = it) }
         }
 
-        val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion).apply {
-            table.colors.applyTo(this, isSelected = true)
-            setCell(row, column)
-        }
+        val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion.originalVersion)
+            .apply {
+                table.colors.applyTo(this, isSelected = true)
+                setCell(row, column)
+            }
 
         lastEditor = editor
         return editor

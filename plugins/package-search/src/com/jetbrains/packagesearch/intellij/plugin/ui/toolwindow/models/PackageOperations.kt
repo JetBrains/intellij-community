@@ -8,7 +8,7 @@ internal data class PackageOperations(
     val targetModules: TargetModules,
     val primaryOperations: List<PackageSearchOperation<*>>,
     val removeOperations: List<PackageSearchOperation<*>>,
-    val targetVersion: NormalizedPackageVersion?,
+    val targetVersion: NormalizedPackageVersion<*>?,
     val primaryOperationType: PackageOperationType?,
     val repoToAddWhenInstalling: RepositoryModel?
 ) {

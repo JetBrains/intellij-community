@@ -25,7 +25,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.Operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultUiState
@@ -34,6 +33,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackag
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.matchesCoordinates
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
@@ -86,7 +86,7 @@ internal class PackagesListPanel(
 
     private val searchFieldFocus = Channel<Unit>()
 
-    private val packagesTable = PackagesTable(project, operationExecutor, ::onSearchResultStateChanged)
+    private val packagesTable = PackagesTable(operationExecutor, ::onSearchResultStateChanged)
 
     val onlyStableStateFlow = MutableStateFlow(true)
     val selectedPackageStateFlow = packagesTable.selectedPackageStateFlow
@@ -397,7 +397,7 @@ internal class PackagesListPanel(
 
     private fun onSearchResultStateChanged(
         searchResult: PackageModel.SearchResult,
-        overrideVersion: PackageVersion?,
+        overrideVersion: NormalizedPackageVersion<*>?,
         overrideScope: PackageScope?
     ) {
         project.lifecycleScope.launch {
@@ -444,11 +444,11 @@ private fun computeHeaderData(
         .flatMap { packageUpdateInfo ->
             val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
                 packageModel = packageUpdateInfo.packageModel,
-                selectedVersion = packageUpdateInfo.targetVersion
+                selectedVersion = packageUpdateInfo.targetVersion.originalVersion
             )
             operationFactory.createChangePackageVersionOperations(
                 packageModel = packageUpdateInfo.packageModel,
-                newVersion = packageUpdateInfo.targetVersion,
+                newVersion = packageUpdateInfo.targetVersion.originalVersion,
                 targetModules = targetModules,
                 repoToInstall = repoToInstall
             )

@@ -4,7 +4,6 @@ import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
@@ -16,11 +15,11 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRep
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
@@ -44,11 +43,11 @@ import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 import kotlin.math.roundToInt
 
-internal typealias SearchResultStateChangeListener = (PackageModel.SearchResult, PackageVersion?, PackageScope?) -> Unit
+internal typealias SearchResultStateChangeListener =
+    (PackageModel.SearchResult, NormalizedPackageVersion<*>?, PackageScope?) -> Unit
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
-    project: Project,
     private val operationExecutor: OperationExecutor,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
@@ -320,7 +319,8 @@ internal class PackagesTable(
                 operationExecutor.executeOperations(operations)
             }
             is UiPackageModel.SearchResult -> {
-                onSearchResultStateChanged(uiPackageModel.packageModel, uiPackageModel.selectedVersion, newScope)
+                val selectedVersion = uiPackageModel.selectedVersion
+                onSearchResultStateChanged(uiPackageModel.packageModel, selectedVersion, newScope)
 
                 logDebug("PackagesTable#updatePackageScope()") {
                     "The user has selected a new scope for search result ${uiPackageModel.identifier}: '$newScope'."
@@ -330,18 +330,18 @@ internal class PackagesTable(
         }
     }
 
-    private fun updatePackageVersion(uiPackageModel: UiPackageModel<*>, newVersion: PackageVersion) {
+    private fun updatePackageVersion(uiPackageModel: UiPackageModel<*>, newVersion: NormalizedPackageVersion<*>) {
         when (uiPackageModel) {
             is UiPackageModel.Installed -> {
                 val operations = uiPackageModel.packageModel.usageInfo.flatMap {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
                         uiPackageModel.packageModel,
-                        newVersion
+                        newVersion.originalVersion
                     )
 
                     operationFactory.createChangePackageVersionOperations(
                         packageModel = uiPackageModel.packageModel,
-                        newVersion = newVersion,
+                        newVersion = newVersion.originalVersion,
                         targetModules = targetModules,
                         repoToInstall = repoToInstall
                     )
