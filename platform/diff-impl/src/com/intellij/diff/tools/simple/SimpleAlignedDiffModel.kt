@@ -103,7 +103,8 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
                                inlaySideSoftWraps: Int,
                                isLastLineToAdd: Boolean): Inlay<ChangeAlignDiffInlayPresentation> {
     val editor = viewer.getEditor(side)
-    val offset = DiffUtil.getOffset(editor.document, change.getStartLine(side), 0)
+    val line = if (change.diffType === TextDiffType.MODIFIED) change.getEndLine(side) else change.getStartLine(side)
+    val offset = DiffUtil.getOffset(editor.document, line, 0)
     val inlayPresentation =
       ChangeAlignDiffInlayPresentation(editor,
         calculateHeight(side, change, linesToAdd, inlaySideSoftWraps), change.diffType)
