@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -251,8 +250,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       final var newProjectStatisticService = ApplicationManager.getApplication().getService(NewProjectStatisticService.class);
       if (newProjectStatisticService != null && generator != null) {
         final var newProjectInfoState = newProjectStatisticService.getState();
-        newProjectInfoState.getCreatedProjectInfo().add(
-          new NewProjectInfoEntry(generator.getName(), LocalDateTime.now(), false, false));
+        newProjectInfoState.getCreatedProjectInfo().add(NewProjectInfoEntry.Companion.createNewProjectInfoEntry(generator.getName()));
       }
     }
 
