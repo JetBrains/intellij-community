@@ -599,7 +599,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup(index);
+    that.myPreviewPopupUpdateProcessor.setup(that.myPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
   }
 
