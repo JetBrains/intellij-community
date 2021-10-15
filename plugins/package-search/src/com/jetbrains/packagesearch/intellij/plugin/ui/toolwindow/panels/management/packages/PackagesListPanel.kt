@@ -8,7 +8,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -478,7 +477,6 @@ private fun List<PackageModel.Installed>.filterByTargetModules(
     TargetModules.None -> emptyList()
 }
 
-@RequiresReadLock
 private fun computeSearchResultModels(
     searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
     installedPackages: List<UiPackageModel.Installed>,
