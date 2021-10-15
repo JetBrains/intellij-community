@@ -99,7 +99,15 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   }
 
   private void alignPanels() {
-    JComponent container = getComponent();
+    alignPanels(getComponent());
+    for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
+      if (fragment instanceof NestedGroupFragment && fragment.isSelected()) {
+        alignPanels(fragment.getComponent());
+      }
+    }
+  }
+
+  private static void alignPanels(JComponent container) {
     List<PanelWithAnchor> panels =
       Arrays.stream(container.getComponents()).filter(component -> component instanceof PanelWithAnchor)
         .map(component -> (PanelWithAnchor)component).collect(Collectors.toList());
