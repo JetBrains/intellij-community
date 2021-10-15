@@ -3,6 +3,7 @@ package ru.adelf.idea.dotenv.tests.dotenv;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection;
+import ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection;
 import ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
@@ -31,6 +32,10 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         doInspectionTest(new SpaceInsideNonQuotedInspection(), Collections.singletonList("spaces without quotes"));
     }
 
+    public void testExtraBlankLine() {
+        doInspectionTest(new ExtraBlankLineInspection(), Collections.singletonList("\n\n\n"));
+    }
+
     private void doInspectionTest(InspectionProfileEntry entry, List<String> expectedHighlightedText) {
         myFixture.enableInspections(entry);
 
@@ -39,6 +44,6 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
 
         highlightInfoList.forEach( highlightInfo -> actualHighlightedText.add(highlightInfo.getText()));
 
-        assertEquals(actualHighlightedText, expectedHighlightedText);
+        assertEquals(expectedHighlightedText, actualHighlightedText);
     }
 }
