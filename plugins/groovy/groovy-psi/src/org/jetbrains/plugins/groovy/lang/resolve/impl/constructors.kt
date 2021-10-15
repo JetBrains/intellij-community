@@ -9,6 +9,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
@@ -32,7 +33,12 @@ fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
 }
 
 private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
-  val constructors = clazz.constructors.filter { !(it is GrMethod && it.isCompactConstructor()) }
+  val constructors = if (clazz is GrRecordDefinition) {
+    clazz.constructors.filter { !(it is GrMethod && it.isCompactConstructor()) }
+  }
+  else {
+    clazz.constructors.asList()
+  }
   if (constructors.isEmpty() && !clazz.isInterface) {
     return listOf(getDefaultConstructor(clazz))
   }
