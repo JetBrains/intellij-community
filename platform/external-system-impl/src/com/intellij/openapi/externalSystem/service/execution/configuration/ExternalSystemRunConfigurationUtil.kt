@@ -350,9 +350,11 @@ fun <S, C : JComponent> SettingsFragmentsContainer<S>.addSettingsEditorFragment(
   actionHint = settingsFragmentInfo.settingsActionHint
 
   val editorComponent = editorComponent
-  if (editorComponent is JTextComponent ||
-      editorComponent is JComboBox<*>) {
-    CommonParameterFragments.setMonospaced(editorComponent)
+  if (settingsFragmentInfo.settingsType == SettingsEditorFragmentType.COMMAND_LINE) {
+    if (editorComponent is JTextComponent ||
+        editorComponent is JComboBox<*>) {
+      CommonParameterFragments.setMonospaced(editorComponent)
+    }
   }
   if (editorComponent is JBTextField) {
     FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
