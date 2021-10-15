@@ -984,6 +984,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+          UsageViewStatisticsCollector.logOpenInFindToolWindow(project);
           hideHints();
           cancel(popupRef.get());
           findUsagesRunnable.run();
