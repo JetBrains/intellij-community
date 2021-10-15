@@ -682,6 +682,7 @@
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+    <dictionary.runtimeDictionaryProvider implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.console">
