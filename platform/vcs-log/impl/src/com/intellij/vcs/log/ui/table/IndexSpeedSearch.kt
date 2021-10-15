@@ -72,7 +72,7 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, pr
     return IndexedDetails(dataGetter, storage, getCommitId(row))
   }
 
-  private fun getCommitId(row: Int) = myComponent.model.getIdAtRow(row)
+  protected fun getCommitId(row: Int) = myComponent.model.getIdAtRow(row)
 
   private data class MatchResult(val pattern: String,
                                  val commitsForUsers: Set<Int> = emptySet(),

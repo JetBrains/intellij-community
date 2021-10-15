@@ -60,6 +60,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogUiProperties myProperties;
 
   @NotNull private final VcsLogGraphTable myGraphTable;
+  @NotNull private final FileHistorySpeedSearch mySpeedSearch;
 
   @NotNull private final CommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
@@ -92,7 +93,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
-    new IndexSpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
+    mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
@@ -186,6 +187,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    mySpeedSearch.setVisiblePack(visiblePack);
   }
 
   public void showDetails(boolean show) {
