@@ -41,14 +41,12 @@ public class GitExecutableDetector {
     "/opt/bin",
     "/usr/local/git/bin"};
 
-  private static final @NonNls String GIT = "git";
-  private static final @NonNls String UNIX_EXECUTABLE = GIT;
 
   private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
-  private static final @NonNls String GIT_EXE = "git.exe";
 
-  private static final String WIN_EXECUTABLE = GIT_EXE;
+  private static final @NonNls String UNIX_EXECUTABLE = "git";
+  private static final @NonNls String WIN_EXECUTABLE = "git.exe";
 
   private static final int WSL_DETECTION_TIMEOUT_MS = 10000;
   private final ScheduledExecutorService myWslExecutor =
@@ -170,7 +168,7 @@ public class GitExecutableDetector {
 
     @Override
     public void runDetection() {
-      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPathEnv(), null);
+      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE, getPathEnv(), null);
       String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
       myEnvExecutable.set(new DetectedPath(path));
     }
@@ -370,7 +368,7 @@ public class GitExecutableDetector {
       return null;
     }
 
-    File fe = new File(binDir, GIT_EXE);
+    File fe = new File(binDir, WIN_EXECUTABLE);
     if (fe.exists()) {
       return fe.getPath();
     }
