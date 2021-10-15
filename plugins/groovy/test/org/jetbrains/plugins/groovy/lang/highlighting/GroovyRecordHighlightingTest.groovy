@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrPOJOInspection
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 
 @CompileStatic
@@ -145,5 +146,20 @@ import groovy.transform.ImmutableOptions
 @ImmutableOptions(knownImmutables = ['b'])
 record X(b) {}
 """
+  }
+
+  void 'test do not unnecessarily load files containing records'() {
+    myFixture.with {
+      def file = addFileToProject'A.groovy', """
+record R(int a, String c) {}
+"""
+
+      configureByText 'b.groovy', """
+R r = new R(1, "")
+"""
+      checkHighlighting()
+
+      assert !(file as GroovyFileImpl).contentsLoaded
+    }
   }
 }
