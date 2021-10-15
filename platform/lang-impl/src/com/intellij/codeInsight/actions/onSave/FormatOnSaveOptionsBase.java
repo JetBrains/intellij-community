@@ -19,6 +19,10 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
     default @NotNull Collection<@NotNull FileType> getFileTypesFormattedOnSaveByDefault() {
       return Collections.emptyList();
     }
+
+    default @NotNull Collection<@NotNull FileType> getFileTypesWithOptimizeImportsOnSaveByDefault() {
+      return Collections.emptyList();
+    }
   }
 
   static class StateBase implements Cloneable {

@@ -28,7 +28,7 @@ public class FormatOnSaveUsagesCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     return Set.of(
       REFORMAT_CODE_ON_SAVE.metric(FormatOnSaveOptions.getInstance(project).isRunOnSaveEnabled()),
-      OPTIMIZE_IMPORTS_ON_SAVE.metric(OptimizeImportsOnSaveActionInfo.isOptimizeImportsOnSaveEnabled(project)),
+      OPTIMIZE_IMPORTS_ON_SAVE.metric(OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled()),
       REARRANGE_CODE_ON_SAVE.metric(RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project)),
       CLEANUP_CODE_ON_SAVE.metric(CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project))
     );

@@ -19,7 +19,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
   @Override
   public boolean isEnabledForProject(@NotNull Project project) {
     return FormatOnSaveOptions.getInstance(project).isRunOnSaveEnabled() ||
-           OptimizeImportsOnSaveActionInfo.isOptimizeImportsOnSaveEnabled(project) ||
+           OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled() ||
            RearrangeCodeOnSaveActionInfo.isRearrangeCodeOnSaveEnabled(project) ||
            CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project);
   }
@@ -76,7 +76,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
                                                                                                boolean onlyChangedLines,
                                                                                                @Nullable ReformatCodeProcessor reformatProcessor) {
     AbstractLayoutCodeProcessor processor = reformatProcessor;
-    if (OptimizeImportsOnSaveActionInfo.isOptimizeImportsOnSaveEnabled(project)) {
+    if (OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled()) {
       processor = processor != null
                   ? new OptimizeImportsProcessor(processor)
                   : new OptimizeImportsProcessor(project, filesToProcess, null);

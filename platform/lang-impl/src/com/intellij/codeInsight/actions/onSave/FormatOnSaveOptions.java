@@ -30,8 +30,8 @@ public final class FormatOnSaveOptions extends FormatOnSaveOptionsBase<FormatOnS
     }
 
     @Override
-    public FormatOnSaveOptions.State clone() {
-      return (FormatOnSaveOptions.State)super.clone();
+    public State clone() {
+      return (State)super.clone();
     }
 
     @Override
