@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -150,12 +149,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
-    new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
-      @Override
-      protected boolean isSpeedSearchEnabled() {
-        return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
-      }
-    };
   }
 
   public @NotNull @NonNls String getId() {
@@ -170,10 +163,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     TableColumnModel columnModel = new MyTableColumnModel(myProperties);
     setColumnModel(columnModel);
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
-  }
-
-  protected boolean isSpeedSearchEnabled() {
-    return Registry.is("vcs.log.speedsearch");
   }
 
   protected void updateEmptyText() {

@@ -30,6 +30,7 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -78,11 +79,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                         logUi::requestMore, disposable) {
       @Override
-      protected boolean isSpeedSearchEnabled() {
-        return true;
-      }
-
-      @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
         if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
@@ -96,6 +92,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
+    new IndexSpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
