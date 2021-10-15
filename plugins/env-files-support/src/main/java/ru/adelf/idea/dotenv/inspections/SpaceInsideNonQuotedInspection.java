@@ -16,6 +16,13 @@ import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import ru.adelf.idea.dotenv.psi.DotEnvValue;
 
 public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
+    // Change the display name within the plugin.xml
+    // This needs to be here as otherwise the tests will throw errors.
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return "Space inside non-quoted value";
+    }
 
     private AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
 

@@ -86,6 +86,7 @@
         <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 
+        <!-- displayName defined within class otherwise test will throw errors -->
         <localInspection language="DotEnv"
                          groupName="DotEnv"
                          shortName="DotEnvDuplicateKeyInspection"
@@ -94,6 +95,7 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
+        <!-- displayName defined within class otherwise test will throw errors -->
         <localInspection language="DotEnv"
                          groupName="DotEnv"
                          shortName="DotEnvSpaceInsideNonQuotedInspection"

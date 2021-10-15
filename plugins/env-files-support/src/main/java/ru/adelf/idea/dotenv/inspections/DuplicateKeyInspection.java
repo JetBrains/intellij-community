@@ -15,6 +15,14 @@ import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import java.util.*;
 
 public class DuplicateKeyInspection extends LocalInspectionTool {
+    // Change the display name within the plugin.xml
+    // This needs to be here as otherwise the tests will throw errors.
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return "Duplicate Key";
+    }
+
     @Override
     public boolean runForWholeFile() {
         return true;
