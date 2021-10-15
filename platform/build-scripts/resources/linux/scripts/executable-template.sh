@@ -99,18 +99,8 @@ USER_VM_OPTIONS_FILE=""
 if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
   # 1. $<IDE_NAME>_VM_OPTIONS
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
-elif [ -r "${IDE_HOME}.vmoptions" ]; then
-  # 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
-  VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  if ! egrep -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
-    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  fi
-elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
-  # 3. <config_directory>/<bin_name>.vmoptions
-  VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
 else
-  # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
+  # 2. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
   if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
   else
@@ -119,20 +109,27 @@ else
       VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
     fi
   fi
-  if [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions" ]; then
-    if [ -n "$VM_OPTIONS_FILE" ]; then
-      VM_OPTIONS="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
-    else
-      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
-    fi
+  # ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
+  if [ -r "${IDE_HOME}.vmoptions" ]; then
+    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
+    USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
   fi
 fi
 
 VM_OPTIONS=""
-if [ -n "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
+USER_GC=""
+if [ -n "$USER_VM_OPTIONS_FILE" ]; then
+  egrep -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
+fi
+if [ -n "$VM_OPTIONS_FILE" -o -n "$USER_VM_OPTIONS_FILE" ]; then
+  if [ -z "$USER_GC" -o -z "$VM_OPTIONS_FILE" ]; then
+    VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
+  else
+    VM_OPTIONS=$({ egrep -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | egrep -v -e "^#.*")
+  fi
 else
-  message "Cannot find VM options file"
+  message "Cannot find a VM options file"
 fi
 
 __class_path__
