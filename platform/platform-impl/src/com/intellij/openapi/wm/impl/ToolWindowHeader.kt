@@ -32,6 +32,8 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -43,7 +45,7 @@ abstract class ToolWindowHeader internal constructor(
   private val gearProducer: Supplier<ActionGroup>
 ) :
   JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fill(), ConstraintParser.parseColumnConstraints("[grow][pref!]"))),
-  UISettingsListener, DataProvider {
+  UISettingsListener, DataProvider, PropertyChangeListener {
   private var image: BufferedImage? = null
   private var activeImage: BufferedImage? = null
   private var imageType: ToolWindowType? = null
@@ -59,7 +61,7 @@ abstract class ToolWindowHeader internal constructor(
     AccessibleContextUtil.setName(this, IdeBundle.message("toolwindow.header.accessible.name"))
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
-    westPanel.add(contentUi.tabComponent, CC().grow().pushX())
+    westPanel.add(contentUi.tabComponent, CC().growY())
     MouseDragHelper.setComponentDraggable(westPanel, true)
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
@@ -152,6 +154,24 @@ abstract class ToolWindowHeader internal constructor(
         }
       }
     )
+  }
+
+  override fun propertyChange(evt: PropertyChangeEvent?) {
+    if (UIUtil.isClientPropertyTrue(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS))
+      westPanel.add(contentUi.tabComponent, CC().grow().pushX())
+    else
+      westPanel.add(contentUi.tabComponent, CC().growY())
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    toolWindow.component.addPropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
+    propertyChange(null)
+  }
+
+  override fun removeNotify() {
+    toolWindow.component.removePropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
+    super.removeNotify()
   }
 
   fun getToolbar(): ActionToolbar? {
