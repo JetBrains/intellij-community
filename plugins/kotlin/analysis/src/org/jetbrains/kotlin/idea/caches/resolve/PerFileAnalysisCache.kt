@@ -471,10 +471,9 @@ private object KotlinResolveDataProvider {
                 return AnalysisResult.success(bindingContext, moduleDescriptor)
             }
 
-            val trace = bindingTrace ?: DelegatingBindingTrace(
+            val trace = bindingTrace ?: BindingTraceForBodyResolve(
                 resolveSession.bindingContext,
-                "Trace for resolution of $analyzableElement",
-                allowSliceRewrite = true
+                "Trace for resolution of $analyzableElement"
             )
 
             val moduleInfo = analyzableElement.containingKtFile.getModuleInfo()
