@@ -33,7 +33,7 @@ class MigrationDialogUi(map: MigrationMap?) {
         .component
     }
 
-    row(JavaRefactoringBundle.message("migration.dialog.link.delete")) {
+    row(JavaRefactoringBundle.message("migration.dialog.scope.label")) {
       modulesCombo = cell(ModulesComboBox())
         .horizontalAlign(HorizontalAlign.FILL)
         .component
