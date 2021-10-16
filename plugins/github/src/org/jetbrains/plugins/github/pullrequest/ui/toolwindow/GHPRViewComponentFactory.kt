@@ -316,7 +316,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         diffBridge.filesTree = tree
         tree?.showPullRequestProgress(
           uiDisposable,
-          dataContext.repositoryDataService.remoteCoordinates.repository, dataProvider.reviewData
+          dataContext.repositoryDataService.remoteCoordinates.repository, dataProvider.reviewData, dataProvider.viewedStateData
         )
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->

@@ -12,14 +12,18 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
+import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRViewedStateDataProvider
 
 internal fun ChangesTree.showPullRequestProgress(
   parent: Disposable,
   repository: GitRepository,
-  reviewData: GHPRReviewDataProvider
+  reviewData: GHPRReviewDataProvider,
+  viewedStateData: GHPRViewedStateDataProvider
 ) {
-  val model = GHPRProgressTreeModel(repository, reviewData)
+  val model = GHPRProgressTreeModel(repository, reviewData, viewedStateData)
   Disposer.register(parent, model)
 
   setupCodeReviewProgressModel(parent, model)
@@ -27,15 +31,20 @@ internal fun ChangesTree.showPullRequestProgress(
 
 private class GHPRProgressTreeModel(
   private val repository: GitRepository,
-  private val reviewData: GHPRReviewDataProvider
+  private val reviewData: GHPRReviewDataProvider,
+  private val viewedStateData: GHPRViewedStateDataProvider
 ) : CodeReviewProgressTreeModel(),
     Disposable {
 
   private var unresolvedThreadsCount: Map<String, Int> = emptyMap()
+  private var filesViewedState: Map<String, GHPullRequestFileViewedState> = emptyMap()
 
   init {
     loadThreads()
     reviewData.addReviewThreadsListener(this) { loadThreads() }
+
+    loadViewedState()
+    viewedStateData.addViewedStateListener(this) { loadViewedState() }
   }
 
   private fun loadThreads() {
@@ -47,9 +56,24 @@ private class GHPRProgressTreeModel(
     }
   }
 
+  private fun loadViewedState() {
+    viewedStateData.loadViewedState().handleOnEdt(this) { viewedState, _ ->
+      viewedState ?: return@handleOnEdt // error
+
+      filesViewedState = viewedState
+      fireModelChanged()
+    }
+  }
+
   override fun dispose() = Unit
 
-  override fun isRead(node: ChangesBrowserNode<*>): Boolean = true
+  override fun isRead(node: ChangesBrowserNode<*>): Boolean {
+    val change = node.userObject as? Change ?: return true
+    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(change))
+
+    val viewedState = filesViewedState[repositoryRelativePath] ?: return true
+    return viewedState.isViewed()
+  }
 
   override fun getUnresolvedDiscussionsCount(node: ChangesBrowserNode<*>): Int {
     val change = node.userObject as? Change ?: return 0
