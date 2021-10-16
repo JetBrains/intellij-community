@@ -159,7 +159,6 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return ktHost;
     }
 
-
     private fun findInjectionInfo(place: KtElement, originalHost: Boolean = true): InjectionInfo? {
         return injectWithExplicitCodeInstruction(place)
             ?: injectWithCall(place)
@@ -218,7 +217,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
             val resolvedTo = reference.resolve()
             if (resolvedTo is KtFunction) {
-                val injectionInfo = findInjection(resolvedTo.receiverTypeReference, kotlinInjections)
+                val injectionInfo = findInjection(resolvedTo.receiverTypeReference, qualifiedExpression, kotlinInjections)
                 if (injectionInfo != null) {
                     return injectionInfo
                 }
@@ -320,21 +319,22 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
                 val method = psiClass.findMethodsByName(argumentName, false).singleOrNull() ?: return null
                 return findInjection(
                     method,
+                    argument.getArgumentExpression(),
                     Configuration.getProjectInstance(host.project).getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
                 )
             }
             else -> return null
         }
-
     }
 
     private fun injectionForJavaMethod(argument: KtValueArgument, javaMethod: PsiMethod): InjectionInfo? {
         val argumentIndex = (argument.parent as KtValueArgumentList).arguments.indexOf(argument)
         val psiParameter = javaMethod.parameterList.parameters.getOrNull(argumentIndex) ?: return null
 
-        val injectionInfo = findInjection(psiParameter,
-                                          Configuration.getProjectInstance(argument.project)
-                                              .getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
+        val injectionInfo = findInjection(
+            psiParameter,
+            argument.getArgumentExpression(),
+            Configuration.getProjectInstance(argument.project).getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
         )
         if (injectionInfo != null) {
             return injectionInfo
@@ -362,7 +362,10 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         } else {
             ktFunction.valueParameters.getOrNull(argumentIndex)
         } ?: return null
-        val patternInjection = findInjection(ktParameter, Configuration.getProjectInstance(argument.project).getInjections(KOTLIN_SUPPORT_ID))
+        val patternInjection = findInjection(
+            ktParameter, argument.getArgumentExpression(),
+            Configuration.getProjectInstance(argument.project).getInjections(KOTLIN_SUPPORT_ID)
+        )
         if (patternInjection != null) {
             return patternInjection
         }
@@ -393,9 +396,9 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return InjectionInfo(languageId, prefix, suffix)
     }
 
-    private fun findInjection(element: PsiElement?, injections: List<BaseInjection>): InjectionInfo? {
+    private fun findInjection(patternElement: PsiElement?, target: PsiElement?, injections: List<BaseInjection>): InjectionInfo? {
         for (injection in injections) {
-            if (injection.acceptsPsiElement(element)) {
+            if (injection.acceptsPsiElement(patternElement, target)) {
                 return InjectionInfo(injection.injectedLanguageId, injection.prefix, injection.suffix)
             }
         }
@@ -407,7 +410,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return Configuration.getProjectInstance(project).advancedConfiguration.dfaOption == Configuration.DfaOption.OFF
     }
 
-    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo? {
+    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo {
         val id = AnnotationUtilEx.calcAnnotationValue(annotations, "value")
         val prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix")
         val suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix")
@@ -459,7 +462,6 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         place.elementPattern.condition.conditions.forEach { collect(it) }
         return classNames
     }
-
 }
 
 internal fun isSupportedElement(context: KtElement): Boolean {

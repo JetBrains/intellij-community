@@ -170,10 +170,10 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             if (method != null) {
               PsiParameter[] parameters = method.getParameterList().getParameters();
               if (index < parameters.length) {
-                process(parameters[index], method, index);
+                process(expression, parameters[index], method, index);
               }
               else if (method.isVarArgs()) {
-                process(parameters[parameters.length - 1], method, parameters.length - 1);
+                process(expression, parameters[parameters.length - 1], method, parameters.length - 1);
               }
             }
           }
@@ -183,7 +183,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         @Override
         public boolean visitMethodReturnStatement(PsiElement source, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
-            process(method, method, -1);
+            process(source, method, method, -1);
           }
           return false;
         }
@@ -217,7 +217,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             myShouldStop = true;
           }
           else {
-            process(variable, null, -1);
+            process(variable.getInitializer(), variable, null, -1);
           }
           return false;
         }
@@ -230,7 +230,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             PsiReference reference = nameValuePair.getReference();
             PsiElement element = reference == null ? null : reference.resolve();
             if (element instanceof PsiMethod) {
-              process((PsiMethod)element, (PsiMethod)element, -1);
+              process(nameValuePair.getValue(), (PsiMethod)element, (PsiMethod)element, -1);
             }
           }
           return false;
@@ -250,7 +250,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
               if (!(parameterList == null || parameterList != e.getParent()) &&
                   areThereInjectionsWithName(method.getName(), false)) {
                 int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
-                process((PsiModifierListOwner)e, method, parameterIndex);
+                process(expression, (PsiModifierListOwner)e, method, parameterIndex);
               }
             }
             visitVariable((PsiVariable)e);
@@ -284,12 +284,15 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       return false;
     }
 
-    private void process(PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+    private void process(@Nullable PsiElement target,
+                         PsiModifierListOwner owner,
+                         PsiMethod method,
+                         int paramIndex) {
       if (!processAnnotationInjections(owner)) {
         myShouldStop = true;
       }
       for (BaseInjection injection : myConfiguration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
-        if (injection.acceptsPsiElement(owner)) {
+        if (injection.acceptsPsiElement(owner, target)) {
           if (!processXmlInjections(injection, owner, method, paramIndex)) {
             myShouldStop = true;
             break;
