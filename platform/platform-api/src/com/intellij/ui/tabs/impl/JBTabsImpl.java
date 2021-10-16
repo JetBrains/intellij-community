@@ -1278,6 +1278,7 @@ public class JBTabsImpl extends JComponent
       return ActionCallback.REJECTED;
     }
 
+    myMouseInsideTabsArea = false;//temporary state to make selection fully visible (scrolled in view)
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
