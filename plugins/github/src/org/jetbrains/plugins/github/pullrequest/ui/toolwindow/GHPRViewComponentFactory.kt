@@ -47,6 +47,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
+import org.jetbrains.plugins.github.pullrequest.ui.changes.showPullRequestProgress
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
@@ -310,7 +311,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     GithubBundle.message("cannot.load.changes"),
                                                     changesLoadingErrorHandler)
       .withContentListener {
-        diffBridge.filesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
+        val tree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
+
+        diffBridge.filesTree = tree
+        tree?.showPullRequestProgress(
+          uiDisposable,
+          dataContext.repositoryDataService.remoteCoordinates.repository, dataProvider.reviewData
+        )
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
         createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"))
