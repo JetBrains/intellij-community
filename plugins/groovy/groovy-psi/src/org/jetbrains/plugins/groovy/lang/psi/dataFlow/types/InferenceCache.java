@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Pair;
@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.LazyKt.lazyPub;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
@@ -70,14 +69,14 @@ final class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    return getInferredType(descriptor, instruction, mixinOnly, emptyMap());
+    return getInferredType(descriptor, instruction, mixinOnly, null);
   }
 
   @Nullable
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly,
-                          @NotNull Map<VariableDescriptor, DFAType> initialState) {
+                          @Nullable Map<VariableDescriptor, DFAType> initialState) {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
@@ -113,7 +112,7 @@ final class InferenceCache {
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
                                             @NotNull DFAFlowInfo flowInfo,
-                                            @NotNull Map<VariableDescriptor, DFAType> initialTypes) {
+                                            @Nullable Map<VariableDescriptor, DFAType> initialTypes) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager());
     final TypeDfaState initialState = computeInitialState(flowInfo, new InitialTypeProvider(owner, initialTypes));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager(), initialState);
