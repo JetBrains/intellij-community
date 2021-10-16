@@ -218,8 +218,12 @@ class ProjectCreationFeedbackDialog(
           })
         })
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
-    }.also {
-      it.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+    }.also { dialog ->
+      dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+      checkBoxFrameworkProperty.afterChange {
+        pack()
+        repaint()
+      }
     }
   }
 
