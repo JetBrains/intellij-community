@@ -15,9 +15,11 @@ interface LanguageInjectionCondition {
   fun getId(): String
 
   /**
-   * @return false to prevent injection to context
+   * @param injection settings including language
+   * @param target place where injection is detected by element pattern, often it is injection host or variable containing actual code
+   * @return false to prevent injection for target
    */
-  fun isApplicable(injection: Injection, context: PsiElement): Boolean
+  fun isApplicable(injection: Injection, target: PsiElement): Boolean
 
   companion object {
     @JvmField
