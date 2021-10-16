@@ -22,4 +22,14 @@ final class ProjectLibraryEntry extends DistributionFileEntry implements Distrib
     this.libraryFile = libraryFile
     this.fileSize = fileSize
   }
+
+
+  @Override
+  String toString() {
+    return "ProjectLibraryEntry(" +
+           "libraryName='" + libraryName + '\'' +
+           ", libraryFile=" + libraryFile +
+           ", fileSize=" + fileSize +
+           ')'
+  }
 }
