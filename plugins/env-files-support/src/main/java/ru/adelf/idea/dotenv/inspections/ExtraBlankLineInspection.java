@@ -1,14 +1,17 @@
 package ru.adelf.idea.dotenv.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 
 import java.util.regex.Matcher;
@@ -51,10 +54,38 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
                 count++;
 
             if (count > 2) {
-                problemsHolder.registerProblem(whiteSpace, "Only one extra line allowed between properties");
+                problemsHolder.registerProblem(whiteSpace,
+                        "Only one extra line allowed between properties",
+                        new RemoveExtraBlankLineQuickFix());
             }
         });
 
         return problemsHolder;
+    }
+
+    private static class RemoveExtraBlankLineQuickFix implements LocalQuickFix {
+
+        @NotNull
+        @Override
+        public String getName() {
+            return "Remove extra blank line";
+        }
+
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+            try {
+                PsiElement psiElement = descriptor.getPsiElement();
+
+                PsiElement newPsiElement = DotEnvFactory.createFromText(project, ElementType.WHITE_SPACE, "\n\n");
+
+                psiElement.replace(newPsiElement);
+            } catch (IncorrectOperationException e) {
+                Logger.getInstance(ExtraBlankLineInspection.class).error(e);
+            }
+        }
+
+        @NotNull
+        public String getFamilyName() {
+            return getName();
+        }
     }
 }
