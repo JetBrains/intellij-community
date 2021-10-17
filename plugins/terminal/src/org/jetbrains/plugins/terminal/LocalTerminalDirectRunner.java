@@ -4,10 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -181,7 +178,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         .setEnvironment(envs)
         .setDirectory(workingDir)
         .setInitialColumns(options.getInitialColumns())
-        .setInitialRows(options.getInitialRows());
+        .setInitialRows(options.getInitialRows())
+        .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty());
       PtyProcess process = builder.start();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
