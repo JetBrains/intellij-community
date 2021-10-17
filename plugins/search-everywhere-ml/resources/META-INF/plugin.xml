@@ -61,6 +61,8 @@
 
     <rankingModelProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
+    <rankingModelProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsExperimentalRankingModelProvider"/>
   </extensions>
 
   <applicationListeners>

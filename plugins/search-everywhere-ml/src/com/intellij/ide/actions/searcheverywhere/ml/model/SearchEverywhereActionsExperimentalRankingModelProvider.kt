@@ -5,13 +5,13 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
-import com.intellij.searchEverywhere.model.PredictionModel
+import com.intellij.searchEverywhere.model.actions.exp.PredictionModel
 
 
-internal class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLRankingModelProvider() {
-  private val resourceDirectory = "features"
+internal class SearchEverywhereActionsExperimentalRankingModelProvider : SearchEverywhereMLRankingModelProvider() {
+  private val resourceDirectory = "actions_features_exp"
 
-  override val isExperimental: Boolean = false
+  override val isExperimental: Boolean = true
 
   override val supportedContributor = ActionSearchEverywhereContributor::class.java
 
