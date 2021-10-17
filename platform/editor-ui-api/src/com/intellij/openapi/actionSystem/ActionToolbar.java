@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
@@ -152,6 +153,9 @@ public interface ActionToolbar {
    * Enables showing titles of separators as labels in the toolbar (off by default).
    */
   default void setShowSeparatorTitles(boolean showSeparatorTitles) {
+  }
+
+  default void addListener(@NotNull ActionToolbarListener listener, @NotNull Disposable parentDisposable) {
   }
 
 

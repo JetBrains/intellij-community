@@ -181,6 +181,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
+  private static @NotNull ActionManagerListener managerPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC);
+  }
+
   static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
     AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
@@ -418,7 +422,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
   }
 
   private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl module, @NotNull KeymapManagerEx keymapManager) {
