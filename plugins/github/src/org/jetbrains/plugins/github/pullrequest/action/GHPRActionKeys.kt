@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.vcs.FilePath
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -13,6 +14,8 @@ object GHPRActionKeys {
 
   @JvmStatic
   val PULL_REQUEST_DATA_PROVIDER = DataKey.create<GHPRDataProvider>("org.jetbrains.plugins.github.pullrequest.data.provider")
+
+  internal val PULL_REQUEST_FILES = DataKey.create<Iterable<FilePath>>("org.jetbrains.plugins.github.pullrequest.files")
 
   @JvmStatic
   val SELECTED_PULL_REQUEST = DataKey.create<GHPullRequestShort>("org.jetbrains.plugins.github.pullrequest.list.selected")

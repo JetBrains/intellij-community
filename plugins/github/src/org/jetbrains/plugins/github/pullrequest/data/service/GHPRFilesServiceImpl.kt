@@ -36,4 +36,20 @@ class GHPRFilesServiceImpl(
         loader.loadAll(indicator)
       }
       .logError(LOG, "Error occurred while loading pull request files")
+
+  override fun updateViewedState(
+    progressIndicator: ProgressIndicator,
+    pullRequestId: GHPRIdentifier,
+    path: String,
+    isViewed: Boolean
+  ): CompletableFuture<Unit> =
+    progressManager
+      .submitIOTask(progressIndicator) { indicator ->
+        val request =
+          if (isViewed) GHGQLRequests.PullRequest.markFileAsViewed(repository.serverPath, pullRequestId.id, path)
+          else GHGQLRequests.PullRequest.unmarkFileAsViewed(repository.serverPath, pullRequestId.id, path)
+
+        requestExecutor.execute(indicator, request)
+      }
+      .logError(LOG, "Error occurred while updating file viewed state")
 }

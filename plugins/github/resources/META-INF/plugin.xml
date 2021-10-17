@@ -165,6 +165,10 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="Github.PullRequest.Changes.Reload"/>
+      <action id="Github.PullRequest.Changes.MarkViewed"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
+      <action id="Github.PullRequest.Changes.MarkNotViewed"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesNotViewedAction"/>
     </group>
 
     <group id="Github.PullRequest.Timeline.Popup">

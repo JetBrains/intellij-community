@@ -19,6 +19,8 @@ object GHGQLQueries {
   const val pullRequestCommits = "graphql/query/pullRequestCommits.graphql"
   const val pullRequestMergeabilityData = "graphql/query/findPullRequestMergeability.graphql"
   const val pullRequestFiles = "graphql/query/pullRequestFiles.graphql"
+  const val markFileAsViewed = "graphql/query/markFileAsViewed.graphql"
+  const val unmarkFileAsViewed = "graphql/query/unmarkFileAsViewed.graphql"
   const val createReview = "graphql/query/createReview.graphql"
   const val submitReview = "graphql/query/submitReview.graphql"
   const val updateReview = "graphql/query/updateReview.graphql"

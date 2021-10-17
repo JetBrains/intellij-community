@@ -14,4 +14,12 @@ interface GHPRFilesService {
     progressIndicator: ProgressIndicator,
     pullRequestId: GHPRIdentifier
   ): CompletableFuture<List<GHPullRequestChangedFile>>
+
+  @CalledInAny
+  fun updateViewedState(
+    progressIndicator: ProgressIndicator,
+    pullRequestId: GHPRIdentifier,
+    path: String,
+    isViewed: Boolean
+  ): CompletableFuture<Unit>
 }

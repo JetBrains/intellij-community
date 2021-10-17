@@ -220,6 +220,20 @@ object GHGQLRequests {
     private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile>) :
       GHConnection<GHPullRequestChangedFile>(pageInfo, nodes)
 
+    fun markFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
+      GQLQuery.TraversedParsed(
+        server.toGraphQLUrl(), GHGQLQueries.markFileAsViewed,
+        mapOf("pullRequestId" to pullRequestId, "path" to path),
+        Unit::class.java
+      )
+
+    fun unmarkFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
+      GQLQuery.TraversedParsed(
+        server.toGraphQLUrl(), GHGQLQueries.unmarkFileAsViewed,
+        mapOf("pullRequestId" to pullRequestId, "path" to path),
+        Unit::class.java
+      )
+
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,
                 pagination: GHGQLRequestPagination? = null)

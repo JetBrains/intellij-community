@@ -12,6 +12,12 @@ interface GHPRViewedStateDataProvider {
   fun loadViewedState(): CompletableFuture<Map<String, GHPullRequestFileViewedState>>
 
   @RequiresEdt
+  fun getViewedState(): Map<String, GHPullRequestFileViewedState>
+
+  @RequiresEdt
+  fun updateViewedState(path: String, isViewed: Boolean)
+
+  @RequiresEdt
   fun addViewedStateListener(parent: Disposable, listener: () -> Unit)
 
   @RequiresEdt

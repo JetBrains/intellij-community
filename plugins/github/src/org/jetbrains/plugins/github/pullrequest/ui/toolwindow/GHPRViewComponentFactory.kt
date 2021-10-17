@@ -12,10 +12,13 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
@@ -24,6 +27,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -37,6 +41,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUEST_FILES
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -320,7 +325,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         )
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"))
+        val getCustomData = { tree: ChangesTree, dataId: String ->
+          if (PULL_REQUEST_FILES.`is`(dataId)) tree.getPullRequestFiles()
+          else null
+        }
+
+        createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"), getCustomData)
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
@@ -362,9 +372,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return model
   }
 
-  private fun createChangesTree(parentPanel: JPanel,
-                                model: SingleValueModel<List<Change>>,
-                                emptyTextText: String): JComponent {
+  private fun createChangesTree(
+    parentPanel: JPanel,
+    model: SingleValueModel<List<Change>>,
+    emptyTextText: String,
+    getCustomData: ChangesTree.(String) -> Any? = { null }
+  ): JComponent {
     val editorDiffPreview = object : DiffPreview {
       override fun updateAvailability(event: AnActionEvent) {
         GHPRShowDiffActionProvider.updateAvailability(event)
@@ -392,10 +405,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
-    DataManager.registerDataProvider(parentPanel) {
-      if (EDITOR_TAB_DIFF_PREVIEW.`is`(it)) return@registerDataProvider editorDiffPreview
-
-      if (tree.isShowing) tree.getData(it) else null
+    DataManager.registerDataProvider(parentPanel) { dataId ->
+      when {
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> editorDiffPreview
+        tree.isShowing -> tree.getCustomData(dataId) ?: tree.getData(dataId)
+        else -> null
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
@@ -431,3 +446,11 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 }
+
+private fun ChangesTree.getPullRequestFiles(): Iterable<FilePath> =
+  JBIterable.create {
+    VcsTreeModelData.selected(this)
+      .userObjectsStream(Change::class.java)
+      .map { ChangesUtil.getFilePath(it) }
+      .iterator()
+  }
