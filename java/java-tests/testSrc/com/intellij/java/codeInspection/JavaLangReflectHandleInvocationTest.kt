@@ -25,9 +25,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author Pavel.Dolgov
  */
-
-class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_7,
-                                                                                    LightJavaCodeInsightFixtureTestCase.JAVA_8) {
+class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_9,
+                                                                                     LightJavaCodeInsightFixtureTestCase.JAVA_9) {
   fun testVirtual() = doTest()
   fun testStatic() = doTest()
   fun testConstructor() = doTest()
@@ -37,10 +36,7 @@ class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestB
 
   fun testStaticGetter() = doTest()
   fun testStaticSetter() = doTest()
-}
 
-class Java9LangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_9,
-                                                                                     LightJavaCodeInsightFixtureTestCase.JAVA_9) {
   fun testVarHandle() = doTest()
   fun testStaticVarHandle() = doTest()
   fun testArrayVarHandle() = doTest()

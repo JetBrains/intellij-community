@@ -1,6 +1,11 @@
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 class Main {
   void fooInt() throws Throwable {
@@ -122,10 +127,47 @@ class Main {
     CharSequence superclassResult3 = (<warning descr="Should be cast to 'java.lang.String'">CharSequence</warning>) handle.invokeExact(instance, "c");
   }
 
+  void fooVariousTypesVariousMethodTypes() throws Throwable {
+    MethodHandles.Lookup lookup = MethodHandles.lookup();
+    Test instance = new Test();
+
+    MethodType methodTypeFromArraysAsList = MethodType.methodType(long.class, Arrays.asList(int.class, long.class));
+    MethodHandle methodHandle0 = lookup.findVirtual(Test.class, "foo", methodTypeFromArraysAsList);
+    methodHandle0.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodType methodTypeFromArraysAsListWithClassArray = MethodType.methodType(long.class, Arrays.asList(new Class<?>[]{int.class, long.class}));
+    MethodHandle methodHandle1 = lookup.findVirtual(Test.class, "foo", methodTypeFromArraysAsListWithClassArray);
+    methodHandle1.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodType methodTypeFromListOf = MethodType.methodType(long.class, List.of(int.class, long.class));
+    MethodHandle methodHandle2 = lookup.findVirtual(Test.class, "foo", methodTypeFromListOf);
+    methodHandle2.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodType methodTypeFromListOfWithClassArray = MethodType.methodType(long.class, List.of(new Class[]{int.class, long.class}));
+    MethodHandle methodHandle3 = lookup.findVirtual(Test.class, "foo", methodTypeFromListOfWithClassArray);
+    methodHandle3.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodHandle methodHandle4 = lookup.findVirtual(Test.class, "foo", MethodType.methodType(long.class, MethodType.methodType(Object.class, int.class, long.class)));
+    methodHandle4.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodHandle methodHandle5 = lookup.findVirtual(Test.class, "foo", MethodType.methodType(long.class, new Class<?>[]{int.class, long.class}));
+    methodHandle5.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodHandle methodHandle6 = lookup.findVirtual(Test.class, "foo", MethodType.methodType(long.class, new Class[]{int.class, long.class}));
+    methodHandle6.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+
+    MethodType nestedMethodType7 = MethodType.methodType(long.class, new Class[]{int.class, long.class});
+    MethodHandle methodHandle7 = lookup.findVirtual(Test.class, "foo", MethodType.methodType(long.class, nestedMethodType7));
+    methodHandle7.invoke<warning descr="3 arguments are expected">(instance, 1, 2, 3)</warning>;
+  }
+
   private static CharSequence charSequence() { return "abc"; }
 }
 
 class Test {
   public int foo(int n) {return n;}
   public String foo(String s) {return s;}
+  public long foo(int i, long l) {
+    return l + i;
+  }
 }

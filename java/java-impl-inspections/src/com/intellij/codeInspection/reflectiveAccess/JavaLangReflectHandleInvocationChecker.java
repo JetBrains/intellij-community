@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +36,8 @@ final class JavaLangReflectHandleInvocationChecker {
   private static final String JAVA_LANG_INVOKE_METHOD_HANDLE = "java.lang.invoke.MethodHandle";
 
   private static final Set<String> METHOD_HANDLE_INVOKE_NAMES = ContainerUtil.set(INVOKE, INVOKE_EXACT, INVOKE_WITH_ARGUMENTS);
+  private static final RecursionGuard<PsiExpression> ourGuard =
+    RecursionManager.createGuard(JavaLangReflectHandleInvocationChecker.class.getName());
 
   static boolean checkMethodHandleInvocation(@NotNull PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     final String referenceName = methodCall.getMethodExpression().getReferenceName();
@@ -251,6 +255,32 @@ final class JavaLangReflectHandleInvocationChecker {
 
       if (isCallToMethod(typeDefinitionCall, JAVA_LANG_INVOKE_METHOD_TYPE, METHOD_TYPE)) {
         final PsiExpression[] arguments = typeDefinitionCall.getArgumentList().getExpressions();
+        if (arguments.length == 2) {
+          final PsiExpression returnType = findDefinition(arguments[0]);
+          final PsiExpression secondArgument = findDefinition(arguments[1]);
+          final List<PsiExpression> components = getArrayOrListComponents(secondArgument);
+          if (components != null) {
+            // Call to MethodType.methodType(Class<?>, List<Class<?>>) or MethodType.methodType(Class<?>, Class<?>[])
+            final List<PsiExpression> signature = ContainerUtil.prepend(components, returnType);
+            return ContainerUtil.map(signature, parameter -> (() -> getReflectiveType(parameter)));
+          }
+          if (secondArgument instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression maybeNestedMethodTypeCall = (PsiMethodCallExpression)secondArgument;
+            if (isCallToMethod(maybeNestedMethodTypeCall, JAVA_LANG_INVOKE_METHOD_TYPE, METHOD_TYPE)) {
+              // Call to MethodType.methodType(Class<?>, MethodType)
+              final List<Supplier<ReflectiveType>> nestedSignature =
+                ourGuard.doPreventingRecursion(methodTypeExpression, false, () -> getLazyMethodSignature(maybeNestedMethodTypeCall));
+              if (nestedSignature != null) {
+                final List<Supplier<ReflectiveType>> signature = new ArrayList<>(nestedSignature);
+                if (!signature.isEmpty()) {
+                  signature.set(0, () -> getReflectiveType(returnType));
+                }
+                return signature;
+              }
+            }
+          }
+        }
+
         if (arguments.length != 0) {
           return ContainerUtil.map(arguments, argument -> (() -> getReflectiveType(argument)));
         }
