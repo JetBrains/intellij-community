@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,17 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     if (defaultValueToIgnore == value.booleanValue()) {
       return;
     }
+    node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
+  }
+
+  /**
+   * Writes an option field of any type that can be converted to a String unconditionally. The field can't be null.
+   * @param node  the xml element node the field is written to.
+   * @param property  the name of the field.
+   */
+  protected void writeOption(@NotNull Element node, @NotNull @NonNls String property) {
+    final Object value = ReflectionUtil.getField(this.getClass(), this, null, property);
+    assert value != null : "field " + property + " not found";
     node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
   }
 
