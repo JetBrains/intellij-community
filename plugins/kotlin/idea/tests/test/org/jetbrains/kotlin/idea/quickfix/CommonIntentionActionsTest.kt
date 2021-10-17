@@ -681,6 +681,109 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testGetMethodHasParameters() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "getBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.getTypeByName("java.lang.String", project, project.allScope())),
+                    parameters = expectedParams(PsiType.getTypeByName("java.lang.String", project, project.allScope()))
+                )
+            ).findWithText("Add method 'getBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun getBaz(param0: String): String {
+        |        TODO("Not yet implemented")
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+    fun testSetMethodHasStringReturnType() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "setBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.getTypeByName("java.lang.String", project, project.allScope())),
+                    parameters = expectedParams(PsiType.getTypeByName("java.lang.String", project, project.allScope()))
+                )
+            ).findWithText("Add method 'setBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun setBaz(param0: String): String {
+        |        TODO("Not yet implemented")
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+
+    fun testSetMethodHasTwoParameters() {
+        myFixture.configureByText(
+            "foo.kt", """
+        |class Foo<caret> {
+        |    fun bar() {}
+        |}
+        """.trim().trimMargin()
+        )
+
+        myFixture.launchAction(
+            createMethodActions(
+                myFixture.atCaret(),
+                SimpleMethodRequest(
+                    project,
+                    methodName = "setBaz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiType.VOID),
+                    parameters = expectedParams(
+                        PsiType.getTypeByName("java.lang.String", project, project.allScope()),
+                        PsiType.getTypeByName("java.lang.String", project, project.allScope())
+                    )
+                )
+            ).findWithText("Add method 'setBaz' to 'Foo'")
+        )
+        myFixture.checkResult(
+            """
+        |class Foo {
+        |    fun bar() {}
+        |    fun setBaz(param0: String, param1: String) {
+        |
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
 
     private fun expectedTypes(vararg psiTypes: PsiType) = psiTypes.map { expectedType(it) }
 

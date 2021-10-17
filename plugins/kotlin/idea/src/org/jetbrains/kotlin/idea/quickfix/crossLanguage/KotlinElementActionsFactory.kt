@@ -288,26 +288,35 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         val methodName = request.methodName
         val targetClassName = targetClass.name
-        val action = AddMethodCreateCallableFromUsageFix(
+        val actions = AddMethodCreateCallableFromUsageFix(
             request = request,
             modifierList = modifierBuilder.modifierList,
             familyName = KotlinBundle.message("add.method"),
             providedText = KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()),
             targetContainer = targetContainer
-        )
+        ).let { listOf(it) }
 
-        val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName) ?: return listOf(action)
+        val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName) ?: return actions
 
-        val propertyType = (request.expectedParameters.singleOrNull()?.expectedTypes ?: request.returnType)
-            .firstOrNull { JvmPsiConversionHelper.getInstance(targetContainer.project).convertType(it.theType) != PsiType.VOID }
-            ?: return listOf(action)
+        val setterRequired = nameAndKind.second == PropertyKind.SETTER
+        val expectedParameters = request.expectedParameters
+        val returnTypes = request.returnType
+        val propertyType = if (setterRequired) {
+            val jvmPsiConversionHelper = JvmPsiConversionHelper.getInstance(targetContainer.project)
+            if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiType.VOID }) return actions
+            val expectedParameter = expectedParameters.singleOrNull() ?: return actions
+            expectedParameter.expectedTypes.firstOrNull()
+        } else {
+            if (expectedParameters.isNotEmpty()) return actions
+            returnTypes.firstOrNull()
+        } ?: return actions
 
         return createAddPropertyActions(
             targetContainer,
             request.modifiers,
             propertyType.theType,
             nameAndKind.first,
-            nameAndKind.second == PropertyKind.SETTER,
+            setterRequired,
             targetClass.name
         )
     }
