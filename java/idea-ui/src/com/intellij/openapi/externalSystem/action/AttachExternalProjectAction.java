@@ -42,6 +42,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
+
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
       presentation.setText(JavaUiBundle.messagePointer("action.attach.external.project.text", name));
@@ -49,6 +50,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     }
 
     presentation.setIcon(AllIcons.General.Add);
+    presentation.setEnabledAndVisible(externalSystemId != null);
   }
 
   @Override
