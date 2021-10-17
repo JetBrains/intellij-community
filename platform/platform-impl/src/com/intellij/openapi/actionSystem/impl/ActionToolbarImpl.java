@@ -29,6 +29,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -160,6 +161,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     super.setVisible(composite != null);
     if (isShowing()) repaint();
   });
+
+  private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -1237,6 +1240,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
+    myListeners.getMulticaster().actionsUpdated();
     if (forced || canUpdateActions(newVisibleActions)) {
       myForcedUpdateRequested = false;
       myCachedImage = null;
@@ -1371,6 +1375,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void setShowSeparatorTitles(boolean showSeparatorTitles) {
     myShowSeparatorTitles = showSeparatorTitles;
+  }
+
+  @Override
+  public void addListener(@NotNull ActionToolbarListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.addListener(listener, parentDisposable);
   }
 
   protected @NotNull DataContext getDataContext() {
