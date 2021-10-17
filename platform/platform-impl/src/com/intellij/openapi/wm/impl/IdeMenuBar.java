@@ -26,6 +26,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +85,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected IdeMenuBar() {
+    Menu.isEnabled(); // load native library
+
     if (FrameInfoHelper.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
       myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
@@ -398,10 +402,28 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     removeAll();
     boolean isDarkMenu = isDarkMenu();
+    List<MenuItem> newItems = Menu.isEnabled() ? new ArrayList<>() : null;
     for (AnAction action : myVisibleActions) {
-      add(createActionMenu(enableMnemonics, isDarkMenu, (ActionGroup)action));
+      Menu rootMenuPeer = null;
+      if (newItems != null) {
+        rootMenuPeer = new Menu(myPresentationFactory.getPresentation(action).getText(enableMnemonics));
+        newItems.add(rootMenuPeer);
+      }
+      ActionMenu actionMenu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, rootMenuPeer);
+
+      if(IdeFrameDecorator.isCustomDecorationActive()) {
+        actionMenu.setOpaque(false);
+        actionMenu.setFocusable(false);
+      }
+
+      add(actionMenu);
     }
     myPresentationFactory.resetNeedRebuild();
+
+    if (newItems != null) {
+      // TODO: ensure that newItems will be release (for example if refillMainMenu wasn't invoked because of exception)
+      Menu.refillMainMenu(newItems);
+    }
 
     updateGlobalMenuRoots();
     if (myClockPanel != null) {
@@ -421,18 +443,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   protected boolean isDarkMenu() {
     return SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
-  }
-
-  @NotNull
-  protected ActionMenu createActionMenu(boolean enableMnemonics, boolean isDarkMenu, ActionGroup action) {
-    ActionMenu actionMenu = new ActionMenu(null, ActionPlaces.MAIN_MENU, action, myPresentationFactory, enableMnemonics, isDarkMenu);
-
-    if(IdeFrameDecorator.isCustomDecorationActive()) {
-      actionMenu.setOpaque(false);
-      actionMenu.setFocusable(false);
-    }
-
-    return actionMenu;
   }
 
   @Override
