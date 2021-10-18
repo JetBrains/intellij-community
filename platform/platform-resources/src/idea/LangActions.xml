@@ -344,6 +344,8 @@
     </group>
     <action id="Documentation.ToggleShowInPopup"
             class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
+    <action id="Documentation.ToggleAutoShow"
+            class="com.intellij.lang.documentation.ide.actions.ToggleAutoShowAction"/>
     <action id="Documentation.TurnOffAutoUpdate"
             class="com.intellij.lang.documentation.ide.actions.TurnOffAutoUpdateAction"
             icon="AllIcons.Toolbar.Pin"

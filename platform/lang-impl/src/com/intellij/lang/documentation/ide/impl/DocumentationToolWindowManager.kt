@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
+import com.intellij.lang.documentation.ide.actions.TOGGLE_AUTO_SHOW_ACTION_ID
 import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_ID
 import com.intellij.lang.documentation.ide.actions.navigationActions
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
@@ -52,6 +53,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     toolWindow.setAdditionalGearActions(DefaultActionGroup(
       ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID),
       ToggleShowDocsOnHoverAction(),
+      ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID),
       AdjustFontSizeAction(), // TODO this action doesn't work because of wrong DataContext
     ))
     if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
