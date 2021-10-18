@@ -28,6 +28,7 @@ class ProcessServiceImpl: ProcessService {
       .setInitialRows(if (options.initialRows > 0) options.initialRows else null)
       .setConsole(options.consoleMode)
       .setCygwin(options.useCygwinLaunch && SystemInfo.isWindows)
+      .setUseWinConPty(options.useWinConPty)
       .setLogFile(if (app != null && app.isEAP) File(PathManager.getLogPath(), "pty.log") else null)
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
