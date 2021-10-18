@@ -30,8 +30,8 @@ public final class VfsPresentationUtil {
   }
 
   @Nullable
-  public static @NlsContexts.TabTitle String getOverriddenPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
-    return SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getOverriddenEditorTabTitle(project, file));
+  public static @NlsContexts.TabTitle String getCustomPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
+    return SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getCustomEditorTabTitle(project, file));
   }
 
   @NotNull
