@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.containers.ComparatorUtil.max
 import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Path
@@ -92,14 +93,14 @@ fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 
-class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, val locationToOffset: LocationToOffsetConverter) {
+class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, locationToOffset_: LocationToOffsetConverter) {
   companion object {
     private const val FILE_PROTOCOL = "file://"
     private const val PATH_GROUP = "path"
     private const val LINE_GROUP = "line"
     private const val COLUMN_GROUP = "column"
     private const val REVISION = "revision"
-    private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
+    private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
 
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
@@ -116,6 +117,10 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
         null
       }
     }
+  }
+
+  val locationToOffset: LocationToOffsetConverter = { locationInFile, editor ->
+    max(locationToOffset_(locationInFile, editor), 0)
   }
 
   enum class NavigationKeyPrefix(val prefix: String) {
