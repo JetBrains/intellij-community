@@ -235,8 +235,9 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return ktTypeReference.toPsiType(source, boxed)
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
-        return ktTypeReference.getType()?.toPsiType(lightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind, boxed = false)
+    override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
+        return ktTypeReference.getType()
+            ?.toPsiType(containingLightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind, boxed = false)
     }
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
@@ -297,10 +298,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ?.toPsiType(source, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
+    override fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
-            ?.toPsiType(lightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
+            ?.toPsiType(containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
     override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
