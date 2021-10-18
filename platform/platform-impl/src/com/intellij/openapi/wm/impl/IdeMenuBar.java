@@ -399,7 +399,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       if (newItems != null) {
         rootMenuPeer = new Menu(myPresentationFactory.getPresentation(action).getText(enableMnemonics));
         newItems.add(rootMenuPeer);
-      };
+      }
       ActionMenu actionMenu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, rootMenuPeer);
 
       if(IdeFrameDecorator.isCustomDecorationActive()) {

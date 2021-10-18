@@ -511,7 +511,6 @@ public final class MavenServerManager implements Disposable {
   public static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
     if (settings == null) {
       settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
-      ;
     }
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     MavenServerSettings result = new MavenServerSettings();
