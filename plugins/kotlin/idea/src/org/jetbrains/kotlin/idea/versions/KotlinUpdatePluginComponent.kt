@@ -47,7 +47,7 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
         // Build and update JarHandler
         val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return
         VfsUtilCore.visitChildrenRecursively(jarFile, object : VirtualFileVisitor<Any?>() {})
-        ((jarFile as NewVirtualFile)).markDirtyRecursively()
+        (jarFile as NewVirtualFile).markDirtyRecursively()
     }
 
     companion object {
