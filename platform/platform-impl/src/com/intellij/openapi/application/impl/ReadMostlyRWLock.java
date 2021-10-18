@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
@@ -98,7 +99,7 @@ final class ReadMostlyRWLock {
     if (status.readRequested) return null;
 
     if (!tryReadLock(status)) {
-      ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
       for (int iter = 0; ; iter++) {
         if (tryReadLock(status)) {
           break;
@@ -122,21 +123,6 @@ final class ReadMostlyRWLock {
 
     tryReadLock(status);
     return status;
-  }
-
-  // return true if write lock acquired successfully, false if there's at least one active reader and write lock couldn't be acquired
-  boolean startTryWrite() {
-    checkWriteThreadAccess();
-    assert !writeRequested;
-    assert !writeAcquired;
-
-    writeRequested = true;
-    if (areAllReadersIdle()) {
-      writeAcquired = true;
-      return true;
-    }
-    writeRequested = false;
-    return false;
   }
 
   void endRead(Reader status) {
