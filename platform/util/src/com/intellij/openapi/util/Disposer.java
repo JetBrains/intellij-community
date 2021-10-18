@@ -114,10 +114,21 @@ public final class Disposer {
   }
 
   /**
-   * <b>Note</b>: This method may return wrong result after dynamic plugin unload (see {@link #clearDisposalTraces}).<br/>
-   * If this method is intent to be used in such cases, consider to use own <b>myDisposed</b> flag instead.
-   *
    * @return true if {@code disposable} is disposed or being disposed (i.e. its {@link Disposable#dispose()} method is executing).
+   *
+   * <b>Note</b>: This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
+   * for example on dynamic plugin unload or major GC run.</br>
+   * Thus, it's not wise to rely on this method in your production-grade code. Please use something similar to this code instead:
+   * <pre> {@code class MyDisposable implements Disposable {
+   *   boolean isDisposed;
+   *   void dispose() {
+   *     isDisposed = true;
+   *   }
+   *   boolean isDisposed() {
+   *     return isDisposed;
+   *   }
+   * }}
+   * </pre>
    */
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.getDisposalInfo(disposable) != null;
