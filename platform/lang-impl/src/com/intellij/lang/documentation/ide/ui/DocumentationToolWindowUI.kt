@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation.ide.ui
 
-import com.intellij.lang.documentation.ide.actions.TURN_OFF_AUTO_UPDATE_ACTION_ID
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -35,7 +33,6 @@ internal class DocumentationToolWindowUI(
       content.icon = presentation.icon
       content.displayName = "* ${presentation.presentableText}"
     })
-    ActionManager.getInstance().getAction(TURN_OFF_AUTO_UPDATE_ACTION_ID).registerCustomShortcutSet(ui.scrollPane, this)
   }
 
   override fun dispose() {
