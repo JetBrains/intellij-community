@@ -67,6 +67,11 @@ public interface RefElement extends RefEntity {
   }
 
   /**
+   * Blocks until this element has been initialized.
+   */
+  default void waitForInitialized() {}
+
+  /**
    * Returns the collection of references from this element to other elements.
    *
    * @return the collection of outgoing references.

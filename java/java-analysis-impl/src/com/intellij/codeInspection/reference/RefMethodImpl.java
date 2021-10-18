@@ -297,7 +297,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public synchronized RefParameter @NotNull [] getParameters() {
-    LOG.assertTrue(isInitialized(), getName() + " not initialized");
+    LOG.assertTrue(isInitialized());
     return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
   }
 
@@ -512,6 +512,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void setReturnValueUsed(boolean value) {
+    LOG.assertTrue(isInitialized());
     if (checkFlag(IS_RETURN_VALUE_USED_MASK) == value) return;
     setFlag(value, IS_RETURN_VALUE_USED_MASK);
     for (RefMethod refSuper : getSuperMethods()) {
@@ -525,6 +526,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void updateReturnValueTemplate(UExpression expression) {
+    LOG.assertTrue(isInitialized());
     if (expression == null) return;
     synchronized (this) {
       if (myReturnValueTemplate == null) return;
@@ -573,7 +575,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   void updateParameterValues(List<UExpression> args, @Nullable PsiElement elementPlace) {
-    LOG.assertTrue(isInitialized(), getName() + " not initialized");
+    LOG.assertTrue(isInitialized());
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {

@@ -256,13 +256,14 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   public void setInitialized(final boolean initialized) {
+    setFlag(initialized, IS_INITIALIZED_MASK);
     if (initialized) {
       myInitSignal.countDown();
     }
-    setFlag(initialized, IS_INITIALIZED_MASK);
   }
 
-  public void waitForInitialized() {
+  @Override
+  public final void waitForInitialized() {
     try {
       myInitSignal.await();
     }

@@ -81,6 +81,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
                                if (target != null) {
                                  final RefElement refElement = refFrom.getRefManager().getReference(target.getSourcePsi());
+                                 if (refElement != null) refElement.waitForInitialized();
                                  refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
                                }
                                return null;
@@ -232,6 +233,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          boolean writing = isAccessedForWriting(node);
                          boolean reading = isAccessedForReading(node);
+                         if (refResolved != null) refResolved.waitForInitialized();
+                         refFrom.waitForInitialized();
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
                          if (refResolved instanceof RefMethodImpl) {
@@ -269,10 +272,13 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            aClass = ((PsiClass)aClass).getSourceElement();
                          }
                          if (aClass != null) {
-                           refFrom.addReference(refFrom.getRefManager().getReference(aClass), aClass, decl, false, true, null);
+                           final RefElement refWhat = refFrom.getRefManager().getReference(aClass);
+                           if (refWhat != null) refWhat.waitForInitialized();
+                           refFrom.addReference(refWhat, aClass, decl, false, true, null);
                          }
                          PsiElement functionalExpr = expression.getSourcePsi();
                          RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
+                         if (refFunctionalExpr != null) refFunctionalExpr.waitForInitialized();
                          refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
@@ -300,6 +306,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          PsiElement sourcePsi = uClass.getSourcePsi();
                          RefElement refWhat = refFrom.getRefManager().getReference(sourcePsi);
+                         if (refWhat != null) refWhat.waitForInitialized();
                          refFrom.addReference(refWhat, sourcePsi, decl, false, true, null);
                          return true;
                        }
@@ -318,6 +325,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            }
                          }
                          if (refMethod != null) {
+                           refMethod.waitForInitialized();
                            refMethod.updateReturnValueTemplate(node.getReturnExpression());
                          }
                          return false;
@@ -397,6 +405,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
         if (containingClass != null) {
           RefElement refContainingClass = refFrom.getRefManager().getReference(containingClass);
           if (refContainingClass != null) {
+            refContainingClass.waitForInitialized();
             refFrom.addReference(refContainingClass, containingClass, decl, false, true, node);
           }
         }
@@ -506,7 +515,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     RefEntity refParent = refElement.getOwner();
 
     while (refParent instanceof RefElement && !(refParent instanceof RefFile)) {
-      refElement = (RefElementImpl)refParent;
+      refElement = (RefElement)refParent;
       refParent = refParent.getOwner();
     }
 
@@ -528,6 +537,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   @Nullable
   public String getPackageName(RefEntity refEntity) {
     if (refEntity instanceof RefProject || refEntity instanceof RefJavaModule) {
+      return null;
+    }
+    if (!(refEntity instanceof RefJavaElement) && !(refEntity instanceof RefPackage) && !(refEntity instanceof RefJavaFileImpl)) {
       return null;
     }
     RefPackage refPackage = getPackage(refEntity);
