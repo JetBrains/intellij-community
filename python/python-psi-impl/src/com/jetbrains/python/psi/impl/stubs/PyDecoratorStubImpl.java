@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,17 +19,20 @@ import java.util.Map;
  */
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final QualifiedName myQualifiedName;
-  private final List<@Nullable String> myPositionalArguments;
-  private final Map<String, @Nullable String> myKeywordArguments;
+  private final boolean myHasArgumentList;
+  private final List<String> myPositionalArguments;
+  private final Map<String, String> myKeywordArguments;
 
   protected PyDecoratorStubImpl(final QualifiedName qualname,
+                                final boolean hasArgumentList,
                                 final StubElement parent,
-                                final List<String> positionalArguments,
-                                final Map<String, String> namedArguments) {
+                                final @NotNull List<String> positionalArguments,
+                                final @NotNull Map<String, String> namedArguments) {
     super(parent, PyElementTypes.DECORATOR_CALL);
     myQualifiedName = qualname;
-    myPositionalArguments = positionalArguments != null ? positionalArguments : Collections.emptyList();
-    myKeywordArguments = namedArguments != null ? namedArguments : Collections.emptyMap();
+    myHasArgumentList = hasArgumentList;
+    myPositionalArguments = positionalArguments;
+    myKeywordArguments = namedArguments;
   }
 
   @Override
@@ -40,7 +42,7 @@ public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDeco
 
   @Override
   public boolean hasArgumentList() {
-    return myPositionalArguments.size() > 0 || myKeywordArguments.size() > 0;
+    return myHasArgumentList;
   }
 
   @Override
@@ -54,11 +56,11 @@ public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDeco
     return myKeywordArguments.get(name);
   }
 
-  protected List<String> getPositionalArguments() {
+  List<String> getPositionalArguments() {
     return myPositionalArguments;
   }
 
-  protected Map<String, String> getKeywordArguments() {
+  Map<String, String> getKeywordArguments() {
     return myKeywordArguments;
   }
 }

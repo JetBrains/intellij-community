@@ -43,25 +43,24 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @NotNull
   public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
     PyExpression[] arguments = psi.getArguments();
-    List<String> positionalArguments = null;
-    Map<String, String> namedArguments = null;
+    List<String> positionalArguments = new ArrayList<>();
+    Map<String, String> namedArguments = new HashMap<>();
     for (PyExpression argument : arguments) {
       if (argument instanceof PyKeywordArgument) {
         PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
         String keyword = keywordArgument.getKeyword();
         String value = extractLiteralValue(keywordArgument.getValueExpression());
         if (keyword != null && value != null) {
-          if (namedArguments == null) namedArguments = new HashMap<>();
           namedArguments.put(keyword, value);
         }
       }
       else {
-        if (positionalArguments == null) positionalArguments = new ArrayList<>();
         String value = extractLiteralValue(argument);
         positionalArguments.add(value);
       }
     }
-    return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub, positionalArguments, namedArguments);
+    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, List.copyOf(positionalArguments),
+                                   Map.copyOf(namedArguments));
   }
 
   private static @Nullable String extractLiteralValue(PyExpression expression) {
@@ -82,6 +81,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @Override
   public void serialize(@NotNull PyDecoratorStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     QualifiedName.serialize(stub.getQualifiedName(), dataStream);
+    dataStream.writeBoolean(stub.hasArgumentList());
     PyDecoratorStubImpl decoratorStub = (PyDecoratorStubImpl)stub;
     PyFileElementType.writeNullableList(dataStream, decoratorStub.getPositionalArguments());
     dataStream.writeInt(decoratorStub.getKeywordArguments().size());
@@ -98,7 +98,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     if (qualifiedName != null) {
       sink.occurrence(PyDecoratorStubIndex.KEY, qualifiedName.toString());
       PyCustomDecoratorIndexer.EP_NAME.extensions().forEach(extension -> {
-        String keyForStub = extension.keyForStub(stub);
+        String keyForStub = extension.getKeyForStub(stub);
         if (keyForStub != null) {
           sink.occurrence(extension.getKey(), keyForStub);
         }
@@ -110,17 +110,20 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @NotNull
   public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName q_name = QualifiedName.deserialize(dataStream);
+    boolean hasArgumentList = dataStream.readBoolean();
     List<String> positionalArguments = PyFileElementType.readNullableList((dataStream));
     int namedSize = dataStream.readInt();
     Map<String, String> namedArguments = null;
     if (namedSize > 0) {
-      namedArguments = new HashMap<>();
+      namedArguments = new HashMap<>(namedSize);
       for (int i = 0; i < namedSize; i++) {
         String key = dataStream.readNameString();
         String value = dataStream.readNameString();
         namedArguments.put(key, value);
       }
     }
-    return new PyDecoratorStubImpl(q_name, parentStub, positionalArguments, namedArguments);
+    return new PyDecoratorStubImpl(q_name, hasArgumentList, parentStub,
+                                   positionalArguments != null ? positionalArguments : Collections.emptyList(),
+                                   namedArguments != null ? namedArguments : Collections.emptyMap());
   }
 }

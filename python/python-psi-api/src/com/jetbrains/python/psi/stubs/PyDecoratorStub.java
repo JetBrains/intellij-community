@@ -37,6 +37,7 @@ public interface PyDecoratorStub extends StubElement<PyDecorator> {
   @ApiStatus.Experimental
   @Nullable
   String getPositionalArgumentLiteralText(int position);
+
   @ApiStatus.Experimental
   @Nullable
   String getNamedArgumentLiteralText(@NotNull String name);

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface PyCustomDecoratorIndexer {
   fun getKey(): StubIndexKey<String, PyDecorator>
-  fun keyForStub(decorator: PyDecoratorStub): String?
+  fun getKeyForStub(decorator: PyDecoratorStub): String?
   companion object {
     @JvmField val EP_NAME = ExtensionPointName.create<PyCustomDecoratorIndexer>("Pythonid.decoratorIndexer")
   }
