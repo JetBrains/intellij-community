@@ -517,6 +517,9 @@ public final class MavenIndicesManager implements Disposable {
         Pair<File, MavenIndex> elementToAdd;
         ArrayList<Pair<File, MavenIndex>> retryElements = new ArrayList<>();
         while ((elementToAdd = queueToAdd.poll()) != null) {
+          if (indexedCache.contains(elementToAdd.first.getName())) {
+            continue;
+          }
           boolean added = elementToAdd.second.tryAddArtifact(elementToAdd.first);
           if (added) {
             indexedCache.add(elementToAdd.first.getName());
@@ -524,7 +527,7 @@ public final class MavenIndicesManager implements Disposable {
             retryElements.add(elementToAdd);
           }
         }
-        if (!retryElements.isEmpty()) queueToAdd.addAll(retryElements);
+        if (retryElements.size() < 10_000) queueToAdd.addAll(retryElements);
       }
     }
   }
