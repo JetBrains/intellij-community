@@ -324,8 +324,20 @@
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
 
+    <group id="Documentation.Navigation">
+      <action id="Documentation.Back" icon="AllIcons.Actions.Back" use-shortcut-of="Back"
+              class="com.intellij.lang.documentation.ide.actions.DocumentationBackAction"/>
+      <action id="Documentation.Forward" icon="AllIcons.Actions.Forward" use-shortcut-of="Forward"
+              class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
+      <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
+              class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
+    </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
             class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
+    <group id="Documentation.ContextMenu">
+      <reference ref="Documentation.Navigation"/>
+      <reference ref="Documentation.ViewExternal"/>
+    </group>
     <action id="Documentation.ToggleShowInPopup"
             class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
     <action id="Documentation.TurnOffAutoUpdate"

@@ -11,9 +11,7 @@ import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -63,15 +61,14 @@ internal class DocumentationUI(
       applyStateLater(request, result)
     })
 
-    val primaryActions = primaryActions()
-    for (action in linkHandler.createLinkActions() + primaryActions) {
+    for (action in linkHandler.createLinkActions()) {
       action.registerCustomShortcutSet(editorPane, this)
     }
+    registerBackForwardActions(editorPane)
 
-    val externalDocAction = ActionManager.getInstance().getAction(DOCUMENTATION_VIEW_EXTERNAL_ACTION_ID)
     val contextMenu = PopupHandler.installPopupMenu(
       editorPane,
-      DefaultActionGroup(primaryActions + externalDocAction),
+      DOCUMENTATION_CONTEXT_MENU_GROUP_ID,
       "documentation.pane.content.menu"
     )
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
