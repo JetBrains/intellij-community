@@ -294,7 +294,7 @@ public final class PluginManagerCore {
 
     IdeaPluginDescriptor result = null;
     for (IdeaPluginDescriptorImpl o : pluginSet.enabledPlugins) {
-      ClassLoader classLoader = o.getPluginClassLoader();
+      ClassLoader classLoader = o.getClassLoader();
       if (!hasLoadedClass(className, classLoader)) {
         continue;
       }
