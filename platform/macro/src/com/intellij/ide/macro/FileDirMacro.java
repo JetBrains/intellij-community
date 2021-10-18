@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class FileDirMacro extends Macro {
+public final class FileDirMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {
