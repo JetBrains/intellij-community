@@ -79,7 +79,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }
-    }, root)
+    }, root, CheckboxTreeBase.CheckPolicy(true, true, true, false))
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
