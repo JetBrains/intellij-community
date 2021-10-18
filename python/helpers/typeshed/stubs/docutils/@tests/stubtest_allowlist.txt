@@ -1,0 +1,10 @@
+docutils.TransformSpec.unknown_reference_resolvers
+docutils.frontend.ConfigParser.__getattr__
+docutils.frontend.ConfigParser.read
+docutils.frontend.OptionParser.__getattr__
+docutils.io.FileOutput.__getattr__
+docutils.io.FileOutput.__init__
+docutils.io.Input.__getattr__
+docutils.io.Input.__init__
+docutils.parsers.rst.Directive.__getattr__
+docutils.parsers.rst.nodes
