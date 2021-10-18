@@ -20,7 +20,12 @@ final class TextFragmentFactory {
   }
 
   private static boolean containsSurrogatePairs(char[] chars, int start, int end) {
-    int length = end - start;
-    return Character.codePointCount(chars, start, length) != length;
+    end--; // no need to check last character for high surrogate
+    for (int i = start; i < end; i++) {
+      if (Character.isHighSurrogate(chars[i]) && Character.isLowSurrogate(chars[i + 1])) {
+        return true;
+      }
+    }
+    return false;
   }
 }
