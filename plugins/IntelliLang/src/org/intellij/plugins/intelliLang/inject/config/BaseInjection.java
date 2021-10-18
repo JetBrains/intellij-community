@@ -225,6 +225,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return acceptsPsiElement(element, null);
   }
 
+  @Override
   public boolean acceptsPsiElement(PsiElement patternElement, @Nullable PsiElement target) {
     // if injector does not support conditions so far, but injection has condition
     if (target == null && myConditionId != null) {
@@ -436,7 +437,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  @Override
   public @Nullable String getConditionId() {
     return myConditionId;
   }

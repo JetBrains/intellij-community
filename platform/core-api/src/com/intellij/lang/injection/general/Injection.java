@@ -44,11 +44,4 @@ public interface Injection {
    */
   @Nullable
   @NlsSafe String getSupportId();
-
-  /**
-   * @return the ID of {@link LanguageInjectionCondition} bean to check if this injection should be performed
-   */
-  default String getConditionId() {
-    return null;
-  }
 }
