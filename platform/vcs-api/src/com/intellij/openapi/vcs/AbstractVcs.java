@@ -276,6 +276,21 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * This method is called when a user invokes "Enable VCS Integration" and selects a particular VCS.
+   * By default, it sets up a single mapping {@code <targetDirectory> -> selected VCS}.
+   * Some VCSes might try to automatically detect VCS roots or create a new one.
+   *
+   * @param targetDirectory overridden location of project files to check
+   */
+  @RequiresEdt
+  public void enableIntegration(@NotNull VirtualFile targetDirectory) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (vcsManager != null) {
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+    }
+  }
+
+  /**
    * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
    * when the previous one was empty).
    * @param list change list that's about to be removed
