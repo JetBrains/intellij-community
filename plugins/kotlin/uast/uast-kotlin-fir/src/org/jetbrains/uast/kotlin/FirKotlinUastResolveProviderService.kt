@@ -278,11 +278,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
+    override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyseForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
             if (ktType is KtClassErrorType) return null
-            return toPsiType(ktType, lightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind)
+            return toPsiType(ktType, containingLightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind)
         }
     }
 
@@ -333,9 +333,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
+    override fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         analyseForUast(ktDeclaration) {
-            return toPsiType(ktDeclaration.getReturnKtType(), lightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind)
+            return toPsiType(ktDeclaration.getReturnKtType(), containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind)
         }
     }
 
