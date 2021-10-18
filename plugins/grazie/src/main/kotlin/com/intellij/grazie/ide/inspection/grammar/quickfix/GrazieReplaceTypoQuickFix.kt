@@ -23,7 +23,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import kotlin.math.min
 
-internal object GrazieReplaceTypoQuickFix {
+object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
     HighPriorityAction
 
@@ -67,9 +67,11 @@ internal object GrazieReplaceTypoQuickFix {
     override fun startInWriteAction(): Boolean = true
   }
 
-  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
+  @JvmStatic
+  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val replacementRange = problem.replacementRange
     val replacedText = replacementRange.subSequence(problem.text)
+    val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
