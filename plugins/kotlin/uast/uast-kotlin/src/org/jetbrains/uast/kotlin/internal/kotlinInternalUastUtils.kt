@@ -87,7 +87,7 @@ internal fun KotlinType.toPsiType(
     toPsiType(source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner, element, typeOwnerKind, boxed)
 
 internal fun KotlinType.toPsiType(
-    lightDeclaration: PsiModifierListOwner?,
+    containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
     boxed: Boolean
@@ -95,7 +95,7 @@ internal fun KotlinType.toPsiType(
     if (this.isError) return UastErrorType
 
     (constructor.declarationDescriptor as? TypeAliasDescriptor)?.let { typeAlias ->
-        return typeAlias.expandedType.toPsiType(lightDeclaration, context, typeOwnerKind, boxed)
+        return typeAlias.expandedType.toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed)
     }
 
     if (contains { type -> type.constructor is TypeVariableTypeConstructor }) {
@@ -106,7 +106,8 @@ internal fun KotlinType.toPsiType(
         (typeParameter.containingDeclaration.toSource()?.getMaybeLightElement() as? PsiTypeParameterListOwner)
             ?.typeParameterList?.typeParameters?.getOrNull(typeParameter.index)
             ?.let { return PsiTypesUtil.getClassType(it) }
-        return CommonSupertypes.commonSupertype(typeParameter.upperBounds).toPsiType(lightDeclaration, context, typeOwnerKind, boxed)
+        return CommonSupertypes.commonSupertype(typeParameter.upperBounds)
+            .toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed)
     }
 
     if (arguments.isEmpty()) {
@@ -130,14 +131,15 @@ internal fun KotlinType.toPsiType(
             else -> {
                 when (val typeConstructor = this.constructor) {
                     is IntegerValueTypeConstructor ->
-                        TypeUtils.getDefaultPrimitiveNumberType(typeConstructor).toPsiType(lightDeclaration, context, typeOwnerKind, boxed)
+                        TypeUtils.getDefaultPrimitiveNumberType(typeConstructor)
+                            .toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed)
                     is IntegerLiteralTypeConstructor ->
-                        typeConstructor.getApproximatedType().toPsiType(lightDeclaration, context, typeOwnerKind, boxed)
+                        typeConstructor.getApproximatedType().toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed)
                     else -> null
                 }
             }
         }
-        if (psiType != null) return psiType.annotate(buildAnnotationProvider(this, lightDeclaration ?: context))
+        if (psiType != null) return psiType.annotate(buildAnnotationProvider(this, containingLightDeclaration ?: context))
     }
 
     if (this.containsLocalTypes()) return UastErrorType
@@ -159,17 +161,17 @@ internal fun KotlinType.toPsiType(
     val typeInfo = TypeInfo.fromString(javaType, false)
     val typeText = TypeInfo.createTypeText(typeInfo) ?: return UastErrorType
 
-    val parent: PsiElement = lightDeclaration ?: context
-    if (parent.containingFile == null) {
+    val psiTypeParent: PsiElement = containingLightDeclaration ?: context
+    if (psiTypeParent.containingFile == null) {
         Logger.getInstance("org.jetbrains.uast.kotlin.KotlinInternalUastUtils")
             .error(
-                "initialising ClsTypeElementImpl with null-file parent = $parent (of ${parent.javaClass}) " +
-                        "containing class = ${parent.safeAs<PsiMethod>()?.containingClass}, " +
-                        "lightDeclaration = $lightDeclaration (of ${lightDeclaration?.javaClass})," +
-                        " context = $context (of ${context.javaClass})"
+                "initialising ClsTypeElementImpl with null-file parent = $psiTypeParent (of ${psiTypeParent.javaClass}) " +
+                        "containing class = ${psiTypeParent.safeAs<PsiMethod>()?.containingClass}, " +
+                        "containing lightDeclaration = $containingLightDeclaration (of ${containingLightDeclaration?.javaClass}), " +
+                        "context = $context (of ${context.javaClass})"
             )
     }
-    return ClsTypeElementImpl(parent, typeText, '\u0000').type
+    return ClsTypeElementImpl(psiTypeParent, typeText, '\u0000').type
 }
 
 private fun renderAnnotation(annotation: AnnotationDescriptor): String? {
