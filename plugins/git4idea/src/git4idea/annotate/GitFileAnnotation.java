@@ -259,7 +259,8 @@ public final class GitFileAnnotation extends FileAnnotation {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
 
-        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
+                                                                 () -> getRevisionsChangesProvider().getChangesIn(lineNum));
       }
     }
   }

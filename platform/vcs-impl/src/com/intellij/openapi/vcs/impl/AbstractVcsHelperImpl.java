@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -519,12 +520,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
     FilePath filePath = VcsUtil.getFilePath(virtualFile);
-    loadAndShowCommittedChangesDetails(project, revision, filePath, () -> getAffectedChanges(provider, virtualFile, revision, location, isNonLocal));
+    loadAndShowCommittedChangesDetails(project, revision, filePath,
+                                       () -> getAffectedChanges(provider, virtualFile, revision, location, isNonLocal));
   }
 
   public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
                                                         @NotNull VcsRevisionNumber revision,
                                                         @NotNull FilePath filePath,
+                                                        @NotNull CommittedChangeListProvider changelistProvider) {
+    loadAndShowCommittedChangesDetails(project, revision, filePath, showCommittedChangesAsTab(), changelistProvider);
+  }
+
+  public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
+                                                        @NotNull VcsRevisionNumber revision,
+                                                        @NotNull FilePath filePath,
+                                                        boolean showAsTab,
                                                         @NotNull CommittedChangeListProvider changelistProvider) {
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
@@ -534,7 +544,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     LoadingCommittedChangeListPanel loadingPanel = new LoadingCommittedChangeListPanel(project);
     loadingPanel.loadChangesInBackground(() -> loadCommittedChanges(revision, filePath, changelistProvider));
-    ChangeListViewerDialog.show(project, title, loadingPanel, lock);
+    ChangeListViewerDialog.show(project, title, loadingPanel, lock, showAsTab);
+  }
+
+  public static boolean showCommittedChangesAsTab() {
+    return Registry.is("vcs.show.affected.files.as.tab") &&
+           ModalityState.current() == ModalityState.NON_MODAL;
   }
 
   @NotNull
