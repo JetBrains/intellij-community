@@ -66,8 +66,9 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   private DropDownLink<String> myLinkLabel;
   private String myConfigId; // for FUS
 
-  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                            @Nullable NestedGroupFragment<Settings> main, @NotNull Disposable parentDisposable) {
+  public FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                                   @Nullable NestedGroupFragment<Settings> main,
+                                   @NotNull Disposable parentDisposable) {
     myFragments = fragments;
     myMain = main;
     Disposer.register(parentDisposable, this);
@@ -139,20 +140,21 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     addLine(component, TOP_INSET, 0, 0);
   }
 
-  private void addBeforeRun(@Nullable SettingsEditorFragment<Settings, ?> beforeRun) {
+  protected void addBeforeRun(@Nullable SettingsEditorFragment<Settings, ?> beforeRun) {
     if (beforeRun != null) {
       addLine(beforeRun.getComponent(), TOP_INSET, 0, TOP_INSET * 2);
     }
   }
 
-  private void addHeader(@Nullable SettingsEditorFragment<Settings, ?> header) {
+  protected void addHeader(@Nullable SettingsEditorFragment<Settings, ?> header) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(5, 0));
     if (header != null) {
       panel.add(header.getComponent(), BorderLayout.WEST);
     }
-    if (myMain != null) {
-      panel.add(SeparatorFactory.createSeparator(myMain.getGroup(), null), BorderLayout.CENTER);
+    var separator = createHeaderSeparator();
+    if (separator != null) {
+      panel.add(separator, BorderLayout.CENTER);
     }
     String message = OptionsBundle.message(myMain == null ? "settings.editor.modify.options" : "settings.editor.modify");
     myLinkLabel = new DropDownLink<>(message, link -> showOptions());
@@ -172,7 +174,11 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     addLine(panel);
   }
 
-  private void addFragments(@NotNull List<SettingsEditorFragment<Settings, ?>> fragments) {
+  protected @Nullable JComponent createHeaderSeparator() {
+    return myMain != null ? SeparatorFactory.createSeparator(myMain.getGroup(), null) : null;
+  }
+
+  protected void addFragments(@NotNull List<SettingsEditorFragment<Settings, ?>> fragments) {
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getComponent();
       addLine(component);
@@ -182,13 +188,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
   }
 
-  private void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
+  protected void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
     }
   }
 
-  private void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
+  protected void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, TAG_HGAP, TAG_VGAP));
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());

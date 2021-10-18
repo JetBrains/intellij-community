@@ -37,8 +37,11 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
 import com.intellij.ui.layout.*
+import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -51,6 +54,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.BorderLayout
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 
@@ -94,60 +98,78 @@ class MavenRunConfigurationSettingsEditor(
     get() = runnerSettings ?: MavenRunner.getInstance(project).settings.clone()
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
-    add(object : NestedGroupFragment<MavenRunConfiguration>(
+    addCollapsableGroup(
       "maven.runner.group",
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      { true }
+      MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
     ) {
-      override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-        inheritCheckBoxGroup(
-          "maven.runner.group.inherit",
-          MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
-          { it, c -> c.isSelected = it.generalSettings == null },
-          { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
-        ) {
-          val distributionComponent = addDistributionFragment().component().component
-          val userSettingsComponent = addUserSettingsFragment().component().component
-          addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
-          addOutputLevelFragment()
-          addThreadsFragment()
-          addUsePluginRegistryTag()
-          addPrintStacktracesTag()
-          addUpdateSnapshotsTag()
-          addExecuteNonRecursivelyTag()
-          addWorkOfflineTag()
-          addCheckSumPolicyTag()
-          addMultiProjectBuildPolicyTag()
-        }
+      addInheritCheckBoxGroup(
+        "maven.runner.group.inherit",
+        MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
+        { it, c -> c.isSelected = it.generalSettings == null },
+        { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
+      ) {
+        val distributionComponent = addDistributionFragment().component().component
+        val userSettingsComponent = addUserSettingsFragment().component().component
+        addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
+        addOutputLevelFragment()
+        addThreadsFragment()
+        addUsePluginRegistryTag()
+        addPrintStacktracesTag()
+        addUpdateSnapshotsTag()
+        addExecuteNonRecursivelyTag()
+        addWorkOfflineTag()
+        addCheckSumPolicyTag()
+        addMultiProjectBuildPolicyTag()
       }
-    }).apply { isRemovable = false }
+    }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
-    add(object : NestedGroupFragment<MavenRunConfiguration>(
+    addCollapsableGroup(
       "maven.runner.group",
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
-      { true }
+      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
     ) {
-      override fun createChildren() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
-        inheritCheckBoxGroup(
-          "maven.runner.group.inherit",
-          MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
-          { it, c -> c.isSelected = it.runnerSettings == null },
-          { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
-        ) {
-          addJreFragment()
-          addEnvironmentFragment()
-          addVmOptionsFragment()
-          addPropertiesFragment()
-          addSkipTestsTag()
-          addResolveWorkspaceArtifactsTag()
+      addInheritCheckBoxGroup(
+        "maven.runner.group.inherit",
+        MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
+        { it, c -> c.isSelected = it.runnerSettings == null },
+        { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
+      ) {
+        addJreFragment()
+        addEnvironmentFragment()
+        addVmOptionsFragment()
+        addPropertiesFragment()
+        addSkipTestsTag()
+        addResolveWorkspaceArtifactsTag()
+      }
+    }
+
+  private fun <S : FragmentedSettings> SettingsFragmentsContainer<S>.addCollapsableGroup(
+    id: String,
+    name: @Nls(capitalization = Nls.Capitalization.Sentence) String,
+    group: @Nls(capitalization = Nls.Capitalization.Title) String,
+    configure: SettingsFragmentsContainer<S>.() -> Unit
+  ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
+
+    override fun createChildren() = SettingsFragmentsContainer.fragments(configure)
+
+    override fun getBuilder() = object : FragmentedSettingsBuilder<S>(children, this, this) {
+
+      private val separator = CollapsibleTitledSeparator(group)
+
+      override fun createHeaderSeparator() = separator
+
+      init {
+        children.forEach { bind(separator, it) }
+        resetOperation.afterOperation {
+          separator.expanded = false
         }
       }
-    }).apply { isRemovable = false }
+    }
+  }).apply { isRemovable = false }
 
-  private fun <S> SettingsFragmentsContainer<S>.inheritCheckBoxGroup(
+  private fun <S> SettingsFragmentsContainer<S>.addInheritCheckBoxGroup(
     id: String,
     label: @NlsContexts.Checkbox String,
     reset: (S, JCheckBox) -> Unit,
@@ -156,7 +178,7 @@ class MavenRunConfigurationSettingsEditor(
   ) {
     val fragments = SettingsFragmentsContainer.fragments(configure)
     addInheritCheckBoxFragment(id, label, reset, apply)
-      .applyToComponent { bind(fragments) }
+      .applyToComponent { fragments.forEach { bind(this, it) } }
     fragments.forEach(::add)
   }
 
@@ -181,19 +203,32 @@ class MavenRunConfigurationSettingsEditor(
     { true }
   ).apply { isRemovable = false }
 
-  private fun JCheckBox.bind(fragments: List<SettingsEditorFragment<*, *>>) {
-    addItemListener {
-      for (fragment in fragments) {
-        val component = fragment.component()
-        if (component != null) {
-          UIUtil.setEnabledRecursively(component, !isSelected)
-        }
+  private fun bind(checkBox: JCheckBox, fragment: SettingsEditorFragment<*, *>) {
+    checkBox.addItemListener {
+      val component = fragment.component()
+      if (component != null) {
+        UIUtil.setEnabledRecursively(component, !checkBox.isSelected)
       }
     }
-    for (fragment in fragments) {
-      fragment.addSettingsEditorListener {
+    fragment.addSettingsEditorListener {
+      if (resetOperation.isOperationCompleted()) {
+        checkBox.isSelected = false
+      }
+    }
+  }
+
+  private fun bind(separator: CollapsibleTitledSeparator, fragment: SettingsEditorFragment<*, *>) {
+    val mutex = AtomicBoolean()
+    separator.onAction {
+      mutex.lockOrSkip {
+        fragment.component.isVisible = fragment.isSelected && separator.expanded
+        fragment.hintComponent?.isVisible = fragment.isSelected && separator.expanded
+      }
+    }
+    fragment.addSettingsEditorListener {
+      mutex.lockOrSkip {
         if (resetOperation.isOperationCompleted()) {
-          isSelected = false
+          separator.expanded = true
         }
       }
     }
