@@ -7,7 +7,7 @@ import com.intellij.lang.documentation.*
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 
-class PsiDocumentationLinkResolver : DocumentationLinkResolver {
+internal class PsiDocumentationLinkResolver : DocumentationLinkResolver {
 
   override fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {
     if (target !is PsiElementDocumentationTarget) {

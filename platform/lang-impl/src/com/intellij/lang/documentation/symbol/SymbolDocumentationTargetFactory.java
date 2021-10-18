@@ -5,6 +5,7 @@ import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * <li>implement {@link DocumentationTarget} directly in a Symbol</li>
  * </ul>
  */
+@Experimental
 public interface SymbolDocumentationTargetFactory {
 
   @Internal

@@ -16,14 +16,12 @@ import javax.swing.JComponent
 val DOCUMENTATION_TARGETS_KEY: DataKey<List<DocumentationTarget>> = DataKey.create("documentation.targets")
 internal val DOCUMENTATION_BROWSER_DATA_KEY: DataKey<DocumentationBrowser> = DataKey.create("documentation.browser")
 internal val DOCUMENTATION_HISTORY_DATA_KEY: DataKey<DocumentationHistory> = DataKey.create("documentation.history")
-internal val DOCUMENTATION_TARGET_POINTER_KEY: DataKey<Pointer<out DocumentationTarget>> = DataKey.create("documentation.target.pointer");
+internal val DOCUMENTATION_TARGET_POINTER_KEY: DataKey<Pointer<out DocumentationTarget>> = DataKey.create("documentation.target.pointer")
 internal val DOCUMENTATION_POPUP_KEY: DataKey<JBPopup> = DataKey.create("documentation.popup")
 
 internal const val DOCUMENTATION_PRIMARY_GROUP_ID: String = "Documentation.PrimaryGroup"
-internal const val DOCUMENTATION_VIEW_EXTERNAL_ACTION_ID: String = "Documentation.ViewExternal"
 internal const val TOGGLE_SHOW_IN_POPUP_ACTION_ID: String = "Documentation.ToggleShowInPopup"
 internal const val TOGGLE_AUTO_SHOW_ACTION_ID: String = "Documentation.ToggleAutoShow"
-internal const val TURN_OFF_AUTO_UPDATE_ACTION_ID: String = "Documentation.TurnOffAutoUpdate"
 
 internal fun primaryActions(): List<AnAction> = groupActions(DOCUMENTATION_PRIMARY_GROUP_ID)
 internal fun navigationActions(): List<AnAction> = groupActions("Documentation.Navigation")
