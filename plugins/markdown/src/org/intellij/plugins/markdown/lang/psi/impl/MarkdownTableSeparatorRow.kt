@@ -41,10 +41,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): LeafPsiElement(MarkdownToke
     var right = left + cells.first().length
     val ranges = mutableListOf<TextRange>()
     ranges.add(TextRange(left, right))
-    val cellsSequence = when {
-      endedWithSeparator -> cells.asSequence().drop(1)
-      else -> cells.asSequence()
-    }
+    val cellsSequence = cells.asSequence().drop(1)
     for (cell in cellsSequence) {
       left = right + 1
       right = left + cell.length
@@ -112,7 +109,7 @@ class MarkdownTableSeparatorRow(text: CharSequence): LeafPsiElement(MarkdownToke
   }
 
   fun getCellAlignment(index: Int): CellAlignment {
-    val range = getCellRange(index)!!.shiftLeft(startOffset)
+    val range = getCellRange(index, local = true)!!
     return getCellAlignment(range)
   }
 }
