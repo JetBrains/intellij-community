@@ -3,6 +3,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.util.ui.JBValue
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -23,4 +24,6 @@ class SquareStripeButtonLook(button: SquareStripeButton) : IdeaActionButtonLook(
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {
     super.paintLookBorder(g, toSquareButtonRect(rect), color)
   }
+
+  override fun getButtonArc() = JBValue.UIInteger("Button.ToolWindow.arc", 12)
 }
