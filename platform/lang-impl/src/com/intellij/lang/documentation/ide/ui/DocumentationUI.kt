@@ -25,7 +25,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
-import javax.swing.Icon
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 
@@ -131,9 +130,19 @@ internal class DocumentationUI(
       showMessage(CodeInsightBundle.message("no.documentation.found"))
       return
     }
-    val decorated = renderDocumentation(data, request) {
-      htmlFactory.registerIcon(it)
+    val presentation = request.presentation
+    val locationChunk = presentation.locationText?.let { locationText ->
+      presentation.locationIcon?.let { locationIcon ->
+        val iconKey = htmlFactory.registerIcon(locationIcon)
+        HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", iconKey),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(locationText)
+        )
+      } ?: HtmlChunk.text(locationText)
     }
+    val linkChunk = getLink(presentation.presentableText, data.externalUrl)
+    val decorated = decorate(data.html, locationChunk, linkChunk)
     update(decorated, data.anchor)
   }
 
@@ -189,25 +198,6 @@ internal class DocumentationUI(
       if (ScreenReader.isActive()) {
         editorPane.caretPosition = 0
       }
-    }
-  }
-
-  companion object {
-    @Nls
-    fun renderDocumentation(data: DocumentationData, request: DocumentationRequest, iconKeyProvider: (Icon) -> String): String {
-      val presentation = request.presentation
-      val locationChunk = presentation.locationText?.let { locationText ->
-        presentation.locationIcon?.let { locationIcon ->
-          val iconKey = iconKeyProvider(locationIcon)
-          HtmlChunk.fragment(
-            HtmlChunk.tag("icon").attr("src", iconKey),
-            HtmlChunk.nbsp(),
-            HtmlChunk.text(locationText)
-          )
-        } ?: HtmlChunk.text(locationText)
-      }
-      val linkChunk = getLink(presentation.presentableText, data.externalUrl)
-      return decorate(data.html, locationChunk, linkChunk)
     }
   }
 }

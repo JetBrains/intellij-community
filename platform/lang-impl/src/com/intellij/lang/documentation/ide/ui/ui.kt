@@ -4,14 +4,9 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.computeDocumentationAsync
-import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -19,27 +14,10 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.future.future
-import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JScrollPane
-
-@TestOnly
-fun renderDocumentation(target: DocumentationTarget): String? {
-  val request = ReadAction.compute<DocumentationRequest, Throwable> {
-    target.documentationRequest()
-  }
-  val cs = CoroutineScope(SupervisorJob())
-  val job = cs.computeDocumentationAsync(request.targetPointer)
-  val data = cs.future { job.await() }
-  return data.get()?.let {
-    DocumentationUI.renderDocumentation(it, request) { "loc_icon" }
-  }
-}
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.ide.ui")
 
