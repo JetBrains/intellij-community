@@ -129,6 +129,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     updatePluginDependencies(pluginIdMap);
     assertCanApply(pluginIdMap);
 
+    DynamicPluginEnablerState pluginEnablerState = DynamicPluginEnabler.getInstance().getState();
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
       myDiff.remove(pluginDescriptor);
@@ -141,9 +142,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         getEnabledMap().remove(pluginId);
       }
 
-      ProjectPluginTrackerManager.getInstance()
-        .getState()
-        .stopTracking(List.of(pluginId));
+      pluginEnablerState.stopTracking(List.of(pluginId));
     }
 
     boolean installsRequiringRestart = myInstallsRequiringRestart;
@@ -229,9 +228,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     boolean result = true;
-    ProjectPluginTrackerManager pluginTrackerManager = ProjectPluginTrackerManager.getInstance();
+    DynamicPluginEnabler pluginEnabler = DynamicPluginEnabler.getInstance();
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      if (!pluginTrackerManager.updatePluginsState(entry.getValue(),
+      if (!pluginEnabler.updatePluginsState(entry.getValue(),
                                                    entry.getKey(),
                                                    getProject(),
                                                    parentComponent)) {

@@ -30,7 +30,7 @@ public class InstalledPluginsTableModel {
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
     myPluginTracker = myProject != null ?
-                      ProjectPluginTrackerManager.getInstance().getPluginTracker(myProject) :
+                      DynamicPluginEnabler.getInstance().getPluginTracker(myProject) :
                       null;
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();

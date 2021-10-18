@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -11,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -229,8 +229,8 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (PluginEnabler.isPerProjectEnabled() &&
-              !Registry.is("ide.plugins.per.project.use.checkboxes", false)) {
+          if (DynamicPluginEnabler.isPerProjectEnabled() &&
+              !RegistryManager.getInstance().is("ide.plugins.per.project.use.checkboxes")) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               action -> createEnableDisableAction(action, List.of(this)),
               () -> createUninstallAction(List.of(this))

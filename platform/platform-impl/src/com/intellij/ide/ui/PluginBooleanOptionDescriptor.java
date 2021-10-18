@@ -63,7 +63,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                                          getDependenciesToEnable(descriptors, pluginIdMap) :
                                                                          getDependentsToDisable(descriptors, pluginIdMap);
 
-    boolean enabledWithoutRestart = ProjectPluginTrackerManager.getInstance()
+    boolean enabledWithoutRestart = DynamicPluginEnabler.getInstance()
       .updatePluginsState(autoSwitchedDescriptors, action);
 
     if (autoSwitchedDescriptors.size() > descriptors.size()) {

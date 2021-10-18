@@ -61,7 +61,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final Set<PluginId> notInstalled = new HashSet<>();
     List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
-    ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().getPluginTracker(project);
+    ProjectPluginTracker pluginTracker = DynamicPluginEnabler.getInstance().getPluginTracker(project);
 
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
@@ -153,11 +153,9 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     Set<PluginId> pluginIds = map2SetNotNull(plugins, IdeaPluginDescriptor::getPluginId);
     LOG.info("Required plugins to enable: [" + join(pluginIds, ", ") + "]");
 
-    ProjectPluginTrackerManager
-      .getInstance()
-      .updatePluginsState(plugins,
-                          PluginEnableDisableAction.ENABLE_GLOBALLY,
-                          project);
+    DynamicPluginEnabler.getInstance().updatePluginsState(plugins,
+                                                          PluginEnableDisableAction.ENABLE_GLOBALLY,
+                                                          project);
   }
 
   private static @NotNull NotificationListener createEnableNotificationListener(@NotNull Project project,

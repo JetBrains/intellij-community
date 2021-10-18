@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.application.options.RegistryManager
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
@@ -21,16 +22,23 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @State(
-  name = "ProjectPluginTrackerManager",
+  name = "DynamicPluginEnabler",
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
   reloadable = false,
 )
 @ApiStatus.Internal
-class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManagerState>(ProjectPluginTrackerManagerState()) {
+class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnablerState>(DynamicPluginEnablerState()) {
   companion object {
+
+    private val isPerProjectEnabledValue = RegistryManager.getInstance()["ide.plugins.per.project"]
+
     @JvmStatic
-    val instance
-      get() = service<ProjectPluginTrackerManager>()
+    fun getInstance(): DynamicPluginEnabler = service()
+
+    @JvmStatic
+    var isPerProjectEnabled: Boolean
+      get() = isPerProjectEnabledValue.asBoolean()
+      set(value) = isPerProjectEnabledValue.setValue(value)
 
     @JvmStatic
     fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(toPluginDescriptors(pluginIds))
@@ -57,12 +65,12 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       }
 
       override fun runActivity(project: Project) {
-        val manager = instance
-        val tracker = manager.getPluginTracker(project)
+        val pluginEnabler = getInstance()
+        val tracker = pluginEnabler.getPluginTracker(project)
         val projects = openProjectsExcludingCurrent(project)
 
         val pluginIdsToLoad = tracker.enabledPluginsIds
-          .union(manager.locallyDisabledAndGloballyEnabledPlugins(projects))
+          .union(pluginEnabler.locallyDisabledAndGloballyEnabledPlugins(projects))
 
         val pluginIdsToUnload = tracker.disabledPluginsIds
 
@@ -78,7 +86,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
             }
-            manager.unloadPlugins(
+            pluginEnabler.unloadPlugins(
               pluginIdsToUnload,
               project,
               projects,
@@ -238,7 +246,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 }
 
 @ApiStatus.Internal
-class ProjectPluginTrackerManagerState : BaseState() {
+class DynamicPluginEnablerState : BaseState() {
 
   @get:XCollection(propertyElementName = "trackers", style = XCollection.Style.v2)
   internal val trackers by map<String, ProjectPluginTracker>()

@@ -586,9 +586,9 @@
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.plugins.ProjectPluginTrackerManager"
+    <applicationService serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         preload="true"/>
-    <startupActivity implementation="com.intellij.ide.plugins.ProjectPluginTrackerManager$Companion$EnableDisablePluginsActivity"
+    <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
                      order="first"/>
     <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
