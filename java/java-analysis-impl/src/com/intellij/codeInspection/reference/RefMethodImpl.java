@@ -98,7 +98,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (param.getSourcePsi() != null) {
           final RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
           if (refParameter != null) {
-            add(refParameter);
             refUtil.setIsFinal(refParameter, param.isFinal());
             newParameters.add(refParameter);
           }

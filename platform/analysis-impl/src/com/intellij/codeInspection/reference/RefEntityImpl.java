@@ -15,7 +15,7 @@ import java.util.List;
 
 public abstract class RefEntityImpl extends UserDataHolderBase implements RefEntity, WritableRefEntity {
   private volatile WritableRefEntity myOwner;
-  protected List<RefEntity> myChildren;  // guarded by this
+  private List<RefEntity> myChildren;  // guarded by this
   private final String myName;
   protected long myFlags; // guarded by this
   protected final RefManagerImpl myManager;
