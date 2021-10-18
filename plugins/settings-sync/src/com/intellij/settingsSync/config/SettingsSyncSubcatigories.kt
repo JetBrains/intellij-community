@@ -4,6 +4,8 @@ import org.jetbrains.annotations.Nls
 
 interface SettingsSyncSubcategoryGroup {
   fun getDescriptors() : List<SettingsSyncSubcategoryDescriptor>
+
+  fun isComplete() : Boolean = true
 }
 
 data class SettingsSyncSubcategoryDescriptor(

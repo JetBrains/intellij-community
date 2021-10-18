@@ -76,7 +76,11 @@ object SettingsSyncPanelFactory {
     descriptors.forEach {
       if (it.isSelected != isFirstSelected) return State.DONT_CARE
     }
-    return if (isFirstSelected) State.SELECTED else State.NOT_SELECTED
+    return when {
+      isFirstSelected -> State.SELECTED
+      group.isComplete() -> State.NOT_SELECTED
+      else -> State.DONT_CARE
+    }
   }
 
   private fun configureLink(group: SettingsSyncSubcategoryGroup, onCheckBoxChange: () -> Unit): JComponent {

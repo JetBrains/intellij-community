@@ -14,7 +14,7 @@ internal class SettingsCategoryDescriptor(
 
   companion object {
     private val DESCRIPTORS : List<SettingsCategoryDescriptor> = listOf(
-      SettingsCategoryDescriptor(UI),
+      SettingsCategoryDescriptor(UI, SettingsSyncUiGroup()),
       SettingsCategoryDescriptor(KEYMAP),
       SettingsCategoryDescriptor(CODE),
       SettingsCategoryDescriptor(PLUGINS, SettingsSyncPluginsGroup()),
