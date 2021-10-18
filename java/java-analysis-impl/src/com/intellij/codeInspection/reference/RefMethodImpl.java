@@ -152,7 +152,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
     }
 
-    if (sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (sourcePsi instanceof PsiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       collectUncaughtExceptions((PsiMethod)sourcePsi);
     }
   }
