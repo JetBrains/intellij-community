@@ -221,7 +221,12 @@ public final class HighlightUtil {
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(checkType));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      if (TypeConversionUtil.isPrimitiveAndNotNull(checkType)) {
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement));
+      }
+      return info;
     }
     return null;
   }
@@ -3248,7 +3253,7 @@ public final class HighlightUtil {
 
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
     final PsiElement parent = list.getParent();
-    if (PsiUtil.isAnnotationMethod(parent) && 
+    if (PsiUtil.isAnnotationMethod(parent) &&
         (!list.isEmpty() || PsiTreeUtil.getChildOfType(list, PsiReceiverParameter.class) != null)) {
       final String message = JavaErrorBundle.message("annotation.interface.members.may.not.have.parameters");
       final HighlightInfo highlightInfo =

@@ -16,7 +16,9 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplacePrimitiveWithBoxedTypeTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -25,8 +27,8 @@ public class ReplacePrimitiveWithBoxedTypeTest extends LightQuickFixParameterize
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
   }
 }
 
