@@ -8,6 +8,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomDecoratorIndexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
@@ -43,24 +44,26 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @NotNull
   public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
     PyExpression[] arguments = psi.getArguments();
-    List<String> positionalArguments = new ArrayList<>();
-    Map<String, String> namedArguments = new HashMap<>();
+    List<String> positionalArguments = null;
+    Map<String, String> namedArguments = null;
     for (PyExpression argument : arguments) {
       if (argument instanceof PyKeywordArgument) {
         PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
         String keyword = keywordArgument.getKeyword();
         String value = extractLiteralValue(keywordArgument.getValueExpression());
         if (keyword != null && value != null) {
+          if (namedArguments == null) namedArguments = new HashMap<>();
           namedArguments.put(keyword, value);
         }
       }
       else {
         String value = extractLiteralValue(argument);
+        if (positionalArguments == null) positionalArguments = new ArrayList<>();
         positionalArguments.add(value);
       }
     }
-    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, List.copyOf(positionalArguments),
-                                   Map.copyOf(namedArguments));
+    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, ContainerUtil.notNullize(positionalArguments),
+                                   ContainerUtil.notNullize(namedArguments));
   }
 
   private static @Nullable String extractLiteralValue(PyExpression expression) {
@@ -122,8 +125,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
         namedArguments.put(key, value);
       }
     }
-    return new PyDecoratorStubImpl(q_name, hasArgumentList, parentStub,
-                                   positionalArguments != null ? positionalArguments : Collections.emptyList(),
-                                   namedArguments != null ? namedArguments : Collections.emptyMap());
+    return new PyDecoratorStubImpl(q_name, hasArgumentList, parentStub, ContainerUtil.notNullize(positionalArguments),
+                                   ContainerUtil.notNullize(namedArguments));
   }
 }
