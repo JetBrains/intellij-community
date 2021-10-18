@@ -10,6 +10,8 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
+import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.MarkdownFileType
@@ -33,11 +35,11 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   private class Collector(editor: Editor): FactoryInlayHintsCollector(editor) {
     override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
       if (element is MarkdownTableRowImpl || element is MarkdownTableSeparatorRow) {
-        if (DocumentUtil.isAtLineStart(element.startOffset, editor.document)) {
+        if (DocumentUtil.isAtLineStart(element.startOffset, editor.document) && TableUtils.findTable(element)?.hasCorrectBorders() == true) {
           val presentation = VerticalBarPresentation.create(factory, editor, element)
           sink.addInlineElement(element.startOffset, false, presentation, false)
         }
-      } else if (element is MarkdownTableImpl) {
+      } else if (element is MarkdownTableImpl && element.hasCorrectBorders()) {
         val presentation = HorizontalBarPresentation.create(factory, editor, element)
         sink.addBlockElement(element.startOffset, false, true, -1, presentation)
       }

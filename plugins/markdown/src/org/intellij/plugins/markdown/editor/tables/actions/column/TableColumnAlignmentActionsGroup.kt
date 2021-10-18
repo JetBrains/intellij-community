@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.editor.tables.actions.column
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 
 internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
   override fun update(event: AnActionEvent) {
@@ -14,6 +15,6 @@ internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
       return
     }
     val (table, columnIndex) = ColumnBasedTableAction.findTableAndIndex(event, file, editor)
-    event.presentation.isEnabledAndVisible = table != null && columnIndex != null
+    event.presentation.isEnabledAndVisible = table != null && columnIndex != null && table.hasCorrectBorders()
   }
 }

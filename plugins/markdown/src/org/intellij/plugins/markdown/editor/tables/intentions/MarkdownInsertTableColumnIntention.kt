@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.insertColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -22,7 +23,7 @@ internal abstract class MarkdownInsertTableColumnIntention(private val insertAft
       return false
     }
     val cell = TableUtils.findCell(element)
-    return cell != null && editor != null
+    return cell != null && editor != null && cell.parentTable?.hasCorrectBorders() == true
   }
 
   override fun invoke(project: Project, editor: Editor?, element: PsiElement) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -42,6 +43,17 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
         }
       }
     }
+  }
+
+  override fun update(event: AnActionEvent) {
+    super.update(event)
+    val editor = event.getData(CommonDataKeys.EDITOR)
+    val file = event.getData(CommonDataKeys.PSI_FILE)
+    if (editor == null || file == null) {
+      return
+    }
+    val (table, _) = ColumnBasedTableAction.findTableAndIndex(event, file, editor)
+    event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
   }
 
   //class None: SetColumnAlignmentAction(MarkdownTableSeparatorRow.CellAlignment.NONE)
