@@ -3,11 +3,13 @@ package com.intellij.lang.injection.general
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Checks additional preconditions on IntelliLang injection configured via config XML.
  * Implement it when you need to insert a chameleon injection that uses different language depending on additional arguments or parameters.
  */
+@ApiStatus.Experimental
 interface LanguageInjectionCondition {
   /**
    * @return ID that should be set to injections condition-id attribute
