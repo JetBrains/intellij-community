@@ -107,7 +107,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         .exceptionally(throwable -> {
           Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
           if (exception instanceof EvaluateException) {
-            LOG.error(exception);
+            // TODO: simplify when only async method left
+            if (!(exception.getCause() instanceof InvalidStackFrameException)) {
+              LOG.error(exception);
+            }
             return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
           }
           throw (RuntimeException)throwable;
