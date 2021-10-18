@@ -1,4 +1,4 @@
-// "Annotate annotation 'NotNull' as @Retention" "false"
+// "Annotate annotation 'NotNull' as @Retention(RetentionPolicy.RUNTIME)" "false"
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
