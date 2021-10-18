@@ -61,7 +61,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private final Map<PsiReferenceExpression, ArgResultEquality> mySameArguments = new HashMap<>();
-  private final Map<PsiExpression, ThreeState> mySwitchLabelsReachability = new HashMap<>();
+  private final Map<PsiCaseLabelElement, ThreeState> mySwitchLabelsReachability = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
@@ -182,7 +182,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     return myConstantExpressions;
   }
 
-  Map<PsiExpression, ThreeState> getSwitchLabelsReachability() {
+  Map<PsiCaseLabelElement, ThreeState> getSwitchLabelsReachability() {
     return mySwitchLabelsReachability;
   }
 
@@ -241,7 +241,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
     if (anchor instanceof JavaSwitchLabelTakenAnchor) {
       DfType type = state.getDfType(value);
-      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelExpression(),
+      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelElement(),
                                        type.equals(DfTypes.TRUE) ? ThreeState.YES :
                                        type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE, ThreeState::merge);
       return;

@@ -332,22 +332,22 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {
+  private void reportUnreachableSwitchBranches(Map<PsiCaseLabelElement, ThreeState> labelReachability, ProblemsHolder holder) {
     if (labelReachability.isEmpty()) return;
     PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
     MultiMap<Object, PsiElement> elementsToCheckDuplicates = getElementsToCheckDuplicates(switchBlock);
     Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
 
-    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+    for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.YES) continue;
-      PsiExpression label = entry.getKey();
+      PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
-        .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiExpression.class)).skip(1))
+        .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiCaseLabelElement.class)).skip(1))
         .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;
       }
@@ -355,9 +355,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"),
                              createUnwrapSwitchLabelFix());
     }
-    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+    for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.NO) continue;
-      PsiExpression label = entry.getKey();
+      PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       boolean isDuplicateLabel = elementsToCheckDuplicates.get(evaluateConstant(label)).size() > 1;
       // duplicate case label is a compilation error so no need to highlight by the inspection

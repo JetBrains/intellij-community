@@ -45,8 +45,11 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
-  // todo fix after supporting patterns if DFA
   public void testTotalPatternAlreadyExists() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+  }
+
+  public void testTotalPatternNotExist() {
     doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 }

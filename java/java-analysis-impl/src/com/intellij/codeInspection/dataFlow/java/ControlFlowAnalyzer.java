@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer.PatternInSwitchEmitter.PatternInInstanceofEmitter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
@@ -28,6 +29,7 @@ import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.JavaCatchC
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -42,6 +44,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -718,7 +721,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement thenStatement = statement.getThenBranch();
     PsiStatement elseStatement = statement.getElseBranch();
 
-    ControlFlow.DeferredOffset skipThenOffset = new ControlFlow.DeferredOffset();
+    DeferredOffset skipThenOffset = new DeferredOffset();
 
     if (condition != null) {
       condition.accept(this);
@@ -732,7 +735,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (elseStatement != null) {
-      ControlFlow.DeferredOffset skipElseOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset skipElseOffset = new DeferredOffset();
       Instruction instruction = new GotoInstruction(skipElseOffset);
       addInstruction(instruction);
       skipThenOffset.setOffset(getInstructionCount());
@@ -882,6 +885,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
     if (switchBlock == null) return;
     startElement(statement);
+    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+    if (labelElementList != null) {
+      for (PsiCaseLabelElement element : labelElementList.getElements()) {
+        if (element instanceof PsiDefaultCaseLabelElement) {
+          element.accept(this);
+        }
+      }
+    }
     PsiStatement body = statement.getBody();
     PsiCodeBlock switchBody = switchBlock.getBody();
     boolean expressionSwitch = myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == switchBody;
@@ -986,14 +997,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   }
                   else {
                     addInstruction(new JvmPushInstruction(expressionValue, null));
-                    ControlFlow.DeferredOffset condGotoOffset = new ControlFlow.DeferredOffset();
+                    DeferredOffset condGotoOffset = new DeferredOffset();
                     addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.NULL));
 
                     addInstruction(new JvmPushInstruction(expressionValue, null));
                     generateBoxingUnboxingInstructionFor(selector, PsiPrimitiveType.getUnboxedType(targetType));
                     expr.accept(this);
                     addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
-                    ControlFlow.DeferredOffset gotoOffset = new ControlFlow.DeferredOffset();
+                    DeferredOffset gotoOffset = new DeferredOffset();
                     addInstruction(new GotoInstruction(gotoOffset));
 
                     PushValueInstruction pushValInstr = new PushValueInstruction(DfTypes.FALSE, new JavaSwitchLabelTakenAnchor(expr));
@@ -1015,6 +1026,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   pushUnknown();
                   addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
+              }
+              else if (expressionValue != null && targetType != null && labelElement instanceof PsiPattern) {
+                new PatternInSwitchEmitter(this, ((PsiPattern)labelElement), expressionValue, targetType).emit();
+                addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
               }
             }
           }
@@ -1544,7 +1559,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
-    ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+    DeferredOffset endOffset = new DeferredOffset();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
@@ -1552,7 +1567,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
-        ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
+        DeferredOffset nextOffset = new DeferredOffset();
         addInstruction(new ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), operand));
         push(DfTypes.booleanValue(!and), expression);
         addInstruction(new GotoInstruction(endOffset));
@@ -1579,7 +1594,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (thenExpression != null) {
       PsiExpression condition = expression.getCondition();
       PsiExpression elseExpression = expression.getElseExpression();
-      ControlFlow.DeferredOffset elseOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset elseOffset = new DeferredOffset();
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
@@ -1587,7 +1602,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-      ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset endOffset = new DeferredOffset();
       addInstruction(new GotoInstruction(endOffset));
 
       elseOffset.setOffset(getInstructionCount());
@@ -1613,50 +1628,50 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     startElement(expression);
+
     PsiPattern pattern = expression.getPattern();
     PsiExpression operand = expression.getOperand();
-    CFGBuilder builder = new CFGBuilder(this);
+    PsiType operandType = operand.getType();
     PsiTypeElement checkType = expression.getCheckType();
-    if (pattern instanceof PsiTypeTestPattern && checkType != null) {
-      PsiType type = checkType.getType();
-      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-      if (variable != null) {
-        DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
-        DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-        if (expr instanceof DfaVariableValue) {
-          builder.push(expr, operand);
-        }
-        else {
-          DfaVariableValue tmp = createTempVariable(operand.getType());
-          builder
-            .pushForWrite(tmp)
-            .pushExpression(operand)
-            .assign();
-        }
-        builder
-          .dup()
-          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-          .isInstance(expression)
-          .ifConditionIs(false)
-          .pop()
-          .push(DfTypes.FALSE)
-          .elseBranch()
-          .pushForWrite(dfaVar)
-          .swap()
-          .assign()
-          .pop()
-          .push(DfTypes.TRUE)
-          .end();
-      } else {
+    CFGBuilder builder = new CFGBuilder(this);
+    DfaVariableValue expressionValue;
+    if (pattern == null) {
+      if (checkType == null) {
+        pushUnknown();
+      }
+      else {
         buildSimpleInstanceof(builder, expression, operand, checkType);
       }
     }
-    else if (checkType != null) {
-      buildSimpleInstanceof(builder, expression, operand, checkType);
-    }
     else {
-      pushUnknown();
+      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+      if (patternVariable == null) {
+        if (checkType == null) {
+          pushUnknown();
+        }
+        else {
+          buildSimpleInstanceof(builder, expression, operand, checkType);
+        }
+      }
+      else if (operandType != null) {
+        DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
+        if (expr instanceof DfaVariableValue) {
+          expressionValue = (DfaVariableValue)expr;
+        }
+        else {
+          expressionValue = createTempVariable(operand.getType());
+          builder
+            .pushForWrite(expressionValue)
+            .pushExpression(operand)
+            .assign();
+        }
+        new PatternInInstanceofEmitter(this, pattern, expressionValue, operandType, expression).emit();
+      }
+      else {
+        pushUnknown();
+      }
     }
+
     finishElement(expression);
   }
 
@@ -2313,5 +2328,134 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner(), new EnumCompareInliner()
   };
-}
 
+  static class PatternInSwitchEmitter {
+    final ControlFlowAnalyzer myAnalyzer;
+    final PsiPattern myPattern;
+    private final DfaVariableValue myExpressionValue;
+    private final PsiType myCheckType;
+
+    private PatternInSwitchEmitter(@NotNull ControlFlowAnalyzer analyzer, @NotNull PsiPattern pattern,
+                                   @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
+      myAnalyzer = analyzer;
+      myPattern = pattern;
+      myExpressionValue = expressionValue;
+      myCheckType = checkType;
+    }
+
+    void emit() {
+      processPattern(myPattern, new SmartList<>());
+      myAnalyzer.addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(myPattern)));
+    }
+
+    void processPattern(@Nullable PsiPattern innerPattern, @NotNull List<DeferredOffset> deferredOffsets) {
+      if (innerPattern == null) return;
+      if (innerPattern instanceof PsiGuardedPattern) {
+        PsiPrimaryPattern primaryPattern = ((PsiGuardedPattern)innerPattern).getPrimaryPattern();
+        processPattern(primaryPattern, deferredOffsets);
+        PsiExpression expression = ((PsiGuardedPattern)innerPattern).getGuardingExpression();
+        if (expression != null) {
+          expression.accept(myAnalyzer);
+        }
+        DeferredOffset condGotoOffset = new DeferredOffset();
+        myAnalyzer.addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
+
+        myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.FALSE));
+        DeferredOffset gotoInstrOffset = new DeferredOffset();
+        myAnalyzer.addInstruction(new GotoInstruction(gotoInstrOffset));
+        deferredOffsets.add(gotoInstrOffset);
+
+        condGotoOffset.setOffset(myAnalyzer.getInstructionCount());
+      }
+      else if (innerPattern instanceof PsiParenthesizedPattern) {
+        PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
+        processPattern(unwrappedPattern, deferredOffsets);
+      }
+      else if (innerPattern instanceof PsiTypeTestPattern) {
+        PsiPatternVariable variable = ((PsiTypeTestPattern)innerPattern).getPatternVariable();
+        if (variable == null) return;
+
+        myAnalyzer.addInstruction(new JvmPushInstruction(myExpressionValue, null));
+
+        DeferredOffset condGotoOffset = null;
+        if (!isTotalPattern()) {
+          myAnalyzer.addInstruction(new DupInstruction());
+          myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(innerPattern), Nullability.NOT_NULL)));
+
+          addInstanceofInstruction();
+
+          condGotoOffset = new DeferredOffset();
+          myAnalyzer.addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
+
+          myAnalyzer.addInstruction(new PopInstruction());
+          myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.FALSE));
+          DeferredOffset gotoInstrOffset = new DeferredOffset();
+          myAnalyzer.addInstruction(new GotoInstruction(gotoInstrOffset));
+          deferredOffsets.add(gotoInstrOffset);
+        }
+
+        DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(myAnalyzer.getFactory(), variable);
+        JvmPushInstruction pushInstr = new JvmPushInstruction(patternDfaVar, null, true);
+        myAnalyzer.addInstruction(pushInstr);
+        if (condGotoOffset != null) {
+          condGotoOffset.setOffset(pushInstr.getIndex());
+        }
+
+        myAnalyzer.addInstruction(new SwapInstruction());
+        myAnalyzer.addInstruction(new AssignInstruction(null, null));
+      }
+
+      if (myPattern == innerPattern) {
+        myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.TRUE));
+        for (DeferredOffset offset : deferredOffsets) {
+          offset.setOffset(myAnalyzer.getInstructionCount());
+        }
+      }
+    }
+
+    boolean isTotalPattern() {
+      return JavaPsiPatternUtil.isTotalForType(myPattern, myCheckType);
+    }
+
+    void addInstanceofInstruction() {
+      myAnalyzer.addInstruction(new InstanceofInstruction(null, false));
+    }
+
+    static class PatternInInstanceofEmitter extends PatternInSwitchEmitter {
+      private final PsiInstanceOfExpression myExpression;
+      private final boolean myInstanceofCanBePotentiallyRedundant;
+
+      private PatternInInstanceofEmitter(@NotNull ControlFlowAnalyzer analyzer, @NotNull PsiPattern pattern,
+                                         @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType,
+                                         @NotNull PsiInstanceOfExpression expression) {
+        super(analyzer, pattern, expressionValue, checkType);
+        myExpression = expression;
+        myInstanceofCanBePotentiallyRedundant = pattern instanceof PsiTypeTestPattern ||
+                                                JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern;
+      }
+
+      @Override
+      void emit() {
+        processPattern(myPattern, new SmartList<>());
+        if (!myInstanceofCanBePotentiallyRedundant) {
+          myAnalyzer.addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(myExpression)));
+        }
+      }
+
+      @Override
+      void addInstanceofInstruction() {
+        if (myInstanceofCanBePotentiallyRedundant) {
+          myAnalyzer.addInstruction(new InstanceofInstruction(new JavaExpressionAnchor(myExpression), false));
+        }
+        else {
+          super.addInstanceofInstruction();
+        }
+      }
+
+      @Override
+      boolean isTotalPattern() {
+        return false;
+      }
+    }
+  }
+}
