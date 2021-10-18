@@ -32,6 +32,8 @@ import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.io.ByteArrayInputStream
+import java.io.ObjectInputStream
 import java.net.InetAddress
 import java.util.concurrent.Future
 
@@ -48,13 +50,14 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
-    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler)
+    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler,classpathInferer)
   }
 
   private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
                                serverEnvironmentSetup: GradleServerEnvironmentSetupImpl,
                                targetProgressIndicator: GradleServerProgressIndicator,
-                               resultHandler: ResultHandler<Any?>) {
+                               resultHandler: ResultHandler<Any?>,
+                               classpathInferer: GradleServerClasspathInferer) {
     targetProgressIndicator.checkCanceled()
     val remoteEnvironment = serverEnvironmentSetup.targetEnvironment
     val process = remoteEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
@@ -78,7 +81,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
       serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, hostPort) ?: hostPort
     }
-    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver) {
+    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver, classpathInferer) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -122,7 +125,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
   private fun String.useLocalFileSeparators(targetPlatform: TargetPlatform) =
     if (targetPlatform.platform == Platform.current()) this
     else replace(targetPlatform.platform.fileSeparator, Platform.current().fileSeparator)
-
   @NlsSafe
   private fun resolveFistPath(@NlsSafe text: String,
                               targetProjectBasePath: String,
@@ -151,9 +153,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     buf.append(text.substring(pathIndexEnd))
     return buf.toString()
   }
-
   private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
                                            private val connectionAddressResolver: (HostPort) -> HostPort,
+                                           private val classpathInferer: GradleServerClasspathInferer,
                                            private val buildEventConsumer: BuildEventConsumer) {
     private lateinit var listenerTask: Future<*>
     fun start(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
@@ -168,7 +170,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         }
       }
     }
-
     private fun doRun(targetBuildParameters: TargetBuildParameters,
                       hostName: HostPort,
                       resultHandler: ResultHandler<Any?>,
@@ -185,7 +186,12 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           val message = connection.receive() ?: break
           when (message) {
             is Success -> {
-              resultHandler.onComplete(message.value)
+              val bytes = message.value as? ByteArray ?: throw IllegalStateException("Wrong")
+              val bis = ByteArrayInputStream(bytes)
+              ObjectInputStream(bis).use {
+                val value = it.readObject()
+                resultHandler.onComplete(value)
+              }
               break@loop
             }
             is Failure -> {
