@@ -98,8 +98,12 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
         return;
       }
       final PsiAnnotation retentionAnnotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);
-      if (retentionAnnotation == null && annotationClass.isWritable()) {
-        registerError(arg, annotationClass);
+      if (retentionAnnotation == null) {
+        if (annotationClass.isWritable()) {
+          registerError(arg, annotationClass);
+        } else {
+          registerError(arg);
+        }
         return;
       }
       final PsiAnnotationParameterList parameters = retentionAnnotation.getParameterList();
