@@ -58,7 +58,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       VirtualFile file = MavenUtil.getRepositoryFile(contextProject, id, "pom", null);
       if (file != null) {
         File artifactFile = new File(file.getPath());
-        MavenIndicesManager.getInstance(contextProject).fixArtifactIndex(artifactFile, localRepository);
+        MavenIndicesManager.getInstance(contextProject).fixArtifactIndexAsync(artifactFile, localRepository);
         return s;
       }
       return null;

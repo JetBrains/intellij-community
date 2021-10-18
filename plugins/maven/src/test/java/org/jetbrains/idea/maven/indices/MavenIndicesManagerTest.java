@@ -96,7 +96,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     FileUtil.copyDir(artifactDir, localRepo);
     assertFalse(localIndex.hasGroupId("junit"));
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    MavenIndicesManager.getInstance(myProject).fixArtifactIndex(artifactFile, localRepo);
+    MavenIndicesManager.getInstance(myProject).fixArtifactIndexAsync(artifactFile, localRepo);
     new WaitFor(500) {
       @Override
       protected boolean condition() {
