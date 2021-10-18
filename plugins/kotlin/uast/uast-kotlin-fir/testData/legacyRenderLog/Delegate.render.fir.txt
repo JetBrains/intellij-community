@@ -9,6 +9,7 @@ public final class MyColor {
 }
 
 public final class Some {
+    @org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<? extends MyColor>
     @org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<? extends MyColor> = lazy({
         return <init>(1, 2, 3)
     })
