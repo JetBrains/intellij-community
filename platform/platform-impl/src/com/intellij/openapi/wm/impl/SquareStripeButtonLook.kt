@@ -11,7 +11,7 @@ import java.awt.Rectangle
 /**
  * @author Konstantin Bulenkov
  */
-class SquareStripeButtonLook(button: SquareStripeButton) : IdeaActionButtonLook() {
+class SquareStripeButtonLook : IdeaActionButtonLook() {
   override fun paintLookBackground(g: Graphics, rect: Rectangle, color: Color) {
     super.paintLookBackground(g, toSquareButtonRect(rect), color)
   }

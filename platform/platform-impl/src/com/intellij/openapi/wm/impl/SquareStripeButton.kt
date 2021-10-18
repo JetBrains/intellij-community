@@ -24,7 +24,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   ActionButton(SquareAnActionButton(project, button), createPresentation(button), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {
-    setLook(SquareStripeButtonLook(this))
+    setLook(SquareStripeButtonLook())
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         showPopup(component, x, y)
