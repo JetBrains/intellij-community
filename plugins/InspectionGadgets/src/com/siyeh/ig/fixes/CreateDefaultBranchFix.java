@@ -71,15 +71,17 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
       .map(text -> factory.createStatementFromText(text, parent))
       .forEach(statement -> parent.addBefore(statement, anchor));
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
-    adjustEditor(switchBlock, lastStatement);
+    startTemplateOnStatement(lastStatement);
   }
 
   /**
    * Method selects the statement inside the switch block and offers a user to replace the selected statement
-   * with his own value.
+   * with the user-specified value.
    */
-  public static void adjustEditor(@NotNull PsiSwitchBlock block, @Nullable PsiStatement statementToAdjust) {
-    if (!block.isPhysical()) return;
+  public static void startTemplateOnStatement(@Nullable PsiStatement statementToAdjust) {
+    if (statementToAdjust == null) return;
+    PsiSwitchBlock block = PsiTreeUtil.getParentOfType(statementToAdjust, PsiSwitchBlock.class);
+    if (block == null || !block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
     Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);

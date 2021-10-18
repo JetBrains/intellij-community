@@ -985,32 +985,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                   }
                   else {
-                    // if selector != null
                     addInstruction(new JvmPushInstruction(expressionValue, null));
-                    addInstruction(new PushValueInstruction(DfTypes.NULL));
-                    addInstruction(new BooleanBinaryInstruction(RelationType.NE, true, null));
-                    ConditionalGotoInstruction condGotoInstr = new ConditionalGotoInstruction(new ControlFlow.DeferredOffset(), DfTypes.TRUE);
-                    addInstruction(condGotoInstr);
+                    ControlFlow.DeferredOffset condGotoOffset = new ControlFlow.DeferredOffset();
+                    addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.NULL));
 
-                    // if selector == null, we set false explicitly and jump to GOTO instruction that exits from the switch branch
-                    addInstruction(new PushValueInstruction(DfTypes.FALSE, new JavaSwitchLabelTakenAnchor(expr)));
-                    GotoInstruction gotoInstr = new GotoInstruction(new ControlFlow.DeferredOffset());
-                    addInstruction(gotoInstr);
-
-                    JvmPushInstruction pushSelectorInstr = new JvmPushInstruction(expressionValue, null);
-                    addInstruction(pushSelectorInstr);
+                    addInstruction(new JvmPushInstruction(expressionValue, null));
                     generateBoxingUnboxingInstructionFor(selector, PsiPrimitiveType.getUnboxedType(targetType));
                     expr.accept(this);
                     addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
+                    ControlFlow.DeferredOffset gotoOffset = new ControlFlow.DeferredOffset();
+                    addInstruction(new GotoInstruction(gotoOffset));
+
+                    PushValueInstruction pushValInstr = new PushValueInstruction(DfTypes.FALSE, new JavaSwitchLabelTakenAnchor(expr));
+                    addInstruction(pushValInstr);
+                    condGotoOffset.setOffset(pushValInstr.getIndex());
 
                     ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
                     addInstruction(exitFromSwitchBranchInstr);
-
-                    condGotoInstr.setOffset(pushSelectorInstr.getIndex());
-                    gotoInstr.setOffset(exitFromSwitchBranchInstr.getIndex());
+                    gotoOffset.setOffset(exitFromSwitchBranchInstr.getIndex());
                   }
                 }
-                else if (expressionValue != null && TypeConversionUtil.isNullType(((PsiExpression)labelElement).getType())) {
+                else if (expressionValue != null && ExpressionUtils.isNullLiteral((PsiExpression)labelElement)) {
                   addInstruction(new JvmPushInstruction(expressionValue, null));
                   expr.accept(this);
                   addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
