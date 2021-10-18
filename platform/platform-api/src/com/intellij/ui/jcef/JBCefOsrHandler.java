@@ -41,6 +41,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
+  private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register("ide.browser.jcef.osr.measureFPS");
 
   private final @NotNull Object myImageLock = new Object();
 
@@ -62,6 +63,8 @@ class JBCefOsrHandler implements CefRenderHandler {
         updateLocation();
       }
     });
+
+    myFpsMeter.registerComponent(myComponent);
   }
 
   @Override
@@ -149,12 +152,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   public void paint(Graphics2D g) {
+    myFpsMeter.paintFrameStarted();
     synchronized (myImageLock) {
       if (myImage != null) {
-        // the graphics clip will optimize the whole image painting
+        // the graphics has correct clip set in onPaint, so here we draw the whole image
         UIUtil.drawImage(g, myImage, 0, 0, null);
       }
     }
+    myFpsMeter.paintFrameFinished(g);
   }
 
   private static @NotNull Rectangle findOuterRect(Rectangle@NotNull[] rects) {
