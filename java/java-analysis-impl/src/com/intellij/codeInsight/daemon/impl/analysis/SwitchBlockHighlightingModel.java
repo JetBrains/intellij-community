@@ -688,7 +688,11 @@ public class SwitchBlockHighlightingModel {
       }
       alreadyDominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
-        QuickFixAction.registerQuickFixAction(info, getFixFactory().createMoveSwitchBranchUpFix(who, overWhom));
+        PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
+        PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
+        if (whoPattern == null || !JavaPsiPatternUtil.dominates(overWhomPattern, whoPattern)) {
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createMoveSwitchBranchUpFix(who, overWhom));
+        }
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
         results.add(info);
       });
