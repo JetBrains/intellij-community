@@ -23,7 +23,12 @@ public enum IntelliJPlatformProduct {
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio"),
+  /**
+   * @deprecated Code With Me Guest is an old name for JetBrains Client
+   */
+  @Deprecated
   CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX),
+  JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX);
 
   private final String myProductCode;

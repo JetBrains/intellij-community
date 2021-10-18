@@ -22,6 +22,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.io.*
+import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
@@ -56,7 +57,7 @@ object CodeWithMeClientDownloader {
   const val gatewayTestsInstallersDirProperty = "intellij.cwm.tests.remoteDev.gateway.idea.tar.gz.dir"
   const val gatewayTestsX11DisplayProperty = "intellij.cwm.tests.remoteDev.gateway.x11.display"
   const val cwmTestsGuestCachesSystemProperty = "codeWithMe.tests.guest.caches.dir"
-  const val DEFAULT_GUEST_CACHES_DIR_NAME = "CodeWithMeClientDist"
+  const val DEFAULT_GUEST_CACHES_DIR_NAME = "JetBrainsClientDist"
 
   private fun isJbrSymlink(file: Path): Boolean {
     return file.name == "jbr" && FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
@@ -92,6 +93,11 @@ object CodeWithMeClientDownloader {
            ?: (getJetBrainsSystemCachesDir() / DEFAULT_GUEST_CACHES_DIR_NAME)
   }
 
+  fun getClientDistributionName(clientBuildVersion: String) = when {
+    VersionComparatorUtil.compare(clientBuildVersion, "221.1") >= 0 -> "JetBrainsClient"
+    else -> "CodeWithMeGuest"
+  }
+
   fun createSessionInfo(clientBuildVersion: String, jreBuild: String, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
     if ("SNAPSHOT" in clientBuildVersion) {
       LOG.warn(
@@ -106,7 +112,9 @@ object CodeWithMeClientDownloader {
       else -> error("Current platform is not supported")
     }
 
-    val clientDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}CodeWithMeGuest-$hostBuildNumber$platformSuffix"
+    val clientDistributionName = getClientDistributionName(clientBuildVersion)
+
+    val clientDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}$clientDistributionName-$hostBuildNumber$platformSuffix"
 
     val platformString = if (SystemInfo.isMac) "osx-x64" else if (SystemInfo.isWindows) "windows-x64" else "linux-x64"
 
@@ -119,7 +127,7 @@ object CodeWithMeClientDownloader {
     val jdkBuild = jreBuildParts[1]
     val jreDownloadUrl = "${DEFAULT_JRE_DOWNLOAD_LOCATION}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
-    val clientName = "CodeWithMeGuest-$hostBuildNumber"
+    val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
 
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
@@ -149,7 +157,8 @@ object CodeWithMeClientDownloader {
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
     jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
-    val clientJdkDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}CodeWithMeGuest-$clientBuildVersion-jdk-build.txt"
+    val clientDistributionName = getClientDistributionName(clientBuildVersion)
+    val clientJdkDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
     val jdkBuild = HttpRequests
       .request(clientJdkDownloadUrl)
       .readString(jdkBuildProgressIndicator)
@@ -413,7 +422,19 @@ object CodeWithMeClientDownloader {
       }
     }
 
-    error("Code With Me Guest home is not found under $guestRoot")
+    error("JetBrains Client home is not found under $guestRoot")
+  }
+
+  private fun findLauncher(guestRoot: Path, launcherNames: List<String>): Pair<Path, List<String>> {
+    val launcher = launcherNames.firstNotNullOfOrNull {
+      val launcherRelative = Path.of("bin", it)
+      val launcher = findLauncher(guestRoot, launcherRelative)
+      launcher?.let {
+        launcher to listOf(launcher.toString())
+      }
+    }
+
+    return launcher ?: error("Could not find launchers (${launcherNames.joinToString { "'$it'" }}) under $guestRoot")
   }
 
   private fun findLauncher(guestRoot: Path, launcherName: Path): Path? {
@@ -433,25 +454,8 @@ object CodeWithMeClientDownloader {
   private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): Pair<Path, List<String>> {
     when {
       SystemInfo.isWindows -> {
-        val exeLauncherName = Path.of("bin", "cwm_guest64.exe")
-        val exeLauncher = findLauncher(guestRoot, exeLauncherName)
-        if (exeLauncher != null) {
-          return exeLauncher to listOf(exeLauncher.toString())
-        }
-
-        val oldExeLauncherName = Path.of("bin", "intellij_client64.exe")
-        val oldExeLauncher = findLauncher(guestRoot, oldExeLauncherName)
-        if (oldExeLauncher != null) {
-          return oldExeLauncher to listOf(oldExeLauncher.toString())
-        }
-
-        val batLauncherName = Path.of("bin", "intellij_client.bat")
-        val batLauncher = findLauncher(guestRoot, batLauncherName)
-        if (batLauncher != null) {
-          return batLauncher to listOf(batLauncher.toString())
-        }
-
-        error("Both '$exeLauncherName' and '$batLauncherName' are missing under $guestRoot")
+        val launcherNames = listOf("jetbrains_client64.exe", "cwm_guest64.exe", "intellij_client64.exe", "intellij_client.bat")
+        return findLauncher(guestRoot, launcherNames)
       }
 
       SystemInfo.isUnix -> {
@@ -462,19 +466,8 @@ object CodeWithMeClientDownloader {
           }
         }
 
-        val shLauncherName = Path.of("bin", "cwm_guest.sh")
-        val shLauncher = findLauncher(guestRoot, shLauncherName)
-        if (shLauncher != null) {
-          return shLauncher to listOf(shLauncher.toString())
-        }
-
-        val oldShLauncherName = Path.of("bin", "intellij_client.sh")
-        val oldShLauncher = findLauncher(guestRoot, oldShLauncherName)
-        if (oldShLauncher != null) {
-          return oldShLauncher to listOf(oldShLauncher.toString())
-        }
-
-        error("Could not find launcher '$shLauncherName' under $guestRoot")
+        val shLauncherNames = listOf("jetbrains_client.sh", "cwm_guest.sh", "intellij_client.sh")
+        return findLauncher(guestRoot, shLauncherNames)
       }
 
       else -> error("Unsupported OS: ${SystemInfo.OS_NAME}")
@@ -504,7 +497,7 @@ object CodeWithMeClientDownloader {
     val processLifetimeDef = lifetime.createNested()
 
     if (patchVmOptions != null) {
-      val vmOptionsFile = executable.resolveSibling("cwm_guest64.vmoptions")
+      val vmOptionsFile = executable.resolveSibling("jetbrains_client64.vmoptions")
       LOG.info("Patching $vmOptionsFile")
 
       require(vmOptionsFile.isFile() && vmOptionsFile.exists())
@@ -565,7 +558,7 @@ object CodeWithMeClientDownloader {
           commandLine.environment["DISPLAY"] = it
         }
 
-        LOG.info("Starting Code With Me Guest process (attempts left: $attemptCount): ${commandLine}")
+        LOG.info("Starting JetBrains Client process (attempts left: $attemptCount): ${commandLine}")
 
         attemptCount--
         lastProcessStartTime = System.currentTimeMillis()
