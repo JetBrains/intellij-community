@@ -13,11 +13,11 @@ import java.util.ArrayList;
 public class MigrationGroup extends ActionGroup {
   @Override
   public AnAction @NotNull [] getChildren(AnActionEvent e) {
-    final ArrayList<AnAction> availableMigrations = new ArrayList<>();
-    if (e == null) return availableMigrations.toArray(AnAction[]::new);
+    if (e == null) return AnAction.EMPTY_ARRAY;
     final Project project = e.getProject();
-    if (project == null) return availableMigrations.toArray(AnAction[]::new);
+    if (project == null) return AnAction.EMPTY_ARRAY;
 
+    final ArrayList<AnAction> availableMigrations = new ArrayList<>();
     final MigrationManager manager = RefactoringManager.getInstance(project).getMigrateManager();
     for (MigrationMap map: manager.getMigrationsMap().getMaps()) {
       availableMigrations.add(new AnAction(map.getName()) {
