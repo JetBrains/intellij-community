@@ -49,6 +49,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe private static final String ALPHA = "alpha";
   @NlsSafe private static final String BETA = "beta";
   @NlsSafe private static final String RC = "rc";
+  @NlsSafe private static final String SNAPSHOT = "SNAPSHOT";
 
 
   private GroovyConfigUtils() {}
@@ -70,8 +71,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
-    //return getInstance().isVersionAtLeast(element, GROOVY4_0);
-    return true;
+    return getInstance().isVersionAtLeast(element, GROOVY4_0);
   }
 
   @Override
@@ -138,20 +138,20 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   private static int getVersionPart(String[] parts, int index) {
-    String part = index < parts.length ? parts[index] : "0";
-    int partNumber;
-    if (part.equals(ALPHA)) {
-      partNumber = -3;
+    String part = index < parts.length ? parts[index] : "-4";
+    if (part.equals(SNAPSHOT)) {
+      return 999;
+    } else if (part.equals(ALPHA)) {
+      return -3;
     } else if (part.equals(BETA)) {
-      partNumber = -2;
+      return -2;
     } else if (part.equals(RC)) {
-      partNumber = -1;
+      return -1;
     } else try {
-      partNumber = Integer.parseInt(part);
+      return Integer.parseInt(part);
     } catch (NumberFormatException __) {
-      partNumber = -4;
+      return -4;
     }
-    return partNumber;
   }
 
   @NotNull
