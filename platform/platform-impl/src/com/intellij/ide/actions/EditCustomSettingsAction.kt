@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.IoErrorText
+import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -143,7 +144,8 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   }
 
   override fun file(): Path? = file.value
-  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
+  override fun template(): String =
+    "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties (expand/override 'bin${File.separator}idea.properties')\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
@@ -157,7 +159,8 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   }
 
   override fun file(): Path? = file.value
-  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n"
+  override fun template(): String =
+    "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options (expand/override 'bin${File.separator}${VMOptions.getFileName()}')\n\n"
   override fun charset(): Charset = VMOptions.getFileCharset()
 
   fun isEnabled(): Boolean = file() != null
