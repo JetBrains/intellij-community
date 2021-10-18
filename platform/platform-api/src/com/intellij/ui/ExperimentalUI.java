@@ -8,6 +8,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -15,12 +17,14 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.intellij.openapi.util.registry.Registry.is;
@@ -67,6 +71,10 @@ public final class ExperimentalUI {
     if (app == null) return;
     RegistryValue value = Registry.get("ide.experimental.ui");
     patchUIDefaults(value);
+    IconPathPatcher iconPathPatcher = createPathPatcher();
+    if (value.asBoolean()) {
+      IconLoader.installPathPatcher(iconPathPatcher);
+    }
     value.addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
@@ -78,6 +86,9 @@ public final class ExperimentalUI {
               || tabPlacement == SwingConstants.BOTTOM) {
             UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
           }
+          IconLoader.installPathPatcher(iconPathPatcher);
+        } else {
+          IconLoader.removePathPatcher(iconPathPatcher);
         }
       }
     }, app);
@@ -87,6 +98,36 @@ public final class ExperimentalUI {
         patchUIDefaults(value);
       }
     });
+  }
+
+  private static IconPathPatcher createPathPatcher() {
+    HashMap<String, String> paths = new HashMap<>();
+    paths.put("/toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
+    paths.put("/toolwindows/toolWindowBookmarks.svg", "/expui/toolwindow/bookmarks.svg");
+    paths.put("/toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
+    paths.put("/toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
+    paths.put("/icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
+    paths.put("/toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
+    paths.put("/toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
+    paths.put("/icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
+    paths.put("/toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
+    paths.put("/images/toolWindowMaven.svg", "/expui/toolwindow/maven.svg");
+    paths.put("/toolwindows/toolWindowProblems.svg", "/expui/toolwindow/problems.svg");
+    paths.put("/toolwindows/toolWindowProfiler.svg", "/expui/toolwindow/profiler.svg");
+    paths.put("/toolwindows/toolWindowProject.svg", "/expui/toolwindow/project.svg");
+    paths.put("/toolwindows/toolWindowRun.svg", "/expui/toolwindow/run.svg");
+    paths.put("/toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
+    paths.put("/icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
+    paths.put("/toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
+    paths.put("/toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
+    paths.put("/toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
+    return new IconPathPatcher() {
+      @Override
+      public @Nullable String patchPath(@NotNull String path,
+                                        @Nullable ClassLoader classLoader) {
+        return paths.get(path.replace("_dark.svg", ".svg"));
+      }
+    };
   }
 
   private static void patchUIDefaults(RegistryValue value) {
