@@ -986,7 +986,8 @@ public final class ConfigImportHelper {
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
-        Collection<String> platformLines = new LinkedHashSet<>(readPlatformOptions(newConfigDir, log));
+        Path platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
+        Collection<String> platformLines = new LinkedHashSet<>(readPlatformOptions(platformVmOptionsFile, log));
         boolean updated = false;
 
         for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
@@ -1013,12 +1014,12 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static List<String> readPlatformOptions(Path newConfigDir, Logger log) {
-    Path platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
+  private static List<String> readPlatformOptions(Path platformVmOptionsFile, Logger log) {
     try {
       return Files.readAllLines(platformVmOptionsFile, VMOptions.getFileCharset());
     }
     catch (IOException e) {
+      // should not prevent a user's VM options file from being processed
       log.warn("Cannot read platform VM options file " + platformVmOptionsFile, e);
       return List.of();
     }
