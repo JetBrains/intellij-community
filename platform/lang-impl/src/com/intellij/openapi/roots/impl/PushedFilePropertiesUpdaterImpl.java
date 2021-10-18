@@ -35,6 +35,8 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -219,7 +221,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         else {
           statistics = null;
         }
-        performDelayedPushTasks(statistics);
+        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
+        try {
+          performDelayedPushTasks(statistics);
+        }
+        finally {
+          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
+        }
       }
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {

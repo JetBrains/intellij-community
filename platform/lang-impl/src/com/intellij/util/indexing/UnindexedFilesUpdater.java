@@ -30,6 +30,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
@@ -520,6 +522,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, myPredefinedIndexableFilesIterators == null);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
+    ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);
     }
@@ -531,6 +534,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
+      ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
       myIndex.filesUpdateFinished(myProject);
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
