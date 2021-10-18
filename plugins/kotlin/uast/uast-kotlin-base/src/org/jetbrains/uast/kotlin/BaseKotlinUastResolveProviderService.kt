@@ -72,7 +72,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType?
 
-    fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType?
+    fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
     // ----------
     // Types
@@ -90,7 +90,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType?
 
-    fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType?
+    fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
     fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType?
 

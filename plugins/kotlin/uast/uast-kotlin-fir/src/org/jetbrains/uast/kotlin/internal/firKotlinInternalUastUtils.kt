@@ -81,7 +81,7 @@ internal fun KtAnalysisSession.toPsiType(
 
 internal fun KtAnalysisSession.toPsiType(
     ktType: KtType,
-    lightDeclaration: PsiModifierListOwner?,
+    containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
     boxed: Boolean = false
@@ -107,8 +107,8 @@ internal fun KtAnalysisSession.toPsiType(
         }
         if (psiType != null) return psiType
     }
-    val parent: PsiElement = lightDeclaration ?: context
-    return ktType.asPsiType(parent, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
+    val psiTypeParent: PsiElement = containingLightDeclaration ?: context
+    return ktType.asPsiType(psiTypeParent, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
