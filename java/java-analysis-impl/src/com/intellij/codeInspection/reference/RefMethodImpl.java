@@ -120,12 +120,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
             PsiType.VOID.equals(returnType) ||
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
 
-    RefClass ownerClass = getOwnerClass();
-    if (isConstructor()) {
-      LOG.assertTrue(ownerClass != null);
-      addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
-    }
-    else {
+    RefClass ownerClass = ObjectUtils.tryCast(parentRef, RefClass.class);
+    if (!isConstructor()) {
       if (ownerClass != null && ownerClass.isInterface()) {
         setAbstract(false);
       }
@@ -312,9 +308,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       getRefManager().executeTask(() -> buildReferences());
       return;
     }
+
     // Work on code block to find what we're referencing...
     UMethod method = (UMethod)getUastElement();
     if (method == null) return;
+    if (isConstructor()) {
+      final RefClass ownerClass = getOwnerClass();
+      assert ownerClass != null;
+      ownerClass.waitForInitialized();
+      addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
+    }
     UExpression body = method.getUastBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     refUtil.addReferencesTo(method, this, method);

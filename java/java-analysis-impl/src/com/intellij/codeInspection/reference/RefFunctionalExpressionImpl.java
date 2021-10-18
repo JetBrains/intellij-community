@@ -51,7 +51,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         parameters = uMethodRef.getUastParameters();
       }
     }
-    setParameters(parameters, isMethodReference);
+    setParameters(parameters);
     if (resolvedRefMethod != null && resolvedMethod != null) {
       resolvedRefMethod.addDerivedReference(this);
       RefClass refClass = resolvedRefMethod.getOwnerClass();
@@ -74,6 +74,9 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     }
     else if (element instanceof UCallableReferenceExpression) {
       RefJavaUtil.getInstance().addReferencesTo(element, this, element);
+      for (RefParameter parameter : getParameters()) {
+        addReference(parameter, parameter.getPsiElement(), element, false, true, null);
+      }
     }
     getRefManager().fireBuildReferences(this);
   }
@@ -130,7 +133,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     }
   }
 
-  private void setParameters(@Nullable List<UParameter> parameters, boolean isMethodReference) {
+  private void setParameters(@Nullable List<UParameter> parameters) {
     if (ContainerUtil.isEmpty(parameters)) return;
     UExpression element = getUastElement();
     assert element != null;
@@ -141,9 +144,6 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
         if (refParameter == null) continue;
         refParameters.add(refParameter);
-        if (isMethodReference) {
-          addReference(refParameter, refParameter.getPsiElement(), element, false, true, null);
-        }
       }
     }
     synchronized (this) {
