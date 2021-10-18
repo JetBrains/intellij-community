@@ -40,8 +40,6 @@ fun updateLibraries(project: Project, libraries: Collection<Library>) {
         getConfiguratorByName(KotlinJsModuleConfigurator.NAME) as KotlinJsModuleConfigurator?
             ?: error("Configurator with given name doesn't exists: " + KotlinJsModuleConfigurator.NAME)
 
-    val collector = createConfigureKotlinNotificationCollector(project)
-
     for (library in libraries) {
         val libraryJarDescriptor =
             if (JavaRuntimeDetectionUtil.getJavaRuntimeVersion(library) != null) kJvmConfigurator.libraryJarDescriptor
@@ -49,8 +47,6 @@ fun updateLibraries(project: Project, libraries: Collection<Library>) {
 
         updateJar(project, library, libraryJarDescriptor)
     }
-
-    collector.showNotification()
 }
 
 private fun updateJar(project: Project, library: Library, libraryJarDescriptor: LibraryJarDescriptor) {
