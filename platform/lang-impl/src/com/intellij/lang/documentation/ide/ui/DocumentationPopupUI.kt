@@ -2,7 +2,6 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.PopupDragListener
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -76,7 +75,6 @@ internal class DocumentationPopupUI(
     secondaryActions.add(ToggleShowDocsOnHoverAction())
     secondaryActions.add(AdjustFontSizeAction())
     secondaryActions.add(ShowToolbarAction())
-    secondaryActions.add(ShowPopupAutomaticallyAction())
     secondaryActions.add(RestoreDefaultSizeAction())
 
     val toolbarActionGroup = DefaultActionGroup()
@@ -174,17 +172,6 @@ internal class DocumentationPopupUI(
     toolbarComponent.isVisible = value
     corner.isVisible = !value
     popupUpdateFlow.tryEmit("toolbar")
-  }
-
-  private class ShowPopupAutomaticallyAction internal constructor() : ToggleAction(
-    CodeInsightBundle.messagePointer("javadoc.show.popup.automatically")), ActionToIgnore {
-    override fun isSelected(e: AnActionEvent): Boolean {
-      return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO
-    }
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO = state
-    }
   }
 
   private inner class ShowToolbarAction : ToggleAction(
