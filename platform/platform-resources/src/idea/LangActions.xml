@@ -323,6 +323,9 @@
 
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
+
+    <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
+            class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
     <action id="Documentation.ToggleShowInPopup"
             class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
     <action id="Documentation.TurnOffAutoUpdate"

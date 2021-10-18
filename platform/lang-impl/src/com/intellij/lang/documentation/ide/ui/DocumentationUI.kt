@@ -5,18 +5,15 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.*
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationManager.getLink
-import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationData
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_HISTORY_DATA_KEY
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGET_POINTER_KEY
-import com.intellij.lang.documentation.ide.actions.primaryActions
+import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -70,9 +67,8 @@ internal class DocumentationUI(
     for (action in linkHandler.createLinkActions() + primaryActions) {
       action.registerCustomShortcutSet(editorPane, this)
     }
-    val externalDocAction = ExternalDocAction()
-    externalDocAction.registerCustomShortcutSet(editorPane, this)
 
+    val externalDocAction = ActionManager.getInstance().getAction(DOCUMENTATION_VIEW_EXTERNAL_ACTION_ID)
     val contextMenu = PopupHandler.installPopupMenu(
       editorPane,
       DefaultActionGroup(primaryActions + externalDocAction),
@@ -86,14 +82,11 @@ internal class DocumentationUI(
   }
 
   override fun getData(dataId: String): Any? {
-    return if (DOCUMENTATION_HISTORY_DATA_KEY.`is`(dataId)) {
-      browser.history
-    }
-    else if (DOCUMENTATION_TARGET_POINTER_KEY.`is`(dataId)) {
-      browser.targetPointer
-    }
-    else {
-      null
+    return when {
+      DOCUMENTATION_BROWSER_DATA_KEY.`is`(dataId) -> browser
+      DOCUMENTATION_HISTORY_DATA_KEY.`is`(dataId) -> browser.history
+      DOCUMENTATION_TARGET_POINTER_KEY.`is`(dataId) -> browser.targetPointer
+      else -> null
     }
   }
 
@@ -199,24 +192,6 @@ internal class DocumentationUI(
       if (ScreenReader.isActive()) {
         editorPane.caretPosition = 0
       }
-    }
-  }
-
-  private inner class ExternalDocAction : AnAction(
-    CodeInsightBundle.messagePointer("javadoc.action.view.external"),
-    AllIcons.General.Web
-  ), ActionToIgnore {
-
-    init {
-      shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).shortcutSet
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = browser.currentExternalUrl() != null
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      browser.openCurrentExternalUrl()
     }
   }
 
