@@ -1,5 +1,5 @@
 from socket import socket
-from typing import Iterable, Mapping, NoReturn, Tuple, Type
+from typing import Iterable, Mapping, NoReturn, Type
 
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 from paramiko.hostkeys import HostKeys
@@ -47,7 +47,7 @@ class SSHClient(ClosingContextManager):
         timeout: float | None = ...,
         get_pty: bool = ...,
         environment: dict[str, str] | None = ...,
-    ) -> Tuple[ChannelStdinFile, ChannelFile, ChannelStderrFile]: ...
+    ) -> tuple[ChannelStdinFile, ChannelFile, ChannelStderrFile]: ...
     def invoke_shell(
         self,
         term: str = ...,

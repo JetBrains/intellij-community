@@ -10,12 +10,17 @@ _S = TypeVar("_S")
 _T = TypeVar("_T")
 
 class ApplyResult(Generic[_T]):
-    def __init__(
-        self,
-        pool: Pool,
-        callback: Callable[[_T], None] | None = ...,
-        error_callback: Callable[[BaseException], None] | None = ...,
-    ) -> None: ...
+    if sys.version_info >= (3, 8):
+        def __init__(
+            self, pool: Pool, callback: Callable[[_T], None] | None, error_callback: Callable[[BaseException], None] | None
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            cache: dict[int, ApplyResult[Any]],
+            callback: Callable[[_T], None] | None,
+            error_callback: Callable[[BaseException], None] | None,
+        ) -> None: ...
     def get(self, timeout: float | None = ...) -> _T: ...
     def wait(self, timeout: float | None = ...) -> None: ...
     def ready(self) -> bool: ...
@@ -26,9 +31,31 @@ class ApplyResult(Generic[_T]):
 # alias created during issue #17805
 AsyncResult = ApplyResult
 
-class MapResult(ApplyResult[List[_T]]): ...
+class MapResult(ApplyResult[List[_T]]):
+    if sys.version_info >= (3, 8):
+        def __init__(
+            self,
+            pool: Pool,
+            chunksize: int,
+            length: int,
+            callback: Callable[[list[_T]], None] | None,
+            error_callback: Callable[[BaseException], None] | None,
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            cache: dict[int, ApplyResult[Any]],
+            chunksize: int,
+            length: int,
+            callback: Callable[[list[_T]], None] | None,
+            error_callback: Callable[[BaseException], None] | None,
+        ) -> None: ...
 
 class IMapIterator(Iterator[_T]):
+    if sys.version_info >= (3, 8):
+        def __init__(self, pool: Pool) -> None: ...
+    else:
+        def __init__(self, cache: dict[int, IMapIterator[Any]]) -> None: ...
     def __iter__(self: _S) -> _S: ...
     def next(self, timeout: float | None = ...) -> _T: ...
     def __next__(self, timeout: float | None = ...) -> _T: ...

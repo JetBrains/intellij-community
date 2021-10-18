@@ -41,8 +41,6 @@ dataclasses.KW_ONLY
 dummy_threading
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
-ftplib.FTP.__init__
-ftplib.FTP_TLS.__init__
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__
 gettext.install
@@ -106,15 +104,11 @@ collections.abc.Coroutine.send
 collections.abc.Coroutine.throw
 collections.abc.Generator.send
 collections.abc.Generator.throw
-contextlib.AsyncExitStack.callback
-contextlib.AsyncExitStack.push_async_callback
-contextlib.ExitStack.callback
 contextvars.ContextVar.reset
 contextvars.ContextVar.set
 io.IncrementalNewlineDecoder.setstate
 random.SystemRandom.getrandbits
 secrets.SystemRandom.getrandbits
-zipfile.ZipExtFile.seek
 # These enums derive from (str, Enum). See comment in py3_common.txt
 pstats.SortKey.__new__
 tkinter.EventType.__new__
@@ -170,7 +164,5 @@ ssl.SSLContext.__new__
 ssl._create_unverified_context
 ssl.get_server_certificate
 tempfile.TemporaryDirectory.__init__
-types.UnionType  # Renamed from `types.Union`
 unicodedata.ucnhash_CAPI
 unittest.mock.create_autospec
-zipfile.Path.open

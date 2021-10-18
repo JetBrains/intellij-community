@@ -93,7 +93,7 @@ class Response:
     headers: CaseInsensitiveDict[str]
     raw: Any
     url: str
-    encoding: str
+    encoding: str | None
     history: list[Response]
     reason: str
     cookies: RequestsCookieJar
