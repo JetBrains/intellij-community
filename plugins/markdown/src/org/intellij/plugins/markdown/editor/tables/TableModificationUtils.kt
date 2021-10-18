@@ -333,6 +333,7 @@ internal object TableModificationUtils {
    * Swaps two cells based on PSI.
    */
   fun MarkdownTableSeparatorRow.swapCells(leftIndex: Int, rightIndex: Int) {
+    val content = text
     val contents = (0 until cellsCount).asSequence().map { getCellText(it) }.toMutableList()
     ContainerUtil.swapElements(contents, leftIndex, rightIndex)
     val newContents = contents.joinToString(
@@ -340,7 +341,16 @@ internal object TableModificationUtils {
       prefix = TableProps.SEPARATOR_CHAR.toString(),
       postfix = TableProps.SEPARATOR_CHAR.toString()
     )
-    replaceWithText(newContents)
+    val adjustedStart = when {
+      content.startsWith(TableProps.SEPARATOR_CHAR.toString()) -> 1
+      else -> 0
+    }
+    val adjustedEnd = when {
+      content.endsWith(TableProps.SEPARATOR_CHAR.toString()) -> content.length - 1
+      else -> content.length
+    }
+    val adjusted = newContents.substring(adjustedStart, adjustedEnd)
+    replaceWithText(adjusted)
   }
 
   /**
@@ -351,8 +361,9 @@ internal object TableModificationUtils {
     for (cell in cells.asReversed()) {
       val parent = cell.parent
       when {
-        columnIndex == 0 && cell.prevSibling.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) -> parent.deleteChildRange(cell.prevSibling, cell)
-        cell.nextSibling.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) -> parent.deleteChildRange(cell, cell.nextSibling)
+        columnIndex == 0 && cell.prevSibling?.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) == true -> parent.deleteChildRange(cell.prevSibling, cell)
+        cell.nextSibling?.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) == true -> parent.deleteChildRange(cell, cell.nextSibling)
+        else -> cell.delete()
       }
     }
     separatorRow?.removeCell(columnIndex)
