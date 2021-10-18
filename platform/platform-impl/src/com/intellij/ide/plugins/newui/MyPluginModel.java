@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -230,12 +229,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean result = true;
     DynamicPluginEnabler pluginEnabler = DynamicPluginEnabler.getInstance();
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      if (!pluginEnabler.updatePluginsState(entry.getValue(),
-                                                   entry.getKey(),
-                                                   getProject(),
-                                                   parentComponent)) {
-        result = false;
-      }
+      result &= pluginEnabler.updatePluginsState(entry.getValue(),
+                                                 entry.getKey(),
+                                                 getProject(),
+                                                 parentComponent);
     }
     return result;
   }
@@ -849,12 +846,27 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myUninstalled.add(descriptor);
   }
 
-  @Override
-  public void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                              @NotNull PluginEnableDisableAction action) {
+  public boolean setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                 @NotNull PluginEnableDisableAction action) {
     enableRows(descriptors, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
+    return true;
+  }
+
+  @Override
+  public boolean isDisabled(@NotNull PluginId pluginId) {
+    return !isEnabled(pluginId, getEnabledMap());
+  }
+
+  @Override
+  public boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    return setEnabledState(descriptors, PluginEnableDisableAction.ENABLE_GLOBALLY);
+  }
+
+  @Override
+  public boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    return setEnabledState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY);
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
@@ -1163,7 +1175,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public static @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     return Collections.unmodifiableSet(ContainerUtil.map2Set(descriptors,
-                                                             PluginDescriptor::getName));
+                                                             IdeaPluginDescriptor::getName));
   }
 
   public static @NotNull String joinPluginNamesOrIds(@NotNull Set<String> pluginNames) {

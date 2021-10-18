@@ -586,7 +586,8 @@
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginEnabler"
+                        serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         preload="true"/>
     <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
                      order="first"/>

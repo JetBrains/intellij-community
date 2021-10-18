@@ -232,14 +232,30 @@ public final class PluginManagerMain {
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
   @Deprecated
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
-    @Override
-    default void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors, @NotNull PluginEnableDisableAction action) {
-      HEADLESS.setEnabledState(descriptors, action);
-    }
 
     @Override
     default boolean isDisabled(@NotNull PluginId pluginId) {
       return HEADLESS.isDisabled(pluginId);
+    }
+
+    @Override
+    default boolean enableById(@NotNull Set<PluginId> pluginIds) {
+      return HEADLESS.enableById(pluginIds);
+    }
+
+    @Override
+    default boolean enable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+      return HEADLESS.enable(descriptors);
+    }
+
+    @Override
+    default boolean disableById(@NotNull Set<PluginId> pluginIds) {
+      return HEADLESS.disableById(pluginIds);
+    }
+
+    @Override
+    default boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+      return HEADLESS.disable(descriptors);
     }
 
     final class HEADLESS implements PluginEnabler { }

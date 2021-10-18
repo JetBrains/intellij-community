@@ -193,7 +193,7 @@ public class ListPluginComponent extends JPanel {
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
-        myPluginModel.setEnabledState(List.of(myPlugin), PluginEnableDisableAction.globally(false));
+        myPluginModel.disable(List.of(myPlugin));
         setupNotAllowedMarkerButton();
       });
     }
@@ -240,8 +240,15 @@ public class ListPluginComponent extends JPanel {
           }
           else {
             myEnableDisableButton = createEnableDisableButton(
-              __ -> myPluginModel.setEnabledState(List.of(myPlugin),
-                                                  PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled()))
+              __ -> {
+                List<IdeaPluginDescriptor> descriptors = List.of(myPlugin);
+                if (myPluginModel.getState(myPlugin).isDisabled()) {
+                  myPluginModel.enable(descriptors);
+                }
+                else {
+                  myPluginModel.disable(descriptors);
+                }
+              }
             );
           }
 

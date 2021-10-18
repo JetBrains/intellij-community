@@ -153,7 +153,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
-    return DisabledPluginsState.isDisabled(pluginId);
+    return PluginEnabler.HEADLESS.isDisabled(pluginId);
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -242,11 +242,11 @@ public final class PluginManagerCore {
   }
 
   public static boolean disablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.setEnabledState(Collections.singleton(id), false);
+    return PluginEnabler.HEADLESS.disableById(Collections.singleton(id));
   }
 
   public static boolean enablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.setEnabledState(Collections.singleton(id), true);
+    return PluginEnabler.HEADLESS.enableById(Collections.singleton(id));
   }
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {

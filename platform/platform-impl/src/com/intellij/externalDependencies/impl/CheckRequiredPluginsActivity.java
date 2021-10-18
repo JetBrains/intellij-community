@@ -19,6 +19,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -29,9 +30,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 
 final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForSmartMode {
   private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
@@ -61,7 +59,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final Set<PluginId> notInstalled = new HashSet<>();
     List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
-    ProjectPluginTracker pluginTracker = DynamicPluginEnabler.getInstance().getPluginTracker(project);
+    DynamicPluginEnabler pluginEnabler = DynamicPluginEnabler.getInstance();
+    ProjectPluginTracker pluginTracker = pluginEnabler.getPluginTracker(project);
 
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
@@ -119,7 +118,9 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     }
 
     if (!pluginsToEnableWithoutRestart.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() -> enablePlugins(project, pluginsToEnableWithoutRestart));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        enablePlugins(pluginsToEnableWithoutRestart, pluginEnabler);
+      });
     }
 
     if (errorMessages.isEmpty()) {
@@ -141,31 +142,30 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     }
 
     NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-      .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), join(errorMessages, "<br>"), NotificationType.ERROR)
+      .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), StringUtil.join(errorMessages, "<br>"), NotificationType.ERROR)
       .setListener(notInstalled.isEmpty() ?
-                   createEnableNotificationListener(project, disabled) :
+                   createEnableNotificationListener(project, disabled, pluginEnabler) :
                    createInstallNotificationListener(project, notInstalled, disabled))
       .notify(project);
   }
 
-  private static void enablePlugins(@NotNull Project project,
-                                    @NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    Set<PluginId> pluginIds = map2SetNotNull(plugins, IdeaPluginDescriptor::getPluginId);
-    LOG.info("Required plugins to enable: [" + join(pluginIds, ", ") + "]");
-
-    DynamicPluginEnabler.getInstance().updatePluginsState(plugins,
-                                                          PluginEnableDisableAction.ENABLE_GLOBALLY,
-                                                          project);
+  private static boolean enablePlugins(@NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                                       @NotNull PluginEnabler pluginEnabler) {
+    LOG.info("Required plugins to enable: [" + StringUtil.join(descriptors, d -> d.getPluginId().getIdString(), ", ") + "]");
+    return pluginEnabler.enable(descriptors);
   }
 
   private static @NotNull NotificationListener createEnableNotificationListener(@NotNull Project project,
-                                                                                @NotNull List<? extends IdeaPluginDescriptor> disabled) {
+                                                                                @NotNull List<? extends IdeaPluginDescriptor> disabled,
+                                                                                @NotNull PluginEnabler pluginEnabler) {
     return (notification, event) -> {
       if (!isApplicable(event, ENABLE)) return;
 
       notification.expire();
-      enablePlugins(project, disabled);
-      PluginManagerMain.notifyPluginsUpdated(project);
+
+      if (!enablePlugins(disabled, pluginEnabler)) {
+        PluginManagerMain.notifyPluginsUpdated(project);
+      }
     };
   }
 

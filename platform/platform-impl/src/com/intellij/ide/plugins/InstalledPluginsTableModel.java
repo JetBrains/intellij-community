@@ -138,14 +138,6 @@ public class InstalledPluginsTableModel {
     }
   }
 
-  public boolean isEnabled(@NotNull PluginId pluginId) {
-    return !isDisabled(pluginId, myEnabled);
-  }
-
-  public boolean isDisabled(@NotNull PluginId pluginId) {
-    return !isEnabled(pluginId, myEnabled);
-  }
-
   protected final @NotNull Map<PluginId, PluginEnabledState> getEnabledMap() {
     return myEnabled;
   }

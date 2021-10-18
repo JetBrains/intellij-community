@@ -27,35 +27,19 @@ import javax.swing.JComponent
   reloadable = false,
 )
 @ApiStatus.Internal
-class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnablerState>(DynamicPluginEnablerState()) {
+class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnablerState>(DynamicPluginEnablerState()),
+                             PluginEnabler {
   companion object {
 
     private val isPerProjectEnabledValue = RegistryManager.getInstance()["ide.plugins.per.project"]
 
     @JvmStatic
-    fun getInstance(): DynamicPluginEnabler = service()
+    fun getInstance(): DynamicPluginEnabler = PluginEnabler.getInstance() as DynamicPluginEnabler
 
     @JvmStatic
     var isPerProjectEnabled: Boolean
       get() = isPerProjectEnabledValue.asBoolean()
       set(value) = isPerProjectEnabledValue.setValue(value)
-
-    @JvmStatic
-    fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(toPluginDescriptors(pluginIds))
-
-    @JvmStatic
-    @JvmOverloads
-    fun unloadPlugins(
-      pluginIds: Collection<PluginId>,
-      project: Project? = null,
-      parentComponent: JComponent? = null,
-    ): Boolean {
-      return DynamicPlugins.unloadPlugins(
-        descriptors = toPluginDescriptors(pluginIds),
-        project = project,
-        parentComponent = parentComponent,
-      )
-    }
 
     internal class EnableDisablePluginsActivity : StartupActivity {
       init {
@@ -81,13 +65,13 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
             }
-            loadPlugins(pluginIdsToLoad)
+            DynamicPlugins.loadPlugins(pluginIdsToLoad.toPluginDescriptors())
 
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
             }
             pluginEnabler.unloadPlugins(
-              pluginIdsToUnload,
+              pluginIdsToUnload.toPluginDescriptors(),
               project,
               projects,
             )
@@ -97,8 +81,6 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     }
 
     private fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
-
-    private fun toPluginDescriptors(collection: Collection<PluginId>) = collection.mapNotNull { PluginManagerCore.findPlugin(it) }
   }
 
   private var applicationShuttingDown = false
@@ -114,16 +96,20 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
           val tracker = getPluginTracker(project)
           val projects = openProjectsExcludingCurrent(project)
 
-          val pluginIdsToLoad = if (projects.isNotEmpty())
+          val descriptorsToLoad = if (projects.isNotEmpty())
             emptyList()
           else
-            tracker.disabledPluginsIds.filterNot { PluginEnabler.HEADLESS.isDisabled(it) }
-          loadPlugins(pluginIdsToLoad)
+            tracker.disabledPluginsIds
+              .filterNot { isDisabled(it) }
+              .toPluginDescriptors()
+          DynamicPlugins.loadPlugins(descriptorsToLoad)
 
-          val pluginIdsToUnload = tracker.enabledPluginsIds
+          val descriptorsToUnload = tracker.enabledPluginsIds
             .union(locallyDisabledPlugins(projects))
+            .toPluginDescriptors()
+
           unloadPlugins(
-            pluginIdsToUnload,
+            descriptorsToUnload,
             project,
             projects,
           )
@@ -145,6 +131,13 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
   val trackers get(): Map<String, ProjectPluginTracker> = state.trackers
 
+  override fun isDisabled(pluginId: PluginId) = PluginEnabler.HEADLESS.isDisabled(pluginId)
+
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>) = updatePluginsState(descriptors, PluginEnableDisableAction.ENABLE_GLOBALLY)
+
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>) = updatePluginsState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY)
+
+  @ApiStatus.Internal
   @JvmOverloads
   fun updatePluginsState(
     descriptors: Collection<IdeaPluginDescriptor>,
@@ -154,53 +147,41 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
   ): Boolean {
     assert(!action.isPerProject || project != null)
 
-    val pluginIds = descriptors.map { it.pluginId }
+    val pluginIds = descriptors.toPluginSet()
 
-    fun startTrackingPerProject(enable: Boolean) = state.startTracking(project!!, pluginIds, enable)
+    fun unloadExcessPlugins() = unloadPlugins(
+      descriptors,
+      project,
+      openProjectsExcludingCurrent(project),
+      parentComponent,
+    )
 
-    fun stopTrackingPerProject() = state.stopTracking(pluginIds)
-
-    fun loadPlugins() = DynamicPlugins.loadPlugins(descriptors)
-
-    fun unloadPlugins(): Boolean {
-      val predicate = when (project) {
-        null -> { _: PluginId -> true }
-        else -> shouldUnload(openProjectsExcludingCurrent(project))
-      }
-
-      return DynamicPlugins.unloadPlugins(
-        descriptors.filter { predicate.invoke(it.pluginId) },
-        project,
-        parentComponent,
-      )
-    }
-    PluginManagerUsageCollector.pluginsStateChanged(project, pluginIds, action)
+    PluginManagerUsageCollector.pluginsStateChanged(descriptors, action, project)
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
-        stopTrackingPerProject()
-        val loaded = loadPlugins()
-        PluginEnabler.HEADLESS.enablePlugins(descriptors)
+        state.stopTracking(pluginIds)
+        val loaded = DynamicPlugins.loadPlugins(descriptors)
+        PluginEnabler.HEADLESS.enableById(pluginIds)
         loaded
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT -> {
-        startTrackingPerProject(true)
-        loadPlugins()
+        state.startTracking(project!!, pluginIds, true)
+        DynamicPlugins.loadPlugins(descriptors)
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT_DISABLE_GLOBALLY -> {
-        PluginEnabler.HEADLESS.disablePlugins(descriptors)
+        PluginEnabler.HEADLESS.disableById(pluginIds)
         descriptors.forEach { it.isEnabled = true }
-        startTrackingPerProject(true)
+        state.startTracking(project!!, pluginIds, true)
         true
       }
       PluginEnableDisableAction.DISABLE_GLOBALLY -> {
-        val unloaded = unloadPlugins()
-        PluginEnabler.HEADLESS.disablePlugins(descriptors)
-        stopTrackingPerProject()
-        unloaded
+        PluginEnabler.HEADLESS.disableById(pluginIds)
+        state.stopTracking(pluginIds)
+        unloadExcessPlugins()
       }
       PluginEnableDisableAction.DISABLE_FOR_PROJECT -> {
-        startTrackingPerProject(false)
-        unloadPlugins()
+        state.startTracking(project!!, pluginIds, false)
+        unloadExcessPlugins()
       }
       PluginEnableDisableAction.DISABLE_FOR_PROJECT_ENABLE_GLOBALLY ->
         false
@@ -208,13 +189,22 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
   }
 
   private fun unloadPlugins(
-    pluginIds: Collection<PluginId>,
-    project: Project,
+    descriptors: Collection<IdeaPluginDescriptor>,
+    project: Project?,
     projects: List<Project>,
-  ): Boolean = unloadPlugins(
-    pluginIds.filter(shouldUnload(projects)),
-    project,
-  )
+    parentComponent: JComponent? = null,
+  ): Boolean {
+    val predicate = when (project) {
+      null -> { _: PluginId -> true }
+      else -> shouldUnload(projects)
+    }
+
+    return DynamicPlugins.unloadPlugins(
+      descriptors.filter { predicate(it.pluginId) },
+      project,
+      parentComponent,
+    )
+  }
 
   private fun locallyDisabledPlugins(projects: List<Project>): Collection<PluginId> {
     return projects
@@ -224,7 +214,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
   private fun locallyDisabledAndGloballyEnabledPlugins(projects: List<Project>): Collection<PluginId> {
     return locallyDisabledPlugins(projects)
-      .filterNot { PluginEnabler.HEADLESS.isDisabled(it) }
+      .filterNot { isDisabled(it) }
   }
 
   private fun shouldUnload(openProjects: List<Project>) = object : (PluginId) -> Boolean {
@@ -240,7 +230,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     override fun invoke(pluginId: PluginId): Boolean {
       return !requiredPluginIds.contains(pluginId.idString) &&
              !trackers.any { it.isEnabled(pluginId) } &&
-             (PluginEnabler.HEADLESS.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
+             (isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
     }
   }
 }
