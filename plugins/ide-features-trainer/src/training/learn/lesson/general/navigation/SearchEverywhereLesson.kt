@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.navigation
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
@@ -109,7 +108,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task("QuickJavaDoc") {
       text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-      triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
+      triggerOnQuickDocumentationPopup()
       restoreByUi()
       test { actions(it) }
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.assistance
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
 import org.assertj.swing.timing.Timeout
@@ -9,6 +8,7 @@ import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
+import training.dsl.triggerOnQuickDocumentationPopup
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiUtil
@@ -22,14 +22,14 @@ class QuickPopupsLesson(private val sample: LessonSample) :
 
     task("QuickJavaDoc") {
       text(LessonsBundle.message("quick.popups.show.documentation", action(it)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: DocumentationComponent -> true }
+      triggerOnQuickDocumentationPopup()
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }
 
     task {
       text(LessonsBundle.message("quick.popups.press.escape", action("EditorEscape")))
-      stateCheck { checkDocComponentClosed() }
+      stateCheck { previous.ui?.isShowing != true }
       restoreIfModifiedOrMoved()
       test {
         invokeActionViaShortcut("ESCAPE")
