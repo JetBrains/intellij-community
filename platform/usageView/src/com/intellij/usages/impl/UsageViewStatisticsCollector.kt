@@ -33,7 +33,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 2)
+    val GROUP = EventLogGroup("usage.view", 3)
     private var sessionId = AtomicInteger(0)
     private val SESSION_ID = EventFields.Int("id")
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
