@@ -442,24 +442,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return ObjectUtils.tryCast(getOwner(), RefClass.class);
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    if (isValid()) {
-      return ReadAction.compute(() -> {
-        UMethod uMethod = (UMethod)getUastElement();
-        if (uMethod instanceof SyntheticElement) {
-          return uMethod.getName();
-        }
-        return PsiFormatUtil.formatMethod(uMethod.getJavaPsi(),
-                                          PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE);
-      });
-    }
-    return super.getName();
-  }
-
   @Override
   public String getExternalName() {
     return ReadAction.compute(() -> {
