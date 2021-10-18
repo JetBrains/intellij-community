@@ -162,8 +162,8 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
     for (Map<String, Object> map : myCachedData) {
       Object answer = map.get(dataId);
-      if (answer != null) {
-        return answer == ourNull ? null : answer;
+      if (answer != null && answer != ourNull) {
+        return answer;
       }
     }
     return null;
