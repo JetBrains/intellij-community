@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -127,6 +128,8 @@ public final class Disposer {
    */
   @Deprecated
   public static boolean isDisposing(@NotNull Disposable disposable) {
+    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
+    Logger.getInstance(Disposer.class).error(message);
     return isDisposed(disposable);
   }
 
