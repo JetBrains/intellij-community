@@ -225,6 +225,15 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
 (JNIEnv *env, jclass peerClass, jlongArray newItems)
 {
     JNI_COCOA_ENTER();
+    if (sjc_Menu == NULL) {
+        // Cache Menu jclass, because JNI can't find it when:
+        // 1. class in signed JAR
+        // 2. class requested in AppKit-thread
+        sjc_Menu = peerClass;
+        if (sjc_Menu != NULL) {
+            sjc_Menu = (*env)->NewGlobalRef(env, sjc_Menu);
+        }
+    }
 
     // 1. create copy of array
     jsize length = (*env)->GetArrayLength(env, newItems);
