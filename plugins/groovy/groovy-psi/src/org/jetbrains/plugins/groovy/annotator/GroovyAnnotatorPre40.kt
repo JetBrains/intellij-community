@@ -5,12 +5,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.elementType
-import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -21,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitch
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.util.forbidRecord
 
 class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElementVisitor() {
   companion object {
@@ -102,10 +100,7 @@ class GroovyAnnotatorPre40(private val holder: AnnotationHolder) : GroovyElement
   }
 
   override fun visitRecordDefinition(recordDefinition: GrRecordDefinition) {
-    holder
-      .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.records.are.available.in.groovy.4.or.later"))
-      .range(recordDefinition.firstChild.siblings().first { it.elementType === GroovyTokenTypes.kRECORD })
-      .create()
+    forbidRecord(holder, recordDefinition)
     super.visitRecordDefinition(recordDefinition)
   }
 }

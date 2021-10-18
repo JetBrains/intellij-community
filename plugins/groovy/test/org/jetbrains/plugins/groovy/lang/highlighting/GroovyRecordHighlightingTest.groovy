@@ -28,12 +28,12 @@ class A {}
 
   void 'test record definition'() {
     highlightingTest '''
-record R(int a) {}'''
+<error>record</error> R(int a) {}'''
   }
 
   void 'test record field'() {
     highlightingTest '''
-record R(int a) {}
+<error>record</error> R(int a) {}
 def x = new R(10)
 x.a()
 '''
@@ -41,7 +41,7 @@ x.a()
 
   void 'test final record field'() {
     highlightingTest '''
-record R(int a) {}
+<error>record</error> R(int a) {}
 def x = new R(10)
 <warning>x.a</warning> = 20
 ''', GrFinalVariableAccessInspection
@@ -49,7 +49,7 @@ def x = new R(10)
 
   void 'test default getter'() {
     highlightingTest '''
-record X(String a) {}
+<error>record</error> X(String a) {}
 
 def x = new X(a: "200")
 println x.a()
@@ -58,7 +58,7 @@ println x.a()
 
   void 'test custom getter'() {
     highlightingTest '''
-record X(String a) {
+<error>record</error> X(String a) {
     String a() {
         return a + "20"
     }
@@ -71,7 +71,7 @@ println x.a()
 
   void 'test private record field'() {
     highlightingTest '''
-record R(int a) {}
+<error>record</error> R(int a) {}
 def x = new R(10)
 x.<warning>a</warning>
 x.a()
@@ -80,7 +80,7 @@ x.a()
 
   void 'test GROOVY-10305'() {
     highlightingTest """
-record X(String a, int s) {
+<error>record</error> X(String a, int s) {
     private X {
         println 20
     }
@@ -91,8 +91,7 @@ record X(String a, int s) {
 
   void 'test sealed record'() {
     highlightingTest """
-<error>sealed</error> record X(int a) {
-    record RR() {}
+<error>sealed</error> <error>record</error> X(int a) {
 }"""
   }
 
@@ -106,7 +105,7 @@ record X(int a) {
 
   void 'test static field'() {
     highlightingTest """
-record X(static int a, String b)
+<error>record</error> X(static int a, String b)
 {}
 
 new X("")
@@ -115,7 +114,7 @@ new X("")
 
   void 'test no accessor for static field'() {
     highlightingTest """
-record X(static int a, String b)
+<error>record</error> X(static int a, String b)
 {}
 
 new X("").a<warning>()</warning>
@@ -125,7 +124,7 @@ new X("").a<warning>()</warning>
 
   void 'test map constructor'() {
     highlightingTest """
-record X(static int a, String b)
+<error>record</error> X(static int a, String b)
 {}
 
 new X(b : "")
@@ -134,7 +133,7 @@ new X(b : "")
 
   void 'test non-immutable field'() {
     highlightingTest """
-record X(<error>b</error>) {}
+<error>record</error> X(<error>b</error>) {}
 """
   }
 
@@ -144,7 +143,7 @@ record X(<error>b</error>) {}
 import groovy.transform.ImmutableOptions
 
 @ImmutableOptions(knownImmutables = ['b'])
-record X(b) {}
+<error>record</error> X(b) {}
 """
   }
 
