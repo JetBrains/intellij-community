@@ -13,6 +13,9 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <!-- Poetry -->
+  <depends optional="true" config-file="poetry-toml.xml">org.toml.lang</depends>
+
   <projectListeners>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
@@ -399,11 +402,6 @@
     <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
     <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
-    <runLineMarkerContributor language="TOML"
-                              implementationClass="com.jetbrains.python.sdk.poetry.PoetryExtrasLineMarkerContributor"/>
-    <runLineMarkerContributor language="TOML"
-                              implementationClass="com.jetbrains.python.sdk.poetry.PoetryScriptsLineMarkerContributor"/>
-    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryVersionInspection" displayName="Poetry Package versions"  bundle="messages.PyPsiBundle"  groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersion" shortName="PoetryPackageVersion"/>
 
     <!-- Targets API -->
     <experimentalFeature id="python.use.targets.api.for.run.configurations">
