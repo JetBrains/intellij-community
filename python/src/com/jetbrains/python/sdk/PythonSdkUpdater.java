@@ -439,6 +439,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final var pathsToTransfer = new HashSet<VirtualFile>();
     pathsToTransfer.addAll(sdkRoots.second);
     pathsToTransfer.addAll(userAddedRoots.second);
+    pathsToTransfer.removeAll(moduleRoots);
 
     /*
     Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
