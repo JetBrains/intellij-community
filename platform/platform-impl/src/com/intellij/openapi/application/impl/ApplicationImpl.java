@@ -1282,8 +1282,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     int prevBase = myWriteStackBase;
     myWriteStackBase = myWriteActionsStack.size();
-    try (AccessToken ignored = myLock.writeSuspend()) {
-      runModalProgress(project, title, runnable);
+    try {
+      myLock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(()->runModalProgress(project, title, runnable));
     }
     finally {
       myWriteStackBase = prevBase;

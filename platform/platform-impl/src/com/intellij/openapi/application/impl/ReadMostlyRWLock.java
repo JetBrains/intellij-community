@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -243,18 +242,18 @@ final class ReadMostlyRWLock {
     }
   }
 
-  AccessToken writeSuspend() {
+  void writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(@NotNull Runnable runnable) {
     boolean prev = writeSuspended;
     writeSuspended = true;
     writeUnlock();
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        cancelActionsToBeCancelledBeforeWrite();
-        writeLock();
-        writeSuspended = prev;
-      }
-    };
+    try {
+      runnable.run();
+    }
+    finally {
+      cancelActionsToBeCancelledBeforeWrite();
+      writeLock();
+      writeSuspended = prev;
+    }
   }
 
   void writeUnlock() {
