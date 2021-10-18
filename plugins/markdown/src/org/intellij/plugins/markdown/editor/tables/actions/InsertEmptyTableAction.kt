@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
+import org.intellij.plugins.markdown.lang.MarkdownFileType
 import java.awt.Dimension
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -48,9 +49,8 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     val editor = event.getData(CommonDataKeys.EDITOR)
-    if (editor == null) {
-      event.presentation.isEnabledAndVisible = false
-    }
+    val file = event.getData(CommonDataKeys.PSI_FILE)
+    event.presentation.isEnabledAndVisible = editor != null && file?.fileType == MarkdownFileType.INSTANCE
   }
 
   private class TableGridComponent(
