@@ -68,7 +68,7 @@ internal class DocumentationUI(
 
     val contextMenu = PopupHandler.installPopupMenu(
       editorPane,
-      DOCUMENTATION_CONTEXT_MENU_GROUP_ID,
+      DOCUMENTATION_PRIMARY_GROUP_ID,
       "documentation.pane.content.menu"
     )
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }

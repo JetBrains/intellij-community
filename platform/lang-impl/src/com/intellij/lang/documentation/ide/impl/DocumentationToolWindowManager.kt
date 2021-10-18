@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
 import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_ID
-import com.intellij.lang.documentation.ide.actions.primaryActions
+import com.intellij.lang.documentation.ide.actions.navigationActions
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
@@ -57,7 +57,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
       // TODO these actions are always visible, but they are unavailable in the tool window title,
       //  because they are updated with the wrong DataContext.
-      toolWindow.setTitleActions(primaryActions())
+      toolWindow.setTitleActions(navigationActions())
     }
     toolWindow.installWatcher(contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)

@@ -334,7 +334,11 @@
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
             class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
-    <group id="Documentation.ContextMenu">
+    <group id="Documentation.PrimaryGroup">
+      <!--
+      These actions are added to the context menu, to the popup menu, and to the toolbar.
+      This group should be used to register additional documentation actions.
+      -->
       <reference ref="Documentation.Navigation"/>
       <reference ref="Documentation.ViewExternal"/>
     </group>
