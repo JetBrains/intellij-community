@@ -1,4 +1,5 @@
 // "Specify supertype" "true"
+// DIFFERENT FROM FE1.0 AS INTENDED
 package a.b.c
 
 interface X
