@@ -7,6 +7,7 @@
 #import "java_awt_event_InputEvent.h"
 
 static JavaVM *g_jvm = NULL;
+static jclass sjc_MenuItem = NULL;
 
 void initGlobalVMPtr(JNIEnv * env) {
     if (g_jvm == NULL) {
@@ -81,8 +82,8 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
     JNI_COCOA_ENTER();
 
     JNIEnv *env = getAppKitEnv();
-    DECLARE_CLASS(jc_MenuItem, "com/intellij/ui/mac/screenmenu/MenuItem");
-    DECLARE_METHOD(jm_handleAction, jc_MenuItem, "handleAction", "(I)V");
+    GET_CLASS(sjc_MenuItem, "com/intellij/ui/mac/screenmenu/MenuItem");
+    DECLARE_METHOD(jm_handleAction, sjc_MenuItem, "handleAction", "(I)V");
 
     NSEvent *currEvent = [[NSApplication sharedApplication] currentEvent];
     NSUInteger modifiers = [currEvent modifierFlags];
@@ -267,6 +268,17 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
 (JNIEnv *env, jobject peer, jboolean isSeparator)
 {
     initGlobalVMPtr(env);
+
+    if (sjc_MenuItem == NULL) {
+        // Cache MenuItem jclass, because JNI can't find it when:
+        // 1. class in signed JAR
+        // 2. class requested in AppKit-thread
+        jclass peerClass = (*env)->GetObjectClass(env, peer);
+        sjc_MenuItem = peerClass;
+        if (sjc_MenuItem != NULL) {
+            sjc_MenuItem = (*env)->NewGlobalRef(env, sjc_MenuItem);
+        }
+    }
 
     JNI_COCOA_ENTER();
     jobject javaPeer = (*env)->NewGlobalRef(env, peer);
