@@ -34,9 +34,6 @@ final class ErrorStripeMarkersModel {
 
   private Disposable myActiveDisposable;
 
-  private static final int HIGHLIGHTER_LAYER_TO_TRACK_CREATION = 7;
-  private Throwable myHighlighterCreationTrace;
-
   ErrorStripeMarkersModel(@NotNull EditorImpl editor, @NotNull Disposable parentDisposable) {
     myEditor = editor;
     myTree = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
@@ -174,12 +171,8 @@ final class ErrorStripeMarkersModel {
   private void createErrorStripeMarker(@NotNull RangeHighlighterEx h) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), h);
-    int layer = h.getLayer();
-    if (layer == HIGHLIGHTER_LAYER_TO_TRACK_CREATION && myHighlighterCreationTrace == null) {
-      myHighlighterCreationTrace = new Throwable();
-    }
     treeFor(h).addInterval(marker, h.getStartOffset(), h.getEndOffset(), h.isGreedyToLeft(), h.isGreedyToRight(),
-                           (h instanceof RangeMarkerImpl) && ((RangeMarkerImpl)h).isStickingToRight(), layer);
+                           (h instanceof RangeMarkerImpl) && ((RangeMarkerImpl)h).isStickingToRight(), h.getLayer());
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, h)));
   }
 
@@ -272,8 +265,7 @@ final class ErrorStripeMarkersModel {
           return;
         }
         else {
-          LOG.error(new Throwable("Dangling highlighter found: " + highlighter + " (" + next + ")",
-                                  highlighter.getLayer() == HIGHLIGHTER_LAYER_TO_TRACK_CREATION ? myHighlighterCreationTrace : null));
+          LOG.error("Dangling highlighter found: " + highlighter + " (" + next + ")");
           myToRemove.add(next);
         }
       }
