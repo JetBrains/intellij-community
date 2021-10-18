@@ -355,7 +355,10 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
-            if (module == null) return Stream.empty();
+            if (module == null) {
+              LOG.error("Failed to find a module from " + moduleEntity.getName() + " entity.");
+              return Stream.empty();
+            }
             ProgressManager.checkCanceled();
             return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
                 final IndexableFilesIterator files = it;
