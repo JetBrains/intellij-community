@@ -626,8 +626,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
-    that.myPopup.setAdText(CodeInsightBundle.message(show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
-                                                     IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    ListPopup popup = that.myPopup;
+    if (!popup.isDisposed()) {
+      popup.setAdText(CodeInsightBundle.message(
+        show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+        IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+    }
   }
 
   private static void showPreview(@NotNull IntentionHintComponent.IntentionPopup that) {
