@@ -4,12 +4,13 @@ package com.intellij.formatting
 import com.intellij.lang.Commenter
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
 
-class LineCommentAddSpacePostFormatProcessor2 : PostFormatProcessor {
+class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
   override fun processElement(source: PsiElement, settings: CodeStyleSettings) = source
     .also { processText(it.containingFile, it.textRange, settings) }
@@ -18,7 +19,7 @@ class LineCommentAddSpacePostFormatProcessor2 : PostFormatProcessor {
 
     val language = source.language
     if (settings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE) {
-      //return rangeToReformat  // Option is disabled
+      return rangeToReformat  // Option is disabled
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language)
@@ -60,7 +61,8 @@ internal class SingleLineCommentFinder(commenter: Commenter) : PsiElementVisitor
                                 .find { commentText.startsWith(it) }             // Find the line comment prefix
                                 ?.length                                         // Not found -> not a line comment
                                 ?.takeUnless { commentText.length == it }        // Empty comment, no need to add a trailing space
-                                ?.takeUnless { commentText[it].isWhitespace() }  // Space is already there
+                                ?.takeIf { commentText[it].isLetterOrDigit() }   // Insert space only before word-like symbols to keep
+                                                                                 // pseugraphics, shebangs and other fancy stuff
                               ?: return
 
     commentOffsets.add(comment.textRange.startOffset + commentPrefixLength)
