@@ -5,26 +5,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
-import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
-import ru.adelf.idea.dotenv.psi.DotEnvValue;
 
-public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ExtraBlankLineInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Space inside non-quoted value";
+        return "Extra blank line";
     }
-
-    private AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
 
     @Override
     public boolean runForWholeFile() {
@@ -45,46 +45,41 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
-        PsiTreeUtil.findChildrenOfType(file, DotEnvProperty.class).forEach(dotEnvProperty -> {
-            if (dotEnvProperty.getValueText().trim().contains(" ")) {
-                DotEnvValue value = dotEnvProperty.getValue();
+        PsiTreeUtil.findChildrenOfType(file, PsiWhiteSpaceImpl.class).forEach(whiteSpace -> {
+            Pattern pattern = Pattern.compile("\r\n|\r|\n");
+            Matcher matcher = pattern.matcher(whiteSpace.getText());
 
-                if (value != null) {
-                    PsiElement firstChild = value.getFirstChild();
+            int count = 0;
+            while (matcher.find())
+                count++;
 
-                    if (firstChild != null && !firstChild.getText().equals("\"")) {
-                        problemsHolder.registerProblem(value, "Space inside allowed only for quoted values", addQuotesQuickFix);
-                    }
-                }
+            if (count > 2) {
+                problemsHolder.registerProblem(whiteSpace,
+                        "Only one extra line allowed between properties",
+                        new RemoveExtraBlankLineQuickFix());
             }
         });
 
         return problemsHolder;
     }
 
-    private static class AddQuotesQuickFix implements LocalQuickFix {
+    private static class RemoveExtraBlankLineQuickFix implements LocalQuickFix {
 
         @NotNull
         @Override
         public String getName() {
-            return "Add quotes";
+            return "Remove extra blank line";
         }
 
-        /**
-         * Adds quotes to DotEnvValue element
-         *
-         * @param project    The project that contains the file being edited.
-         * @param descriptor A problem found by this inspection.
-         */
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
-                DotEnvValue valueElement = (DotEnvValue) descriptor.getPsiElement();
+                PsiElement psiElement = descriptor.getPsiElement();
 
-                PsiElement newValueElement = DotEnvFactory.createFromText(project, DotEnvTypes.VALUE, "DUMMY=\"" + valueElement.getText() + "\"");
+                PsiElement newPsiElement = DotEnvFactory.createFromText(project, ElementType.WHITE_SPACE, "\n\n");
 
-                valueElement.getNode().getTreeParent().replaceChild(valueElement.getNode(), newValueElement.getNode());
+                psiElement.replace(newPsiElement);
             } catch (IncorrectOperationException e) {
-                Logger.getInstance(SpaceInsideNonQuotedInspection.class).error(e);
+                Logger.getInstance(ExtraBlankLineInspection.class).error(e);
             }
         }
 

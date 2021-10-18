@@ -102,6 +102,22 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvExtraBlankLineInspection"
+                         displayName="Extra blank line"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvIncorrectDelimiterInspection"
+                         displayName="Incorrect delimiter"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 

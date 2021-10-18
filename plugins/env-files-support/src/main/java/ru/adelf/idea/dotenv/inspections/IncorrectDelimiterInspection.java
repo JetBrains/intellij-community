@@ -11,20 +11,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
-import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
-import ru.adelf.idea.dotenv.psi.DotEnvValue;
+import ru.adelf.idea.dotenv.psi.impl.DotEnvKeyImpl;
 
-public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
+public class IncorrectDelimiterInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Space inside non-quoted value";
+        return "Incorrect delimiter";
     }
-
-    private AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
 
     @Override
     public boolean runForWholeFile() {
@@ -45,46 +42,33 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
-        PsiTreeUtil.findChildrenOfType(file, DotEnvProperty.class).forEach(dotEnvProperty -> {
-            if (dotEnvProperty.getValueText().trim().contains(" ")) {
-                DotEnvValue value = dotEnvProperty.getValue();
-
-                if (value != null) {
-                    PsiElement firstChild = value.getFirstChild();
-
-                    if (firstChild != null && !firstChild.getText().equals("\"")) {
-                        problemsHolder.registerProblem(value, "Space inside allowed only for quoted values", addQuotesQuickFix);
-                    }
-                }
+        PsiTreeUtil.findChildrenOfType(file, DotEnvKeyImpl.class).forEach(key -> {
+            if (key.getText().contains("-")) {
+                problemsHolder.registerProblem(key, "Expected: '_' Found: '-'", new ReplaceDelimiterQuickFix());
             }
         });
 
         return problemsHolder;
     }
 
-    private static class AddQuotesQuickFix implements LocalQuickFix {
+    private static class ReplaceDelimiterQuickFix implements LocalQuickFix {
 
         @NotNull
         @Override
         public String getName() {
-            return "Add quotes";
+            return "Replace delimiter";
         }
 
-        /**
-         * Adds quotes to DotEnvValue element
-         *
-         * @param project    The project that contains the file being edited.
-         * @param descriptor A problem found by this inspection.
-         */
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
-                DotEnvValue valueElement = (DotEnvValue) descriptor.getPsiElement();
+                PsiElement psiElement = descriptor.getPsiElement();
 
-                PsiElement newValueElement = DotEnvFactory.createFromText(project, DotEnvTypes.VALUE, "DUMMY=\"" + valueElement.getText() + "\"");
+                PsiElement newPsiElement = DotEnvFactory.createFromText(project, DotEnvTypes.KEY,
+                        psiElement.getText().replace("-","_")+"=dummy");
 
-                valueElement.getNode().getTreeParent().replaceChild(valueElement.getNode(), newValueElement.getNode());
+                psiElement.replace(newPsiElement);
             } catch (IncorrectOperationException e) {
-                Logger.getInstance(SpaceInsideNonQuotedInspection.class).error(e);
+                Logger.getInstance(IncorrectDelimiterInspection.class).error(e);
             }
         }
 
