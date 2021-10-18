@@ -64,13 +64,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core:5.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.4" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.4.2-grz" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4.2-grz/languagetool-core-5.4.2-grz.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4.2-grz/languagetool-core-5.4.2-grz-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
