@@ -150,7 +150,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
-    new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), this) {
+    new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
       @Override
       protected boolean isSpeedSearchEnabled() {
         return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
@@ -237,20 +237,24 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    updateOrder(myProperties, ContainerUtil.map(getVisibleColumns(), it ->
-      VcsLogColumnManager.getInstance().getColumn(it)
-    ));
+    updateOrder(myProperties, getVisibleColumns());
     return null;
   }
 
   @NotNull
-  private List<Integer> getVisibleColumns() {
+  private List<Integer> getVisibleColumnIndices() {
     List<Integer> columnOrder = new ArrayList<>();
 
     for (int i = 0; i < getVisibleColumnCount(); i++) {
       columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
     }
     return columnOrder;
+  }
+
+  @NotNull
+  public List<VcsLogColumn<?>> getVisibleColumns() {
+    return ContainerUtil.map2List(getVisibleColumnIndices(),
+                                  columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
   }
 
   private int getVisibleColumnCount() {
@@ -534,7 +538,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void performCopy(@NotNull DataContext dataContext) {
     StringBuilder sb = new StringBuilder();
 
-    List<Integer> visibleColumns = getVisibleColumns();
+    List<Integer> visibleColumns = getVisibleColumnIndices();
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];

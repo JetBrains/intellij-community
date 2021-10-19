@@ -140,6 +140,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
     }
     updateTableOnCommitDetailsLoaded(this, table)
     return VcsLogStringCellRenderer(
+      withSpeedSearchHighlighting = true,
       contentSampleProvider = {
         if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
           null
@@ -161,6 +162,7 @@ internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
     updateTableOnCommitDetailsLoaded(this, table)
     return VcsLogStringCellRenderer(
+      withSpeedSearchHighlighting = true,
       contentSampleProvider = { "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH) }
     )
   }
