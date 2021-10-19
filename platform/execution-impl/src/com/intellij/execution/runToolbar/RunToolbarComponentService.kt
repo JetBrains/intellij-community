@@ -92,6 +92,6 @@ class RunToolbarComponentService(val project: Project) {
   }
 
   private fun isRelevant(environment: ExecutionEnvironment): Boolean {
-    return environment.getRunToolbarProcess() != null
+    return environment.contentToReuse != null && environment.getRunToolbarProcess() != null
   }
 }
