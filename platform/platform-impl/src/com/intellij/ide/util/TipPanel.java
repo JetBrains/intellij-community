@@ -134,6 +134,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     if (myCurrentPromotion != null) {
       remove(myCurrentPromotion);
       myCurrentPromotion = null;
+      myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
     }
     List<JPanel> promotions = ContainerUtil.mapNotNull(TipAndTrickPromotionFactory.getEP_NAME().getExtensionList(),
                                                        factory -> factory.createPromotionPanel(myProject, myCurrentTip));
@@ -143,6 +144,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       }
       myCurrentPromotion = promotions.get(0);
       add(myCurrentPromotion, BorderLayout.NORTH);
+      myBrowser.getComponent().setBorder(JBUI.Borders.empty(0, 12, 8, 12));
     }
     revalidate();
     repaint();
