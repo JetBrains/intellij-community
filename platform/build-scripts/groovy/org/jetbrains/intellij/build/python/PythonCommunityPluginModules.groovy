@@ -47,6 +47,7 @@ class PythonCommunityPluginModules {
       withModule(mainModuleName, mainJarName)
       withGeneratedResources(new HelpersGenerator(), "helpers")
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
+      withModuleLibrary("tuweni-toml", "intellij.python.psi.impl", "")
       body.delegate = delegate
       body()
     }
