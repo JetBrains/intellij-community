@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="org.intellij">
-        <featureSuggester.languageSupport language="JAVA" implementationClass="org.jetbrains.plugins.feature.suggester.suggesters.lang.JavaLanguageSupport"/>
-    </extensions>
-</idea-plugin>

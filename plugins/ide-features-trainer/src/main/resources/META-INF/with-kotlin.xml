@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="org.intellij">
-        <featureSuggester.languageSupport language="kotlin" implementationClass="org.jetbrains.plugins.feature.suggester.suggesters.lang.KotlinLanguageSupport"/>
-    </extensions>
-</idea-plugin>
