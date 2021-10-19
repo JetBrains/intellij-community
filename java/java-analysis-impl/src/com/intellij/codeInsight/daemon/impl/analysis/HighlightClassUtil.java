@@ -307,6 +307,7 @@ public final class HighlightClassUtil {
    * @return true if file correspond to the shebang script
    */
   public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
+    if (!(containingFile instanceof PsiJavaFile)) return false;
     if (containingFile instanceof PsiFileEx && !((PsiFileEx)containingFile).isContentsLoaded()) {
       final VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile.isInLocalFileSystem()) {
@@ -319,7 +320,6 @@ public final class HighlightClassUtil {
         }
       }
     }
-    if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
     if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {
       PsiElement sibling = firstChild.getNextSibling();
