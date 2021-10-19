@@ -2,12 +2,16 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
+import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
@@ -25,6 +29,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private val tree: CheckboxTree
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
   private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
+  private var currentEditor: Editor? = null
 
   init {
     val models = InlaySettingsProvider.EP.getExtensions().flatMap { provider ->
@@ -101,7 +106,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     var nodeToSelect: CheckedTreeNode? = selected
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
-
+        currentEditor?.let { updateHints(it, model) }
       }
     }
     val node = CheckedTreeNode(model)
@@ -123,6 +128,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
     rightPanel.removeAll()
+    currentEditor = null
     when (val item = treeNode?.userObject) {
       is InlayProviderSettingsModel -> {
         if (treeNode.isLeaf) {
@@ -131,7 +137,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
         if (treeNode.isLeaf) {
-          addPreview(item.getCasePreview(null) ?: item.previewText, item.language)
+          addPreview(item.getCasePreview(null) ?: item.previewText, item)
         }
       }
       is ImmediateConfigurable.Case -> {
@@ -139,7 +145,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val model = parent.userObject as InlayProviderSettingsModel
         addDescription(model.getCaseDescription(item))
         val preview = model.getCasePreview(item)
-        addPreview(preview, model.language)
+        addPreview(preview, model)
       }
     }
     if (treeNode != null) {
@@ -149,19 +155,32 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.repaint()
   }
 
-  private fun addPreview(previewText: String?, language: Language) {
+  private fun addPreview(previewText: String?, model: InlayProviderSettingsModel) {
     if (previewText != null) {
-      val usagePanel = ActionUsagePanel()
-      usagePanel.editor.setBorder(JBUI.Borders.empty(10))
-      usagePanel.editor.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      usagePanel.editor.settings.apply {
-        isLineNumbersShown = false
-        isCaretRowShown = false
-        isRightMarginShown = false
+      val editorTextField = createEditor(model.language, project) { editor ->
+        currentEditor = editor
+        updateHints(editor, model)
       }
-      usagePanel.reset(previewText, language.associatedFileType)
-      rightPanel.add(usagePanel, "growx")
+      editorTextField.text = previewText
+      editorTextField.addSettingsProvider {
+        it.setBorder(JBUI.Borders.empty(10))
+        it.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
+        it.settings.apply {
+          isLineNumbersShown = false
+          isCaretRowShown = false
+          isRightMarginShown = false
+        }
+      }
+      rightPanel.add(editorTextField, "growx")
     }
+  }
+
+  private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
+    ReadAction.nonBlocking {
+      val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
+      val psiFile = model.createFile(project, fileType, editor.document)
+      model.collectAndApplyOnEdt(editor, psiFile)
+    }.inSmartMode(project).submit(AppExecutorUtil.getAppExecutorService())
   }
 
   private fun addDescription(@Nls s: String?) {
