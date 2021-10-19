@@ -13,27 +13,27 @@ import training.featuresSuggester.handleAction
 
 class DebugSessionListener(private val session: XDebugSession) : XDebugSessionListener {
 
-    override fun sessionPaused() = runInEdt {
-        handleDebugSessionAction(::DebugSessionPausedAction)
-    }
+  override fun sessionPaused() = runInEdt {
+    handleDebugSessionAction(::DebugSessionPausedAction)
+  }
 
-    override fun sessionResumed() = runInEdt {
-        handleDebugSessionAction(::DebugSessionResumedAction)
-    }
+  override fun sessionResumed() = runInEdt {
+    handleDebugSessionAction(::DebugSessionResumedAction)
+  }
 
-    override fun beforeSessionResume() = runInEdt {
-        handleDebugSessionAction(::BeforeDebugSessionResumedAction)
-    }
+  override fun beforeSessionResume() = runInEdt {
+    handleDebugSessionAction(::BeforeDebugSessionResumedAction)
+  }
 
-    private fun <T : Action> handleDebugSessionAction(actionConstructor: (XSourcePosition, Project, Long) -> T) {
-        val currentPosition = session.currentPosition ?: return
-        handleAction(
-            session.project,
-            actionConstructor(
-                currentPosition,
-                session.project,
-                System.currentTimeMillis()
-            )
-        )
-    }
+  private fun <T : Action> handleDebugSessionAction(actionConstructor: (XSourcePosition, Project, Long) -> T) {
+    val currentPosition = session.currentPosition ?: return
+    handleAction(
+      session.project,
+      actionConstructor(
+        currentPosition,
+        session.project,
+        System.currentTimeMillis()
+      )
+    )
+  }
 }

@@ -11,29 +11,29 @@ import training.featuresSuggester.handleAction
 
 class BreakpointsListener(val project: Project) : XBreakpointListener<XBreakpoint<*>> {
 
-    override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
-        handleBreakpointAction(breakpoint, ::BreakpointAddedAction)
-    }
+  override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
+    handleBreakpointAction(breakpoint, ::BreakpointAddedAction)
+  }
 
-    override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
-        handleBreakpointAction(breakpoint, ::BreakpointRemovedAction)
-    }
+  override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
+    handleBreakpointAction(breakpoint, ::BreakpointRemovedAction)
+  }
 
-    override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
-        handleBreakpointAction(breakpoint, ::BreakpointChangedAction)
-    }
+  override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
+    handleBreakpointAction(breakpoint, ::BreakpointChangedAction)
+  }
 
-    private fun <T : Action> handleBreakpointAction(
-        breakpoint: XBreakpoint<*>,
-        actionConstructor: (XBreakpoint<*>, Project, Long) -> T
-    ) {
-        handleAction(
-            project,
-            actionConstructor(
-                breakpoint,
-                project,
-                System.currentTimeMillis()
-            )
-        )
-    }
+  private fun <T : Action> handleBreakpointAction(
+    breakpoint: XBreakpoint<*>,
+    actionConstructor: (XBreakpoint<*>, Project, Long) -> T
+  ) {
+    handleAction(
+      project,
+      actionConstructor(
+        breakpoint,
+        project,
+        System.currentTimeMillis()
+      )
+    )
+  }
 }

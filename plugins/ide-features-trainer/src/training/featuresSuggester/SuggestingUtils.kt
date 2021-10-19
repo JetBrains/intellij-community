@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("MatchingDeclarationName")
+
 package training.featuresSuggester
 
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -24,64 +25,68 @@ import java.io.IOException
 data class TextFragment(val startOffset: Int, val endOffset: Int, val text: String)
 
 internal fun Editor.getSelection(): TextFragment? {
-    with(selectionModel) {
-        return if (selectedText != null) {
-            TextFragment(selectionStart, selectionEnd, selectedText!!)
-        } else {
-            null
-        }
+  with(selectionModel) {
+    return if (selectedText != null) {
+      TextFragment(selectionStart, selectionEnd, selectedText!!)
     }
+    else {
+      null
+    }
+  }
 }
 
 internal fun handleAction(project: Project, action: Action) {
-    project.getService(FeatureSuggestersManager::class.java)
-        ?.actionPerformed(action)
+  project.getService(FeatureSuggestersManager::class.java)
+    ?.actionPerformed(action)
 }
 
 internal inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {
-    return PsiTreeUtil.getParentOfType(this, T::class.java)
+  return PsiTreeUtil.getParentOfType(this, T::class.java)
 }
 
 internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
-    return parents(true).find(predicate)
+  return parents(true).find(predicate)
 }
 
 internal fun Transferable.asString(): String? {
-    return try {
-        getTransferData(DataFlavor.stringFlavor) as? String
-    } catch (ex: IOException) {
-        null
-    } catch (ex: UnsupportedFlavorException) {
-        null
-    }
+  return try {
+    getTransferData(DataFlavor.stringFlavor) as? String
+  }
+  catch (ex: IOException) {
+    null
+  }
+  catch (ex: UnsupportedFlavorException) {
+    null
+  }
 }
 
 internal fun findBreakpointOnPosition(project: Project, position: XSourcePosition): XBreakpoint<*>? {
-    val breakpointManager = XDebuggerManager.getInstance(project)?.breakpointManager ?: return null
-    return breakpointManager.allBreakpoints.find {
-        XSourcePosition.isOnTheSameLine(
-            it.sourcePosition,
-            position
-        )
-    }
+  val breakpointManager = XDebuggerManager.getInstance(project)?.breakpointManager ?: return null
+  return breakpointManager.allBreakpoints.find {
+    XSourcePosition.isOnTheSameLine(
+      it.sourcePosition,
+      position
+    )
+  }
 }
 
 @Suppress("UnstableApiUsage")
 internal fun actionsLocalSummary(): ActionsLocalSummary {
-    return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
+  return ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
 }
 
 @Nls
 internal fun getShortcutText(actionId: String): String {
-    val shortcut = KeymapUtil.getShortcutText(actionId)
-    return if (shortcut == "<no shortcut>") {
-        FeatureSuggesterBundle.message("shortcut.not.found.message")
-    } else {
-        FeatureSuggesterBundle.message("shortcut", shortcut)
-    }
+  val shortcut = KeymapUtil.getShortcutText(actionId)
+  return if (shortcut == "<no shortcut>") {
+    FeatureSuggesterBundle.message("shortcut.not.found.message")
+  }
+  else {
+    FeatureSuggesterBundle.message("shortcut", shortcut)
+  }
 }
 
 internal fun isRedoOrUndoRunning(): Boolean {
-    val commandName = CommandProcessor.getInstance().currentCommandName
-    return commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))
+  val commandName = CommandProcessor.getInstance().currentCommandName
+  return commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))
 }

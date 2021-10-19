@@ -4,101 +4,101 @@ import training.featuresSuggester.NoSuggestion
 
 class ReplaceCompletionSuggesterKotlinTest : ReplaceCompletionSuggesterTest() {
 
-    override val testingCodeFileName: String = "KotlinCodeExample.kt"
+  override val testingCodeFileName: String = "KotlinCodeExample.kt"
 
-    override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(12, 20)
-        deleteAndTypeDot()
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[0])
-        repeat(5) { typeDelete() }
+  override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(12, 20)
+    deleteAndTypeDot()
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[0])
+    repeat(5) { typeDelete() }
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(64, 57)
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[3])
-        deleteTextBetweenLogicalPositions(
-            lineStartIndex = 64,
-            columnStartIndex = 72,
-            lineEndIndex = 64,
-            columnEndIndex = 94
-        )
+  override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(64, 57)
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[3])
+    deleteTextBetweenLogicalPositions(
+      lineStartIndex = 64,
+      columnStartIndex = 72,
+      lineEndIndex = 64,
+      columnEndIndex = 94
+    )
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(64, 57)
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[3])
-        type("132")
-        deleteTextBetweenLogicalPositions(
-            lineStartIndex = 64,
-            columnStartIndex = 76,
-            lineEndIndex = 64,
-            columnEndIndex = 97
-        )
+  override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(64, 57)
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[3])
+    type("132")
+    deleteTextBetweenLogicalPositions(
+      lineStartIndex = 64,
+      columnStartIndex = 76,
+      lineEndIndex = 64,
+      columnEndIndex = 97
+    )
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(64, 30)
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[0])
-        repeat(21) { typeDelete() }
+  override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(64, 30)
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[0])
+    repeat(21) { typeDelete() }
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(64, 88)
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[0])
-        repeat(15) { typeDelete() }
+  override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(64, 88)
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[0])
+    repeat(15) { typeDelete() }
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
-        moveCaretToLogicalPosition(64, 30)
-        completeBasic()
-        type("cycles")
-        val variants = getLookupElements() ?: fail()
-        chooseCompletionItem(variants[0])
-        repeat(22) { typeDelete() }
+  override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
+    moveCaretToLogicalPosition(64, 30)
+    completeBasic()
+    type("cycles")
+    val variants = getLookupElements() ?: fail()
+    chooseCompletionItem(variants[0])
+    repeat(22) { typeDelete() }
 
-        testInvokeLater {
-            assertSuggestedCorrectly()
-        }
+    testInvokeLater {
+      assertSuggestedCorrectly()
     }
+  }
 
-    override fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`() {
-        moveCaretToLogicalPosition(64, 57)
-        val variants = completeBasic() ?: fail()
-        chooseCompletionItem(variants[3])
-        deleteTextBetweenLogicalPositions(
-            lineStartIndex = 65,
-            columnStartIndex = 16,
-            lineEndIndex = 65,
-            columnEndIndex = 41
-        )
+  override fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`() {
+    moveCaretToLogicalPosition(64, 57)
+    val variants = completeBasic() ?: fail()
+    chooseCompletionItem(variants[3])
+    deleteTextBetweenLogicalPositions(
+      lineStartIndex = 65,
+      columnStartIndex = 16,
+      lineEndIndex = 65,
+      columnEndIndex = 41
+    )
 
-        testInvokeLater {
-            assertTrue(expectedSuggestion is NoSuggestion)
-        }
+    testInvokeLater {
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
+  }
 }

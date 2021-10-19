@@ -15,62 +15,63 @@ import training.featuresSuggester.actions.EditorFocusGainedAction
 import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class FileStructureSuggester : AbstractFeatureSuggester() {
-    override val id: String = "File structure"
-    override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
+  override val id: String = "File structure"
+  override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
 
-    override val message = FeatureSuggesterBundle.message("file.structure.message")
-    override val suggestingActionId = "FileStructurePopup"
-    override val suggestingTipFileName = "FileStructurePopup.html"
+  override val message = FeatureSuggesterBundle.message("file.structure.message")
+  override val suggestingActionId = "FileStructurePopup"
+  override val suggestingTipFileName = "FileStructurePopup.html"
 
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
-    private var prevActionIsEditorFindAction = false
+  private var prevActionIsEditorFindAction = false
 
-    override fun getSuggestion(action: Action): Suggestion {
-        val language = action.language ?: return NoSuggestion
-        val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
-        when (action) {
-            is EditorFindAction -> {
-                prevActionIsEditorFindAction = true
-            }
-            is EditorFocusGainedAction -> {
-                if (!prevActionIsEditorFindAction) return NoSuggestion // check that previous action is Find
-                val psiFile = action.psiFile ?: return NoSuggestion
-                val project = action.project ?: return NoSuggestion
-                val findModel = getFindModel(project)
-                val textToFind = findModel.stringToFind
-                val definition = langSupport.getDefinitionOnCaret(psiFile, action.editor.caretModel.offset)
-                if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
-                    definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
-                ) {
-                    prevActionIsEditorFindAction = false
-                    return createSuggestion()
-                }
-            }
-            else -> {
-                prevActionIsEditorFindAction = false
-                NoSuggestion
-            }
+  override fun getSuggestion(action: Action): Suggestion {
+    val language = action.language ?: return NoSuggestion
+    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    when (action) {
+      is EditorFindAction -> {
+        prevActionIsEditorFindAction = true
+      }
+      is EditorFocusGainedAction -> {
+        if (!prevActionIsEditorFindAction) return NoSuggestion // check that previous action is Find
+        val psiFile = action.psiFile ?: return NoSuggestion
+        val project = action.project ?: return NoSuggestion
+        val findModel = getFindModel(project)
+        val textToFind = findModel.stringToFind
+        val definition = langSupport.getDefinitionOnCaret(psiFile, action.editor.caretModel.offset)
+        if (definition is PsiNamedElement && langSupport.isFileStructureElement(definition) &&
+            definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
+        ) {
+          prevActionIsEditorFindAction = false
+          return createSuggestion()
         }
-
-        return NoSuggestion
+      }
+      else -> {
+        prevActionIsEditorFindAction = false
+        NoSuggestion
+      }
     }
 
-    private fun LanguageSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
-        val offset = caretOffset - 1
-        if (offset < 0) return null
-        val curElement = psiFile.findElementAt(offset)
-        return if (curElement != null && isIdentifier(curElement)) {
-            curElement.parent
-        } else {
-            null
-        }
-    }
+    return NoSuggestion
+  }
 
-    private fun getFindModel(project: Project): FindModel {
-        val findManager = FindManager.getInstance(project)
-        val findModel = FindModel()
-        findModel.copyFrom(findManager.findInFileModel)
-        return findModel
+  private fun LanguageSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
+    val offset = caretOffset - 1
+    if (offset < 0) return null
+    val curElement = psiFile.findElementAt(offset)
+    return if (curElement != null && isIdentifier(curElement)) {
+      curElement.parent
     }
+    else {
+      null
+    }
+  }
+
+  private fun getFindModel(project: Project): FindModel {
+    val findManager = FindManager.getInstance(project)
+    val findModel = FindModel()
+    findModel.copyFrom(findManager.findInFileModel)
+    return findModel
+  }
 }

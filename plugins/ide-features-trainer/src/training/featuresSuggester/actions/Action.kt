@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 
 @Suppress("UnnecessaryAbstractClass")
 abstract class Action {
-    abstract val timeMillis: Long
-    abstract val language: Language?
-    abstract val project: Project?
+  abstract val timeMillis: Long
+  abstract val language: Language?
+  abstract val project: Project?
 }

@@ -13,51 +13,51 @@ import javax.swing.JComponent
 
 @Suppress("MagicNumber")
 class SingleTipDialog(parent: Window, tip: TipAndTrickBean) : DialogWrapper(parent, true) {
-    companion object {
-        private const val LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown"
-        private var ourInstance: SingleTipDialog? = null
+  companion object {
+    private const val LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown"
+    private var ourInstance: SingleTipDialog? = null
 
-        fun showForProject(project: Project, tip: TipAndTrickBean) {
-            ourInstance = createForProject(project, tip)
-            ourInstance?.show()
-        }
-
-        private fun createForProject(project: Project, tip: TipAndTrickBean): SingleTipDialog? {
-            val window = WindowManagerEx.getInstanceEx().suggestParentWindow(project)
-                ?: WindowManagerEx.getInstanceEx().findVisibleFrame()
-                ?: return null
-            if (ourInstance != null && ourInstance!!.isVisible) {
-                ourInstance!!.dispose()
-            }
-            return SingleTipDialog(window, tip)
-        }
+    fun showForProject(project: Project, tip: TipAndTrickBean) {
+      ourInstance = createForProject(project, tip)
+      ourInstance?.show()
     }
 
-    private val tipPanel: SingleTipPanel
-
-    init {
-        isModal = false
-        title = FeatureSuggesterBundle.message("tip.title")
-        setCancelButtonText(CommonBundle.getCloseButtonText())
-        tipPanel = SingleTipPanel(tip)
-        horizontalStretch = 1.33f
-        verticalStretch = 1.25f
-        init()
+    private fun createForProject(project: Project, tip: TipAndTrickBean): SingleTipDialog? {
+      val window = WindowManagerEx.getInstanceEx().suggestParentWindow(project)
+                   ?: WindowManagerEx.getInstanceEx().findVisibleFrame()
+                   ?: return null
+      if (ourInstance != null && ourInstance!!.isVisible) {
+        ourInstance!!.dispose()
+      }
+      return SingleTipDialog(window, tip)
     }
+  }
 
-    override fun show() {
-        PropertiesComponent.getInstance()
-            .setValue(LAST_TIME_TIPS_WERE_SHOWN, System.currentTimeMillis().toString())
-        super.show()
-    }
+  private val tipPanel: SingleTipPanel
 
-    override fun getStyle(): DialogStyle = DialogStyle.COMPACT
+  init {
+    isModal = false
+    title = FeatureSuggesterBundle.message("tip.title")
+    setCancelButtonText(CommonBundle.getCloseButtonText())
+    tipPanel = SingleTipPanel(tip)
+    horizontalStretch = 1.33f
+    verticalStretch = 1.25f
+    init()
+  }
 
-    override fun createCenterPanel(): JComponent = tipPanel
+  override fun show() {
+    PropertiesComponent.getInstance()
+      .setValue(LAST_TIME_TIPS_WERE_SHOWN, System.currentTimeMillis().toString())
+    super.show()
+  }
 
-    override fun createSouthPanel(): JComponent? {
-        val component = super.createSouthPanel()
-        component.border = JBUI.Borders.empty(8, 12)
-        return component
-    }
+  override fun getStyle(): DialogStyle = DialogStyle.COMPACT
+
+  override fun createCenterPanel(): JComponent = tipPanel
+
+  override fun createSouthPanel(): JComponent? {
+    val component = super.createSouthPanel()
+    component.border = JBUI.Borders.empty(8, 12)
+    return component
+  }
 }

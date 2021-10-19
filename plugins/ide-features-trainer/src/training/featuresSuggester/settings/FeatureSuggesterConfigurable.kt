@@ -7,33 +7,33 @@ import training.featuresSuggester.suggesters.FeatureSuggester
 import javax.swing.JComponent
 
 class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependencies {
-    private val suggesterIdToName = FeatureSuggester.suggesters.associate { it.id to it.suggestingActionDisplayName }
-    private val settings = FeatureSuggesterSettings.instance()
-    private val panel = FeatureSuggestersPanel(suggesterIdToName, settings)
+  private val suggesterIdToName = FeatureSuggester.suggesters.associate { it.id to it.suggestingActionDisplayName }
+  private val settings = FeatureSuggesterSettings.instance()
+  private val panel = FeatureSuggestersPanel(suggesterIdToName, settings)
 
-    override fun isModified(): Boolean {
-        return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays() ||
-            suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
+  override fun isModified(): Boolean {
+    return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays() ||
+           suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
+  }
+
+  override fun apply() {
+    settings.suggestingIntervalDays = panel.getSuggestingIntervalDays()
+    suggesterIdToName.keys.forEach { suggesterId ->
+      settings.setEnabled(suggesterId, panel.isSelected(suggesterId))
     }
+  }
 
-    override fun apply() {
-        settings.suggestingIntervalDays = panel.getSuggestingIntervalDays()
-        suggesterIdToName.keys.forEach { suggesterId ->
-            settings.setEnabled(suggesterId, panel.isSelected(suggesterId))
-        }
-    }
+  override fun reset() {
+    panel.loadFromSettings()
+  }
 
-    override fun reset() {
-        panel.loadFromSettings()
-    }
+  override fun createComponent(): JComponent {
+    return panel
+  }
 
-    override fun createComponent(): JComponent {
-        return panel
-    }
+  override fun getDependencies(): MutableCollection<BaseExtensionPointName<*>> {
+    return mutableListOf(FeatureSuggester.EP_NAME)
+  }
 
-    override fun getDependencies(): MutableCollection<BaseExtensionPointName<*>> {
-        return mutableListOf(FeatureSuggester.EP_NAME)
-    }
-
-    override fun getDisplayName(): String = FeatureSuggesterBundle.message("configurable.name")
+  override fun getDisplayName(): String = FeatureSuggesterBundle.message("configurable.name")
 }

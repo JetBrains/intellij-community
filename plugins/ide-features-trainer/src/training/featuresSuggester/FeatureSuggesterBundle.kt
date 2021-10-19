@@ -9,6 +9,6 @@ import org.jetbrains.annotations.PropertyKey
 private const val BUNDLE = "messages.FeatureSuggesterBundle"
 
 object FeatureSuggesterBundle : DynamicBundle(BUNDLE) {
-    @Nls
-    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  @Nls
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
 }

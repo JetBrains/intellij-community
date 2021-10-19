@@ -11,31 +11,31 @@ import training.featuresSuggester.actions.DebugProcessStoppedAction
 import training.featuresSuggester.handleAction
 
 class DebuggerListener(val project: Project) : XDebuggerManagerListener {
-    private var curSessionListener: XDebugSessionListener? = null
+  private var curSessionListener: XDebugSessionListener? = null
 
-    override fun processStarted(debugProcess: XDebugProcess) {
-        handleDebugAction(::DebugProcessStartedAction)
-    }
+  override fun processStarted(debugProcess: XDebugProcess) {
+    handleDebugAction(::DebugProcessStartedAction)
+  }
 
-    override fun processStopped(debugProcess: XDebugProcess) {
-        handleDebugAction(::DebugProcessStoppedAction)
-    }
+  override fun processStopped(debugProcess: XDebugProcess) {
+    handleDebugAction(::DebugProcessStoppedAction)
+  }
 
-    private fun <T : Action> handleDebugAction(actionConstructor: (Project, Long) -> T) {
-        handleAction(
-            project,
-            actionConstructor(project, System.currentTimeMillis())
-        )
-    }
+  private fun <T : Action> handleDebugAction(actionConstructor: (Project, Long) -> T) {
+    handleAction(
+      project,
+      actionConstructor(project, System.currentTimeMillis())
+    )
+  }
 
-    override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-        if (previousSession != null && curSessionListener != null) {
-            previousSession.removeSessionListener(curSessionListener!!)
-            curSessionListener = null
-        }
-        if (currentSession != null) {
-            curSessionListener = DebugSessionListener(currentSession)
-            currentSession.addSessionListener(curSessionListener!!)
-        }
+  override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
+    if (previousSession != null && curSessionListener != null) {
+      previousSession.removeSessionListener(curSessionListener!!)
+      curSessionListener = null
     }
+    if (currentSession != null) {
+      curSessionListener = DebugSessionListener(currentSession)
+      currentSession.addSessionListener(curSessionListener!!)
+    }
+  }
 }

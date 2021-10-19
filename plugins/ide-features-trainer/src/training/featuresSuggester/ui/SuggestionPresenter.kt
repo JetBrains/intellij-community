@@ -21,84 +21,84 @@ import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companio
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_SHOWED_EVENT_ID
 
 interface SuggestionPresenter {
-    fun showSuggestion(project: Project, suggestion: PopupSuggestion)
+  fun showSuggestion(project: Project, suggestion: PopupSuggestion)
 }
 
 @Suppress("UnstableApiUsage", "DialogTitleCapitalization")
 class NotificationSuggestionPresenter :
-    SuggestionPresenter {
-    private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
-        .getNotificationGroup("IDE Feature Suggester")
+  SuggestionPresenter {
+  private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
+    .getNotificationGroup("IDE Feature Suggester")
 
-    override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
-        val notification = notificationGroup.createNotification(
-            title = FeatureSuggesterBundle.message("notification.title"),
-            content = suggestion.message,
-            type = NotificationType.INFORMATION
-        ).apply {
-            when (suggestion) {
-                is TipSuggestion -> {
-                    val action = createShowTipAction(project, this, suggestion)
-                    if (action != null) {
-                        addAction(action)
-                    }
-                }
-                is DocumentationSuggestion -> {
-                    addAction(createGoToDocumentationAction(this, suggestion))
-                }
-            }
-            addAction(createDontSuggestAction(this, suggestion))
+  override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
+    val notification = notificationGroup.createNotification(
+      title = FeatureSuggesterBundle.message("notification.title"),
+      content = suggestion.message,
+      type = NotificationType.INFORMATION
+    ).apply {
+      when (suggestion) {
+        is TipSuggestion -> {
+          val action = createShowTipAction(project, this, suggestion)
+          if (action != null) {
+            addAction(action)
+          }
         }
-
-        notification.notify(project)
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_SHOWED_EVENT_ID, suggestion.suggesterId)
-    }
-
-    private fun createDontSuggestAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
-        return object : AnAction(FeatureSuggesterBundle.message("notification.dont.suggest")) {
-            override fun actionPerformed(e: AnActionEvent) {
-                val settings = FeatureSuggesterSettings.instance()
-                settings.setEnabled(suggestion.suggesterId, false)
-                notification.hideBalloon()
-                FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
-            }
+        is DocumentationSuggestion -> {
+          addAction(createGoToDocumentationAction(this, suggestion))
         }
+      }
+      addAction(createDontSuggestAction(this, suggestion))
     }
 
-    private fun createGoToDocumentationAction(
-        notification: Notification,
-        suggestion: DocumentationSuggestion
-    ): AnAction {
-        return object : AnAction(
-            FeatureSuggesterBundle.message(
-                "notification.open.help",
-                ApplicationNamesInfo.getInstance().productName
-            )
-        ) {
-            override fun actionPerformed(e: AnActionEvent) {
-                BrowserUtil.open(suggestion.documentURL)
-                notification.hideBalloon()
-                FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
-            }
-        }
-    }
+    notification.notify(project)
+    FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_SHOWED_EVENT_ID, suggestion.suggesterId)
+  }
 
-    private fun createShowTipAction(
-        project: Project,
-        notification: Notification,
-        suggestion: TipSuggestion
-    ): AnAction? {
-        val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
-        return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
-            override fun actionPerformed(e: AnActionEvent) {
-                SingleTipDialog.showForProject(project, tip)
-                notification.hideBalloon()
-                FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
-            }
-        }
+  private fun createDontSuggestAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
+    return object : AnAction(FeatureSuggesterBundle.message("notification.dont.suggest")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        val settings = FeatureSuggesterSettings.instance()
+        settings.setEnabled(suggestion.suggesterId, false)
+        notification.hideBalloon()
+        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
+      }
     }
+  }
 
-    private fun getTipByFilename(tipFilename: String): TipAndTrickBean? {
-        return TipAndTrickBean.EP_NAME.extensions.find { it.fileName == tipFilename }
+  private fun createGoToDocumentationAction(
+    notification: Notification,
+    suggestion: DocumentationSuggestion
+  ): AnAction {
+    return object : AnAction(
+      FeatureSuggesterBundle.message(
+        "notification.open.help",
+        ApplicationNamesInfo.getInstance().productName
+      )
+    ) {
+      override fun actionPerformed(e: AnActionEvent) {
+        BrowserUtil.open(suggestion.documentURL)
+        notification.hideBalloon()
+        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+      }
     }
+  }
+
+  private fun createShowTipAction(
+    project: Project,
+    notification: Notification,
+    suggestion: TipSuggestion
+  ): AnAction? {
+    val tip = getTipByFilename(suggestion.suggestingTipFilename) ?: return null
+    return object : AnAction(FeatureSuggesterBundle.message("notification.learn.more")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        SingleTipDialog.showForProject(project, tip)
+        notification.hideBalloon()
+        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+      }
+    }
+  }
+
+  private fun getTipByFilename(tipFilename: String): TipAndTrickBean? {
+    return TipAndTrickBean.EP_NAME.extensions.find { it.fileName == tipFilename }
+  }
 }
