@@ -35,6 +35,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("Before  after", extracted.toString());
   }
 
+  public void testMarkdownIndent() {
+    TextContent extracted = extractText("a.md", "* first line\n  second line", 3);
+    assertEquals("first line\nsecond line", TextContentTest.unknownOffsets(extracted));
+  }
+
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
     assertEquals("you can use a number of predefined fields (e.g. |)", TextContentTest.unknownOffsets(extracted));
