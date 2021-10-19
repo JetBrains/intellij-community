@@ -168,7 +168,8 @@ final class PluginsCollector {
         incompatiblePlugins += pluginId.getTextTrim()
       }
 
-      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout)
+      String description = xml.getChildTextTrim("description")
+      def pluginDescriptor = new PluginDescriptor(id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout)
       pluginDescriptors[id] = pluginDescriptor
       for (module in declaredModules) {
         pluginDescriptors[module] = pluginDescriptor
@@ -179,16 +180,22 @@ final class PluginsCollector {
 
   static final class PluginDescriptor {
     final String id
+    final String description
     final Set<String> declaredModules
     final Set<String> requiredDependencies
     final Set<String> incompatiblePlugins
     final List<Pair<String, String>> optionalDependencies
     final PluginLayout pluginLayout
 
-    PluginDescriptor(String id, Set<String> declaredModules,
-                     Set<String> requiredDependencies, Set<String> incompatiblePlugins,
-                     List<Pair<String, String>> optionalDependencies, PluginLayout pluginLayout) {
+    PluginDescriptor(String id,
+                     String description,
+                     Set<String> declaredModules,
+                     Set<String> requiredDependencies,
+                     Set<String> incompatiblePlugins,
+                     List<Pair<String, String>> optionalDependencies,
+                     PluginLayout pluginLayout) {
       this.id = id
+      this.description = description
       this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
       this.incompatiblePlugins = incompatiblePlugins
