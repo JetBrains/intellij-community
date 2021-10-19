@@ -115,7 +115,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   public FileChooserDescriptor createFileChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (!super.isFileSelectable(file)) {
           return false;
         }

@@ -227,7 +227,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     }
 
     @Override
-    public boolean isFileSelectable(VirtualFile file) {
+    public boolean isFileSelectable(@Nullable VirtualFile file) {
+      if (file == null) return false;
       return file.isDirectory() ? super.isFileSelectable(file) : myStandardDescriptor.isFileSelectable(file);
     }
 

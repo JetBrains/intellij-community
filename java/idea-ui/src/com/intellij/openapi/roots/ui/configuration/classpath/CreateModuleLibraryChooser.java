@@ -132,7 +132,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     else {
       chooserDescriptor = new FileChooserDescriptor(true, true, true, false, true, false) {
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
           for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
             if (pair.getSecond().isFileSelectable(file)) {
               return true;

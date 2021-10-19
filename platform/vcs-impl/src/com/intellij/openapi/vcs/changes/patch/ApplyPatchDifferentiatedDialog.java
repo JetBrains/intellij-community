@@ -300,8 +300,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   public static FileChooserDescriptor createSelectPatchDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, PatchFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.PLAIN_TEXT);
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null &&
+               (FileTypeRegistry.getInstance().isFileOfType(file, PatchFileType.INSTANCE) ||
+                FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.PLAIN_TEXT));
       }
     };
   }
