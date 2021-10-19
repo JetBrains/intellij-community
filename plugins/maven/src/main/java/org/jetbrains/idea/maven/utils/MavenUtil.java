@@ -1035,7 +1035,7 @@ public class MavenUtil {
 
       for (Pair<Pattern, String> path : SUPER_POM_PATHS) {
         if (path.first.matcher(library.getName()).matches()) {
-          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(library);
+          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library.toPath());
           if (libraryVirtualFile == null) continue;
 
           VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
