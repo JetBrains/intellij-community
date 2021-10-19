@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -9,12 +10,16 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.CommandLineArgs;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,7 +30,8 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.ContainerUtil;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,16 +41,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
   public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
+  public static final String SCHEME_INTERNAL = "!!!internal!!!";
 
   private CommandLineProcessor() { }
 
@@ -135,6 +144,57 @@ public final class CommandLineProcessor {
     return projects[0];
   }
 
+  public static @NotNull CommandLineProcessorResult processProtocolCommand(@NotNull String uri) {
+    LOG.info("external URI request:\n" + uri);
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      throw new IllegalStateException("cannot process URI requests in headless state");
+    }
+
+    int separatorStart = uri.indexOf(SCHEME_SEPARATOR);
+    if (separatorStart < 0) throw new IllegalArgumentException(uri);
+
+    String scheme = uri.substring(0, separatorStart), query = uri.substring(separatorStart + SCHEME_SEPARATOR.length());
+    (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query))
+      .exceptionally(t -> {
+        LOG.error(t);
+        return IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage());
+      })
+      .thenAccept(message -> {
+        if (message != null) {
+          String title = IdeBundle.message("ide.protocol.cannot.title");
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING)
+            .addAction(ShowLogAction.notificationAction())
+            .notify(null);
+        }
+      });
+    return new CommandLineProcessorResult(null, OK_FUTURE);
+  }
+
+  private static CompletableFuture<@Nullable @NotificationContent String> processInternalProtocol(String query) {
+    try {
+      QueryStringDecoder decoder = new QueryStringDecoder(query);
+      if ("open".equals(decoder.path())) {
+        Map<String, List<String>> parameters = decoder.parameters();
+        String fileStr = ContainerUtil.getLastItem(parameters.get("file"));
+        if (fileStr != null && !fileStr.isBlank()) {
+          Path file = parseFilePath(fileStr, null);
+          if (file != null) {
+            int line = StringUtilRt.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
+            int column = StringUtilRt.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
+            openFileOrProject(file, line, column, false, false, false);
+            return CompletableFuture.completedFuture(null);
+          }
+        }
+      }
+
+      return CompletableFuture.completedFuture(IdeBundle.message("ide.protocol.internal.bad.query", query));
+    }
+    catch (Throwable t) {
+      return CompletableFuture.failedFuture(t);
+    }
+  }
+
   public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     StringBuilder logMessage = new StringBuilder();
     logMessage.append("External command line:").append('\n');
@@ -149,11 +209,7 @@ public final class CommandLineProcessor {
       return new CommandLineProcessorResult(null, OK_FUTURE);
     }
 
-    CommandLineProcessorResult result;
-    result = processApplicationStarters(args, currentDirectory);
-    if (result != null) return result;
-
-    result = processCustomHandlers(args);
+    CommandLineProcessorResult result = processApplicationStarters(args, currentDirectory);
     if (result != null) return result;
 
     return processOpenFile(args, currentDirectory);
@@ -187,13 +243,6 @@ public final class CommandLineProcessor {
         return ref.get();
       }
     });
-  }
-
-  @Nullable
-  private static CommandLineProcessorResult processCustomHandlers(@NotNull List<String> args) {
-    Future<CliResult> result = CommandLineCustomHandler.Companion.process(args);
-    if (result == null) return null;
-    return new CommandLineProcessorResult(null, result);
   }
 
   @NotNull

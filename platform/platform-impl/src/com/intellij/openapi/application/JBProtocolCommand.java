@@ -21,8 +21,8 @@ import java.util.concurrent.Future;
  * @author Konstantin Bulenkov
  */
 public abstract class JBProtocolCommand {
-  public static final String PROTOCOL = JetBrainsProtocolHandler.PROTOCOL;
-  public static final String FRAGMENT_PARAM_NAME = JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME;
+  public static final String SCHEME = "jetbrains";
+  public static final String FRAGMENT_PARAM_NAME = "__fragment";
 
   private static final ExtensionPointName<JBProtocolCommand> EP_NAME = new ExtensionPointName<>("com.intellij.jbProtocolCommand");
 
@@ -64,13 +64,10 @@ public abstract class JBProtocolCommand {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Future<@Nullable @DialogMessage String> execute(@NotNull String url) {
-    if (!url.startsWith(PROTOCOL)) throw new IllegalArgumentException(url);
-
-    String query = url.substring(PROTOCOL.length());
+  public static @NotNull Future<@Nullable @DialogMessage String> execute(@NotNull String query) {
     QueryStringDecoder decoder = new QueryStringDecoder(query);
     String[] parts = decoder.path().split("/");
-    if (parts.length < 2) throw new IllegalArgumentException(url);  // expecting at least a platform prefix and a command name
+    if (parts.length < 2) throw new IllegalArgumentException(query);  // expected: at least a platform prefix and a command name
 
     String commandName = parts[1];
     for (JBProtocolCommand command : EP_NAME.getIterable()) {
@@ -90,23 +87,6 @@ public abstract class JBProtocolCommand {
       }
     }
 
-    return CompletableFuture.completedFuture(IdeBundle.message("ide.command.line.unknown.command", commandName));
-  }
-
-  @Deprecated
-  @SuppressWarnings("ALL")
-  public static void handleCurrentCommand() {
-    String commandName = JetBrainsProtocolHandler.getCommand();
-    for (JBProtocolCommand command : EP_NAME.getIterable()) {
-      if (command.getCommandName().equals(commandName)) {
-        try {
-          Map<String, String> parameters = JetBrainsProtocolHandler.getParameters();
-          command.perform(JetBrainsProtocolHandler.getMainParameter(), parameters, parameters.get(FRAGMENT_PARAM_NAME));
-        }
-        finally {
-          JetBrainsProtocolHandler.clear();
-        }
-      }
-    }
+    return CompletableFuture.completedFuture(IdeBundle.message("ide.protocol.unknown.command", commandName));
   }
 }

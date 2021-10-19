@@ -33,6 +33,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.lang.ZipFilePool
@@ -292,7 +293,9 @@ private fun addActivateAndWindowsCliListeners() {
 }
 
 private fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-  val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  val uri = args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)
+  val result = if (uri) CommandLineProcessor.processProtocolCommand(args[0])
+               else CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
   ApplicationManager.getApplication().invokeLater {
     if (result.hasError) {
       result.showErrorIfFailed()

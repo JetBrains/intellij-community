@@ -5,7 +5,6 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.PathClassLoader;
@@ -72,12 +71,6 @@ public final class Main {
     startupTimings.put("startup begin", System.nanoTime());
 
     if (args.length == 1 && "%f".equals(args[0])) {
-      //noinspection SSBasedInspection
-      args = new String[0];
-    }
-
-    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       //noinspection SSBasedInspection
       args = new String[0];
     }

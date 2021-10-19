@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.ide.actions.CopyReferenceUtil.*
 import com.intellij.navigation.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JBProtocolCommand.PROTOCOL
+import com.intellij.openapi.application.JBProtocolCommand.SCHEME
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -85,7 +85,7 @@ object CopyTBXReferenceAction {
     val selectionParameters = getSelectionParameters(editor) ?: ""
     val projectParameter = "${PROJECT_NAME_KEY}=${project.name}"
 
-    return "${PROTOCOL}${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
+    return "${SCHEME}://${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {

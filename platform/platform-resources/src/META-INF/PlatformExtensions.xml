@@ -17,6 +17,7 @@
     <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
+    <protocolHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler"/>
 
     <groupConfigurable id="appearance" weight="70"
                        helpTopic="configurable.group.appearance.help.topic"
@@ -425,9 +426,6 @@
                         serviceImplementation="com.intellij.util.io.IoServiceImpl" />
 
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
-
-    <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
-    <commandLineCustomHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler" />
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
