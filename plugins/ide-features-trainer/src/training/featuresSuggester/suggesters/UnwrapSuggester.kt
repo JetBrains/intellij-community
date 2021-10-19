@@ -3,13 +3,9 @@ package training.featuresSuggester.suggesters
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import training.featuresSuggester.FeatureSuggesterBundle
-import training.featuresSuggester.NoSuggestion
-import training.featuresSuggester.Suggestion
-import training.featuresSuggester.TextFragment
+import training.featuresSuggester.*
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BeforeEditorTextRemovedAction
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class UnwrapSuggester : AbstractFeatureSuggester() {
   override val id: String = "Unwrap"

@@ -4,10 +4,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.LanguageSupport
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 import training.util.WeakReferenceDelegator
 
 class SurroundWithSuggester : AbstractFeatureSuggester() {

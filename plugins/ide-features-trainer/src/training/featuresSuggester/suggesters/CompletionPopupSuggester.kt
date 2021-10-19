@@ -4,7 +4,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import training.featuresSuggester.*
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class CompletionPopupSuggester : AbstractFeatureSuggester() {
   override val id = "Completion"

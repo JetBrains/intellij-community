@@ -7,12 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.LanguageSupport
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFindAction
 import training.featuresSuggester.actions.EditorFocusGainedAction
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class FileStructureSuggester : AbstractFeatureSuggester() {
   override val id: String = "File structure"

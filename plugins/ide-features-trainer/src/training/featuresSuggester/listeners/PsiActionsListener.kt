@@ -4,9 +4,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import training.featuresSuggester.LanguageSupport
 import training.featuresSuggester.actions.*
 import training.featuresSuggester.handleAction
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
   override fun beforePropertyChange(event: PsiTreeChangeEvent) {
@@ -89,14 +89,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
 
   override fun propertyChanged(event: PsiTreeChangeEvent) {
     if (event.parent == null || !isSourceFile(event.file)) return
-    handleAction(
-      project,
-      PropertyChangedAction(
-        psiFile = event.file!!,
-        parent = event.parent,
-        timeMillis = System.currentTimeMillis()
-      )
-    )
+    handleAction(project, PropertyChangedAction(psiFile = event.file!!, parent = event.parent, timeMillis = System.currentTimeMillis()))
   }
 
   override fun childRemoved(event: PsiTreeChangeEvent) {
@@ -141,14 +134,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
 
   override fun childrenChanged(event: PsiTreeChangeEvent) {
     if (event.parent == null || !isSourceFile(event.file)) return
-    handleAction(
-      project,
-      ChildrenChangedAction(
-        psiFile = event.file!!,
-        parent = event.parent,
-        timeMillis = System.currentTimeMillis()
-      )
-    )
+    handleAction(project, ChildrenChangedAction(psiFile = event.file!!, parent = event.parent, timeMillis = System.currentTimeMillis()))
   }
 
   override fun childMoved(event: PsiTreeChangeEvent) {

@@ -19,10 +19,6 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
     FeatureSuggesterTestUtils.subscribeToSuggestions(myFixture.project) { suggestion -> expectedSuggestion = suggestion }
   }
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/plugins/ide-features-trainer/testData"
-  }
-
   fun assertSuggestedCorrectly() {
     TestCase.assertTrue(expectedSuggestion is PopupSuggestion)
     TestCase.assertEquals(testingSuggesterId, (expectedSuggestion as PopupSuggestion).suggesterId)

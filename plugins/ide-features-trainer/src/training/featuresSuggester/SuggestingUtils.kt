@@ -46,11 +46,11 @@ internal fun handleAction(project: Project, action: Action) {
   }
 }
 
-internal inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {
+inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {
   return PsiTreeUtil.getParentOfType(this, T::class.java)
 }
 
-internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
+fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean): PsiElement? {
   return parents(true).find(predicate)
 }
 

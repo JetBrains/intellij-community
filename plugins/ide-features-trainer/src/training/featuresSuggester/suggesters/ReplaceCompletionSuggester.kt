@@ -5,7 +5,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.refactoring.suggested.startOffset
 import training.featuresSuggester.*
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.suggesters.lang.LanguageSupport
 
 class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
   override val id: String = "Completion with replace"
