@@ -116,8 +116,8 @@ internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val dir
   companion object {
     private const val MAIN_SCRIPT_FILENAME = "mermaid/mermaid.js"
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
-    private const val DOWNLOAD_URL = "https://unpkg.com/mermaid@8.9.1/dist/mermaid.js"
-    private const val CHECKSUM = "352791299c7f42ee02e774da58bead4a"
+    private const val DOWNLOAD_URL = "https://unpkg.com/mermaid@8.13.3/dist/mermaid.js"
+    private const val CHECKSUM = "5a958b28bdd744b981422470fd160107"
     private const val storeFileEventName = "storeMermaidFile"
 
     private val generatingProvider
