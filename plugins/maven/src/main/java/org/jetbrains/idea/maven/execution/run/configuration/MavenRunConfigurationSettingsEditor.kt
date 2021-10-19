@@ -54,6 +54,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.BorderLayout
+import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JPanel
@@ -98,67 +99,92 @@ class MavenRunConfigurationSettingsEditor(
     get() = runnerSettings ?: MavenRunner.getInstance(project).settings.clone()
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
-    addCollapsableGroup(
+    addOptionsGroup(
       "maven.runner.group",
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
+      MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
+      MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
+      { it, c -> c.isSelected = it.generalSettings == null },
+      { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
     ) {
-      addInheritCheckBoxGroup(
-        "maven.runner.group.inherit",
-        MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
-        { it, c -> c.isSelected = it.generalSettings == null },
-        { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
-      ) {
-        val distributionComponent = addDistributionFragment().component().component
-        val userSettingsComponent = addUserSettingsFragment().component().component
-        addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
-        addOutputLevelFragment()
-        addThreadsFragment()
-        addUsePluginRegistryTag()
-        addPrintStacktracesTag()
-        addUpdateSnapshotsTag()
-        addExecuteNonRecursivelyTag()
-        addWorkOfflineTag()
-        addCheckSumPolicyTag()
-        addMultiProjectBuildPolicyTag()
-      }
+      val distributionComponent = addDistributionFragment().component().component
+      val userSettingsComponent = addUserSettingsFragment().component().component
+      addLocalRepositoryFragment(distributionComponent, userSettingsComponent)
+      addOutputLevelFragment()
+      addThreadsFragment()
+      addUsePluginRegistryTag()
+      addPrintStacktracesTag()
+      addUpdateSnapshotsTag()
+      addExecuteNonRecursivelyTag()
+      addWorkOfflineTag()
+      addCheckSumPolicyTag()
+      addMultiProjectBuildPolicyTag()
     }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
-    addCollapsableGroup(
+    addOptionsGroup(
       "maven.runner.group",
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group")
+      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
+      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
+      { it, c -> c.isSelected = it.runnerSettings == null },
+      { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
     ) {
-      addInheritCheckBoxGroup(
-        "maven.runner.group.inherit",
-        MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
-        { it, c -> c.isSelected = it.runnerSettings == null },
-        { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
-      ) {
-        addJreFragment()
-        addEnvironmentFragment()
-        addVmOptionsFragment()
-        addPropertiesFragment()
-        addSkipTestsTag()
-        addResolveWorkspaceArtifactsTag()
-      }
+      addJreFragment()
+      addEnvironmentFragment()
+      addVmOptionsFragment()
+      addPropertiesFragment()
+      addSkipTestsTag()
+      addResolveWorkspaceArtifactsTag()
     }
 
-  private fun <S : FragmentedSettings> SettingsFragmentsContainer<S>.addCollapsableGroup(
+  private fun <S : FragmentedSettings> SettingsFragmentsContainer<S>.addOptionsGroup(
     id: String,
     name: @Nls(capitalization = Nls.Capitalization.Sentence) String,
     group: @Nls(capitalization = Nls.Capitalization.Title) String,
+    label: @NlsContexts.Label String,
+    reset: (S, JCheckBox) -> Unit,
+    apply: (S, JCheckBox) -> Unit,
     configure: SettingsFragmentsContainer<S>.() -> Unit
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
-    override fun createChildren() = SettingsFragmentsContainer.fragments(configure)
+    private val separator = CollapsibleTitledSeparator(group)
+
+    override fun createChildren() = SettingsFragmentsContainer.fragments<S> {
+      val checkBoxFragment = addSettingsEditorFragment(
+        JCheckBox(label),
+        object : SettingsFragmentInfo {
+          override val settingsId: String = "$id.checkbox"
+          override val settingsName: String? = null
+          override val settingsGroup: String? = null
+          override val settingsPriority: Int = 0
+          override val settingsType = SettingsEditorFragmentType.EDITOR
+          override val settingsHint: String? = null
+          override val settingsActionHint: String? = null
+        },
+        reset,
+        apply,
+        initialSelection = { true }
+      )
+      checkBoxFragment.isRemovable = false
+      for (fragment in SettingsFragmentsContainer.fragments(configure)) {
+        bind(checkBoxFragment.component(), fragment)
+        add(fragment)
+      }
+    }
 
     override fun getBuilder() = object : FragmentedSettingsBuilder<S>(children, this, this) {
 
-      private val separator = CollapsibleTitledSeparator(group)
-
       override fun createHeaderSeparator() = separator
+
+      override fun addLine(component: Component, top: Int, left: Int, bottom: Int) {
+        if (component is JCheckBox && component.text == label) {
+          super.addLine(component, top, left, bottom + TOP_INSET)
+          myGroupInset += LEFT_INSET
+        } else {
+          super.addLine(component, top, left, bottom)
+        }
+      }
 
       init {
         children.forEach { bind(separator, it) }
@@ -168,40 +194,6 @@ class MavenRunConfigurationSettingsEditor(
       }
     }
   }).apply { isRemovable = false }
-
-  private fun <S> SettingsFragmentsContainer<S>.addInheritCheckBoxGroup(
-    id: String,
-    label: @NlsContexts.Checkbox String,
-    reset: (S, JCheckBox) -> Unit,
-    apply: (S, JCheckBox) -> Unit,
-    configure: SettingsFragmentsContainer<S>.() -> Unit
-  ) {
-    val fragments = SettingsFragmentsContainer.fragments(configure)
-    addInheritCheckBoxFragment(id, label, reset, apply)
-      .applyToComponent { fragments.forEach { bind(this, it) } }
-    fragments.forEach(::add)
-  }
-
-  private fun <S> SettingsFragmentsContainer<S>.addInheritCheckBoxFragment(
-    id: String,
-    label: @NlsContexts.Checkbox String,
-    reset: (S, JCheckBox) -> Unit,
-    apply: (S, JCheckBox) -> Unit,
-  ) = addSettingsEditorFragment(
-    JCheckBox(label),
-    object : SettingsFragmentInfo {
-      override val settingsId: String = id
-      override val settingsName: String? = null
-      override val settingsGroup: String? = null
-      override val settingsPriority: Int = 0
-      override val settingsType = SettingsEditorFragmentType.EDITOR
-      override val settingsHint: String? = null
-      override val settingsActionHint: String? = null
-    },
-    reset,
-    apply,
-    { true }
-  ).apply { isRemovable = false }
 
   private fun bind(checkBox: JCheckBox, fragment: SettingsEditorFragment<*, *>) {
     checkBox.addItemListener {

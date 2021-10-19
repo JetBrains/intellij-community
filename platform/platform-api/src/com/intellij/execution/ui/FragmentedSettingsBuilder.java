@@ -39,10 +39,10 @@ import java.util.*;
 
 public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
-  static final int TOP_INSET = 6;
-  static final int LARGE_TOP_INSET = 20;
-  static final int LARGE_LEFT_INSET = 20;
-  static final int TAG_TOP_INSET = 8;
+  public static final int TOP_INSET = 6;
+  public static final int LEFT_INSET = 20;
+  public static final int MEDIUM_TOP_INSET = 8;
+  public static final int LARGE_TOP_INSET = 20;
 
   public static final int TAG_VGAP = 6;
   public static final int TAG_HGAP = 2;
@@ -66,7 +66,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
   private final Collection<? extends SettingsEditorFragment<Settings, ?>> myFragments;
   private final @Nullable NestedGroupFragment<Settings> myMain;
-  private int myGroupInset;
+  protected int myGroupInset;
   private DropDownLink<String> myLinkLabel;
   private String myConfigId; // for FUS
 
@@ -115,7 +115,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     addBeforeRun(beforeRun);
     addHeader(header);
 
-    myGroupInset = myMain == null ? 0 : LARGE_LEFT_INSET;
+    myGroupInset = myMain == null ? 0 : LEFT_INSET;
     if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
@@ -133,14 +133,14 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     return myPanel;
   }
 
-  private void addLine(Component component, int top, int left, int bottom) {
+  protected void addLine(Component component, int top, int left, int bottom) {
     myConstraints.insets = JBUI.insets(top, left + myGroupInset, bottom, 0);
     myPanel.add(component, myConstraints.clone());
     myConstraints.gridy++;
     myConstraints.insets = JBUI.insetsTop(top);
   }
 
-  private void addLine(Component component) {
+  protected void addLine(Component component) {
     addLine(component, TOP_INSET, 0, 0);
   }
 
@@ -205,7 +205,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
     if (tagsPanel.getComponentCount() > 0) {
       hideWhenChildrenIsInvisible(tagsPanel);
-      addLine(tagsPanel, TAG_TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+      addLine(tagsPanel, MEDIUM_TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
     }
   }
 
