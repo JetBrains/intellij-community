@@ -77,6 +77,12 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
+
+        registerPsiQuickFixes(KtFirDiagnostic.LocalVariableWithTypeParameters::class, RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.LocalVariableWithTypeParametersWarning::class,
+            RemovePsiElementSimpleFix.RemoveTypeParametersFactory
+        )
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -91,6 +97,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ImportQuickFix.FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -130,6 +137,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
         registerPsiQuickFixes(KtFirDiagnostic.NullableSupertype::class, RemoveNullableFix.removeForSuperType)
         registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, RemoveNullableFix.removeForLateInitProperty)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.TypeArgumentsRedundantInSuperQualifier::class,
+            RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory
+        )
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -161,6 +172,13 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
     }
+    private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
+    }
+
+    private val unused = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.UnusedVariable::class, RemovePsiElementSimpleFix.RemoveVariableFactory)
+    }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
@@ -172,5 +190,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         whenStatements,
         typeMismatch,
         superKeyword,
+        vararg,
+        unused,
     )
 }
