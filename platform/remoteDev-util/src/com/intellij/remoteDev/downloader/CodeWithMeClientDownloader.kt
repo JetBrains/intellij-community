@@ -94,7 +94,7 @@ object CodeWithMeClientDownloader {
   }
 
   fun getClientDistributionName(clientBuildVersion: String) = when {
-    VersionComparatorUtil.compare(clientBuildVersion, "221.1") >= 0 -> "JetBrainsClient"
+    VersionComparatorUtil.compare(clientBuildVersion, "213.5318") >= 0 -> "JetBrainsClient"
     else -> "CodeWithMeGuest"
   }
 
