@@ -40,6 +40,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -145,8 +146,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     }
   }
 
-  // public for testing
   @ApiStatus.Internal
+  @VisibleForTesting
   public static @NotNull CompletableFuture<@Nullable Project> openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
     boolean canAttach = ProjectAttachProcessor.canAttachToProject();
     boolean preferAttach = currentProject != null &&
