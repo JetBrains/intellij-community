@@ -157,6 +157,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       usagePanel.editor.settings.apply {
         isLineNumbersShown = false
         isCaretRowShown = false
+        isRightMarginShown = false
       }
       usagePanel.reset(previewText, language.associatedFileType)
       rightPanel.add(usagePanel, "growx")
