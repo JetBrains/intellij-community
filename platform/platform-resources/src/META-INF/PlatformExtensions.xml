@@ -17,7 +17,7 @@
     <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
-    <protocolHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler"/>
+    <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
     <groupConfigurable id="appearance" weight="70"
                        helpTopic="configurable.group.appearance.help.topic"
