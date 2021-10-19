@@ -81,7 +81,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logUsageNavigate(project: Project?, usage: Usage) {
-      USAGE_NAVIGATE.log(project, (usage as? PsiElementUsage)?.referenceClass, (usage as? PsiElementUsage)?.element?.language)
+      USAGE_NAVIGATE.log(project, UsageReferenceClassProvider.getReferenceClass(usage), (usage as? PsiElementUsage)?.element?.language)
     }
 
     @JvmStatic
