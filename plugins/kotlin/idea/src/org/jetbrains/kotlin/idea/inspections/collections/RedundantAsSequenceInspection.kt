@@ -11,17 +11,14 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
-import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -42,6 +39,8 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
         val context = qualified.analyze(BodyResolveMode.PARTIAL)
         when {
             call.isCalling(asSequenceOnSequenceFqName, context) -> {
+                val typeArgumentList = call.typeArgumentList
+                if (typeArgumentList != null && !typeArgumentList.isRedundant()) return
                 registerProblem(holder, qualified, callee)
             }
             call.isCalling(asSequenceFqName, context) -> {
@@ -56,6 +55,9 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
             }
         }
     })
+
+    private fun KtTypeArgumentList.isRedundant() =
+        RemoveExplicitTypeArgumentsIntention.isApplicableTo(this, approximateFlexible = false)
 
     private fun registerProblem(holder: ProblemsHolder, qualified: KtQualifiedExpression, callee: KtExpression) {
         holder.registerProblem(

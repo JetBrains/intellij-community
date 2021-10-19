@@ -1596,6 +1596,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/sequence2.kt");
             }
 
+            @TestMetadata("sequenceWithRedundantTypeArgument.kt")
+            public void testSequenceWithRedundantTypeArgument() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/sequenceWithRedundantTypeArgument.kt");
+            }
+
+            @TestMetadata("sequenceWithTypeArgument.kt")
+            public void testSequenceWithTypeArgument() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/sequenceWithTypeArgument.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/simple.kt");
