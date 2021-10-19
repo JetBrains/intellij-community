@@ -47,7 +47,7 @@ private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
 internal fun getSdksToInstall(): List<PySdkToInstall> {
-  return if (SystemInfo.isWindows) listOf(getPy39ToInstallOnWindows(), getPy38ToInstallOnWindows())
+  return if (SystemInfo.isWindows) listOf(getPy39ToInstallOnWindows(), getPy310ToInstallOnWindows())
   else emptyList()
 }
 
@@ -69,27 +69,27 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.9.5/python-3.9.5-amd64.exe",
-    28377264,
-    "53a354a15baed952ea9519a7f4d87c3f",
+    "https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe",
+    28895456,
+    "cc3eabc1f9d6c703d1d2a4e7c041bc1d",
     hashFunction,
-    "python-3.9.5-amd64.exe"
+    "python-3.9.7-amd64.exe"
   )
 }
 
-private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
-  val version = "3.8"
+private fun getPy310ToInstallOnWindows(): PySdkToInstallOnWindows {
+  val version = "3.10"
   val name = "Python $version"
   @Suppress("DEPRECATION") val hashFunction = Hashing.md5()
 
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe",
-    28296784,
-    "62cf1a12a5276b0259e8761d4cf4fe42",
+    "https://www.python.org/ftp/python/3.10.0/python-3.10.0-amd64.exe",
+    28315928,
+    "c3917c08a7fe85db7203da6dcaa99a70",
     hashFunction,
-    "python-3.8.10-amd64.exe"
+    "python-3.10.0-amd64.exe"
   )
 }
 
