@@ -101,9 +101,29 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             runTest("../idea/tests/testData/shortenRefsFir/calls/onlyShortenSelection.kt");
         }
 
+        @TestMetadata("propertiesDeclaredInPrimaryConstructor_accessorAnnotation.kt")
+        public void testPropertiesDeclaredInPrimaryConstructor_accessorAnnotation() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/propertiesDeclaredInPrimaryConstructor_accessorAnnotation.kt");
+        }
+
+        @TestMetadata("propertiesDeclaredInPrimaryConstructor_type.kt")
+        public void testPropertiesDeclaredInPrimaryConstructor_type() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/propertiesDeclaredInPrimaryConstructor_type.kt");
+        }
+
         @TestMetadata("propertyChainCall.kt")
         public void testPropertyChainCall() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/calls/propertyChainCall.kt");
+        }
+
+        @TestMetadata("propertyDeclaredInPrimaryConstructor_accessorAnnotation.kt")
+        public void testPropertyDeclaredInPrimaryConstructor_accessorAnnotation() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/propertyDeclaredInPrimaryConstructor_accessorAnnotation.kt");
+        }
+
+        @TestMetadata("propertyDeclaredInPrimaryConstructor_type.kt")
+        public void testPropertyDeclaredInPrimaryConstructor_type() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/calls/propertyDeclaredInPrimaryConstructor_type.kt");
         }
 
         @TestMetadata("propertyInSameFile.kt")
