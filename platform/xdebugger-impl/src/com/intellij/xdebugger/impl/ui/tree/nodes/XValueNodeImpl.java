@@ -134,7 +134,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
             return;
           }
 
-          if (!showAsInlay(session, position, document)) {
+          if (!showAsInlay(session, position)) {
             data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
             myTree.updateEditor();
@@ -150,10 +150,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  private boolean showAsInlay(XDebugSession session, XSourcePosition position, Document document) {
+  private boolean showAsInlay(XDebugSession session, XSourcePosition position) {
     if (Registry.is("debugger.show.values.use.inlays")) {
       if (position.getLine() >= 0 &&
-          XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(this, session, position, document)) {
+          XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(this, session, position)) {
         return true;
       }
     }
