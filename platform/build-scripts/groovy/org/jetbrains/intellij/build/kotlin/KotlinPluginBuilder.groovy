@@ -98,6 +98,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
+    "kotlin.features-trainer",
     )
 
   private static List<String> LIBRARIES = List.of(
