@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -175,5 +177,29 @@ fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissi
         } else {
             element.addBefore(entry, whenCloseBrace)
         }
+    }
+}
+
+tailrec fun hasRedundantTypeSpecification(typeReference: KtTypeReference?, initializer: KtExpression?): Boolean {
+    if (initializer == null || typeReference == null) return true
+    if (initializer !is KtLambdaExpression && initializer !is KtNamedFunction) return true
+    val typeElement = typeReference.typeElement ?: return true
+    if (typeReference.hasModifier(KtTokens.SUSPEND_KEYWORD)) return false
+    return when (typeElement) {
+        is KtFunctionType -> {
+            if (typeElement.receiver != null) return false
+            if (typeElement.parameters.isEmpty()) return true
+            val valueParameters = when (initializer) {
+                is KtLambdaExpression -> initializer.valueParameters
+                is KtNamedFunction -> initializer.valueParameters
+                else -> emptyList()
+            }
+            valueParameters.isNotEmpty() && valueParameters.none { it.typeReference == null }
+        }
+        is KtUserType -> {
+            val typeAlias = typeElement.referenceExpression?.mainReference?.resolve() as? KtTypeAlias ?: return true
+            return hasRedundantTypeSpecification(typeAlias.getTypeReference(), initializer)
+        }
+        else -> true
     }
 }
