@@ -6,11 +6,13 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -18,7 +20,19 @@ import javax.swing.JTextField
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   private var step: BridgeStep? = null
 
+  abstract override fun getPresentableName(): String
+  abstract override fun getDescription(): String
+  abstract override fun getNodeIcon(): Icon
+
   protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
+
+  final override fun getModuleType() =
+    object : ModuleType<AbstractNewProjectWizardBuilder>("newWizard.${this::class.java.name}") {
+      override fun createModuleBuilder() = this@AbstractNewProjectWizardBuilder
+      override fun getName() = this@AbstractNewProjectWizardBuilder.presentableName
+      override fun getDescription() = this@AbstractNewProjectWizardBuilder.description
+      override fun getNodeIcon(isOpened: Boolean) = this@AbstractNewProjectWizardBuilder.nodeIcon
+    }
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
     return BridgeStep(context, createStep(context))
@@ -75,10 +89,5 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     private fun JComponent.setMinimumWidth(width: Int) {
       minimumSize = minimumSize.apply { this.width = width }
     }
-  }
-
-  companion object {
-    const val DEFAULT_GROUP = "Default"
-    const val GENERATORS = "Generators"
   }
 }

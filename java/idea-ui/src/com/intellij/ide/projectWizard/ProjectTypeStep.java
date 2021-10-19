@@ -10,7 +10,10 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.ide.wizard.*;
+import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.NewEmptyProjectBuilder;
+import com.intellij.ide.wizard.NewModuleBuilder;
+import com.intellij.ide.wizard.NewProjectBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -371,12 +374,12 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     if (isNewWizard()) {
       if (context.isCreatingNewProject()) {
-        groups.add(0, new TemplatesGroup(NewEmptyProjectType.INSTANCE.createModuleBuilder()));
-        groups.add(0, new TemplatesGroup(NewProjectType.INSTANCE.createModuleBuilder()));
+        groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
+        groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
         groups.addAll(getUserTemplatesMap(context));
       }
       else {
-        groups.add(0, new TemplatesGroup(NewModuleType.INSTANCE.createModuleBuilder()));
+        groups.add(0, new TemplatesGroup(new NewModuleBuilder()));
       }
     }
 

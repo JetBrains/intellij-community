@@ -9,7 +9,6 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.vfs.VirtualFile
@@ -42,7 +41,9 @@ open class NewProjectWizardDirectoryGeneratorAdapter<T>(val wizard: GeneratorNew
   override fun createPeer(): ProjectGeneratorPeer<T> {
     val context = WizardContext(null) {}
     val builder = object : AbstractNewProjectWizardBuilder() {
-      override fun getModuleType(): ModuleType<*>? = null
+      override fun getPresentableName(): String = throw UnsupportedOperationException()
+      override fun getDescription(): String = throw UnsupportedOperationException()
+      override fun getNodeIcon(): Icon = throw UnsupportedOperationException()
       override fun createStep(context: WizardContext): NewProjectWizardStep =
         wizard.createStep(context).also {
           step = it
