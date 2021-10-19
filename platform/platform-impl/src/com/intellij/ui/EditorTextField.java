@@ -99,6 +99,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private int myCaretPosition = -1;
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
   private Disposable myDisposable;
+  private Disposable myManualDisposable;
 
   public EditorTextField() {
     this("");
@@ -152,6 +153,16 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         if (myEditor == null) initEditor();
       }
     });
+  }
+
+  //prevent from editor reinitialisation on add/remove
+  public void setDisposedWith(@NotNull Disposable disposable) {
+    assert myManualDisposable == null;
+    Disposer.register(disposable, () -> {
+      myManualDisposable = null;
+      deInitEditor();
+    });
+    myManualDisposable = disposable;
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -438,6 +449,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public void removeNotify() {
     super.removeNotify();
+    if (myManualDisposable == null) deInitEditor();
+  }
+
+  private void deInitEditor() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
     }
