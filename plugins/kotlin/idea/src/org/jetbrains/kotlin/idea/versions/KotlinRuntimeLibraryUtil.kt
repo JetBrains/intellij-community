@@ -69,31 +69,26 @@ fun findAllUsedLibraries(project: Project): MultiMap<Library, Module> {
 enum class LibraryJarDescriptor(
     val jarName: String,
     val orderRootType: OrderRootType,
-    private val mavenArtifactId: String,
-    val getPath: (KotlinArtifacts) -> Path = { artifacts -> artifacts.kotlincLibDirectory.toPath().resolve(jarName) },
+    private val mavenArtifactId: String
 ) {
-    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_STDLIB_NAME, { it.kotlinStdlib.toPath() }) {
+    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_STDLIB_NAME) {
         override fun findExistingJar(library: Library): VirtualFile? {
             if (isExternalLibrary(library)) return null
             return JavaRuntimeDetectionUtil.getRuntimeJar(listOf(*library.getFiles(OrderRootType.CLASSES)))
         }
     },
 
-    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_REFLECT_NAME, { it.kotlinReflect.toPath() }),
-    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME, { it.kotlinScriptRuntime.toPath() }),
-    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_TEST_NAME, { it.kotlinTest.toPath() }),
+    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_REFLECT_NAME),
+    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME),
+    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_TEST_NAME),
 
     RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
 
-    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, PathUtil.JS_LIB_NAME, { it.kotlinStdlibJs.toPath() });
+    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, PathUtil.JS_LIB_NAME);
 
     open fun findExistingJar(library: Library): VirtualFile? {
         if (isExternalLibrary(library)) return null
         return library.getFiles(orderRootType).firstOrNull { it.name.startsWith(mavenArtifactId) }
-    }
-
-    fun getPathInPlugin(): Path {
-        return getPath(KotlinArtifacts.instance)
     }
 
     val repositoryLibraryProperties: RepositoryLibraryProperties get() =
