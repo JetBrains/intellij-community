@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationP
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
 import java.net.InetAddress
 import java.util.concurrent.Future
 
@@ -186,12 +186,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           val message = connection.receive() ?: break
           when (message) {
             is Success -> {
-              val bytes = message.value as? ByteArray ?: throw IllegalStateException("Wrong")
-              val bis = ByteArrayInputStream(bytes)
-              ObjectInputStream(bis).use {
-                val value = it.readObject()
-                resultHandler.onComplete(value)
-              }
+              val value = deserializeIfNeeded(message.value)
+              resultHandler.onComplete(value)
               break@loop
             }
             is Failure -> {
@@ -213,6 +209,14 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       finally {
         connection.sendResultAck()
       }
+    }
+
+    private fun deserializeIfNeeded(value: Any?): Any? {
+      val bytes = value as? ByteArray ?: return value
+      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classpathInferer.getClassloaders()).use {
+        it.readObject()
+      }
+      return deserialized
     }
 
     private fun RemoteConnection<Message>.sendResultAck() {
