@@ -41,7 +41,7 @@ class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
     project.messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       if (myLastHtml != null) setHtml(myLastHtml!!)
     })
-    openLinksInExternalBrowser()
+    setOpenLinksInExternalBrowser(true)
   }
 
   override fun prepareHtml(html: String): String = html.replaceFirst("<head>", "<head>$cssStyleCodeToInject")
