@@ -1,85 +1,105 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.featuresSuggester.surroundWith
 
 import junit.framework.TestCase
+import training.featuresSuggester.FeatureSuggesterTestUtils.insertNewLineAt
+import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretRelatively
+import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPosition
+import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
+import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SurroundWithSuggesterTest
 
 class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
-
-  override val testingCodeFileName: String = "JavaCodeExample.java"
+  override val testingCodeFileName = "JavaCodeExample.java"
 
   override fun `testSurround one statement with IF and get suggestion`() {
-    insertNewLineAt(6)
-    type("if () {")
-    insertNewLineAt(8)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(6)
+      typeAndCommit("if () {")
+      insertNewLineAt(8)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   override fun `testSurround 2 statements with IF and add '}' at the line with second statement and get suggestion`() {
-    insertNewLineAt(5)
-    type("if (true){")
-    moveCaretToLogicalPosition(7, 20)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(5)
+      typeAndCommit("if (true){")
+      moveCaretToLogicalPosition(7, 20)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   override fun `testSurround all statements in block with IF and get suggestion`() {
-    insertNewLineAt(5)
-    type("if(){")
-    insertNewLineAt(14)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(5)
+      typeAndCommit("if(){")
+      insertNewLineAt(14)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   override fun `testSurround one statement with IF in one line and get suggestion`() {
-    moveCaretToLogicalPosition(6, 8)
-    type("if(1 > 2 ){")
-    moveCaretRelatively(12, 0)
-    type("}")
+    with(myFixture) {
+      moveCaretToLogicalPosition(6, 8)
+      typeAndCommit("if(1 > 2 ){")
+      moveCaretRelatively(12, 0)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   override fun `testSurround statements with FOR and get suggestion`() {
-    insertNewLineAt(6)
-    type("for (int i = 0; i < 10; i++) {")
-    insertNewLineAt(13)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(6)
+      typeAndCommit("for (int i = 0; i < 10; i++) {")
+      insertNewLineAt(13)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   override fun `testSurround statements with WHILE and get suggestion`() {
-    insertNewLineAt(7)
-    type("while(false && true){")
-    insertNewLineAt(10)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(7)
+      typeAndCommit("while(false && true){")
+      insertNewLineAt(10)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
 
   fun `testSurround IfStatement with IF and get suggestion`() {
-    insertNewLineAt(9)
-    type("if (false && true){")
-    insertNewLineAt(13)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(9)
+      typeAndCommit("if (false && true){")
+      insertNewLineAt(13)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       assertSuggestedCorrectly()
     }
   }
@@ -88,34 +108,40 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
    * This case must throw suggestion but not working now
    */
   fun `testSurround statements with FOREACH and don't get suggestion`() {
-    insertNewLineAt(6)
-    type("for (int a: list) {")
-    insertNewLineAt(13)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(6)
+      typeAndCommit("for (int a: list) {")
+      insertNewLineAt(13)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       TestCase.assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
   override fun `testSurround 0 statements with IF and don't get suggestion`() {
-    insertNewLineAt(6)
-    type("if (true) {    }")
+    with(myFixture) {
+      insertNewLineAt(6)
+      typeAndCommit("if (true) {    }")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       TestCase.assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
   override fun `testWrite if() but add braces in another place and don't get suggestion`() {
-    insertNewLineAt(6)
-    type("if() ")
-    moveCaretToLogicalPosition(7, 20)
-    type("{")
-    moveCaretToLogicalPosition(9, 23)
-    type("}")
+    with(myFixture) {
+      insertNewLineAt(6)
+      typeAndCommit("if() ")
+      moveCaretToLogicalPosition(7, 20)
+      typeAndCommit("{")
+      moveCaretToLogicalPosition(9, 23)
+      typeAndCommit("}")
+    }
 
-    testInvokeLater {
+    testInvokeLater(project) {
       TestCase.assertTrue(expectedSuggestion is NoSuggestion)
     }
   }

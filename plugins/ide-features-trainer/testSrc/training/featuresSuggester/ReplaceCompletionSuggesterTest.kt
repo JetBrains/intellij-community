@@ -1,6 +1,9 @@
-package training.featuresSuggester.replaceCompletion
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.featuresSuggester
 
-import training.featuresSuggester.FeatureSuggesterTest
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
+import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 
 abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest() {
   override val testingSuggesterId = "Completion with replace"
@@ -19,8 +22,8 @@ abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest() {
 
   abstract fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`()
 
-  protected fun deleteAndTypeDot() {
+  protected fun CodeInsightTestFixture.deleteAndTypeDot() {
     deleteSymbolAtCaret()
-    type(".")
+    typeAndCommit(".")
   }
 }
