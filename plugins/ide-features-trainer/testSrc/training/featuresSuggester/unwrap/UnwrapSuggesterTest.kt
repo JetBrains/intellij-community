@@ -1,0 +1,21 @@
+package training.featuresSuggester.unwrap
+
+import training.featuresSuggester.FeatureSuggesterTest
+
+abstract class UnwrapSuggesterTest : FeatureSuggesterTest() {
+    override val testingSuggesterId = "Unwrap"
+
+    abstract fun `testUnwrap IF statement and get suggestion`()
+
+    abstract fun `testUnwrap one-line IF and get suggestion`()
+
+    abstract fun `testUnwrap IF with deleting multiline selection and get suggestion`()
+
+    abstract fun `testUnwrap FOR and get suggestion`()
+
+    abstract fun `testUnwrap WHILE and get suggestion`()
+
+    abstract fun `testUnwrap commented IF and don't get suggestion`()
+
+    abstract fun `testUnwrap IF written in string block and don't get suggestion`()
+}
