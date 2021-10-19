@@ -150,7 +150,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             library.addRoot(it.file, it.type)
         }
 
-        collector.addMessage(KotlinJvmBundle.message("added.0.to.library.configuration", libraryJarDescriptor.jarName))
+        collector.addMessage(KotlinJvmBundle.message("added.0.to.library.configuration", libraryJarDescriptor.mavenArtifactId))
         return
     }
 

@@ -66,29 +66,17 @@ fun findAllUsedLibraries(project: Project): MultiMap<Library, Module> {
     return libraries
 }
 
-enum class LibraryJarDescriptor(
-    val jarName: String,
-    val orderRootType: OrderRootType,
-    private val mavenArtifactId: String
-) {
-    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_STDLIB_NAME) {
-        override fun findExistingJar(library: Library): VirtualFile? {
-            if (isExternalLibrary(library)) return null
-            return JavaRuntimeDetectionUtil.getRuntimeJar(listOf(*library.getFiles(OrderRootType.CLASSES)))
-        }
-    },
+enum class LibraryJarDescriptor(val mavenArtifactId: String) {
+    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_NAME),
+    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_NAME),
+    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME),
+    TEST_JAR(PathUtil.KOTLIN_TEST_NAME),
+    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
+    JS_STDLIB_JAR(PathUtil.JS_LIB_NAME);
 
-    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_REFLECT_NAME),
-    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME),
-    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_TEST_NAME),
-
-    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
-
-    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, PathUtil.JS_LIB_NAME);
-
-    open fun findExistingJar(library: Library): VirtualFile? {
+    fun findExistingJar(library: Library): VirtualFile? {
         if (isExternalLibrary(library)) return null
-        return library.getFiles(orderRootType).firstOrNull { it.name.startsWith(mavenArtifactId) }
+        return library.getFiles(OrderRootType.CLASSES).firstOrNull { it.name.startsWith(mavenArtifactId) }
     }
 
     val repositoryLibraryProperties: RepositoryLibraryProperties get() =

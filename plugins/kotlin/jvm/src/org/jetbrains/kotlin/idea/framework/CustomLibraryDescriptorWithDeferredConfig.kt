@@ -70,7 +70,7 @@ abstract class CustomLibraryDescriptorWithDeferredConfig(
 
             // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
             val descriptorWithSdk = configurator.libraryJarDescriptor
-            if (model.getFiles(descriptorWithSdk.orderRootType).any { it.name == descriptorWithSdk.jarName }) {
+            if (descriptorWithSdk.findExistingJar(library) != null) {
                 configurator.configureLibraryJar(module.project, model, descriptorWithSdk, collector)
             }
 
