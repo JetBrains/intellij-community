@@ -8,7 +8,7 @@ import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.featuresSuggester.suggesters.lang.LanguageSupport
-import training.featuresSuggester.util.WeakReferenceDelegator
+import training.util.WeakReferenceDelegator
 
 class SurroundWithSuggester : AbstractFeatureSuggester() {
     override val id: String = "Surround with"

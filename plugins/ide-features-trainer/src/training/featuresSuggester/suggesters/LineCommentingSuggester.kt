@@ -9,7 +9,7 @@ import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorTextInsertedAction
-import training.featuresSuggester.util.WeakReferenceDelegator
+import training.util.WeakReferenceDelegator
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs

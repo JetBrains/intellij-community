@@ -7,7 +7,7 @@ import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import training.featuresSuggester.*
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.DebugSessionPausedAction
-import training.featuresSuggester.util.WeakReferenceDelegator
+import training.util.WeakReferenceDelegator
 import java.lang.ref.WeakReference
 import java.util.*
 

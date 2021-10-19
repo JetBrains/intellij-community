@@ -8,7 +8,7 @@ import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.featuresSuggester.asString
 import training.featuresSuggester.suggesters.lang.LanguageSupport
-import training.featuresSuggester.util.WeakReferenceDelegator
+import training.util.WeakReferenceDelegator
 import java.awt.datatransfer.DataFlavor
 
 class IntroduceVariableSuggester : AbstractFeatureSuggester() {
