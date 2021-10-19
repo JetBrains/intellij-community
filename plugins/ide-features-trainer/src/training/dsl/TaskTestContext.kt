@@ -226,10 +226,11 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     ComponentFixture<SimpleComponentFixture, Component>(SimpleComponentFixture::class.java, robot, target)
 
 
-  private fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
+  private fun <ComponentType : Component> typeMatcher(componentTypeClass: Class<ComponentType>,
                                                        matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
     return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
-      override fun isMatching(component: ComponentType): Boolean = matcher(component)
+      // Do not check for isValid because for some reason needed dialogs are invalids!
+      override fun isMatching(component: ComponentType): Boolean = component.isShowing && matcher(component)
     }
   }
 }
