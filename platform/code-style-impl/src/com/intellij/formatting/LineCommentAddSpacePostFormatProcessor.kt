@@ -29,7 +29,7 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language)
-    val commentFinder = SingleLineCommentFinder(commenter)
+    val commentFinder = SingleLineCommentFinder(rangeToReformat, commenter)
     source.accept(commentFinder)
 
     val commentOffsets = commentFinder.commentOffsets
@@ -52,13 +52,15 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 }
 
 
-internal class SingleLineCommentFinder(commenter: Commenter) : PsiElementVisitor() {
+internal class SingleLineCommentFinder(val rangeToReformat: TextRange, commenter: Commenter) : PsiRecursiveElementVisitor() {
   val lineCommentPrefixes = commenter.lineCommentPrefixes.map { it.trim() }
   val commentOffsets = arrayListOf<Int>()
 
-  override fun visitFile(file: PsiFile) = file.acceptChildren(this)
-
-  override fun visitElement(element: PsiElement) = element.acceptChildren(this)
+  override fun visitElement(element: PsiElement) {
+    if (element.textRange.intersects(rangeToReformat)) {
+      super.visitElement(element)
+    }
+  }
 
   override fun visitComment(comment: PsiComment) {
     val commentText = comment.text
