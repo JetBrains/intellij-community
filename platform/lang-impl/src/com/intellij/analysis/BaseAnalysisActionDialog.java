@@ -12,21 +12,17 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -117,8 +113,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     preselectButton();
 
     BorderLayoutPanel wholePanel = new BorderLayoutPanel();
-    Border border = SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty();
-    wholePanel.setBorder(border);
     wholePanel.addToTop(panel);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
     if (additionalPanel != null) {
