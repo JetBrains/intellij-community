@@ -8,17 +8,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JTextField
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
-  private var step: BridgeStep? = null
+  private var panel: NewProjectWizardStepPanel? = null
 
   abstract override fun getPresentableName(): String
   abstract override fun getDescription(): String
@@ -35,59 +29,31 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     }
 
   final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
-    return BridgeStep(context, createStep(context))
-      .also { step = it }
+    panel = NewProjectWizardStepPanel(createStep(context))
+    return BridgeStep(panel!!)
   }
 
   override fun commitModule(project: Project, model: ModifiableModuleModel?): Nothing? {
-    step!!.setupProject(project)
+    panel!!.step.setupProject(project)
     return null
   }
 
   override fun cleanup() {
-    step = null
+    panel = null
   }
 
-  private class BridgeStep(context: WizardContext, private val step: NewProjectWizardStep) : ModuleWizardStep() {
+  private class BridgeStep(private val panel: NewProjectWizardStepPanel) : ModuleWizardStep() {
 
-    fun setupProject(project: Project) = step.setupProject(project)
+    override fun validate() = panel.validate()
 
-    private val panelBuilder = NewProjectWizardPanelBuilder(context)
+    override fun updateDataModel() = panel.apply()
 
-    override fun validate() = panelBuilder.validate()
-
-    override fun updateDataModel() = panelBuilder.apply()
-
-    override fun getPreferredFocusedComponent() = panelBuilder.preferredFocusedComponent
+    override fun getPreferredFocusedComponent() = panel.getPreferredFocusedComponent()
 
     override fun updateStep() {
       (preferredFocusedComponent as? JTextField)?.selectAll()
     }
 
-    override fun getComponent() =
-      panelBuilder.panel { step.setupUI(this) }
-        .apply { withBorder(JBUI.Borders.empty(14, 20)) }
-        .also { fixUiShiftingWhenChoosingMultiStep(it) }
-
-    private fun fixUiShiftingWhenChoosingMultiStep(panel: DialogPanel) {
-      val labels = UIUtil.uiTraverser(panel)
-        .filterIsInstance<JLabel>()
-        .filter { isRowLabel(it) }
-      val width = labels.maxOf { it.preferredSize.width }
-      labels.forEach { it.setMinimumWidth(width) }
-    }
-
-    private fun isRowLabel(label: JLabel): Boolean {
-      val layout = (label.parent as? DialogPanel)?.layout as? GridLayout
-      if (layout == null) {
-        return false
-      }
-      val constraints = layout.getConstraints(label)
-      return constraints != null && constraints.x == 0 && constraints.gaps.left == 0
-    }
-
-    private fun JComponent.setMinimumWidth(width: Int) {
-      minimumSize = minimumSize.apply { this.width = width }
-    }
+    override fun getComponent() = panel.component
   }
 }
