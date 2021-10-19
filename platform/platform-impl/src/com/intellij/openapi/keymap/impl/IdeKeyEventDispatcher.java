@@ -22,9 +22,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -603,7 +603,7 @@ public final class IdeKeyEventDispatcher {
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
                                   new PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
-                                  new EmptyProgressIndicator();
+                                  new AbstractProgressIndicatorExBase();
     Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
       Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
