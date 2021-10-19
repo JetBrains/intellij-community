@@ -89,7 +89,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             }
             .coalesceBy(this)
             .inSmartMode(project)
-            .expireWhen { pointToElement.element == null || Disposer.isDisposed(project) }
+            .expireWhen { pointToElement.element == null || project.isDisposed() }
             .submit(AppExecutorUtil.getAppExecutorService())
     }
 

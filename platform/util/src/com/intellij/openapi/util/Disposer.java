@@ -118,7 +118,9 @@ public final class Disposer {
    *
    * <b>Note</b>: This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
    * for example on dynamic plugin unload or major GC run.</br>
-   * Thus, it's not wise to rely on this method in your production-grade code. Please use something similar to this code instead:
+   * Thus, it's not wise to rely on this method in your production-grade code.
+   * Instead, please use corresponding predicate inside the disposable object if available, i.e., {@link com.intellij.openapi.components.ComponentManager#isDisposed()}
+   * Or introduce boolean flag into your object like this:
    * <pre> {@code class MyDisposable implements Disposable {
    *   boolean isDisposed;
    *   void dispose() {
