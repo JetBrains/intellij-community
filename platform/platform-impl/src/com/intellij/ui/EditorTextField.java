@@ -381,14 +381,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     myDisposable = Disposer.newDisposable("ETF dispose");
     Disposer.register(myDisposable, this::releaseEditorLater);
     if (myProject != null) {
-      ProjectManagerListener listener = new ProjectManagerListener() {
+      myProject.getMessageBus().connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          releaseEditorNow();
+          if (project == myProject) {
+            releaseEditorNow();
+          }
         }
-      };
-      ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
-      Disposer.register(myDisposable, ()->ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
+      });
     }
     Disposer.register(myDisposable, () -> {
       // remove traces of this editor from UndoManager to avoid leaks
