@@ -22,8 +22,6 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     override val suggestingActionId = "CommentByLineComment"
     override val suggestingTipFileName = "CommentCode.html"
 
-    override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
-
     private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
     private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
 
@@ -32,7 +30,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     private val maxTimeMillisBetweenComments = 5000L
     private val numberOfCommentsToGetSuggestion = 3
     @Suppress("UnstableApiUsage")
-    private val commentsHistory: Queue<CommentData> = EvictingQueue.create(NUMBER_OF_COMMENTS_TO_GET_SUGGESTION)
+    private val commentsHistory: Queue<CommentData> = EvictingQueue.create(numberOfCommentsToGetSuggestion)
     private var firstSlashAddedAction: EditorTextInsertedAction? by WeakReferenceDelegator(null)
 
     override fun getSuggestion(action: Action): Suggestion {
