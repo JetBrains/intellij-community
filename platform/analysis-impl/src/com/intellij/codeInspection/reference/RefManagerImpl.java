@@ -366,10 +366,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  /**
-   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread if possible.
-   * @param runnable  the task to run.
-   */
+  @Override
   public void executeTask(Runnable runnable) {
     if (myTasks != null) {
       try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
@@ -37,6 +37,14 @@ public abstract class RefManager {
    */
   @Nullable
   public abstract AnalysisScope getScope();
+
+  /**
+   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread if possible.
+   * @param runnable  the task to run.
+   */
+  public void executeTask(Runnable runnable) {
+    runnable.run();
+  }
 
   /**
    * Returns the project for which the reference graph has been built.
