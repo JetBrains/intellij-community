@@ -4,9 +4,14 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_EMPTY_STATE
+import com.intellij.openapi.actionSystem.ActionPlaces.COMMIT_VIEW_EMPTY_STATE
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_CONTEXT_HELP
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.HELP_ID
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
@@ -29,37 +34,43 @@ import java.awt.event.InputEvent
 private const val ACTION_LOCAL_HISTORY = "LocalHistory.ShowHistory"
 
 internal fun StatusText.setChangesViewEmptyState(project: Project) {
+  fun invokeAction(source: Any?, actionId: String) = invokeAction(project, source, actionId, CHANGES_VIEW_EMPTY_STATE)
+  fun invokeAction(source: Any?, action: AnAction) = invokeAction(project, source, action, CHANGES_VIEW_EMPTY_STATE)
+
   appendLine(message("status.text.vcs.toolwindow"))
   findCreateRepositoryAction()?.let { action ->
     appendLine(message("status.text.vcs.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
-      invokeAction(project, it.source, action)
+      invokeAction(it.source, action)
     }
   }
   appendLine(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
-    invokeAction(project, it.source, ACTION_LOCAL_HISTORY)
+    invokeAction(it.source, ACTION_LOCAL_HISTORY)
   }
   appendLine("")
   appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
-    invokeAction(project, it.source, ACTION_CONTEXT_HELP)
+    invokeAction(it.source, ACTION_CONTEXT_HELP)
   }
 }
 
 internal fun StatusText.setCommitViewEmptyState(project: Project) {
+  fun invokeAction(source: Any?, actionId: String) = invokeAction(project, source, actionId, COMMIT_VIEW_EMPTY_STATE)
+  fun invokeAction(source: Any?, action: AnAction) = invokeAction(project, source, action, COMMIT_VIEW_EMPTY_STATE)
+
   findCreateRepositoryAction()?.let { action ->
     appendLine(message("status.text.commit.toolwindow.create.repository.prefix"))
       .appendText(" ")
       .appendText(message("status.text.commit.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
-        invokeAction(project, it.source, action)
+        invokeAction(it.source, action)
       }
   }
   appendLine(message("status.text.commit.toolwindow.local.history.prefix"))
     .appendText(" ")
     .appendText(message("status.text.commit.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
-      invokeAction(project, it.source, ACTION_LOCAL_HISTORY)
+      invokeAction(it.source, ACTION_LOCAL_HISTORY)
     }
   appendLine("")
   appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
-    invokeAction(project, it.source, ACTION_CONTEXT_HELP)
+    invokeAction(it.source, ACTION_CONTEXT_HELP)
   }
 }
 
@@ -77,13 +88,13 @@ private fun findCreateRepositoryAction(): AnAction? {
   return group?.getChildren(null)?.firstOrNull()
 }
 
-private fun invokeAction(project: Project, source: Any?, actionId: String) {
+private fun invokeAction(project: Project, source: Any?, actionId: String, place: String) {
   val action = ActionManager.getInstance().getAction(actionId) ?: return
-  invokeAction(project, source, action)
+  invokeAction(project, source, action, place)
 }
 
-private fun invokeAction(project: Project, source: Any?, action: AnAction) =
-  invokeAction(action, createDataContext(project), ActionPlaces.UNKNOWN, source as? InputEvent, null)
+private fun invokeAction(project: Project, source: Any?, action: AnAction, place: String) =
+  invokeAction(action, createDataContext(project), place, source as? InputEvent, null)
 
 private fun createDataContext(project: Project): DataContext =
   SimpleDataContext.builder()

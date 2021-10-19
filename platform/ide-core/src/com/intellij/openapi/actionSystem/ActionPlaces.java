@@ -169,6 +169,9 @@ public abstract class ActionPlaces {
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
   public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "Vcs.Log.Toolbar.Popup";
 
+  public static final String CHANGES_VIEW_EMPTY_STATE = "ChangesView.EmptyState";
+  public static final String COMMIT_VIEW_EMPTY_STATE = "CommitView.EmptyState";
+
   /* Rider */
   public static final String RIDER_UNIT_TESTS_LEFT_TOOLBAR = "UnitTests.LeftToolbar";
   public static final String RIDER_UNIT_TESTS_TOP_TOOLBAR = "UnitTests.TopToolbar";
@@ -201,7 +204,7 @@ public abstract class ActionPlaces {
     RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
     RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST,
     QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR, TOOLWINDOW_GRADLE, SETTINGS_HISTORY,
-    VCS_LOG_TOOLBAR_PLACE, VCS_HISTORY_TOOLBAR_PLACE
+    VCS_LOG_TOOLBAR_PLACE, VCS_HISTORY_TOOLBAR_PLACE, CHANGES_VIEW_EMPTY_STATE, COMMIT_VIEW_EMPTY_STATE
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
