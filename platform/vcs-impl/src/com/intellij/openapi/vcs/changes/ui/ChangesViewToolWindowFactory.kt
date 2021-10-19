@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
+import com.intellij.ide.actions.ToolWindowEmptyStateAction.setEmptyStateBackground
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -18,6 +20,15 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
 
     window as ToolWindowEx
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
+
+    setEmptyStateBackground(window)
+    window.emptyText?.setChangesViewEmptyState(window.project)
+  }
+
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    super.createToolWindowContent(project, toolWindow)
+
+    if (toolWindow.contentManager.isEmpty) rebuildContentUi(toolWindow) // to show id label
   }
 
   override fun updateState(project: Project, toolWindow: ToolWindow) {
@@ -34,9 +45,8 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean {
-    return super.shouldBeAvailable(project) && project.isCommitToolWindowShown
-  }
+  override fun shouldBeAvailable(project: Project): Boolean =
+    project.vcsManager.hasAnyMappings() && project.isCommitToolWindowShown
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(HIDE_ID_LABEL, "true")

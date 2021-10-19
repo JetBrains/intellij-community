@@ -531,6 +531,8 @@
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
 
+    <group id="Vcs.ToolWindow.CreateRepository" searchable="false"/>
+
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
       <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">

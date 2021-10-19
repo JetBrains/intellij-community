@@ -28,6 +28,7 @@
     <action id="Git.Init" class="git4idea.actions.GitInit">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
+      <add-to-group group-id="Vcs.ToolWindow.CreateRepository"/>
     </action>
 
     <action id="Git.Log" class="git4idea.log.GitShowExternalLogAction">
