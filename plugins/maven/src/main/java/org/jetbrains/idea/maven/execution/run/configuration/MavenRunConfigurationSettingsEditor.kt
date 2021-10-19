@@ -404,7 +404,7 @@ class MavenRunConfigurationSettingsEditor(
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() =
     SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
       .let { sdkLookupProvider ->
-        addLabeledSettingsEditorFragment(
+        addRemovableLabeledSettingsEditorFragment(
           SdkComboBox(createProjectJdkComboBoxModel(project, this@MavenRunConfigurationSettingsEditor)),
           object : LabeledSettingsFragmentInfo {
             override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
@@ -446,7 +446,7 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryField: WorkingDirectoryField
-  ) = addLabeledSettingsEditorFragment(
+  ) = addRemovableLabeledSettingsEditorFragment(
     MavenProfilesFiled(project, workingDirectoryField),
     object : LabeledSettingsFragmentInfo {
       override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
@@ -606,7 +606,7 @@ class MavenRunConfigurationSettingsEditor(
   }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() =
-    addLabeledTextSettingsEditorFragment(
+    addRemovableLabeledTextSettingsEditorFragment(
       JBTextField(),
       object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.threads.label")
