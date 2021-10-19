@@ -57,6 +57,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
                            final RefElement refClass = refFrom.getRefManager().getReference(javaClass.getOriginalElement());
+                           if (refClass != null) refClass.waitForInitialized();
                            refFrom.addReference(refClass, javaClass.getOriginalElement(), decl, false, true, null);
                          }
                          return false;
@@ -525,6 +526,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   @Override
   public boolean isInheritor(@NotNull RefClass subClass, RefClass superClass) {
     if (subClass == superClass) return true;
+    LOG.assertTrue(subClass.isInitialized());
 
     for (RefClass baseClass : subClass.getBaseClasses()) {
       if (isInheritor(baseClass, superClass)) return true;
@@ -598,6 +600,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     RefEntity parent = refElement.getOwner();
 
     while (!(parent instanceof RefClass) && parent instanceof RefElement) {
+      LOG.assertTrue(((RefElement)parent).isInitialized());
       parent = parent.getOwner();
     }
 
