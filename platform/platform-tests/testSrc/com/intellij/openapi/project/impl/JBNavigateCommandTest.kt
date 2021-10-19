@@ -154,7 +154,7 @@ class JBNavigateCommandTest {
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
+    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> "${acc}&${e.key}=${e.value}" }
     JBProtocolCommand.execute("idea/navigate/reference?${query}")
     UIUtil.dispatchAllInvocationEvents()
   }

@@ -523,8 +523,7 @@
     <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel"
                              id="reference.idesettings.quicklists"
                              bundle="messages.IdeBundle"
-                             key="configurable.quick.lists.name"
-    />
+                             key="configurable.quick.lists.name"/>
 
     <!-- Customizations -->
     <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
@@ -536,8 +535,7 @@
                              id="reference.settings.ide.settings.notifications"
                              provider="com.intellij.notification.impl.NotificationsConfigurableProvider"
                              bundle="messages.IdeBundle"
-                             key="configurable.notifications.name"
-    />
+                             key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
     <applicationService serviceImplementation="com.intellij.notification.impl.NotificationCollector"/>
 
@@ -1316,9 +1314,11 @@
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
    </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
   </extensions>
+
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
@@ -1346,5 +1346,4 @@
   </applicationListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
 </idea-plugin>

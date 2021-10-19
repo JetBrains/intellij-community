@@ -269,17 +269,13 @@ private fun addActivateAndWindowsCliListeners() {
   StartupUtil.addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-
     val result = handleExternalCommand(args, currentDirectory)
     result.future
   }
 
   StartupUtil.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
-    if (args.isEmpty()) {
-      return@BiFunction 0
-    }
-
+    if (args.isEmpty()) return@BiFunction 0
     val result = handleExternalCommand(args.toList(), currentDirectory)
     CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
   }

@@ -32,10 +32,6 @@ public abstract class JBProtocolCommand {
     myCommand = command;
   }
 
-  public final @NotNull String getCommandName() {
-    return myCommand;
-  }
-
   /** @deprecated please implement {@link #perform(String, Map, String)} instead */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
@@ -71,7 +67,7 @@ public abstract class JBProtocolCommand {
 
     String commandName = parts[1];
     for (JBProtocolCommand command : EP_NAME.getIterable()) {
-      if (command.getCommandName().equals(commandName)) {
+      if (command.myCommand.equals(commandName)) {
         String target = parts.length > 2 ? parts[2] : null;
 
         Map<String, String> parameters = new LinkedHashMap<>();

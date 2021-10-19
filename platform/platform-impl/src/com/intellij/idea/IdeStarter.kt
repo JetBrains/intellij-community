@@ -9,7 +9,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
@@ -19,7 +18,10 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
@@ -46,7 +48,6 @@ open class IdeStarter : ApplicationStarter {
   companion object {
     private var filesToLoad: List<Path> = Collections.emptyList()
     private var uriToOpen: String? = null
-    private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
     @JvmStatic fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
@@ -54,10 +55,6 @@ open class IdeStarter : ApplicationStarter {
 
     @JvmStatic fun openUriOnLoading(value: String) {
       uriToOpen = value
-    }
-
-    fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-      wizardStepProvider = provider
     }
   }
 
@@ -104,10 +101,9 @@ open class IdeStarter : ApplicationStarter {
       lifecyclePublisher.appFrameCreated(args)
     }
 
-    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+    // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
     if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
-
       LifecycleUsageTriggerCollector.onIdeStart()
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
@@ -118,10 +114,13 @@ open class IdeStarter : ApplicationStarter {
       UiInspectorAction.initGlobalInspector()
     }
 
+    ForkJoinPool.commonPool().execute {
+      LifecycleUsageTriggerCollector.onIdeStart()
+    }
+
     if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
       showWelcomeFrame(lifecyclePublisher)
       frameInitActivity.end()
-      LifecycleUsageTriggerCollector.onIdeStart()
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
       processUriParameter(uriToOpen ?: args.first())
@@ -132,9 +131,6 @@ open class IdeStarter : ApplicationStarter {
       val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
       val needToOpenProject = willOpenProject || showWelcomeFrame(lifecyclePublisher)
       frameInitActivity.end()
-      ForkJoinPool.commonPool().execute {
-        LifecycleUsageTriggerCollector.onIdeStart()
-      }
 
       if (!needToOpenProject) {
         @Suppress("DEPRECATION")

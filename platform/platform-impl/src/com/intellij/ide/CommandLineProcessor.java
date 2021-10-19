@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
@@ -21,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +52,7 @@ import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
+
   public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
   public static final String SCHEME_INTERNAL = "!!!internal!!!";
 
@@ -61,7 +62,7 @@ public final class CommandLineProcessor {
   @ApiStatus.Internal
   public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
-    // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+    // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
@@ -75,16 +76,16 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull CommandLineProcessorResult doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
-    Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+  private static CommandLineProcessorResult doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+    Project[] projects = tempProject ? new Project[0] : ProjectUtilCore.getOpenProjects();
     if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
       RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
       if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart().join()) {
-        projects = ProjectUtil.getOpenProjects();
+        projects = ProjectUtilCore.getOpenProjects();
       }
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile);
     if (file == null) {
       if (LightEditUtil.isLightEditEnabled()) {
         Project lightEditProject = LightEditUtil.openFile(ioFile, true);
@@ -125,7 +126,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static Project findBestProject(VirtualFile file, Project[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
@@ -180,8 +181,8 @@ public final class CommandLineProcessor {
         if (fileStr != null && !fileStr.isBlank()) {
           Path file = parseFilePath(fileStr, null);
           if (file != null) {
-            int line = StringUtilRt.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
-            int column = StringUtilRt.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
+            int line = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("line")), -1);
+            int column = StringUtil.parseInt(ContainerUtil.getLastItem(parameters.get("column")), -1);
             openFileOrProject(file, line, column, false, false, false);
             return CompletableFuture.completedFuture(null);
           }
@@ -215,8 +216,7 @@ public final class CommandLineProcessor {
     return processOpenFile(args, currentDirectory);
   }
 
-  @Nullable
-  private static CommandLineProcessorResult processApplicationStarters(@NotNull List<String> args, @Nullable String currentDirectory) {
+  private static @Nullable CommandLineProcessorResult processApplicationStarters(List<String> args, @Nullable String currentDirectory) {
     String command = args.get(0);
     return ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
@@ -245,8 +245,7 @@ public final class CommandLineProcessor {
     });
   }
 
-  @NotNull
-  private static CommandLineProcessorResult processOpenFile(@NotNull List<String> args, @Nullable String currentDirectory) {
+  private static CommandLineProcessorResult processOpenFile(List<String> args, @Nullable String currentDirectory) {
     CommandLineProcessorResult projectAndCallback = null;
     int line = -1;
     int column = -1;
@@ -264,7 +263,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        line = StringUtilRt.parseInt(args.get(i), -1);
+        line = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -272,7 +271,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        column = StringUtilRt.parseInt(args.get(i), -1);
+        column = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -292,8 +291,8 @@ public final class CommandLineProcessor {
         continue;
       }
 
-      if (StringUtilRt.isQuotedString(arg)) {
-        arg = StringUtilRt.unquoteString(arg);
+      if (StringUtil.isQuotedString(arg)) {
+        arg = StringUtil.unquoteString(arg);
       }
 
       Path file = parseFilePath(arg, currentDirectory);
@@ -331,13 +330,11 @@ public final class CommandLineProcessor {
     }
   }
 
-  @Nullable
-  private static Path parseFilePath(@NotNull String path, @Nullable String currentDirectory) {
+  private static @Nullable Path parseFilePath(String path, @Nullable String currentDirectory) {
     try {
-      // handle paths like /file/foo\qwe
-      Path file = Paths.get(FileUtilRt.toSystemDependentName(path));
+      Path file = Path.of(FileUtilRt.toSystemDependentName(path));  // handle paths like '/file/foo\qwe'
       if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+        file = currentDirectory == null ? file.toAbsolutePath() : Path.of(currentDirectory).resolve(file);
       }
       return file.normalize();
     }
@@ -347,16 +344,12 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull CommandLineProcessorResult openFileOrProject(@NotNull Path file,
-                                                                       int line, int column,
-                                                                       boolean tempProject,
-                                                                       boolean shouldWait,
-                                                                       boolean lightEditMode) {
+
+  private static CommandLineProcessorResult openFileOrProject(Path file, int line, int column,
+                                                              boolean tempProject, boolean shouldWait, boolean lightEditMode) {
     return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode, () -> {
-      if (line != -1 || tempProject) {
-        return doOpenFile(file, line, column, tempProject, shouldWait);
-      }
-      return doOpenFileOrProject(file, shouldWait);
+      boolean asFile = line != -1 || tempProject;
+      return asFile ? doOpenFile(file, line, column, tempProject, shouldWait) : doOpenFileOrProject(file, shouldWait);
     });
   }
 }
