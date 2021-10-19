@@ -15,9 +15,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +26,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
-  private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
+  private final RemoteSdkProperties myRemoteSdkData;
 
   private PyRemoteLibrariesNode(Sdk sdk, Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
 
-    assert sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase;
+    assert sdk.getSdkAdditionalData() instanceof RemoteSdkProperties;
 
-    myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+    myRemoteSdkData = (RemoteSdkProperties)sdk.getSdkAdditionalData();
   }
 
   @Override
@@ -43,7 +44,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   @Nullable
   public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+    if (sdk.getSdkAdditionalData() instanceof RemoteSdkProperties && sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData) {
       VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
 
       if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
