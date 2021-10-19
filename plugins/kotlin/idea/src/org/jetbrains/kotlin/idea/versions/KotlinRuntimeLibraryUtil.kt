@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.isExternalLibrary
 import org.jetbrains.kotlin.idea.util.isSnapshot
@@ -68,24 +69,23 @@ fun findAllUsedLibraries(project: Project): MultiMap<Library, Module> {
 enum class LibraryJarDescriptor(
     val jarName: String,
     val orderRootType: OrderRootType,
-    val shouldExist: Boolean,
     private val mavenArtifactId: String,
     val getPath: (KotlinArtifacts) -> Path = { artifacts -> artifacts.kotlincLibDirectory.toPath().resolve(jarName) },
 ) {
-    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, true, PathUtil.KOTLIN_JAVA_STDLIB_NAME, { it.kotlinStdlib.toPath() }) {
+    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_STDLIB_NAME, { it.kotlinStdlib.toPath() }) {
         override fun findExistingJar(library: Library): VirtualFile? {
             if (isExternalLibrary(library)) return null
             return JavaRuntimeDetectionUtil.getRuntimeJar(listOf(*library.getFiles(OrderRootType.CLASSES)))
         }
     },
 
-    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_JAVA_REFLECT_NAME, { it.kotlinReflect.toPath() }),
-    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, true, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME, { it.kotlinScriptRuntime.toPath() }),
-    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_TEST_NAME, { it.kotlinTest.toPath() }),
+    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_REFLECT_NAME, { it.kotlinReflect.toPath() }),
+    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_NAME, { it.kotlinScriptRuntime.toPath() }),
+    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_TEST_NAME, { it.kotlinTest.toPath() }),
 
-    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, false, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
+    RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_JAR, OrderRootType.CLASSES, PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
 
-    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, PathUtil.JS_LIB_NAME, { it.kotlinStdlibJs.toPath() });
+    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, PathUtil.JS_LIB_NAME, { it.kotlinStdlibJs.toPath() });
 
     open fun findExistingJar(library: Library): VirtualFile? {
         if (isExternalLibrary(library)) return null
@@ -97,7 +97,11 @@ enum class LibraryJarDescriptor(
     }
 
     val repositoryLibraryProperties: RepositoryLibraryProperties get() =
-        RepositoryLibraryProperties("org.jetbrains.kotlin", mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
+        RepositoryLibraryProperties(KOTLIN_MAVEN_GROUP_ID, mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
+
+    companion object {
+        const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
+    }
 }
 
 @NlsSafe
@@ -140,14 +144,6 @@ private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
     }
 
     return badRoots
-}
-
-fun showRuntimeJarNotFoundDialog(project: Project, jarName: String) {
-    Messages.showErrorDialog(
-        project,
-        KotlinBundle.message("version.dialog.message.is.not.found.make.sure.plugin.is.properly.installed", jarName),
-        KotlinBundle.message("version.title.no.runtime.found")
-    )
 }
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")

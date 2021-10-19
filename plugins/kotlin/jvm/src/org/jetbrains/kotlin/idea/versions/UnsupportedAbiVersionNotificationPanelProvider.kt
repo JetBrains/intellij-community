@@ -92,7 +92,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, badRuntimeLibraries)
+                        updateLibraries(project, kotlinCompilerVersionShort(), badRuntimeLibraries)
                     }
                 }
             }

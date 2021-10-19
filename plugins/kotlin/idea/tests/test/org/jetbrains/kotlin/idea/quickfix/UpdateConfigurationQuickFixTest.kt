@@ -6,8 +6,10 @@ import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.ide.IdeEventQueue
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,7 +32,6 @@ import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
 import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -89,7 +90,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.languageVersion)
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
-        assertEquals(bundledRuntimeVersion(), getRuntimeLibraryVersion(myFixture.module))
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
+        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
     fun testIncreaseLangLevelFacet_10() {
@@ -105,7 +108,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         myFixture.launchAction(myFixture.findSingleIntention("Set module language version to 1.1"))
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
-        assertEquals(bundledRuntimeVersion(), getRuntimeLibraryVersion(myFixture.module))
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
+        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
     fun testAddKotlinReflect() {
@@ -145,6 +150,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val tempVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile) ?: error("Can't find file: $tempFile")
 
         ConfigLibraryUtil.addLibrary(module, "KotlinJavaRuntime") {
+            (this as LibraryEx.ModifiableModelEx).kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+            this.properties = LibraryJarDescriptor.RUNTIME_JDK8_JAR.repositoryLibraryProperties
+
             val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(tempVFile) ?: error("Root not found for $tempVFile")
             addRoot(jarRoot, OrderRootType.CLASSES)
         }
