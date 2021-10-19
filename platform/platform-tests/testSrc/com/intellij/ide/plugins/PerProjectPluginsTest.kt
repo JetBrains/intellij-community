@@ -37,7 +37,7 @@ class PerProjectPluginsTest {
     assertThat(descriptor).isNotNull
 
     val project = projectRule.project
-    val pluginEnabler = DynamicPluginEnabler.getInstance()
+    val pluginEnabler = PluginEnabler.getInstance() as DynamicPluginEnabler
 
     val loaded = pluginEnabler.updatePluginsState(
       listOf(descriptor),

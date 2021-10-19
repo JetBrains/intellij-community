@@ -34,27 +34,28 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     private val isPerProjectEnabledValue = RegistryManager.getInstance()["ide.plugins.per.project"]
 
     @JvmStatic
-    fun getInstance(): DynamicPluginEnabler = PluginEnabler.getInstance() as DynamicPluginEnabler
-
-    @JvmStatic
     var isPerProjectEnabled: Boolean
       get() = isPerProjectEnabledValue.asBoolean()
       set(value) = isPerProjectEnabledValue.setValue(value)
 
+    @JvmStatic
+    @JvmOverloads
+    fun findPluginTracker(
+      project: Project,
+      pluginEnabler: PluginEnabler = PluginEnabler.getInstance(),
+    ): ProjectPluginTracker? = (pluginEnabler as? DynamicPluginEnabler)?.getPluginTracker(project)
+
     internal class EnableDisablePluginsActivity : StartupActivity {
-      init {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-          throw ExtensionNotApplicableException.INSTANCE
-        }
-      }
+
+      private val dynamicPluginEnabler = PluginEnabler.getInstance() as? DynamicPluginEnabler
+                                         ?: throw ExtensionNotApplicableException.INSTANCE
 
       override fun runActivity(project: Project) {
-        val pluginEnabler = getInstance()
-        val tracker = pluginEnabler.getPluginTracker(project)
+        val tracker = dynamicPluginEnabler.getPluginTracker(project)
         val projects = openProjectsExcludingCurrent(project)
 
         val pluginIdsToLoad = tracker.enabledPluginsIds
-          .union(pluginEnabler.locallyDisabledAndGloballyEnabledPlugins(projects))
+          .union(dynamicPluginEnabler.locallyDisabledAndGloballyEnabledPlugins(projects))
 
         val pluginIdsToUnload = tracker.disabledPluginsIds
 
@@ -70,7 +71,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
             }
-            pluginEnabler.unloadPlugins(
+            dynamicPluginEnabler.unloadPlugins(
               pluginIdsToUnload.toPluginDescriptors(),
               project,
               projects,
@@ -87,44 +88,38 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(
-      ProjectManager.TOPIC,
-      object : ProjectManagerListener {
-        override fun projectClosing(project: Project) {
-          if (applicationShuttingDown) return
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosing(project: Project) {
+        if (applicationShuttingDown) return
 
-          val tracker = getPluginTracker(project)
-          val projects = openProjectsExcludingCurrent(project)
+        val tracker = getPluginTracker(project)
+        val projects = openProjectsExcludingCurrent(project)
 
-          val descriptorsToLoad = if (projects.isNotEmpty())
-            emptyList()
-          else
-            tracker.disabledPluginsIds
-              .filterNot { isDisabled(it) }
-              .toPluginDescriptors()
-          DynamicPlugins.loadPlugins(descriptorsToLoad)
-
-          val descriptorsToUnload = tracker.enabledPluginsIds
-            .union(locallyDisabledPlugins(projects))
+        val descriptorsToLoad = if (projects.isNotEmpty())
+          emptyList()
+        else
+          tracker.disabledPluginsIds
+            .filterNot { isDisabled(it) }
             .toPluginDescriptors()
+        DynamicPlugins.loadPlugins(descriptorsToLoad)
 
-          unloadPlugins(
-            descriptorsToUnload,
-            project,
-            projects,
-          )
-        }
-      }
-    )
+        val descriptorsToUnload = tracker.enabledPluginsIds
+          .union(locallyDisabledPlugins(projects))
+          .toPluginDescriptors()
 
-    connection.subscribe(
-      AppLifecycleListener.TOPIC,
-      object : AppLifecycleListener {
-        override fun appWillBeClosed(isRestart: Boolean) {
-          applicationShuttingDown = true
-        }
+        unloadPlugins(
+          descriptorsToUnload,
+          project,
+          projects,
+        )
       }
-    )
+    })
+
+    connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        applicationShuttingDown = true
+      }
+    })
   }
 
   fun getPluginTracker(project: Project): ProjectPluginTracker = state.findStateByProject(project)

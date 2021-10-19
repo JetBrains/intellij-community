@@ -22,15 +22,16 @@ class ProjectDependentPluginEnabledState(
       emptyList()
     }
     else {
-      val pluginEnabler = DynamicPluginEnabler.getInstance()
-      ProjectManager.getInstance()
-        .openProjects
-        .asSequence()
-        .filterNot { it == project }
-        .map { pluginEnabler.getPluginTracker(it) }
-        .filter { !PluginEnabler.HEADLESS.isDisabled(pluginId) || it.isEnabled(pluginId) }
-        .map { it.projectName }
-        .toList()
+      (PluginEnabler.getInstance() as? DynamicPluginEnabler)?.let { pluginEnabler ->
+        ProjectManager.getInstance()
+          .openProjects
+          .asSequence()
+          .filterNot { it == project }
+          .map { pluginEnabler.getPluginTracker(it) }
+          .filter { !pluginEnabler.isDisabled(pluginId) || it.isEnabled(pluginId) }
+          .map { it.projectName }
+          .toList()
+      } ?: emptyList()
     }
   }
 
