@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
-import com.intellij.codeInsight.hints.LAMBDAS_GROUP
+import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -22,8 +22,8 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
     override val hintsArePlacedAtTheEndOfLine = true
 
-    override val groupId: String
-        get() = LAMBDAS_GROUP
+    override val group: InlayGroup
+        get() = InlayGroup.LAMBDAS_GROUP
 
     override fun getProperty(key: String): String {
         return KotlinBundle.getMessage(key)

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
-import com.intellij.codeInsight.hints.OTHER_GROUP
+import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -30,7 +30,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract val name: @Nls String
 
-  open val groupId: String = OTHER_GROUP
+  open val group: InlayGroup = InlayGroup.OTHER_GROUP
 
   /**
    *  Arbitrary component to be displayed in

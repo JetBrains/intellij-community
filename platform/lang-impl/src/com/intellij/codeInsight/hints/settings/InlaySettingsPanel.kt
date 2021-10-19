@@ -4,7 +4,6 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -25,25 +24,25 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private val tree: CheckboxTree
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
+  private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
 
   init {
     val models = InlaySettingsProvider.EP.getExtensions().flatMap { provider ->
       provider.getSupportedLanguages(project).flatMap { provider.createModels(project, it) }
     }
-    val groups = models.groupBy { it.groupId }.toSortedMap(Comparator.comparing { sortedGroups.indexOf(it) })
+    groups = models.groupBy { it.group }.toSortedMap()
 
     val root = CheckedTreeNode()
     val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
     for (group in groups) {
-      val groupName = ApplicationBundle.message("settings.hints.group." + group.key)
-      val groupNode = CheckedTreeNode(groupName)
+      val groupNode = CheckedTreeNode(group.key)
       root.add(groupNode)
       for (lang in group.value.groupBy { it.language }) {
         val firstModel = lang.value.first()
         val langNode: CheckedTreeNode
         val startFrom: Int
-        if ((lang.value.size == 1 || groupName == firstModel.name) && OTHER_GROUP != group.key) {
+        if ((lang.value.size == 1 || group.key.toString() == firstModel.name) && InlayGroup.OTHER_GROUP != group.key) {
           nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
           firstModel.isMergedNode = true
           langNode = groupNode.firstChild as CheckedTreeNode
@@ -72,10 +71,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         if (value !is DefaultMutableTreeNode) return
 
         when (val item = value.userObject) {
-          is String -> textRenderer.append(item)
+          is InlayGroup -> textRenderer.append(item.toString())
           is Language -> textRenderer.append(item.displayName)
           is InlayProviderSettingsModel -> textRenderer.append(
-            if ((value.parent as DefaultMutableTreeNode).userObject is String) item.language.displayName else item.name)
+            if ((value.parent as DefaultMutableTreeNode).userObject is InlayGroup) item.language.displayName else item.name)
           is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         }
       }
@@ -200,6 +199,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
     node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
+    when (val item = node.userObject) {
+      is InlayGroup -> {
+        node.isChecked = groups[item]?.any { it.isEnabled } == true
+      }
+    }
   }
 
   private fun isGroupEnabled(settings: InlayHintsSettings) =

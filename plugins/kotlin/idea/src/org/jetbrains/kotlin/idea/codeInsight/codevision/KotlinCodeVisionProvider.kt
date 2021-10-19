@@ -17,8 +17,8 @@ class KotlinCodeVisionProvider : InlayHintsProvider<NoSettings> {
 
     override val key: SettingsKey<NoSettings> = SettingsKey("CodeVision")
     override val name: String = KotlinBundle.message("hints.title.codevision")
-    override val groupId: String
-        get() = CODE_VISION_GROUP
+    override val group: InlayGroup
+        get() = InlayGroup.CODE_VISION_GROUP
     override val previewText: String? = null
 
     var usagesLimit: Int = 100

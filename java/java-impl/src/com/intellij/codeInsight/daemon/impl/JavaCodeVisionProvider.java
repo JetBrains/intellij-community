@@ -28,16 +28,14 @@ import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.CLASS_LOCATION;
 import static com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector.METHOD_LOCATION;
-import static com.intellij.codeInsight.hints.InlayHintsProviderKt.CODE_VISION_GROUP;
 
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
   private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
-  @NotNull
   @Override
-  public String getGroupId() {
-    return CODE_VISION_GROUP;
+  public @NotNull InlayGroup getGroup() {
+    return InlayGroup.CODE_VISION_GROUP;
   }
 
   interface InlResult {
