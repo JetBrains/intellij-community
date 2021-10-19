@@ -22,7 +22,8 @@ public interface RefactoringHelper<T> {
   T prepareOperation(UsageInfo @NotNull [] usages);
 
   /**
-   * @param primaryElement represents the {@link BaseRefactoringProcessor#getBeforeData()}'s element which may be used in addition to {@code usages} 
+   * Is used when refactoring provides {@link BaseRefactoringProcessor#getBeforeData()} with psiElement, 
+   * otherwise {@link #prepareOperation(UsageInfo[])} is used instead
    */
   default T prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
     return prepareOperation(usages);
