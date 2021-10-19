@@ -153,7 +153,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
     val cellBounds = rectangle() ?: return
     cleanup()
 
-    val pt = SwingUtilities.convertPoint(original, cellBounds.location, SwingUtilities.getRootPane(original))
+    val pt = SwingUtilities.convertPoint(original, cellBounds.location, SwingUtilities.getRootPane(original).glassPane)
     val bounds = Rectangle(pt.x - pulsationOffset, pt.y - pulsationOffset, cellBounds.width + 2 * pulsationOffset,
                            cellBounds.height + 2 * pulsationOffset)
 
