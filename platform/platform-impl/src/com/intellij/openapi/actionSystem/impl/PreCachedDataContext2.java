@@ -153,13 +153,13 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
       answer = map.get(dataId);
-      if (map.nullsByRules.get(keyIndex)) continue;
       if (answer != null) {
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
         // allow slow data providers and rules to re-calc the value
+        map.remove(dataId);
       }
-      if (!rulesAllowed) continue;
+      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
       if (dataManager == null) {
         dataManager = (DataManagerImpl)DataManager.getInstance();
@@ -181,7 +181,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
-    for (Map<String, Object> map : myCachedData) {
+    for (ProviderData map : myCachedData) {
       Object answer = map.get(dataId);
       if (answer != null) {
         return answer;
@@ -198,7 +198,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
 
   static void clearAllCaches() {
     for (FList<ProviderData> list : ourPrevMaps.values()) {
-      for (Map<String, Object> map : list) {
+      for (ProviderData map : list) {
         map.clear();
       }
     }
