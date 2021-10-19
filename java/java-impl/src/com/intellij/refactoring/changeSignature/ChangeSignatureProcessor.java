@@ -137,12 +137,12 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
     if (myChangeInfo instanceof JavaChangeInfoImpl &&
          ((JavaChangeInfo)myChangeInfo).isVisibilityChanged() && 
-         usagesSet.stream().anyMatch(OverriderUsageInfo.class::isInstance)) {
+         ContainerUtil.exists(usagesSet, OverriderUsageInfo.class::isInstance)) {
        String visibility = ((JavaChangeInfo)myChangeInfo).getNewVisibility();
        String oldVisibility = VisibilityUtil.getVisibilityModifier(((JavaChangeInfo)myChangeInfo).getMethod().getModifierList());
        if (oldVisibility.equals(VisibilityUtil.getHighestVisibility(visibility, oldVisibility)) &&
            (!ApplicationManager.getApplication().isUnitTestMode() && 
-            Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("dialog.message.overriding.methods.with.weaken.visibility"), RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon()) == Messages.YES)) {
+            Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("dialog.message.overriding.methods.with.weaken.visibility", visibility), RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon()) == Messages.YES)) {
          ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility = true;
        }
      }
