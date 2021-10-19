@@ -377,6 +377,7 @@
  <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="after" relative-to-action="CloseAllEditors"/>
+      <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="CloseAllEditors"/>
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
