@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml
 
 sealed class Feature {
@@ -115,5 +115,56 @@ private class UndefinedMapper private constructor(private val featureName: Strin
 
       return UndefinedMapper(featureName)
     }
+  }
+}
+
+data class BagOfWordsFeature(override val name: String, val words: Set<String>, val splitterDescriptor: SplitterDescriptor?) : Feature() {
+  data class SplitterDescriptor(val withStemming: Boolean, val toLowerCase: Boolean)
+
+  private val splitter = splitterDescriptor?.let { descriptor ->
+    WordsSplitter.Builder()
+      .apply { if (descriptor.toLowerCase) toLowerCase() }
+      .apply { if (descriptor.withStemming) withStemming() }
+      .build()
+  }
+
+  private val wordsCache = object : LinkedHashMap<String, List<String>>() {
+    override fun removeEldestEntry(eldest: Map.Entry<String, List<String>>): Boolean {
+      return size > MAX_CACHE_SIZE
+    }
+  }
+
+  override fun createMapper(suffix: String?): FeatureMapper {
+    return when (suffix) {
+      UNDEFINED -> UndefinedMapper.checkAndCreate(name, UNDEFINED in words)
+      null -> throw InconsistentMetadataException("Bag of words feature usage must have suffix")
+      else -> if (suffix in words) BagOfWordsMapper(suffix)
+      else throw InconsistentMetadataException("Unknown word '$suffix' of Bag of words feature '$name'")
+    }
+  }
+
+  private fun split(value: String): List<String> =
+    wordsCache.computeIfAbsent(value) { splitter?.split(value) ?: listOf(value) }
+
+  private inner class BagOfWordsMapper(private val word: String) : FeatureMapper {
+    override fun getFeatureName(): String = name
+
+    override fun asArrayValue(value: Any?): Double {
+      if (value == null) {
+        return 0.0
+      }
+      val words = when (value) {
+        is String -> split(value)
+        is List<*> -> value.filterNotNull().flatMap { split(it.toString()) }
+        else -> emptyList()
+      }
+
+      return if (word in words) 1.0 else 0.0
+    }
+  }
+
+  companion object {
+    const val UNDEFINED: String = "_UNDEFINED_"
+    const val MAX_CACHE_SIZE: Int = 10
   }
 }
