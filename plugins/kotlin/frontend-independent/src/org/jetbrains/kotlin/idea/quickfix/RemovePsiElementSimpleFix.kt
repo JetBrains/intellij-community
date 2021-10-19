@@ -54,7 +54,12 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
     object RemoveTypeParametersFactory :
         QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         public override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val element = psiElement.getNonStrictParentOfType<KtTypeParameterList>() ?: return emptyList()
+            // FIR passes the KtProperty while FE1.0 passes the type parameter list.
+            val element = if (psiElement is KtProperty) {
+                psiElement.typeParameterList
+            } else {
+                psiElement.getNonStrictParentOfType<KtTypeParameterList>()
+            } ?: return emptyList()
             return listOf(RemovePsiElementSimpleFix(element, KotlinBundle.message("remove.type.parameters")))
         }
     }
