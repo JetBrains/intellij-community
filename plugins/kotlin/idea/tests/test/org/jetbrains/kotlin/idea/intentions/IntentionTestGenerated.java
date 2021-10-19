@@ -16467,6 +16467,26 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/simplifyBooleanWithConstants/flexibleBoolean.kt");
         }
 
+        @TestMetadata("ifCondition.kt")
+        public void testIfCondition() throws Exception {
+            runTest("testData/intentions/simplifyBooleanWithConstants/ifCondition.kt");
+        }
+
+        @TestMetadata("ifCondition2.kt")
+        public void testIfCondition2() throws Exception {
+            runTest("testData/intentions/simplifyBooleanWithConstants/ifCondition2.kt");
+        }
+
+        @TestMetadata("ifNegateCondition.kt")
+        public void testIfNegateCondition() throws Exception {
+            runTest("testData/intentions/simplifyBooleanWithConstants/ifNegateCondition.kt");
+        }
+
+        @TestMetadata("ifNegateCondition2.kt")
+        public void testIfNegateCondition2() throws Exception {
+            runTest("testData/intentions/simplifyBooleanWithConstants/ifNegateCondition2.kt");
+        }
+
         @TestMetadata("inapplicableNoConstants.kt")
         public void testInapplicableNoConstants() throws Exception {
             runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableNoConstants.kt");

@@ -9,11 +9,14 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.inspections.AbstractRangeInspection.Companion.constantValueOrNull
+import org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode.PARTIAL
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isFlexible
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DEPRECATION")
 class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class) {
@@ -89,6 +93,17 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         val topBinary = element.topBinary()
         val simplified = toSimplifiedExpression(topBinary)
         val result = topBinary.replaced(KtPsiUtil.safeDeparenthesize(simplified, true))
+
+        val parentIf = result.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == result }
+        if (parentIf != null) {
+            val constantValue = result.safeAs<KtConstantExpression>()?.constantValueOrNull()?.value as? Boolean
+            if (constantValue != null) {
+                val constantConditionIfFix = ConstantConditionIfInspection.collectFixes(parentIf, constantValue).singleOrNull()
+                constantConditionIfFix?.applyFix(parentIf)
+                return
+            }
+        }
+
         removeRedundantAssertion(result)
     }
 
