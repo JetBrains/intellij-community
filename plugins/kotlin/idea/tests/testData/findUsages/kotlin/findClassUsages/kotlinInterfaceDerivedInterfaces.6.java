@@ -1,0 +1,3 @@
+interface YW extends X {
+
+}

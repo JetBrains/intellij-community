@@ -88,7 +88,7 @@ fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
 fun ReferencesSearch.SearchParameters.effectiveSearchScope(element: PsiElement): SearchScope {
     if (element == elementToSearch) return effectiveSearchScope
     if (isIgnoreAccessScope) return scopeDeterminedByUser
-    val accessScope = PsiSearchHelper.getInstance(element.project).getUseScope(element)
+    val accessScope = element.useScope()
     return scopeDeterminedByUser.intersectWith(accessScope)
 }
 
@@ -97,7 +97,7 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
 }
 
 fun PsiElement.codeUsageScopeRestrictedToProject(): SearchScope = project.projectScope().intersectWith(codeUsageScope())
-
+fun PsiElement.useScope():SearchScope = PsiSearchHelper.getInstance(project).getUseScope(this)
 fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
 // TODO: improve scope calculations
 fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsageScope().restrictToKotlinSources()
@@ -117,8 +117,7 @@ fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
 
 fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor:(KtFile) -> Boolean): Boolean {
     val project = declaration.project
-    val scope = PsiSearchHelper.getInstance(project).getUseScope(declaration) as? GlobalSearchScope
-        ?: return true
+    val scope = declaration.useScope() as? GlobalSearchScope ?: return true
 
     val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return true
     val collector = Processor<VirtualFile> { file ->
