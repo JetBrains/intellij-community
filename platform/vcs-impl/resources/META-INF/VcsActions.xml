@@ -533,6 +533,10 @@
 
     <group id="Vcs.ToolWindow.CreateRepository" searchable="false"/>
 
+    <action id="ActivateCommitToolWindow" class="com.intellij.openapi.vcs.changes.ui.ActivateCommitToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
       <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">

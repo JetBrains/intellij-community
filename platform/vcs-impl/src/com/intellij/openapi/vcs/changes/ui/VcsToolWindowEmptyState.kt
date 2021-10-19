@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
@@ -12,7 +14,15 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.util.ui.StatusText
 import java.awt.event.InputEvent
 
@@ -34,6 +44,34 @@ internal fun StatusText.setChangesViewEmptyState(project: Project) {
   }
 }
 
+internal fun StatusText.setCommitViewEmptyState(project: Project) {
+  findCreateRepositoryAction()?.let { action ->
+    appendLine(message("status.text.commit.toolwindow.create.repository.prefix"))
+      .appendText(" ")
+      .appendText(message("status.text.commit.toolwindow.create.repository"), LINK_PLAIN_ATTRIBUTES) {
+        invokeAction(project, it.source, action)
+      }
+  }
+  appendLine(message("status.text.commit.toolwindow.local.history.prefix"))
+    .appendText(" ")
+    .appendText(message("status.text.commit.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
+      invokeAction(project, it.source, ACTION_LOCAL_HISTORY)
+    }
+  appendLine("")
+  appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
+    invokeAction(project, it.source, ACTION_CONTEXT_HELP)
+  }
+}
+
+internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWindowId.COMMIT) {
+  init {
+    templatePresentation.setText(IdeBundle.messagePointer("toolwindow.stripe.Commit"))
+    templatePresentation.icon = AllIcons.Toolwindows.ToolWindowCommit
+  }
+
+  override fun hasEmptyState(): Boolean = true
+}
+
 private fun findCreateRepositoryAction(): AnAction? {
   val group = ActionManager.getInstance().getAction("Vcs.ToolWindow.CreateRepository") as? ActionGroup
   return group?.getChildren(null)?.firstOrNull()
@@ -53,3 +91,27 @@ private fun createDataContext(project: Project): DataContext =
     .add(VIRTUAL_FILE, project.guessProjectDir())
     .add(HELP_ID, "version.control.empty.state")
     .build()
+
+
+internal fun ToolWindow.hideIdLabelIfNotEmptyState() =
+  contentManager.addContentManagerListener(object : ContentManagerListener {
+    override fun contentAdded(event: ContentManagerEvent) {
+      if (contentManager.contentCount != 1) return
+
+      component.putClientProperty(HIDE_ID_LABEL, "true")
+      contentManager.updateContentUi()
+    }
+
+    override fun contentRemoved(event: ContentManagerEvent) {
+      if (!contentManager.isEmpty) return
+
+      component.putClientProperty(HIDE_ID_LABEL, null)
+      contentManager.updateContentUi()
+    }
+  })
+
+private fun ContentManager.updateContentUi() {
+  if (this !is ContentManagerImpl) return
+
+  (ui as? ToolWindowContentUi)?.update()
+}
