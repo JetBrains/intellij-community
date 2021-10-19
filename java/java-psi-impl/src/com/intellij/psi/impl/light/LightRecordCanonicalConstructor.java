@@ -10,6 +10,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -81,6 +82,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     @Override
     public PsiElement getParent() {
       return myWrapper;
+    }
+
+    @Override
+    public @Nullable Icon getIcon(int flags) {
+      return getPrototype().getIcon(flags);
     }
 
     @Override
