@@ -512,7 +512,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    delayIndexingInTestsIfNecessary();
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     performScanningAndIndexing(indicator);
   }
@@ -542,14 +541,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
     }
     return projectIndexingHistory;
-  }
-
-  private static void delayIndexingInTestsIfNecessary() {
-    int delay = SystemProperties.getIntProperty("intellij.indexing.tests.indexing.delay.seconds", -1);
-    long start = System.nanoTime();
-    if (delay != -1) {
-      ProgressIndicatorUtils.awaitWithCheckCanceled(() -> System.nanoTime() - start > TimeUnit.SECONDS.toNanos(delay));
-    }
   }
 
   @Override
