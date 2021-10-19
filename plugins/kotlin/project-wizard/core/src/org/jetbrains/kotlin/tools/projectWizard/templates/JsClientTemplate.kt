@@ -23,23 +23,19 @@ import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.Templa
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.interceptTemplate
 
 abstract class JsClientTemplate : Template() {
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.js
-
-    override fun isApplicableTo(
-        reader: Reader,
-        module: Module
-    ): Boolean = when (module.configurator) {
-        JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
-        BrowserJsSinglePlatformModuleConfigurator -> {
-            with(reader) {
-                inContextOfModuleConfigurator(module, module.configurator) {
-                    JSConfigurator.kind.reference.notRequiredSettingValue == JsTargetKind.APPLICATION
+                && when (module.configurator) {
+                    JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
+                    BrowserJsSinglePlatformModuleConfigurator -> {
+                        with(reader) {
+                            inContextOfModuleConfigurator(module, module.configurator) {
+                                JSConfigurator.kind.reference.notRequiredSettingValue == JsTargetKind.APPLICATION
+                            }
+                        }
+                    }
+                    else -> false
                 }
-            }
-        }
-        else -> false
-    }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
         if (module.originalModule.kind == ModuleKind.singlePlatformJsBrowser) {
