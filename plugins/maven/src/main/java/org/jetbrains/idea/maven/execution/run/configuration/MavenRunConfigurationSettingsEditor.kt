@@ -149,10 +149,11 @@ class MavenRunConfigurationSettingsEditor(
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
     private val separator = CollapsibleTitledSeparator(group)
+    private val checkBox = JCheckBox(label)
 
     override fun createChildren() = SettingsFragmentsContainer.fragments<S> {
       val checkBoxFragment = addSettingsEditorFragment(
-        JCheckBox(label),
+        checkBox,
         object : SettingsFragmentInfo {
           override val settingsId: String = "$id.checkbox"
           override val settingsName: String? = null
@@ -189,7 +190,7 @@ class MavenRunConfigurationSettingsEditor(
       init {
         children.forEach { bind(separator, it) }
         resetOperation.afterOperation {
-          separator.expanded = false
+          separator.expanded = !checkBox.isSelected
         }
       }
     }
