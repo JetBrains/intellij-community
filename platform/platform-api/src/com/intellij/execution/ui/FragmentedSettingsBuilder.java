@@ -27,6 +27,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,13 @@ import java.util.*;
 
 public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
-  static final int TOP_INSET = 5;
-  static final int GROUP_INSET = 20;
-  public static final int TAG_VGAP = JBUI.scale(6);
-  public static final int TAG_HGAP = JBUI.scale(2);
+  static final int TOP_INSET = 6;
+  static final int LARGE_TOP_INSET = 20;
+  static final int LARGE_LEFT_INSET = 20;
+  static final int TAG_TOP_INSET = 8;
+
+  public static final int TAG_VGAP = 6;
+  public static final int TAG_HGAP = 2;
 
   private Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
@@ -111,7 +115,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     addBeforeRun(beforeRun);
     addHeader(header);
 
-    myGroupInset = myMain == null ? 0 : GROUP_INSET;
+    myGroupInset = myMain == null ? 0 : LARGE_LEFT_INSET;
     if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
@@ -171,7 +175,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       linkPanel.add(shortcutLabel, BorderLayout.EAST);
     }
     panel.add(linkPanel, BorderLayout.EAST);
-    addLine(panel);
+    addLine(panel, myMain == null ? TOP_INSET : LARGE_TOP_INSET, 0, 0);
   }
 
   protected @Nullable JComponent createHeaderSeparator() {
@@ -183,24 +187,33 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       JComponent component = fragment.getComponent();
       addLine(component);
       if (fragment.getHintComponent() != null) {
-        addLine(fragment.getHintComponent(), 0, getLeftInset(component), TOP_INSET);
+        addLine(fragment.getHintComponent(), TOP_INSET, getLeftInset(component), 0);
       }
     }
   }
 
   protected void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
-      addLine(group.getComponent());
+      addLine(group.getComponent(), 0, 0, 0);
     }
   }
 
   protected void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, TAG_HGAP, TAG_VGAP));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
     }
     if (tagsPanel.getComponentCount() > 0) {
-      addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+      hideWhenChildrenIsInvisible(tagsPanel);
+      addLine(tagsPanel, TAG_TOP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+    }
+  }
+
+  private static void hideWhenChildrenIsInvisible(JComponent component) {
+    Component[] children = component.getComponents();
+    component.setVisible(ContainerUtil.exists(children, it -> it.isVisible()));
+    for (var child : children) {
+      UIUtil.runWhenVisibilityChanged(child, () -> component.setVisible(ContainerUtil.exists(children, it -> it.isVisible())));
     }
   }
 
