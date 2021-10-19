@@ -9,6 +9,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
@@ -35,9 +36,13 @@ internal fun Editor.getSelection(): TextFragment? {
   }
 }
 
+internal val isActionsProcessingEnabled: Boolean
+  get() = Registry.`is`("feature.suggester.enabled")
+
 internal fun handleAction(project: Project, action: Action) {
-  project.getService(FeatureSuggestersManager::class.java)
-    ?.actionPerformed(action)
+  if (isActionsProcessingEnabled) {
+    project.getService(FeatureSuggestersManager::class.java)?.actionPerformed(action)
+  }
 }
 
 internal inline fun <reified T : PsiElement> PsiElement.getParentOfType(): T? {

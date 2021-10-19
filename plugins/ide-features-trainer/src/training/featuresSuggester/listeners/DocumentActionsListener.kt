@@ -11,6 +11,7 @@ import com.intellij.openapi.project.guessProjectForFile
 import training.featuresSuggester.TextFragment
 import training.featuresSuggester.actions.*
 import training.featuresSuggester.handleAction
+import training.featuresSuggester.isActionsProcessingEnabled
 import java.lang.ref.WeakReference
 
 class DocumentActionsListener : BulkAwareDocumentListener {
@@ -44,6 +45,7 @@ class DocumentActionsListener : BulkAwareDocumentListener {
     textInsertedActionConstructor: (String, Int, Editor, Long) -> T,
     textRemovedActionConstructor: (TextFragment, Int, Editor, Long) -> T
   ) {
+    if (!isActionsProcessingEnabled) return
     val event = eventRef.get() ?: return
     val document = event.document
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return

@@ -14,10 +14,11 @@ import training.featuresSuggester.actions.*
 import training.featuresSuggester.asString
 import training.featuresSuggester.getSelection
 import training.featuresSuggester.handleAction
+import training.featuresSuggester.isActionsProcessingEnabled
 
 class EditorActionsListener : AnActionListener {
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    if (!action.isSupportedAction()) return
+    if (!isActionsProcessingEnabled || !action.isSupportedAction()) return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -119,7 +120,7 @@ class EditorActionsListener : AnActionListener {
   }
 
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    if (!action.isSupportedAction()) return
+    if (!isActionsProcessingEnabled || !action.isSupportedAction()) return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
