@@ -127,6 +127,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final boolean myDecorateButtons;
 
   private final ToolbarUpdater myUpdater;
+  private CancellablePromise<List<AnAction>> myLastUpdate;
+  private boolean myForcedUpdateRequested = true;
 
   /** @see ActionToolbar#adjustTheSameSize(boolean) */
   private boolean myAdjustTheSameSize;
@@ -228,7 +230,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       updateActionsImmediately();
     }
     else {
-      UiNotifyConnector.doWhenFirstShown(this, this::updateActionsImmediately);
+      UiNotifyConnector.doWhenFirstShown(this, () -> {
+        if (myForcedUpdateRequested && myLastUpdate == null) { // a first update really
+          updateActionsImmediately();
+        }
+      });
     }
   }
 
@@ -1179,9 +1185,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       putClientProperty(failedKey, true);
     }
   }
-
-  private CancellablePromise<List<AnAction>> myLastUpdate;
-  private boolean myForcedUpdateRequested = true;
 
   private void addLoadingIcon() {
     AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
