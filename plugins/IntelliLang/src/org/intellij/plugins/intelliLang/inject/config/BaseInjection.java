@@ -16,7 +16,6 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.general.LanguageInjectionCondition;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -45,8 +44,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.nullize;
-
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
  */
@@ -69,8 +66,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @NonNls
   private String myIgnorePattern = "";
   private Pattern myCompiledIgnorePattern;
-
-  private @Nullable String myConditionId;
 
   public BaseInjection(@NotNull String id) {
     mySupportId = id;
@@ -155,7 +150,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
    * NOTE: In case of concatenation: ignore-pattern is checked only once per concatenation where all injection hosts added to the single
    * string with the passed delimiter. If ignore-pattern is found in this concatenated string then all injected hosts must be ignored.
    *
-   * @param elements  injection hosts
+   * @param elements injection hosts
    * @param delimiter char sequence that will be used for concatenation of element texts to apply regular expression
    */
   public boolean shouldBeIgnored(@NotNull Iterator<PsiLanguageInjectionHost> elements, @Nullable String delimiter) {
@@ -201,15 +196,11 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
     else {
       final LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper =
-        ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
+              ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
       final StringBuilder sb = new StringBuilder();
       textEscaper.decode(textRange, sb);
-      final List<TextRange> ranges =
-        getMatchingRanges(myCompiledValuePattern.matcher(StringPattern.newBombedCharSequence(sb)), sb.length());
-      return !ranges.isEmpty()
-             ? ContainerUtil.map(ranges, s -> new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange),
-                                                            textEscaper.getOffsetInHost(s.getEndOffset(), textRange)))
-             : Collections.emptyList();
+      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(StringPattern.newBombedCharSequence(sb)), sb.length());
+      return !ranges.isEmpty() ? ContainerUtil.map(ranges, s -> new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange))) : Collections.emptyList();
     }
   }
 
@@ -221,43 +212,14 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  public boolean acceptsPsiElement(PsiElement element) {
-    return acceptsPsiElement(element, null);
-  }
-
-  @Override
-  public boolean acceptsPsiElement(PsiElement patternElement, @Nullable PsiElement target) {
-    // if injector does not support conditions so far, but injection has condition
-    if (target == null && myConditionId != null) {
-      return false;
-    }
-
+  public boolean acceptsPsiElement(final PsiElement element) {
     ProgressManager.checkCanceled();
     for (InjectionPlace place : myPlaces) {
-      if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(patternElement)) {
-        if (target != null) {
-          LanguageInjectionCondition condition = getCondition();
-          if (condition != null && !condition.isApplicable(this, target)) {
-            return false;
-          }
-        }
-
+      if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
         return true;
       }
     }
     return false;
-  }
-
-  private @Nullable LanguageInjectionCondition getCondition() {
-    if (myConditionId == null) return null;
-
-    LanguageInjectionCondition injectionCondition =
-      LanguageInjectionCondition.EP_NAME.findFirstSafe(condition -> Objects.equals(condition.getId(), myConditionId));
-    if (injectionCondition == null) {
-      Logger.getInstance(BaseInjection.class).info("Unable to find injection condition by id " + myConditionId);
-    }
-
-    return injectionCondition;
   }
 
   public boolean intersectsWith(final BaseInjection template) {
@@ -321,7 +283,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
     setValuePattern(other.getValuePattern());
     setIgnorePattern(other.getIgnorePattern());
-    setConditionId(other.getConditionId());
 
     myPlaces = other.getInjectionPlaces().clone();
     return this;
@@ -336,7 +297,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
     setValuePattern(element.getChildText("value-pattern"));
     setIgnorePattern(element.getChildText("ignore-pattern"));
-    setConditionId(element.getAttributeValue("condition-id"));
     readExternalImpl(element);
     final List<Element> placeElements = element.getChildren("place");
     myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
@@ -350,6 +310,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       generatePlaces();
     }
   }
+
 
   public PatternCompiler<PsiElement> getCompiler() {
     return PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.getPatternClasses(getSupportId()));
@@ -377,9 +338,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
     if (StringUtil.isNotEmpty(myIgnorePattern)) {
       e.addContent(new Element("ignore-pattern").setText(myIgnorePattern));
-    }
-    if (StringUtil.isNotEmpty(myConditionId)) {
-      e.setAttribute("condition-id", myConditionId);
     }
     Arrays.sort(myPlaces, (o1, o2) -> Comparing.compare(o1.getText(), o2.getText()));
     for (InjectionPlace place : myPlaces) {
@@ -435,14 +393,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       myCompiledIgnorePattern = null;
       Logger.getInstance(getClass().getName()).info("Invalid ignore-pattern", ex);
     }
-  }
-
-  public @Nullable String getConditionId() {
-    return myConditionId;
-  }
-
-  public void setConditionId(@Nullable String conditionId) {
-    myConditionId = nullize(conditionId);
   }
 
   /**

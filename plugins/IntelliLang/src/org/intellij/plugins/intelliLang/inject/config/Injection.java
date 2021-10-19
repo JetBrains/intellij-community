@@ -49,7 +49,4 @@ public interface Injection extends com.intellij.lang.injection.general.Injection
   String getDisplayName();
 
   boolean acceptsPsiElement(final PsiElement element);
-
-  @ApiStatus.Experimental
-  boolean acceptsPsiElement(PsiElement patternElement, @Nullable PsiElement target);
 }
