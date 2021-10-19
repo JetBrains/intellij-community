@@ -23,7 +23,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import kotlin.math.min
 
-object GrazieReplaceTypoQuickFix {
+internal object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
     HighPriorityAction
 
@@ -65,6 +65,12 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun startInWriteAction(): Boolean = true
+  }
+
+  @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
+  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
+  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
+    return getReplacementFixes(problem, underlineRanges)
   }
 
   @JvmStatic
