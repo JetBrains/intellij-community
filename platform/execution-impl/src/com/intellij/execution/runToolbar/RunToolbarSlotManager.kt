@@ -307,7 +307,7 @@ class RunToolbarSlotManager(val project: Project) {
   fun processTerminated(executionId: Long) {
     slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.let { slotDate ->
       val removable = slotDate.environment?.runnerAndConfigurationSettings?.let {
-        it.isTemporary || !RunManager.getInstance(project).hasSettings(it)
+        /*it.isTemporary ||*/ !RunManager.getInstance(project).hasSettings(it)
       } ?: true
 
       if (removable) {
