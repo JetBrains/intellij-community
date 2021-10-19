@@ -161,6 +161,10 @@ abstract class ToolWindowHeader internal constructor(
       westPanel.add(contentUi.tabComponent, CC().grow().pushX())
     else
       westPanel.add(contentUi.tabComponent, CC().growY())
+    val toolbar = toolbarWest
+    if (toolbar != null) {
+      westPanel.add(toolbar.component) //It always should stay after tab component
+    }
   }
 
   override fun addNotify() {
