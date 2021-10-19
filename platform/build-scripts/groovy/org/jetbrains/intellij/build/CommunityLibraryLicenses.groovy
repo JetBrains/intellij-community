@@ -206,6 +206,8 @@ final class CommunityLibraryLicenses {
                          "lucene-analyzers-common",
                          "org.apache.lucene:lucene-core:2.4.1"
                          ]).apache(),
+    new LibraryLicense(name: "Apache Tuweni-Toml", libraryName: "tuweni-toml",
+                       url: "https://github.com/apache/incubator-tuweni/tree/main/toml").apache(),
     new LibraryLicense(name: "ASM (JetBrains's fork)", libraryName: "ASM",
                        url: "https://github.com/JetBrains/intellij-deps-asm",
                        licenseUrl: "https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt",
