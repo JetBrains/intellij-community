@@ -59,7 +59,7 @@ public abstract class JBProtocolCommand {
 
   protected @NotNull String parameter(@NotNull Map<String, String> parameters, @NotNull String name) {
     String value = parameters.get(name);
-    if (value == null || value.isBlank()) throw new IllegalArgumentException(IdeBundle.message("ide.protocol.parameter.missing", name));
+    if (value == null || value.isBlank()) throw new IllegalArgumentException(IdeBundle.message("jb.protocol.parameter.missing", name));
     return value;
   }
 
@@ -87,6 +87,6 @@ public abstract class JBProtocolCommand {
       }
     }
 
-    return CompletableFuture.completedFuture(IdeBundle.message("ide.protocol.unknown.command", commandName));
+    return CompletableFuture.completedFuture(IdeBundle.message("jb.protocol.unknown.command", commandName));
   }
 }
