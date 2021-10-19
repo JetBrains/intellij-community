@@ -282,7 +282,11 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
       }
 
-      TaskTestContext(runtimeContext).action()
+      try {
+        TaskTestContext(runtimeContext).action()
+      } catch (e: Throwable) {
+        thisLogger().error("Test execution error", e)
+      }
     })
   }
 
