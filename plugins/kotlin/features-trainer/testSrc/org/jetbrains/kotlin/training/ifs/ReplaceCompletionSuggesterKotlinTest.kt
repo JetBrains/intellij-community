@@ -12,119 +12,119 @@ import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.ReplaceCompletionSuggesterTest
 
 class ReplaceCompletionSuggesterKotlinTest : ReplaceCompletionSuggesterTest() {
-  override val testingCodeFileName = "KotlinCodeExample.kt"
+    override val testingCodeFileName = "KotlinCodeExample.kt"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-  }
-
-  override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(12, 20)
-      deleteAndTypeDot()
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[0])
-      repeat(5) { typeDelete() }
+    override fun getTestDataPath(): String {
+        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(12, 20)
+            deleteAndTypeDot()
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[0])
+            repeat(5) { typeDelete() }
+        }
 
-  override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 57)
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[3])
-      deleteTextBetweenLogicalPositions(
-        lineStartIndex = 64,
-        columnStartIndex = 72,
-        lineEndIndex = 64,
-        columnEndIndex = 94
-      )
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 57)
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[3])
+            deleteTextBetweenLogicalPositions(
+                lineStartIndex = 64,
+                columnStartIndex = 72,
+                lineEndIndex = 64,
+                columnEndIndex = 94
+            )
+        }
 
-  override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 57)
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[3])
-      typeAndCommit("132")
-      deleteTextBetweenLogicalPositions(
-        lineStartIndex = 64,
-        columnStartIndex = 76,
-        lineEndIndex = 64,
-        columnEndIndex = 97
-      )
-    }
-
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
-
-  override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 30)
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[0])
-      repeat(21) { typeDelete() }
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 57)
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[3])
+            typeAndCommit("132")
+            deleteTextBetweenLogicalPositions(
+                lineStartIndex = 64,
+                columnStartIndex = 76,
+                lineEndIndex = 64,
+                columnEndIndex = 97
+            )
+        }
 
-  override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 88)
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[0])
-      repeat(15) { typeDelete() }
-    }
-
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
-
-  override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 30)
-      invokeCodeCompletion()
-      typeAndCommit("cycles")
-      val variants = lookupElements ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[0])
-      repeat(22) { typeDelete() }
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 30)
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[0])
+            repeat(21) { typeDelete() }
+        }
 
-  override fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(64, 57)
-      val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
-      chooseCompletionItem(variants[3])
-      deleteTextBetweenLogicalPositions(
-        lineStartIndex = 65,
-        columnStartIndex = 16,
-        lineEndIndex = 65,
-        columnEndIndex = 41
-      )
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertTrue(expectedSuggestion is NoSuggestion)
+    override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 88)
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[0])
+            repeat(15) { typeDelete() }
+        }
+
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
-  }
+
+    override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 30)
+            invokeCodeCompletion()
+            typeAndCommit("cycles")
+            val variants = lookupElements ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[0])
+            repeat(22) { typeDelete() }
+        }
+
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
+    }
+
+    override fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(64, 57)
+            val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
+            chooseCompletionItem(variants[3])
+            deleteTextBetweenLogicalPositions(
+                lineStartIndex = 65,
+                columnStartIndex = 16,
+                lineEndIndex = 65,
+                columnEndIndex = 41
+            )
+        }
+
+        testInvokeLater(project) {
+            assertTrue(expectedSuggestion is NoSuggestion)
+        }
+    }
 }

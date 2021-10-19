@@ -13,120 +13,120 @@ import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.UnwrapSuggesterTest
 
 class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
-  override val testingCodeFileName = "KotlinCodeExample.kt"
+    override val testingCodeFileName = "KotlinCodeExample.kt"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-  }
-
-  override fun `testUnwrap IF statement and get suggestion`() {
-    with(myFixture) {
-      moveCaretToLogicalPosition(11, 9)
-      deleteSymbolAtCaret()
-      selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 42, lineEndIndex = 9, columnEndIndex = 3)
-      deleteSymbolAtCaret()
+    override fun getTestDataPath(): String {
+        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testUnwrap IF statement and get suggestion`() {
+        with(myFixture) {
+            moveCaretToLogicalPosition(11, 9)
+            deleteSymbolAtCaret()
+            selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 42, lineEndIndex = 9, columnEndIndex = 3)
+            deleteSymbolAtCaret()
+        }
 
-  override fun `testUnwrap one-line IF and get suggestion`() {
-    with(myFixture) {
-      selectBetweenLogicalPositions(lineStartIndex = 31, columnStartIndex = 23, lineEndIndex = 31, columnEndIndex = 8)
-      deleteSymbolAtCaret()
-      moveCaretRelatively(6, 0)
-      deleteSymbolAtCaret()
-    }
-
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
-
-  override fun `testUnwrap IF with deleting multiline selection and get suggestion`() {
-    with(myFixture) {
-      selectBetweenLogicalPositions(lineStartIndex = 8, columnStartIndex = 23, lineEndIndex = 10, columnEndIndex = 5)
-      deleteSymbolAtCaret()
-      moveCaretToLogicalPosition(9, 9)
-      deleteSymbolAtCaret()
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testUnwrap one-line IF and get suggestion`() {
+        with(myFixture) {
+            selectBetweenLogicalPositions(lineStartIndex = 31, columnStartIndex = 23, lineEndIndex = 31, columnEndIndex = 8)
+            deleteSymbolAtCaret()
+            moveCaretRelatively(6, 0)
+            deleteSymbolAtCaret()
+        }
 
-  override fun `testUnwrap FOR and get suggestion`() {
-    with(myFixture) {
-      selectBetweenLogicalPositions(lineStartIndex = 22, columnStartIndex = 34, lineEndIndex = 22, columnEndIndex = 9)
-      deleteSymbolAtCaret()
-      moveCaretToLogicalPosition(25, 13)
-      deleteSymbolAtCaret()
-    }
-
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
-
-  override fun `testUnwrap WHILE and get suggestion`() {
-    with(myFixture) {
-      selectBetweenLogicalPositions(lineStartIndex = 27, columnStartIndex = 27, lineEndIndex = 27, columnEndIndex = 0)
-      deleteSymbolAtCaret()
-      moveCaretToLogicalPosition(30, 13)
-      deleteSymbolAtCaret()
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
     }
 
-    testInvokeLater(project) {
-      assertSuggestedCorrectly()
-    }
-  }
+    override fun `testUnwrap IF with deleting multiline selection and get suggestion`() {
+        with(myFixture) {
+            selectBetweenLogicalPositions(lineStartIndex = 8, columnStartIndex = 23, lineEndIndex = 10, columnEndIndex = 5)
+            deleteSymbolAtCaret()
+            moveCaretToLogicalPosition(9, 9)
+            deleteSymbolAtCaret()
+        }
 
-  override fun `testUnwrap commented IF and don't get suggestion`() {
-    with(myFixture) {
-      insertNewLineAt(21, 12)
-      typeAndCommit(
-        """//if(true) {
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
+    }
+
+    override fun `testUnwrap FOR and get suggestion`() {
+        with(myFixture) {
+            selectBetweenLogicalPositions(lineStartIndex = 22, columnStartIndex = 34, lineEndIndex = 22, columnEndIndex = 9)
+            deleteSymbolAtCaret()
+            moveCaretToLogicalPosition(25, 13)
+            deleteSymbolAtCaret()
+        }
+
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
+    }
+
+    override fun `testUnwrap WHILE and get suggestion`() {
+        with(myFixture) {
+            selectBetweenLogicalPositions(lineStartIndex = 27, columnStartIndex = 27, lineEndIndex = 27, columnEndIndex = 0)
+            deleteSymbolAtCaret()
+            moveCaretToLogicalPosition(30, 13)
+            deleteSymbolAtCaret()
+        }
+
+        testInvokeLater(project) {
+            assertSuggestedCorrectly()
+        }
+    }
+
+    override fun `testUnwrap commented IF and don't get suggestion`() {
+        with(myFixture) {
+            insertNewLineAt(21, 12)
+            typeAndCommit(
+                """//if(true) {
               |//i++; j--;
               |//}""".trimMargin()
-      )
+            )
 
-      selectBetweenLogicalPositions(
-        lineStartIndex = 21,
-        columnStartIndex = 14,
-        lineEndIndex = 21,
-        columnEndIndex = 24
-      )
-      deleteSymbolAtCaret()
-      moveCaretToLogicalPosition(23, 15)
-      deleteSymbolAtCaret()
+            selectBetweenLogicalPositions(
+                lineStartIndex = 21,
+                columnStartIndex = 14,
+                lineEndIndex = 21,
+                columnEndIndex = 24
+            )
+            deleteSymbolAtCaret()
+            moveCaretToLogicalPosition(23, 15)
+            deleteSymbolAtCaret()
+        }
+
+        testInvokeLater(project) {
+            TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+        }
     }
 
-    testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
-    }
-  }
+    override fun `testUnwrap IF written in string block and don't get suggestion`() {
+        with(myFixture) {
+            insertNewLineAt(21, 12)
+            typeAndCommit("val s = \"\"\"if(true) {\ni++\nj--\n}")
 
-  override fun `testUnwrap IF written in string block and don't get suggestion`() {
-    with(myFixture) {
-      insertNewLineAt(21, 12)
-      typeAndCommit("val s = \"\"\"if(true) {\ni++\nj--\n}")
+            selectBetweenLogicalPositions(
+                lineStartIndex = 21,
+                columnStartIndex = 23,
+                lineEndIndex = 21,
+                columnEndIndex = 33
+            )
+            deleteSymbolAtCaret()
+            moveCaretToLogicalPosition(24, 18)
+            deleteSymbolAtCaret()
+        }
 
-      selectBetweenLogicalPositions(
-        lineStartIndex = 21,
-        columnStartIndex = 23,
-        lineEndIndex = 21,
-        columnEndIndex = 33
-      )
-      deleteSymbolAtCaret()
-      moveCaretToLogicalPosition(24, 18)
-      deleteSymbolAtCaret()
+        testInvokeLater(project) {
+            TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+        }
     }
-
-    testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
-    }
-  }
 }
