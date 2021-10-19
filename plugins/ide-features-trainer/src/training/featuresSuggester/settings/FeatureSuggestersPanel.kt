@@ -4,6 +4,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
+import org.jetbrains.annotations.Nls
 import training.featuresSuggester.FeatureSuggesterBundle
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -144,7 +145,7 @@ class FeatureSuggestersPanel(
     }
   }
 
-  private class SuggestingActionPanel(val suggesterId: String, actionDisplayName: String) : JPanel() {
+  private class SuggestingActionPanel(val suggesterId: String, actionDisplayName: @Nls String) : JPanel() {
     private val checkBox = JCheckBox(actionDisplayName)
 
     init {

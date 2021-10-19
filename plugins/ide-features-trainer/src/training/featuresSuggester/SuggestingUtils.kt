@@ -3,6 +3,7 @@
 
 package training.featuresSuggester
 
+import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -93,5 +94,6 @@ internal fun getShortcutText(actionId: String): String {
 
 internal fun isRedoOrUndoRunning(): Boolean {
   val commandName = CommandProcessor.getInstance().currentCommandName
-  return commandName != null && (commandName.startsWith("Redo") || commandName.startsWith("Undo"))
+  return commandName != null && (commandName.startsWith(ActionsBundle.message("action.redo.description", ""))
+                                 || commandName.startsWith(ActionsBundle.message("action.undo.description", "")))
 }
