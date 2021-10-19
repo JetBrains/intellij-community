@@ -12,6 +12,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -26,14 +27,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
-  private final RemoteSdkProperties myRemoteSdkData;
+  private final @NotNull RemoteSdkProperties myRemoteSdkData;
 
-  private PyRemoteLibrariesNode(Sdk sdk, Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
+  private PyRemoteLibrariesNode(@NotNull Project project,
+                                @NotNull RemoteSdkProperties sdkAdditionalData,
+                                @NotNull PsiDirectory value,
+                                ViewSettings viewSettings) {
     super(project, value, viewSettings);
 
-    assert sdk.getSdkAdditionalData() instanceof RemoteSdkProperties;
-
-    myRemoteSdkData = (RemoteSdkProperties)sdk.getSdkAdditionalData();
+    myRemoteSdkData = sdkAdditionalData;
   }
 
   @Override
@@ -44,7 +46,8 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   @Nullable
   public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    if (sdk.getSdkAdditionalData() instanceof RemoteSdkProperties && sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData) {
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof RemoteSdkProperties && sdkAdditionalData instanceof PythonSdkAdditionalData) {
       VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
 
       if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
@@ -56,7 +59,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
         final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
         if (remoteLibrariesDirectory != null) {
-          return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+          return new PyRemoteLibrariesNode(project, (RemoteSdkProperties)sdkAdditionalData, remoteLibrariesDirectory, settings);
         }
       }
     }
