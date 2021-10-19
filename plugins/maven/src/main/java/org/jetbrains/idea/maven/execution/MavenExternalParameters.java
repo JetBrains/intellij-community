@@ -167,8 +167,11 @@ public final class MavenExternalParameters {
   private static File getMavenWrapper(@Nullable Project project,
                               @NotNull String workingDirPath,
                               @NotNull MavenGeneralSettings coreSettings) {
-    return (project != null && MavenUtil.isWrapper(coreSettings))
-           ? MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome().toFile() : null;
+    if (project != null && MavenUtil.isWrapper(coreSettings)) {
+      File file = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirPath).getMavenHome().toFile();
+      return file.exists() ? file : MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
+    }
+    return null;
   }
 
   static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
@@ -406,7 +409,7 @@ public final class MavenExternalParameters {
 
     parametersList.addParametersString(vmOptionsSettings);
 
-    parametersList.addProperty("maven.home", mavenHome);
+    parametersList.addProperty(MavenConstants.HOME_PROPERTY, mavenHome);
   }
 
   private static void addMavenParameters(ParametersList parametersList,
