@@ -67,19 +67,6 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract String getAppletQName();
 
-  // Android Framework APIs that apps extend and where the subclasses must be public
-  // such that the framework can instantiate them
-
-  public abstract PsiClass getAndroidView();
-  public abstract PsiClass getAndroidActivity();
-  public abstract PsiClass getAndroidService();
-  public abstract PsiClass getAndroidBackupAgent();
-  public abstract PsiClass getAndroidContentProvider();
-  public abstract PsiClass getAndroidReceiver();
-  public abstract PsiClass getAndroidFragment(boolean support, boolean androidx);  // Android Studio: b/141019879
-  public abstract PsiClass getAndroidActionProvider();
-  public abstract PsiClass getAndroidParcelable();
-
   public abstract String getServletQName();
 
   public abstract EntryPointsManager getEntryPointsManager();

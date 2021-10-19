@@ -52,17 +52,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
   private final PsiClass myApplet;
-  private final PsiClass myAndroidActivity;
-  private final PsiClass myAndroidService;
-  private final PsiClass myAndroidBackupAgent;
-  private final PsiClass myAndroidFragment;
-  private final PsiClass myAndroidxFragment;  // Android Studio: b/141019879
-  private final PsiClass myAndroidV4Fragment;
-  private final PsiClass myAndroidContentProvider;
-  private final PsiClass myAndroidReceiver;
-  private final PsiClass myAndroidView;
-  private final PsiClass myAndroidActionProvider;
-  private final PsiClass myAndroidParcelable;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -78,23 +67,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
-    myApplet = psiFacade.findClass("java.applet.Applet", scope);
-
-    // Android Framework APIs that apps extend and where the subclasses must be public
-    // such that the framework can instantiate them
-    myAndroidActivity = psiFacade.findClass("android.app.Activity", scope);
-    myAndroidService = psiFacade.findClass("android.app.Service", scope);
-    myAndroidFragment = psiFacade.findClass("android.app.Fragment", scope);
-    myAndroidxFragment = psiFacade.findClass("androidx.fragment.app.Fragment", scope);  // Android Studio: b/141019879
-    myAndroidV4Fragment = psiFacade.findClass("android.support.v4.app.Fragment", scope);
-    myAndroidContentProvider = psiFacade.findClass("android.content.ContentProvider", scope);
-    myAndroidReceiver = psiFacade.findClass("android.content.BroadcastReceiver", scope);
-    myAndroidView = psiFacade.findClass("android.view.View", scope);
-    myAndroidActionProvider = psiFacade.findClass("android.view.ActionProvider", scope);
-    myAndroidParcelable = psiFacade.findClass("android.os.Parcelable", scope);
-    myAndroidBackupAgent = psiFacade.findClass("android.app.backup.BackupAgent", scope);
+    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -222,51 +195,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   @Override
   public String getServletQName() {
     return JAVAX_SERVLET_SERVLET;
-  }
-
-  @Override
-  public PsiClass getAndroidActivity() {
-    return myAndroidActivity;
-  }
-
-  @Override
-  public PsiClass getAndroidService() {
-    return myAndroidService;
-  }
-
-  @Override
-  public PsiClass getAndroidBackupAgent() {
-    return myAndroidBackupAgent;
-  }
-
-  @Override
-  public PsiClass getAndroidFragment(boolean support, boolean androidx) {  // Android Studio: b/141019879
-    return support ? androidx ? myAndroidxFragment : myAndroidV4Fragment : myAndroidFragment;  // Android Studio: b/141019879
-  }
-
-  @Override
-  public PsiClass getAndroidContentProvider() {
-    return myAndroidContentProvider;
-  }
-
-  @Override
-  public PsiClass getAndroidReceiver() {
-    return myAndroidReceiver;
-  }
-
-  @Override
-  public PsiClass getAndroidView() {
-    return myAndroidView;
-  }
-
-  @Override
-  public PsiClass getAndroidActionProvider() {
-    return myAndroidActionProvider;
-  }
-
-  @Override
-  public PsiClass getAndroidParcelable() {
-    return myAndroidParcelable;
   }
 
   @Override

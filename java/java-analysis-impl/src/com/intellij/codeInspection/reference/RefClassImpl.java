@@ -38,7 +38,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_SERVLET_MASK   = 0x400000;
   private static final int IS_TESTCASE_MASK  = 0x800000;
   private static final int IS_LOCAL_MASK     = 0x1000000;
-  private static final int IS_ANDROID_MASK   = 0x2000000;
 
   private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet. guarded by this
   private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet. guarded by this
@@ -60,7 +59,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       myDefaultConstructor = null;
     }
 
-    final PsiClass psiClass = getElement();
     UClass uClass = getUastElement();
 
     LOG.assertTrue(uClass != null);
@@ -138,27 +136,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    // The Android framework has a number of classes that it wants to
-    // instantiate so it requires these classes to be public, even if
-    // code analysis suggests that that these are only referenced from
-    // within the same package.  Unfortunately these do not all extend the
-    // same set of base classes, so we need to check all these cases
-    // independently.
-    RefJavaManager refManager = getRefJavaManager();
-    if (inheritsFrom(psiClass, refManager.getAndroidActivity())
-      || inheritsFrom(psiClass, refManager.getAndroidService())
-      || inheritsFrom(psiClass, refManager.getAndroidView())
-      || inheritsFrom(psiClass, refManager.getAndroidFragment(false, false))  // Android Studio: b/141019879
-      || inheritsFrom(psiClass, refManager.getAndroidFragment(false, true))  // Android Studio: b/141019879
-      || inheritsFrom(psiClass, refManager.getAndroidFragment(true, false))  // Android Studio: b/141019879
-      || inheritsFrom(psiClass, refManager.getAndroidReceiver())
-      || inheritsFrom(psiClass, refManager.getAndroidContentProvider())
-      || inheritsFrom(psiClass, refManager.getAndroidParcelable())
-      || inheritsFrom(psiClass, refManager.getAndroidBackupAgent())
-      || inheritsFrom(psiClass, refManager.getAndroidActionProvider())) {
-      setAndroidPublic(true);
-    }
-
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
       RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
@@ -223,10 +200,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (file != null) {
       InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
     }
-  }
-
-  private static boolean inheritsFrom(@NotNull PsiClass c1, @Nullable PsiClass c2) {
-    return c2 != null && c1.isInheritor(c2, true);
   }
 
   private void initializeSuperReferences(UClass uClass) {
@@ -533,11 +506,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isAndroidPublic() {
-    return checkFlag(IS_ANDROID_MASK);
-  }
-
-  @Override
   public boolean isTestCase() {
     return checkFlag(IS_TESTCASE_MASK);
   }
@@ -605,10 +573,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   private void setServlet(boolean servlet) {
     setFlag(servlet, IS_SERVLET_MASK);
-  }
-
-  private void setAndroidPublic(boolean android) {
-    setFlag(android, IS_ANDROID_MASK);
   }
 
   private void setTestCase(boolean testCase) {

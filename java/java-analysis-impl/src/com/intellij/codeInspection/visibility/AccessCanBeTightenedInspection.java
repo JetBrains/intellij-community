@@ -119,44 +119,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
             return;
           }
         }
-
-        // Android Studio: Certain types of Android SDK classes are required to be public
-        // https://code.google.com/p/android/issues/detail?id=218848
-        PsiClass cls = memberClass;
-        if (member instanceof PsiClass) {
-          cls = (PsiClass) member;
-        }
-        while (cls != null) {
-          // Android Studio: b/141019879
-          PsiReferenceList implementsList = cls.getImplementsList();
-          if (implementsList != null) {
-            for (PsiJavaCodeReferenceElement impl : implementsList.getReferenceElements()) {
-              if ("Parcelable".equals(impl.getReferenceName())
-                  && impl.getQualifiedName().equals("android.os.Parcelable")) {
-                return;
-              }
-            }
-          }
-          String name = cls.getQualifiedName();
-          if (name != null) {
-            // Unfortunately there isn't an authoritative list somewhere; this lists
-            // consists of the kinds of classes that the runtime wants to instantiate
-            // reflectively
-            if ("android.content.Context".equals(name) ||
-                "android.app.Fragment".equals(name) ||
-                "android.support.v4.app.Fragment".equals(name) ||
-                "androidx.fragment.app.Fragment".equals(name) ||  // Android Studio: b/141019879
-                "android.view.View".equals(name) ||
-                "android.content.ContentProvider".equals(name) ||
-                "android.content.BroadcastReceiver".equals(name) ||
-                "android.view.ActionProvider".equals(name) ||
-                "android.app.backup.BackupAgent".equals(name)) {  // Android Studio: b/141019879
-              return;
-            }
-          }
-          cls = cls.getSuperClass();
-        }
-
         PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() :
                                  ContainerUtil.find(memberModifierList.getChildren(),
           element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));

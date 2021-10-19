@@ -176,8 +176,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) {
         return null;
       }
-
-      if (refClass.isAndroidPublic()) return null;
     }
 
     if (keepVisibilityLevel(refElement)) {
