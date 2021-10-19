@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
@@ -26,7 +27,7 @@ import javax.swing.tree.DefaultTreeModel
 
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
-  private val tree: CheckboxTree
+  val tree: CheckboxTree
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
   private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
@@ -65,7 +66,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
 
-    tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true, true) {
+    tree = object: CheckboxTree(object : CheckboxTreeCellRenderer(true, true) {
       override fun customizeRenderer(tree: JTree?,
                                      value: Any?,
                                      selected: Boolean,
@@ -75,15 +76,15 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
                                      hasFocus: Boolean) {
         if (value !is DefaultMutableTreeNode) return
 
-        when (val item = value.userObject) {
-          is InlayGroup -> textRenderer.append(item.toString())
-          is Language -> textRenderer.append(item.displayName)
-          is InlayProviderSettingsModel -> textRenderer.append(
-            if ((value.parent as DefaultMutableTreeNode).userObject is InlayGroup) item.language.displayName else item.name)
-          is ImmediateConfigurable.Case -> textRenderer.appendHTML(item.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-        }
+        val name = getName(value, value.parent as? DefaultMutableTreeNode)
+        textRenderer.appendHTML(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       }
-    }, root, CheckboxTreeBase.CheckPolicy(true, true, true, false))
+    }, root, CheckPolicy(true, true, true, false)) {
+      override fun installSpeedSearch() {
+        TreeSpeedSearch(this, Convertor { getName(it.lastPathComponent as DefaultMutableTreeNode,
+                                                  it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }, true)
+      }
+    }
     tree.addTreeSelectionListener(
       TreeSelectionListener { updateRightPanel(it?.newLeadSelectionPath?.lastPathComponent as? CheckedTreeNode) })
     if (nodeToSelect == null) {
@@ -97,6 +98,17 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree)
     splitter.secondComponent = rightPanel
     add(splitter, BorderLayout.CENTER)
+  }
+
+  @Nls
+  private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
+    when (val item = node?.userObject) {
+      is InlayGroup -> return item.toString()
+      is Language -> return item.displayName
+      is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
+      is ImmediateConfigurable.Case -> return item.name
+    }
+    return ""
   }
 
   private fun addModelNode(model: InlayProviderSettingsModel,
@@ -226,9 +238,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
   }
 
-  private fun isGroupEnabled(settings: InlayHintsSettings) =
-    settings.hintsEnabledGlobally()
-
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
     return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
   }
@@ -290,7 +299,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
       is ImmediateConfigurable.Case -> {
         if (node.isChecked && !settings.hintsEnabledGlobally()) {
-          return true;
+          return true
         }
       }
       is Language -> {
