@@ -68,6 +68,11 @@ public final class QueueProcessor<T> {
   }
 
   @NotNull
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor(boolean autostart) {
+    return new QueueProcessor<>(new RunnableConsumer(), Conditions.alwaysFalse(), autostart);
+  }
+
+  @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor(@NotNull ThreadToUse threadToUse) {
     return new QueueProcessor<>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.alwaysFalse());
   }
