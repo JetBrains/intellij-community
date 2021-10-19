@@ -418,7 +418,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   // @formatter:on
 
   @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
-    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateBookmarksToolWindow", "ActivateCommanderToolWindow",
     "ActivateServicesToolWindow",
     "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",
