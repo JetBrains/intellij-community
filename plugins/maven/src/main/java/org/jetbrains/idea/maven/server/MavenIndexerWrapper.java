@@ -87,6 +87,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         while (list != null);
         return null;
       } catch (Exception e){
+        MavenLog.LOG.error("maven index id " + mavenIndexId);
         MavenLog.LOG.error(e);
         return null;
       }

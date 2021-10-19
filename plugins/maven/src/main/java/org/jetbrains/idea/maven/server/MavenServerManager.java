@@ -135,7 +135,6 @@ public final class MavenServerManager implements Disposable {
         connector.connect();
       }
     }
-    MavenLog.LOG.warn("[connector] get " + connector);
     return connector;
   }
 

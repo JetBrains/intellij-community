@@ -50,4 +50,15 @@ public class MavenIndexId implements Serializable {
     result = 31 * result + indexDirPath.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "MavenIndexId{" +
+           "indexId='" + indexId + '\'' +
+           ", repositoryId='" + repositoryId + '\'' +
+           ", repositoryFilePath='" + repositoryFilePath + '\'' +
+           ", url='" + url + '\'' +
+           ", indexDirPath='" + indexDirPath + '\'' +
+           '}';
+  }
 }
