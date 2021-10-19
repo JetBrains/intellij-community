@@ -147,6 +147,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
 
     setFont(UIManager.getFont("TextField.font"));
+    addHierarchyListener(e -> {
+      if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getChanged().isShowing()) {
+        if (myEditor == null) initEditor();
+      }
+    });
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -368,8 +373,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return super.isFocusOwner();
   }
 
-  @Override
-  public void addNotify() {
+  private void initEditor() {
     Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
@@ -405,9 +409,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     boolean isFocused = isFocusOwner();
 
-    initEditor();
-
-    super.addNotify();
+    initEditorInner();
 
     if (myNextFocusable != null) {
       myEditor.getContentComponent().setNextFocusableComponent(myNextFocusable);
@@ -419,7 +421,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  private void initEditor() {
+  private void initEditorInner() {
     myEditor = createEditor();
     myEditor.getContentComponent().setEnabled(isEnabled());
     if (myCaretPosition >= 0) {
@@ -676,7 +678,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     if (editor != null) {
       releaseEditor(editor);
-      initEditor();
+      initEditorInner();
       revalidate();
     }
   }
@@ -731,7 +733,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     boolean toReleaseEditor = false;
     if (myEditor == null && myEnsureWillComputePreferredSize) {
       myEnsureWillComputePreferredSize = false;
-      initEditor();
+      initEditorInner();
       toReleaseEditor = true;
     }
 
