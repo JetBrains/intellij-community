@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElement
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmValue
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
@@ -19,6 +16,7 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.uast.toUElement
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -348,6 +346,237 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
             "KtUltraLightMethodForSourceDeclaration -> org.jetbrains.annotations.NotNull," +
                     " KtUltraLightFieldForSourceDeclaration -> pkg.myannotation.JavaAnnotation, org.jetbrains.annotations.NotNull",
             annotationsString(myFixture.findElementByText("bar", KtModifierListOwner::class.java))
+        )
+    }
+    
+    fun testChangeMethodType() {
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun <caret>bar(){}
+                        |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("String", emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+        
+        myFixture.checkResult(
+            """class Foo {
+              |   fun <caret>bar(): String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+    
+    fun testChangeMethodTypeToTypeWithAnnotations() {
+        myFixture.configureByText(
+            "foo.kt", """class Foo {
+                        |   fun <caret>bar(){}
+                        |}""".trim().trimMargin()
+        )
+
+        myFixture.addFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+        """.trimIndent()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("String", listOf(annotationRequest("pkg.myannotation.MyAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @MyAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+    
+    fun testChangeMethodTypeRemoveAnnotations() {
+        myFixture.addFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+    
+    fun testChangeMethodTypeChangeAnnotationsOnly() {
+        myFixture.addFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+            
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, listOf(annotationRequest("pkg.myannotation.MyOtherAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @MyOtherAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+    
+    fun testChangeMethodTypeAddJavaAnnotation() {
+        myFixture.addFileToProject(
+            "pkg/myannotation/JavaAnnotation.java", """
+            package pkg.myannotation
+
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Target;
+
+            @Target(ElementType.TYPE)
+            public @interface JavaAnnotation {}
+        """.trimIndent()
+        )
+
+        myFixture.addFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyOtherAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyOtherAnno String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, listOf(annotationRequest("pkg.myannotation.JavaAnnotation"), annotationRequest("pkg.myannotation.MyOtherAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.JavaAnnotation
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): @JavaAnnotation @MyOtherAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+    
+    fun testChangeMethodTypeWithComments() {
+        myFixture.addFileToProject(
+            "pkg/myannotation/annotations.kt", """
+            package pkg.myannotation
+
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyAnno
+            
+            @Target(AnnotationTarget.TYPE)
+            annotation class MyOtherAnno
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |import pkg.myannotation.MyOtherAnno
+                |
+                |class Foo {
+                |   fun <caret>bar(): @MyOtherAnno /*1*/ String {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest(null, listOf(annotationRequest("pkg.myannotation.MyAnno")))
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.myannotation.MyAnno
+              |import pkg.myannotation.MyOtherAnno
+              |
+              |class Foo {
+              |   fun <caret>bar(): /*1*/@MyAnno String {}
+              |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeMethodTypeToJavaType() {
+        myFixture.addFileToProject(
+            "pkg/mytype/MyType.java", """
+            package pkg.mytype;
+
+            public class MyType {}
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """
+                |class Foo {
+                |   fun <caret>bar() {}
+                |}""".trim().trimMargin()
+        )
+
+        val method = myFixture.findElementByText("bar", KtNamedFunction::class.java).toLightElements().single() as JvmMethod
+        val typeRequest = typeRequest("pkg.mytype.MyType", emptyList())
+        myFixture.launchAction(createChangeTypeActions(method, typeRequest).single())
+
+        myFixture.checkResult(
+            """
+              |import pkg.mytype.MyType
+              |
+              |class Foo {
+              |   fun <caret>bar(): MyType {}
+              |}""".trim().trimMargin(), true
         )
     }
 

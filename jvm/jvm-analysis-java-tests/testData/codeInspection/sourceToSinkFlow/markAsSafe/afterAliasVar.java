@@ -10,7 +10,7 @@ class Simple {
     }
 
     @Untainted String foo() {
-        return "foo";
+      return "foo";
     }
 
     void sink(@Untainted String s1) {}

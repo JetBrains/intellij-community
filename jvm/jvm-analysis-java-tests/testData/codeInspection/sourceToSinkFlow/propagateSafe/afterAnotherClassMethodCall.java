@@ -13,8 +13,7 @@ class Simple {
         return ((another.foo()) + (another.foo()));
     }
 
-    @Untainted
-    static String bar() {
+    static @Untainted String bar() {
         return "safe";
     }
 

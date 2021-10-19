@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
@@ -33,6 +34,8 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -377,6 +380,61 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val ktNamedFunction = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtNamedFunction ?: return emptyList()
         return listOfNotNull(ChangeMethodParameters.create(ktNamedFunction, request))
     }
+
+    override fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
+        return listOfNotNull(ChangeType(ktCallableDeclaration, request))
+    }
+
+    override fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
+        return listOfNotNull(ChangeType(ktCallableDeclaration, request))
+    }
+
+    private class ChangeType(
+        target: KtCallableDeclaration, 
+        private val request: ChangeTypeRequest
+        ) : IntentionAction {
+        private val pointer = target.createSmartPointer()
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null && request.isValid
+
+        override fun getText(): String {
+            if (pointer.element == null || !request.isValid) return KotlinBundle.message("fix.change.signature.unavailable")
+            val typeName = request.qualifiedName
+            if (typeName == null) return familyName
+            return QuickFixBundle.message("change.type.text", request.qualifiedName)
+        }
+
+        override fun getFamilyName(): String = QuickFixBundle.message("change.type.family")
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+            if (!request.isValid) return
+            val target = pointer.element ?: return
+            val oldType = target.typeReference
+            val typeName = request.qualifiedName ?: target.typeName() ?: return
+            val psiFactory = KtPsiFactory(target)
+            val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
+            val newType = psiFactory.createType("$annotations $typeName".trim())
+            target.typeReference = newType
+            if (oldType != null) {
+                val commentSaver = CommentSaver(oldType)
+                commentSaver.restore(target.typeReference!!)
+            }
+            ShortenReferences.DEFAULT.process(target)
+        }
+
+        private fun KtCallableDeclaration.typeName(): String? {
+            val typeReference = this.typeReference
+            if (typeReference != null) return typeReference.typeElement?.text
+            if (this !is KtNamedFunction) return null
+            val descriptor = this.resolveToDescriptorIfAny() as? CallableDescriptor ?: return null
+            val returnType = descriptor.returnType ?: return null
+            return IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType)
+        }
+    }
 }
 
 internal fun addAnnotationEntry(
@@ -400,13 +458,17 @@ internal fun addAnnotationEntry(
         "${annotationTarget.renderName}:"
     }
 
+    val psiFactory = KtPsiFactory(target)
+    // could be generated via descriptor when KT-30478 is fixed
+    val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
+    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
+}
+
+private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
     val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
     fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
         javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE
-    val psiFactory = KtPsiFactory(target)
-    // could be generated via descriptor when KT-30478 is fixed
-    val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(request, psiFactory, ::isKotlinAnnotation)
-    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
+    return renderAnnotation(request, psiFactory, ::isKotlinAnnotation)
 }
 
 private fun renderAnnotation(

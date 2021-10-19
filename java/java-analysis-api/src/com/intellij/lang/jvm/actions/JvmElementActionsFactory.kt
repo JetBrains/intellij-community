@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmParameter
 
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
@@ -26,4 +27,8 @@ abstract class JvmElementActionsFactory {
   open fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> = emptyList()
 
   open fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 }
