@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -146,8 +147,12 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           if (local.isUnfair()) {
             continue; // can't work with passes other than LocalInspectionPass
           }
-          List<ProblemDescriptor> results = local.getTool().processFile(file, manager);
-          descriptors = new ArrayList<>(results);
+          LocalInspectionTool tool = local.getTool();
+          List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
+          // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
+          InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(), false,
+                                     true, ProgressIndicatorProvider.getGlobalProgressIndicator(), (wrapper, descriptor) -> found.add(descriptor));
+          descriptors = new ArrayList<>(found);
         }
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;

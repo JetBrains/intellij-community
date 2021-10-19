@@ -29,6 +29,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -192,13 +193,13 @@ public final class OfflineDescriptorResolveResult {
       }
     }
     Map<String, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, inspectionManager, true,
-                                 new DaemonProgressIndicator());
+      InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), containingFile, textRange, true,
+                                 false, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
     List<ProblemDescriptor> list = ContainerUtil.flatten(map.values());
     for (PsiFile injectedFile : injectedFiles) {
       Map<String, List<ProblemDescriptor>> injectedMap =
-        InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, inspectionManager, true,
-                                   new DaemonProgressIndicator());
+        InspectionEngine.inspectEx(Collections.singletonList(toolWrapper), injectedFile, injectedFile.getTextRange(), true,
+                                   false, new DaemonProgressIndicator(), PairProcessor.alwaysTrue());
       list.addAll(ContainerUtil.flatten(injectedMap.values()));
     }
 

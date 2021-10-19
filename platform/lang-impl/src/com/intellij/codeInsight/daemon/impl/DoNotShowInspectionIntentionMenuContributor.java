@@ -30,7 +30,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -112,14 +115,14 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       elements.addAll(parentsOnTheLeft);
     }
 
-    Map<String, String> displayNames =
+    Map<@NonNls String, @Nls(capitalization = Nls.Capitalization.Sentence) String> displayNames =
       ContainerUtil.map2Map(intentionTools, wrapper -> Pair.create(wrapper.getShortName(), wrapper.getDisplayName()));
 
     // indicator can be null when run from EDT
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
     Map<String, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectElements(intentionTools, hostFile, InspectionManager.getInstance(project), true, progress, elements,
-                                       InspectionEngine.calcElementDialectIds(elements));
+      InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, progress, elements,
+                                       InspectionEngine.calcElementDialectIds(elements), PairProcessor.alwaysTrue());
 
     for (Map.Entry<String, List<ProblemDescriptor>> entry : map.entrySet()) {
       List<ProblemDescriptor> descriptors = entry.getValue();

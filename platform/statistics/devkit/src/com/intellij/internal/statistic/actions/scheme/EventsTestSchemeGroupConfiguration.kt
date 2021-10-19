@@ -33,12 +33,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.PairProcessor
 import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
@@ -321,8 +321,9 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         psiFile
       }
       if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
-      val map: Map<String, List<ProblemDescriptor>> = InspectionEngine.inspectEx(Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
-        file, InspectionManager.getInstance(project), true, DaemonProgressIndicator())
+      val map: Map<String, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
+        Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
+        file, file.textRange, true, false, DaemonProgressIndicator(), PairProcessor.alwaysTrue())
 
       return map.values.flatten().map { descriptor -> ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}") }
     }
