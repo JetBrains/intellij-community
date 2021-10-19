@@ -68,11 +68,13 @@ internal class ScriptChangesNotifier(
                         getListener(project, file)?.documentChanged(file)
                     } else {
                         scriptsQueue.cancelAllRequests()
-                        scriptsQueue.addRequest(
-                            { getListener(project, file)?.documentChanged(file) },
-                            scriptChangesListenerDelayMillis,
-                            true,
-                        )
+                        if (!project.isDisposed) {
+                            scriptsQueue.addRequest(
+                                { getListener(project, file)?.documentChanged(file) },
+                                scriptChangesListenerDelayMillis,
+                                true,
+                            )
+                        }
                     }
                 }
             },

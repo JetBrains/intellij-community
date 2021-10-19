@@ -163,7 +163,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     ): Boolean {
         val virtualFile = file.originalFile.virtualFile ?: return false
 
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
+        if (project.isDisposed || !ScriptDefinitionsManager.getInstance(project).isReady()) return false
         val scriptDefinition = file.findScriptDefinition() ?: return false
 
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
