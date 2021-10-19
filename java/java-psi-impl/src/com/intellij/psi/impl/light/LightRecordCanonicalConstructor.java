@@ -21,6 +21,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
   }
 
   @Override
+  public PsiIdentifier getNameIdentifier() {
+    return getContainingClass().getNameIdentifier();
+  }
+
+  @Override
   public int getTextOffset() {
     return getNavigationElement().getTextOffset();
   }
