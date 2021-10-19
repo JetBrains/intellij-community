@@ -10,12 +10,18 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
 
+private const val REGISTRY_KEY_ENABLED = "formatter.line.comment.add.space.enabled"
+
 class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
   override fun processElement(source: PsiElement, settings: CodeStyleSettings) = source
     .also { processText(it.containingFile, it.textRange, settings) }
 
   override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
+
+    if (!Registry.`is`(REGISTRY_KEY_ENABLED)) {
+      return rangeToReformat  // Feature is forcefully disabled via Registry
+    }
 
     val language = source.language
     if (settings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE) {
