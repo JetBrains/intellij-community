@@ -446,7 +446,7 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryField: WorkingDirectoryField
-  ) = addRemovableLabeledSettingsEditorFragment(
+  ) = addLabeledSettingsEditorFragment(
     MavenProfilesFiled(project, workingDirectoryField),
     object : LabeledSettingsFragmentInfo {
       override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
@@ -457,10 +457,8 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
       override val settingsActionHint: String? = null
     },
-    { profiles },
-    { profiles = it },
-    { runnerParameters.profilesMap.ifEmpty { null } },
-    { runnerParameters.profilesMap = it ?: emptyMap() }
+    { it, c -> c.profiles = it.runnerParameters.profilesMap },
+    { it, c -> it.runnerParameters.profilesMap = c.profiles }
   )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
