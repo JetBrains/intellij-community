@@ -33,6 +33,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -223,9 +224,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null) return;
     ourToolbars.add(this);
 
-    // should update action right on the showing, otherwise toolbar may not be displayed at all,
-    // since by default all updates are postponed until frame gets focused.
-    updateActionsImmediately(true);
+    if (isShowing()) {
+      updateActionsImmediately();
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(this, this::updateActionsImmediately);
+    }
   }
 
   protected boolean isInsideNavBar() {
