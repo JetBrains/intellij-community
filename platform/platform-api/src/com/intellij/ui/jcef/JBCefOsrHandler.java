@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -41,7 +42,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
-  private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register("ide.browser.jcef.osr.measureFPS");
+  private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
+    RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
   private final @NotNull Object myImageLock = new Object();
 
