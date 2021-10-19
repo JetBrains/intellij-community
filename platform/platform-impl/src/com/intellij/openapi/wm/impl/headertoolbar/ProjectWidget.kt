@@ -10,15 +10,16 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.*
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.messages.MessageBusConnection
@@ -34,38 +35,54 @@ import javax.swing.*
 
 private const val MAX_RECENT_COUNT = 100
 
-class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
+object ProjectWidgetFactory : MainToolbarWidgetFactory, Disposable {
 
-  private var currentFile: VirtualFile?
-  private var currentProject: Project? = project
+  private val observableProject = ObservableValue<Project?>(null)
+  private val observableFile = ObservableValue<VirtualFile?>(null)
   private var editorConnection: MessageBusConnection? = null
-
-  private val updater: Updater = Updater()
 
   private val projectListener = object: ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      currentProject = project
+      observableProject.value = project
       editorConnection?.disconnect()
-      editorConnection = project.messageBus.connect(this@ProjectWidget)
+      editorConnection = project.messageBus.connect(this@ProjectWidgetFactory)
       editorConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
-
-      updater.performUpdate()
     }
   }
 
   private val editorListener = object: FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {
-      currentFile = event.newFile
-      updater.performUpdate()
+      observableFile.value = event.newFile
     }
   }
 
   init {
-    currentFile = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
-
-    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    val app = ApplicationManager.getApplication()
+    Disposer.register(app, this)
+    val connection = app.messageBus.connect(this)
     connection.subscribe(ProjectManager.TOPIC, projectListener)
-    connection.subscribe(UISettingsListener.TOPIC, updater)
+  }
+
+  override fun createWidget(): JComponent = ProjectWidget(observableProject, observableFile)
+
+  override fun dispose() {}
+
+  override fun getPosition(): Position = Position.Center
+}
+
+class ProjectWidget internal constructor(
+  private val projectObservable: ObservableValue<Project?>,
+  private val fileObservable: ObservableValue<VirtualFile?>): ToolbarComboWidget(), Disposable {
+
+  private val updater: Updater = Updater()
+
+  init {
+    val projectSubscription = projectObservable.subscribe { updater.performUpdate() }
+    val fileSubscription = fileObservable.subscribe { updater.performUpdate() }
+    Disposer.register(this, projectSubscription)
+    Disposer.register(this, fileSubscription)
+
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, updater)
 
     addPressListener(ActionListener {
       val myStep = MyStep(createActionsList())
@@ -78,7 +95,7 @@ class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
         }
       }
 
-      currentProject?.let {
+      projectObservable.value?.let {
         JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this)
       }
     })
@@ -214,9 +231,10 @@ class ProjectWidget(project: Project?): ToolbarComboWidget(), Disposable {
     }
 
     fun performUpdate() {
-      val sb = StringBuilder(currentProject?.name ?: IdeBundle.message("project.widget.empty"))
+      val sb = StringBuilder(projectObservable.value?.name ?: IdeBundle.message("project.widget.empty"))
+      val currentFile = fileObservable.value
       if (uiSettings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
-        sb.append(" — ").append(currentFile!!.name)
+        sb.append(" — ").append(currentFile.name)
       }
 
       text = sb.toString()

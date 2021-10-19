@@ -19,7 +19,7 @@ open class ToolbarComboWidget: JComponent() {
   val pressListeners = mutableListOf<ActionListener>()
   val expandListeners = mutableListOf<ActionListener>()
 
-  var text: String by Delegates.observable("", this::fireUpdateEvents)
+  var text: String? by Delegates.observable("", this::fireUpdateEvents)
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var hoverBackground: Color by Delegates.observable(UIManager.getColor("ToolbarComboWidget.hoverBackground"), this::fireUpdateEvents)

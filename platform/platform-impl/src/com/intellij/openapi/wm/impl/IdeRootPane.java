@@ -268,10 +268,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private @NotNull JComponent createExperimentalToolbar(Disposable parent) {
-    Window window = SwingUtilities.getWindowAncestor(this);
-    Project pr = (window instanceof IdeFrame) ? ((IdeFrame)window).getProject() : null;
-
-    MainToolbar toolbar = new MainToolbar(pr);
+    MainToolbar toolbar = new MainToolbar();
     Disposer.register(parent, toolbar);
     return toolbar;
   }

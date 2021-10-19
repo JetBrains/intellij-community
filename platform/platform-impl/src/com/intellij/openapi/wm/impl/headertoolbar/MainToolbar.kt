@@ -7,23 +7,28 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.GridBag
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
+import com.intellij.ui.components.panels.HorizontalLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class MainToolbar(project: Project?): JPanel(GridBagLayout()), Disposable {
+class MainToolbar: JPanel(HorizontalLayout(10)), Disposable {
+
+  val layoutMap = mapOf(
+    Position.Left to HorizontalLayout.LEFT,
+    Position.Right to HorizontalLayout.RIGHT,
+    Position.Center to HorizontalLayout.CENTER
+  )
 
   init {
-    val projectWidget = ProjectWidget(project)
-    Disposer.register(this, projectWidget)
+    for (factory in MainToolbarWidgetFactory.EP_NAME.extensionList) {
+      val widget = factory.createWidget()
+      if (widget is Disposable) Disposer.register(this, widget)
+      add(layoutMap[factory.getPosition()], widget)
+    }
 
-    val gb = GridBag().nextLine()
-    add(projectWidget, gb.next().fillCellNone().weightx(1.0).anchor(GridBagConstraints.CENTER))
-    add(createActionsBar(), gb.next().fillCell().anchor(GridBagConstraints.EAST))
+    add(HorizontalLayout.RIGHT, createActionsBar())
   }
 
   private fun createActionsBar(): JComponent {

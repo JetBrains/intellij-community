@@ -57,8 +57,8 @@ public final class ExperimentalUI {
   }
 
   public static boolean isNewToolbar() {
-    return false;
     //return isEnabled("ide.experimental.ui.main.toolbar");
+    return is("ide.experimental.ui.main.toolbar");
   }
 
   private static boolean isEnabled(@NonNls @NotNull String key) {

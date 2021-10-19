@@ -657,6 +657,8 @@
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+
+    <toolbarWidget implementation="git4idea.ui.toolbar.GitToolbarWidgetFactory"/>
   </extensions>
 
   <extensionPoints>
