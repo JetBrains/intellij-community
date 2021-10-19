@@ -52,7 +52,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     }
     val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
-    toolbar.setTargetComponent(editor.contentComponent)
+    toolbar.targetComponent = editor.contentComponent
     toolbar.setReservePlaceAutoPopupIcon(false)
     buttonSize = toolbar.maxButtonHeight
 
@@ -70,6 +70,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   override fun dispose() {
     unregisterListeners()
+    hideIfShown()
+    hint = null
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
