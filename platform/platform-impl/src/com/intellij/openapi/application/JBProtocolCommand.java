@@ -4,7 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public abstract class JBProtocolCommand {
    *
    * @see #parameter(Map, String)
    */
-  public @NotNull Future<@Nullable @DialogMessage String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
+  public @NotNull Future<@Nullable @NotificationContent String> perform(@Nullable String target, @NotNull Map<String, String> parameters, @Nullable String fragment) {
     Map<String, String> simpleParameters = new LinkedHashMap<>(parameters);
     simpleParameters.put(FRAGMENT_PARAM_NAME, fragment);
     perform(target, simpleParameters);
@@ -64,7 +64,7 @@ public abstract class JBProtocolCommand {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Future<@Nullable @DialogMessage String> execute(@NotNull String query) {
+  public static @NotNull Future<@Nullable @NotificationContent String> execute(@NotNull String query) {
     QueryStringDecoder decoder = new QueryStringDecoder(query);
     String[] parts = decoder.path().split("/");
     if (parts.length < 2) throw new IllegalArgumentException(query);  // expected: at least a platform prefix and a command name
