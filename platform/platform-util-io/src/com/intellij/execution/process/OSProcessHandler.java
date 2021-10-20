@@ -260,7 +260,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public boolean hasPty() {
     if (myHasPty == null) {
-      myHasPty = ProcessService.getInstance().isLocalPtyProcess(getProcess());
+      myHasPty = LoadingState.COMPONENTS_LOADED.isOccurred() && ProcessService.getInstance().isLocalPtyProcess(getProcess());
     }
     return myHasPty;
   }
