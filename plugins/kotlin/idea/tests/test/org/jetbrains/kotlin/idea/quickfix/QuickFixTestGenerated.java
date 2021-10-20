@@ -13947,6 +13947,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testTypeMismatchInReturnStatement() throws Exception {
                 runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInReturnStatement.kt");
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn")
+            public static class MultiReturn extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/labeledReturn.kt");
+                }
+
+                @TestMetadata("returnDifferentType.kt")
+                public void testReturnDifferentType() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnDifferentType.kt");
+                }
+
+                @TestMetadata("returnNull.kt")
+                public void testReturnNull() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNull.kt");
+                }
+
+                @TestMetadata("returnNull2.kt")
+                public void testReturnNull2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNull2.kt");
+                }
+
+                @TestMetadata("returnNullable.kt")
+                public void testReturnNullable() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNullable.kt");
+                }
+
+                @TestMetadata("returnSuperType.kt")
+                public void testReturnSuperType() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnSuperType.kt");
+                }
+
+                @TestMetadata("unrelatedLabeledReturn.kt")
+                public void testUnrelatedLabeledReturn() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/unrelatedLabeledReturn.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
