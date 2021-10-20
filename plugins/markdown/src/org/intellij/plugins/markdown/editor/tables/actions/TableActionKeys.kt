@@ -33,7 +33,6 @@ internal object TableActionKeys {
     }
     val dataContextComponent = dataProvider?.let { createDataContextWrapperComponent(editor.contentComponent, dataProvider) }
     actionToolbar.targetComponent = dataContextComponent
-    actionToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     actionToolbar.adjustTheSameSize(true)
     actionToolbar.setReservePlaceAutoPopupIcon(false)
     return actionToolbar
