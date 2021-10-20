@@ -43,11 +43,16 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       Logger.getInstance(MacMainFrameDecorator.class).warn(e);
     }
   }
+  interface MyCoreFoundation extends CoreFoundation {
+    MyCoreFoundation INSTANCE = Native.load("CoreFoundation", MyCoreFoundation.class);
+
+    CoreFoundation.CFStringRef CFPreferencesCopyAppValue(
+      CoreFoundation.CFStringRef key, CoreFoundation.CFStringRef applicationID);
+  }
 
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
-
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
@@ -127,20 +132,20 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
               appleActionOnDoubleClick,
               apple_global_domain);
-            if (res.stringValue().equals("Maximize")) {
-              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-              }
-            }
-            else {
+            if (res != null && !res.stringValue().equals("Maximize")) {
               if (frame.getExtendedState() == Frame.ICONIFIED) {
                 frame.setExtendedState(Frame.NORMAL);
               }
               else {
                 frame.setExtendedState(Frame.ICONIFIED);
+              }
+            }
+            else {
+              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+                frame.setExtendedState(Frame.NORMAL);
+              }
+              else {
+                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
               }
             }
             apple_global_domain.release();
@@ -242,13 +247,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   }
 
   private interface FSListener extends FullScreenListener, EventListener {
-  }
-
-  interface MyCoreFoundation extends CoreFoundation {
-    MyCoreFoundation INSTANCE = Native.load("CoreFoundation", MyCoreFoundation.class);
-
-    CoreFoundation.CFStringRef CFPreferencesCopyAppValue(
-      CoreFoundation.CFStringRef key, CoreFoundation.CFStringRef applicationID);
   }
 
   private static class FSAdapter extends FullScreenAdapter implements FSListener {
