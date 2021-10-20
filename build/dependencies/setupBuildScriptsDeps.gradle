@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 repositories {
   maven { url "https://cache-redirector.jetbrains.com/jcenter.bintray.com" }
-  maven { url 'https://www.jetbrains.com/intellij-repository/releases' }
+  maven { url 'https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases' }
 }
 
 configurations {
