@@ -7,8 +7,9 @@ import com.intellij.codeInsight.hints.fireUpdateEvent
 import com.intellij.codeInsight.hints.presentation.BasePresentation
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
@@ -163,17 +164,13 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     return position
   }
 
-  private fun createActionToolbar(): ActionToolbar {
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_POPUP, columnActionGroup, true)
-    actionToolbar.targetComponent = editor.component
-    actionToolbar.adjustTheSameSize(true)
-    actionToolbar.setReservePlaceAutoPopupIcon(false)
-    return actionToolbar
-  }
-
   private fun showToolbar(columnIndex: Int) {
-    DataManager.registerDataProvider(editor.component, createDataProvider(table, columnIndex))
-    val actionToolbar = createActionToolbar()
+    val actionToolbar = TableActionKeys.createActionToolbar(
+      columnActionGroup,
+      isHorizontal = true,
+      editor,
+      createDataProvider(table, columnIndex)
+    )
     val hint = LightweightHint(actionToolbar.component)
     hint.setForceShowAsPopup(true)
     val targetPoint = calculateToolbarPosition(hint.component.preferredSize.height, columnIndex)
