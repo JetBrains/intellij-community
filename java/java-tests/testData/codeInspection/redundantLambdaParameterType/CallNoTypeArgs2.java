@@ -11,6 +11,6 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
 
     {
-        Test2.bar(y<caret> -> y.t);
+        Test2.bar((Y<St<caret>ring> y) -> y.t.substring(1));
     }
 }
