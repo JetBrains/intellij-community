@@ -354,6 +354,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       if (file == null) {
         return true;
       }
+      getEventPublisher().fileAnalyzed(file, getProject());
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
       List<InspectionToolWrapper<?, ?>> externalAnnotatable = ContainerUtil.concat(

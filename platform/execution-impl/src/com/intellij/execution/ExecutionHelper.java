@@ -73,26 +73,12 @@ public final class ExecutionHelper {
     @NotNull final List<? extends Exception> warnings,
     @NotNull final @NlsContexts.TabTitle String tabDisplayName,
     @Nullable final VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
-      throw new RuntimeException(errors.get(0));
-    }
 
     errors.forEach(it -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Got error: ", it);
-      }
-      else {
-        LOG.warn("Got error: " + it.getMessage());
-      }
+      LOG.warn(tabDisplayName + " error: " + it.getMessage());
     });
-
     warnings.forEach(it -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Got warning: ", it);
-      }
-      else {
-        LOG.warn("Got warning: " + it.getMessage());
-      }
+      LOG.warn(tabDisplayName + " warning: " + it.getMessage());
     });
 
     ApplicationManager.getApplication().invokeLater(() -> {

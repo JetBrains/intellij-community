@@ -34,10 +34,12 @@ interface ModuleChangesSignalProvider {
      * in the module structure. See [AbstractMessageBusModuleChangesSignalProvider] and its implementations
      * for examples on how to register module changes.
      */
-    fun registerModuleChangesListener(project: Project, listener: Supplier<Unit>): Subscription
+    fun registerModuleChangesListener(project: Project, listener: Runnable): Subscription
 }
 
 internal operator fun <T> Supplier<T>.invoke() = get()
+
+internal operator fun Runnable.invoke() = run()
 
 /**
  * Functional interface used to unsubscribe listeners for [ModuleChangesSignalProvider].

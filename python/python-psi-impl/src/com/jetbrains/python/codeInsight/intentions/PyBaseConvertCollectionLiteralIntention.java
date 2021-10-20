@@ -24,8 +24,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +69,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
       return false;
     }
     if (literal instanceof PyTupleExpression) {
+      if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(literal.getProject(), file))) return false;
       setText(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
     }
     else if (literal instanceof PyListLiteralExpression) {

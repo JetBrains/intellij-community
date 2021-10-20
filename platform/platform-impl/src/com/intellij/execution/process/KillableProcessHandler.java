@@ -176,14 +176,19 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * See <a href="https://github.com/microsoft/WSL/issues/7301">WSL issue #7301</a> for the details.
    */
   private boolean isWslProcess() {
-    ProcessHandle.Info info = myProcess.info();
-    String command = info.command().orElse(null);
+    ProcessHandle.Info info = null;
+    try {
+      info = myProcess.info();
+    }
+    catch (UnsupportedOperationException ignored) {
+    }
+    String command = info != null ? info.command().orElse(null) : null;
     boolean wsl = command != null && PathUtil.getFileName(command).equals("wsl.exe");
     if (wsl) {
       LOG.info("Skipping WinP graceful termination for " + command + " due to incorrect work with WSL processes");
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("WSL process: " + wsl  + ", executable: " + command + ", info: " + info);
+      LOG.debug("[graceful termination with WinP] WSL process: " + wsl  + ", executable: " + command + ", info: " + info);
     }
     return wsl;
   }

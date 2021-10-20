@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerContext;
@@ -40,6 +40,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.Debug;
@@ -265,18 +266,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     try {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
         if (e instanceof PsiClass) {
-          String text = getAttributeValue(annotation, "text");
-          LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
-          String childrenArray = getAttributeValue(annotation, "childrenArray");
-          String isLeaf = getAttributeValue(annotation, "hasChildren");
-          ExpressionChildrenRenderer childrenRenderer =
-            StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+            String text = getAttributeValue(annotation, "text");
+            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
+            String childrenArray = getAttributeValue(annotation, "childrenArray");
+            String isLeaf = getAttributeValue(annotation, "hasChildren");
+            ExpressionChildrenRenderer childrenRenderer =
+              StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
           PsiClass cls = ((PsiClass)e);
-          CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+            CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
             cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
-          renderer.setEnabled(true);
-          renderers.add(renderer);
-        }
+            renderer.setEnabled(true);
+            renderers.add(renderer);
+          }
       });
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
@@ -291,10 +292,13 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     if (value == null) {
       return null;
     }
-    if (value instanceof PsiLiteralValue) {
-      return String.valueOf(((PsiLiteralValue)value).getValue());
+    if (value instanceof PsiExpression) {
+      Object res = ExpressionUtils.computeConstantExpression(((PsiExpression)value));
+      if (res instanceof String){
+        return (String)res;
+      }
     }
-    throw new IllegalStateException("String literal expected, but was " + value);
+    throw new IllegalStateException("Constant string expression expected, but was " + value);
   }
 
   public Renderer readRenderer(Element root) throws InvalidDataException {

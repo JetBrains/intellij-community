@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
@@ -342,8 +343,13 @@ public class ExpressionParsing extends Parsing {
       return;
     }
 
+    parseDictOrSetTail(expr, false);
+  }
+
+  private void parseDictOrSetTail(@NotNull SyntaxTreeBuilder.Marker expr, boolean isDict) {
     final SyntaxTreeBuilder.Marker firstExprMarker = myBuilder.mark();
-    if (!parseSingleExpression(false)) {
+
+    if (isDict && !parseSingleExpression(false) || !isDict && !parseNamedTestExpression(false, false)) {
       myBuilder.error(message("PARSE.expected.expression"));
       firstExprMarker.drop();
       expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
@@ -351,6 +357,11 @@ public class ExpressionParsing extends Parsing {
     }
 
     if (matchToken(PyTokenTypes.COLON)) {
+      if (!isDict) {
+        firstExprMarker.rollbackTo();
+        parseDictOrSetTail(expr, true);
+        return;
+      }
       parseDictLiteralTail(expr, firstExprMarker);
     }
     else if (atToken(PyTokenTypes.COMMA) || atToken(PyTokenTypes.RBRACE)) {
@@ -424,7 +435,7 @@ public class ExpressionParsing extends Parsing {
   private void parseSetLiteralTail(SyntaxTreeBuilder.Marker startMarker) {
     while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
       checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
-      if (!parseSingleExpression(false)) {
+      if (!parseNamedTestExpression(false, false)) {
         break;
       }
     }
@@ -514,41 +525,7 @@ public class ExpressionParsing extends Parsing {
         }
         else if (tokenType == PyTokenTypes.LBRACKET) {
           myBuilder.advanceLexer();
-          SyntaxTreeBuilder.Marker sliceOrTupleStart = myBuilder.mark();
-          SyntaxTreeBuilder.Marker sliceItemStart = myBuilder.mark();
-          if (atToken(PyTokenTypes.COLON)) {
-            sliceOrTupleStart.drop();
-            SyntaxTreeBuilder.Marker sliceMarker = myBuilder.mark();
-            sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-            parseSliceEnd(expr, sliceItemStart);
-          }
-          else {
-            boolean hadExpression = parseSingleExpression(false);
-            if (atToken(PyTokenTypes.COLON)) {
-              sliceOrTupleStart.drop();
-              parseSliceEnd(expr, sliceItemStart);
-            }
-            else if (atToken(PyTokenTypes.COMMA)) {
-              sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-              if (!parseSliceListTail(expr, sliceOrTupleStart)) {
-                sliceOrTupleStart.rollbackTo();
-                if (!parseTupleExpression(false, false, false)) {
-                  myBuilder.error(message("tuple.expression.expected"));
-                }
-                checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
-                expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-              }
-            }
-            else {
-              if (!hadExpression) {
-                myBuilder.error(message("PARSE.expected.expression"));
-              }
-              sliceOrTupleStart.drop();
-              sliceItemStart.drop();
-              checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
-              expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-            }
-          }
+          parseSliceOrSubscriptionExpression(expr, false);
           if (isTargetExpression && !recastQualifier) {
             recastFirstIdentifier = true; // subscription is always a reference
             recastQualifier = true; // recast non-first qualifiers too
@@ -568,6 +545,49 @@ public class ExpressionParsing extends Parsing {
     while (recastFirstIdentifier);
 
     return true;
+  }
+
+  private void parseSliceOrSubscriptionExpression(@NotNull SyntaxTreeBuilder.Marker expr, boolean isSlice) {
+    SyntaxTreeBuilder.Marker sliceOrTupleStart = myBuilder.mark();
+    SyntaxTreeBuilder.Marker sliceItemStart = myBuilder.mark();
+    if (atToken(PyTokenTypes.COLON)) {
+      sliceOrTupleStart.drop();
+      SyntaxTreeBuilder.Marker sliceMarker = myBuilder.mark();
+      sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
+      parseSliceEnd(expr, sliceItemStart);
+    }
+    else {
+      var hadExpression = isSlice ? parseSingleExpression(false) : parseNamedTestExpression(false, false);
+      if (atToken(PyTokenTypes.COLON)) {
+        if (!isSlice) {
+          sliceOrTupleStart.rollbackTo();
+          parseSliceOrSubscriptionExpression(expr, true);
+          return;
+        }
+        sliceOrTupleStart.drop();
+        parseSliceEnd(expr, sliceItemStart);
+      }
+      else if (atToken(PyTokenTypes.COMMA)) {
+        sliceItemStart.done(PyElementTypes.SLICE_ITEM);
+        if (!parseSliceListTail(expr, sliceOrTupleStart)) {
+          sliceOrTupleStart.rollbackTo();
+          if (!parseTupleExpression(false, false, false)) {
+            myBuilder.error(message("tuple.expression.expected"));
+          }
+          checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
+          expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+        }
+      }
+      else {
+        if (!hadExpression) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+        sliceOrTupleStart.drop();
+        sliceItemStart.drop();
+        checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
+        expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+      }
+    }
   }
 
   private boolean parseEllipsis() {

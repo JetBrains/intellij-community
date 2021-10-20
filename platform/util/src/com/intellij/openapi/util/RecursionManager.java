@@ -87,6 +87,9 @@ public final class RecursionManager {
           if (ourAssertOnPrevention.get()) {
             throw new StackOverflowPreventedException("Endless recursion prevention occurred on " + key);
           }
+          else if (LOG.isDebugEnabled()) {
+            LOG.debug(new StackOverflowPreventedException("Endless recursion prevention occurred on " + key));
+          }
           return null;
         }
 

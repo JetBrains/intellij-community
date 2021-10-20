@@ -99,7 +99,7 @@ def restore_sys_set_trace_func():
 
 
 def load_python_helper_lib():
-    if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 8):
+    if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 9):
         return None
 
     if IS_WINDOWS:

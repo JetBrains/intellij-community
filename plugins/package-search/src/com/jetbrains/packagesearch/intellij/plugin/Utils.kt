@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import org.apache.commons.lang3.StringUtils
@@ -11,7 +12,9 @@ inline fun <reified T, R> T.tryDoing(a: () -> R?): R? = try {
 } catch (t: Throwable) {
     @Suppress("TooGenericExceptionCaught") // Guarding against random runtime failures
     try {
-        Logger.getInstance(T::class.java).error("Failed to execute safe operation: ${t.message}", t)
+        if (t !is ProcessCanceledException) {
+            Logger.getInstance(T::class.java).error("Failed to execute safe operation: ${t.message}", t)
+        }
     } catch (t: Throwable) {
         // IntelliJ IDEA Logger may throw exception that we try to log inside
     }

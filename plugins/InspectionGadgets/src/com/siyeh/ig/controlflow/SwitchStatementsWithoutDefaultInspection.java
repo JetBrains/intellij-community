@@ -76,8 +76,8 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
         }
         else {
           CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
-          if (completenessResult == CompletenessResult.UNEVALUATED) return;
-          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE) {
+          if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_TOTAL) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_TOTAL) {
             if (!isOnTheFly) return;
             infoMode = true;
           }

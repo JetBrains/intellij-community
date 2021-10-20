@@ -168,7 +168,7 @@ public final class DownloadUtil {
         @Override
         public Object process(@NotNull HttpRequests.Request request) throws IOException {
           try {
-            int contentLength = request.getConnection().getContentLength();
+            long contentLength = request.getConnection().getContentLengthLong();
             substituteContentLength(progress, originalText, contentLength);
             NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
           }
@@ -180,7 +180,8 @@ public final class DownloadUtil {
       });
   }
 
-  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable @NlsContexts.ProgressText String text, int contentLengthInBytes) {
+  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable @NlsContexts.ProgressText String text,
+                                              long contentLengthInBytes) {
     if (progress != null && text != null) {
       int ind = text.indexOf(CONTENT_LENGTH_TEMPLATE);
       if (ind != -1) {
@@ -191,8 +192,7 @@ public final class DownloadUtil {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static String formatContentLength(int contentLengthInBytes) {
+  private static String formatContentLength(long contentLengthInBytes) {
     if (contentLengthInBytes < 0) {
       return "";
     }

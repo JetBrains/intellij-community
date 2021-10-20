@@ -2,12 +2,15 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -29,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -237,5 +242,47 @@ public final class WSLUtil {
       LOG.warn("Cannot read Windows version", e);
     }
     return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
+  }
+
+  public static class WSLToolFlags {
+    public final boolean isQuietFlagAvailable;
+    public final boolean isVerboseFlagAvailable;
+
+    WSLToolFlags(boolean isQuietAvailable, boolean isVerboseAvailable) {
+      isQuietFlagAvailable = isQuietAvailable;
+      isVerboseFlagAvailable = isVerboseAvailable;
+    }
+  }
+
+  private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS =
+    NullableLazyValue.createValue(() -> getWSLToolFlagsInternal());
+
+  public static @Nullable WSLToolFlags getWSLToolFlags() {
+    return WSL_TOOL_FLAGS.getValue();
+  }
+
+  private static final Pattern QUIET = Pattern.compile("\\s--quiet,?\\b");
+  private static final Pattern VERBOSE = Pattern.compile("\\s--verbose,?\\b");
+
+  private static @Nullable WSLToolFlags getWSLToolFlagsInternal() {
+    final Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) return null;
+
+    final GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--help").
+      withCharset(StandardCharsets.UTF_16LE);
+
+    try {
+      final ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, 5000);
+      if (output.isTimeout()) return null;
+
+      // intentionally do no check "wsl --help" exit code because it returns -1
+      final String stdout = output.getStdout();
+      return new WSLToolFlags(QUIET.matcher(stdout).find(),
+                              VERBOSE.matcher(stdout).find());
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 }

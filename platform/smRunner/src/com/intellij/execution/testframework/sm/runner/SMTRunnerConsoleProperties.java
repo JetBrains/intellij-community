@@ -102,6 +102,35 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myPrintTestingStartedTime = printTestingStartedTime;
   }
 
+  public static class FileHyperlinkNavigatable implements Navigatable {
+    private OpenFileDescriptor myFileDescriptor;
+    private final FileHyperlinkInfo myFileHyperlinkInfo;
+
+    public FileHyperlinkNavigatable(@NotNull FileHyperlinkInfo info) { myFileHyperlinkInfo = info; }
+
+    public OpenFileDescriptor getOpenFileDescriptor() {
+      if (myFileDescriptor == null) {
+        myFileDescriptor = myFileHyperlinkInfo.getDescriptor();
+      }
+      return myFileDescriptor;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      getOpenFileDescriptor().navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return getOpenFileDescriptor().canNavigate();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return getOpenFileDescriptor().canNavigateToSource();
+    }
+  }
+
   @Nullable
   @Override
   public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
@@ -126,31 +155,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
-          return new Navigatable() {
-            private OpenFileDescriptor myFileDescriptor;
-
-            private OpenFileDescriptor getOpenFileDescriptor() {
-              if (myFileDescriptor == null) {
-                myFileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
-              }
-              return myFileDescriptor;
-            }
-
-            @Override
-            public void navigate(boolean requestFocus) {
-              getOpenFileDescriptor().navigate(requestFocus);
-            }
-
-            @Override
-            public boolean canNavigate() {
-              return getOpenFileDescriptor().canNavigate();
-            }
-
-            @Override
-            public boolean canNavigateToSource() {
-              return getOpenFileDescriptor().canNavigateToSource();
-            }
-          };
+          return new FileHyperlinkNavigatable((FileHyperlinkInfo)info);
         }
 
         // otherwise

@@ -47,7 +47,14 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
                                         val unhandledLines: List<String>,
                                         val unchangedInBaseFiles: List<String>) {
   companion object {
-    fun empty() = PyRequirementsAnalysisResult(mutableListOf(), mutableMapOf(), mutableListOf(), mutableListOf())
+    fun empty() = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
+  }
+
+  fun withImportedPackages(importedPackages: Map<String, PyPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+    val newCurrentFile = currentFileOutput + importedPackages.values.map {
+      if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name
+    }
+    return PyRequirementsAnalysisResult(newCurrentFile, baseFilesOutput, unhandledLines, unchangedInBaseFiles)
   }
 }
 
@@ -156,9 +163,15 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
     .map { it.name.toLowerCase() to it }
     .toMap(mutableMapOf())
 
-  val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: return PyRequirementsAnalysisResult.empty()
-  val visitor = PyRequirementsFileVisitor(importedPackages, settings)
-  return visitor.visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
+  val analysisResult = when (val requirementsFile = PyPackageUtil.findRequirementsTxt(module)) {
+    null -> PyRequirementsAnalysisResult.empty()
+    else -> {
+      val visitor = PyRequirementsFileVisitor(importedPackages, settings)
+      visitor.visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
+    }
+  }
+
+  return analysisResult.withImportedPackages(importedPackages, settings)
 }
 
 private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings): Boolean {

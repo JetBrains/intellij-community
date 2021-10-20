@@ -84,7 +84,9 @@ class LessonManager {
       it.stopLesson()
       currentLessonExecutor = null
     }
-    LearningUiHighlightingManager.clearHighlights()
+    if (!lessonPassed) {  // highlights already cleared in case of passed lesson
+      LearningUiHighlightingManager.clearHighlights()
+    }
   }
 
   private fun initLesson(editor: Editor?, cLesson: Lesson) {

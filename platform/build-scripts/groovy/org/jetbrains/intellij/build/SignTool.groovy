@@ -18,12 +18,12 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 
 /**
- * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to sign the product's *.exe files.
+ * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to sign the product's files.
  */
 @CompileStatic
 interface SignTool {
   /**
-   * @param path absolute path (with '/' as a separator) to *.exe file to be signed
+   * @param path absolute path (with '/' as a separator) to file to be signed
    */
-  void signExeFile(String path, BuildContext context)
+  void signFile(String path, BuildContext context, Map<String, String> options)
 }

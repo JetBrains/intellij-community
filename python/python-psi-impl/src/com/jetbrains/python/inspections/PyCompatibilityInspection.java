@@ -136,19 +136,14 @@ public class PyCompatibilityInspection extends PyInspection {
     protected void registerProblem(@NotNull PsiElement element,
                                    @NotNull TextRange range,
                                    @NotNull @InspectionMessage String message,
-                                   @Nullable LocalQuickFix quickFix,
-                                   boolean asError) {
+                                   boolean asError,
+                                   LocalQuickFix @NotNull ... fixes) {
       if (element.getTextLength() == 0) {
         return;
       }
 
       range = range.shiftRight(-element.getTextRange().getStartOffset());
-      if (quickFix != null) {
-        myHolder.registerProblem(element, range, message, quickFix);
-      }
-      else {
-        myHolder.registerProblem(element, range, message);
-      }
+      myHolder.registerProblem(element, range, message, fixes);
     }
 
     @Override

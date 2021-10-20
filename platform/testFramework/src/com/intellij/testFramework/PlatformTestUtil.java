@@ -104,10 +104,10 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiPredicate;
-import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1052,6 +1052,15 @@ public final class PlatformTestUtil {
   }
 
   /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for {@code timeoutInSeconds}
+   * seconds till process ends.
+   */
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration, long timeoutInSeconds)
+    throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID, timeoutInSeconds);
+  }
+
+  /**
    * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
    */
   @NotNull
@@ -1063,36 +1072,40 @@ public final class PlatformTestUtil {
   /**
    * Executing {@code runConfiguration} with executor {@code executoId} and wait for the {@code timeoutInSeconds} seconds till process ends.
    */
-  @NotNull
-  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                 @NotNull String executorId,
-                                                                 long timeoutInSeconds) throws InterruptedException {
-    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                          @NotNull String executorId,
+                                                                          long timeoutInSeconds) throws InterruptedException {
+    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler, processHandler::isProcessTerminated, 60);
+    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+                              processHandler::isProcessTerminated, 60);
     return result.first;
   }
 
-
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull String executorId)
+  /**
+   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, com.intellij.execution.Executor, java.util.function.Consumer)
+   */
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId,
+    @Nullable Consumer<RunContentDescriptor> contentDescriptorProcessor)
     throws InterruptedException {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);
-    return executeConfiguration(runConfiguration, executor);
+    return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
 
   /**
-   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
-   * {@link RunContentDescriptor}
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns a pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}.
+   *
+   * @param descriptorProcessor optional processor for the run content descriptor of executed configuration
    */
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull Executor executor)
-    throws InterruptedException {
-
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull Executor executor,
+    @Nullable Consumer<? super RunContentDescriptor> descriptorProcessor) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1109,6 +1122,9 @@ public final class PlatformTestUtil {
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
       LOG.debug("Process started");
+      if (descriptorProcessor != null) {
+        descriptorProcessor.accept(descriptor);
+      }
       ProcessHandler processHandler = descriptor.getProcessHandler();
       assertNotNull(processHandler);
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -1138,18 +1154,25 @@ public final class PlatformTestUtil {
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
+  public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+    waitWithEventsDispatching(() -> errorMessage, condition, timeoutInSeconds);
+  }
+
   /**
    * Wait and dispatch events during timeout
-   * @param errorMessage The error message if timeout happens
-   * @param condition Check whether finished
-   * @param timeoutInSeconds timeout in seconds
+   *
+   * @param errorMessageSupplier The error message supplier if timeout happens
+   * @param condition            Check whether finished
+   * @param timeoutInSeconds     timeout in seconds
    */
-  public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
+                                               @NotNull BooleanSupplier condition,
+                                               int timeoutInSeconds) {
     long start = System.currentTimeMillis();
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          fail(errorMessage);
+          fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
           break;

@@ -31,6 +31,7 @@ import org.eclipse.aether.util.graph.selector.AndDependencySelector;
 import org.eclipse.aether.util.graph.selector.ExclusionDependencySelector;
 import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
+import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
@@ -215,7 +216,8 @@ public final class ArtifactRepositoryManager {
       org.apache.http.HttpConnection.class, //httpcore
       org.apache.http.client.HttpClient.class, //httpclient
       org.apache.commons.logging.LogFactory.class, // commons-logging
-      org.slf4j.Marker.class // slf4j
+      org.slf4j.Marker.class, // slf4j
+      org.apache.commons.codec.binary.Base64.class // commons-codec
     );
   }
 
@@ -411,16 +413,33 @@ public final class ArtifactRepositoryManager {
 
   public static RemoteRepository createRemoteRepository(final String id,
                                                         final String url) {
-    return createRemoteRepository(id, url, true);
+    return createRemoteRepository(id, url, null, true);
   }
 
   public static RemoteRepository createRemoteRepository(final String id,
                                                         final String url,
                                                         boolean allowSnapshots) {
+    return createRemoteRepository(id, url, null, allowSnapshots);
+  }
+
+  public static RemoteRepository createRemoteRepository(String id, String url, ArtifactAuthenticationData authenticationData) {
+    return createRemoteRepository(id, url, authenticationData, true);
+  }
+
+  public static RemoteRepository createRemoteRepository(String id,
+                                                        String url,
+                                                        ArtifactAuthenticationData authenticationData,
+                                                        boolean allowSnapshots) {
     // for maven repos repository type should be 'default'
     RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
     if (!allowSnapshots) {
       builder.setSnapshotPolicy(new RepositoryPolicy(false, null, null));
+    }
+    if (authenticationData != null) {
+      AuthenticationBuilder authenticationBuilder = new AuthenticationBuilder();
+      authenticationBuilder.addUsername(authenticationData.getUsername());
+      authenticationBuilder.addPassword(authenticationData.getPassword());
+      builder.setAuthentication(authenticationBuilder.build());
     }
     return builder.setProxy(ourProxySelector.getProxy(url)).build();
   }
@@ -475,6 +494,24 @@ public final class ArtifactRepositoryManager {
       }
     }
     return result;
+  }
+
+  public static class ArtifactAuthenticationData {
+    private final String username;
+    private final String password;
+
+    public ArtifactAuthenticationData(String username, String password) {
+      this.username = username;
+      this.password = password;
+    }
+
+    private String getUsername() {
+      return username;
+    }
+
+    private String getPassword() {
+      return password;
+    }
   }
 
   private static class ArtifactWithChangedClassifier extends DelegatingArtifact {

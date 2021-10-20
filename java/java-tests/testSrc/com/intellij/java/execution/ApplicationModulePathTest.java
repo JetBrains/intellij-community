@@ -42,9 +42,13 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
   public void testServices() throws ExecutionException {
     Module module2 = createEmptyModule();
     setupModule(getTestName(true) + "/dep", module2);
+    
+    Module module3 = createEmptyModule();
+    setupModule(getTestName(true) + "/dep1", module3);
 
     ApplicationConfiguration configuration = setupConfiguration(getTestName(true), myModule);
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addModuleOrderEntry(module2));
+    ModuleRootModificationUtil.updateModel(module2, model -> model.addModuleOrderEntry(module3));
     
     ExecutionEnvironment environment =
       ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
@@ -52,7 +56,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
       new ApplicationConfiguration.JavaApplicationCommandLineState<>(configuration, environment).createJavaParameters4Test();
     
     PathsList modulePath = params4Tests.getModulePath();
-    assertSize(2, modulePath.getPathList());
+    assertSize(3, modulePath.getPathList());
   }
 
   private ApplicationConfiguration setupConfiguration(String sources, Module module) {

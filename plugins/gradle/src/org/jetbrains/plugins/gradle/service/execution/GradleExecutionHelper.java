@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -177,6 +178,7 @@ public class GradleExecutionHelper {
     ensureInstalledWrapper(id, projectPath, settings, null, listener, cancellationToken);
   }
 
+  @SuppressWarnings("deprecation")
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
                                      @NotNull String projectPath,
                                      @NotNull GradleExecutionSettings settings,
@@ -195,8 +197,11 @@ public class GradleExecutionHelper {
       projectPath, id, settings, listener, cancellationToken,
       connection -> {
         long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+        List<String> arguments = settings.getArguments();
         try {
           settings.setRemoteProcessIdleTtlInMs(100);
+          settings.setArguments(GradleCommandLine.parse(arguments).getScriptParameters());
+
           TargetEnvironmentConfigurationProvider configurationProvider =
             ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
           if (configurationProvider != null) {
@@ -263,6 +268,7 @@ public class GradleExecutionHelper {
         }
         finally {
           settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+          settings.setArguments(arguments);
         }
         return null;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -30,6 +30,13 @@ public final class TestLogger extends Log4jBasedLogger {
         throw (TestLoggerAssertionError)t;
       }
 
+      if (TestLoggerFactory.shouldSplitTestLogs()) {
+        TestLoggerFactory.log(Level.ERROR.toString(), myLogger.getName(), message, t);
+        for (String detail : details) {
+          TestLoggerFactory.log(Level.ERROR.toString(), myLogger.getName(), detail, null);
+        }
+      }
+
       message += DefaultLogger.attachmentsToString(t);
       myLogger.info(message, t);
 
@@ -42,6 +49,9 @@ public final class TestLogger extends Log4jBasedLogger {
   @Override
   public void warn(String message, @Nullable Throwable t) {
     if (LoggedErrorProcessor.getInstance().processWarn(myLogger.getName(), message, ensureNotControlFlow(t))) {
+      if (TestLoggerFactory.shouldSplitTestLogs()) {
+        TestLoggerFactory.log(Level.WARN.toString(), myLogger.getName(), message, t);
+      }
       myLogger.warn(message, t);
     }
   }

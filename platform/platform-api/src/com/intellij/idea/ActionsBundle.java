@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.DynamicBundle;
@@ -20,12 +20,12 @@ public final class ActionsBundle extends DynamicBundle {
   }
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
-    return ourInstance.getMessage(key, params);
+    return ourInstance.containsKey(key) ? ourInstance.getMessage(key, params) : ActionsDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
-    return ourInstance.getLazyMessage(key, params);
+    return ourInstance.containsKey(key) ? ourInstance.getLazyMessage(key, params) : ActionsDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
   public static @NlsActions.ActionText String actionText(@NonNls String actionId) {

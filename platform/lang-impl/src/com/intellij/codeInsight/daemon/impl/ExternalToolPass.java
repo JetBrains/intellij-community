@@ -3,7 +3,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author ven
@@ -100,7 +103,15 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     setProgressLimit(externalAnnotatorsInRoots);
 
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    Function<InspectionProfileImpl, InspectionProfileWrapper> custom = myFile.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    InspectionProfile profile;
+    if (custom != null) {
+      profile = custom.apply(currentProfile).getInspectionProfile();
+    }
+    else {
+      profile = currentProfile;
+    }
     boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument);
     Editor editor = getEditor();
 

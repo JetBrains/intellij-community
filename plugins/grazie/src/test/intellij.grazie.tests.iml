@@ -101,6 +101,16 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.languagetool:language-it:5.4" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.4" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.4/language-it-5.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />

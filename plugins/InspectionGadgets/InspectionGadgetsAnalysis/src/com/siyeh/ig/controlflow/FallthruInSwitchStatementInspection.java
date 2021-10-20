@@ -70,11 +70,10 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
-      String value = "";
-      if (switchBlock instanceof PsiSwitchExpression) {
-        value = " " + PsiTypesUtil.getDefaultValueOfType(((PsiSwitchExpression)switchBlock).getType()) + " ";
-      }
-      final PsiStatement breakStatement = factory.createStatementFromText("break" + value + ";", labelStatement);
+      String stmt = switchBlock instanceof PsiSwitchExpression 
+                    ? "yield " + PsiTypesUtil.getDefaultValueOfType(((PsiSwitchExpression)switchBlock).getType()) + ";" 
+                    : "break;";
+      final PsiStatement breakStatement = factory.createStatementFromText(stmt, labelStatement);
       final PsiElement parent = labelStatement.getParent();
       parent.addBefore(breakStatement, labelStatement);
     }

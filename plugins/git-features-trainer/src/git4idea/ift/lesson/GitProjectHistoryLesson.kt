@@ -21,7 +21,6 @@ import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
@@ -34,7 +33,7 @@ import java.awt.Rectangle
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "git/sphinx_cat.yml"
-  private val branchName = "feature"
+  override val branchName = "feature"
   private val textToFind = "sphinx"
 
   private var showGitBranchesBackup: Boolean? = null
@@ -42,8 +41,6 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch("feature")
-
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.project.history.open.git.window", action(it)))
       stateCheck {

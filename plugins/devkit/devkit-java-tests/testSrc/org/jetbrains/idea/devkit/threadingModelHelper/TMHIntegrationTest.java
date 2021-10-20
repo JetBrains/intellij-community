@@ -30,9 +30,8 @@ import java.util.concurrent.*;
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
-  private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from event dispatch thread with IW lock only.";
-  private static final String READ_ACCESS_ASSERTION_MESSAGE =
-    "Read access is allowed from inside read-action (or EDT) only";
+  private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from event dispatch thread only";
+  private static final String READ_ACCESS_ASSERTION_MESSAGE = "Read access is allowed from inside read-action (or EDT) only";
   private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
   private static final String NON_READ_ACCESS_ASSERTION_MESSAGE = "Read access is not allowed";
 

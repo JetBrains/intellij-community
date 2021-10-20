@@ -18,10 +18,6 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
     doVisitFile(requirementsFile, mutableSetOf(requirementsFile.virtualFile))
     val currentFileOutput = collectedOutput.remove(requirementsFile.virtualFile)!!
 
-    importedPackages.values.asSequence()
-      .map { if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name }
-      .forEach { currentFileOutput.add(it) }
-
     return PyRequirementsAnalysisResult(currentFileOutput, collectedOutput, unmatchedLines, unchangedInBaseFiles)
   }
 

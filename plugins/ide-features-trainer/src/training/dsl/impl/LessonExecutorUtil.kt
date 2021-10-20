@@ -93,7 +93,7 @@ internal object LessonExecutorUtil {
       it.background = Color(0, true)
       it.putClientProperty("gotItButton", true)
       it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
-      it.foreground = UISettings.instance.tooltipTextColor
+      it.foreground = UISettings.instance.tooltipButtonForegroundColor
       it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
@@ -114,7 +114,7 @@ internal object LessonExecutorUtil {
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setFillColor(UISettings.instance.tooltipBackgroundColor)
-      .setBorderColor(UISettings.instance.tooltipBackgroundColor)
+      .setBorderColor(UISettings.instance.tooltipBorderColor)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
       .createBalloon()
@@ -209,6 +209,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
                                                                   highlightBorder: Boolean,
                                                                   highlightInside: Boolean,
                                                                   usePulsation: Boolean,
+                                                                  clearPreviousHighlights: Boolean,
                                                                   selector: ((candidates: Collection<T>) -> T?)?,
                                                                   rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     hasDetection = true
@@ -219,6 +220,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
                                                                                 highlightBorder: Boolean,
                                                                                 highlightInside: Boolean,
                                                                                 usePulsation: Boolean,
+                                                                                clearPreviousHighlights: Boolean,
                                                                                 selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                                                                 finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     hasDetection = true

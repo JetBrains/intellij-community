@@ -352,7 +352,15 @@ final class ActionUpdater {
     if (!myPreCacheSlowDataKeys) return;
     long start = System.currentTimeMillis();
     for (DataKey<?> key : DataKey.allKeys()) {
-      myDataContext.getData(key);
+      try {
+        myDataContext.getData(key);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
+      }
+      catch (Throwable ex) {
+        LOG.error(ex);
+      }
     }
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
@@ -629,8 +637,8 @@ final class ActionUpdater {
     }
     boolean nestedWA = reason instanceof String && ((String)reason).startsWith("nested write-action");
     if (nestedWA) {
-      LOG.error(new IllegalStateException(
-        "An action must not request write-action during actions update. See CustomComponentAction.createCustomComponent javadoc."));
+      LOG.error(new AssertionError("An action must not request write-action during actions update. " +
+                                   "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
       ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));

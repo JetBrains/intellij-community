@@ -8,17 +8,26 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,6 +142,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   private class FormattingRequestImpl implements AsyncFormattingRequest {
+    private final static String TEMP_FILE_PREFIX = "ij-format-temp";
+
     private final Document          myDocument;
     private final List<TextRange>   myRanges;
     private final long              myInitialModificationStamp;
@@ -156,6 +167,39 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myInitialModificationStamp = document.getModificationStamp();
       myQuickFormat = quickFormat;
+      FileDocumentManager.getInstance().saveDocument(myDocument);
+    }
+
+    @Override
+    public @Nullable File getIOFile() {
+      VirtualFile originalFile = myContext.getVirtualFile();
+      String ext;
+      Charset charset;
+      if (originalFile != null) {
+        if (originalFile.isInLocalFileSystem()) {
+          Path localPath = originalFile.getFileSystem().getNioPath(originalFile);
+          if (localPath != null) {
+            return localPath.toFile();
+          }
+        }
+        ext = originalFile.getExtension();
+        charset = originalFile.getCharset();
+      }
+      else {
+        ext = "";
+        charset = EncodingManager.getInstance().getDefaultCharset();
+      }
+      try {
+        File tempFile = FileUtilRt.createTempFile(TEMP_FILE_PREFIX, "." + ext, true);
+        try (FileWriter writer = new FileWriter(tempFile, charset)) {
+          writer.write(getDocumentText());
+        }
+        return tempFile;
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        return null;
+      }
     }
 
     @Override

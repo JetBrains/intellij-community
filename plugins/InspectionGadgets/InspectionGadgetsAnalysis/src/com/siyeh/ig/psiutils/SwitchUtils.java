@@ -337,6 +337,27 @@ public final class SwitchUtils {
     }
   }
 
+  /**
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (switchLabelStatement == null) continue;
+      if (switchLabelStatement.isDefaultCase()) return switchLabelStatement;
+      PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      PsiCaseLabelElement defaultElement = ContainerUtil.find(labelElementList.getElements(),
+                                                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
+      if (defaultElement != null) return defaultElement;
+    }
+    return null;
+  }
+
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression) {

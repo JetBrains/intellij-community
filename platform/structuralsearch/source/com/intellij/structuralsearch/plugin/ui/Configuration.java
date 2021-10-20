@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -99,8 +100,9 @@ public abstract class Configuration implements JDOMExternalizable {
   @NotNull @Nls
   public String getTypeText() {
     final LanguageFileType type = getFileType();
-    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", type.getLanguage().getDisplayName())
-                          : SSRBundle.message("predefined.configuration.type.text.user.defined", type.getLanguage().getDisplayName());
+    final String name = type == null ? CoreBundle.message("filetype.unknown.display.name") : type.getLanguage().getDisplayName();
+    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", name)
+                          : SSRBundle.message("predefined.configuration.type.text.user.defined", name);
   }
 
   @NotNull
@@ -267,9 +269,10 @@ public abstract class Configuration implements JDOMExternalizable {
   @NotNull
   public Icon getIcon() {
     final LanguageFileType type = getFileType();
-    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Any_type : type.getIcon();
+    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Unknown : type.getIcon();
   }
 
+  @Nullable
   public LanguageFileType getFileType() {
     return getMatchOptions().getFileType();
   }

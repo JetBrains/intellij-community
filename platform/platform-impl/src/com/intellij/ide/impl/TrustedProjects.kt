@@ -7,6 +7,7 @@ package com.intellij.ide.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
@@ -16,7 +17,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
@@ -30,7 +30,7 @@ fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
   projectTypeNames: List<String>,
 ): OpenUntrustedProjectChoice {
-  val systemsPresentation: String = StringUtil.naturalJoin(projectTypeNames)
+  val systemsPresentation: String = NlsMessages.formatAndList(projectTypeNames)
   return confirmOpeningUntrustedProject(
     virtualFile,
     IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),

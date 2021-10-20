@@ -145,8 +145,11 @@ internal class RootsChangeWatcher(val project: Project) {
         val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
         calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
         virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
-        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) } && virtualFileUrl.url !in projectFilePaths) return
-        result = calculateRootsChangeType(result, currentRootsChangeType)
+
+        if (affectedEntities.any { it.propertyName != "entitySource" && shouldFireRootsChanged(it.entity, project) }
+            || virtualFileUrl.url in projectFilePaths) {
+          result = calculateRootsChangeType(result, currentRootsChangeType)
+        }
       }
 
       private fun isRootChangeForbidden(): Boolean {

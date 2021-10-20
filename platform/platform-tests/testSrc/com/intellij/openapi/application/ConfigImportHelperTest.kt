@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableNotNullBiFunction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
@@ -428,5 +429,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cachesAndLogs = result.paths.map { result.findRelatedDirectories(it, true) }.filter { it.isNotEmpty() }
     assertThat(cachesAndLogs).containsExactlyInAnyOrder(
       cachesAndLogs193, listOf(sys202), cachesAndLogs203)
+  }
+
+  @Test fun `default project directory is excluded`() {
+    val defaultProjectPath = "${SystemProperties.getUserHome()}/PhpstormProjects"
+    Files.createDirectories(memoryFs.fs.getPath(defaultProjectPath))
+    val current = createConfigDir("2021.2", product = "PhpStorm")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
   }
 }
