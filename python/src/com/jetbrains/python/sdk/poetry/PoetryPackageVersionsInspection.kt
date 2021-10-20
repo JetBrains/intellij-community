@@ -15,7 +15,7 @@ import org.toml.lang.psi.*
  *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PoetryVersionInspection : LocalInspectionTool() {
+class PoetryPackageVersionsInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
