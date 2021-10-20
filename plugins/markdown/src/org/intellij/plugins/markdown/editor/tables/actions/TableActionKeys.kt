@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables.actions
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import java.lang.ref.WeakReference
@@ -24,9 +25,15 @@ internal object TableActionKeys {
   }
 
   fun createActionToolbar(group: ActionGroup, isHorizontal: Boolean, editor: Editor, dataProvider: DataProvider? = null): ActionToolbar {
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_POPUP, group, isHorizontal)
+    val actionToolbar = object: ActionToolbarImpl(ActionPlaces.EDITOR_POPUP, group, isHorizontal) {
+      override fun addNotify() {
+        super.addNotify()
+        updateActionsImmediately(true)
+      }
+    }
     val dataContextComponent = dataProvider?.let { createDataContextWrapperComponent(editor.contentComponent, dataProvider) }
     actionToolbar.targetComponent = dataContextComponent
+    actionToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     actionToolbar.adjustTheSameSize(true)
     actionToolbar.setReservePlaceAutoPopupIcon(false)
     return actionToolbar
