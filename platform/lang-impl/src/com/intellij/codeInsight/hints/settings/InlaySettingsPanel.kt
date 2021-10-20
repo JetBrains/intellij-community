@@ -24,6 +24,7 @@ import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
 
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
@@ -127,7 +128,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       val caseNode = object: CheckedTreeNode(it) {
         override fun setChecked(checked: Boolean) {
           super.setChecked(checked)
-          it.value = checked
+//          it.value = checked
         }
       }
       node.add(caseNode)
@@ -220,11 +221,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun reset(node: CheckedTreeNode, settings: InlayHintsSettings) {
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        resetNode(node, isModelEnabled(item, settings))
         item.reset()
+        resetNode(node, isModelEnabled(item, settings))
       }
       is ImmediateConfigurable.Case -> {
-        resetNode(node, item.value && settings.hintsEnabledGlobally())
+        resetNode(node, isCaseEnabled(item, node.parent, settings))
       }
       is Language -> {
         resetNode(node, isLanguageEnabled(settings, item))
@@ -237,6 +238,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }
   }
+
+  private fun isCaseEnabled(item: ImmediateConfigurable.Case,
+                            parent: TreeNode,
+                            settings: InlayHintsSettings) = item.value && ((parent as CheckedTreeNode).userObject as InlayProviderSettingsModel).isEnabled && settings.hintsEnabledGlobally()
 
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
     return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
@@ -260,6 +265,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
+    node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
         item.isEnabled = node.isChecked
@@ -278,7 +284,6 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         enableHintsForLanguage(item, settings, node)
       }
     }
-    node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
   }
 
   private fun enableHintsForLanguage(language: Language, settings: InlayHintsSettings, node: CheckedTreeNode) {
@@ -294,11 +299,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        if ((node.isChecked != isModelEnabled(item, settings)) || settings.hintsEnabledGlobally() && item.isModified())
+        if ((node.isChecked != isModelEnabled(item, settings)))
           return true
       }
       is ImmediateConfigurable.Case -> {
-        if (node.isChecked && !settings.hintsEnabledGlobally()) {
+        if (node.isChecked != isCaseEnabled(item, node.parent, settings)) {
           return true
         }
       }
