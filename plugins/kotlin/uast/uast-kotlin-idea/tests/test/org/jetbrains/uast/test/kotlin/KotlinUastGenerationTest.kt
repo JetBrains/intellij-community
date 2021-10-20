@@ -519,7 +519,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         ) as KtFile
 
-        val reference = file.findUElementByTextFromPsi<UElement>("println(a)")
+        val reference = file.findUElementByTextFromPsi<UElement>("println(a)", strict = true)
             .findElementByTextFromPsi<UReferenceExpression>("a")
 
         val callExpression = uastElementFactory.createCallExpression(
