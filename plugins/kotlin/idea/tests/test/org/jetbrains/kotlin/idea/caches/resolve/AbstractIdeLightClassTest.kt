@@ -53,7 +53,12 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
             else -> error("Invalid test data extension")
         }
 
-        withCustomCompilerOptions(File(testDataPath, fileName).readText(), project, module) {
+        val fileText = File(testDataPath, fileName).readText()
+        if (InTextDirectivesUtils.isDirectiveDefined(fileText, "SKIP_IDE_TEST")) {
+            return
+        }
+
+        withCustomCompilerOptions(fileText, project, module) {
             val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
             val lazinessMode = lazinessModeByFileText()
             myFixture.configureByFiles(*testFiles.toTypedArray())
@@ -90,7 +95,7 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
 
     open val fileExtension = ".kt"
 }
@@ -105,7 +110,7 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
         val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
             ?: error("Test file not found!")
 
-        val extraClasspath = mutableListOf(KotlinArtifacts.instance.jetbrainsAnnotations)
+        val extraClasspath = mutableListOf(KotlinArtifacts.instance.jetbrainsAnnotations, KotlinArtifacts.instance.kotlinStdlibJdk8)
         if (testFile.extension == "kts") {
             extraClasspath += KotlinArtifacts.instance.kotlinScriptRuntime
         }

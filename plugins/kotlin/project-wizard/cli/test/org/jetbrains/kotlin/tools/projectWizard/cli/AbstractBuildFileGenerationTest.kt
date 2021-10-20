@@ -6,7 +6,6 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.wizard.Wizard
 import java.nio.file.Files
@@ -48,8 +47,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
             if (testParameters.keepKotlinVersion) {
                 fileContent
             } else {
-                val pluginVersion = wizard.context.read { KotlinPlugin.version.propertyValue.version.toString() }
-                fileContent.replace(pluginVersion, KOTLIN_VERSION_PLACEHOLDER)
+                fileContent.replace(KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString(), KOTLIN_VERSION_PLACEHOLDER)
             }.also { it.replaceAllTo(
                 listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
                 KOTLIN_REPO_PLACEHOLDER
