@@ -135,6 +135,7 @@ public final class MavenServerManager implements Disposable {
         connector.connect();
       }
     }
+    MavenLog.LOG.debug("[connector] get " + connector);
     return connector;
   }
 
@@ -147,7 +148,7 @@ public final class MavenServerManager implements Disposable {
       if (connector != null) return connector;
       connector = findCompatibleConnector(project, jdk, multimoduleDirectory);
       if (connector != null) {
-        MavenLog.LOG.info("[connector] use existing connector for " + connector);
+        MavenLog.LOG.debug("[connector] use existing connector for " + connector);
         connector.addMultimoduleDir(multimoduleDirectory);
       }
       else {
@@ -184,7 +185,7 @@ public final class MavenServerManager implements Disposable {
     MavenServerConnector connector;
     if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
-      MavenLog.LOG.info("[connector] new maven connector " + connector);
+      MavenLog.LOG.debug("[connector] new maven connector " + connector);
     }
     else {
       MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
