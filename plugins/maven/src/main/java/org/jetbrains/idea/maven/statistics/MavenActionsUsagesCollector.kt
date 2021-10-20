@@ -16,7 +16,7 @@ class MavenActionsUsagesCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.actions", 2)
+    private val GROUP = EventLogGroup("build.maven.actions", 3)
     private val EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
     private val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
