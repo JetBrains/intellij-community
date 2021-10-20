@@ -30,6 +30,7 @@ NSString* minRequiredJavaVersion = @"1.8";
 
 @interface NSDictionary (TypedGetters)
 - (NSDictionary *)dictionaryForKey:(id)key;
+- (NSArray *)arrayForKey:(id)key;
 - (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject:(NSString *)defaultValue;
 @end
 
@@ -40,6 +41,11 @@ NSString* minRequiredJavaVersion = @"1.8";
         return answer;
     }
     return nil;
+}
+
+- (NSArray *)arrayForKey:(id)key {
+    id answer = self[key];
+    return [answer isKindOfClass:[NSArray class]] ? answer : nil;
 }
 
 - (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject: (NSString*) defaultValue {
@@ -403,7 +409,12 @@ NSString *getOverridePropertiesPath() {
     return [[NSProcessInfo processInfo] environment][variable];
 }
 
-- (void)fillArgs:(NSMutableArray *)args_array fromProperties:(NSDictionary *)properties {
+- (void)fillArgs:(NSMutableArray *)args_array fromOptions:(NSArray *)options fromProperties:(NSDictionary *)properties {
+    if (options != nil) {
+        for (id value in options) {
+            [args_array addObject:value];
+        }
+    }
     if (properties != nil) {
         for (id key in properties) {
             [args_array addObject:[NSString stringWithFormat:@"-D%@=%@", key, properties[key]]];
@@ -429,7 +440,7 @@ NSString *getOverridePropertiesPath() {
         [args_array addObject:[NSString stringWithFormat:@"-Didea.properties.file=%@", properties]];
     }
 
-    [self fillArgs:args_array fromProperties:[jvmInfo dictionaryForKey:@"Properties"]];
+    [self fillArgs:args_array fromOptions:[jvmInfo arrayForKey:@"Options"] fromProperties:[jvmInfo dictionaryForKey:@"Properties"]];
 
     JavaVMInitArgs args;
     args.version = JNI_VERSION_1_6;
