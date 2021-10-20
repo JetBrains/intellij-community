@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
@@ -25,6 +26,7 @@ public class Touchbar {
   // setActions
 
   public static void setActions(@NotNull JComponent component, @Nullable ActionGroup group) {
+    if (ApplicationManager.getApplication() == null) return;
     ComponentUtil.putClientProperty(component, ACTION_GROUP_KEY, group);
   }
   public static void setActions(@NotNull JComponent component, @Nullable AnAction action) {
@@ -53,6 +55,8 @@ public class Touchbar {
                                       Collection<JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
+    if (ApplicationManager.getApplication() == null) return;
+
     final DefaultActionGroup result = new DefaultActionGroup();
     if (buttons != null) {
       result.add(buildActionsFromButtons(buttons, defaultButton, false));
