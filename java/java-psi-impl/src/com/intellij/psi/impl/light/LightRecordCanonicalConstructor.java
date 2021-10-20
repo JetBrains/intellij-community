@@ -21,6 +21,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
   }
 
   @Override
+  public PsiElement getParent() {
+    return getContainingClass();
+  }
+
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return getContainingClass().getNameIdentifier();
   }
