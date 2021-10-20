@@ -484,7 +484,6 @@
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
-    <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
   <action id="ChangesView.SetDefault">
