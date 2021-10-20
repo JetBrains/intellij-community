@@ -30,7 +30,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = asCompilerRefs(element, names)?.singleOrNull()
     override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? =
         when (val originalElement = element.unwrapped) {
-            is KtClass -> originalElement.asCompilerRef(names)?.let(::listOf)
+            is KtClass -> originalElement.asClassCompilerRef(names)?.let(::listOf)
             is KtObjectDeclaration -> originalElement.asCompilerRefs(names)
             is KtConstructor<*> -> originalElement.asCompilerRef(names)
             is KtCallableDeclaration -> originalElement.asCompilerRefs(names)
@@ -74,21 +74,26 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             }
         }
 
-    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef.CompilerClassHierarchyElementDef? =
+    private fun KtClassOrObject.asClassCompilerRef(names: NameEnumerator): CompilerRef.CompilerClassHierarchyElementDef? =
         qualifierId(names)?.let(CompilerRef::JavaCompilerClassRef)
 
     private fun KtClassOrObject.qualifierId(names: NameEnumerator): Int? = jvmFqName?.let(names::tryEnumerate)
 
     private fun KtObjectDeclaration.asCompilerRefs(names: NameEnumerator): List<CompilerRef.NamedCompilerRef>? {
-        val asClassRef = asCompilerRef(names)?.let(::listOf) ?: return null
+        val classCompilerRef = asClassCompilerRef(names) ?: return null
+        val instanceField = if (isCompanion()) {
+            asCompanionCompilerRef(names)
+        } else {
+            CompilerRef.JavaCompilerFieldRef(classCompilerRef.name, names.tryEnumerate("INSTANCE"))
+        }
 
-        if (!isCompanion()) return asClassRef
-        val name = name ?: return asClassRef
-        val qualifierId = containingClassOrObject?.qualifierId(names) ?: return asClassRef
-        return asClassRef + CompilerRef.JavaCompilerFieldRef(
-            qualifierId,
-            names.tryEnumerate(name),
-        )
+        return listOfNotNull(classCompilerRef, instanceField)
+    }
+
+    private fun KtObjectDeclaration.asCompanionCompilerRef(names: NameEnumerator): CompilerRef.NamedCompilerRef? {
+        val name = name ?: return null
+        val qualifierId = containingClassOrObject?.qualifierId(names) ?: return null
+        return CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name))
     }
 
     private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): List<CompilerRef.CompilerMember>? {
