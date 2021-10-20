@@ -88,16 +88,14 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
         isDefault = false;
       }
       ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
-      //it means that user disable it manually - no need update
-      if (moduleProfile != null && !moduleProfile.isEnabled()) return;
 
       if (moduleProfile == null) {
         moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
+        moduleProfile.setEnabled(true);
         compilerConfiguration.addModuleProcessorProfile(moduleProfile);
       }
 
       moduleProfile.setOutputRelativeToContentRoot(true);
-      moduleProfile.setEnabled(true);
       moduleProfile.setObtainProcessorsFromClasspath(true);
       moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
       moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
