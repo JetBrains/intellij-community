@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 @ApiStatus.Internal
@@ -50,10 +53,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     if (hint != null || !canBeShownAtCurrentSelection()) {
       return
     }
-    val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
-    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
-    toolbar.targetComponent = editor.contentComponent
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    val toolbar = createActionToolbar(editor.contentComponent)
     buttonSize = toolbar.maxButtonHeight
 
     val newHint = LightweightHint(toolbar.component)
@@ -72,6 +72,19 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     unregisterListeners()
     hideIfShown()
     hint = null
+  }
+
+  private fun createActionToolbar(targetComponent: JComponent): ActionToolbar {
+    val group = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
+    val toolbar = object: ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, group, true) {
+      override fun addNotify() {
+        super.addNotify()
+        updateActionsImmediately(true)
+      }
+    }
+    toolbar.targetComponent = targetComponent
+    toolbar.setReservePlaceAutoPopupIcon(false)
+    return toolbar
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
