@@ -81,4 +81,6 @@ class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallEx
     }
     return expr as? PsiMethodCallExpression
   }
+
+  override val key: SettingsKey<Settings> = SettingsKey("chain.hints")
 }
