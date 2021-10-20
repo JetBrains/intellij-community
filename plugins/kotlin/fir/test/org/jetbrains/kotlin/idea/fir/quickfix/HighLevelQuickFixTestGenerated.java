@@ -1464,6 +1464,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/removeRedundantSpreadOperator")
+    public static class RemoveRedundantSpreadOperator extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/quickfix/removeRedundantSpreadOperator/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall")
     public static class ReplaceInfixOrOperatorCall extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1538,6 +1551,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/list.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation")
+    public static class ReplaceWithArrayCallInAnnotation extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("emptyLiteral.kt")
+        public void testEmptyLiteral() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation/emptyLiteral.kt");
+        }
+
+        @TestMetadata("literalWithValues.kt")
+        public void testLiteralWithValues() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation/literalWithValues.kt");
+        }
+
+        @TestMetadata("replaceForbiddenAssignmentWithArrayLiteral.kt")
+        public void testReplaceForbiddenAssignmentWithArrayLiteral() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation/replaceForbiddenAssignmentWithArrayLiteral.kt");
+        }
+
+        @TestMetadata("replaceSingleElementInNamedForm.kt")
+        public void testReplaceSingleElementInNamedForm() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation/replaceSingleElementInNamedForm.kt");
+        }
+
+        @TestMetadata("replaceSingleElementInNamedForm_1_2.kt")
+        public void testReplaceSingleElementInNamedForm_1_2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithArrayCallInAnnotation/replaceSingleElementInNamedForm_1_2.kt");
         }
     }
 
