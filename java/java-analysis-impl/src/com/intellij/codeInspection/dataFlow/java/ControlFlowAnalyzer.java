@@ -6,7 +6,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer.PatternInSwitchEmitter.PatternInInstanceofEmitter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
@@ -1028,7 +1027,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 }
               }
               else if (expressionValue != null && targetType != null && labelElement instanceof PsiPattern) {
-                new PatternInSwitchEmitter(this, ((PsiPattern)labelElement), expressionValue, targetType).emit();
+                processPatternInSwitch(((PsiPattern)labelElement), expressionValue, targetType);
                 addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
               }
             }
@@ -1054,6 +1053,86 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (syntheticVar && expressionValue != null) {
       addInstruction(new FlushVariableInstruction(expressionValue));
+    }
+  }
+
+  private void processPatternInSwitch(@NotNull PsiPattern pattern, @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
+    processPattern(pattern, pattern, expressionValue, checkType, null, new SmartList<>());
+    addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
+  }
+
+  private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
+                                          @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
+    boolean instanceofCanBePotentiallyRedundant = pattern instanceof PsiTypeTestPattern ||
+                                                  JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern;
+    DfaAnchor instanceofAnchor = instanceofCanBePotentiallyRedundant ? new JavaExpressionAnchor(expression) : null;
+    processPattern(pattern, pattern, expressionValue, checkType, instanceofAnchor, new SmartList<>());
+    if (!instanceofCanBePotentiallyRedundant) {
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
+    }
+  }
+
+  private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
+                              @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType,
+                              @Nullable DfaAnchor instanceofAnchor, @NotNull List<DeferredOffset> deferredOffsets) {
+    if (innerPattern == null) return;
+    if (innerPattern instanceof PsiGuardedPattern) {
+      PsiPrimaryPattern primaryPattern = ((PsiGuardedPattern)innerPattern).getPrimaryPattern();
+      processPattern(sourcePattern, primaryPattern, expressionValue, checkType, instanceofAnchor, deferredOffsets);
+      PsiExpression expression = ((PsiGuardedPattern)innerPattern).getGuardingExpression();
+      if (expression != null) {
+        expression.accept(this);
+      }
+      DeferredOffset condGotoOffset = new DeferredOffset();
+      addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
+
+      addInstruction(new PushValueInstruction(DfTypes.FALSE));
+      DeferredOffset gotoInstrOffset = new DeferredOffset();
+      addInstruction(new GotoInstruction(gotoInstrOffset));
+      deferredOffsets.add(gotoInstrOffset);
+
+      condGotoOffset.setOffset(getInstructionCount());
+    }
+    else if (innerPattern instanceof PsiParenthesizedPattern) {
+      PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
+      processPattern(sourcePattern, unwrappedPattern, expressionValue, checkType, instanceofAnchor, deferredOffsets);
+    }
+    else if (innerPattern instanceof PsiTypeTestPattern) {
+      PsiPatternVariable variable = ((PsiTypeTestPattern)innerPattern).getPatternVariable();
+      if (variable == null) return;
+
+      addInstruction(new JvmPushInstruction(expressionValue, null));
+
+      DeferredOffset condGotoOffset = null;
+      if (!JavaPsiPatternUtil.isTotalForType(sourcePattern, checkType)) {
+        addInstruction(new DupInstruction());
+        addInstruction(new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(innerPattern), Nullability.NOT_NULL)));
+
+        addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+
+        condGotoOffset = new DeferredOffset();
+        addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
+
+        addInstruction(new PopInstruction());
+        addInstruction(new PushValueInstruction(DfTypes.FALSE));
+        DeferredOffset gotoInstrOffset = new DeferredOffset();
+        addInstruction(new GotoInstruction(gotoInstrOffset));
+        deferredOffsets.add(gotoInstrOffset);
+      }
+
+      DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
+      SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
+      addInstruction(assignmentInstr);
+      if (condGotoOffset != null) {
+        condGotoOffset.setOffset(assignmentInstr.getIndex());
+      }
+    }
+
+    if (sourcePattern == innerPattern) {
+      addInstruction(new PushValueInstruction(DfTypes.TRUE));
+      for (DeferredOffset offset : deferredOffsets) {
+        offset.setOffset(getInstructionCount());
+      }
     }
   }
 
@@ -1635,7 +1714,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiTypeElement checkType = expression.getCheckType();
     CFGBuilder builder = new CFGBuilder(this);
     DfaVariableValue expressionValue;
-    if (pattern == null) {
+    PsiPatternVariable patternVariable = pattern == null ? null : JavaPsiPatternUtil.getPatternVariable(pattern);
+    if (patternVariable == null) {
       if (checkType == null) {
         pushUnknown();
       }
@@ -1643,33 +1723,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         buildSimpleInstanceof(builder, expression, operand, checkType);
       }
     }
-    else {
-      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
-      if (patternVariable == null) {
-        if (checkType == null) {
-          pushUnknown();
-        }
-        else {
-          buildSimpleInstanceof(builder, expression, operand, checkType);
-        }
-      }
-      else if (operandType != null) {
-        DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-        if (expr instanceof DfaVariableValue) {
-          expressionValue = (DfaVariableValue)expr;
-        }
-        else {
-          expressionValue = createTempVariable(operand.getType());
-          builder
-            .pushForWrite(expressionValue)
-            .pushExpression(operand)
-            .assign();
-        }
-        new PatternInInstanceofEmitter(this, pattern, expressionValue, operandType, expression).emit();
+    else if (operandType != null) {
+      DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
+      if (expr instanceof DfaVariableValue) {
+        expressionValue = (DfaVariableValue)expr;
       }
       else {
-        pushUnknown();
+        expressionValue = createTempVariable(operand.getType());
+        builder
+          .pushForWrite(expressionValue)
+          .pushExpression(operand)
+          .assign();
       }
+      processPatternInInstanceof(pattern, expression, expressionValue, operandType);
+    }
+    else {
+      pushUnknown();
     }
 
     finishElement(expression);
@@ -2328,134 +2397,4 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner(), new EnumCompareInliner()
   };
-
-  static class PatternInSwitchEmitter {
-    final ControlFlowAnalyzer myAnalyzer;
-    final PsiPattern myPattern;
-    private final DfaVariableValue myExpressionValue;
-    private final PsiType myCheckType;
-
-    private PatternInSwitchEmitter(@NotNull ControlFlowAnalyzer analyzer, @NotNull PsiPattern pattern,
-                                   @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
-      myAnalyzer = analyzer;
-      myPattern = pattern;
-      myExpressionValue = expressionValue;
-      myCheckType = checkType;
-    }
-
-    void emit() {
-      processPattern(myPattern, new SmartList<>());
-      myAnalyzer.addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(myPattern)));
-    }
-
-    void processPattern(@Nullable PsiPattern innerPattern, @NotNull List<DeferredOffset> deferredOffsets) {
-      if (innerPattern == null) return;
-      if (innerPattern instanceof PsiGuardedPattern) {
-        PsiPrimaryPattern primaryPattern = ((PsiGuardedPattern)innerPattern).getPrimaryPattern();
-        processPattern(primaryPattern, deferredOffsets);
-        PsiExpression expression = ((PsiGuardedPattern)innerPattern).getGuardingExpression();
-        if (expression != null) {
-          expression.accept(myAnalyzer);
-        }
-        DeferredOffset condGotoOffset = new DeferredOffset();
-        myAnalyzer.addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-        myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.FALSE));
-        DeferredOffset gotoInstrOffset = new DeferredOffset();
-        myAnalyzer.addInstruction(new GotoInstruction(gotoInstrOffset));
-        deferredOffsets.add(gotoInstrOffset);
-
-        condGotoOffset.setOffset(myAnalyzer.getInstructionCount());
-      }
-      else if (innerPattern instanceof PsiParenthesizedPattern) {
-        PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
-        processPattern(unwrappedPattern, deferredOffsets);
-      }
-      else if (innerPattern instanceof PsiTypeTestPattern) {
-        PsiPatternVariable variable = ((PsiTypeTestPattern)innerPattern).getPatternVariable();
-        if (variable == null) return;
-
-        myAnalyzer.addInstruction(new JvmPushInstruction(myExpressionValue, null));
-
-        DeferredOffset condGotoOffset = null;
-        if (!isTotalPattern()) {
-          myAnalyzer.addInstruction(new DupInstruction());
-          myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(innerPattern), Nullability.NOT_NULL)));
-
-          addInstanceofInstruction();
-
-          condGotoOffset = new DeferredOffset();
-          myAnalyzer.addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-          myAnalyzer.addInstruction(new PopInstruction());
-          myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.FALSE));
-          DeferredOffset gotoInstrOffset = new DeferredOffset();
-          myAnalyzer.addInstruction(new GotoInstruction(gotoInstrOffset));
-          deferredOffsets.add(gotoInstrOffset);
-        }
-
-        DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(myAnalyzer.getFactory(), variable);
-        JvmPushInstruction pushInstr = new JvmPushInstruction(patternDfaVar, null, true);
-        myAnalyzer.addInstruction(pushInstr);
-        if (condGotoOffset != null) {
-          condGotoOffset.setOffset(pushInstr.getIndex());
-        }
-
-        myAnalyzer.addInstruction(new SwapInstruction());
-        myAnalyzer.addInstruction(new AssignInstruction(null, null));
-      }
-
-      if (myPattern == innerPattern) {
-        myAnalyzer.addInstruction(new PushValueInstruction(DfTypes.TRUE));
-        for (DeferredOffset offset : deferredOffsets) {
-          offset.setOffset(myAnalyzer.getInstructionCount());
-        }
-      }
-    }
-
-    boolean isTotalPattern() {
-      return JavaPsiPatternUtil.isTotalForType(myPattern, myCheckType);
-    }
-
-    void addInstanceofInstruction() {
-      myAnalyzer.addInstruction(new InstanceofInstruction(null, false));
-    }
-
-    static class PatternInInstanceofEmitter extends PatternInSwitchEmitter {
-      private final PsiInstanceOfExpression myExpression;
-      private final boolean myInstanceofCanBePotentiallyRedundant;
-
-      private PatternInInstanceofEmitter(@NotNull ControlFlowAnalyzer analyzer, @NotNull PsiPattern pattern,
-                                         @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType,
-                                         @NotNull PsiInstanceOfExpression expression) {
-        super(analyzer, pattern, expressionValue, checkType);
-        myExpression = expression;
-        myInstanceofCanBePotentiallyRedundant = pattern instanceof PsiTypeTestPattern ||
-                                                JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern;
-      }
-
-      @Override
-      void emit() {
-        processPattern(myPattern, new SmartList<>());
-        if (!myInstanceofCanBePotentiallyRedundant) {
-          myAnalyzer.addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(myExpression)));
-        }
-      }
-
-      @Override
-      void addInstanceofInstruction() {
-        if (myInstanceofCanBePotentiallyRedundant) {
-          myAnalyzer.addInstruction(new InstanceofInstruction(new JavaExpressionAnchor(myExpression), false));
-        }
-        else {
-          super.addInstanceofInstruction();
-        }
-      }
-
-      @Override
-      boolean isTotalPattern() {
-        return false;
-      }
-    }
-  }
 }
