@@ -88,6 +88,7 @@ fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T {
   return runUnderIndicator(coroutineContext.job, coroutineContext.progressSink, action)
 }
 
+@OptIn(InternalCoroutinesApi::class)
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
 internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
