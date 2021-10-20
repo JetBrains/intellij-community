@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 
-class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWizardService {
+open class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         if (projectKind == ProjectKind.COMPOSE) {
             return kotlinVersionWithDefaultValues(Versions.KOTLIN_VERSION_FOR_COMPOSE)
