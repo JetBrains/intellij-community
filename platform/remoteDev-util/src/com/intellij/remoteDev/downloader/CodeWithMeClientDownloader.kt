@@ -54,7 +54,7 @@ object CodeWithMeClientDownloader {
 
   private const val extractDirSuffix = "-ide"
 
-  const val gatewayTestsInstallersDirProperty = "intellij.cwm.tests.remoteDev.gateway.idea.tar.gz.dir"
+  const val gatewayTestsCwmGuestDownloadLocationProperty = "intellij.cwm.tests.remoteDev.gateway.cwm.guest.download.location"
   const val gatewayTestsX11DisplayProperty = "intellij.cwm.tests.remoteDev.gateway.x11.display"
   const val cwmTestsGuestCachesSystemProperty = "codeWithMe.tests.guest.caches.dir"
   const val DEFAULT_GUEST_CACHES_DIR_NAME = "JetBrainsClientDist"
@@ -66,8 +66,11 @@ object CodeWithMeClientDownloader {
   val cwmGuestManifestFilter: (Path) -> Boolean = { !isJbrSymlink(it) && !it.isDirectory() }
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() }
 
+  private val DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION
+    get() = System.getProperty(gatewayTestsCwmGuestDownloadLocationProperty)?.let { URI(it) }
+            ?: URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
+
   // todo: make it configurable.... for enterprise?
-  private val DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
   private val DEFAULT_JRE_DOWNLOAD_LOCATION = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
 
   private data class DownloadableFileData(
@@ -159,6 +162,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
     val clientJdkDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
+    LOG.info("Downloading from $clientJdkDownloadUrl")
     val jdkBuild = HttpRequests
       .request(clientJdkDownloadUrl)
       .readString(jdkBuildProgressIndicator)
@@ -285,62 +289,36 @@ object CodeWithMeClientDownloader {
             return@execute
           }
 
-          val testInstallersDir = System.getProperty(gatewayTestsInstallersDirProperty)?.let { Path.of(it) }
-          val usePreparedArchive = testInstallersDir != null && !data.archivePath.fileName.pathString.contains("jbr")
           val downloadingDataProgressIndicator = dataProgressIndicator.createSubProgress(0.5)
 
           try {
-            if (usePreparedArchive) {
-              fun getPreparedGuestArchive(): Path {
-                val archiveName = data.archivePath.name
-
-                // CodeWithMeGuest-213.SNAPSHOT.tar.gz
-                val localArchive = testInstallersDir!! / archiveName
-                if (localArchive.exists()) return localArchive
-
-                // CodeWithMeGuest-213.2626-no-jbr.tar.gz
-                val teamcityArchive = testInstallersDir / archiveName.replace(".tar.gz", "-no-jbr.tar.gz")
-                if (teamcityArchive.exists()) return teamcityArchive
-
-                error("No archive with guest was prepared while the $gatewayTestsInstallersDirProperty is set, " +
-                      "please build it manually and put at ${localArchive.absolutePathString()} or ${teamcityArchive.absolutePathString()}")
-              }
-
-              val preparedGuestArchive = getPreparedGuestArchive()
-              LOG.warn("Using prepared archive from ${preparedGuestArchive.absolutePathString()}")
-
-              preparedGuestArchive.copy(data.archivePath)
-              downloadingDataProgressIndicator.fraction = 1.0
+            fun download(url: URI, path: Path) {
+              LOG.info("Downloading $url -> $path")
+              HttpRequests.request(url.toString()).saveToFile(path, downloadingDataProgressIndicator)
             }
-            else {
-              fun download(url: URI, path: Path) {
-                LOG.info("Downloading $url -> $path")
-                HttpRequests.request(url.toString()).saveToFile(path, downloadingDataProgressIndicator)
-              }
 
-              download(data.url, data.archivePath)
+            download(data.url, data.archivePath)
 
-              if (Registry.`is`("codewithme.check.guest.signature")) {
-                download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL),
-                  tempDir.resolve("KEYS"))
-                download(data.url.addPathSuffix(SHA256_SUFFIX), data.archivePath.addSuffix(SHA256_SUFFIX))
-                download(data.url.addPathSuffix(SHA256_ASC_SUFFIX), data.archivePath.addSuffix(SHA256_ASC_SUFFIX))
+            if (Registry.`is`("codewithme.check.guest.signature")) {
+              download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL),
+                tempDir.resolve("KEYS"))
+              download(data.url.addPathSuffix(SHA256_SUFFIX), data.archivePath.addSuffix(SHA256_SUFFIX))
+              download(data.url.addPathSuffix(SHA256_ASC_SUFFIX), data.archivePath.addSuffix(SHA256_ASC_SUFFIX))
 
-                val pgpVerifier = PgpSignaturesVerifier(object : PgpSignaturesVerifierLogger {
-                  override fun info(message: String) {
-                    LOG.info("Verifying ${data.url} PGP signature: $message")
-                  }
-                })
+              val pgpVerifier = PgpSignaturesVerifier(object : PgpSignaturesVerifierLogger {
+                override fun info(message: String) {
+                  LOG.info("Verifying ${data.url} PGP signature: $message")
+                }
+              })
 
-                Sha256ChecksumSignatureVerifier(pgpVerifier).verifyChecksumAndSignature(
-                  file = data.archivePath,
-                  detachedSignatureFile = data.archivePath.addSuffix(SHA256_ASC_SUFFIX),
-                  checksumFile = data.archivePath.addSuffix(SHA256_SUFFIX),
-                  expectedFileName = data.url.path.substringAfterLast('/'),
-                  untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(tempDir.resolve("KEYS"))),
-                  trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
-                )
-              }
+              Sha256ChecksumSignatureVerifier(pgpVerifier).verifyChecksumAndSignature(
+                file = data.archivePath,
+                detachedSignatureFile = data.archivePath.addSuffix(SHA256_ASC_SUFFIX),
+                checksumFile = data.archivePath.addSuffix(SHA256_SUFFIX),
+                expectedFileName = data.url.path.substringAfterLast('/'),
+                untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(tempDir.resolve("KEYS"))),
+                trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
+              )
             }
           }
           catch (ex: IOException) {
