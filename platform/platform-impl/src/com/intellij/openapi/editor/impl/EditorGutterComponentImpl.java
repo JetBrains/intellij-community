@@ -343,6 +343,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void paintComponent(Graphics g_) {
     Rectangle clip = g_.getClipBounds();
+    if (clip == null || clip.isEmpty()) {
+      return;
+    }
+
     Graphics2D g = (Graphics2D)getComponentGraphics(g_);
 
     if (myEditor.isDisposed()) {
