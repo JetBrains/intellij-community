@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
@@ -199,24 +200,23 @@ abstract class ToolWindowHeader internal constructor(
     }
   }
 
-  private fun initWestToolBar(westPanel: JPanel) {
-    toolbarWest = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest), true)
-    toolbarWest!!.setTargetComponent(this)
-    toolbarWest!!.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    toolbarWest!!.setReservePlaceAutoPopupIcon(false)
-    val component = toolbarWest!!.component
-    component.isOpaque = false
-    component.border = JBUI.Borders.empty()
-    westPanel.add(component)
-  }
-
   override fun uiSettingsChanged(uiSettings: UISettings) {
     clearCaches()
   }
 
   fun setTabActions(actions: Array<AnAction>) {
     if (toolbarWest == null) {
-      initWestToolBar(westPanel)
+      toolbarWest = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest),
+                                                                    true)
+      with(toolbarWest as ActionToolbarImpl) {
+        targetComponent = this
+        setForceMinimumSize(true)
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        setReservePlaceAutoPopupIcon(false)
+        isOpaque = false
+        border = JBUI.Borders.empty()
+        westPanel.add(this, CC().growY().pushX())
+      }
     }
     actionGroupWest.removeAll()
     actionGroupWest.addSeparator()
