@@ -7,22 +7,24 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRelativePath
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 
 abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
-  private val filePath: FilePath
-    get() = filePath(getUserObject())
-  private val originText: String?
-    get() = originText(getUserObject())
+  private val filePath: FilePath get() = filePath(getUserObject())
+  private val originInfo: OriginInfo? by lazy(LazyThreadSafetyMode.NONE) { buildOriginInfo() }
 
   protected abstract fun filePath(userObject: U): FilePath
 
-  protected open fun originText(userObject: U): String? = null
+  protected open fun originPath(userObject: U): FilePath? = null
 
   override fun isFile(): Boolean {
     return !filePath.isDirectory
@@ -55,8 +57,20 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
   override fun getBackgroundColor(project: Project): Color? = getBackgroundColorFor(project, filePath)
 
   private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
-    originText?.let {
-      renderer.append(FontUtil.spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    originInfo?.let {
+      renderer.append(FontUtil.spaceAndThinSpace() + it.getText(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+  }
+
+  private fun buildOriginInfo(): OriginInfo? {
+    val originPath = originPath(getUserObject()) ?: return null
+    val path = filePath
+    val areParentsEqual = CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(path.parentPath, originPath.parentPath)
+
+    return when {
+      !areParentsEqual -> OriginInfo.Moved(getPresentableRelativePath(path, originPath))
+      path.name != originPath.name -> OriginInfo.Renamed(originPath.name)
+      else -> null
     }
   }
 
@@ -112,3 +126,15 @@ open class ChangesBrowserFilePathNode(userObject: FilePath, status: FileStatus?)
 
   override fun filePath(userObject: FilePath) = userObject
 }
+
+private sealed class OriginInfo {
+  class Moved(val originRelativePath: @NlsSafe String) : OriginInfo()
+
+  class Renamed(val originName: @NlsSafe String) : OriginInfo()
+}
+
+private fun OriginInfo.getText(): @Nls String =
+  when (this) {
+    is OriginInfo.Moved -> VcsBundle.message("change.file.moved.from.text", originRelativePath)
+    is OriginInfo.Renamed -> VcsBundle.message("change.file.renamed.from.text", originName)
+  }
