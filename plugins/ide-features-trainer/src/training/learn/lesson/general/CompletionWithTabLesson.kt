@@ -3,6 +3,7 @@ package training.learn.lesson.general
 
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -30,4 +31,9 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
     }
 
   override val suitableTips = listOf("TabInLookups")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.code.completion"),
+         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/auto-completing-code.html"),
+  )
 }

@@ -128,4 +128,9 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
   private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
 
   override val suitableTips = listOf("find_action", "GoToAction")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.search.everywhere"),
+         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/searching-everywhere.html"),
+  )
 }

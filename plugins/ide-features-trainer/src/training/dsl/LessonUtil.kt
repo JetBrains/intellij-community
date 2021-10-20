@@ -51,6 +51,7 @@ import training.util.learningToolWindow
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
@@ -60,6 +61,14 @@ object LessonUtil {
   val productName: String get() {
       return ApplicationNamesInfo.getInstance().fullProductName
     }
+
+  val helpIdeName: String get() {
+    return when (val name = ApplicationNamesInfo.getInstance().productName) {
+      "GoLand" -> "go"
+      "RubyMine" -> "ruby"
+      else -> name.lowercase(Locale.ENGLISH)
+    }
+  }
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)

@@ -149,4 +149,9 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   }
 
   override val suitableTips = listOf("SearchEverywhere", "GoToClass", "search_everywhere_general")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.search.everywhere"),
+         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/searching-everywhere.html"),
+  )
 }

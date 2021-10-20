@@ -79,4 +79,9 @@ class FStringCompletionLesson
     }
     text(PythonLessonsBundle.message("python.f.string.completion.result.message"))
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.f.string.completion.help.link"),
+         "https://www.jetbrains.com/help/pycharm/auto-completing-code.html#f-string-completion"),
+  )
 }
