@@ -527,7 +527,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   /**
-   * Try to add artifact to index.
+   * Trying to add artifact to index.
    *
    * @return true if artifact added to index else need retry
    */
@@ -557,15 +557,16 @@ public final class MavenIndex implements MavenSearchIndex {
       } finally {
         indexUpdateLock.unlock();
       }
-    }, false);
+    }, true);
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     synchronized (cache) {
       Set<String> values = cache.get(key);
       if (values == null) values = new HashSet<>();
-      values.add(value);
-      cache.put(key, values);
+      if (values.add(value)) {
+        cache.put(key, values);
+      }
     }
   }
 
@@ -727,7 +728,7 @@ public final class MavenIndex implements MavenSearchIndex {
       return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
-    public void close(boolean releaseIndexContext) throws MavenIndexException {
+    void close(boolean releaseIndexContext) throws MavenIndexException {
       MavenIndexException[] exceptions = new MavenIndexException[1];
 
       try {
@@ -755,17 +756,17 @@ public final class MavenIndex implements MavenSearchIndex {
       }
     }
 
-    public void flush() throws IOException {
+    void flush() throws IOException {
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
       archetypeIdToDescriptionMap.force();
     }
 
-    public IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
+    IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
       return myNexusIndexer.addArtifact(mavenIndexId, artifactFile);
     }
 
-    public Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {
+    Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {
       return myNexusIndexer.search(mavenIndexId, pattern, maxResult);
     }
   }
