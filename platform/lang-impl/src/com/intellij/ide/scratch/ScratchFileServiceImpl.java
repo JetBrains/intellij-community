@@ -370,16 +370,13 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
     @Override
     public @Nullable String getPresentableText(Object object) {
-      if (!(object instanceof PsiElement)) {
-        return null;
-      }
-      Project project = ((PsiElement)object).getProject();
-      VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)object);
+      PsiElement psi = object instanceof PsiElement ? (PsiElement)object : null;
+      if (psi == null || !psi.isValid()) return null;
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psi);
       if (virtualFile == null || !virtualFile.isValid()) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(virtualFile);
-      if (rootType == null) {
-        return null;
-      }
+      if (rootType == null) return null;
+      Project project = psi.getProject();
       if (virtualFile.isDirectory() && additionalRoots(project).contains(virtualFile)) {
         return rootType.getDisplayName();
       }
