@@ -21,6 +21,7 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
-  private static final ThreadLocal<DebuggerCommandImpl> myCurrentCommand = new ThreadLocal<>();
+  private static final ThreadLocal<LinkedList<DebuggerCommandImpl>> myCurrentCommands = ThreadLocal.withInitial(LinkedList::new);
 
   static final int COMMAND_TIMEOUT = 3000;
 
@@ -145,7 +146,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
     assertIsManagerThread();
-    myCurrentCommand.set(managerCommand);
+    myCurrentCommands.get().push(managerCommand);
     try {
       if (myEvents.isClosed()) {
         managerCommand.notifyCancelled();
@@ -167,12 +168,12 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       LOG.error(e);
     }
     finally {
-      myCurrentCommand.set(null);
+      myCurrentCommands.get().pop();
     }
   }
 
   public static DebuggerCommandImpl getCurrentCommand() {
-    return myCurrentCommand.get();
+    return myCurrentCommands.get().peek();
   }
 
   public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {

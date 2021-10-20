@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -39,10 +39,7 @@ import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
-import training.ui.LearningUiUtil
-import training.ui.UISettings
+import training.ui.*
 import training.util.learningToolWindow
 import java.awt.Component
 import java.awt.Point
@@ -50,7 +47,6 @@ import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
@@ -62,11 +58,9 @@ object LessonUtil {
 
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManager.getInstance(project)
-    val declaredFields = ToolWindowId::class.java.declaredFields
-    for (field in declaredFields) {
-      if (Modifier.isStatic(field.modifiers) && field.type == String::class.java) {
-        val id = field.get(null) as String
-        windowManager.getToolWindow(id)?.hide(null)
+    for (id in windowManager.toolWindowIds) {
+      if (id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+        windowManager.getToolWindow(id)?.hide()
       }
     }
   }
@@ -349,7 +343,16 @@ fun @Nls String.dropMnemonic(): @Nls String {
   return TextWithMnemonic.parse(this).dropMnemonic(true).text
 }
 
-val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
+
+fun TaskContext.waitSmartModeStep() {
+  val future = CompletableFuture<Boolean>()
+  addStep(future)
+  DumbService.getInstance(project).runWhenSmart {
+    future.complete(true)
+  }
+}
+
+private val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
   if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
@@ -385,7 +388,7 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     }
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
       taskInvokeLater {
@@ -423,7 +426,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
     invokeInBackground {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+        LearningUiUtil.findAllShowingComponentWithTimeout(project, componentClass, seconds01) { ui ->
           finderFunction(ui)
         }
 

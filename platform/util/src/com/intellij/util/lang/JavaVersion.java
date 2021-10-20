@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // this class is used in bootstrap - please use only JDK API
 
@@ -221,9 +223,14 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   public static @NotNull JavaVersion parse(@NotNull String versionString) throws IllegalArgumentException {
     // trimming
     String str = versionString.trim();
-    if (str.contains("Runtime Environment")) {
-      int p = str.indexOf("(build ");
-      if (p > 0) str = str.substring(p);
+    Map<String, String> trimmingMap = new HashMap<>(); // "substring to detect" to "substring from which to trim"
+    trimmingMap.put("Runtime Environment", "(build ");
+    trimmingMap.put("OpenJ9", "version ");
+    for (String keyToDetect : trimmingMap.keySet()) {
+      if (str.contains(keyToDetect)) {
+        int p = str.indexOf(trimmingMap.get(keyToDetect));
+        if (p > 0) str = str.substring(p);
+      }
     }
 
     // partitioning

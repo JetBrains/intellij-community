@@ -172,9 +172,19 @@ class DfFloatRangeType implements DfFloatType {
       if (!range.myInvert) {
         return range.meet(this);
       } else {
-        float from = Math.min(myFrom, range.myFrom);
-        float to = Math.max(myTo, range.myTo);
-        return create(from, to, true, nan);
+        // both inverted
+        if (myTo >= Math.nextDown(range.myFrom) && range.myTo >= Math.nextDown(myFrom)) {
+          // excluded ranges intersect or touch each other: we can exclude their union
+          float from = Math.min(myFrom, range.myFrom);
+          float to = Math.max(myTo, range.myTo);
+          return create(from, to, true, nan);
+        }
+        // excluded ranges don't intersect: we cannot encode this case
+        // just keep one of the ranges (with lesser from, for stability)
+        if (myFrom < range.myFrom) {
+          return create(myFrom, myTo, true, nan);
+        }
+        return create(range.myFrom, range.myTo, true, nan);
       }
     }
   }

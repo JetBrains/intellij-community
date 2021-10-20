@@ -685,9 +685,6 @@ public final class IdeKeyEventDispatcher {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         myIgnoreNextKeyTypedEvent = true;
       }
-      if (dumbModeWarningListener != null) {
-        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
-      }
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
       String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);
       showDumbModeBalloonLaterIfNobodyConsumesEvent(project, message, retryRunnable, __ -> e.isConsumed());
@@ -732,12 +729,6 @@ public final class IdeKeyEventDispatcher {
   public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
     return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
            IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
-  }
-
-  private static DumbModeWarningListener dumbModeWarningListener;
-
-  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
-    dumbModeWarningListener = listener;
   }
 
   /**
@@ -795,32 +786,27 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static boolean rearrangeByPromoters(List<AnAction> actions, DataContext context) {
+  private static boolean rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    for (ActionPromoter promoter : getPromoters(actions)) {
+    List<ActionPromoter> promoters = ContainerUtil.concat(
+      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
+    for (ActionPromoter promoter : promoters) {
       try {
         List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-        if (promoted == null || promoted.isEmpty()) continue;
-
-        actions.removeAll(promoted);
-        actions.addAll(0, promoted);
+        if (promoted != null && !promoted.isEmpty()) {
+          actions.removeAll(promoted);
+          actions.addAll(0, promoted);
+        }
+        List<AnAction> suppressed = promoter.suppress(readOnlyActions, context);
+        if (suppressed != null && !suppressed.isEmpty()) {
+          actions.removeAll(suppressed);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
     return true;
-  }
-
-  @NotNull
-  private static List<ActionPromoter> getPromoters(@NotNull List<? extends AnAction> candidates) {
-    List<ActionPromoter> promoters = new ArrayList<>(Arrays.asList(ActionPromoter.EP_NAME.getExtensions()));
-    for (AnAction action : candidates) {
-      if (action instanceof ActionPromoter) {
-        promoters.add((ActionPromoter)action);
-      }
-    }
-    return promoters;
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {

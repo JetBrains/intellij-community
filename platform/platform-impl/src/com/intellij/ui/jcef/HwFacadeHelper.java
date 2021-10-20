@@ -101,7 +101,8 @@ public class HwFacadeHelper {
         public void hide() {
         }
         @Override
-        public void paint(Graphics g, Consumer<? super Graphics> targetPaint) {
+        public void paint(@NotNull Graphics g, @NotNull Consumer<? super Graphics> targetPaint) {
+          targetPaint.accept(g);
         }
       };
   }
@@ -234,7 +235,7 @@ public class HwFacadeHelper {
     }
   }
 
-  public void paint(Graphics g, Consumer<? super Graphics> targetPaint) {
+  public void paint(@NotNull Graphics g, @NotNull Consumer<? super Graphics> targetPaint) {
     if (isActive()) {
       Dimension size = myTarget.getSize();
       if (myBackBuffer == null || myBackBuffer.getWidth() != size.width || myBackBuffer.getHeight() != size.height) {

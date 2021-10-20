@@ -16,11 +16,10 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShBundle;
+import com.intellij.sh.ShFileType;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -99,22 +98,19 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     ShShfmtFormatterUtil.checkShfmtForUpdate(project);
     String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
 
-    VirtualFile file = formattingContext.getVirtualFile();
-    if (file == null || !file.exists()) return null;
 
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
-    String filePath = file.getPath();
-    String realPath = FileUtil.toSystemDependentName(filePath);
-    if (!new File(realPath).exists()) return null;
+    File ioFile = request.getIOFile();
+    if (ioFile == null) return null;
 
     @NonNls
     List<String> params = new SmartList<>();
     params.add("-ln=" + interpreter);
-    if (!settings.useTabCharacter(file.getFileType())) {
-      int tabSize = settings.getIndentSize(file.getFileType());
+    if (!settings.getIndentOptions(ShFileType.INSTANCE).USE_TAB_CHARACTER) {
+      int tabSize = settings.getIndentOptions(ShFileType.INSTANCE).INDENT_SIZE;
       params.add("-i=" + tabSize);
     }
     if (shSettings.BINARY_OPS_START_LINE) {
@@ -132,7 +128,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     if (shSettings.MINIFY_PROGRAM) {
       params.add("-mn");
     }
-    params.add(realPath);
+    params.add(ioFile.getPath());
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()

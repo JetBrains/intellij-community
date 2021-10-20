@@ -22,12 +22,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -135,9 +138,12 @@ public final class TypeUtils {
     if (expression == null) {
       return null;
     }
-    final PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if (type == null) {
       return null;
+    }
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
     }
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
@@ -263,7 +269,7 @@ public final class TypeUtils {
    * @return true if instances of given types may be equal
    */
   public static boolean mayBeEqualByContract(PsiType type1, PsiType type2) {
-    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSubtypesOf(type1, type2, className));
+    return ContainerUtil.or(EQUAL_CONTRACT_CLASSES, className -> areConvertibleSubtypesOf(type1, type2, className));
   }
 
   private static boolean areConvertibleSubtypesOf(PsiType type1, PsiType type2, String className) {

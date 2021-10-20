@@ -15,32 +15,45 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.runSuspendingAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 internal class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>): List<TextProblem> {
+    val problems = runSuspendingAction {
+      val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
+        when (checker) {
+          is ExternalTextChecker -> async { checker.checkExternally(text) }
+          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
+        }
+      }
+      deferred.awaitAll().flatten()
+    }
+
     val filtered = ArrayList<TextProblem>()
-    for (checker in checkers) {
-      for (problem in checker.check(text)) {
-        require(problem.text == text)
+    for (problem in problems) {
+      require(problem.text == text)
 
-        if (isSuppressed(problem) ||
-            hasIgnoredCategory(problem) ||
-            isIgnoredByStrategies(problem) ||
-            isIgnoredByFilters(problem)) {
-          continue
-        }
+      if (isSuppressed(problem) ||
+          hasIgnoredCategory(problem) ||
+          isIgnoredByStrategies(problem) ||
+          isIgnoredByFilters(problem)) {
+        continue
+      }
 
-        if (filtered.none { it.highlightRange.intersects(problem.highlightRange) }) {
-          filtered.add(problem)
-        }
+      if (filtered.none { it.highlightRange.intersects(problem.highlightRange) }) {
+        filtered.add(problem)
       }
     }
 

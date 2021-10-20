@@ -21,6 +21,7 @@ import training.learn.course.LearningModule
 import training.learn.course.LessonType
 import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
+import training.learn.lesson.general.assistance.LocalHistoryLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
@@ -87,6 +88,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
+        LocalHistoryLesson(),
         CodeFormatLesson(ls("CodeFormat.java.sample"), true),
         ParameterInfoLesson(ls("ParameterInfo.java.sample")),
         QuickPopupsLesson(ls("QuickPopups.java.sample")),

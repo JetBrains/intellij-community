@@ -19,6 +19,7 @@ public final class RunManagerConfig {
   @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
   @NonNls private static final String RECENTS_LIMIT_KEY = "temporary.configurations.limit";
+  @NonNls private static final String CONFIRM_RERUN_KEY = "confirm.rerun.with.termination";
 
   public RunManagerConfig(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
@@ -32,20 +33,23 @@ public final class RunManagerConfig {
     AdvancedSettings.setInt(RECENTS_LIMIT_KEY, Math.max(MIN_RECENT_LIMIT, recentsLimit));
   }
 
-  public void migrateToRegistry() {
-    String value = myPropertiesComponent.getValue(RECENTS_LIMIT);
-    if (value != null) {
-      setRecentsLimit(Math.max(MIN_RECENT_LIMIT, StringUtil.parseInt(value, DEFAULT_RECENT_LIMIT)));
-      myPropertiesComponent.setValue(RECENTS_LIMIT, null);
+  public void migrateToAdvancedSettings() {
+    if (myPropertiesComponent.isValueSet(RECENTS_LIMIT)) {
+      setRecentsLimit(Math.max(MIN_RECENT_LIMIT, StringUtil.parseInt(myPropertiesComponent.getValue(RECENTS_LIMIT), DEFAULT_RECENT_LIMIT)));
+      myPropertiesComponent.unsetValue(RECENTS_LIMIT);
+    }
+    if (myPropertiesComponent.isValueSet(RESTART_REQUIRES_CONFIRMATION)) {
+      setRestartRequiresConfirmation(myPropertiesComponent.getBoolean(RESTART_REQUIRES_CONFIRMATION));
+      myPropertiesComponent.unsetValue(RESTART_REQUIRES_CONFIRMATION);
     }
   }
 
   public boolean isRestartRequiresConfirmation() {
-    return myPropertiesComponent.getBoolean(RESTART_REQUIRES_CONFIRMATION, true);
+    return AdvancedSettings.getBoolean(CONFIRM_RERUN_KEY);
   }
 
   public void setRestartRequiresConfirmation(boolean restartRequiresConfirmation) {
-    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, restartRequiresConfirmation, true);
+    AdvancedSettings.setBoolean(CONFIRM_RERUN_KEY, restartRequiresConfirmation);
   }
 
   public boolean isDeletionFromPopupRequiresConfirmation() {

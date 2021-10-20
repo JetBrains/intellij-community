@@ -20,17 +20,20 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil
-import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
+import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.openUpdateDialogText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
+import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepository
@@ -45,7 +48,7 @@ import javax.swing.JList
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
   override val existedFile = "git/simple_cat.yml"
   private val remoteName = "origin"
-  private val branchName = "feature"
+  override val branchName = "feature"
   private val main = "main"
 
   private val fileToCommitName = "sphinx_cat.yml"
@@ -69,12 +72,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    prepareRuntimeTask {
-      repository = GitRepositoryManager.getInstance(project).repositories.first()
-    }
-
-    checkoutBranch(branchName)
-
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))
       illustration(illustration1)
@@ -85,6 +82,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     resetGitLogWindow()
+
+    prepareRuntimeTask {
+      repository = GitRepositoryManager.getInstance(project).repositories.first()
+    }
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main)))
@@ -115,11 +116,14 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
-      highlightListItemAndRehighlight { item -> item.toString() == checkoutItemText }
-      stateCheck { repository.currentBranchName == main }
-      restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
+      val checkoutStartedFuture = triggerOnCheckout { newBranch -> newBranch == main }
+      restoreState(firstShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
-        previous.ui?.isShowing != true || (newBranchName != curBranchName && newBranchName != main)
+        val checkoutWrongBranch = newBranchName != curBranchName && newBranchName != main
+        (previous.ui?.isShowing != true && !checkoutStartedFuture.isDone) || checkoutWrongBranch
+      }
+      highlightListItemAndRehighlight(restartDelayMillis = 4 * defaultRestoreDelay) { item ->
+        (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
     }
 
@@ -134,6 +138,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
     }
 
     task {
@@ -141,10 +146,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerByUiComponentAndHighlight { ui: JButton ->
         ui.text == CommonBundle.getOkButtonText()
       }
-      triggerOnNotification { notification ->
-        notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
+      highlightSubsequentCommitsInGitLog { commit ->
+        commit.fullMessage == commitMessage
       }
-      restoreState(delayMillis = defaultRestoreDelay) {
+      restoreState(delayMillis = 6 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
       }
     }
@@ -152,7 +157,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
       illustration(illustration2)
-      highlightLatestCommitsFromBranch("$remoteName/$main")
       proceedLink(4)
     }
 
@@ -178,9 +182,11 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.branch",
                                                     GitBranchPopupActions.getCurrentBranchTruncatedPresentation(project, repositories))
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
-      highlightListItemAndRehighlight { item -> item.toString().contains(checkoutAndRebaseText) }
+      highlightListItemAndRehighlight(restartDelayMillis = 4 * defaultRestoreDelay) { item ->
+        item.toString().contains(checkoutAndRebaseText)
+      }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
-      restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
+      restoreState(secondShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
       }
     }
@@ -208,7 +214,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
     }
   }
 
@@ -226,7 +232,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
   }
 
-  private fun TaskContext.highlightListItemAndRehighlight(checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
+  private fun TaskContext.highlightListItemAndRehighlight(restartDelayMillis: Int,
+                                                          checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
     var showedList: JList<*>? = null
     triggerByPartOfComponent l@{ ui: JList<*> ->
       val ind = (0 until ui.model.size).find { checkList(ui.model.getElementAt(it)) } ?: return@l null
@@ -235,7 +242,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
     // it is a hack: restart current task to highlight list item when it will be shown again
     // rehighlightPreviousUi property can not be used in this case, because I can't highlight this list item in the previous task
-    restoreState(restoreId = taskId) {
+    restoreState(restoreId = taskId, delayMillis = restartDelayMillis) {
       showedList != null && !showedList!!.isShowing
     }
   }

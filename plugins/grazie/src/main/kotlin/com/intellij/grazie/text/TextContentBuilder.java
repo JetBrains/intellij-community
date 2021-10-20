@@ -1,19 +1,16 @@
 package com.intellij.grazie.text;
 
-import com.intellij.grazie.grammar.strategy.StrategyUtils;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * A class encapsulating common utilities needed for extracting {@link TextContent} from PSI.
@@ -109,20 +106,6 @@ public class TextContentBuilder {
         return tokens.isEmpty() ? null : new TextContentImpl(domain, tokens);
       }
     }.walkPsiTree();
-    if (content == null) return null;
-
-    TextContent noIndents =
-      indentChars.isEmpty()
-      ? content
-      : excludeRanges(content, StrategyUtils.INSTANCE.indentIndexes(content, indentChars));
-    return noIndents.trimWhitespace();
-  }
-
-  static TextContent excludeRanges(TextContent content, Collection<IntRange> ranges) {
-    for (IntRange range : ranges.stream().sorted(Comparator.comparingInt(r -> -r.getFirst())).collect(Collectors.toList())) {
-      TextRange textRange = new TextRange(range.getStart(), range.getEndInclusive() + 1);
-      content = content.hasUnknownFragmentsIn(textRange) ? content.markUnknown(textRange) : content.excludeRange(textRange);
-    }
-    return content;
+    return content == null ? null : content.removeIndents(indentChars).trimWhitespace();
   }
 }

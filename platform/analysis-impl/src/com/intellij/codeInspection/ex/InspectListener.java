@@ -2,12 +2,15 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 
 public interface InspectListener {
   default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind,
                                   Project project) {}
 
   default void activityFinished(long duration, long threadId, ActivityKind activityKind, Project project) {}
+
+  default void fileAnalyzed(PsiFile file, Project project) {}
 
   enum InspectionKind {
     LOCAL,

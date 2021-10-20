@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -135,12 +136,47 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
-  private void doTestBasicCompletion() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
+  // PY-48220
+  public void testAttributesFromPackageStubSuggested() {
+    assertContainsElements(doBasicCompletion(), "pkg.foo");
+  }
+
+  // PY-48220
+  public void testAttributesFromModuleStubSuggested() {
+    assertContainsElements(doBasicCompletion(), "mod.foo");
+  }
+
+  // PY-48219
+  public void testAttributesNotLimitedByDunderAll() {
+    assertContainsElements(doBasicCompletion(), "mod.foo");
+  }
+
+  // PY-48219
+  public void testAliasAttributesNotLimitedByDunderAll() {
+    doTestBasicCompletion();
+  }
+
+  // PY-48198
+  public void testSubpackagesAndSubmodulesOfNamespacePackages() {
+    assertContainsElements(doBasicCompletion(), "nspkg.submod", "nspkg.subpkg");
+  }
+
+  // PY-47941
+  public void testAttributeReExportedWithAlias() {
+    assertContainsElements(doBasicCompletion(), "pytest.mark", "pytest.param");
+  }
+
+  @Nullable
+  private List<String> doBasicCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    return myFixture.getLookupElementStrings();
+  }
+
+  private void doTestBasicCompletion() {
+    doBasicCompletion();
+    myFixture.checkResultByFile(getTestName(false) + "/main.after.py");
   }
 
   @Override

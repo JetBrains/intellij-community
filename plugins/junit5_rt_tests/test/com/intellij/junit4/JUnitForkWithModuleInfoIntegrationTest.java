@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit4;
 
 import com.intellij.execution.ExecutionException;
@@ -75,7 +75,12 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(3, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(3, processOutput);
+  }
+
+  private static void assertStartedEvents(int size, ProcessOutput processOutput) {
+    assertEquals("error output" + processOutput.err.toString() + "\n commandline: " + processOutput.sys.toString(), 
+                 size, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
 
   public void testForkPerModuleForModuleInfoInTestRootInModuleWithDependency() throws ExecutionException {
@@ -92,7 +97,7 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(2, processOutput);
   }
 
   public void testForkPerMethodForModuleInfoInTestRoot() throws ExecutionException {
@@ -108,6 +113,6 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(2, processOutput);
   }
 }

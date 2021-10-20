@@ -69,6 +69,8 @@ import org.jetbrains.concurrency.AsyncPromise;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -122,7 +124,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
     catch (Throwable e) {
       LOG.error(e);
-      reportError(e.getMessage());
+      reportError(e);
       gracefulExit();
       return;
     }
@@ -228,8 +230,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
     ConversionService conversionService = ConversionService.getInstance();
-    if (conversionService != null && conversionService.convertSilently(projectPath, createConversionListener()).openingIsCanceled()) {
-      gracefulExit();
+    StringBuilder convertErrorBuffer = new StringBuilder();
+    if (conversionService != null &&
+        conversionService.convertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
+      onFailure(convertErrorBuffer.toString());
       return null;
     }
 
@@ -256,8 +260,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     Project project = projectRef.get();
     if (project == null) {
-      reportError("Unable to open project");
-      gracefulExit();
+      onFailure(InspectionsBundle.message("inspection.application.unable.open.project"));
       return null;
     }
     waitAllStartupActivitiesPassed(project);
@@ -531,8 +534,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         isMappingLoaded.blockingGet(60000);
       }
       catch (TimeoutException | ExecutionException e) {
-        reportError("Cannot initialize vcs mapping");
-        gracefulExit();
+        onFailure(InspectionsBundle.message("inspection.application.cannot.initialize.vcs.mapping"));
       }
     }
     runAnalysisAfterShelvingSync(
@@ -685,8 +687,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
       })) {
-        gracefulExit();
-        return;
+        onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
       }
       context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
       reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
@@ -800,12 +801,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profileName != null && !profileName.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
       if (inspectionProfile == null) {
-        reportError("Profile with configured name (" +
-                    profileName +
-                    ") was not found (neither in project nor in config directory). Configured by: " +
-                    configSource);
-        gracefulExit();
-        return null;
+        onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
       }
       return inspectionProfile;
     }
@@ -813,9 +809,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profilePath != null && !profilePath.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
-        reportError("Failed to load profile from '" + profilePath + "'. Configured by: " + configSource);
-        gracefulExit();
-        return null;
+        onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
       }
       return inspectionProfile;
     }
@@ -852,7 +846,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
 
-  private ConversionListener createConversionListener() {
+  private ConversionListener createConversionListener(StringBuilder errorBuffer) {
     return new ConversionListener() {
       @Override
       public void conversionNeeded() {
@@ -868,7 +862,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public void error(@NotNull String message) {
-        reportError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
+        errorBuffer.append(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message))
+          .append(System.lineSeparator());
       }
 
       @Override
@@ -877,8 +872,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         for (Path file : readonlyFiles) {
           files.append(file.toString()).append("; ");
         }
-        reportError(InspectionsBundle
-                      .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));
+        errorBuffer.append(InspectionsBundle
+                             .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0",
+                                      files.toString()))
+          .append(System.lineSeparator());
       }
     };
   }
@@ -901,6 +898,15 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (myVerboseLevel >= minVerboseLevel) {
       System.out.print(message);
     }
+  }
+
+  public void reportError(@NotNull Throwable e) {
+    reportError(e.getMessage());
+  }
+
+  public void onFailure(@NotNull String message) {
+    reportError(message);
+    gracefulExit();
   }
 
   @Override

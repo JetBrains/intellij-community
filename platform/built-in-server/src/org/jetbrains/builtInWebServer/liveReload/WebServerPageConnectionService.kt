@@ -5,6 +5,8 @@ import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.ide.browsers.actions.WebPreviewFileEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -70,12 +72,12 @@ class WebServerPageConnectionService {
   /**
    * @return suffix to add to requested file in response
    */
-  fun fileRequested(request: FullHttpRequest, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
+  fun fileRequested(request: FullHttpRequest, onlyIfHtmlFile: Boolean, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
     var reloadRequest = ReloadMode.DISABLED
     val uri = request.uri()
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {
       val decoder = QueryStringDecoder(uri)
-      reloadRequest = ReloadMode.valueOf(decoder.parameters()[RELOAD_URL_PARAM]?.get(0) ?: ReloadMode.DISABLED.name)
+      reloadRequest = decoder.parameters()[RELOAD_URL_PARAM]?.get(0)?.let { ReloadMode.valueOf(it) } ?: ReloadMode.DISABLED
     }
     if (reloadRequest == ReloadMode.DISABLED && myState.isEmpty) return null
     val file = fileSupplier.get()
@@ -88,6 +90,7 @@ class WebServerPageConnectionService {
       LOGGER.warn("VirtualFile for $uri isn't resolved, reload on save can't be started")
       return null
     }
+    if (onlyIfHtmlFile && !WebBrowserXmlService.getInstance().isHtmlFile(file)) return null
     val clientId = myState.pageRequested(uri, file, reloadRequest)
 
     val optionalConsoleLog =
@@ -189,6 +192,16 @@ class WebServerPageConnectionService {
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
     val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
     if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened()) return
+
+    if (WebBrowserManager.BROWSER_RELOAD_MODE_DEFAULT !== ReloadMode.RELOAD_ON_SAVE) {
+      Logger.getInstance(WebServerPageConnectionService::class.java).error(
+        "Default value for " + BuiltInServerBundle.message("reload.on.save.got.it.title") + " has changed, tooltip is outdated.")
+      return
+    }
+    if (WebBrowserManager.getInstance().webServerReloadMode !== ReloadMode.RELOAD_ON_SAVE) {
+      // changed before gotIt was shown
+      return
+    }
 
     gotItTooltip
       .withHeader(BuiltInServerBundle.message("reload.on.save.got.it.title"))
@@ -295,27 +308,25 @@ class WebServerPageConnectionService {
 
     @Synchronized
     fun pageRequested(uri: String, file: VirtualFile, reloadMode: ReloadMode): Int {
-      if (myRequestedPages.isEmpty) {
-        if (myFileListenerDisposable == null) {
-          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
-          VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
-          myFileListenerDisposable = disposable
-        }
-        else {
-          LOGGER.error("Listener already added")
-        }
-        if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
-          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myDocumentListenerDisposable")
-          EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-              val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
-              if (isTrackedFile(virtualFile)) {
-                FileDocumentManager.getInstance().saveDocument(event.document)
-              }
+      LOGGER.assertTrue(myRequestedPages.isEmpty == (myFileListenerDisposable == null),
+        "isEmpty: ${myRequestedPages.isEmpty}, disposable is null: ${myFileListenerDisposable == null}")
+
+      if (myFileListenerDisposable == null) {
+        val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
+        VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
+        myFileListenerDisposable = disposable
+      }
+      if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
+        val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myDocumentListenerDisposable")
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+          override fun documentChanged(event: DocumentEvent) {
+            val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
+            if (isTrackedFile(virtualFile)) {
+              FileDocumentManager.getInstance().saveDocument(event.document)
             }
-          }, disposable)
-          myDocumentListenerDisposable = disposable
-        }
+          }
+        }, disposable)
+        myDocumentListenerDisposable = disposable
       }
       val clientId = ++myLastClientId
       LOGGER.debug("Page is requested for $uri, clientId = $clientId")

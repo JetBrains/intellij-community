@@ -1050,6 +1050,81 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals("UNKNOWN", myFileTypeManager.getFileTypeByFileName(name).getName());
   }
 
+  public void testRegisterAssociationsViaFileTypeFactoryDoesWork() {
+    FileType anyExistingType = StdFileTypes.XML;
+    FileType ownType = new FileType() {
+      @Override
+      public @NotNull String getName() {
+        return getTestName(false) + "_FileType";
+      }
+
+      @Override
+      public @NotNull String getDescription() {
+        return getTestName(false) + "_Description";
+      }
+
+      @Override
+      public @NotNull String getDefaultExtension() {
+        return getTestName(false) + "_Extension";
+      }
+
+      @Override
+      public @Nullable Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public boolean isBinary() {
+        return false;
+      }
+    };
+
+    // I suspect it may work when registered once, need more than 1
+    String[] extensionsForXml = {getTestName(true)+"_1", getTestName(true)+"_2", getTestName(true)+"_3" };
+
+    for (String nextExtension : ContainerUtil.concat(extensionsForXml, new String[]{ownType.getDefaultExtension()})) {
+      assertEquals("precondition: should be unknown before: " + nextExtension,
+                   FileTypes.UNKNOWN, myFileTypeManager.getFileTypeByExtension(nextExtension));
+    }
+
+    Ref<Boolean> factoryWasCalled = new Ref<>(false);
+
+    FileTypeFactory factory = new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        factoryWasCalled.set(true);
+
+        consumer.consume(ownType);
+
+        for (String nextExtension : extensionsForXml) {
+          consumer.consume(anyExistingType, nextExtension);
+        }
+      }
+    };
+
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      clearFileTypeCache();
+      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(factory, disposable);
+
+      assertFalse(factoryWasCalled.get());
+      reInitFileTypeManagerComponent(null);
+      assertTrue(factoryWasCalled.get());
+
+      assertEquals("factory was called, new types work fine",
+                   ownType, myFileTypeManager.getFileTypeByExtension(ownType.getDefaultExtension()));
+
+      // it works for own types but does not for the external types
+      for (String nextExtension : extensionsForXml) {
+        assertEquals("factory was called but extension is still unknown : " + nextExtension,
+                     anyExistingType, myFileTypeManager.getFileTypeByExtension(nextExtension));
+      }
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
   public void testPluginOverridesAbstractFileType() {
     assertInstanceOf(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME), AbstractFileType.class);
 

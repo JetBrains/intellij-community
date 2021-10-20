@@ -15,24 +15,25 @@ interface ProjectModuleOperationProvider {
 
     companion object {
 
-        private val extensionPointName: ExtensionPointName<ProjectModuleOperationProvider> =
-            ExtensionPointName.create("com.intellij.packagesearch.projectModuleOperationProvider")
+        private val extensions: Array<ProjectModuleOperationProvider>
+            get() = runCatching {
+                ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
+                    .extensions
+            }.getOrDefault(emptyArray())
 
         /**
          * Retrieves the first provider for given [project] and [psiFile].
          * @return The first compatible provider or `null` if none is found.
          */
         fun forProjectPsiFileOrNull(project: Project, psiFile: PsiFile?): ProjectModuleOperationProvider? =
-            extensionPointName.extensions
-                .firstOrNull { it.hasSupportFor(project, psiFile) }
+            extensions.firstOrNull { it.hasSupportFor(project, psiFile) }
 
         /**
          * Retrieves the first provider for given the [projectModuleType].
          * @return The first compatible provider or `null` if none is found.
          */
         fun forProjectModuleType(projectModuleType: ProjectModuleType): ProjectModuleOperationProvider? =
-            extensionPointName.extensions
-                .firstOrNull { it.hasSupportFor(projectModuleType) }
+            extensions.firstOrNull { it.hasSupportFor(projectModuleType) }
     }
 
     /**

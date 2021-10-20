@@ -9,10 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -23,11 +20,13 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.fromFoothold
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.search.PySearchUtilBase
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher
 import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor() {
 
@@ -106,6 +105,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         if (isOtherReferenceQualifier) return
 
         val project = parameters.position.project
+        val originalFile = parameters.originalFile
         val attribute = result.prefixMatcher.prefix
         val qualifier = context.get(REFERENCE_QUALIFIER)
         val suggestedQualifiedNames = HashSet<String>()
@@ -116,13 +116,14 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val packageName = if (packageNameForAlias != null) QualifiedName.fromDottedString(packageNameForAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
         val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
+        val typeContext = TypeEvalContext.userInitiated(project, originalFile)
 
-        val availableModules = PyModuleNameIndex.findByQualifiedName(packageName, project, scope)
-          .asSequence()
+        val availableModules = resolveQualifiedName(packageName, fromFoothold(originalFile))
 
         if (packageNameForAlias == null) {
-          availableModules.filter { PyUtil.isPackage(it) }
-            .flatMap { PyModuleType.getSubModuleVariants(it.containingDirectory, it, null) }
+          availableModules.asSequence()
+            .filterIsInstance<PsiDirectory>()
+            .flatMap { PyModuleType.getSubModuleVariants(it, originalFile, null) }
             .filterNot { it.lookupString.startsWith('_') }
             .mapNotNull {
               val qualifiedNameToSuggest = "$qualifier.${it.lookupString}"
@@ -137,8 +138,13 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
             .forEach { resultMatchingCompleteReference.addElement(it) }
         }
 
-        availableModules.flatMap { it.iterateNames() }
-          .filter { it.containingFile != null }
+        availableModules.asSequence()
+          .mapNotNull { if (it is PsiDirectory) PyUtil.getPackageElement(it, originalFile) else it }
+          .filterIsInstance<PyFile>()
+          .map { PyModuleType(it) }
+          .flatMap { it.getCompletionVariantsAsLookupElements(parameters.position, context, false, false, typeContext) }
+          .mapNotNull {it.psiElement }
+          .filterIsInstance<PyElement>()
           .filterNot { it is PsiFileSystemItem }
           .filterNot { it.name == null || it.name!!.startsWith('_') }
           .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$qualifier.${it.name}") }
@@ -158,13 +164,12 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           return
         }
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          qualifiedName, parameters.originalFile, scope,
+          qualifiedName, originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
               resultMatchingCompleteReference.addElement(LookupElementBuilder
-                                                           .createWithSmartPointer(it.qualifiedName.toString(),
-                                                                                   it.element)
+                                                           .createWithSmartPointer(it.qualifiedName.toString(), it.element)
                                                            .withIcon(it.element.getIcon(0))
                                                            .withInsertHandler(getInsertHandler(it.element, parameters.position)))
             }

@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import java.nio.file.*
@@ -148,8 +149,9 @@ final class WinExeInstallerBuilder {
     if (!new File(installerPath).exists()) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
-
-    buildContext.signExeFile(installerPath)
+    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
+      buildContext.signFile(installerPath)
+    }
     buildContext.notifyArtifactBuilt(installerPath)
     return installerPath
   }

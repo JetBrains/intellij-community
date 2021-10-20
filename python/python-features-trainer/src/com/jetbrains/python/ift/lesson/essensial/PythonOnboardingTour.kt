@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -40,6 +41,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
@@ -88,6 +90,8 @@ class PythonOnboardingTour :
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
+  private val uiSettings get() = UISettings.instance
+
   override val properties = LessonProperties(
     canStartInDumbMode = true,
     openFileAtStart = false
@@ -96,6 +100,8 @@ class PythonOnboardingTour :
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   private var backupPopupLocation: Point? = null
+  private var hideToolStripesPreference = false
+  private var showNavigationBarPreference = true
 
   val sample: LessonSample = parseLessonSample("""
     def find_average(values)<caret id=3/>:
@@ -122,6 +128,8 @@ class PythonOnboardingTour :
     }
     clearBreakpoints()
 
+    checkUiSettings()
+
     projectTasks()
 
     prepareSample(sample)
@@ -129,6 +137,8 @@ class PythonOnboardingTour :
     openLearnToolwindow()
 
     showInterpreterConfiguration()
+
+    waitIndexingTasks()
 
     runTasks()
 
@@ -160,6 +170,11 @@ class PythonOnboardingTour :
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
+
+    uiSettings.hideToolStripes = hideToolStripesPreference
+    uiSettings.showNavigationBar = showNavigationBarPreference
+    uiSettings.fireUISettingsChanged()
+
     if (!lessonPassed) return
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
@@ -284,6 +299,25 @@ class PythonOnboardingTour :
     }
   }
 
+  private fun LessonContext.waitIndexingTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { progress: NonOpaquePanel ->
+        progress.javaClass.name.contains("InlineProgressPanel")
+      }
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.indexing.description"))
+      waitSmartModeStep()
+    }
+
+    waitBeforeContinue(300)
+
+    prepareRuntimeTask {
+      LearningUiHighlightingManager.clearHighlights()
+    }
+  }
+
   private fun LessonContext.runTasks() {
     val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName'"
 
@@ -305,7 +339,6 @@ class PythonOnboardingTour :
     }
 
     task {
-
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
@@ -353,6 +386,30 @@ class PythonOnboardingTour :
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
       requestEditorFocus()
+    }
+  }
+
+
+  private fun LessonContext.checkUiSettings() {
+    hideToolStripesPreference = uiSettings.hideToolStripes
+    showNavigationBarPreference = uiSettings.showNavigationBar
+
+    if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
+      // a small hack to have same tasks count. It is needed to track statistics result.
+      task { }
+      task { }
+      return
+    }
+
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.change.ui.settings"))
+      proceedLink()
+    }
+
+    prepareRuntimeTask {
+      uiSettings.hideToolStripes = false
+      uiSettings.showNavigationBar = true
+      uiSettings.fireUISettingsChanged()
     }
   }
 
@@ -417,32 +474,18 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.completionSteps() {
-    val completionPosition = sample.getPosition(2)
-    caret(completionPosition)
     prepareRuntimeTask {
+      setSample(sample.insertAtPosition(2, " / len(<caret>)"))
       FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
     }
-    task {
-      text(PythonLessonsBundle.message("python.onboarding.type.division", code(" / l")))
-      proposeRestoreForInvalidText("/len")
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
-        it.toString().contains("string=len;")
-      }
-    }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.choose.len.item",
-                                       code("len(__obj)"), action("EditorChooseLookupItem")))
-      stateCheck {
-        checkEditorModification(completionPosition, "/len()")
-      }
-      restoreByUi()
-    }
-
-    task {
+      text(PythonLessonsBundle.message("python.onboarding.type.division",
+        code(" / len()")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
-                                       code("values"),
-                                       code("()")))
+        code("values"),
+        code("()"),
+        action("CodeCompletion")))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
         it.toString().contains("values")
       }
@@ -453,7 +496,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
                                        code("values"), action("EditorChooseLookupItem")))
       stateCheck {
-        checkEditorModification(completionPosition, "/len(values)")
+        checkEditorModification(sample.getPosition(2), "/len(values)")
       }
       restoreByUi()
     }

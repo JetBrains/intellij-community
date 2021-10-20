@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
@@ -17,8 +17,7 @@ public abstract class XSuspendContext {
    * Returned execution stack will be selected by default in 'Frames' panel of 'Debug' tool window. Also it will be used to obtain current
    * stack frame to perform 'Evaluate' action, for example
    */
-  @Nullable
-  public XExecutionStack getActiveExecutionStack() {
+  public @Nullable XExecutionStack getActiveExecutionStack() {
     return null;
   }
 

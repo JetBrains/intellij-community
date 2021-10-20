@@ -278,14 +278,16 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                          highlightBorder: Boolean,
                                          highlightInside: Boolean,
                                          usePulsation: Boolean,
+                                         clearPreviousHighlights: Boolean,
                                          selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
                                          finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
     triggerByUiComponentAndHighlight l@{
-      val component = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+      val component = LearningUiUtil.findComponentOrNull(project, componentClass, selector) {
         finderFunction(it)
       }
       if (component != null) {
-        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside,
+          usePulsation, clearPreviousHighlights)
         taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
@@ -299,11 +301,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                                                   highlightBorder: Boolean,
                                                                   highlightInside: Boolean,
                                                                   usePulsation: Boolean,
+                                                                  clearPreviousHighlights: Boolean,
                                                                   selector: ((candidates: Collection<T>) -> T?)?,
                                                                   rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
     triggerByUiComponentAndHighlight l@{
-      val whole = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+      val whole = LearningUiUtil.findComponentOrNull(project, componentClass, selector) {
         rectangle(it) != null
       }
       if (whole != null) {
@@ -318,7 +321,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                   checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
     triggerByUiComponentAndHighlight {
-      val list = LearningUiUtil.findComponentOrNull(JList::class.java) l@{
+      val list = LearningUiUtil.findComponentOrNull(project, JList::class.java) l@{
         val index = checkList(it) ?: return@l false
         val itemRect = it.getCellBounds(index, index)
         val listRect = it.visibleRect
@@ -339,7 +342,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                               checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     triggerByUiComponentAndHighlight l@{
-      val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
+      val tree = LearningUiUtil.findComponentOrNull(project, JTree::class.java) {
         checkTree(it) != null
       }
       if (tree != null) {

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
+import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
@@ -33,6 +34,8 @@ public class JavaCompletionTestSuite extends TestSuite {
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
     for (Class<?> aClass : myTestCaseLoader.getClasses()) {
       if (!aClass.getSimpleName().contains("Completion")) continue;
+      // JavaCompletionFeaturesTest does not depend on indices
+      if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
         //noinspection unchecked
         Class<? extends TestIndexingModeSupporter> testCaseClass = (Class<? extends TestIndexingModeSupporter>)aClass;

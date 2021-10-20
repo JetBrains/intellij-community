@@ -189,7 +189,7 @@ abstract class ProductProperties {
   /**
    * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
    */
-  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.

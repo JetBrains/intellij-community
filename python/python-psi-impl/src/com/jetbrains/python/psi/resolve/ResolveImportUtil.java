@@ -133,7 +133,10 @@ public final class ResolveImportUtil {
                                                               candidate.getClass());
       }
       if (candidate instanceof PsiDirectory) {
-        candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
+        final var packageElement = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
+        if (packageElement != importStatement.getContainingFile()) {
+          candidate = packageElement;
+        }
       }
       results.addAll(resolveChildren(candidate, name, file, false, true, false, false));
     }

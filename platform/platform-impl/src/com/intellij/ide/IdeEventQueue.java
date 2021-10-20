@@ -222,8 +222,6 @@ public final class IdeEventQueue extends EventQueue {
 
     abracadabraDaberBoreh();
 
-    IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
-
     if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }

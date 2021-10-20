@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
@@ -289,9 +286,10 @@ public class JBPopupMenu extends JPopupMenu {
       int y = -myShift + insets.top;
       for (Component component : components) {
         if (!component.isVisible()) {
+          String place = target instanceof PlaceProvider ? ((PlaceProvider)target).getPlace() : null;
           String itemText = component instanceof AbstractButton ?
                             "\"" + ((AbstractButton)component).getText() + "\"" : component.getClass().getName();
-          LOG.error("Invisible menu item " + itemText);
+          LOG.error("Invisible menu item " + itemText + (place != null ? " in '" + place + "'" : ""));
           continue;
         }
         int height = component.getPreferredSize().height;
