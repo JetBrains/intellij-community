@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,7 +131,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     DataKey<?>[] keys = DataKey.allKeys();
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     ProviderData cachedData = new ProviderData();
-    Component component = myComponentRef.ref.get();
+    Component component = SoftReference.dereference(myComponentRef.ref);
     doPreGetAllData(dataProvider, cachedData, component, dataManager, keys, myCachedData.getHead());
     return new PreCachedDataContext2(myComponentRef, myCachedData.prepend(cachedData),
                                      new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataKeysCount);
@@ -138,7 +139,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return myComponentRef.ref.get();
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return SoftReference.dereference(myComponentRef.ref);
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
     if (myCachedData.isEmpty()) return null;
