@@ -54,12 +54,18 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         doInspectionTest(new LeadingCharacterInspection(), Collections.singletonList("*LEADING_CHARACTER"));
     }
 
+    @Test
+    public void testLowercaseKeyInspection() {
+        doInspectionTest(new LowercaseKeyInspection(), Collections.singletonList("lower_case_KEY"));
+    }
+
     // Every available quickfix from every inspection is getting applied
     @Test
     public void testQuickFixes() {
         myFixture.enableInspections(new SpaceInsideNonQuotedInspection());
         myFixture.enableInspections(new ExtraBlankLineInspection());
         myFixture.enableInspections(new IncorrectDelimiterInspection());
+        myFixture.enableInspections(new LowercaseKeyInspection());
 
         myFixture.doHighlighting();
         List<IntentionAction> intentionActions = myFixture.getAllQuickFixes();

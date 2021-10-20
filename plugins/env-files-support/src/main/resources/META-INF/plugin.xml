@@ -126,6 +126,14 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvLowercaseKeyInspection"
+                         displayName="Key uses lowercase chars"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
