@@ -424,13 +424,6 @@
                  description="Adds &quot;--full-history --simplify-merges&quot; to git log arguments when retrieving history for a file.
                               This may sometimes result in empty merges being shown in the file history.
                               However, skipping this arguments hides some side branches if the end result is the same."/>
-    <registryKey key="git.diff.renameLimit" defaultValue="1"
-                 description="Sets diff.renameLimit configuration variable value.\n
-                              Essentially this variable tells Git the maximal size of commit for which to perform rename detection.
-                              Zero value means detecting renames in all commits.
-                              Setting this value too high (or zero) may lead to increased memory consumption by a Git process and longer execution time.\n
-                              This variable only used when reading git commits for indexing.
-                              Value from git configuration (1000 by default) is used for other purposes (eg for displaying changes in changes view)."/>
     <registryKey key="git.refresh.vfs.total" defaultValue="false"
                  description="If set to true, the whole Git repository root will be refreshed after performing a Git operation.
                               Otherwise only the affected files will be refreshed.

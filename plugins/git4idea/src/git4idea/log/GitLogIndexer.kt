@@ -31,7 +31,7 @@ class GitLogIndexer(private val project: Project,
       return
     }
 
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Registry,
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
@@ -46,13 +46,17 @@ class GitLogIndexer(private val project: Project,
       return
     }
 
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Registry,
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
   }
 
   override fun getSupportedVcs(): VcsKey {
     return GitVcs.getKey()
+  }
+
+  companion object {
+    private const val RENAME_LIMIT = 1
   }
 }
 

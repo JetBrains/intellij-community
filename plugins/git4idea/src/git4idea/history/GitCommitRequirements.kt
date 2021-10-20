@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
-import com.intellij.openapi.util.registry.Registry
-
 data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
                                  val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GitConfig,
                                  val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
@@ -11,7 +9,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     val result = mutableListOf<String>()
     when (diffRenameLimit) {
       DiffRenameLimit.Infinity -> result.add(renameLimit(0))
-      DiffRenameLimit.Registry -> result.add(renameLimit(Registry.intValue("git.diff.renameLimit")))
+      is DiffRenameLimit.Value -> result.add(renameLimit(diffRenameLimit.limit))
       DiffRenameLimit.NoRenames -> result.add("diff.renames=false")
       DiffRenameLimit.GitConfig -> {}
     }
@@ -47,9 +45,9 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     object Infinity : DiffRenameLimit()
 
     /**
-     * Use value set in registry (usually 1000)
+     * Use specified value
      */
-    object Registry : DiffRenameLimit()
+    class Value(val limit: Int) : DiffRenameLimit()
 
     /**
      * Use value set in users git.config
