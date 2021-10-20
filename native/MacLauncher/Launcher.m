@@ -37,10 +37,7 @@ NSString* minRequiredJavaVersion = @"1.8";
 @implementation NSDictionary (TypedGetters)
 - (NSDictionary *)dictionaryForKey:(id)key {
     id answer = self[key];
-    if ([answer isKindOfClass:[NSDictionary class]]) {
-        return answer;
-    }
-    return nil;
+    return [answer isKindOfClass:[NSDictionary class]] ? answer : nil;
 }
 
 - (NSArray *)arrayForKey:(id)key {
@@ -293,10 +290,7 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 NSString *getJVMProperty(NSString *property) {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSDictionary *properties = [jvmInfo dictionaryForKey:@"Properties"];
-    if (properties != nil) {
-        return properties[property];
-    }
-    return nil;
+    return properties != nil ? properties[property] : nil;
 }
 
 NSString *getSelector() {
