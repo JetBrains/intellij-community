@@ -316,7 +316,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
       PsiType type = iterable.getType();
-      String iterableText = ct.text(iterable);
+      String iterableText = iterable instanceof PsiSuperExpression ? "this" : ct.text(iterable);
       if (type instanceof PsiArrayType) {
         iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
       }
