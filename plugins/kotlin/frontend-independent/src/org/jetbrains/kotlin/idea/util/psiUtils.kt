@@ -180,26 +180,32 @@ fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissi
     }
 }
 
-tailrec fun hasRedundantTypeSpecification(typeReference: KtTypeReference?, initializer: KtExpression?): Boolean {
-    if (initializer == null || typeReference == null) return true
-    if (initializer !is KtLambdaExpression && initializer !is KtNamedFunction) return true
-    val typeElement = typeReference.typeElement ?: return true
-    if (typeReference.hasModifier(KtTokens.SUSPEND_KEYWORD)) return false
+/**
+ * Consider a property initialization `val f: (Int) -> Unit = { println(it) }`. The type annotation `(Int) -> Unit` in this case is required
+ * in order for the code to type check because otherwise the compiler cannot infer the type of `it`.
+ */
+tailrec fun KtCallableDeclaration.isExplicitTypeReferenceNeededForTypeInference(typeRef: KtTypeReference? = typeReference): Boolean {
+    if (this !is KtDeclarationWithInitializer) return false
+    val initializer = initializer
+    if (initializer == null || typeRef == null) return false
+    if (initializer !is KtLambdaExpression && initializer !is KtNamedFunction) return false
+    val typeElement = typeRef.typeElement ?: return false
+    if (typeRef.hasModifier(KtTokens.SUSPEND_KEYWORD)) return true
     return when (typeElement) {
         is KtFunctionType -> {
-            if (typeElement.receiver != null) return false
-            if (typeElement.parameters.isEmpty()) return true
+            if (typeElement.receiver != null) return true
+            if (typeElement.parameters.isEmpty()) return false
             val valueParameters = when (initializer) {
                 is KtLambdaExpression -> initializer.valueParameters
                 is KtNamedFunction -> initializer.valueParameters
                 else -> emptyList()
             }
-            valueParameters.isNotEmpty() && valueParameters.none { it.typeReference == null }
+            valueParameters.isEmpty() || valueParameters.any { it.typeReference == null }
         }
         is KtUserType -> {
-            val typeAlias = typeElement.referenceExpression?.mainReference?.resolve() as? KtTypeAlias ?: return true
-            return hasRedundantTypeSpecification(typeAlias.getTypeReference(), initializer)
+            val typeAlias = typeElement.referenceExpression?.mainReference?.resolve() as? KtTypeAlias ?: return false
+            return isExplicitTypeReferenceNeededForTypeInference(typeAlias.getTypeReference())
         }
-        else -> true
+        else -> false
     }
 }
