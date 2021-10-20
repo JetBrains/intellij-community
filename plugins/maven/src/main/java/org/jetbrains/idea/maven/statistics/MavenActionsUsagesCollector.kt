@@ -50,6 +50,12 @@ class MavenActionsUsagesCollector : CounterUsagesCollector() {
     @JvmField
     val START_WSL_MAVEN_SERVER = GROUP.registerEvent("StartWslMavenServer")
 
+    @JvmField
+    val CREATE_MAVEN_PROJECT = GROUP.registerEvent("CreateMavenProjectOrModule")
+
+    @JvmField
+    val CREATE_MAVEN_PROJECT_FROM_ARCHETYPE = GROUP.registerEvent("CreateMavenProjectOrModuleFromArchetype")
+
     @JvmStatic
     fun trigger(project: Project?,
                 actionID: VarargEventId,
