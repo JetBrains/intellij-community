@@ -165,7 +165,7 @@ internal class VerticalBarPresentation(
   private fun showToolbar() {
     val actionToolbar = TableActionKeys.createActionToolbar(
       rowActionGroup,
-      isHorizontal = false,
+      isHorizontal = true,
       editor,
       createDataProvider(row)
     )
