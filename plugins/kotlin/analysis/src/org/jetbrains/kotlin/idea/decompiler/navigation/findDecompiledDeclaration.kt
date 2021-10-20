@@ -188,5 +188,6 @@ object ByDescriptorIndexer : DecompiledTextIndexer<String> {
         defaultDecompilerRendererOptions()
         withDefinedIn = true
         renderUnabbreviatedType = false
+        defaultParameterValueRenderer = null
     }
 }
