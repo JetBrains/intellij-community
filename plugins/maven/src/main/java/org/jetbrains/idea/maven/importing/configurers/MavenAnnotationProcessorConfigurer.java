@@ -6,10 +6,13 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,15 +51,10 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       return;
     }
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null) {
-      String versionString = sdk.getVersionString();
-      if (versionString != null) {
-        if (versionString.contains("1.5") ||
-            versionString.contains("1.4") ||
-            versionString.contains("1.3") ||
-            versionString.contains("1.2")) {
-          return;
-        }
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+      JavaSdkVersion sdkVersion = ((JavaSdk)sdk.getSdkType()).getVersion(sdk);
+      if (sdkVersion != null && sdkVersion.getMaxLanguageLevel().isLessThan(LanguageLevel.JDK_1_6)) {
+        return;
       }
     }
 
@@ -90,6 +88,8 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
         isDefault = false;
       }
       ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
+      //it means that user disable it manually - no need update
+      if (moduleProfile != null && !moduleProfile.isEnabled()) return;
 
       if (moduleProfile == null) {
         moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
