@@ -118,6 +118,14 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvLeadingCharacterInspection"
+                         displayName="Invalid leading character"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 

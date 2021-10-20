@@ -3,10 +3,10 @@ package ru.adelf.idea.dotenv.tests.dotenv;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection;
-import ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection;
-import ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection;
-import ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import ru.adelf.idea.dotenv.inspections.*;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@RunWith(JUnit4.class)
 public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     @Override
@@ -28,23 +29,33 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     // Test for each Inspection
 
+    @Test
     public void testDuplicateKey() {
         doInspectionTest(new DuplicateKeyInspection(), Arrays.asList("DUPLICATE_KEY=test", "DUPLICATE_KEY=test2"));
     }
 
+    @Test
     public void testSpaceInsideNonQuoted() {
         doInspectionTest(new SpaceInsideNonQuotedInspection(), Collections.singletonList("spaces without quotes"));
     }
 
+    @Test
     public void testExtraBlankLine() {
         doInspectionTest(new ExtraBlankLineInspection(), Collections.singletonList("\n\n\n"));
     }
 
+    @Test
     public void testIncorrectDelimiterInspection() {
         doInspectionTest(new IncorrectDelimiterInspection(), Collections.singletonList("INCORRECT-DELIMITER"));
     }
 
+    @Test
+    public void testLeadingCharacterInspection() {
+        doInspectionTest(new LeadingCharacterInspection(), Collections.singletonList("*LEADING_CHARACTER"));
+    }
+
     // Every available quickfix from every inspection is getting applied
+    @Test
     public void testQuickFixes() {
         myFixture.enableInspections(new SpaceInsideNonQuotedInspection());
         myFixture.enableInspections(new ExtraBlankLineInspection());
