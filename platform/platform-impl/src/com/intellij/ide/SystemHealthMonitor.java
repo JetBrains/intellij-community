@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
@@ -164,7 +165,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
+    int minReservedCodeCacheSize = PluginManagerCore.isRunningFromSources() ? 240 : 512;
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
       NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
