@@ -18,7 +18,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +95,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     init();
     setTitle(title);
+    setResizable(false);
+    setOKButtonText(getOKButtonText());
   }
 
   @Override
@@ -107,20 +109,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myAnalyzeInjectedCode.setVisible(false);
 
     ArrayList<JRadioButton> buttons = new ArrayList<>();
-    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource, myAnalyzeInjectedCode, buttons, myDisposable);
+    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource,
+                                                          myAnalyzeInjectedCode, buttons, myDisposable,
+                                                          getAdditionalActionSettings(myProject));
     buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
-
-    BorderLayoutPanel wholePanel = new BorderLayoutPanel();
-    wholePanel.addToTop(panel);
-    final JComponent additionalPanel = getAdditionalActionSettings(myProject);
-    if (additionalPanel != null) {
-      wholePanel.addToCenter(additionalPanel);
-    }
     new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
 
-    return wholePanel;
+    panel.setPreferredSize(panel.getMinimumSize());
+    return panel;
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
@@ -257,5 +255,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project) {
     return null;
+  }
+
+  @NotNull
+  public @Nls String getOKButtonText() {
+    return CodeInsightBundle.message("action.analyze.verb");
   }
 }
