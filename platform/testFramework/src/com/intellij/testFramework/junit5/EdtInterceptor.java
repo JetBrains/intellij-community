@@ -16,4 +16,18 @@ public class EdtInterceptor implements InvocationInterceptor {
                                   ExtensionContext extensionContext) throws Throwable {
     EdtTestUtil.runInEdtAndWait(() -> invocation.proceed());
   }
+
+  @Override
+  public void interceptBeforeEachMethod(Invocation<Void> invocation,
+                                        ReflectiveInvocationContext<Method> invocationContext,
+                                        ExtensionContext extensionContext) throws Throwable {
+    EdtTestUtil.runInEdtAndWait(() -> invocation.proceed());
+  }
+
+  @Override
+  public void interceptAfterEachMethod(Invocation<Void> invocation,
+                                       ReflectiveInvocationContext<Method> invocationContext,
+                                       ExtensionContext extensionContext) throws Throwable {
+    EdtTestUtil.runInEdtAndWait(() -> invocation.proceed());
+  }
 }
