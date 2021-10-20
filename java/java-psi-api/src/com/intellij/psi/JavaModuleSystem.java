@@ -4,17 +4,32 @@ package com.intellij.psi;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Allows checking accessibility of a given class.
+ *
+ * If at least one extension considers class as inaccessible, then it is inaccessible.
+ *
  * @see com.intellij.codeInsight.JavaModuleSystemEx
  */
 public interface JavaModuleSystem {
   ExtensionPointName<JavaModuleSystem> EP_NAME = new ExtensionPointName<>("com.intellij.javaModuleSystem");
 
+  /**
+   * @return name of the module system which will be reported to user in case of inaccessibility
+   */
+  @Nls
   @NotNull String getName();
 
+  /**
+   * Checks accessibility of the class
+   *
+   * @param target class which accessibility should be determined
+   * @param place place where accessibility of target is required
+   */
   default boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place) {
     PsiFile targetFile = target.getContainingFile();
     if (targetFile == null) return true;
@@ -25,5 +40,12 @@ public interface JavaModuleSystem {
     return packageName == null || isAccessible(packageName, targetFile, place);
   }
 
+  /**
+   * Checks availability of element in the package
+   *
+   * @param targetPackageName name of the package which element's accessibility should be determined
+   * @param targetFile file in which this element is contained
+   * @param place place where accessibility of target is required
+   */
   boolean isAccessible(@NotNull String targetPackageName, @Nullable PsiFile targetFile, @NotNull PsiElement place);
 }

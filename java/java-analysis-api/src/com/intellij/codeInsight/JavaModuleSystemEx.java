@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+
+/**
+ * Allows checking accessibility of the class and provide fixes.
+ */
 public interface JavaModuleSystemEx extends JavaModuleSystem {
   final class ErrorWithFixes {
     public final @NotNull @Nls String message;
