@@ -5,6 +5,7 @@ import com.intellij.execution.Executor
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 
 interface MarkdownRunner {
   companion object {
@@ -18,5 +19,6 @@ interface MarkdownRunner {
 
   fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean
 
+  @Nls
   fun title(): String
 }
