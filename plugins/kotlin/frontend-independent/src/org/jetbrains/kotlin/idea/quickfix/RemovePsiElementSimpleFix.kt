@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.hasRedundantTypeSpecification
+import org.jetbrains.kotlin.idea.util.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -67,23 +67,23 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
     object RemoveVariableFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         public override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             if (psiElement is KtDestructuringDeclarationEntry) return emptyList()
-            val expression = psiElement.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
-            if (!hasRedundantTypeSpecification(expression.typeReference, expression.initializer)) return emptyList()
+            val ktProperty = psiElement.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
+            if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return emptyList()
             return listOf(RemoveVariableFix(expression))
         }
     }
 
     class RemoveVariableFix(expression: KtProperty) :
-        RemovePsiElementSimpleFix(expression, KotlinBundle.message("remove.variable.0", expression.name.toString())) {
+        RemovePsiElementSimpleFix(expression, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val expression = element as? KtProperty ?: return
-            val initializer = expression.initializer
+            val ktProperty = element as? KtProperty ?: return
+            val initializer = ktProperty.initializer
             if (initializer != null && initializer !is KtConstantExpression) {
-                val commentSaver = CommentSaver(expression)
-                val replaced = expression.replace(initializer)
+                val commentSaver = CommentSaver(ktProperty)
+                val replaced = ktProperty.replace(initializer)
                 commentSaver.restore(replaced)
             } else {
-                expression.delete()
+                ktProperty.delete()
             }
         }
     }
