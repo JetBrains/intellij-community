@@ -90,7 +90,7 @@ object CodeWithMeClientDownloader {
     Done
   }
 
-  private val buildNumberRegex = Regex("""[0-9]{3}\.([0-9]+|SNAPSHOT)""")
+  private val buildNumberRegex = Regex("""[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)""")
 
   fun getCwmGuestCachesDir(): Path {
     return System.getProperty(cwmTestsGuestCachesSystemProperty)?.let { Path.of(it) }
@@ -98,8 +98,9 @@ object CodeWithMeClientDownloader {
   }
 
   fun getClientDistributionName(clientBuildVersion: String) = when {
-    VersionComparatorUtil.compare(clientBuildVersion, "213.5318") >= 0 -> "JetBrainsClient"
-    else -> "CodeWithMeGuest"
+    VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
+    VersionComparatorUtil.compare(clientBuildVersion, "213.5318") < 0 -> "CodeWithMeGuest"
+    else -> "JetBrainsClient"
   }
 
   fun createSessionInfo(clientBuildVersion: String, jreBuild: String, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
@@ -308,6 +309,7 @@ object CodeWithMeClientDownloader {
             download(data.url, data.archivePath)
 
             if (Registry.`is`("codewithme.check.guest.signature")) {
+              LOG.info("Signature verification is on, preparing for it")
               download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL),
                 tempDir.resolve("KEYS"))
               download(data.url.addPathSuffix(SHA256_SUFFIX), data.archivePath.addSuffix(SHA256_SUFFIX))
@@ -319,6 +321,7 @@ object CodeWithMeClientDownloader {
                 }
               })
 
+              LOG.info("Running checksum signature verifier for ${data.archivePath}")
               Sha256ChecksumSignatureVerifier(pgpVerifier).verifyChecksumAndSignature(
                 file = data.archivePath,
                 detachedSignatureFile = data.archivePath.addSuffix(SHA256_ASC_SUFFIX),
