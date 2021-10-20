@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
@@ -45,6 +46,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   private final boolean myBatchMode;
   Annotator myCurrentAnnotator;
+  private ExternalAnnotator<?, ?> myExternalAnnotator;
 
   /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
@@ -235,26 +237,30 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   @NotNull
   @Override
   public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return new B(this, severity, message, myCurrentElement);
+    return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
   @NotNull
   @Override
   public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return new B(this, severity, null, myCurrentElement);
+    return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
 
   PsiElement myCurrentElement;
   @ApiStatus.Internal
   public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
+    myCurrentAnnotator = annotator;
     myCurrentElement = element;
     annotator.annotate(element, this);
     myCurrentElement = null;
+    myCurrentAnnotator = null;
   }
   @ApiStatus.Internal
   public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
+    myExternalAnnotator = annotator;
     myCurrentElement = file;
     annotator.apply(file, result, this);
     myCurrentElement = null;
+    myExternalAnnotator = null;
   }
 
   // to assert each AnnotationBuilder did call .create() in the end
