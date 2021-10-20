@@ -98,6 +98,7 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
 }
 
 @Internal
+@OptIn(InternalCoroutinesApi::class)
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
 fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()

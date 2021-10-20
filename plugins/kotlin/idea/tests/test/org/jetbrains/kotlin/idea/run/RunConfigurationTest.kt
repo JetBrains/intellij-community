@@ -258,7 +258,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(f)
 
                 val isMainFunction = isMainFunction(function)
-                val functionCandidatesAreMain = functionCandidates.map(::isMainFunction)
+                val functionCandidatesAreMain = functionCandidates.map { isMainFunction(it) }
                 val anyFunctionCandidatesAreMain = functionCandidatesAreMain.any { it }
                 val allFunctionCandidatesAreNotMain = functionCandidatesAreMain.none { it }
 
