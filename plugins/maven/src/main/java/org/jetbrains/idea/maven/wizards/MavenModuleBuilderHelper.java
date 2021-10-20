@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -74,6 +75,8 @@ public class MavenModuleBuilderHelper {
   }
 
   public void configure(final Project project, final VirtualFile root, final boolean isInteractive) {
+    MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT);
+
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
@@ -187,6 +190,8 @@ public class MavenModuleBuilderHelper {
   }
 
   private void generateFromArchetype(final Project project, final VirtualFile pom) {
+    MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE);
+
     final File workingDir;
     try {
       workingDir = FileUtil.createTempDirectory("archetype", "tmp");
