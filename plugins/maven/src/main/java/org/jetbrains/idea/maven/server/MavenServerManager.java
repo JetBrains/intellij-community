@@ -442,10 +442,19 @@ public final class MavenServerManager implements Disposable {
           settings.setOffline(false);
         }
 
-        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+        RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
+        String sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk());
+        if (sdkPath != null) {
+          sdkPath = transformer.toRemotePath(sdkPath);
+        }
+        settings.setProjectJdk(sdkPath);
         myConnector = MavenServerManager.this.getConnector(project, multiModuleProjectDirectory);
-        return myConnector.createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+
+        return myConnector.createEmbedder(
+          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
+                                    transformer.toRemotePath(multiModuleProjectDirectory)));
       }
+
 
       @Override
       protected synchronized void cleanup() {
@@ -515,7 +524,12 @@ public final class MavenServerManager implements Disposable {
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
-    result.setMavenHome(settings.getEffectiveMavenHome());
+    File mavenHome = settings.getEffectiveMavenHome();
+    if (mavenHome != null) {
+      String remotePath = transformer.toRemotePath(mavenHome.getAbsolutePath());
+      mavenHome = remotePath == null ? null : new File(remotePath);
+    }
+    result.setMavenHome(mavenHome);
     result.setUserSettingsFile(
       transformer == RemotePathTransformerFactory.Transformer.ID ? settings.getEffectiveUserSettingsIoFile() : null);
     result.setGlobalSettingsFile(
