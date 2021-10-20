@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
 import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
 import kotlin.system.exitProcess
 
 
@@ -95,6 +96,13 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
               withFileMasks(param ?: throw ArgumentsException("Missing file mask(s)."))
               skipFlag.skip()
             }
+            "-charset" -> {
+              param ?: throw ArgumentsException("Missing file mask(s).")
+              runCatching { Charset.forName(param) }
+                .onSuccess { withCharset(it) }
+                .onFailure { messageOutput.error("Ignoring charset setting: ${it.message}") }
+              skipFlag.skip()
+            }
             else -> {
               if (arg.startsWith("-")) throw ArgumentsException("Unknown option $arg")
               withEntry(arg)
@@ -106,12 +114,13 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
 
 
 private const val usageInfo = """
-Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] path1 path2...
+Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] path1 path2...
   -h|-help       Show a help message and exit.
   -s|-settings   A path to Intellij IDEA code style settings .xml file.
   -r|-R          Scan directories recursively.
-  -d|-dry        Perform a dry run: no file modifications, only exit status
+  -d|-dry        Perform a dry run: no file modifications, only exit status.
   -m|-mask       A comma-separated list of file masks.
+  -charset       Force charset to use when reading and writing files. 
   path<n>        A path to a file or a directory.  
 """
 

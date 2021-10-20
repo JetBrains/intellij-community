@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
 
 
 private var LOG = Logger.getInstance(FileSetProcessor::class.java)
@@ -13,7 +14,8 @@ private var LOG = Logger.getInstance(FileSetProcessor::class.java)
 
 abstract class FileSetProcessor(
   val messageOutput: MessageOutput,
-  val isRecursive: Boolean
+  val isRecursive: Boolean,
+  val charset: Charset? = null
 ) {
 
   private val topEntries = arrayListOf<File>()
@@ -56,11 +58,12 @@ abstract class FileSetProcessor(
       }
       .filter { it.isFile }
       .filter { it.matchesFileMask() }
-      .map { it.toVirtualFile() }
-      .forEach { virtualFile ->
-        LOG.info("Processing ${virtualFile.path}")
+      .map { ioFile -> ioFile.toVirtualFile() }
+      .onEach { vFile -> charset?.let { vFile.charset = it } }
+      .forEach { vFile ->
+        LOG.info("Processing ${vFile.path}")
         statistics.fileTraversed()
-        processVirtualFile(virtualFile)
+        processVirtualFile(vFile)
       }
   }
 

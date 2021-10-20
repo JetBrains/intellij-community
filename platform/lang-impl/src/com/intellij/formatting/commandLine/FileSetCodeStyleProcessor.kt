@@ -17,7 +17,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -27,6 +26,8 @@ import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PlatformUtils
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.Closeable
+import java.io.File
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.util.*
 
@@ -47,8 +48,9 @@ private const val RESULT_MESSAGE_DRY_FAIL = "Needs reformatting"
 class FileSetFormatter(
   codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
-  isRecursive: Boolean
-) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive) {
+  isRecursive: Boolean,
+  charset: Charset? = null
+) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive, charset) {
 
   override val operationContinuous = "Formatting"
   override val operationPerfect = "formatted"
@@ -112,8 +114,9 @@ class FileSetFormatter(
 class FileSetFormatValidator(
   codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
-  isRecursive: Boolean
-) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive) {
+  isRecursive: Boolean,
+  charset: Charset? = null
+) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive, charset) {
 
   override val operationContinuous = "Checking"
   override val operationPerfect = "checked"
@@ -165,8 +168,9 @@ class FileSetFormatValidator(
 abstract class FileSetCodeStyleProcessor(
   val codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
-  isRecursive: Boolean
-) : FileSetProcessor(messageOutput, isRecursive), Closeable {
+  isRecursive: Boolean,
+  charset: Charset? = null
+) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
 
   private val projectUID = UUID.randomUUID().toString()
   protected val project = createProject(projectUID, codeStyleSettings)

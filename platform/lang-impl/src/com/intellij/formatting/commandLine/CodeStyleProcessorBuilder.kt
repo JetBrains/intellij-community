@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import java.io.File
+import java.nio.charset.Charset
 
 
 private val LOG = Logger.getInstance(CodeStyleProcessorBuilder::class.java)
@@ -15,6 +16,7 @@ class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
   var codeStyleSettings = CodeStyleSettingsManager.getInstance().createSettings()
   var fileMasks = emptyList<Regex>()
   val entries = arrayListOf<File>()
+  var charset: Charset? = null
 
   fun dryRun() = this.also { isDryRun = true }
 
@@ -41,6 +43,7 @@ class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
 
   fun withEntry(entryPath: String) = this.also { entries.add(File(entryPath)) }
 
+  fun withCharset(charset: Charset) = this.also { this.charset = charset }
 
   private fun FileSetCodeStyleProcessor.configure() = apply {
     fileMasks.forEach { mask ->
@@ -53,10 +56,10 @@ class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
   }
 
   private fun buildFormatter() =
-    FileSetFormatter(codeStyleSettings, messageOutput, isRecursive).configure()
+    FileSetFormatter(codeStyleSettings, messageOutput, isRecursive, charset).configure()
 
   private fun buildFormatValidator() =
-    FileSetFormatValidator(codeStyleSettings, messageOutput, isRecursive).configure()
+    FileSetFormatValidator(codeStyleSettings, messageOutput, isRecursive, charset).configure()
 
   fun build(): FileSetCodeStyleProcessor =
     if (isDryRun) buildFormatValidator() else buildFormatter()
