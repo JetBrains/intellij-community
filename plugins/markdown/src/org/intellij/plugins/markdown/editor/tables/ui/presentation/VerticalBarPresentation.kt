@@ -6,8 +6,9 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hints.presentation.BasePresentation
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -161,17 +162,13 @@ internal class VerticalBarPresentation(
     return position
   }
 
-  private fun createActionToolbar(): ActionToolbar {
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_POPUP, rowActionGroup, true)
-    actionToolbar.targetComponent = editor.component
-    actionToolbar.adjustTheSameSize(true)
-    actionToolbar.setReservePlaceAutoPopupIcon(false)
-    return actionToolbar
-  }
-
   private fun showToolbar() {
-    DataManager.registerDataProvider(editor.component, createDataProvider(row))
-    val actionToolbar = createActionToolbar()
+    val actionToolbar = TableActionKeys.createActionToolbar(
+      rowActionGroup,
+      isHorizontal = false,
+      editor,
+      createDataProvider(row)
+    )
     val hint = LightweightHint(actionToolbar.component)
     hint.setForceShowAsPopup(true)
     val targetPoint = calculateToolbarPosition(hint.component.preferredSize.height)
