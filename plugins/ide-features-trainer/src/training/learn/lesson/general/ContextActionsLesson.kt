@@ -119,4 +119,9 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
   }
 
   override val suitableTips = listOf("ContextActions")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("context.actions.help.intention.actions"),
+         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/intention-actions.html"),
+  )
 }
