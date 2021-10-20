@@ -120,6 +120,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
+        filter(token: "product_code", value: buildContext.applicationInfo.productCode)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
