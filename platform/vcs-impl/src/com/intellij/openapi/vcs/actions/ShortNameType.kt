@@ -13,85 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.actions;
+package com.intellij.openapi.vcs.actions
 
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
-
-import java.util.List;
-
-import static com.intellij.openapi.vcs.VcsBundle.BUNDLE;
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsBundle
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 
 /**
  * @author Konstantin Bulenkov
  */
-public enum ShortNameType {
+enum class ShortNameType(private val myId: @NonNls String,
+                         private val myDescriptionKey: @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String) {
   INITIALS("initials", "annotations.short.name.type.initials"),
   LASTNAME("lastname", "annotations.short.name.type.last.name"),
   FIRSTNAME("firstname", "annotations.short.name.type.first.name"),
   NONE("full", "annotations.short.name.type.full.name");
 
-  private static final String KEY = "annotate.short.names.type"; // NON-NLS
-  private final String myId;
-  private final String myDescriptionKey;
+  val description: @NlsActions.ActionText String get() = VcsBundle.message(myDescriptionKey)
 
-  ShortNameType(@NotNull @NonNls String id,
-                @NotNull @PropertyKey(resourceBundle = BUNDLE) String descriptionKey) {
-    myId = id;
-    myDescriptionKey = descriptionKey;
+  fun isSet(): Boolean {
+    return myId == PropertiesComponent.getInstance().getValue(KEY)
   }
 
-  @NlsActions.ActionText
-  public String getDescription() {
-    return VcsBundle.message(myDescriptionKey);
+  fun set() {
+    PropertiesComponent.getInstance().setValue(KEY, myId)
   }
 
-  boolean isSet() {
-    return myId.equals(PropertiesComponent.getInstance().getValue(KEY));
-  }
+  companion object {
+    private const val KEY = "annotate.short.names.type" // NON-NLS
 
-  void set() {
-    PropertiesComponent.getInstance().setValue(KEY, myId);
-  }
+    @JvmStatic
+    fun shorten(name: String?, type: ShortNameType): String? {
+      var name = name ?: return null
+      if (type == NONE) return name
 
-  @Nullable
-  public static String shorten(@Nullable String name, @NotNull ShortNameType type) {
-    if (name == null) return null;
-    if (type == NONE) return name;
+      val atOffset = name.indexOf('@')
+      val emailStart = name.indexOf('<')
+      val emailEnd = name.indexOf('>')
+      if (0 < emailStart && emailStart < atOffset && atOffset < emailEnd) {
+        // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
+        name = name.substring(0, emailStart).trim()
+      }
+      else if (!name.contains(" ") && atOffset > 0) {
+        // vasya.pupkin@email.com --> vasya.pupkin
+        name = name.substring(0, atOffset)
+      }
 
-    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
-    final int[] ind = {name.indexOf('<'), name.indexOf('@'), name.indexOf('>')};
-    if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
-      name = name.substring(0, ind[0]).trim();
+      name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ')
+
+      val strings = StringUtil.split(name, " ")
+      if (type == INITIALS) {
+        return StringUtil.join(strings, { StringUtil.toUpperCase(it[0]).toString() }, "")
+      }
+
+      if (strings.size < 2) return name
+
+      val shortName = when (type) {
+        FIRSTNAME -> strings.first()
+        else -> strings.last()
+      }
+      return StringUtil.capitalize(shortName)
     }
-
-    // vasya.pupkin@email.com --> vasya pupkin
-    if (!name.contains(" ") && name.contains("@")) { //simple e-mail check. john@localhost
-      name = name.substring(0, name.indexOf('@'));
-    }
-    name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ');
-
-    final List<String> strings = StringUtil.split(name, " ");
-
-    if (type == INITIALS) {
-      return StringUtil.join(strings, it -> String.valueOf(StringUtil.toUpperCase(it.charAt(0))), "");
-    }
-
-    if (strings.size() < 2) return name;
-
-    String shortName;
-    if (type == FIRSTNAME) {
-      shortName = strings.get(0);
-    }
-    else {
-      shortName = strings.get(strings.size() - 1);
-    }
-    return StringUtil.capitalize(shortName);
   }
 }
