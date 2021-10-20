@@ -308,8 +308,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       allocateNewFrame(project, frame)
     }
     else {
-      frame.setProject(project)
       projectToFrame.put(project, frame)
+      frame.setProject(project)
     }
     return frame
   }
@@ -337,8 +337,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
     }
 
-    frameHelper.setProject(project)
     projectToFrame.put(project, frameHelper)
+    frameHelper.setProject(project)
     val uiFrame = frameHelper.frame!!
     if (frameInfo != null) {
       uiFrame.extendedState = frameInfo.extendedState
