@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.python.psi" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
