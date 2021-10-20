@@ -527,7 +527,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   /**
-   * Try add artifact to index.
+   * Try to add artifact to index.
    *
    * @return true if artifact added to index else need retry
    */
@@ -557,7 +557,7 @@ public final class MavenIndex implements MavenSearchIndex {
       } finally {
         indexUpdateLock.unlock();
       }
-    }, null);
+    }, false);
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
