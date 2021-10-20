@@ -18,12 +18,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+//
+// Public API for assigning touchbar actions to ui-component
+//
 public class Touchbar {
   public static @Nullable ActionGroup getActions(@NotNull JComponent component) {
     return ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
   }
 
-  // setActions
+  //
+  // Use setActions to link action-group with JComponent.
+  // Linked group will be shown in touchbar when JComponent gains focus.
+  //
 
   public static void setActions(@NotNull JComponent component, @Nullable ActionGroup group) {
     if (ApplicationManager.getApplication() == null) return;
@@ -35,8 +41,19 @@ public class Touchbar {
   public static void setActions(@NotNull JComponent component, @NotNull String actionId) {
     setActions(component, ActionManager.getInstance().getAction(actionId));
   }
+  public static void addActions(@NotNull JComponent component, @Nullable ActionGroup group) {
+    if (ApplicationManager.getApplication() == null) return;
+    ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
+    if (old == null) {
+      setActions(component, group);
+    } else if (old instanceof DefaultActionGroup && group != null) {
+      ((DefaultActionGroup)old).addAll(group);
+    }
+  }
 
-  // setButtonActions
+  //
+  // The same as setActions, but internally generates action-group wrapper from the set of JButtons
+  //
 
   public static void setButtonActions(@NotNull JComponent component, JButton button) {
     setButtonActions(component, Collections.singletonList(button));
@@ -69,6 +86,17 @@ public class Touchbar {
     }
 
     setActions(component, result);
+  }
+  public static void addButtonAction(@NotNull JComponent component, JButton button) {
+    if (ApplicationManager.getApplication() == null) return;
+    ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
+    if (old == null) {
+      setButtonActions(component, button);
+    } else if (old instanceof DefaultActionGroup) {
+      final AnAction anAct = _createActionFromButton(button.getAction(), button, false);
+      if (anAct != null)
+        ((DefaultActionGroup)old).add(anAct);
+    }
   }
 
   //
