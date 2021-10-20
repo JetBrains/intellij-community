@@ -104,7 +104,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getEntryPointAxisSize() {
-      return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + 6;
+      return myTabs.getEntryPointPreferredSize().width;
     }
 
     @Override
@@ -331,7 +331,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     int getEntryPointAxisSize() {
-      return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + 2;
+      return myTabs.getEntryPointPreferredSize().height;
     }
 
     @Override
