@@ -1851,7 +1851,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));
+        tooltip.set(ReadAction.nonBlocking(() -> renderer.getTooltipText())
+            .wrapProgress(indicator)
+              .executeSynchronously());
       }
 
       @Override
