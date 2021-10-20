@@ -15,34 +15,67 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vcs.actions.ShortNameType;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.vcs.actions.ShortNameType.FIRSTNAME;
-import static com.intellij.openapi.vcs.actions.ShortNameType.LASTNAME;
+import static com.intellij.openapi.vcs.actions.ShortNameType.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class AnnotationShortNameTest extends TestCase {
   public void testShortNames() {
-    doTest(FIRSTNAME, "Vasya Pavlovich Pupkin <asdasd@localhost>", "Vasya");
-    doTest(LASTNAME, "Vasya Pavlovich Pupkin <asdasd@localhost>", "Pupkin");
-    doTest(FIRSTNAME, "Vasya Pavlovich Pupkin", "Vasya");
-    doTest(LASTNAME, "Vasya Pavlovich Pupkin", "Pupkin");
-    doTest(LASTNAME, "vasya.pupkin@localhost.com", "Pupkin");
-    doTest(FIRSTNAME, "vasya.pupkin@localhost.com", "Vasya");
-    doTest(LASTNAME, "vasya-pavlovich-pupkin@localhost.com", "Pupkin");
-    doTest(FIRSTNAME, "vasya-pavlovich-pupkin@localhost.com", "Vasya");
-    doTest(FIRSTNAME, "vasya", "vasya");
-    doTest(LASTNAME, "vasya", "vasya");
-    doTest(FIRSTNAME, "Vasya  Pupkin", "Vasya");
-    doTest(LASTNAME, "Vasya  Pupkin", "Pupkin");
+    doTest("Vasya Pavlovich Pupkin <asdasd@localhost>",
+           "Vasya", "Pupkin", "VPP",
+           "Vasya Pavlovich Pupkin", "asdasd@localhost");
+    doTest("Vasya Pavlovich Pupkin",
+           "Vasya", "Pupkin", "VPP",
+           "Vasya Pavlovich Pupkin", "Vasya Pavlovich Pupkin");
+    doTest("vasya.pupkin@localhost.com",
+           "Vasya", "Pupkin", "VP",
+           "vasya.pupkin@localhost.com", "vasya.pupkin@localhost.com");
+    doTest("vasya-pavlovich-pupkin@localhost.com",
+           "Vasya", "Pupkin", "VPP",
+           "vasya-pavlovich-pupkin@localhost.com", "vasya-pavlovich-pupkin@localhost.com");
+    doTest("vasya",
+           "Vasya", "Vasya", "V",
+           "vasya", "vasya");
+    doTest("Vasya  Pupkin",
+           "Vasya", "Pupkin", "VP",
+           "Vasya Pupkin", "Vasya Pupkin");
+    doTest("vasya-pupkin",
+           "Vasya", "Pupkin", "VP",
+           "vasya-pupkin", "vasya-pupkin");
+    doTest("vasya.pupkin",
+           "Vasya", "Pupkin", "VP",
+           "vasya.pupkin", "vasya.pupkin");
+    doTest("<asdasd@localhost> Vasya Pupkin",
+           "Vasya", "Pupkin", "VP",
+           "Vasya Pupkin", "asdasd@localhost");
+    doTest("<vasya.pupkin@localhost>",
+           "Vasya", "Pupkin", "VP",
+           "vasya.pupkin@localhost", "vasya.pupkin@localhost");
+    doTest("pupkin <vasya@localhost>",
+           "Pupkin", "Pupkin", "P",
+           "pupkin", "vasya@localhost");
+    doTest("@localhost",
+           "@localhost", "@localhost", "@",
+           "@localhost", "@localhost");
+    doTest("vasya <email>",
+           "Vasya", "Email", "VE",
+           "vasya <email>", "vasya <email>");
+    doTest("vasya <.email.>",
+           "Vasya", "Email", "VE",
+           "vasya <.email.>", "vasya <.email.>");
   }
 
-  private static void doTest(@NotNull ShortNameType type, @NotNull String fullName, @NotNull String expected) {
-    String actual = ShortNameType.shorten(fullName, type);
-    assertEquals("Type: " + type, expected, actual);
+  private static void doTest(@NotNull String input,
+                             @NotNull String firstName,
+                             @NotNull String lastName,
+                             @NotNull String initials,
+                             @NotNull String fullName,
+                             @NotNull String email) {
+    assertEquals(firstName, shorten(input, FIRSTNAME));
+    assertEquals(lastName, shorten(input, LASTNAME));
+    assertEquals(initials, shorten(input, INITIALS));
+    assertEquals(fullName, shorten(input, NONE));
+    assertEquals(email, shorten(input, EMAIL));
   }
 }

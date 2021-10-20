@@ -77,7 +77,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     new GitAnnotationAspect(LineAnnotationAspect.AUTHOR, VcsBundle.message("line.annotation.aspect.author"), true) {
       @Override
       protected String doGetValue(LineInfo lineInfo) {
-        return lineInfo.getAuthor();
+        return VcsUserUtil.toExactString(lineInfo.getAuthorUser());
       }
     };
   private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;

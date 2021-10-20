@@ -21,61 +21,99 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.util.*
 
-/**
- * @author Konstantin Bulenkov
- */
-enum class ShortNameType(private val myId: @NonNls String,
-                         private val myDescriptionKey: @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String) {
+enum class ShortNameType(private val typeId: @NonNls String,
+                         private val descriptionKey: @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String) {
   INITIALS("initials", "annotations.short.name.type.initials"),
   LASTNAME("lastname", "annotations.short.name.type.last.name"),
   FIRSTNAME("firstname", "annotations.short.name.type.first.name"),
-  NONE("full", "annotations.short.name.type.full.name");
+  NONE("full", "annotations.short.name.type.full.name"),
+  EMAIL("email", "annotations.short.name.type.email");
 
-  val description: @NlsActions.ActionText String get() = VcsBundle.message(myDescriptionKey)
+  val description: @NlsActions.ActionText String get() = VcsBundle.message(descriptionKey)
 
   fun isSet(): Boolean {
-    return myId == PropertiesComponent.getInstance().getValue(KEY)
+    return typeId == PropertiesComponent.getInstance().getValue(KEY)
   }
 
   fun set() {
-    PropertiesComponent.getInstance().setValue(KEY, myId)
+    PropertiesComponent.getInstance().setValue(KEY, typeId)
   }
 
   companion object {
     private const val KEY = "annotate.short.names.type" // NON-NLS
 
-    @JvmStatic
-    fun shorten(name: String?, type: ShortNameType): String? {
-      var name = name ?: return null
-      if (type == NONE) return name
+    private val DELIMITERS_REGEX = Regex("[.,<>()\":_-]")
 
-      val atOffset = name.indexOf('@')
+    @JvmStatic
+    fun shorten(input: String?, type: ShortNameType): String? {
+      if (input == null) return null
+      val rawName = StringUtil.collapseWhiteSpace(input)
+
+      var name = rawName
+
       val emailStart = name.indexOf('<')
       val emailEnd = name.indexOf('>')
-      if (0 < emailStart && emailStart < atOffset && atOffset < emailEnd) {
-        // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
-        name = name.substring(0, emailStart).trim()
-      }
-      else if (!name.contains(" ") && atOffset > 0) {
-        // vasya.pupkin@email.com --> vasya.pupkin
-        name = name.substring(0, atOffset)
+      val atSign = name.indexOf('@')
+      if (0 <= emailStart && emailStart < atSign && atSign < emailEnd) {
+        // "Vasya <vasya.pupkin@jetbrains.com> Pupkin" -> "vasya.pupkin@jetbrains.com"
+        val email = name.substring(emailStart + 1, emailEnd).trim()
+        if (type == EMAIL) return email
+
+        // "Vasya <vasya.pupkin@jetbrains.com> Pupkin" -> "Vasya Pupkin"
+        val prefix = name.substring(0, emailStart).trim()
+        val suffix = name.substring(emailEnd + 1).trim()
+        name = when {
+          prefix.isNotEmpty() && suffix.isNotEmpty() -> "$prefix $suffix"
+          prefix.isNotEmpty() -> prefix
+          suffix.isNotEmpty() -> suffix
+          else -> email
+        }
       }
 
-      name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ')
+      if (type == NONE) {
+        return name
+      }
 
-      val strings = StringUtil.split(name, " ")
+      if (type == EMAIL) {
+        val atIndex = name.indexOf("@")
+        if (atIndex == -1) {
+          return name // email not found
+        }
+
+        // "Vasya vasya.pupkin@jetbrains.com Pupkin" -> "vasya.pupkin@jetbrains.com"
+        var startIndex = name.lastIndexOf(" ", atIndex)
+        if (startIndex == -1) startIndex = 0
+        var endIndex = name.indexOf(" ", atIndex)
+        if (endIndex == -1) endIndex = name.length
+        return name.substring(startIndex, endIndex)
+      }
+
+      val atIndex = name.indexOf("@")
+      if (atIndex > 0 && !name.contains(" ")) {
+        // "vasya.pupkin@email.com" -> "vasya.pupkin"
+        name = name.substring(0, atIndex)
+      }
+
+      name = name.replace(DELIMITERS_REGEX, " ")
+
+      val strings = name.split(" ").filter { it.isNotBlank() }
+      if (strings.isEmpty()) return rawName
+
       if (type == INITIALS) {
-        return StringUtil.join(strings, { StringUtil.toUpperCase(it[0]).toString() }, "")
+        return strings.joinToString(separator = "") { it[0].uppercase(Locale.getDefault()) }
       }
 
-      if (strings.size < 2) return name
-
-      val shortName = when (type) {
+      val userName = when (type) {
         FIRSTNAME -> strings.first()
-        else -> strings.last()
+        LASTNAME -> strings.last()
+        else -> throw IllegalArgumentException(type.name)
       }
-      return StringUtil.capitalize(shortName)
+      return userName.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(Locale.getDefault())
+        else it.toString()
+      }
     }
   }
 }
