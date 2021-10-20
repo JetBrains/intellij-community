@@ -147,7 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !ToolbarSettings.getInstance().isVisible() &&
+      return isEnabledByDefault() &&
              !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 

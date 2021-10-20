@@ -26,7 +26,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
                                                                    Disposable {
   companion object {
     private val logger = logger<ExperimentalToolbarSettings>()
-    private var newToolbarEnabled = RegistryManager.getInstance().get("ide.widget.toolbar")
+    private val newToolbarEnabled = RegistryManager.getInstance().get("ide.widget.toolbar")
   }
 
   private var toolbarState = ExperimentalToolbarSettingsState()
@@ -79,11 +79,12 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
    * True if new the toolbar is visible
    */
   override var isVisible: Boolean
-    get() = toolbarState.showNewMainToolbar && isEnabled
+    get() = toolbarState.showNewMainToolbar
     set(value) {
       toolbarState.showNewMainToolbar = value
 
       val uiSettingState = UISettings.instance.state
       uiSettingState.showMainToolbar = !value && uiSettingState.showMainToolbar
+      UISettings.instance.fireUISettingsChanged()
     }
 }
