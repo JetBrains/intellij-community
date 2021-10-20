@@ -285,10 +285,10 @@ fun createEditor(language: Language,
                  updateHints: (editor: Editor) -> Any): EditorTextField {
   val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
   val editorField = object : EditorTextField(null, project, fileType, false, false) {
-    override fun addNotify() {
-      super.addNotify()
-      // only here the editor is finally initialized
-      updateHints(editor as EditorEx)
+    override fun createEditor(): EditorEx {
+      val editor = super.createEditor()
+      updateHints(editor)
+      return editor
     }
   }
   editorField.font = EditorFontType.PLAIN.globalFont
