@@ -107,7 +107,9 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {
       isOpaque = false
       add(applyButton)
+      /* Android Studio: disable auth via account.jetbrains.com and internal web browser redirect
       add(githubLoginButton)
+      Android Studio: disable auth via account.jetbrains.com and internal web browser redirect */
       add(tokenLoginLink)
       add(gheLoginButton)
 
@@ -179,11 +181,14 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     private fun getAccountsPopupActions(server: GithubServerPath): List<Action> {
       return if (server.isGithubDotCom)
+        /* Android Studio: disable web flow for GitHub auth (via account.jetbrains.com and internal web browser redirect)
         listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
           override fun actionPerformed(e: ActionEvent?) {
             authManager.requestNewAccountForDefaultServer(project)?.let(::trySelectAccount)
           }
         }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+        Android Studio: disable web flow for GitHub auth (via account.jetbrains.com and internal web browser redirect) */
+        listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
           override fun actionPerformed(e: ActionEvent?) {
             authManager.requestNewAccountForDefaultServer(project, true)?.let(::trySelectAccount)
           }
