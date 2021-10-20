@@ -2,18 +2,18 @@
 
 package org.jetbrains.kotlin.idea.stubs
 
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
-import org.jetbrains.kotlin.idea.test.AstAccessControl
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
+import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.jetbrains.kotlin.load.java.descriptors.PossiblyExternalAnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
-import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.junit.Assert
 import java.io.File
 
@@ -33,11 +33,19 @@ abstract class AbstractResolveByStubTest : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    // In compiler repo for these test MOCK_JDK is used which is currently 1.6 JDK
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+    ) {
+        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk16()
+    }
 
     private fun performTest(path: String) {
         val file = file as KtFile
-        val module = file.findModuleDescriptor()
+
+        val module = withCustomCompilerOptions(file.text, project, module) {
+            file.findModuleDescriptor()
+        }
         val packageViewDescriptor = module.getPackage(FqName("test"))
         Assert.assertFalse(packageViewDescriptor.isEmpty())
 
