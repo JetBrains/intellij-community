@@ -180,8 +180,17 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
     }
-
     private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationError::class,
+            ReplaceWithArrayCallInAnnotationFix
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationWarning::class,
+            ReplaceWithArrayCallInAnnotationFix
+        )
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInAnnotation::class, ReplaceWithArrayCallInAnnotationFix)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInFunction::class, RemoveRedundantSpreadOperatorFix)
         registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
     }
 

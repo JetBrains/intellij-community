@@ -11478,6 +11478,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testReplaceSingleElementInNamedForm() throws Exception {
             runTest("testData/quickfix/replaceWithArrayCallInAnnotation/replaceSingleElementInNamedForm.kt");
         }
+
+        @TestMetadata("replaceSingleElementInNamedForm_1_2.kt")
+        public void testReplaceSingleElementInNamedForm_1_2() throws Exception {
+            runTest("testData/quickfix/replaceWithArrayCallInAnnotation/replaceSingleElementInNamedForm_1_2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
