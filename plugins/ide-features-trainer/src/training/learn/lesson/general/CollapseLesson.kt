@@ -28,6 +28,6 @@ class CollapseLesson(private val sample: LessonSample) : KLesson("Collapse", Les
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("collapse.help.link"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/working-with-source-code.html#expand-or-collapse-code-elements"),
+         LessonUtil.getHelpLink("working-with-source-code.html#expand-or-collapse-code-elements")),
   )
 }

@@ -102,6 +102,6 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("selection.help.select.code.constructs"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/working-with-source-code.html#editor_code_selection"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_code_selection")),
   )
 }

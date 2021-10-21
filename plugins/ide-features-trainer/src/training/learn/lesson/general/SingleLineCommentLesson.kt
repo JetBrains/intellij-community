@@ -55,6 +55,6 @@ class SingleLineCommentLesson(private val sample: LessonSample)
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.lines.of.code"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/working-with-source-code.html#editor_lines_code_blocks"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
   )
 }

@@ -90,6 +90,6 @@ class MultipleSelectionHtmlLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("multiple.selections.help.multiple.carets"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/multicursor.html"),
+         LessonUtil.getHelpLink("multicursor.html")),
   )
 }

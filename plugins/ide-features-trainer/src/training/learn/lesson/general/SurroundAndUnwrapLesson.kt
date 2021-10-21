@@ -105,8 +105,8 @@ abstract class SurroundAndUnwrapLesson
 
   override val helpLinks: Map<String, String> = mapOf(
     Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/surrounding-blocks-of-code-with-language-constructs.html"),
+         LessonUtil.getHelpLink("surrounding-blocks-of-code-with-language-constructs.html")),
     Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/working-with-source-code.html#unwrap_remove_statement"),
+         LessonUtil.getHelpLink("working-with-source-code.html#unwrap_remove_statement")),
   )
 }

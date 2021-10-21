@@ -92,6 +92,6 @@ class JavaStatementCompletionLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(JavaLessonsBundle.message("java.statement.completion.help.link"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/auto-completing-code.html#statements_completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#statements_completion")),
   )
 }

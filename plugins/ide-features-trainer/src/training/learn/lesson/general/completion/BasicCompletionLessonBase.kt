@@ -101,6 +101,6 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("basic.completion.help.code.completion"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/auto-completing-code.html#basic_completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#basic_completion")),
   )
 }
