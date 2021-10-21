@@ -17,8 +17,6 @@ import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_DOES_NOT_MATCH;
 import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
 
 public class VcsLogImpl implements VcsLog {
@@ -101,11 +98,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus) {
-    SettableFuture<JumpResult> future = SettableFuture.create();
-    myUi.jumpTo(commitHash, (visiblePack, hash) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-      return getCommitRow(visiblePack, hash, root);
-    }, future, false, focus);
+    ListenableFuture<JumpResult> future = VcsLogUtil.jumpToCommit(myUi, myUi.getLogData().getStorage(), commitHash, root, false, focus);
     return mapToJumpSuccess(future);
   }
 
@@ -131,7 +124,7 @@ public class VcsLogImpl implements VcsLog {
       Hash candidateHash = HashImpl.build(partialHash);
       for (VirtualFile candidateRoot : myLogData.getRoots()) {
         if (myLogData.getStorage().containsCommit(new CommitId(candidateHash, candidateRoot))) {
-          int candidateRow = getCommitRow(visiblePack, candidateHash, candidateRoot);
+          int candidateRow = VcsLogUtil.getCommitRow(myLogData.getStorage(), visiblePack, candidateHash, candidateRoot);
           if (candidateRow >= 0) return candidateRow;
           if (row == COMMIT_NOT_FOUND) row = candidateRow;
         }
@@ -142,29 +135,13 @@ public class VcsLogImpl implements VcsLog {
     IntRef row = new IntRef(COMMIT_NOT_FOUND);
     myLogData.getStorage().iterateCommits(candidate -> {
       if (CommitIdByStringCondition.matches(candidate, partialHash)) {
-        int candidateRow = getCommitRow(visiblePack, candidate.getHash(), candidate.getRoot());
+        int candidateRow = VcsLogUtil.getCommitRow(myLogData.getStorage(), visiblePack, candidate.getHash(), candidate.getRoot());
         if (row.get() == COMMIT_NOT_FOUND) row.set(candidateRow);
         return candidateRow < 0;
       }
       return true;
     });
     return row.get();
-  }
-
-  private int getCommitRow(@NotNull VisiblePack visiblePack,
-                           @NotNull Hash hash,
-                           @NotNull VirtualFile root) {
-    int commitIndex = myLogData.getCommitIndex(hash, root);
-    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
-    if (visibleGraph instanceof VisibleGraphImpl) {
-      int nodeId = ((VisibleGraphImpl<Integer>)visibleGraph).getPermanentGraph().getPermanentCommitsInfo().getNodeId(commitIndex);
-      if (nodeId == COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
-      if (nodeId < 0) return COMMIT_DOES_NOT_MATCH;
-      Integer rowIndex = ((VisibleGraphImpl<Integer>)visibleGraph).getLinearGraph().getNodeIndex(nodeId);
-      return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
-    }
-    Integer rowIndex = visibleGraph.getVisibleRowIndex(commitIndex);
-    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
   }
 
   @NotNull
