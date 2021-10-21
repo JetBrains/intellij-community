@@ -17,6 +17,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -31,10 +32,10 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
 
   boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
     if (!(file instanceof VirtualFileWithId)) {
-      throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: "+file);
+      throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: "+file +" ("+file.getClass()+")");
     }
     if (file.isDirectory()) {
-      throw new IllegalArgumentException("file must not be directory but got: "+file);
+      throw new IllegalArgumentException("file must not be directory but got: "+file+"; File.isDirectory():"+new File(file.getPath()).isDirectory());
     }
     String value = type.getName();
     String prevValue = myMap.put(file, value);
