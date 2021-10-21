@@ -29,18 +29,16 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.productImplementationModules = [
                 "intellij.platform.main",
                 "intellij.java.execution.impl",
-                "intellij.java.compiler.instrumentationUtil",
-                "intellij.platform.externalSystem.impl"
+                "intellij.java.compiler.instrumentationUtil"
         ]
         productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
+
 
         productLayout.withAdditionalPlatformJar("javac2.jar",
                 "intellij.java.compiler.antTasks",
                 "intellij.java.guiForms.compiler",
-                "intellij.java.guiForms.rt",
                 "intellij.java.compiler.instrumentationUtil",
                 "intellij.java.compiler.instrumentationUtil.java8")
-        productLayout.withAdditionalPlatformJar("forms_rt.jar", "intellij.java.guiForms.compiler")
         productLayout.withAdditionalPlatformJar("util.jar",
                 "intellij.platform.util",
                 "intellij.platform.util.rt")
@@ -89,6 +87,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
 
                 withModule("intellij.platform.coverage", productLayout.mainJarName)
+                withModule("intellij.java.guiForms.rt")
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
                 withProjectLibrary("Eclipse")
