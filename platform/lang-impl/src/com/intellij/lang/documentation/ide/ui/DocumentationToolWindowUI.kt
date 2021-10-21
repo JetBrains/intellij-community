@@ -13,18 +13,31 @@ import javax.swing.JComponent
 
 internal class DocumentationToolWindowUI(
   project: Project,
-  ui: DocumentationUI,
+  private val ui: DocumentationUI,
   private val content: Content,
 ) : Disposable {
 
-  private var _ui: DocumentationUI? = ui
-  private val ui get() = requireNotNull(_ui) { "already detached" }
+  private var preview: Disposable?
 
+  // Disposable tree:
+  // content
+  // > this
+  // - > ui
+  // - > preview
+  // - - > auto-updater
+  // - - > asterisk content tab updater
+  // - - > content user data cleaner
+  // - > content tab updater (after preview is turned off)
   init {
-    content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
-    Disposer.register(this, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, ui.browser)))
-    Disposer.register(this, browser.addStateListener { request, _, byLink ->
+    Disposer.register(this, ui)
+
+    val preview = Disposer.newDisposable(this, "documentation preview").also {
+      this.preview = it
+    }
+
+    Disposer.register(preview, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, ui.browser)))
+    Disposer.register(preview, browser.addStateListener { request, _, byLink ->
       if (byLink && Registry.`is`("documentation.v2.turn.off.preview.by.links")) {
         turnOffPreview()
         return@addStateListener
@@ -33,32 +46,26 @@ internal class DocumentationToolWindowUI(
       content.icon = presentation.icon
       content.displayName = "* ${presentation.presentableText}"
     })
-  }
 
-  override fun dispose() {
-    val ui = _ui
-    if (ui != null) {
-      Disposer.dispose(ui)
-      _ui = null
+    content.putUserData(TW_UI_KEY, this)
+    Disposer.register(preview) {
+      content.putUserData(TW_UI_KEY, null)
     }
-    content.putUserData(TW_UI_KEY, null)
   }
 
-  private fun detachUI(): DocumentationUI {
-    val ui = ui
-    _ui = null
-    return ui
-  }
+  override fun dispose() {}
 
   val browser: DocumentationBrowser get() = ui.browser
 
   val contentComponent: JComponent get() = ui.scrollPane
 
   fun turnOffPreview() {
-    val ui = detachUI()
-    Disposer.dispose(this)
-    Disposer.register(content, ui)
-    Disposer.register(content, updateContentTab(ui.browser, content))
+    val preview = requireNotNull(this.preview) {
+      "the preview was turned off already"
+    }
+    this.preview = null
+    Disposer.dispose(preview)
+    Disposer.register(this, updateContentTab(ui.browser, content))
   }
 }
 
