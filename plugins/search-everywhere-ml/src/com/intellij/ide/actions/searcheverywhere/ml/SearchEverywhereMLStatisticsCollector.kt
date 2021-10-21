@@ -9,7 +9,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -114,11 +113,7 @@ internal class SearchEverywhereMLStatisticsCollector {
 
       val actionManager = ActionManager.getInstance()
       data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-        val isProjectDisposed = ReadAction.compute<Boolean, Nothing> {
-          return@compute project?.isDisposed ?: false
-        }
-
-        if (isProjectDisposed) {
+        if (project != null && project.isDisposed) {
           return@execute
         }
 
