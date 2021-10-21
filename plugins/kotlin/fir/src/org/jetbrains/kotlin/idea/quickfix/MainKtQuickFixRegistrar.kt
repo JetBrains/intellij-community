@@ -189,6 +189,8 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
             KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationWarning::class,
             ReplaceWithArrayCallInAnnotationFix
         )
+        registerApplicator(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunction)
+        registerApplicator(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunctionWarning)
         registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInAnnotation::class, ReplaceWithArrayCallInAnnotationFix)
         registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInFunction::class, RemoveRedundantSpreadOperatorFix)
         registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
