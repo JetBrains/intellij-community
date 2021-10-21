@@ -30,7 +30,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.event.ActionListener
+import java.awt.event.InputEvent
 import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
@@ -116,20 +116,18 @@ private class ProjectWidget: ToolbarComboWidget(), Disposable {
 
   var project: Project? = null
 
-  init {
-    addPressListener(ActionListener {
-      val myStep = MyStep(createActionsList())
-      val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
+  override fun doExpand(e: InputEvent) {
+    val myStep = MyStep(createActionsList())
+    val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
 
-      val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
-        ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
-          if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        }
+    val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
+      ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+        if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
+    }
 
-      project?.let { JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this) }
-    })
+    project?.let { JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this) }
   }
 
   override fun removeNotify() {

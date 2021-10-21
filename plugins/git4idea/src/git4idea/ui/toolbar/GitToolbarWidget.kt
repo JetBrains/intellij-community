@@ -22,7 +22,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopup
-import java.awt.event.ActionListener
+import java.awt.event.InputEvent
 import java.util.concurrent.Executor
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -130,16 +130,16 @@ private class GitToolbarWidget : ToolbarComboWidget(), Disposable {
 
   init {
     leftIcons = listOf(AllIcons.Vcs.Branch)
+  }
 
-    addPressListener(ActionListener {
-      val proj = project
-      val repo = repository
-      if (proj != null && repo != null) {
-        val dataManager = DataManager.getInstance()
-        val listPopup = GitBranchPopup.getInstance(proj, repo, dataManager.getDataContext(this)).asListPopup()
-        listPopup.showUnderneathOf(this)
-      }
-    })
+  override fun doExpand(e: InputEvent) {
+    val proj = project
+    val repo = repository
+    if (proj != null && repo != null) {
+      val dataManager = DataManager.getInstance()
+      val listPopup = GitBranchPopup.getInstance(proj, repo, dataManager.getDataContext(this)).asListPopup()
+      listPopup.showUnderneathOf(this)
+    }
   }
 
   override fun dispose() {}
