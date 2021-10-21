@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.lang.documentation.ide.impl.openUrl
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
@@ -13,7 +14,9 @@ internal class DocumentationViewExternalAction : AnAction(), ActionToIgnore {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     val browser = e.dataContext.getData(DOCUMENTATION_BROWSER_DATA_KEY) ?: return
-    browser.openCurrentExternalUrl()
+    val url = browser.currentExternalUrl() ?: return
+    openUrl(project, browser.targetPointer, url)
   }
 }
