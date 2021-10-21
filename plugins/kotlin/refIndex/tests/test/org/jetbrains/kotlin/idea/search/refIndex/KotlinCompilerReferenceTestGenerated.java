@@ -120,7 +120,36 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/functions/fromObject")
-        public abstract static class FromObject extends AbstractKotlinCompilerReferenceTest {
+        public static class FromObject extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extension")
+            public void testExtension() throws Exception {
+                runTest("testData/compilerIndex/functions/fromObject/extension/");
+            }
+
+            @TestMetadata("function")
+            public void testFunction() throws Exception {
+                runTest("testData/compilerIndex/functions/fromObject/function/");
+            }
+
+            @TestMetadata("functionWithSeveralParameters")
+            public void testFunctionWithSeveralParameters() throws Exception {
+                runTest("testData/compilerIndex/functions/fromObject/functionWithSeveralParameters/");
+            }
+
+            @TestMetadata("staticExtension")
+            public void testStaticExtension() throws Exception {
+                runTest("testData/compilerIndex/functions/fromObject/staticExtension/");
+            }
+
+            @TestMetadata("staticFunction")
+            public void testStaticFunction() throws Exception {
+                runTest("testData/compilerIndex/functions/fromObject/staticFunction/");
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
             public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
@@ -138,29 +167,9 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject/");
                 }
 
-                @TestMetadata("extensionWithCustomName")
-                public void testExtensionWithCustomName() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithCustomName/");
-                }
-
-                @TestMetadata("extensionWithJvmStatic")
-                public void testExtensionWithJvmStatic() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithJvmStatic/");
-                }
-
-                @TestMetadata("extensionWithJvmStaticAndCustomName")
-                public void testExtensionWithJvmStaticAndCustomName() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithJvmStaticAndCustomName/");
-                }
-
                 @TestMetadata("function")
                 public void testFunction() throws Exception {
                     runTest("testData/compilerIndex/functions/fromObject/fromCompanion/function/");
-                }
-
-                @TestMetadata("functionWithJvmStatic")
-                public void testFunctionWithJvmStatic() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/functionWithJvmStatic/");
                 }
 
                 @TestMetadata("javaStaticMethod")
@@ -171,6 +180,120 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @TestMetadata("javaStaticMethod2")
                 public void testJavaStaticMethod2() throws Exception {
                     runTest("testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2/");
+                }
+
+                @TestMetadata("overloadsExtension")
+                public void testOverloadsExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/overloadsExtension/");
+                }
+
+                @TestMetadata("overloadsFunction")
+                public void testOverloadsFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/overloadsFunction/");
+                }
+
+                @TestMetadata("overloadsStaticExtension")
+                public void testOverloadsStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticExtension/");
+                }
+
+                @TestMetadata("overloadsStaticFunction")
+                public void testOverloadsStaticFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticFunction/");
+                }
+
+                @TestMetadata("staticExtension")
+                public void testStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/staticExtension/");
+                }
+
+                @TestMetadata("staticFunction")
+                public void testStaticFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction/");
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named")
+                public static class Named extends AbstractKotlinCompilerReferenceTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("extension")
+                    public void testExtension() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/extension/");
+                    }
+
+                    @TestMetadata("function")
+                    public void testFunction() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/function/");
+                    }
+
+                    @TestMetadata("staticExtension")
+                    public void testStaticExtension() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/staticExtension/");
+                    }
+
+                    @TestMetadata("staticFunction")
+                    public void testStaticFunction() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction/");
+                    }
+
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject")
+                    public static class NestedObject extends AbstractKotlinCompilerReferenceTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                        }
+
+                        @TestMetadata("extension")
+                        public void testExtension() throws Exception {
+                            runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/extension/");
+                        }
+
+                        @TestMetadata("function")
+                        public void testFunction() throws Exception {
+                            runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/function/");
+                        }
+
+                        @TestMetadata("staticExtension")
+                        public void testStaticExtension() throws Exception {
+                            runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticExtension/");
+                        }
+
+                        @TestMetadata("staticFunction")
+                        public void testStaticFunction() throws Exception {
+                            runTest("testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction/");
+                        }
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject")
+                public static class NestedObject extends AbstractKotlinCompilerReferenceTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("extension")
+                    public void testExtension() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/extension/");
+                    }
+
+                    @TestMetadata("function")
+                    public void testFunction() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/function/");
+                    }
+
+                    @TestMetadata("staticExtension")
+                    public void testStaticExtension() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticExtension/");
+                    }
+
+                    @TestMetadata("staticFunction")
+                    public void testStaticFunction() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction/");
+                    }
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
@@ -224,6 +347,54 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     public void testSet() throws Exception {
                         runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/set/");
                     }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/functions/fromObject/nestedObject")
+            public static class NestedObject extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("extension")
+                public void testExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/extension/");
+                }
+
+                @TestMetadata("function")
+                public void testFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/function/");
+                }
+
+                @TestMetadata("overloadsExtension")
+                public void testOverloadsExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/overloadsExtension/");
+                }
+
+                @TestMetadata("overloadsFunction")
+                public void testOverloadsFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/overloadsFunction/");
+                }
+
+                @TestMetadata("overloadsStaticExtension")
+                public void testOverloadsStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticExtension/");
+                }
+
+                @TestMetadata("overloadsStaticFunction")
+                public void testOverloadsStaticFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticFunction/");
+                }
+
+                @TestMetadata("staticExtension")
+                public void testStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/staticExtension/");
+                }
+
+                @TestMetadata("staticFunction")
+                public void testStaticFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/nestedObject/staticFunction/");
                 }
             }
         }

@@ -4,6 +4,7 @@
         "Explicit.kt",
         "Explicit2.kt",
         "Implicit.kt",
-        "Import.kt"
+        "Import.kt",
+        "JavaClass.java"
     ]
 }

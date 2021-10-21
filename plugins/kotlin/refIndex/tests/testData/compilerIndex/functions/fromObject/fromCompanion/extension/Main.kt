@@ -1,6 +1,6 @@
 class Main {
     companion object {
-        fun Int.topLevelEx<caret>tension() {
+        fun Int.ex<caret>tension() {
 
         }
     }
