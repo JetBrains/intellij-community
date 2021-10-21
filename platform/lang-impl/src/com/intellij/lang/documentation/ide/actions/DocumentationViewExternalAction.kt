@@ -9,13 +9,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 internal class DocumentationViewExternalAction : AnAction(), ActionToIgnore {
 
   override fun update(e: AnActionEvent) {
-    val browser = e.dataContext.getData(DOCUMENTATION_BROWSER_DATA_KEY)
+    val browser = e.dataContext.getData(DOCUMENTATION_BROWSER)
     e.presentation.isEnabledAndVisible = browser?.currentExternalUrl() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val browser = e.dataContext.getData(DOCUMENTATION_BROWSER_DATA_KEY) ?: return
+    val browser = e.dataContext.getData(DOCUMENTATION_BROWSER) ?: return
     val url = browser.currentExternalUrl() ?: return
     openUrl(project, browser.targetPointer, url)
   }
