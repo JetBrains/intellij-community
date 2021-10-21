@@ -30,7 +30,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.animation.ShowHideAnimationHelper;
+import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -156,10 +156,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
 
-  private double myAlphaValue = 1.0;
-  private final ShowHideAnimationHelper myAlphaAnimator = new ShowHideAnimationHelper(value -> {
-    myAlphaValue = value;
-    super.setVisible(value > 0.0);
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
+    super.setVisible(composite != null);
     if (isShowing()) repaint();
   });
 
@@ -177,7 +175,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                "Any string unique enough to deduce the toolbar location will do.", myCreationTrace);
     }
 
-    myAlphaAnimator.setVisibleImmediately(isVisible());
+    myAlphaContext.getAnimator().setVisibleImmediately(true);
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
@@ -298,9 +296,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void paintComponent(final Graphics g) {
     if (g instanceof Graphics2D) {
       Graphics2D g2d = (Graphics2D)g;
-      double value = myAlphaValue;
-      if (value <= 0.0) return;
-      g2d.setComposite(value >= 1.0 ? AlphaComposite.SrcOver : AlphaComposite.SrcOver.derive((float)value));
+      AlphaComposite composite = myAlphaContext.getComposite();
+      if (composite == null) return; // do not paint a completely transparent component
+      g2d.setComposite(composite);
     }
     if (myCachedImage != null) {
       UIUtil.drawImage(g, myCachedImage, 0, 0, null);
@@ -1113,7 +1111,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void setVisible(boolean visible) {
     if (Registry.is("ide.experimental.ui")) {
-      myAlphaAnimator.setVisible(visible);
+      myAlphaContext.getAnimator().setVisible(visible);
     }
     else {
       super.setVisible(visible);

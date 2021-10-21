@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.DoubleConsumer
 import kotlin.math.roundToInt
 
-open class ShowHideAnimationHelper(easing: Easing, private val consumer: DoubleConsumer) {
+open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer) {
   private val animator = JBAnimator()
   private val atomicVisible = AtomicBoolean()
   private val statefulEasing = easing.stateful()

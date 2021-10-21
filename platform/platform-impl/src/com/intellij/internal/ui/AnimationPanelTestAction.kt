@@ -594,10 +594,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     private val backgroundFunction = DoubleColorFunction(component.background, component.foreground)
     private val foregroundFunction = DoubleColorFunction(component.foreground, component.background)
 
-    private val helper = ShowHideAnimationHelper(CubicBezierEasing(0.215, 0.61, 0.355, 1.0), DoubleConsumer {
+    private val helper = ShowHideAnimator(CubicBezierEasing(0.215, 0.61, 0.355, 1.0)) {
       component.background = backgroundFunction.apply(it)
       component.foreground = foregroundFunction.apply(it)
-    })
+    }
 
     init {
       addTo(component)
