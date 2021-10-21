@@ -26,6 +26,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
@@ -35,6 +36,7 @@ import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
@@ -45,10 +47,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -58,6 +62,7 @@ import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JPanel
+import javax.swing.event.HyperlinkEvent
 
 class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
@@ -100,12 +105,13 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenOptionsGroupFragment() =
     addOptionsGroup(
-      "maven.runner.group",
+      "maven.general.options.group",
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group.name"),
       MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      MavenConfigurableBundle.message("maven.run.configuration.general.options.group.inherit"),
-      { it, c -> c.isSelected = it.generalSettings == null },
-      { it, c -> it.generalSettings = if (c.isSelected) null else it.generalSettingsOrDefault }
+      MavenProjectBundle.message("configurable.MavenSettings.display.name"),
+      { generalSettings },
+      { generalSettingsOrDefault },
+      { generalSettings = it }
     ) {
       val distributionComponent = addDistributionFragment().component().component
       val userSettingsComponent = addUserSettingsFragment().component().component
@@ -123,12 +129,13 @@ class MavenRunConfigurationSettingsEditor(
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
     addOptionsGroup(
-      "maven.runner.group",
+      "maven.runner.options.group",
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.name"),
       MavenConfigurableBundle.message("maven.run.configuration.runner.options.group"),
-      MavenConfigurableBundle.message("maven.run.configuration.runner.options.group.inherit"),
-      { it, c -> c.isSelected = it.runnerSettings == null },
-      { it, c -> it.runnerSettings = if (c.isSelected) null else it.runnerSettingsOrDefault }
+      RunnerBundle.message("maven.tab.runner"),
+      { runnerSettings },
+      { runnerSettingsOrDefault },
+      { runnerSettings = it }
     ) {
       addJreFragment()
       addEnvironmentFragment()
@@ -138,22 +145,34 @@ class MavenRunConfigurationSettingsEditor(
       addResolveWorkspaceArtifactsTag()
     }
 
-  private fun <S : FragmentedSettings> SettingsFragmentsContainer<S>.addOptionsGroup(
+  private fun <S : FragmentedSettings, Settings> SettingsFragmentsContainer<S>.addOptionsGroup(
     id: String,
     name: @Nls(capitalization = Nls.Capitalization.Sentence) String,
     group: @Nls(capitalization = Nls.Capitalization.Title) String,
-    label: @NlsContexts.Label String,
-    reset: (S, JCheckBox) -> Unit,
-    apply: (S, JCheckBox) -> Unit,
+    settingsName: @NlsContexts.ConfigurableName String,
+    getSettings: S.() -> Settings?,
+    getDefaultSettings: S.() -> Settings,
+    setSettings: S.(Settings?) -> Unit,
     configure: SettingsFragmentsContainer<S>.() -> Unit
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
     private val separator = CollapsibleTitledSeparator(group)
-    private val checkBox = JCheckBox(label)
+    private val checkBox = JCheckBox()
+    private val settingsLink = htmlComponent(MavenConfigurableBundle.message("maven.run.configuration.options.group.inherit")) {
+      if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+        val showSettingsUtil = ShowSettingsUtil.getInstance()
+        showSettingsUtil.showSettingsDialog(project, settingsName)
+      }
+    }
+    private val checkBoxWithLink = JPanel().apply {
+      layout = BorderLayout()
+      add(checkBox, BorderLayout.WEST)
+      add(settingsLink, BorderLayout.CENTER)
+    }
 
     override fun createChildren() = SettingsFragmentsContainer.fragments<S> {
-      val checkBoxFragment = addSettingsEditorFragment(
-        checkBox,
+      addSettingsEditorFragment(
+        checkBoxWithLink,
         object : SettingsFragmentInfo {
           override val settingsId: String = "$id.checkbox"
           override val settingsName: String? = null
@@ -163,13 +182,11 @@ class MavenRunConfigurationSettingsEditor(
           override val settingsHint: String? = null
           override val settingsActionHint: String? = null
         },
-        reset,
-        apply,
-        initialSelection = { true }
+        { it, _ -> checkBox.isSelected = it.getSettings() == null },
+        { it, _ -> it.setSettings(if (checkBox.isSelected) null else (it.getSettings() ?: it.getDefaultSettings())) }
       )
-      checkBoxFragment.isRemovable = false
       for (fragment in SettingsFragmentsContainer.fragments(configure)) {
-        bind(checkBoxFragment.component(), fragment)
+        bind(checkBox, fragment)
         add(fragment)
       }
     }
@@ -179,10 +196,11 @@ class MavenRunConfigurationSettingsEditor(
       override fun createHeaderSeparator() = separator
 
       override fun addLine(component: Component, top: Int, left: Int, bottom: Int) {
-        if (component is JCheckBox && component.text == label) {
+        if (component === checkBoxWithLink) {
           super.addLine(component, top, left, bottom + TOP_INSET)
           myGroupInset += LEFT_INSET
-        } else {
+        }
+        else {
           super.addLine(component, top, left, bottom)
         }
       }
