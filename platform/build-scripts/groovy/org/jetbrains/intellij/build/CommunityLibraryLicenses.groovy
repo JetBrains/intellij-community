@@ -781,6 +781,8 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.high-level-api"),
     jetbrainsLibrary("kotlinc.high-level-api-fir"),
+    jetbrainsLibrary("kotlinc.high-level-api-impl-base"),
+    jetbrainsLibrary("kotlinc.high-level-api-impl-base-tests"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler"),
