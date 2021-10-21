@@ -15,6 +15,7 @@
  */
 package com.intellij.jarRepository;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -22,12 +23,19 @@ import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
 
@@ -38,6 +46,7 @@ public class RepositoryLibraryWithDescriptionEditor
 
   public RepositoryLibraryWithDescriptionEditor(LibraryEditorComponent<RepositoryLibraryProperties> editorComponent) {
     super(editorComponent, RepositoryLibraryType.getInstance(), null);
+    setupCleanButton();
   }
 
   @Override
@@ -90,5 +99,47 @@ public class RepositoryLibraryWithDescriptionEditor
     }
     myEditorComponent.updateRootsTree();
     updateDescription();
+  }
+
+  private void setupCleanButton() {
+    if (myEditorComponent.isNewLibrary()) return;
+    VirtualFile directory = myEditorComponent.getExistingRootDirectory();
+    if (directory == null) return;
+    String toolTipText = JavaUiBundle.message("button.clean.description", directory.getPath());
+    myCleanButton.setVisible(true);
+    myCleanButton.setToolTipText(toolTipText);
+    myCleanButton.addActionListener(e -> cleanLibraryDirectory());
+  }
+
+  private void cleanLibraryDirectory() {
+    VirtualFile directory = myEditorComponent.getExistingRootDirectory();
+    if (directory == null) return;
+    VirtualFile[] children = directory.getChildren();
+    if (children == null) return;
+
+    logger.debug("start delete " + directory);
+    String lastError = null;
+    for (VirtualFile child : children) {
+      try {
+        FileUtil.delete(child.toNioPath());
+      }
+      catch (IOException e) {
+        lastError = e.getLocalizedMessage();
+        logger.error("error delete " + child, e);
+      }
+    }
+    if (lastError == null) {
+      showBalloon(JavaUiBundle.message("popup.clean.success.result", directory.getPath()), MessageType.INFO);
+    } else {
+      showBalloon(lastError, MessageType.ERROR);
+    }
+  }
+
+  private void showBalloon(String text, MessageType type) {
+    JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(JavaUiBundle.message(text), type, null)
+      .setHideOnClickOutside(true)
+      .createBalloon()
+      .show(RelativePoint.getSouthWestOf(myCleanButton.getRootPane()), Balloon.Position.atRight);
   }
 }
