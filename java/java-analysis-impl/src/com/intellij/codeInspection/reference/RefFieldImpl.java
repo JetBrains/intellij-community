@@ -34,7 +34,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
     RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
-    ((WritableRefEntity)owner).add(this);
+    this.setOwner((WritableRefEntity)owner);
 
     if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
       setIsStatic(true);

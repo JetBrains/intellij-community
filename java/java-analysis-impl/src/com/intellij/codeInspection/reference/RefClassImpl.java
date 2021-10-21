@@ -112,14 +112,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
 
     for (UField uField : uFields) {
-      // create RefFields for implicit references
-      getRefManager().getReference(uField.getSourcePsi());
+      final RefElement field = getRefManager().getReference(uField.getSourcePsi());
+      if (field != null) addChild(field);
     }
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
       RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
 
       if (refMethod != null) {
+        addChild(refMethod);
         if (uMethod.isConstructor()) {
           final List<UParameter> parameters = uMethod.getUastParameters();
           if (!parameters.isEmpty()|| uMethod.getVisibility() != UastVisibility.PRIVATE) {
