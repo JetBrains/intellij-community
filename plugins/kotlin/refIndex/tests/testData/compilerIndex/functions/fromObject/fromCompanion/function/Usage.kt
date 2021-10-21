@@ -1,5 +1,5 @@
 import top.level.Main
 
-fun d() {
-    Main.companionFunction()
+fun usage() {
+    Main.function()
 }

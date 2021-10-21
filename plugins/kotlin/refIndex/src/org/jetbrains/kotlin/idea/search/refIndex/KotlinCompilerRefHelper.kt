@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
@@ -63,7 +64,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtCallableDeclaration.asObjectMemberCompilerRefs(
         containingObject: KtObjectDeclaration,
         names: NameEnumerator,
-    ): List<CompilerRef>? = null
+    ): List<CompilerRef>? = when (this) {
+        is KtNamedFunction -> asObjectMemberFunctionCompilerRefs(containingObject, names)
+        is KtProperty -> asObjectMemberPropertyCompilerRefs(containingObject, names)
+        else -> null
+    }
 
     private fun KtCallableDeclaration.asTopLevelCompilerRefs(names: NameEnumerator): List<CompilerRef.CompilerMember>? =
         containingKtFile.javaFileFacadeFqName.asString().let(names::tryEnumerate).let { qualifierId ->
@@ -107,6 +112,20 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         return asCompilerRefsWithJvmOverloads(qualifierId, nameId)
     }
 
+    private fun KtNamedFunction.asObjectMemberFunctionCompilerRefs(
+        containingObject: KtObjectDeclaration,
+        names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember>? {
+        val qualifierId = containingObject.qualifierId(names) ?: return null
+        val compilerMembers = asFunctionCompilerRefs(qualifierId, names)
+        val additionalQualifierId = containingObject.takeIf { hasJvmStaticAnnotation() }
+            ?.containingClassOrObject
+            ?.qualifierId(names)
+            ?: return compilerMembers
+
+        return compilerMembers + asFunctionCompilerRefs(additionalQualifierId, names)
+    }
+
     private fun KtCallableDeclaration.asCompilerRefsWithJvmOverloads(qualifierId: Int, nameId: Int): List<CompilerRef.CompilerMember> {
         val numberOfArguments = numberOfArguments(countReceiver = true)
         if (!hasJvmOverloadsAnnotation()) {
@@ -122,6 +141,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, it)
         }
     }
+
+    private fun KtProperty.asObjectMemberPropertyCompilerRefs(
+        containingObject: KtObjectDeclaration,
+        names: NameEnumerator,
+    ): List<CompilerRef.CompilerMember>? = null
 
     private fun KtProperty.asPropertyCompilerRefs(
         qualifierId: Int,
@@ -214,5 +238,6 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     }
 }
 
+private fun KtAnnotated.hasJvmStaticAnnotation(): Boolean = hasAnnotationWithShortName(JVM_STATIC_ANNOTATION_FQ_NAME.shortName())
 private fun KtAnnotated.hasJvmOverloadsAnnotation(): Boolean = hasAnnotationWithShortName(JVM_OVERLOADS_FQ_NAME.shortName())
 private fun KtAnnotated.hasJvmFieldAnnotation(): Boolean = hasAnnotationWithShortName(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName())
