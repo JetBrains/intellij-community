@@ -148,7 +148,7 @@ public class VcsLogManager implements Disposable {
     }
 
     U ui = factory.createLogUi(myProject, myLogData);
-    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui.getId(), ui.getRefresher(), kind, isClosedOnDispose));
+    Disposer.register(ui, getTabsWatcher().addTabToWatch(ui, kind, isClosedOnDispose));
 
     return ui;
   }

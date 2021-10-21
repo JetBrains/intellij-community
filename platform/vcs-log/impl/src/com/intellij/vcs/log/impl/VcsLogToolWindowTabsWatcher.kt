@@ -16,6 +16,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.TabbedContent
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogToolWindowTabsWatcher.VcsLogToolWindowTab
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeEvent
@@ -44,10 +45,8 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
     tabSelectedCallback = callback
   }
 
-  override fun createLogTab(logId: String,
-                            refresher: VisiblePackRefresher,
-                            isClosedOnDispose: Boolean): VcsLogToolWindowTab {
-    return VcsLogToolWindowTab(logId, refresher, isClosedOnDispose)
+  override fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): VcsLogToolWindowTab {
+    return VcsLogToolWindowTab(ui, isClosedOnDispose)
   }
 
   override fun isOwnerOf(tab: VcsLogWindow): Boolean {
@@ -83,9 +82,7 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
     Disposer.dispose(toolwindowListenerDisposable)
   }
 
-  inner class VcsLogToolWindowTab(id: String, refresher: VisiblePackRefresher, val isClosedOnDispose: Boolean) :
-    VcsLogWindow(id, refresher) {
-
+  inner class VcsLogToolWindowTab(ui: VcsLogUiEx, val isClosedOnDispose: Boolean) : VcsLogWindow(ui) {
     override fun isVisible(): Boolean {
       val selectedTab = getSelectedToolWindowTabId(toolWindow)
       return id == selectedTab

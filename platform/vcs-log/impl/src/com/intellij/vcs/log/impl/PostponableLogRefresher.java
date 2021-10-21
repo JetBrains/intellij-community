@@ -12,7 +12,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -117,16 +119,18 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public static class VcsLogWindow {
-    private final @NotNull String myId;
-    private final @NotNull VisiblePackRefresher myRefresher;
+    private final @NotNull VcsLogUiEx myUi;
 
-    public VcsLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
-      myId = id;
-      myRefresher = refresher;
+    public VcsLogWindow(@NotNull VcsLogUiEx ui) {
+      myUi = ui;
+    }
+
+    public @NotNull VcsLogUiEx getUi() {
+      return myUi;
     }
 
     public @NotNull VisiblePackRefresher getRefresher() {
-      return myRefresher;
+      return myUi.getRefresher();
     }
 
     public boolean isVisible() {
@@ -134,13 +138,13 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     }
 
     public @NotNull String getId() {
-      return myId;
+      return myUi.getId();
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "VcsLogWindow '" + myId + "'";
+      return "VcsLogWindow '" + myUi.getId() + "'";
     }
   }
 }
