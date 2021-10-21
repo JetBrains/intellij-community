@@ -15154,6 +15154,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testSuspendFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/suspendFunction.kt");
         }
+
+        @TestMetadata("varWithNull.kt")
+        public void testVarWithNull() throws Exception {
+            runTest("testData/intentions/removeExplicitType/varWithNull.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
