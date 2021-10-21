@@ -15,8 +15,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -68,7 +70,14 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   private final JComponent myDecoratorChild;
   private Mode myMode = null;
   private boolean isSplitUnsplitInProgress;
+  private boolean isWindowHovered;
   private final ToolWindowImpl toolWindow;
+  private final ToolWindowManagerListener activeStateListener = new ToolWindowManagerListener() {
+    @Override
+    public void stateChanged(@NotNull ToolWindowManager manager) {
+      updateActiveAndHoverState();
+    }
+  };
 
   @Nullable
   private JPanel divider;
@@ -120,9 +129,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    if (Registry.is("ide.experimental.ui")) {
-      new ToolwindowHoverListener().addTo(this);
-    }
     getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
@@ -538,6 +544,13 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     return toolWindow.isActive();
   }
 
+  void updateActiveAndHoverState() {
+    ActionToolbar toolbar = getHeaderToolbar();
+    if (toolbar != null && Registry.is("ide.experimental.ui")) {
+      toolbar.getComponent().setVisible(isWindowHovered || toolWindow.isActive());
+    }
+  }
+
   public void activate(ToolWindowEventSource source) {
     toolWindow.fireActivated(source);
   }
@@ -578,6 +591,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
     JPanel divider = this.divider;
     disposable = Disposer.newDisposable();
+    HOVER_STATE_LISTENER.addTo(this, disposable);
+    toolWindow.getToolWindowManager().addToolWindowManagerListener(activeStateListener, disposable);
     if (divider != null) {
       IdeGlassPane glassPane = (IdeGlassPane)getRootPane().getGlassPane();
       ResizeOrMoveDocketToolWindowMouseListener listener = new ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this);
@@ -782,22 +797,26 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     container.setFocusTraversalKeys(id, KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(id));
   }
 
-  private class ToolwindowHoverListener extends HoverListener {
+  private static final HoverListener HOVER_STATE_LISTENER = new HoverListener() {
     @Override
     public void mouseMoved(@NotNull Component component, int x, int y) { }
 
     @Override
     public void mouseEntered(@NotNull Component component, int x, int y) {
-      updateToolbarVisibility(true);
+      onHoverChange(component, true);
     }
 
     @Override
     public void mouseExited(@NotNull Component component) {
-      updateToolbarVisibility(false);
+      onHoverChange(component, false);
     }
 
-    private void updateToolbarVisibility(boolean visible) {
-      getHeaderToolbar().getComponent().setVisible(visible);
+    private void onHoverChange(@NotNull Component component, boolean hovered) {
+      if (component instanceof InternalDecoratorImpl) {
+        InternalDecoratorImpl decorator = (InternalDecoratorImpl)component;
+        decorator.isWindowHovered = hovered;
+        decorator.updateActiveAndHoverState();
+      }
     }
-  }
+  };
 }
