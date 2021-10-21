@@ -732,6 +732,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
+    jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-markdown"),
