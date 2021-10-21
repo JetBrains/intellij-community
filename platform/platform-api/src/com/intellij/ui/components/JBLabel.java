@@ -246,7 +246,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   private void updateLayout() {
     setLayout(new BorderLayout(getIcon() == null ? 0 : getIconTextGap(), 0));
     int position = getHorizontalTextPosition();
-    String iconConstraint = BorderLayout.WEST;
+    String iconConstraint = getComponentOrientation().isLeftToRight() ? BorderLayout.WEST : BorderLayout.EAST;
     if (getComponentOrientation().isLeftToRight() && position == SwingConstants.LEADING) iconConstraint = BorderLayout.EAST;
     if (!getComponentOrientation().isLeftToRight() && position == SwingConstants.TRAILING) iconConstraint = BorderLayout.EAST;
     if (position == SwingConstants.LEFT) iconConstraint = BorderLayout.EAST;
