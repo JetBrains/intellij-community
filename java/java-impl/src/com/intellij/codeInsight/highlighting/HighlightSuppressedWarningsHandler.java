@@ -128,8 +128,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       if (toolsCopy.isEmpty()) {
         continue;
       }
-      InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-      GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
+      GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext();
       for (InspectionToolWrapper<?, ?> toolWrapper : toolsCopy) {
         toolWrapper.initialize(context);
       }
@@ -138,10 +137,10 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator == null) {
           ProgressManager.getInstance()
-            .executeProcessUnderProgress(() -> pass.doInspectInBatch(context, managerEx, toolsCopy), new ProgressIndicatorBase());
+            .executeProcessUnderProgress(() -> pass.doInspectInBatch(context, toolsCopy), new ProgressIndicatorBase());
         }
         else {
-          pass.doInspectInBatch(context, managerEx, toolsCopy);
+          pass.doInspectInBatch(context, toolsCopy);
         }
 
         for (HighlightInfo info : pass.getInfos()) {

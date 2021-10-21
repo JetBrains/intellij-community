@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.PsiElement;
@@ -20,13 +19,11 @@ import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 // stores CPU profiler data for inspections run session
 final class InspectionProfilerDataHolder {
@@ -147,8 +144,8 @@ final class InspectionProfilerDataHolder {
       String s0 = latencies[0].topSmallestLatenciesStat("ERROR");
       String s1 = latencies[1].topSmallestLatenciesStat("WARNING");
       String s2 = latencies[2].topSmallestLatenciesStat("INFO");
-      LOG.trace(String.format("Sort inspections: %b; total tools: %4d; total highlighting time: %4dms; in %s:",
-                              isInspectionSortByLatencyEnabled(), contexts.size(),
+      LOG.trace(String.format("Inspections latencies stat: total tools: %4d; total highlighting time: %4dms; in %s:",
+                              contexts.size(),
                               totalHighlightingNanos / 1_000_000, file.getName()) +
                               StringUtil.notNullize(s0)+
                               StringUtil.notNullize(s1)+
@@ -200,9 +197,5 @@ final class InspectionProfilerDataHolder {
         context.myFavoriteElement = element;
       }
     }
-  }
-
-  static boolean isInspectionSortByLatencyEnabled() {
-    return Registry.is("inspection.sort") && System.getProperty("no.inspection.sort") == null;
   }
 }
