@@ -208,6 +208,7 @@ public interface CodeStyleSettingsCustomizable {
 
   enum CommenterOption {
     LINE_COMMENT_ADD_SPACE,
+    LINE_COMMENT_ADD_SPACE_ON_REFORMAT,
     LINE_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_ADD_SPACE
