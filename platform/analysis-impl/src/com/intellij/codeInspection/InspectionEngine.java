@@ -107,8 +107,7 @@ public final class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
 
-    Map<String, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, isOnTheFly, indicator, elements,
-                                                               calcElementDialectIds(elements), foundDescriptorCallback);
+    Map<String, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
       List<PsiFile> injectedFiles = new ArrayList<>();
@@ -147,6 +146,7 @@ public final class InspectionEngine {
                                                     @NotNull Set<? super String> outDialects) {
     FileViewProvider viewProvider = file.getViewProvider();
     Set<Language> processedLanguages = new SmartHashSet<>();
+    // we hope that injected file here is small enough for PsiRecursiveElementVisitor
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -190,11 +190,22 @@ public final class InspectionEngine {
                                                                               boolean isOnTheFly,
                                                                               @NotNull ProgressIndicator indicator,
                                                                               @NotNull List<? extends PsiElement> elements,
-                                                                              @NotNull Set<String> elementDialectIds,
                                                                               // when returned true -> add to the holder, false -> do not add to the holder
                                                                               @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    return inspectElements(toolWrappers, file, restrictRange, isOnTheFly, indicator, elements, calcElementDialectIds(elements), foundDescriptorCallback);
+  }
+  private static @NotNull Map<String, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                               @NotNull PsiFile file,
+                                                                               @NotNull TextRange restrictRange,
+                                                                               boolean isOnTheFly,
+                                                                               @NotNull ProgressIndicator indicator,
+                                                                               @NotNull List<? extends PsiElement> elements,
+                                                                               @NotNull Set<String> elementDialectIds,
+                                                                               // when returned true -> add to the holder, false -> do not add to the holder
+                                                                               @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, restrictRange.getStartOffset(), restrictRange.getEndOffset());
 
+    Set<String> dialectIds = calcElementDialectIds(elements);
     toolWrappers = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
     Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     Processor<LocalInspectionToolWrapper> processor = wrapper -> {
