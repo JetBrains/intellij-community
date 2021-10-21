@@ -19,4 +19,10 @@ interface DocumentationBrowserFacade {
    * Pointer to the currently open target.
    */
   val targetPointer: Pointer<out DocumentationTarget>
+
+  /**
+   * Queues reloading from the current target.
+   * Does not change back/forward history stacks.
+   */
+  fun reload()
 }

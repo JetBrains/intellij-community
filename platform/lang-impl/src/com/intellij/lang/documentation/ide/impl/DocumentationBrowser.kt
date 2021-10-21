@@ -76,6 +76,13 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
+  override fun reload() {
+    cs.coroutineContext.cancelChildren()
+    cs.launch(Dispatchers.EDT) {
+      browseDocumentation(state.request, false)
+    }
+  }
+
   private fun browseDocumentation(request: DocumentationRequest, byLink: Boolean) {
     setState(BrowserState(request, cs.computeDocumentationAsync(request.targetPointer)), byLink)
   }
