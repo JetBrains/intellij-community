@@ -384,7 +384,6 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         val overload: FunctionDescriptor? = null,
         var call: Call? = null,
         var resolvedCall: ResolvedCall<FunctionDescriptor>? = null,
-        var arguments: List<ValueArgument> = emptyList(),
         var parameterIndex: Int? = null,
         var dummyArgument: ValueArgument? = null,
         var dummyResolvedCall: ResolvedCall<FunctionDescriptor>? = null,
@@ -392,8 +391,18 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         var isGreyArgumentIndex: Int = -1,
         var isDeprecatedAtCallSite: Boolean = false
     ) {
+
         override fun toString(): String =
-            "CallInfo(overload=$overload, call=$call, resolvedCall=${resolvedCall?.resultingDescriptor}($resolvedCall), arguments=$arguments, parameterIndex=$parameterIndex, dummyArgument=$dummyArgument, dummyResolvedCall=$dummyResolvedCall, isResolvedToDescriptor=$isResolvedToDescriptor, isGreyArgumentIndex=$isGreyArgumentIndex, isDeprecatedAtCallSite=$isDeprecatedAtCallSite)"
+            "CallInfo(overload=$overload, call=$call, resolvedCall=${resolvedCall?.resultingDescriptor}($resolvedCall), parameterIndex=$parameterIndex, dummyArgument=$dummyArgument, dummyResolvedCall=$dummyResolvedCall, isResolvedToDescriptor=$isResolvedToDescriptor, isGreyArgumentIndex=$isGreyArgumentIndex, isDeprecatedAtCallSite=$isDeprecatedAtCallSite)"
+    }
+
+    fun Call.arguments(): List<ValueArgument> {
+        val isArraySetMethod = callType == Call.CallType.ARRAY_SET_METHOD
+
+        return valueArguments.let<List<ValueArgument>, List<ValueArgument>> { args ->
+            // For array set method call, we're only interested in the arguments in brackets which are all except the last one
+            if (isArraySetMethod) args.dropLast(1) else args
+        }
     }
 
     private fun resolveCallInfo(
@@ -406,12 +415,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         val overload = info.overload ?: return
         val isArraySetMethod = call.callType == Call.CallType.ARRAY_SET_METHOD
 
-        fun calculateArgument(c: Call) = c.valueArguments.let { args ->
-            // For array set method call, we're only interested in the arguments in brackets which are all except the last one
-            if (c.callType == Call.CallType.ARRAY_SET_METHOD) args.dropLast(1) else args
-        }
-
-        val arguments = calculateArgument(call)
+        val arguments = call.arguments()
 
         val resolvedCall = resolvedCall(call, bindingContext, resolutionFacade, overload) ?: return
 
@@ -444,7 +448,6 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         with(info) {
             this.call = call
             this.resolvedCall = resolvedCall
-            this.arguments = arguments
             this.parameterIndex = parameterIndex
             this.dummyArgument = dummyArgument
             this.dummyResolvedCall = dummyResolvedCall
@@ -491,7 +494,6 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
 
         return candidates.firstOrNull { it.resultingDescriptor.original == overload.original }
             ?: candidates.firstOrNull { descriptorsEqual(it.resultingDescriptor, overload) }
-            ?: null
     }
 
     private fun matchCallWithSignature(
@@ -504,7 +506,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             return SignatureInfo(resolvedCall.resultingDescriptor, { null }, null, isGrey = false)
         }
 
-        val arguments = info.arguments
+        val arguments = call.arguments()
 
         checkWithAttachment(
             arguments.size >= currentArgumentIndex,
@@ -548,7 +550,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
                 return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex, isGrey = true)
             }
 
-            val usedParameters = argumentsBeforeCurrent.mapNotNull { argumentToParameter(it) }
+            val usedParameters = argumentsBeforeCurrent.mapNotNull { argumentToParameter(it) }.toSet()
             val availableParameters = if (call.callType == Call.CallType.ARRAY_SET_METHOD) {
                 resultingDescriptor.valueParameters.dropLast(1)
             } else {
