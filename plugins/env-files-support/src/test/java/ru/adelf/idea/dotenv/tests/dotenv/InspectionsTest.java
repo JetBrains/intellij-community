@@ -30,17 +30,17 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
     // Test for each Inspection
 
     @Test
-    public void testDuplicateKey() {
+    public void testDuplicateKeyInspection() {
         doInspectionTest(new DuplicateKeyInspection(), Arrays.asList("DUPLICATE_KEY=test", "DUPLICATE_KEY=test2"));
     }
 
     @Test
-    public void testSpaceInsideNonQuoted() {
+    public void testSpaceInsideNonQuotedInspection() {
         doInspectionTest(new SpaceInsideNonQuotedInspection(), Collections.singletonList("spaces without quotes"));
     }
 
     @Test
-    public void testExtraBlankLine() {
+    public void testExtraBlankLineInspection() {
         doInspectionTest(new ExtraBlankLineInspection(), Collections.singletonList("\n\n\n"));
     }
 
@@ -60,8 +60,13 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     @Test
-    public void testTrailingWhitespace() {
+    public void testTrailingWhitespaceInspection() {
         doInspectionTest(new TrailingWhitespaceInspection(), Arrays.asList(" ", " "));
+    }
+    
+    @Test
+    public void testSpaceAroundSeparatorInspection() {
+        doInspectionTest(new SpaceAroundSeparatorInspection(), Arrays.asList(" = ", " = ", " =", "= ", " ="));
     }
 
     // Every available quickfix from every inspection is getting applied
@@ -72,6 +77,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         myFixture.enableInspections(new IncorrectDelimiterInspection());
         myFixture.enableInspections(new LowercaseKeyInspection());
         myFixture.enableInspections(new TrailingWhitespaceInspection());
+        myFixture.enableInspections(new SpaceAroundSeparatorInspection());
 
         myFixture.doHighlighting();
         List<IntentionAction> intentionActions = myFixture.getAllQuickFixes();

@@ -136,11 +136,18 @@
 
         <localInspection language="DotEnv"
                          groupName="DotEnv"
-                         shortName="DotEnvTrailingWhitespace"
-                         displayName="Value has trailing whitespac"
+                         shortName="DotEnvTrailingWhitespaceInspection"
+                         displayName="Value has trailing whitespace"
                          enabledByDefault="true"
                          level="WARNING" implementationClass="ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvSpaceAroundSeparatorInspection"
+                         displayName="Extra spaces surrounding '='"
+                         enabledByDefault="true" 
+                         implementationClass="ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection"/>
+        
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
