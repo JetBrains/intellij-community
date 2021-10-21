@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -637,14 +637,15 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private @NotNull MultiMap<String, ProjectTemplate> loadLocalTemplates() {
     MultiMap<String, ProjectTemplate> map = MultiMap.createConcurrent();
     TEMPLATE_EP.processWithPluginDescriptor((ep, pluginDescriptor) -> {
-      URL url = pluginDescriptor.getPluginClassLoader().getResource(StringUtil.trimStart(ep.templatePath, "/"));
+      ClassLoader classLoader = pluginDescriptor.getClassLoader();
+      URL url = classLoader.getResource(StringUtil.trimStart(ep.templatePath, "/"));
       if (url == null) {
         LOG.error(new PluginException("Can't find resource for project template: " + ep.templatePath, pluginDescriptor.getPluginId()));
         return;
       }
 
       try {
-        LocalArchivedTemplate template = new LocalArchivedTemplate(url, pluginDescriptor.getPluginClassLoader());
+        LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
         if (ep.category) {
           TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
           myTemplatesMap.putValue(new TemplatesGroup(category), template);

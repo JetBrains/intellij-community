@@ -1178,8 +1178,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
       try {
         InspectionEP extension = toolWrapper.getExtension();
-        ClassLoader classLoader = extension == null ? getClass().getClassLoader() : extension.getPluginDescriptor().getPluginClassLoader();
-        Constructor<?> constructor = Class.forName(presentationClass, true, classLoader).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
+        ClassLoader extensionClassLoader = extension != null ? extension.getPluginDescriptor().getPluginClassLoader() : null;
+        Constructor<?> constructor = Class.forName(presentationClass,
+                                                   true,
+                                                   extensionClassLoader != null ? extensionClassLoader : getClass().getClassLoader())
+          .getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class);
         constructor.setAccessible(true);
         return (InspectionToolPresentation)constructor.newInstance(toolWrapper, this);
       }

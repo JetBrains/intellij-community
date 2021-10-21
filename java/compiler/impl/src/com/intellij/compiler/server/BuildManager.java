@@ -1416,7 +1416,7 @@ public final class BuildManager implements Disposable {
     final DynamicBundle.LanguageBundleEP languageBundle = DynamicBundle.findLanguageBundle();
     if (languageBundle != null) {
       final PluginDescriptor pluginDescriptor = languageBundle.pluginDescriptor;
-      final ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
+      final ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getClassLoader();
       final String bundlePath = loader == null ? null : PathManager.getResourceRoot(loader, "META-INF/plugin.xml");
       if (bundlePath != null) {
         cmdLine.addParameter("-D"+ GlobalOptions.LANGUAGE_BUNDLE + "=" + FileUtil.toSystemIndependentName(bundlePath));

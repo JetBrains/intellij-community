@@ -292,7 +292,7 @@ public final class PluginManagerCore {
       return null;
     }
 
-    IdeaPluginDescriptor result = null;
+    IdeaPluginDescriptorImpl result = null;
     for (IdeaPluginDescriptorImpl o : pluginSet.enabledPlugins) {
       ClassLoader classLoader = o.getClassLoader();
       if (!hasLoadedClass(className, classLoader)) {
@@ -324,7 +324,7 @@ public final class PluginManagerCore {
       }
 
       if (root == null) {
-        root = PathManager.getResourceRoot(result.getPluginClassLoader(), className.replace('.', '/') + ".class");
+        root = PathManager.getResourceRoot(result.getClassLoader(), className.replace('.', '/') + ".class");
         if (root == null) {
           return null;
         }
