@@ -766,10 +766,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (myEditor != null) {
       Dimension preferredSize = myEditor.getComponent().getPreferredSize();
 
-      if (myPreferredWidth != -1) {
-        preferredSize.width = myPreferredWidth;
-      }
-
       JBInsets.addTo(preferredSize, getInsets());
       size = preferredSize;
     }
@@ -782,6 +778,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       myPassivePreferredSize = size;
     }
 
+    if (myPreferredWidth != -1) {
+      size.width = myPreferredWidth;
+    }
     return size;
   }
 
