@@ -20,6 +20,8 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api-impl-base-tests" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="kotlinc.high-level-api-fir-tests" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.low-level-api-fir" level="project" />
