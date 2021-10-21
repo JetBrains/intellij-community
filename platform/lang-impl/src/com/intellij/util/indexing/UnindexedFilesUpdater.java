@@ -40,6 +40,7 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.ModuleIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
@@ -47,7 +48,6 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
-import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -82,7 +82,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private static final Object ourLastRunningTaskLock = new Object();
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-  private final Project myProject;
+  protected final Project myProject;
   private final boolean myStartSuspended;
   private final @NonNls String myIndexingReason;
   private final PushedFilePropertiesUpdater myPusher;
@@ -92,7 +92,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
                                boolean startSuspended,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable @NonNls String indexingReason) {
-    super(predefinedIndexableFilesIterators == null ? project : new Pair<>(project, predefinedIndexableFilesIterators));
     myProject = project;
     myStartSuspended = startSuspended;
     myIndexingReason = indexingReason;
@@ -131,6 +130,50 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         myProject.putUserData(RUNNING_TASK, null);
       }
     }
+  }
+
+  @Override
+  public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+    if (!(taskFromQueue instanceof UnindexedFilesUpdater) || taskFromQueue.getClass() != getClass()) return null;
+    UnindexedFilesUpdater oldTask = (UnindexedFilesUpdater)taskFromQueue;
+    if (!myProject.equals(oldTask.myProject)) return null;
+    String reason;
+    if (oldTask.isFullIndexUpdate()) {
+      reason = oldTask.myIndexingReason;
+    }
+    else if (isFullIndexUpdate()) {
+      reason = myIndexingReason;
+    }
+    else {
+      reason = "Merged " +
+               StringUtil.trimStart(myIndexingReason, "Merged ") +
+               " with " +
+               StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
+    }
+    LOG.debug("Merged " + this + " task");
+    return new UnindexedFilesUpdater(myProject, myStartSuspended, mergeIterators(myPredefinedIndexableFilesIterators,
+                                                                                 ((UnindexedFilesUpdater)taskFromQueue).myPredefinedIndexableFilesIterators),
+                                     reason);
+  }
+
+  private static @Nullable List<IndexableFilesIterator> mergeIterators(@Nullable List<IndexableFilesIterator> iterators,
+                                                                       @Nullable List<IndexableFilesIterator> otherIterators) {
+    if (iterators == null || otherIterators == null) return null;
+    List<IndexableFilesIterator> result = new ArrayList<>(iterators.size());
+    Collection<ModuleIndexableFilesIteratorImpl> rootIterators = new ArrayList<>();
+    Set<IndexableSetOrigin> origins = new HashSet<>();
+    for (IndexableFilesIterator iterator : iterators) {
+      if (iterator instanceof ModuleIndexableFilesIteratorImpl) {
+        rootIterators.add((ModuleIndexableFilesIteratorImpl)iterator);
+      }
+      else {
+        if (origins.add(iterator.getOrigin())) {
+          result.add(iterator);
+        }
+      }
+    }
+    result.addAll(rootIterators);
+    return result;
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {

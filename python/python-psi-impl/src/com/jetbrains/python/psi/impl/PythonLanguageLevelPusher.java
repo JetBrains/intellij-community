@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -22,7 +21,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -424,7 +422,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     private final SimpleMessageBusConnection connection;
 
     private MyDumbModeTask(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
-      super(Pair.create(project, ImmutableSet.copyOf(sdks)));
       this.project = project;
       this.sdks = sdks;
       connection = project.getMessageBus().simpleConnect();
@@ -456,6 +453,16 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
       //                                          " SDKs");
       //}
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof MyDumbModeTask &&
+          ((MyDumbModeTask)taskFromQueue).project.equals(project) &&
+          ((MyDumbModeTask)taskFromQueue).sdks.equals(sdks)) {
+        return this;
+      }
+      return null;
     }
   }
 }
