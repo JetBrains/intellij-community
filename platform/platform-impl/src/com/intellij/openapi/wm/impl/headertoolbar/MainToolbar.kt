@@ -2,18 +2,16 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class MainToolbar: JPanel(HorizontalLayout(10)), Disposable {
+class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   val layoutMap = mapOf(
     Position.Left to HorizontalLayout.LEFT,
@@ -24,7 +22,6 @@ class MainToolbar: JPanel(HorizontalLayout(10)), Disposable {
   init {
     for (factory in MainToolbarWidgetFactory.EP_NAME.extensionList) {
       val widget = factory.createWidget()
-      if (widget is Disposable) Disposer.register(this, widget)
       add(layoutMap[factory.getPosition()], widget)
     }
 
@@ -38,6 +35,4 @@ class MainToolbar: JPanel(HorizontalLayout(10)), Disposable {
 
     return toolBar.component
   }
-
-  override fun dispose() {}
 }

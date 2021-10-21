@@ -70,10 +70,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private ToolwindowToolbar myLeftToolwindowToolbar;
   private ToolwindowToolbar myRightToolwindowToolbar;
 
-  private final Disposable myParentDisposable;
-
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
-    myParentDisposable = parentDisposable;
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
@@ -229,7 +226,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   void updateToolbar() {
     removeToolbar();
-    myToolbar = ExperimentalUI.isNewToolbar() ? createExperimentalToolbar(myParentDisposable) : createToolbar();
+    myToolbar = ExperimentalUI.isNewToolbar() ? createExperimentalToolbar() : createToolbar();
     myNorthPanel.add(myToolbar, 0);
     updateToolbarVisibility();
     myContentPane.revalidate();
@@ -267,9 +264,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private @NotNull JComponent createExperimentalToolbar(Disposable parent) {
+  private static @NotNull JComponent createExperimentalToolbar() {
     MainToolbar toolbar = new MainToolbar();
-    Disposer.register(parent, toolbar);
+    toolbar.setBorder(JBUI.Borders.empty(0, 10));
     return toolbar;
   }
 

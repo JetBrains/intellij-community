@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -19,7 +20,7 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.*
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.messages.MessageBusConnection
@@ -30,60 +31,92 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ActionListener
+import java.util.concurrent.Executor
 import java.util.function.Function
 import javax.swing.*
+import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-object ProjectWidgetFactory : MainToolbarWidgetFactory, Disposable {
+object ProjectWidgetFactory : MainToolbarWidgetFactory {
 
-  private val observableProject = ObservableValue<Project?>(null)
-  private val observableFile = ObservableValue<VirtualFile?>(null)
-  private var editorConnection: MessageBusConnection? = null
-
-  private val projectListener = object: ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      observableProject.value = project
-      editorConnection?.disconnect()
-      editorConnection = project.messageBus.connect(this@ProjectWidgetFactory)
-      editorConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
-    }
+  override fun createWidget(): JComponent {
+    val p = getCurrentProject()
+    val widget = ProjectWidget()
+    ProjectWidgetUpdater(p, widget).subscribe()
+    return widget
   }
-
-  private val editorListener = object: FileEditorManagerListener {
-    override fun selectionChanged(event: FileEditorManagerEvent) {
-      observableFile.value = event.newFile
-    }
-  }
-
-  init {
-    val app = ApplicationManager.getApplication()
-    Disposer.register(app, this)
-    val connection = app.messageBus.connect(this)
-    connection.subscribe(ProjectManager.TOPIC, projectListener)
-  }
-
-  override fun createWidget(): JComponent = ProjectWidget(observableProject, observableFile)
-
-  override fun dispose() {}
 
   override fun getPosition(): Position = Position.Center
+
+  private fun getCurrentProject(): Project? = ProjectManager.getInstance().openProjects.firstOrNull()
 }
 
-class ProjectWidget internal constructor(
-  private val projectObservable: ObservableValue<Project?>,
-  private val fileObservable: ObservableValue<VirtualFile?>): ToolbarComboWidget(), Disposable {
+private class ProjectWidgetUpdater(proj: Project?, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
 
-  private val updater: Updater = Updater()
+  private var project: Project? by Delegates.observable(null) { _, _, _ -> updateProject() }
+  private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
+  private var settings: UISettings by Delegates.observable(UISettings.instance) { _, _, _ -> updateText() }
+
+  @Volatile
+  private var projectConnection: MessageBusConnection? = null
+
+  private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   init {
-    val projectSubscription = projectObservable.subscribe { updater.performUpdate() }
-    val fileSubscription = fileObservable.subscribe { updater.performUpdate() }
-    Disposer.register(this, projectSubscription)
-    Disposer.register(this, fileSubscription)
+    project = proj
+    file = proj?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
+  }
 
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, updater)
+  private fun updateText() {
+    widget.text = project?.let { p ->
+      val sb = StringBuilder(p.name)
+      val currentFile = file
+      if (settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
+        sb.append(" — ").append(currentFile.name)
+      }
+      return@let sb.toString()
+    } ?: IdeBundle.message("project.widget.empty")
+  }
 
+  private fun updateProject() {
+    widget.project = project
+    updateText()
+  }
+
+  fun subscribe() {
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(widget)
+    appConnection.subscribe(ProjectManager.TOPIC, this)
+    appConnection.subscribe(UISettingsListener.TOPIC, this)
+    project?.let { projectSubscribe(it) }
+  }
+
+  private fun projectSubscribe(p: Project) {
+    projectConnection?.disconnect()
+    val conn = p.messageBus.connect(widget)
+    conn.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
+    projectConnection = conn
+  }
+
+  override fun projectOpened(prj: Project) {
+    swingExecutor.execute { project = prj }
+    projectSubscribe(prj)
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    swingExecutor.execute { settings = uiSettings }
+  }
+
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    swingExecutor.execute { file = event.newFile }
+  }
+}
+
+private class ProjectWidget: ToolbarComboWidget(), Disposable {
+
+  var project: Project? = null
+
+  init {
     addPressListener(ActionListener {
       val myStep = MyStep(createActionsList())
       val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
@@ -95,10 +128,13 @@ class ProjectWidget internal constructor(
         }
       }
 
-      projectObservable.value?.let {
-        JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this)
-      }
+      project?.let { JBPopupFactory.getInstance().createListPopup(it, myStep, renderer).showUnderneathOf(this) }
     })
+  }
+
+  override fun removeNotify() {
+    super.removeNotify()
+    Disposer.dispose(this)
   }
 
   override fun dispose() {}
@@ -218,26 +254,6 @@ class ProjectWidget internal constructor(
       panel.add(res)
 
       return panel
-    }
-  }
-
-  private inner class Updater : UISettingsListener {
-
-    var uiSettings = UISettings.instance
-
-    override fun uiSettingsChanged(settings: UISettings) {
-      uiSettings = settings
-      performUpdate()
-    }
-
-    fun performUpdate() {
-      val sb = StringBuilder(projectObservable.value?.name ?: IdeBundle.message("project.widget.empty"))
-      val currentFile = fileObservable.value
-      if (uiSettings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null) {
-        sb.append(" — ").append(currentFile.name)
-      }
-
-      text = sb.toString()
     }
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
@@ -111,11 +110,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout.show(myHeaderContent, if (settings.showMainToolbar) MENU_PANEL else TOOLBAR_PANEL)
   }
 
-  private fun createToolbar(): JPanel {
-    val res = MainToolbar()
-    Disposer.register(this, res)
-    return res
-  }
+  private fun createToolbar(): JPanel = MainToolbar()
 
   private fun createMenuButton(): AbstractButton {
     val button = FixedSizeButton(20)
