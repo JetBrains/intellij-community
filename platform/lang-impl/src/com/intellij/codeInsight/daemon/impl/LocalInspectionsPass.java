@@ -237,7 +237,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromResults(myInfos);
 
     if (isOnTheFly) {
-      highlightRedundantSuppressions(toolWrappers, inside, outside);
+      highlightRedundantSuppressions(toolWrappers, inside, outside, progress);
     }
   }
 
@@ -289,7 +289,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void highlightRedundantSuppressions(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                               @NotNull List<? extends PsiElement> inside,
-                                              @NotNull List<? extends PsiElement> outside) {
+                                              @NotNull List<? extends PsiElement> outside,
+                                              @NotNull ProgressIndicator progress) {
     HighlightDisplayKey key = HighlightDisplayKey.find(RedundantSuppressInspection.SHORT_NAME);
     InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (key != null && inspectionProfile.isToolEnabled(key, getFile())) {
@@ -317,7 +318,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         Map<String, List<ProblemDescriptor>> result =
           InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(localTool)), getFile(), myRestrictRange,
                                            true,
-                                           myHighlightingSession.getProgressIndicator(), ContainerUtil.concat(inside, outside),
+                                           progress, ContainerUtil.concat(inside, outside),
                                            PairProcessor.alwaysTrue());
         HighlightSeverity severity = myProfileWrapper.getErrorLevel(key, getFile()).getSeverity();
         for (List<ProblemDescriptor> descriptors : result.values()) {
