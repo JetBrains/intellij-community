@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
 import com.intellij.openapi.project.Project
@@ -31,7 +31,7 @@ class GitLogIndexer(private val project: Project,
       return
     }
 
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Registry,
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
@@ -46,7 +46,7 @@ class GitLogIndexer(private val project: Project,
       return
     }
 
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Registry,
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
   }

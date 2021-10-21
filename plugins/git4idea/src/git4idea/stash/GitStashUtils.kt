@@ -37,7 +37,7 @@ import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
-import git4idea.history.GitCommitRequirements.DiffRenameLimit.NO_RENAMES
+import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
@@ -216,7 +216,7 @@ object GitStashOperations {
     try {
       val consumer = CollectConsumer<GitCommit>()
       GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()),
-                                          GitCommitRequirements(false, NO_RENAMES, DIFF_TO_PARENTS), consumer)
+                                          GitCommitRequirements(false, NoRenames, DIFF_TO_PARENTS), consumer)
       val stashCommit = consumer.result.first()
 
       val changesInStash = (0 until stashCommit.parents.size).flatMap { stashCommit.getChanges(it) }
