@@ -100,6 +100,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
   private Disposable myDisposable;
   private Disposable myManualDisposable;
+  private boolean myInHierarchy;
 
   public EditorTextField() {
     this("");
@@ -453,6 +454,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void removeNotify() {
+    myInHierarchy = false;
     super.removeNotify();
     if (myManualDisposable == null) deInitEditor();
   }
@@ -750,6 +752,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       return super.getPreferredSize();
     }
 
+    if (myEditor == null && (myInHierarchy || myManualDisposable != null)) {
+      initEditor();
+    }
     boolean toReleaseEditor = false;
     if (myEditor == null && myEnsureWillComputePreferredSize) {
       myEnsureWillComputePreferredSize = false;
@@ -833,6 +838,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   //use addSettingsProvider or onEditorAdded
   @Override
   public final void addNotify() {
+    myInHierarchy = true;
     super.addNotify();
   }
 
