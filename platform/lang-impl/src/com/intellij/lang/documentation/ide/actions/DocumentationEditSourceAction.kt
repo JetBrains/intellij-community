@@ -13,12 +13,12 @@ import java.util.concurrent.Callable
 internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.dataContext.getData(DOCUMENTATION_TARGET_POINTER_KEY)?.dereference()?.navigatable != null
+    e.presentation.isEnabledAndVisible = e.dataContext.getData(DOCUMENTATION_TARGET_POINTER)?.dereference()?.navigatable != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
-    val targetPointer = dataContext.getData(DOCUMENTATION_TARGET_POINTER_KEY) ?: return
+    val targetPointer = dataContext.getData(DOCUMENTATION_TARGET_POINTER) ?: return
     ReadAction.nonBlocking(Callable {
       targetPointer.dereference()?.navigatable
     }).finishOnUiThread(ModalityState.defaultModalityState()) { navigatable ->
@@ -26,6 +26,6 @@ internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
         OpenSourceUtil.navigate(true, navigatable)
       }
     }.submit(AppExecutorUtil.getAppExecutorService())
-    dataContext.getData(DOCUMENTATION_POPUP_KEY)?.cancel()
+    dataContext.getData(DOCUMENTATION_POPUP)?.cancel()
   }
 }

@@ -66,7 +66,7 @@ internal class DocumentationUI(
 
     val contextMenu = PopupHandler.installPopupMenu(
       editorPane,
-      DOCUMENTATION_PRIMARY_GROUP_ID,
+      PRIMARY_GROUP_ID,
       "documentation.pane.content.menu"
     )
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
@@ -78,9 +78,9 @@ internal class DocumentationUI(
 
   override fun getData(dataId: String): Any? {
     return when {
-      DOCUMENTATION_BROWSER_DATA_KEY.`is`(dataId) -> browser
-      DOCUMENTATION_HISTORY_DATA_KEY.`is`(dataId) -> browser.history
-      DOCUMENTATION_TARGET_POINTER_KEY.`is`(dataId) -> browser.targetPointer
+      DOCUMENTATION_BROWSER.`is`(dataId) -> browser
+      DOCUMENTATION_HISTORY.`is`(dataId) -> browser.history
+      DOCUMENTATION_TARGET_POINTER.`is`(dataId) -> browser.targetPointer
       SELECTED_QUICK_DOC_TEXT.`is`(dataId) -> editorPane.selectedText?.replace(160.toChar(), ' ') // IDEA-86633
       else -> null
     }
