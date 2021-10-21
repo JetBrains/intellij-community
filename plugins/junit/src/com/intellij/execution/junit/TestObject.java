@@ -705,7 +705,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, psiFacade);
     }
     else {
-      return ReadAction.compute(() -> findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade));
+      return ReadAction.nonBlocking(() -> findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade)).executeSynchronously();
     }
   }
 
