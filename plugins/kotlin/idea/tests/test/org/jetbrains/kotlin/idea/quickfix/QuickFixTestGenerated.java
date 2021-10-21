@@ -12846,6 +12846,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("onlyShortenInsertedArrayOfCall.kt")
+        public void testOnlyShortenInsertedArrayOfCall() throws Exception {
+            runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/onlyShortenInsertedArrayOfCall.kt");
+        }
+
         @TestMetadata("replaceForVarargOfAny.kt")
         public void testReplaceForVarargOfAny() throws Exception {
             runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/replaceForVarargOfAny.kt");
@@ -12861,14 +12866,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/replaceToArrayOfPrimitiveTypes.kt");
         }
 
+        @TestMetadata("replaceToArrayOfPrimitiveTypes_1_2.kt")
+        public void testReplaceToArrayOfPrimitiveTypes_1_2() throws Exception {
+            runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/replaceToArrayOfPrimitiveTypes_1_2.kt");
+        }
+
         @TestMetadata("simpleNamedArgumentToVararg.kt")
         public void testSimpleNamedArgumentToVararg() throws Exception {
             runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/simpleNamedArgumentToVararg.kt");
         }
 
+        @TestMetadata("simpleNamedArgumentToVararg_1_2.kt")
+        public void testSimpleNamedArgumentToVararg_1_2() throws Exception {
+            runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/simpleNamedArgumentToVararg_1_2.kt");
+        }
+
         @TestMetadata("surroundWithSpreadForConstructorCall.kt")
         public void testSurroundWithSpreadForConstructorCall() throws Exception {
             runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/surroundWithSpreadForConstructorCall.kt");
+        }
+
+        @TestMetadata("surroundWithSpreadForConstructorCall_1_2.kt")
+        public void testSurroundWithSpreadForConstructorCall_1_2() throws Exception {
+            runTest("testData/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs/surroundWithSpreadForConstructorCall_1_2.kt");
         }
     }
 

@@ -1,4 +1,4 @@
-// "Surround with *intArrayOf(...)" "true"
+// "Surround with intArrayOf(...)" "true"
 
 fun foo(vararg s: Int) {}
 

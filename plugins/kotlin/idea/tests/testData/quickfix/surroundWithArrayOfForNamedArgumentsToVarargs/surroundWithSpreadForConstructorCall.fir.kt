@@ -1,4 +1,4 @@
-// "Surround with *arrayOf(...)" "true"
+// "Surround with arrayOf(...)" "true"
 
 class Foo<T>(vararg val p: T)
 
