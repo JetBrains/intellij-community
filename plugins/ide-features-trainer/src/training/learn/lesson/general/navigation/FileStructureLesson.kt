@@ -69,4 +69,9 @@ abstract class FileStructureLesson
   }
 
   override val suitableTips = listOf("FileStructurePopup")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("file.structure.help.link"),
+         LessonUtil.getHelpLink("viewing-structure-of-a-source-file.html")),
+  )
 }

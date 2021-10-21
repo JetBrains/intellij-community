@@ -305,4 +305,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     val task = { Git.getInstance().runCommand(handler).throwOnError() }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(task, "", false, null)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.feature.branch.help.link"),
+         LessonUtil.getHelpLink("manage-branches.html")),
+  )
 }

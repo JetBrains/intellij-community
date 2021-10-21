@@ -4,11 +4,8 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
 import org.assertj.swing.timing.Timeout
-import training.dsl.LessonContext
-import training.dsl.LessonSample
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskRuntimeContext
-import training.dsl.triggerOnQuickDocumentationPopup
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiUtil
@@ -56,4 +53,9 @@ class QuickPopupsLesson(private val sample: LessonSample) :
   }
 
   override val suitableTips = listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("quick.popups.help.link"),
+         LessonUtil.getHelpLink("using-code-editor.html#quick_popups")),
+  )
 }

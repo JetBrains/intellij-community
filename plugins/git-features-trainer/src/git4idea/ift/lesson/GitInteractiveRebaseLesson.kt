@@ -285,4 +285,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     val index = getCommitIndex(hash, roots.single())
     return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.interactive.rebase.help.link"),
+         LessonUtil.getHelpLink("edit-project-history.html#interactive-rebase")),
+  )
 }

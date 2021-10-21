@@ -136,4 +136,9 @@ class JavaRenameLesson
   }
 
   override val suitableTips = listOf("Rename")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }
