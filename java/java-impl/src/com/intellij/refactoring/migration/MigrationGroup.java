@@ -33,7 +33,6 @@ public class MigrationGroup extends ActionGroup {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
-    presentation.setEnabled(project != null);
-    presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
+    presentation.setEnabledAndVisible(project != null && !ActionPlaces.isPopupPlace(event.getPlace()));
   }
 }
