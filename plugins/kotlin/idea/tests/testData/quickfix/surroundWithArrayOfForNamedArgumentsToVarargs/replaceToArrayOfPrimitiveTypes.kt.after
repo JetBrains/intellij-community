@@ -1,5 +1,4 @@
 // "Surround with *intArrayOf(...)" "true"
-// LANGUAGE_VERSION: 1.2
 
 fun foo(vararg s: Int) {}
 
