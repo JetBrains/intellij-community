@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -316,4 +317,16 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun isLanguageEnabled(settings: InlayHintsSettings, item: Language) = settings.hintsEnabled(item)
+
+  fun enableSearch(option: String?): Runnable? {
+    if (option == null) return null
+    return Runnable {
+      val treeNode = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode, Condition {
+        getName(it, it.parent as DefaultMutableTreeNode?).lowercase().startsWith(option.lowercase())
+      })
+      if (treeNode != null) {
+        TreeUtil.selectNode(tree, treeNode)
+      }
+    }
+  }
 }
