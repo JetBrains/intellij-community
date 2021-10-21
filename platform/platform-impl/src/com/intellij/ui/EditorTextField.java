@@ -384,6 +384,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return super.isFocusOwner();
   }
 
+  protected void onEditorAdded(@NotNull Editor editor) {
+
+  }
+
   private void initEditor() {
     Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
@@ -421,6 +425,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     boolean isFocused = isFocusOwner();
 
     initEditorInner();
+    onEditorAdded(myEditor);
 
     if (myNextFocusable != null) {
       myEditor.getContentComponent().setNextFocusableComponent(myNextFocusable);
@@ -823,6 +828,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       return super.processKeyBinding(ks, e, condition, pressed);
     }
     return true;
+  }
+
+  //use addSettingsProvider or onEditorAdded
+  @Override
+  public final void addNotify() {
+    super.addNotify();
   }
 
   @Override
