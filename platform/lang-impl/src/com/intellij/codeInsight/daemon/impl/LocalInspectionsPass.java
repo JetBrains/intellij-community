@@ -314,19 +314,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(myProject), getFile(), true);
-        PsiElementVisitor visitor = localTool.buildVisitor(holder, true);
-        InspectionEngine.acceptElements(inside, visitor);
-        InspectionEngine.acceptElements(outside, visitor);
-
+        Map<String, List<ProblemDescriptor>> result =
+          InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(localTool)), getFile(), myRestrictRange,
+                                           true,
+                                           myHighlightingSession.getProgressIndicator(), ContainerUtil.concat(inside, outside),
+                                           PairProcessor.alwaysTrue());
         HighlightSeverity severity = myProfileWrapper.getErrorLevel(key, getFile()).getSeverity();
-        for (ProblemDescriptor descriptor : holder.getResults()) {
-          ProgressManager.checkCanceled();
-          PsiElement element = descriptor.getPsiElement();
-          if (element != null) {
-            Document thisDocument = Objects.requireNonNull(documentManager.getDocument(getFile()));
-            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument,
-                                          new LocalInspectionToolWrapper(localTool), severity, descriptor, element, false);
+        for (List<ProblemDescriptor> descriptors : result.values()) {
+          for (ProblemDescriptor descriptor : descriptors) {
+            ProgressManager.checkCanceled();
+            PsiElement element = descriptor.getPsiElement();
+            if (element != null) {
+              Document thisDocument = Objects.requireNonNull(documentManager.getDocument(getFile()));
+              createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument,
+                                            new LocalInspectionToolWrapper(localTool), severity, descriptor, element, false);
+            }
           }
         }
       }
