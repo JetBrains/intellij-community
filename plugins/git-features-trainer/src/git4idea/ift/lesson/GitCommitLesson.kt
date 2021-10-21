@@ -342,4 +342,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   }
 
   override val suitableTips = listOf("partial_git_commit")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.commit.help.link"),
+         LessonUtil.getHelpLink("commit-and-push-changes.html")),
+  )
 }

@@ -133,4 +133,9 @@ class JavaInheritanceHierarchyLesson
   private fun TaskContext.hierarchyToolWindow() = strong(UIBundle.message("tool.window.name.hierarchy"))
 
   override val suitableTips = listOf("HierarchyBrowser")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.inheritance.hierarchy.help.link"),
+         LessonUtil.getHelpLink("viewing-structure-and-hierarchy-of-the-source-code.html")),
+  )
 }

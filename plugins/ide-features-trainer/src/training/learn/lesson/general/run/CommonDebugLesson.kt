@@ -464,6 +464,11 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   override val suitableTips = listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("debug.workflow.help.link"),
+         LessonUtil.getHelpLink("debugging-code.html")),
+  )
 }
 
 

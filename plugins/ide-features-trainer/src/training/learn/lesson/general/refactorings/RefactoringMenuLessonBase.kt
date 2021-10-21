@@ -77,4 +77,9 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
   private fun TaskRuntimeContext.hasInplaceRename() = editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null
 
   override val suitableTips = listOf("RefactorThis")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("refactoring.menu.help.link"),
+         LessonUtil.getHelpLink("refactoring-source-code.html#refactoring_invoke")),
+  )
 }
