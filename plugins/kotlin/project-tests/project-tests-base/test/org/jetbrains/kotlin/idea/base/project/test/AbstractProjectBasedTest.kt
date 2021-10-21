@@ -53,9 +53,10 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
     @OptIn(ExperimentalStdlibApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun runAction(action: ProjectAction, stats: Stats, profile: ProjectBasedTestPreferences) {
-        val iterationsOverride = settingsOverride<Any, Any> {
+        val projectTestOverride = settingsOverride<Any, Any> {
             warmUpIterations(profile.warmUpIterations)
             iterations(profile.iterations)
+            reportCompilerCounters(false)
         }
         when (action) {
             is HighlightFile -> {
@@ -65,7 +66,7 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
                     stopAtException = true,
                     tearDown = { invalidateCaches(project()) },
                     overrides = buildList {
-                        add(iterationsOverride as PerfTestSettingsOverride<EditorFile, List<HighlightInfo>>)
+                        add(projectTestOverride as PerfTestSettingsOverride<EditorFile, List<HighlightInfo>>)
                         if (profile.checkForValidity) {
                             add(settingsOverride<EditorFile, List<HighlightInfo>> {
                                 afterTestCheck { (file, highlightings) ->
@@ -88,7 +89,7 @@ abstract class AbstractProjectBasedTest : AbstractPerformanceProjectsTest() {
                     note = action.note ?: "",
                     stopAtException = true,
                     overrides = listOf(
-                        iterationsOverride as PerfTestSettingsOverride<Unit, Array<LookupElement>>
+                        projectTestOverride as PerfTestSettingsOverride<Unit, Array<LookupElement>>
                     )
                 )
             }
