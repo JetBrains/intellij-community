@@ -72,12 +72,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   private boolean isSplitUnsplitInProgress;
   private boolean isWindowHovered;
   private final ToolWindowImpl toolWindow;
-  private final ToolWindowManagerListener activeStateListener = new ToolWindowManagerListener() {
-    @Override
-    public void stateChanged(@NotNull ToolWindowManager manager) {
-      updateActiveAndHoverState();
-    }
-  };
 
   @Nullable
   private JPanel divider;
@@ -592,7 +586,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     JPanel divider = this.divider;
     disposable = Disposer.newDisposable();
     HOVER_STATE_LISTENER.addTo(this, disposable);
-    toolWindow.getToolWindowManager().addToolWindowManagerListener(activeStateListener, disposable);
+    updateActiveAndHoverState();
     if (divider != null) {
       IdeGlassPane glassPane = (IdeGlassPane)getRootPane().getGlassPane();
       ResizeOrMoveDocketToolWindowMouseListener listener = new ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this);
