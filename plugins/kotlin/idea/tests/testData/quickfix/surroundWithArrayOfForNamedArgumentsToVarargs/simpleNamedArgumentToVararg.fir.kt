@@ -1,4 +1,4 @@
-// "Surround with *arrayOf(...)" "true"
+// "Surround with arrayOf(...)" "true"
 
 fun foo(vararg s: String) {}
 
