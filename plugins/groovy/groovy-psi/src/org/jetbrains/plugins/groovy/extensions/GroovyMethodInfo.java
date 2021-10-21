@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +64,7 @@ public final class GroovyMethodInfo {
       Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<>();
 
       GroovyClassDescriptor.EP_NAME.processWithPluginDescriptor((classDescriptor, pluginDescriptor) -> {
-        ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
+        ClassLoader classLoader = pluginDescriptor.getClassLoader();
         for (GroovyMethodDescriptor method : classDescriptor.methods) {
           addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
         }

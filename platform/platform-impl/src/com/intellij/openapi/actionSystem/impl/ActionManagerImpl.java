@@ -253,7 +253,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getPluginClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getClassLoader(), null, true);
     if (icon == null) {
       reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
       icon = AllIcons.Nodes.Unknown;
@@ -448,7 +448,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getPluginClassLoader());
+          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getClassLoader());
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
@@ -460,10 +460,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
       switch (descriptor.name) {
         case ACTION_ELEMENT_NAME:
-          processActionElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case GROUP_ELEMENT_NAME:
-          processGroupElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case SEPARATOR_ELEMENT_NAME:
           processSeparatorNode(null, element, module, bundle);

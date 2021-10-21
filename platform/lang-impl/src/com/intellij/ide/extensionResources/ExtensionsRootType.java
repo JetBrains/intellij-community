@@ -202,7 +202,7 @@ public final class ExtensionsRootType extends RootType {
       if (descriptor == null) {
         continue;
       }
-      ClassLoader loader = descriptor.getPluginClassLoader();
+      ClassLoader loader = descriptor.getClassLoader();
       if (loader != pluginClassLoader) {
         Enumeration<URL> pluginResources = loader.getResources(EXTENSIONS_PATH + '/' + path);
         while (pluginResources.hasMoreElements()) {
