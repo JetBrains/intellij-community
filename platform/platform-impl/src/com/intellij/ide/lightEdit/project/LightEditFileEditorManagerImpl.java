@@ -39,16 +39,9 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   @Override
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
-                                                                         boolean focusEditor) {
+                                                                         @NotNull FileEditorOpenOptions options) {
     LightEditService.getInstance().openFile(file);
     return getEditorsWithProviders(file);
-  }
-
-  @Override
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
-                                                                         @NotNull VirtualFile file,
-                                                                         @NotNull FileEditorOpenOptions options) {
-    return openFileImpl2(window, file, true);
   }
 
   @Override

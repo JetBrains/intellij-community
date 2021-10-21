@@ -116,12 +116,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract @NotNull EditorsSplitters getSplitters();
 
   @Override
-  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {
+  public final FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor) {
     return openFileWithProviders(file, focusEditor, false).getFirst();
   }
 
   @Override
-  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public final FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 

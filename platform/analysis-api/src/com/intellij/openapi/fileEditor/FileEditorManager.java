@@ -221,7 +221,7 @@ public abstract class FileEditorManager {
    *
    * @return opened file editors
    */
-  public @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+  public final @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     return openFileEditor(descriptor, focusEditor);
   }
 
