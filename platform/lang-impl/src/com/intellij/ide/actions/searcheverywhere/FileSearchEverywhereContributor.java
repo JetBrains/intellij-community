@@ -10,7 +10,9 @@ import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,7 @@ import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersS
  * @author Mikhail Sokolov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+  private static final Logger LOG = Logger.getInstance(FileSearchEverywhereContributor.class);
   private final GotoFileModel myModelForRenderer;
   private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
 
@@ -94,6 +98,29 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
         return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem)value, myModelForRenderer);
       }
     };
+  }
+
+  @Override
+  protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
+                                   @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
+                                   FilteringGotoByModel<?> model, Object element, int degree) {
+    if (progressIndicator.isCanceled()) return false;
+
+    if (element == null) {
+      LOG.error("Null returned from " + model + " in " + this.getClass().getSimpleName());
+      return true;
+    }
+
+    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
+    if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
+      double mlWeight = mlService.getMlWeight(this, element, degree);
+
+      if (mlWeight >= 0.0) {
+        return consumer.process(new FoundItemDescriptor<>(element, degree, mlWeight));
+      }
+    }
+
+    return consumer.process(new FoundItemDescriptor<>(element, degree));
   }
 
   @Override

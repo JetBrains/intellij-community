@@ -15,16 +15,17 @@ internal abstract class SearchEverywhereMLRankingModelProvider {
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelProvider")
 
     fun getForTab(contributorId: String): SearchEverywhereMLRankingModelProvider {
-      val useExperimentalModel = SearchEverywhereMlSessionService.getService().shouldUseExperimentalModel(contributorId)
       return EP_NAME.findFirstSafe {
-        it.supportedContributor.simpleName == contributorId && it.isExperimental == useExperimentalModel
+        it.supportedContributor.simpleName == contributorId
       } ?: throw IllegalArgumentException("Unsupported contributor $contributorId")
     }
   }
 
   abstract val model: DecisionFunction
 
-  abstract val isExperimental: Boolean
-
   protected abstract val supportedContributor: Class<out SearchEverywhereContributor<*>>
+
+  protected fun shouldProvideExperimentalModel(): Boolean {
+    return SearchEverywhereMlSessionService.getService().shouldUseExperimentalModel(supportedContributor.simpleName)
+  }
 }
