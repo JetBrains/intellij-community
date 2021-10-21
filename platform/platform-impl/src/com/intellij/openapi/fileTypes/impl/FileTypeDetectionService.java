@@ -719,9 +719,8 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private static @NotNull String loadFile(@NotNull File file, int maxLength) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(file), Charset.defaultCharset());
-    try {
-      int length = Math.min((int)file.length(), maxLength);
+    try (Reader reader = new InputStreamReader(new FileInputStream(file), Charset.defaultCharset())) {
+      int length = (int)Math.min(file.length(), maxLength);
       char[] result = FileUtil.loadText(reader, length);
       if (file.length() > maxLength) {
         return new String(result) + "\n\n+" + (file.length() - maxLength) + " bytes more";
@@ -729,9 +728,6 @@ final class FileTypeDetectionService implements Disposable {
       else {
         return new String(result);
       }
-    }
-    finally {
-      reader.close();
     }
   }
 
