@@ -119,107 +119,111 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/compilerIndex/functions/fromCompanion")
-        public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("extension")
-            public void testExtension() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/extension/");
-            }
-
-            @TestMetadata("extensionForObject")
-            public void testExtensionForObject() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/extensionForObject/");
-            }
-
-            @TestMetadata("extensionWithCustomName")
-            public void testExtensionWithCustomName() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/extensionWithCustomName/");
-            }
-
-            @TestMetadata("extensionWithJvmStatic")
-            public void testExtensionWithJvmStatic() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/extensionWithJvmStatic/");
-            }
-
-            @TestMetadata("extensionWithJvmStaticAndCustomName")
-            public void testExtensionWithJvmStaticAndCustomName() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/extensionWithJvmStaticAndCustomName/");
-            }
-
-            @TestMetadata("function")
-            public void testFunction() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/function/");
-            }
-
-            @TestMetadata("functionWithJvmStatic")
-            public void testFunctionWithJvmStatic() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/functionWithJvmStatic/");
-            }
-
-            @TestMetadata("javaStaticMethod")
-            public void testJavaStaticMethod() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/javaStaticMethod/");
-            }
-
-            @TestMetadata("javaStaticMethod2")
-            public void testJavaStaticMethod2() throws Exception {
-                runTest("testData/compilerIndex/functions/fromCompanion/javaStaticMethod2/");
-            }
-
+        @TestMetadata("testData/compilerIndex/functions/fromObject")
+        public abstract static class FromObject extends AbstractKotlinCompilerReferenceTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/compilerIndex/functions/fromCompanion/operators")
-            public static class Operators extends AbstractKotlinCompilerReferenceTest {
+            @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion")
+            public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
-                @TestMetadata("component")
-                public void testComponent() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/component/");
+                @TestMetadata("extension")
+                public void testExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extension/");
                 }
 
-                @TestMetadata("get")
-                public void testGet() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/get/");
+                @TestMetadata("extensionForObject")
+                public void testExtensionForObject() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject/");
                 }
 
-                @TestMetadata("hasNext")
-                public void testHasNext() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/hasNext/");
+                @TestMetadata("extensionWithCustomName")
+                public void testExtensionWithCustomName() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithCustomName/");
                 }
 
-                @TestMetadata("invoke")
-                public void testInvoke() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/invoke/");
+                @TestMetadata("extensionWithJvmStatic")
+                public void testExtensionWithJvmStatic() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithJvmStatic/");
                 }
 
-                @TestMetadata("iterator")
-                public void testIterator() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/iterator/");
+                @TestMetadata("extensionWithJvmStaticAndCustomName")
+                public void testExtensionWithJvmStaticAndCustomName() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/extensionWithJvmStaticAndCustomName/");
                 }
 
-                @TestMetadata("minus")
-                public void testMinus() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/minus/");
+                @TestMetadata("function")
+                public void testFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/function/");
                 }
 
-                @TestMetadata("next")
-                public void testNext() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/next/");
+                @TestMetadata("functionWithJvmStatic")
+                public void testFunctionWithJvmStatic() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/functionWithJvmStatic/");
                 }
 
-                @TestMetadata("plus")
-                public void testPlus() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/plus/");
+                @TestMetadata("javaStaticMethod")
+                public void testJavaStaticMethod() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod/");
                 }
 
-                @TestMetadata("set")
-                public void testSet() throws Exception {
-                    runTest("testData/compilerIndex/functions/fromCompanion/operators/set/");
+                @TestMetadata("javaStaticMethod2")
+                public void testJavaStaticMethod2() throws Exception {
+                    runTest("testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2/");
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/compilerIndex/functions/fromObject/fromCompanion/operators")
+                public static class Operators extends AbstractKotlinCompilerReferenceTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("component")
+                    public void testComponent() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/component/");
+                    }
+
+                    @TestMetadata("get")
+                    public void testGet() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/get/");
+                    }
+
+                    @TestMetadata("hasNext")
+                    public void testHasNext() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/hasNext/");
+                    }
+
+                    @TestMetadata("invoke")
+                    public void testInvoke() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/invoke/");
+                    }
+
+                    @TestMetadata("iterator")
+                    public void testIterator() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/iterator/");
+                    }
+
+                    @TestMetadata("minus")
+                    public void testMinus() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/minus/");
+                    }
+
+                    @TestMetadata("next")
+                    public void testNext() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/next/");
+                    }
+
+                    @TestMetadata("plus")
+                    public void testPlus() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/plus/");
+                    }
+
+                    @TestMetadata("set")
+                    public void testSet() throws Exception {
+                        runTest("testData/compilerIndex/functions/fromObject/fromCompanion/operators/set/");
+                    }
                 }
             }
         }
@@ -714,80 +718,84 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/compilerIndex/properties/fromCompanion")
-        public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("testData/compilerIndex/properties/fromObject")
+        public abstract static class FromObject extends AbstractKotlinCompilerReferenceTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
+            public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("constant")
-            public void testConstant() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/constant/");
-            }
+                @TestMetadata("constant")
+                public void testConstant() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/constant/");
+                }
 
-            @TestMetadata("extension")
-            public void testExtension() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/extension/");
-            }
+                @TestMetadata("extension")
+                public void testExtension() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/extension/");
+                }
 
-            @TestMetadata("extensionVariable")
-            public void testExtensionVariable() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/extensionVariable/");
-            }
+                @TestMetadata("extensionVariable")
+                public void testExtensionVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable/");
+                }
 
-            @TestMetadata("extensionVariableWithJvmStatic")
-            public void testExtensionVariableWithJvmStatic() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/extensionVariableWithJvmStatic/");
-            }
+                @TestMetadata("extensionVariableWithJvmStatic")
+                public void testExtensionVariableWithJvmStatic() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariableWithJvmStatic/");
+                }
 
-            @TestMetadata("isVariable")
-            public void testIsVariable() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/isVariable/");
-            }
+                @TestMetadata("isVariable")
+                public void testIsVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/isVariable/");
+                }
 
-            @TestMetadata("javaStaticField")
-            public void testJavaStaticField() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/javaStaticField/");
-            }
+                @TestMetadata("javaStaticField")
+                public void testJavaStaticField() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField/");
+                }
 
-            @TestMetadata("javaStaticField2")
-            public void testJavaStaticField2() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/javaStaticField2/");
-            }
+                @TestMetadata("javaStaticField2")
+                public void testJavaStaticField2() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField2/");
+                }
 
-            @TestMetadata("lateinit")
-            public void testLateinit() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/lateinit/");
-            }
+                @TestMetadata("lateinit")
+                public void testLateinit() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/lateinit/");
+                }
 
-            @TestMetadata("property")
-            public void testProperty() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/property/");
-            }
+                @TestMetadata("property")
+                public void testProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/property/");
+                }
 
-            @TestMetadata("propertyWithBackingField")
-            public void testPropertyWithBackingField() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithBackingField/");
-            }
+                @TestMetadata("propertyWithBackingField")
+                public void testPropertyWithBackingField() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithBackingField/");
+                }
 
-            @TestMetadata("propertyWithCustomGetterAndSetter")
-            public void testPropertyWithCustomGetterAndSetter() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithCustomGetterAndSetter/");
-            }
+                @TestMetadata("propertyWithCustomGetterAndSetter")
+                public void testPropertyWithCustomGetterAndSetter() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter/");
+                }
 
-            @TestMetadata("propertyWithJvmField")
-            public void testPropertyWithJvmField() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithJvmField/");
-            }
+                @TestMetadata("propertyWithJvmField")
+                public void testPropertyWithJvmField() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithJvmField/");
+                }
 
-            @TestMetadata("variable")
-            public void testVariable() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/variable/");
-            }
+                @TestMetadata("variable")
+                public void testVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/variable/");
+                }
 
-            @TestMetadata("variableWithJvmField")
-            public void testVariableWithJvmField() throws Exception {
-                runTest("testData/compilerIndex/properties/fromCompanion/variableWithJvmField/");
+                @TestMetadata("variableWithJvmField")
+                public void testVariableWithJvmField() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/variableWithJvmField/");
+                }
             }
         }
 
