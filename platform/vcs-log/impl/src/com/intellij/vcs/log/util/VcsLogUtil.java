@@ -416,12 +416,13 @@ public final class VcsLogUtil {
 
   @NotNull
   public static ListenableFuture<VcsLogUiEx.JumpResult> jumpToCommit(@NotNull VcsLogUiEx vcsLogUi,
-                                                                     @NotNull VcsLogStorage storage, @NotNull Hash commitHash,
+                                                                     @NotNull Hash commitHash,
                                                                      @NotNull VirtualFile root,
                                                                      boolean silently,
                                                                      boolean focus) {
     SettableFuture<VcsLogUiEx.JumpResult> future = SettableFuture.create();
     vcsLogUi.jumpTo(commitHash, (visiblePack, hash) -> {
+      VcsLogStorage storage = vcsLogUi.getLogData().getStorage();
       if (!storage.containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
       return getCommitRow(storage, visiblePack, hash, root);
     }, future, silently, focus);

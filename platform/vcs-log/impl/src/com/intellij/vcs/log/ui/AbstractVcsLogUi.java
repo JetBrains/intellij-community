@@ -109,6 +109,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     return myLog;
   }
 
+  @Override
   @NotNull
   public VcsLogData getLogData() {
     return myLogData;

@@ -7,6 +7,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -40,6 +41,9 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
 
   @NotNull
   VcsLogColorManager getColorManager();
+
+  @NotNull
+  VcsLogData getLogData();
 
   @Nullable
   History getNavigationHistory();

@@ -98,7 +98,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus) {
-    ListenableFuture<JumpResult> future = VcsLogUtil.jumpToCommit(myUi, myUi.getLogData().getStorage(), commitHash, root, false, focus);
+    ListenableFuture<JumpResult> future = VcsLogUtil.jumpToCommit(myUi, commitHash, root, false, focus);
     return mapToJumpSuccess(future);
   }
 

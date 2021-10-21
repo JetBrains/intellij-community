@@ -187,8 +187,7 @@ public final class VcsLogUiUtil {
       CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<VcsLogUiEx.JumpResult> future = VcsLogUtil.jumpToCommit(myUi, myUi.getLogData().getStorage(),
-                                                                               commitId.getHash(), commitId.getRoot(),
+      ListenableFuture<VcsLogUiEx.JumpResult> future = VcsLogUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),
                                                                                false, true);
 
       Futures.addCallback(future, new FutureCallback<>() {
