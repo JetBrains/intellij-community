@@ -145,7 +145,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
       invokeOnChange(() -> jumpTo(commitId, rowGetter, future, silently, focus));
     }
     else {
-      if (!silently) handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
+      if (!silently) handleCommitNotFound(commitId, result == COMMIT_DOES_NOT_MATCH, rowGetter);
       future.set(false);
     }
   }

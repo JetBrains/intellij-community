@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -31,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.vcs.log.ui.table.GraphTableModel.COMMIT_DOES_NOT_MATCH;
-import static com.intellij.vcs.log.ui.table.GraphTableModel.COMMIT_NOT_FOUND;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_DOES_NOT_MATCH;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;

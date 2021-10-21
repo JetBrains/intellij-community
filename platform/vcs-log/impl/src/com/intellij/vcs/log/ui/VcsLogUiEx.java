@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -53,4 +53,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
                   @NotNull SettableFuture<? super Boolean> future,
                   boolean silently,
                   boolean focus);
+
+  @ApiStatus.Internal int COMMIT_NOT_FOUND = -1;
+  @ApiStatus.Internal int COMMIT_DOES_NOT_MATCH = -2;
 }
