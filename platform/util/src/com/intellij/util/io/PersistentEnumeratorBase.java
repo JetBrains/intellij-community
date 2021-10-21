@@ -460,6 +460,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void doClose() throws IOException {
+    IOCancellationCallbackHolder.interactWithUI();
     try {
       force();
       myKeyStorage.close();
