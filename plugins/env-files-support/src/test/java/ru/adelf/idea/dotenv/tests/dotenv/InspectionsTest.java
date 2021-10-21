@@ -59,6 +59,11 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         doInspectionTest(new LowercaseKeyInspection(), Collections.singletonList("lower_case_KEY"));
     }
 
+    @Test
+    public void testTrailingWhitespace() {
+        doInspectionTest(new TrailingWhitespaceInspection(), Arrays.asList(" ", " "));
+    }
+
     // Every available quickfix from every inspection is getting applied
     @Test
     public void testQuickFixes() {
@@ -66,6 +71,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         myFixture.enableInspections(new ExtraBlankLineInspection());
         myFixture.enableInspections(new IncorrectDelimiterInspection());
         myFixture.enableInspections(new LowercaseKeyInspection());
+        myFixture.enableInspections(new TrailingWhitespaceInspection());
 
         myFixture.doHighlighting();
         List<IntentionAction> intentionActions = myFixture.getAllQuickFixes();

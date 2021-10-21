@@ -134,6 +134,13 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvTrailingWhitespace"
+                         displayName="Value has trailing whitespac"
+                         enabledByDefault="true"
+                         level="WARNING" implementationClass="ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
