@@ -32,12 +32,18 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.compiler.instrumentationUtil",
                 "intellij.platform.externalSystem.impl"
         ]
-        productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
+        productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
 
-        productLayout.additionalPlatformJars.
-                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
-        productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
-        productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
+        productLayout.withAdditionalPlatformJar("javac2.jar",
+                "intellij.java.compiler.antTasks",
+                "intellij.java.guiForms.compiler",
+                "intellij.java.guiForms.rt",
+                "intellij.java.compiler.instrumentationUtil",
+                "intellij.java.compiler.instrumentationUtil.java8")
+        productLayout.withAdditionalPlatformJar("forms_rt.jar", "intellij.java.guiForms.compiler")
+        productLayout.withAdditionalPlatformJar("util.jar",
+                "intellij.platform.util",
+                "intellij.platform.util.rt")
 
         productLayout.bundledPluginModules += [
                 "intellij.java.plugin",
