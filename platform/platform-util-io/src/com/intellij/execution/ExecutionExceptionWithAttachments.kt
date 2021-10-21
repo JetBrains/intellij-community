@@ -9,35 +9,25 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import java.nio.charset.StandardCharsets
 
 abstract class ExecutionExceptionWithAttachments : ExecutionException, ExceptionWithAttachments {
-  val rawStdout: ByteArray?
-  val rawStderr: ByteArray?
   val stdout: @NlsSafe String
   val stderr: @NlsSafe String
 
   constructor(@NlsContexts.DialogMessage s: String, rawStdout: ByteArray?, rawStderr: ByteArray?) : super(s) {
-    this.rawStdout = rawStdout
-    this.rawStderr = rawStderr
     stdout = decode(rawStdout)
     stderr = decode(rawStderr)
   }
 
   constructor(@NlsContexts.DialogMessage s: String, throwable: Throwable, rawStdout: ByteArray?, rawStderr: ByteArray?) : super(s, throwable) {
-    this.rawStdout = rawStdout
-    this.rawStderr = rawStderr
     stdout = decode(rawStdout)
     stderr = decode(rawStderr)
   }
 
   constructor(@NlsContexts.DialogMessage s: String, stdout: String?, stderr: String?) : super(s) {
-    this.rawStdout = encode(stdout)
-    this.rawStderr = encode(stderr)
     this.stdout = stdout ?: ""
     this.stderr = stderr ?: ""
   }
 
   constructor(@NlsContexts.DialogMessage s: String, throwable: Throwable, stdout: String?, stderr: String?) : super(s, throwable) {
-    this.rawStdout = encode(stdout)
-    this.rawStderr = encode(stderr)
     this.stdout = stdout ?: ""
     this.stderr = stderr ?: ""
   }
@@ -45,8 +35,8 @@ abstract class ExecutionExceptionWithAttachments : ExecutionException, Exception
   override fun getAttachments(): Array<Attachment> =
     // Process outputs can contain private data, not sending them by default.
     listOfNotNull(
-      rawStdout?.let { Attachment("stdout.txt", it, stdout).apply { isIncluded = false } },
-      rawStderr?.let { Attachment("stderr.txt", it, stderr).apply { isIncluded = false } },
+      stdout.takeIf { it.isNotBlank() }?.let { Attachment("stdout.txt", it).apply { isIncluded = false } },
+      stderr.takeIf { it.isNotBlank() }?.let { Attachment("stderr.txt", it).apply { isIncluded = false } },
     ).toTypedArray()
 
   companion object {
