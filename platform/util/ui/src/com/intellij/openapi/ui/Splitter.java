@@ -672,18 +672,15 @@ public class Splitter extends JPanel implements Splittable {
       boolean bothVisible = component != null && component.isVisible()
                             && other != null && other.isVisible();
       if (bothVisible) {
+        double size = getDimension(component.getSize());
         component = unwrap(component);
         other = unwrap(other);
-        Dimension min = component.getMinimumSize();
-        Dimension oMax = other.getMaximumSize();
-        if (isVertical()) {
-          float total = getHeight() - getDividerWidth();
-          return Math.max((total - oMax.height) / total, (float)min.height / total);
-        }
-        else {
-          float total = getWidth() - getDividerWidth();
-          return Math.max((total - oMax.width) / total, (float)min.width / total);
-        }
+        double min = getDimension(component.getMinimumSize());
+        double oMax = getDimension(other.getMaximumSize());
+        double total = getDimension(getSize()) - getDividerWidth();
+        double oMaxP = (total - oMax) / total;
+        double minP = size < min ? 0 : min / total;
+        return (float)Math.max(oMaxP, minP);
       }
     }
     return 0.0f;
