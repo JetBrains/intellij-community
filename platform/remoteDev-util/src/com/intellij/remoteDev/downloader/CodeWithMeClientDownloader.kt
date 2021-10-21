@@ -22,6 +22,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.io.*
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY
@@ -112,7 +113,8 @@ object CodeWithMeClientDownloader {
     val platformSuffix = when {
       SystemInfo.isLinux -> "-no-jbr.tar.gz"
       SystemInfo.isWindows -> ".win.zip"
-      SystemInfo.isMac -> "-no-jdk.sit"
+      SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
+      SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
       else -> error("Current platform is not supported")
     }
 
@@ -120,7 +122,13 @@ object CodeWithMeClientDownloader {
 
     val clientDownloadUrl = "${DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION}$clientDistributionName-$hostBuildNumber$platformSuffix"
 
-    val platformString = if (SystemInfo.isMac) "osx-x64" else if (SystemInfo.isWindows) "windows-x64" else "linux-x64"
+    val platformString = when {
+      SystemInfo.isLinux -> "linux-x64"
+      SystemInfo.isWindows -> "windows-x64"
+      SystemInfo.isMac && CpuArch.isIntel64() -> "osx-x64"
+      SystemInfo.isMac && CpuArch.isArm64() -> "osx-aarch64"
+      else -> error("Current platform is not supported")
+    }
 
     val jreBuildParts = jreBuild.split("b")
     require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0" }
