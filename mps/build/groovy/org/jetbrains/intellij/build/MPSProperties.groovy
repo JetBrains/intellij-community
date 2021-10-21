@@ -153,6 +153,11 @@ class MPSProperties extends JetBrainsProductProperties {
     }
 
     @Override
+    String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        return "MPS${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
+    }
+
+    @Override
     WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
         return null
     }
