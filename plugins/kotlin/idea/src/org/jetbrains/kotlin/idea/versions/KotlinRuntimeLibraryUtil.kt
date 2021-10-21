@@ -24,7 +24,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.framework.isExternalLibrary
 import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
@@ -69,10 +68,8 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
     RUNTIME_JDK8_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME),
     JS_STDLIB_JAR(PathUtil.JS_LIB_NAME);
 
-    fun findExistingJar(library: Library): VirtualFile? {
-        if (isExternalLibrary(library)) return null
-        return library.getFiles(OrderRootType.CLASSES).firstOrNull { it.name.startsWith(mavenArtifactId) }
-    }
+    fun findExistingJar(library: Library): VirtualFile? =
+        library.getFiles(OrderRootType.CLASSES).firstOrNull { it.name.startsWith(mavenArtifactId) }
 
     val repositoryLibraryProperties: RepositoryLibraryProperties get() =
         RepositoryLibraryProperties(KOTLIN_MAVEN_GROUP_ID, mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
