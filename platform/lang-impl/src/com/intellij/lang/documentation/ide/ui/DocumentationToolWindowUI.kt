@@ -17,6 +17,12 @@ internal class DocumentationToolWindowUI(
   private val content: Content,
 ) : Disposable {
 
+  override fun dispose() {}
+
+  val browser: DocumentationBrowser get() = ui.browser
+
+  val contentComponent: JComponent get() = ui.scrollPane
+
   private var preview: Disposable?
 
   // Disposable tree:
@@ -36,7 +42,7 @@ internal class DocumentationToolWindowUI(
       this.preview = it
     }
 
-    Disposer.register(preview, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, ui.browser)))
+    Disposer.register(preview, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, browser)))
     Disposer.register(preview, browser.addStateListener { request, _, byLink ->
       if (byLink && Registry.`is`("documentation.v2.turn.off.preview.by.links")) {
         turnOffPreview()
@@ -53,19 +59,13 @@ internal class DocumentationToolWindowUI(
     }
   }
 
-  override fun dispose() {}
-
-  val browser: DocumentationBrowser get() = ui.browser
-
-  val contentComponent: JComponent get() = ui.scrollPane
-
   fun turnOffPreview() {
     val preview = requireNotNull(this.preview) {
       "the preview was turned off already"
     }
     this.preview = null
     Disposer.dispose(preview)
-    Disposer.register(this, updateContentTab(ui.browser, content))
+    Disposer.register(this, updateContentTab(browser, content))
   }
 }
 
