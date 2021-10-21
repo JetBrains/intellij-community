@@ -24,8 +24,8 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
 
   private final short myIndex;
-  private Object myActualValueTemplate;
-  private int myUsageCount;
+  private Object myActualValueTemplate; // guarded by this
+  private int myUsageCount; // guarded by this
 
   RefParameterImpl(UParameter parameter, PsiElement psi, int index, RefManager manager, RefElement refElement) {
     super(parameter, psi, manager);
@@ -63,7 +63,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Override
-  public int getUsageCount() {
+  public synchronized int getUsageCount() {
     return myUsageCount;
   }
 
@@ -103,11 +103,11 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
-  void clearTemplateValue() {
+  synchronized void clearTemplateValue() {
     myActualValueTemplate = VALUE_IS_NOT_CONST;
   }
 
-  void updateTemplateValue(UExpression expression, @Nullable PsiElement accessPlace) {
+  synchronized void updateTemplateValue(UExpression expression, @Nullable PsiElement accessPlace) {
     myUsageCount++;
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
@@ -122,7 +122,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
 
   @Nullable
   @Override
-  public Object getActualConstValue() {
+  public synchronized Object getActualConstValue() {
     return myActualValueTemplate;
   }
 
