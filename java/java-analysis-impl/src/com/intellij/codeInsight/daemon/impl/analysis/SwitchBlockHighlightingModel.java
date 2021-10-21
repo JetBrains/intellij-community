@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -200,7 +201,7 @@ public class SwitchBlockHighlightingModel {
           results.add(createError(expr, JavaErrorBundle.message("constant.expression.required")));
           continue;
         }
-        values.putValue(value, expr);
+        fillElementsToCheckDuplicates(values, expr);
       }
     }
 
@@ -246,6 +247,22 @@ public class SwitchBlockHighlightingModel {
       return Collections.singletonList(createError(mySelector, JavaErrorBundle.message("inaccessible.type", className)));
     }
     return Collections.emptyList();
+  }
+
+  void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
+    PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
+    if (expr == null) return;
+    if (expr instanceof PsiReferenceExpression) {
+      String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)expr);
+      if (enumConstName != null) {
+        elements.putValue(enumConstName,labelElement);
+        return;
+      }
+    }
+    Object value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
+    if (value != null) {
+      elements.putValue(value, expr);
+    }
   }
 
   final void checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, @NotNull List<HighlightInfo> results) {
@@ -491,7 +508,8 @@ public class SwitchBlockHighlightingModel {
       return createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
     }
 
-    private void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
+    @Override
+    void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
       if (labelElement instanceof PsiDefaultCaseLabelElement) {
         elements.putValue(myDefaultValue, labelElement);
       }
@@ -659,34 +677,8 @@ public class SwitchBlockHighlightingModel {
      * @see JavaPsiPatternUtil#dominates(PsiPattern, PsiPattern)
      */
     private void checkDominance(@NotNull List<PsiCaseLabelElement> switchLabels, @NotNull List<HighlightInfo> results) {
-      Map<PsiCaseLabelElement, PsiCaseLabelElement> alreadyDominatedLabels = new HashMap<>();
-      for (int i = 0; i < switchLabels.size() - 1; i++) {
-        PsiPattern currPattern = ObjectUtils.tryCast(switchLabels.get(i), PsiPattern.class);
-        if (currPattern == null) continue;
-        if (alreadyDominatedLabels.containsKey(currPattern)) continue;
-        for (int j = i + 1; j < switchLabels.size(); j++) {
-          PsiCaseLabelElement next = switchLabels.get(j);
-          if (isConstantLabelElement(next)) {
-            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
-            assert constExpr != null;
-            if (JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType) &&
-                JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
-              alreadyDominatedLabels.put(next, currPattern);
-            }
-            continue;
-          }
-          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) {
-            alreadyDominatedLabels.put(next, currPattern);
-            continue;
-          }
-          PsiPattern nextPattern = ObjectUtils.tryCast(next, PsiPattern.class);
-          if (nextPattern == null) continue;
-          if (JavaPsiPatternUtil.dominates(currPattern, nextPattern)) {
-            alreadyDominatedLabels.put(next, currPattern);
-          }
-        }
-      }
-      alreadyDominatedLabels.forEach((overWhom, who) -> {
+      Map<PsiCaseLabelElement, PsiCaseLabelElement> dominatedLabels = findDominatedLabels(switchLabels);
+      dominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
         PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
         PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
@@ -696,6 +688,38 @@ public class SwitchBlockHighlightingModel {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix(overWhom));
         results.add(info);
       });
+    }
+
+    @NotNull
+    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<PsiCaseLabelElement> switchLabels) {
+      Map<PsiCaseLabelElement, PsiCaseLabelElement> result = new HashMap<>();
+      for (int i = 0; i < switchLabels.size() - 1; i++) {
+        PsiPattern currPattern = ObjectUtils.tryCast(switchLabels.get(i), PsiPattern.class);
+        if (currPattern == null) continue;
+        if (result.containsKey(currPattern)) continue;
+        for (int j = i + 1; j < switchLabels.size(); j++) {
+          PsiCaseLabelElement next = switchLabels.get(j);
+          if (isConstantLabelElement(next)) {
+            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
+            assert constExpr != null;
+            if (JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType) &&
+                JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
+              result.put(next, currPattern);
+            }
+            continue;
+          }
+          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) {
+            result.put(next, currPattern);
+            continue;
+          }
+          PsiPattern nextPattern = ObjectUtils.tryCast(next, PsiPattern.class);
+          if (nextPattern == null) continue;
+          if (JavaPsiPatternUtil.dominates(currPattern, nextPattern)) {
+            result.put(next, currPattern);
+          }
+        }
+      }
+      return result;
     }
 
     /**
@@ -857,18 +881,8 @@ public class SwitchBlockHighlightingModel {
       if (switchModel == null) return UNEVALUATED;
       PsiCodeBlock switchBody = switchModel.myBlock.getBody();
       if (switchBody == null) return UNEVALUATED;
-      List<PsiCaseLabelElement> labelElements = new SmartList<>();
-      for (PsiStatement st : switchBody.getStatements()) {
-        if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
-        PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
-        if (labelStatement.isDefaultCase()) continue;
-        PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          if (labelElement instanceof PsiDefaultCaseLabelElement) continue;
-          labelElements.add(labelElement);
-        }
-      }
+      List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class)
+        .filter(element -> !(element instanceof PsiDefaultCaseLabelElement)).toList();
       if (labelElements.isEmpty()) return UNEVALUATED;
       List<HighlightInfo> results = new SmartList<>();
       boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
@@ -898,5 +912,41 @@ public class SwitchBlockHighlightingModel {
       COMPLETE_WITH_TOTAL,
       COMPLETE_WITHOUT_TOTAL
     }
+  }
+
+  /**
+   * @param switchBlock switch statement/expression to check
+   * @return a set of label elements that are duplicates. If a switch block contains patterns,
+   * then dominated patterns will be also included in the result set.
+   */
+  @NotNull
+  public static Set<PsiElement> findSuspiciousLabelElements(@Nullable PsiSwitchBlock switchBlock) {
+    if (switchBlock == null) return Collections.emptySet();
+    var switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
+    if (switchModel == null) return Collections.emptySet();
+    var labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
+    if (labelElements.isEmpty()) return Collections.emptySet();
+    MultiMap<Object, PsiElement> duplicateCandidates = new MultiMap<>();
+    labelElements.forEach(branch -> switchModel.fillElementsToCheckDuplicates(duplicateCandidates, branch));
+
+    Set<PsiElement> result = new SmartHashSet<>();
+
+    for (Map.Entry<Object, Collection<PsiElement>> entry : duplicateCandidates.entrySet()) {
+      if (entry.getValue().size() <= 1) continue;
+      result.addAll(entry.getValue());
+    }
+
+    var patternInSwitchModel = ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
+    if (patternInSwitchModel == null) return result;
+    List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
+    labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
+    if (dominanceCheckingCandidates.isEmpty()) return result;
+    var dominatedPatterns = patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates).entrySet().stream()
+      .filter(entry -> entry.getKey() instanceof PsiPattern && entry.getValue() instanceof PsiPattern)
+      .map(t -> t.getKey())
+      .collect(Collectors.toSet());
+    result.addAll(dominatedPatterns);
+
+    return result;
   }
 }

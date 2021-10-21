@@ -25,7 +25,7 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testDuplicateLabels() {
+  public void testSuspiciousLabelElements() {
     doTest();
   }
 
