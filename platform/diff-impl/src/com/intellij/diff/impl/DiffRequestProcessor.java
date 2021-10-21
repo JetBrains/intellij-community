@@ -8,6 +8,7 @@ import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
@@ -538,6 +539,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     if (oldToolbar) {
       navigationActions.add(new MyChangeDiffToolAction());
     }
+    else {
+      myRightToolbarGroup.add(new MyDiffToolChooser(myMainPanel));
+    }
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
 
@@ -700,6 +704,38 @@ public abstract class DiffRequestProcessor implements Disposable {
       catch (Throwable ex) {
         Messages.showErrorDialog(e.getProject(), ex.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
       }
+    }
+  }
+
+  private class MyDiffToolChooser extends DiffToolChooser {
+    private MyDiffToolChooser(@Nullable JComponent targetComponent) {
+      super(targetComponent);
+    }
+
+    @Override
+    public void onSelected(@NotNull AnActionEvent e, @NotNull DiffTool diffTool) {
+      DiffUsageTriggerCollector.logToggleDiffTool(e.getProject(), diffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+      moveToolOnTop(diffTool);
+
+      updateRequest(true);
+    }
+
+    @NotNull
+    @Override
+    public List<FrameDiffTool> getTools() {
+      return getAvailableFittedTools();
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return myState.getActiveTool();
+    }
+
+    @Nullable
+    @Override
+    public DiffTool getForcedDiffTool() {
+      return myForcedDiffTool;
     }
   }
 
