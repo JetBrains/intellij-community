@@ -1885,7 +1885,7 @@ public class JBTabsImpl extends JComponent
         }
         if (myEntryPointToolbar != null) {
           JComponent eComponent = myEntryPointToolbar.getComponent();
-          if (!getTabsPosition().isSide() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+          if (!getTabsPosition().isSide() && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE && getTabCount() > 0) {
             Dimension preferredSize = eComponent.getPreferredSize();
             Rectangle bounds = new Rectangle(getWidth() - preferredSize.width - 2, 1, preferredSize.width, myHeaderFitSize.height);
             int xDiff = (bounds.width - preferredSize.width) / 2;
@@ -1907,7 +1907,7 @@ public class JBTabsImpl extends JComponent
           JComponent eComponent = ObjectUtils.doIfNotNull(myEntryPointToolbar, ActionToolbar::getComponent);
           if (eComponent != null) {
             Rectangle entryPointRect = getEntryPointRect();
-            if (entryPointRect != null && !entryPointRect.isEmpty()) {
+            if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
               Dimension preferredSize = eComponent.getPreferredSize();
               Rectangle bounds = new Rectangle(entryPointRect);
               int xDiff = (bounds.width - preferredSize.width) / 2;
