@@ -274,17 +274,19 @@
             <arg value="${patchKotlinLibRead}"/>
         </exec>
 
+        <!--
         <property name="patchClassLoaderConfigurator"
                   value="${basedir}/patches/ClassLoaderConfigurator.patch"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;&#45;check"/>
             <arg value="${patchClassLoaderConfigurator}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
             <arg value="${patchClassLoaderConfigurator}"/>
         </exec>
+        -->
 
         <property name="useAppInfoFromFile"
                   value="${basedir}/patches/UseAppInfoFromFile.patch"/>
