@@ -553,6 +553,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
+  private static final Set<RefElement> failedRefElements = new HashSet<>();
   void checkForReachableRefs(@NotNull final GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
 
@@ -569,14 +570,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     });
 
-
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       try {
         entry.accept(codeScanner);
       }
       // todo temporary decision for debugging, to be deleted
       catch (StackOverflowError e) {
-        logFromEntryPoint(entry);
+        if (failedRefElements.add(entry)) {
+          LOG.warn(String.format("Entry point: %s %s", entry.getClass().getSimpleName(), entry.getName()));
+          logFromEntryPoint(entry);
+        }
       }
     }
 
@@ -587,25 +590,22 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   private static void logFromEntryPoint(RefElement entry) {
-    StringBuilder result = new StringBuilder("\n");
     List<List<RefElement>> paths = new ArrayList<>();
     paths.add(new ArrayList<>());
     traverse(entry, paths, 0);
-    String rootText = String.format("%s %s (owner: %s, reachable: %s, entry: %s):", entry.getClass().getSimpleName(), entry.getName(),
-                                    entry.getOwner(), entry.isReachable(), entry.isEntry());
-    result.append(rootText).append("\n");
+    LOG.warn(String.format("%s %s (owner: %s, reachable: %s)", entry.getClass().getSimpleName(), entry.getName(), entry.getOwner(),
+                           entry.isReachable()));
+    int counter = 1;
     for (List<RefElement> path : paths) {
       if (path.size() <= 1) continue;
-      StringJoiner pathJoiner = new StringJoiner(" --> ");
+      LOG.warn("PATH " + counter++ + ":");
       for (int i = 1; i < path.size(); i++) {
         RefElement element = path.get(i);
         String elementText = String.format("%s %s (owner: %s, reachable: %s)", element.getClass().getSimpleName(), element.getName(),
                                            element.getOwner(), element.isReachable());
-        pathJoiner.add(elementText);
+        LOG.warn(" --> " + elementText);
       }
-      result.append(" --> ").append(pathJoiner).append("\n");
     }
-    LOG.warn(result.toString());
   }
 
   private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth) {
