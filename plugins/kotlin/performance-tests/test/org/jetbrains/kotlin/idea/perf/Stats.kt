@@ -102,6 +102,7 @@ class Stats(
             test = test,
             tearDown = tearDown,
             afterTestCheck = afterTestCheck,
+            reportCompilerCounters = perfTest.reportCompilerCounters,
         )
         val block = {
             val metricChildren = mutableListOf<Metric>()
@@ -115,6 +116,7 @@ class Stats(
                         test = test,
                         tearDown = tearDown,
                         afterTestCheck = afterTestCheck,
+                        reportCompilerCounters = perfTest.reportCompilerCounters,
                     )
                     warmUpPhase(warmPhaseData, metricChildren, stopAtException)
                 }
@@ -302,9 +304,11 @@ class Stats(
                         phaseData.test(testData)
                     }
 
-                    PerformanceCounter.report { name, counter, nanos ->
-                        valueMap["counter \"$name\": count"] = counter.toLong()
-                        valueMap["counter \"$name\": time"] = nanos.nsToMs
+                    if (phaseData.reportCompilerCounters) {
+                        PerformanceCounter.report { name, counter, nanos ->
+                            valueMap["counter \"$name\": count"] = counter.toLong()
+                            valueMap["counter \"$name\": time"] = nanos.nsToMs
+                        }
                     }
 
                     when (val result = phaseData.afterTestCheck(testData)) {
@@ -500,6 +504,7 @@ data class PhaseData<SV, TV>(
     val test: (TestData<SV, TV>) -> Unit,
     val tearDown: (TestData<SV, TV>) -> Unit,
     val fastIterations: Boolean = false,
+    val reportCompilerCounters: Boolean,
     val afterTestCheck: (TestData<SV, TV>) -> TestCheckResult,
 )
 

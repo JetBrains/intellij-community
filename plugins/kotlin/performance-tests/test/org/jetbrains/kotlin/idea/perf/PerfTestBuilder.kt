@@ -11,6 +11,7 @@ data class PerfTest<SV, TV>(
     val fastIterations: Boolean,
     val checkStability: Boolean,
     val stopAtException: Boolean,
+    val reportCompilerCounters: Boolean,
     val stats: Stats,
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
@@ -26,6 +27,7 @@ abstract class PerfTestBuilderBase<SV, TV> {
     protected var fastIterations: Boolean? = null
     protected var checkStability: Boolean? = null
     protected var stopAtException: Boolean? = null
+    protected var reportCompilerCounters: Boolean? = null
     protected var afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)? = null
 
     fun name(name: String) {
@@ -44,13 +46,16 @@ abstract class PerfTestBuilderBase<SV, TV> {
         this.fastIterations = fastIterations
     }
 
-
     fun checkStability(checkStability: Boolean) {
         this.checkStability = checkStability
     }
 
     fun stopAtException(stopAtException: Boolean) {
         this.stopAtException = stopAtException
+    }
+
+    fun reportCompilerCounters(reportCompilerCounters: Boolean) {
+        this.reportCompilerCounters = reportCompilerCounters
     }
 
     fun afterTestCheck(check: (TestData<SV, TV>) -> TestCheckResult) {
@@ -61,13 +66,14 @@ abstract class PerfTestBuilderBase<SV, TV> {
 class PerfTestOverrideBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
     fun build(): PerfTestSettingsOverride<SV, TV> =
         PerfTestSettingsOverride(
-            name,
-            warmUpIterations,
-            iterations,
-            fastIterations,
-            checkStability,
-            stopAtException,
-            afterTestCheck,
+            name = name,
+            warmUpIterations = warmUpIterations,
+            iterations = iterations,
+            fastIterations = fastIterations,
+            checkStability = checkStability,
+            stopAtException =stopAtException ,
+            reportCompilerCounters = reportCompilerCounters,
+            afterTestCheck = afterTestCheck,
         )
 }
 
@@ -80,6 +86,7 @@ class PerfTestSettingsOverride<SV, TV>(
     val iterations: Int?,
     val fastIterations: Boolean?,
     val checkStability: Boolean?,
+    val reportCompilerCounters: Boolean?,
     val stopAtException: Boolean?,
     val afterTestCheck: ((TestData<SV, TV>) -> TestCheckResult)?
 ) {
@@ -90,6 +97,7 @@ class PerfTestSettingsOverride<SV, TV>(
             iterations = iterations ?: perfTest.iterations,
             fastIterations = fastIterations ?: perfTest.fastIterations,
             checkStability = checkStability ?: perfTest.checkStability,
+            reportCompilerCounters = reportCompilerCounters ?: perfTest.reportCompilerCounters,
             stopAtException = stopAtException ?: perfTest.stopAtException,
             afterTestCheck = afterTestCheck?.and(perfTest.afterTestCheck) ?: perfTest.afterTestCheck,
         )
@@ -110,6 +118,7 @@ class PerfTestBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
         fastIterations = false
         checkStability = true
         stopAtException = false
+        reportCompilerCounters = true
         afterTestCheck = { TestCheckResult.Success }
     }
 
@@ -141,6 +150,7 @@ class PerfTestBuilder<SV, TV> : PerfTestBuilderBase<SV, TV>() {
             fastIterations = fastIterations!!,
             checkStability = checkStability!!,
             stopAtException = stopAtException!!,
+            reportCompilerCounters = reportCompilerCounters!!,
             stats = stats,
             setUp = setUp,
             test = test,
