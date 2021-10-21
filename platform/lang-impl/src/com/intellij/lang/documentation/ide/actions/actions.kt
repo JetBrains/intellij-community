@@ -2,9 +2,8 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
+import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
-import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.keymap.KeymapUtil
@@ -14,9 +13,11 @@ import javax.swing.JComponent
 
 @JvmField
 val DOCUMENTATION_TARGETS: DataKey<List<DocumentationTarget>> = DataKey.create("documentation.targets")
-internal val DOCUMENTATION_BROWSER: DataKey<DocumentationBrowser> = DataKey.create("documentation.browser")
+
+@JvmField
+val DOCUMENTATION_BROWSER: DataKey<DocumentationBrowserFacade> = DataKey.create("documentation.browser")
+
 internal val DOCUMENTATION_HISTORY: DataKey<DocumentationHistory> = DataKey.create("documentation.history")
-internal val DOCUMENTATION_TARGET_POINTER: DataKey<Pointer<out DocumentationTarget>> = DataKey.create("documentation.target.pointer")
 internal val DOCUMENTATION_POPUP: DataKey<JBPopup> = DataKey.create("documentation.popup")
 
 internal const val PRIMARY_GROUP_ID: String = "Documentation.PrimaryGroup"

@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalLinkResult
@@ -22,11 +23,14 @@ import kotlinx.coroutines.*
 
 internal class DocumentationBrowser private constructor(
   private val project: Project
-) : Disposable {
+) : DocumentationBrowserFacade, Disposable {
 
   private val cs = CoroutineScope(SupervisorJob())
-  private val stateListeners = ArrayList<BrowserStateListener>(2)
+
+  @Volatile // written from EDT, read from any thread
   private lateinit var state: BrowserState
+
+  private val stateListeners = ArrayList<BrowserStateListener>(2)
   private val backStack = Stack<HistorySnapshot>()
   private val forwardStack = Stack<HistorySnapshot>()
 
@@ -39,11 +43,7 @@ internal class DocumentationBrowser private constructor(
 
   var snapshooter: () -> UISnapshot by lateinitVal()
 
-  val targetPointer: Pointer<out DocumentationTarget>
-    get() {
-      EDT.assertIsEdt()
-      return state.request.targetPointer
-    }
+  override val targetPointer: Pointer<out DocumentationTarget> get() = state.request.targetPointer
 
   private fun setState(state: BrowserState, byLink: Boolean) {
     EDT.assertIsEdt()
