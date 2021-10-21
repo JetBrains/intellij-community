@@ -145,12 +145,25 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     private fun KtProperty.asObjectMemberPropertyCompilerRefs(
         containingObject: KtObjectDeclaration,
         names: NameEnumerator,
-    ): List<CompilerRef.CompilerMember>? = null
+    ): List<CompilerRef.CompilerMember>? {
+        val qualifierId = containingObject.qualifierId(names) ?: return null
+        if (!containingObject.isCompanion()) {
+            return asPropertyCompilerRefs(qualifierId, names)
+        }
+
+        val fieldOwnerId = containingObject.containingClassOrObject?.qualifierId(names)
+        val compilerMembers = asPropertyCompilerRefs(qualifierId, names, fieldOwnerId)
+        if (!hasJvmStaticAnnotation() || fieldOwnerId == null) return compilerMembers
+
+        val staticMembers = asPropertyCompilerRefs(fieldOwnerId, names, fieldOwnerId = null) ?: return compilerMembers
+        return compilerMembers?.plus(staticMembers) ?: staticMembers
+    }
 
     private fun KtProperty.asPropertyCompilerRefs(
         qualifierId: Int,
         names: NameEnumerator,
-    ): List<CompilerRef.CompilerMember>? = asPropertyOrParameterCompilerRefs(qualifierId, names, isVar)
+        fieldOwnerId: Int? = qualifierId,
+    ): List<CompilerRef.CompilerMember>? = asPropertyOrParameterCompilerRefs(qualifierId, names, isVar, fieldOwnerId)
 
     private fun KtParameter.asParameterCompilerRefs(
         qualifierId: Int,
@@ -174,14 +187,15 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         qualifierId: Int,
         names: NameEnumerator,
         isMutable: Boolean,
+        fieldOwnerId: Int? = qualifierId,
     ): List<CompilerRef.CompilerMember>? where T : KtCallableDeclaration, T : KtValVarKeywordOwner {
         val name = name ?: return null
-        if (hasModifier(KtTokens.CONST_KEYWORD) || hasJvmFieldAnnotation()) {
-            return listOf(CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name)))
+        if (fieldOwnerId != null && (hasModifier(KtTokens.CONST_KEYWORD) || hasJvmFieldAnnotation())) {
+            return listOf(CompilerRef.JavaCompilerFieldRef(fieldOwnerId, names.tryEnumerate(name)))
         }
 
-        val field = if (hasModifier(KtTokens.LATEINIT_KEYWORD)) {
-            CompilerRef.JavaCompilerFieldRef(qualifierId, names.tryEnumerate(name))
+        val field = if (fieldOwnerId != null && hasModifier(KtTokens.LATEINIT_KEYWORD)) {
+            CompilerRef.JavaCompilerFieldRef(fieldOwnerId, names.tryEnumerate(name))
         } else {
             null
         }
