@@ -120,11 +120,6 @@ internal class DocumentationBrowser private constructor(
     return result.getCompleted()?.externalUrl
   }
 
-  fun openCurrentExternalUrl() {
-    val url = currentExternalUrl() ?: return
-    openUrl(project, state.request.targetPointer, url)
-  }
-
   private class HistorySnapshot(
     val state: BrowserState,
     val ui: UISnapshot,
