@@ -890,7 +890,76 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/properties/fromObject")
-        public abstract static class FromObject extends AbstractKotlinCompilerReferenceTest {
+        public static class FromObject extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("constant")
+            public void testConstant() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/constant/");
+            }
+
+            @TestMetadata("extension")
+            public void testExtension() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/extension/");
+            }
+
+            @TestMetadata("extensionVariable")
+            public void testExtensionVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/extensionVariable/");
+            }
+
+            @TestMetadata("fieldProperty")
+            public void testFieldProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/fieldProperty/");
+            }
+
+            @TestMetadata("fieldVariable")
+            public void testFieldVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/fieldVariable/");
+            }
+
+            @TestMetadata("lateinit")
+            public void testLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/lateinit/");
+            }
+
+            @TestMetadata("property")
+            public void testProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/property/");
+            }
+
+            @TestMetadata("staticExtension")
+            public void testStaticExtension() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/staticExtension/");
+            }
+
+            @TestMetadata("staticExtensionVariable")
+            public void testStaticExtensionVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/staticExtensionVariable/");
+            }
+
+            @TestMetadata("staticLateinit")
+            public void testStaticLateinit() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/staticLateinit/");
+            }
+
+            @TestMetadata("staticProperty")
+            public void testStaticProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/staticProperty/");
+            }
+
+            @TestMetadata("staticVariable")
+            public void testStaticVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/staticVariable/");
+            }
+
+            @TestMetadata("variable")
+            public void testVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/variable/");
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion")
             public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
@@ -913,9 +982,14 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     runTest("testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable/");
                 }
 
-                @TestMetadata("extensionVariableWithJvmStatic")
-                public void testExtensionVariableWithJvmStatic() throws Exception {
-                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariableWithJvmStatic/");
+                @TestMetadata("fieldProperty")
+                public void testFieldProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/fieldProperty/");
+                }
+
+                @TestMetadata("fieldVariable")
+                public void testFieldVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable/");
                 }
 
                 @TestMetadata("isVariable")
@@ -953,9 +1027,29 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     runTest("testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter/");
                 }
 
-                @TestMetadata("propertyWithJvmField")
-                public void testPropertyWithJvmField() throws Exception {
-                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithJvmField/");
+                @TestMetadata("staticExtension")
+                public void testStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/staticExtension/");
+                }
+
+                @TestMetadata("staticExtensionVariable")
+                public void testStaticExtensionVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/staticExtensionVariable/");
+                }
+
+                @TestMetadata("staticLateinit")
+                public void testStaticLateinit() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/staticLateinit/");
+                }
+
+                @TestMetadata("staticProperty")
+                public void testStaticProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/staticProperty/");
+                }
+
+                @TestMetadata("staticVariable")
+                public void testStaticVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/staticVariable/");
                 }
 
                 @TestMetadata("variable")
@@ -963,9 +1057,150 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     runTest("testData/compilerIndex/properties/fromObject/fromCompanion/variable/");
                 }
 
-                @TestMetadata("variableWithJvmField")
-                public void testVariableWithJvmField() throws Exception {
-                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/variableWithJvmField/");
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/compilerIndex/properties/fromObject/fromCompanion/named")
+                public static class Named extends AbstractKotlinCompilerReferenceTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("constant")
+                    public void testConstant() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/constant/");
+                    }
+
+                    @TestMetadata("extension")
+                    public void testExtension() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/extension/");
+                    }
+
+                    @TestMetadata("extensionVariable")
+                    public void testExtensionVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/extensionVariable/");
+                    }
+
+                    @TestMetadata("fieldProperty")
+                    public void testFieldProperty() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldProperty/");
+                    }
+
+                    @TestMetadata("fieldVariable")
+                    public void testFieldVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable/");
+                    }
+
+                    @TestMetadata("lateinit")
+                    public void testLateinit() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit/");
+                    }
+
+                    @TestMetadata("property")
+                    public void testProperty() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/property/");
+                    }
+
+                    @TestMetadata("staticExtension")
+                    public void testStaticExtension() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtension/");
+                    }
+
+                    @TestMetadata("staticExtensionVariable")
+                    public void testStaticExtensionVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtensionVariable/");
+                    }
+
+                    @TestMetadata("staticLateinit")
+                    public void testStaticLateinit() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/staticLateinit/");
+                    }
+
+                    @TestMetadata("staticProperty")
+                    public void testStaticProperty() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/staticProperty/");
+                    }
+
+                    @TestMetadata("staticVariable")
+                    public void testStaticVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/staticVariable/");
+                    }
+
+                    @TestMetadata("variable")
+                    public void testVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/variable/");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/properties/fromObject/nestedObject")
+            public static class NestedObject extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("constant")
+                public void testConstant() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/constant/");
+                }
+
+                @TestMetadata("extension")
+                public void testExtension() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/extension/");
+                }
+
+                @TestMetadata("extensionVariable")
+                public void testExtensionVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/extensionVariable/");
+                }
+
+                @TestMetadata("fieldProperty")
+                public void testFieldProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/fieldProperty/");
+                }
+
+                @TestMetadata("fieldVariable")
+                public void testFieldVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable/");
+                }
+
+                @TestMetadata("lateinit")
+                public void testLateinit() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/lateinit/");
+                }
+
+                @TestMetadata("property")
+                public void testProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/property/");
+                }
+
+                @TestMetadata("staticExtension")
+                public void testStaticExtension() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/staticExtension/");
+                }
+
+                @TestMetadata("staticExtensionVariable")
+                public void testStaticExtensionVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/staticExtensionVariable/");
+                }
+
+                @TestMetadata("staticLateinit")
+                public void testStaticLateinit() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/staticLateinit/");
+                }
+
+                @TestMetadata("staticProperty")
+                public void testStaticProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/staticProperty/");
+                }
+
+                @TestMetadata("staticVariable")
+                public void testStaticVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/staticVariable/");
+                }
+
+                @TestMetadata("variable")
+                public void testVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/variable/");
                 }
             }
         }
