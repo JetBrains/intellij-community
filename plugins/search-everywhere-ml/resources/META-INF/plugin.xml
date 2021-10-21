@@ -22,10 +22,16 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.files"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
 
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
                  key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with files order won't be performed"
+                 key="search.everywhere.force.disable.experiment.files.ml"/>
     <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
@@ -62,7 +68,7 @@
     <rankingModelProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
     <rankingModelProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsExperimentalRankingModelProvider"/>
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelProvider"/>
   </extensions>
 
   <applicationListeners>
