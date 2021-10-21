@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -135,6 +135,14 @@ abstract class ScriptClassRootsUpdater(
         // run update even in inner transaction
         // (outer transaction may be async, so it would be better to not wait it)
         scheduleUpdateIfInvalid()
+    }
+
+    fun addConfiguration(vFile: VirtualFile, configuration: ScriptCompilationConfigurationWrapper) {
+        update {
+            val builder = classpathRoots.builder(project)
+            builder.add(vFile, configuration)
+            cache.set(builder.build())
+        }
     }
 
     private fun scheduleUpdateIfInvalid() {
