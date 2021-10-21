@@ -4,11 +4,14 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
-class InlaySettingsConfigurable(val project: Project) : Configurable {
+const val INLAY_ID = "inlay.hints"
+
+class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable {
 
   private val panel: InlaySettingsPanel = InlaySettingsPanel(project)
 
@@ -32,7 +35,15 @@ class InlaySettingsConfigurable(val project: Project) : Configurable {
     panel.reset()
   }
 
+  override fun enableSearch(option: String?): Runnable? {
+    return panel.enableSearch(option)
+  }
+
   override fun getDisplayName(): String = CodeInsightBundle.message("settings.inlay.hints.panel.name")
+
+  override fun getId(): String = INLAY_ID
+
+  override fun getHelpTopic(): String = "settings.inlays"
 }
 
 class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
