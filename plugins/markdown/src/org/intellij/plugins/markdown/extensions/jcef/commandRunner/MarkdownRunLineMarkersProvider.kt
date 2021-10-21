@@ -40,17 +40,17 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
         return processBlock(lang, element)
       }
     }
+    val inCodeSpan = (element.hasType(MarkdownTokenTypes.BACKTICK)
+                      && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
+                      && element.parent.firstChild == element)
     if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
-          || (element.hasType(MarkdownTokenTypes.BACKTICK)
-              && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
-              && element.parent.firstChild == element)
-         )) {
+          || inCodeSpan)) {
       return null
     }
 
     val dir = element.containingFile.virtualFile.parent.path
     val text = getText(element)
-    if (!matches(element.project, dir, true, text)) {
+    if (!matches(element.project, dir, true, text, allowRunConfigurations = inCodeSpan)) {
       return null
     }
 

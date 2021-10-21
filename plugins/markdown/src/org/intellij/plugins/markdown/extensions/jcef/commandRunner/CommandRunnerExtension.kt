@@ -91,13 +91,15 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  fun processCodeLine(rawCodeLine: String, inBlock: Boolean): String {
+  fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     val project = panel.project
     val file = panel.virtualFile
-    if (project != null && file != null && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim())) {
+    if (project != null && file != null
+        && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
+    ) {
       val hash = MarkdownUtil.md5(rawCodeLine, "")
       hash2Cmd[hash] = rawCodeLine
-      val cssClass = "run-icon hidden" + if (inBlock) " code-block" else ""
+      val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
       return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
              "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
              "</a>"
@@ -219,14 +221,16 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
     }
 
-    fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
+    fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
+                command: String,
+                allowRunConfigurations: Boolean = false): Boolean {
       val trimmedCmd = command.trim()
       if (trimmedCmd.isEmpty()) return false
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
       return RunAnythingProvider.EP_NAME.extensionList
         .asSequence()
-        .filter { checkForCLI(it) }
+        .filter { checkForCLI(it, allowRunConfigurations) }
         .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
     }
 
@@ -255,10 +259,10 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
         .build()
     }
 
-    private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {
+    private fun checkForCLI(it: RunAnythingProvider<*>?, allowRunConfigurations: Boolean): Boolean {
       return (it !is RunAnythingCommandProvider
               && it !is RunAnythingRecentProjectProvider
-              && it !is RunAnythingRunConfigurationProvider)
+              && (it !is RunAnythingRunConfigurationProvider || allowRunConfigurations))
     }
 
     fun icon2Stream(icon: Icon, format: String): ByteArray {
