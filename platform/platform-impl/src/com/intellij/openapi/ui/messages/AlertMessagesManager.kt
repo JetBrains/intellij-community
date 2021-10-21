@@ -333,14 +333,14 @@ private class AlertDialog(project: Project?,
         val firstButton = myButtons[0]
 
         val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
-        val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
 
         val iconSize = myIconComponent.preferredSize
         val helpSize = helpButton.preferredSize
         val buttonSize = firstButton.preferredSize
 
         helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
-                             buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
+                             target.height - target.insets.bottom - (buttonSize.height + helpSize.height) / 2,
+                             helpSize.width, helpSize.height)
       }
     }
   }
