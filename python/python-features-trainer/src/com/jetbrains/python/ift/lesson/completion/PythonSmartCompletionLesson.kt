@@ -61,6 +61,6 @@ class PythonSmartCompletionLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(PythonLessonsBundle.message("python.smart.completion.help.link"),
-         "https://www.jetbrains.com/help/pycharm/auto-completing-code.html#smart_type_matching_completion"),
+         LessonUtil.getHelpLink("pycharm", "auto-completing-code.html#smart_type_matching_completion")),
   )
 }

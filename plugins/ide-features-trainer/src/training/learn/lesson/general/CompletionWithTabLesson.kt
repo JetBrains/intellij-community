@@ -34,6 +34,6 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.code.completion"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/auto-completing-code.html"),
+         LessonUtil.getHelpLink("auto-completing-code.html")),
   )
 }

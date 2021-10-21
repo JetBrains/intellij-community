@@ -62,12 +62,15 @@ object LessonUtil {
       return ApplicationNamesInfo.getInstance().fullProductName
     }
 
-  val helpIdeName: String get() {
-    return when (val name = ApplicationNamesInfo.getInstance().productName) {
+  fun getHelpLink(topic: String): String  = getHelpLink(null, topic)
+
+  fun getHelpLink(ide: String?, topic: String): String {
+    val helpIdeName: String = ide ?: when (val name = ApplicationNamesInfo.getInstance().productName) {
       "GoLand" -> "go"
       "RubyMine" -> "ruby"
       else -> name.lowercase(Locale.ENGLISH)
     }
+    return "https://www.jetbrains.com/help/$helpIdeName/$topic"
   }
 
   fun hideStandardToolwindows(project: Project) {

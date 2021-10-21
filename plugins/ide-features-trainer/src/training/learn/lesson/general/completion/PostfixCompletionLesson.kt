@@ -53,6 +53,6 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("postfix.completion.help.link"),
-         "https://www.jetbrains.com/help/${LessonUtil.helpIdeName}/auto-completing-code.html#postfix_completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#postfix_completion")),
   )
 }
