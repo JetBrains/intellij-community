@@ -4,13 +4,10 @@ package com.intellij.formatting
 import com.intellij.lang.Commenter
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
-
-private const val REGISTRY_KEY_ENABLED = "formatter.line.comment.add.space.enabled"
 
 class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
@@ -19,12 +16,8 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
   override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
 
-    if (!Registry.`is`(REGISTRY_KEY_ENABLED)) {
-      return rangeToReformat  // Feature is forcefully disabled via Registry
-    }
-
     val language = source.language
-    if (settings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE) {
+    if (!settings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE_ON_REFORMAT) {
       return rangeToReformat  // Option is disabled
     }
 
@@ -70,7 +63,7 @@ internal class SingleLineCommentFinder(val rangeToReformat: TextRange, commenter
                                 ?.length                                         // Not found -> not a line comment
                                 ?.takeUnless { commentText.length == it }        // Empty comment, no need to add a trailing space
                                 ?.takeIf { commentText[it].isLetterOrDigit() }   // Insert space only before word-like symbols to keep
-                                                                                 // pseugraphics, shebangs and other fancy stuff
+                              // pseugraphics, shebangs and other fancy stuff
                               ?: return
 
     commentOffsets.add(comment.textRange.startOffset + commentPrefixLength)

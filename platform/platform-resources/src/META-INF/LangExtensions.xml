@@ -247,8 +247,6 @@
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <formattingService implementation="com.intellij.formatting.service.CoreFormattingService" order="last"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
-    <registryKey key="formatter.line.comment.add.space.enabled" defaultValue="true"
-                 description="Whether to insert a leading space into line comments during code formatting. If enabled formatter will take into account the LINE_COMMENT_ADD_SPACE style setting"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
                         serviceImplementation="com.intellij.codeInsight.editorActions.TabOutScopesTrackerImpl"/>
