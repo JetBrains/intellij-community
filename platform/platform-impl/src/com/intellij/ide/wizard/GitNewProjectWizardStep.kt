@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -41,9 +42,13 @@ class GitNewProjectWizardStep(
         }
       }
     }
+    NewProjectWizardCollector.logGitFinished(context, git)
   }
 
   init {
     data.putUserData(GitNewProjectWizardData.KEY, this)
+    gitProperty.afterChange {
+      NewProjectWizardCollector.logGitChanged(context)
+    }
   }
 }

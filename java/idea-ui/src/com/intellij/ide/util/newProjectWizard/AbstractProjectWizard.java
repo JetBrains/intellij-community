@@ -4,6 +4,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.projectWizard.NewProjectWizardCollector;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -256,6 +257,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     step.onStepLeaving();
     super.doNextAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logNext(myWizardContext, -1);
+      NewProjectWizardCollector.logScreen(myWizardContext, 2);
+    }
   }
 
 
@@ -290,6 +295,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logPrev(myWizardContext, -1);
+    }
   }
 
   @Override
@@ -369,5 +377,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   @NotNull
   public WizardContext getWizardContext() {
     return myWizardContext;
+  }
+
+  @Override
+  protected void helpAction() {
+    super.helpAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logHelpNavigation(myWizardContext);
+    }
   }
 }

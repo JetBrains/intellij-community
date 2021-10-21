@@ -140,7 +140,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       String emptyCard = "emptyCard";
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
-        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
+        myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
           showCard(emptyCard);
           wizard.updateButtons(true, false, true);
       });
@@ -499,6 +499,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       if (isNewWizard() && builder instanceof TemplateModuleBuilder) {
         step = new ProjectSettingsStep(myContext);
         myContext.setProjectBuilder(builder);
+        NewProjectWizardCollector.logCustomTemplateSelected(myContext);
       }
       if (step == null) return false;
       step.updateStep();
@@ -516,6 +517,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     } catch (Throwable e) {
       LOG.error(e);
     }
+
+    NewProjectWizardCollector.logGeneratorSelected(myContext, builder.getClass());
+    NewProjectWizardCollector.logScreen(myContext, 1);
 
     showCard(card);
     return true;
