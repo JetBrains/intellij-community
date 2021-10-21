@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
@@ -90,6 +91,11 @@ fun KtAnnotated.hasAnnotationWithShortName(
     shortName: String,
     useSiteTarget: AnnotationUseSiteTarget? = null,
 ): Boolean = findAnnotationWithShortName(shortName, useSiteTarget) != null
+
+fun KtAnnotated.hasAnnotationWithShortName(
+    shortName: Name,
+    useSiteTarget: AnnotationUseSiteTarget? = null,
+): Boolean = hasAnnotationWithShortName(shortName.asString(), useSiteTarget)
 
 val KtNamedFunction.jvmName: String? get() = findJvmName()
 val KtPropertyAccessor.jvmName: String? get() = findJvmName()
