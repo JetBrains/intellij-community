@@ -106,12 +106,15 @@ public final class Main {
       // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
       // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
       // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
-      Path remoteDevPluginLibs = Paths.get(PathManager.getPreInstalledPluginsPath(), "cwm-plugin-projector", "lib");
-      if (Files.exists(remoteDevPluginLibs))
+      Path remoteDevPluginLibs = Paths.get(PathManager.getPreInstalledPluginsPath(), "cwm-plugin-projector", "lib", "projector");
+      if (!Files.exists(remoteDevPluginLibs)) remoteDevPluginLibs = Paths.get(PathManager.getPluginsPath(), "cwm-plugin", "lib", "projector");
+
+      if (Files.exists(remoteDevPluginLibs)) {
         try (Stream<Path> libs = Files.list(remoteDevPluginLibs)) {
           // add all files in that dir except for plugin jar
-          newClassLoader.addFiles(libs.filter(it -> !it.getFileName().toString().endsWith("projector.jar")).collect(Collectors.toList()));
+          newClassLoader.addFiles(libs.collect(Collectors.toList()));
         }
+      }
 
       // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
       Class<ClassLoader> aClass = ClassLoader.class;
