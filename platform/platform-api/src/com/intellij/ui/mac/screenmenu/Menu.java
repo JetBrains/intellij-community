@@ -160,8 +160,12 @@ public class Menu extends MenuItem {
           System.load(lib.toFile().getAbsolutePath());
           IS_ENABLED = true;
           Logger.getInstance(Menu.class).info("use new screen menu");
+          // create and dispose native object (just for to test)
+          Menu test = new Menu("test");
+          test.ensureNativePeer();
+          test.dispose();
         } catch (Throwable e) {
-          Logger.getInstance(Menu.class).info("can't load menu library: " + lib.toFile().getAbsolutePath());
+          Logger.getInstance(Menu.class).info("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
         }
       }
     }
