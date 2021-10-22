@@ -601,7 +601,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       LOG.warn("PATH " + counter++ + ":");
       for (int i = 1; i < path.size(); i++) {
         RefElement element = path.get(i);
-        String elementText = String.format("%s %s (owner: %s, reachable: %s)", element.getClass().getSimpleName(), element.getName(),
+        String elementText = String.format("%d) %s %s (owner: %s, reachable: %s)", i, element.getClass().getSimpleName(), element.getName(),
                                            element.getOwner(), element.isReachable());
         LOG.warn(" --> " + elementText);
       }
@@ -611,8 +611,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth) {
     int lastPathsIndex = paths.size() - 1;
     List<RefElement> path = paths.get(lastPathsIndex);
-    if (path.contains(element)) {
-      LOG.warn(String.format("Cycle is detected on the element %s", element.getName()));
+    int elementIndex;
+    if ((elementIndex = path.indexOf(element)) > -1) {
+      LOG.warn(String.format("Cycle is detected on the element %s, path index: %d, element index in path: %d", element.getName(),
+                             lastPathsIndex + 1, elementIndex));
       return;
     }
     path.add(element);
