@@ -16,8 +16,8 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import kotlin.time.ExperimentalTime
-import kotlin.time.hours
-import kotlin.time.minutes
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message("elevation.settings.configurable")),
                                       Configurable.NoScroll {

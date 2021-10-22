@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.Messages.CANCEL
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.messages.Topic
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
-import kotlin.time.minutes
 
 @Service
 @State(name = "Elevation", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)])

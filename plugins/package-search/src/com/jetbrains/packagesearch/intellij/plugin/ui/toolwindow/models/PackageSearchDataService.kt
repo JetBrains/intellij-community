@@ -74,7 +74,7 @@ import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.util.Locale
-import java.util.concurrent.TimeUnit.HOURS
+import kotlin.time.DurationUnit.HOURS
 import java.util.concurrent.TimeoutException
 import kotlin.time.toDuration
 
