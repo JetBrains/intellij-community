@@ -19,8 +19,11 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import com.intellij.openapi.ui.MessageType;
@@ -46,7 +49,7 @@ public class RepositoryLibraryWithDescriptionEditor
 
   public RepositoryLibraryWithDescriptionEditor(LibraryEditorComponent<RepositoryLibraryProperties> editorComponent) {
     super(editorComponent, RepositoryLibraryType.getInstance(), null);
-    setupCleanButton();
+    setupReloadButton();
   }
 
   @Override
@@ -101,38 +104,42 @@ public class RepositoryLibraryWithDescriptionEditor
     updateDescription();
   }
 
-  private void setupCleanButton() {
-    if (myEditorComponent.isNewLibrary()) return;
+  private void setupReloadButton() {
+    Project project = myEditorComponent.getProject();
     VirtualFile directory = myEditorComponent.getExistingRootDirectory();
-    if (directory == null) return;
-    String toolTipText = JavaUiBundle.message("button.clean.description", directory.getPath());
-    myCleanButton.setVisible(true);
-    myCleanButton.setToolTipText(toolTipText);
-    myCleanButton.addActionListener(e -> cleanLibraryDirectory());
+    if (myEditorComponent.isNewLibrary() || project == null || directory == null) return;
+
+    LibraryEditor editor = myEditorComponent.getLibraryEditor();
+    if (!(editor instanceof ExistingLibraryEditor)) return;
+
+    Library library = ((ExistingLibraryEditor)editor).getLibrary();
+    if (!(library instanceof LibraryEx)) return;
+
+    String toolTipText = JavaUiBundle.message("button.reload.description", directory.getPath());
+    myReloadButton.setVisible(true);
+    myReloadButton.setToolTipText(toolTipText);
+    myReloadButton.addActionListener(e -> reloadLibraryDirectory(project, directory, (LibraryEx)library));
   }
 
-  private void cleanLibraryDirectory() {
-    VirtualFile directory = myEditorComponent.getExistingRootDirectory();
+  private void reloadLibraryDirectory(Project project, VirtualFile directory, LibraryEx library) {
     if (directory == null) return;
     VirtualFile[] children = directory.getChildren();
     if (children == null) return;
 
     logger.debug("start delete " + directory);
-    String lastError = null;
-    for (VirtualFile child : children) {
-      try {
+    try {
+      for (VirtualFile child : children) {
         FileUtil.delete(child.toNioPath());
       }
-      catch (IOException e) {
-        lastError = e.getLocalizedMessage();
-        logger.error("error delete " + child, e);
-      }
     }
-    if (lastError == null) {
-      showBalloon(JavaUiBundle.message("popup.clean.success.result", directory.getPath()), MessageType.INFO);
-    } else {
-      showBalloon(lastError, MessageType.ERROR);
+    catch (IOException e) {
+      logger.error("error on delete", e);
+      String error = e.getLocalizedMessage();
+      showBalloon(error, MessageType.ERROR);
+      return;
     }
+    reloadDependencies(project, library);
+    showBalloon(JavaUiBundle.message("popup.reload.success.result", directory.getPath()), MessageType.INFO);
   }
 
   private void showBalloon(String text, MessageType type) {
@@ -140,6 +147,6 @@ public class RepositoryLibraryWithDescriptionEditor
       .createHtmlTextBalloonBuilder(JavaUiBundle.message(text), type, null)
       .setHideOnClickOutside(true)
       .createBalloon()
-      .show(RelativePoint.getSouthWestOf(myCleanButton.getRootPane()), Balloon.Position.atRight);
+      .show(RelativePoint.getSouthWestOf(myReloadButton.getRootPane()), Balloon.Position.atRight);
   }
 }
