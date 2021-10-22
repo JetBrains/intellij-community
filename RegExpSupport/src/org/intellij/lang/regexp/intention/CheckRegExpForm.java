@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -331,6 +331,7 @@ public final class CheckRegExpForm {
     for (RegExpMatch match : matches) {
       final int start = match.start(group);
       final int end = match.end(group);
+      if (start < 0 || end < 0) continue;
       if (group != 0 || start != 0 || end != mySampleText.getText().length()) {
         highlightManager.addRangeHighlight(editor, start, end, RegExpHighlighter.MATCHED_GROUPS, true, mySampleHighlights);
       }
