@@ -87,9 +87,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testTwoModules() {
         Module[] modules = getModules();
         for (Module module : modules) {
-            if (module.getName().equals("module2")) {
-                assertNotConfigured(module, getJvmConfigurator());
-            }
+            assertNotConfigured(module, getJvmConfigurator());
             configure(module, getJvmConfigurator());
             assertConfigured(module, getJvmConfigurator());
         }
