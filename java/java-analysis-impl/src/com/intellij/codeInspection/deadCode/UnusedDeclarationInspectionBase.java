@@ -573,17 +573,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
-      try {
-        entry.accept(codeScanner);
-      }
-      // todo temporary decision for debugging, to be deleted
-      catch (StackOverflowError e) {
-        if (needLog.get()) {
-          needLog.set(false);
-          LOG.warn(String.format("Entry point: %s %s", entry.getClass().getSimpleName(), entry.getName()));
-          logFromEntryPoint(entry);
-        }
-      }
+      entry.accept(codeScanner);
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
