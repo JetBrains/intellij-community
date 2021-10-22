@@ -65,9 +65,4 @@ public class AddAnnotationTargetFix extends LocalQuickFixAndIntentionActionOnPsi
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression);
     value.addAfter(expression, value.getFirstChild());
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }
