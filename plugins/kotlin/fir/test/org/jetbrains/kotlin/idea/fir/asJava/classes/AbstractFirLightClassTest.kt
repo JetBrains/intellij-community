@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import java.net.URLClassLoader
 
 abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -33,7 +34,21 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
         )
     }
 
+    private fun printClassloader(loader: ClassLoader, indent: Int) {
+        println(" ".repeat(indent) + "[Loader] " + loader.name + " (" + loader.toString() + ")")
+        if (loader is URLClassLoader) {
+            for (url in loader.urLs) {
+                println(" ".repeat(indent + 1) + url.toString())
+            }
+        }
+
+        val parent = loader.parent ?: return
+        printClassloader(parent, indent + 1)
+    }
+
     private fun doTestImpl() {
+        printClassloader(AbstractFirLightClassTest::class.java.classLoader, 0)
+
         println(AbstractKtCallResolver::class.java.name)
 
         val fileName = fileName()
