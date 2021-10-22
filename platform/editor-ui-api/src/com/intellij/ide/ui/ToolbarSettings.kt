@@ -27,5 +27,5 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
 class ExperimentalToolbarSettingsState : BaseState() {
 
   @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
-  var showNewMainToolbar by property(true)
+  var showNewMainToolbar by property(false)
 }
