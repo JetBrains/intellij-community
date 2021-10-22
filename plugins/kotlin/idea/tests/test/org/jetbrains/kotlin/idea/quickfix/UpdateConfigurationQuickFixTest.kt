@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.impl.ZipHandler
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
@@ -185,6 +186,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                 }
             },
             ThrowableRunnable { ZipHandler.clearFileAccessorCache() },
+            ThrowableRunnable { JarFileSystemImpl.cleanupForNextTest() },
             ThrowableRunnable { super.tearDown() }
         )
     }
