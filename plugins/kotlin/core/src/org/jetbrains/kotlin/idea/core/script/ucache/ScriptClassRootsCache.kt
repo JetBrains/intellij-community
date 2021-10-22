@@ -96,7 +96,7 @@ class ScriptClassRootsCache(
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
         val roots = configuration.dependenciesClassPath
-        val sdk = sdks[SdkId(configuration.javaHome)]
+        val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         return if (sdk == null) {
             HeavyScriptInfo(configuration, compose(toVfsRoots(roots)), null)
