@@ -37,7 +37,7 @@ public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
   private JButton myEditButton;
-  protected JButton myCleanButton;
+  protected JButton myReloadButton;
   protected final LibraryEditorComponent<P> myEditorComponent;
   protected final T myLibraryType;
 
