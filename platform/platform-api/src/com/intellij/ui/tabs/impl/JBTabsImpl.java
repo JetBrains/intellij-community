@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Queryable;
@@ -2703,7 +2704,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  private abstract static class BaseNavigationAction extends AnAction {
+  private abstract static class BaseNavigationAction extends DumbAwareAction {
     private final ShadowAction myShadow;
     @NotNull private final ActionManager myActionManager;
     private final JBTabsImpl myTabs;
