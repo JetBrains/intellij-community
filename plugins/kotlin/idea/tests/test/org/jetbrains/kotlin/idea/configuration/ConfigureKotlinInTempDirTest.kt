@@ -89,15 +89,6 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         checkKotlincPresence(false)
     }
 
-    fun testProject106InconsistentVersionInConfig() {
-        val settings = KotlinFacetSettingsProvider.getInstance(myProject)?.getInitializedSettings(module)
-            ?: error("Facet settings are not found")
-
-        Assert.assertEquals(false, settings.useProjectSettings)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.languageLevel!!)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.apiLevel!!)
-    }
-
     fun testProject107InconsistentVersionInConfig() {
         val settings = KotlinFacetSettingsProvider.getInstance(myProject)?.getInitializedSettings(module)
             ?: error("Facet settings are not found")
