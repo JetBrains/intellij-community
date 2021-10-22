@@ -426,8 +426,13 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
     }
 
-    if (SystemInfoRt.isMac)
-      Touchbar.setButtonActions(myButtonsPanel, null, myButtons, myButtons.find { b -> b.action.getValue(DEFAULT_ACTION) != null });
+    if (SystemInfoRt.isMac) {
+      val buttonMap = buttonMap
+      buttonMap.clear()
+      myButtons.forEach { buttonMap[it.action] = it }
+
+      Touchbar.setButtonActions(myButtonsPanel, null, myButtons, myButtons.find { b -> b.action.getValue(DEFAULT_ACTION) != null })
+    }
 
     mySouthPanel.add(myButtonsPanel)
 
