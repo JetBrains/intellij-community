@@ -2,7 +2,9 @@
 package com.intellij.openapi.updateSettings;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
+import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,5 +57,17 @@ public class UpdateStrategyCustomization {
    */
   public boolean isNewerVersion(@NotNull BuildNumber candidateBuild, @NotNull BuildNumber currentBuild) {
     return candidateBuild.compareTo(currentBuild) > 0;
+  }
+
+  public boolean isChannelApplicableForUpdates(UpdateChannel updateChannel, ChannelStatus selectedChannel) {
+    return updateChannel.getStatus().compareTo(selectedChannel) >= 0;
+  }
+
+  public boolean isChannelApplicableForPatches(UpdateChannel updateChannel, ChannelStatus selectedChannel) {
+    return true;
+  }
+
+  public boolean isChannelSelectionDisabled() {
+    return ApplicationInfoEx.getInstanceEx().isMajorEAP() && forceEapUpdateChannelForEapBuilds();
   }
 }
