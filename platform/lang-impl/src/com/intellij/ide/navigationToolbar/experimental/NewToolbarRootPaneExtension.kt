@@ -121,7 +121,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
 
     val toolbarSettings = ToolbarSettings.Instance
     myPanel.isEnabled = toolbarSettings.isEnabled
-    myPanel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
+    myPanel.isVisible = myPanel.isEnabled && toolbarSettings.isVisible && !settings.presentationMode
 
     reinitAndPaintAll()
     updateStatusBar()
