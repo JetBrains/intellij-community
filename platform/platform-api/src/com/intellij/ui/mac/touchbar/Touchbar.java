@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBOptionButton;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class Touchbar {
   //
 
   public static void setActions(@NotNull JComponent component, @Nullable ActionGroup group) {
-    if (ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
     ComponentUtil.putClientProperty(component, ACTION_GROUP_KEY, group);
   }
   public static void setActions(@NotNull JComponent component, @Nullable AnAction action) {
@@ -43,7 +44,7 @@ public class Touchbar {
     setActions(component, ActionManager.getInstance().getAction(actionId));
   }
   public static void addActions(@NotNull JComponent component, @Nullable ActionGroup group) {
-    if (ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
     ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
     if (old == null) {
       setActions(component, group);
@@ -73,7 +74,7 @@ public class Touchbar {
                                       Collection<JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
-    if (ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
 
     ActionManagerEx.doWithLazyActionManager(instance -> {
       DefaultActionGroup result = new DefaultActionGroup();
@@ -91,7 +92,7 @@ public class Touchbar {
     });
   }
   public static void addButtonAction(@NotNull JComponent component, JButton button) {
-    if (ApplicationManager.getApplication() == null) return;
+    if (!SystemInfo.isMac || ApplicationManager.getApplication() == null) return;
     ActionGroup old = ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
     if (old == null) {
       setButtonActions(component, button);
