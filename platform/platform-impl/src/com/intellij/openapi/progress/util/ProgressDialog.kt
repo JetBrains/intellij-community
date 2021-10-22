@@ -321,8 +321,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       myPopup!!.close(DialogWrapper.CANCEL_EXIT_CODE)
     }
 
-    val popup = if (myParentWindow.isShowing) MyDialogWrapper(myParentWindow, myProgressWindow.myShouldShowCancel)
-    else MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+    val popup = createDialog(myParentWindow)
     myPopup = popup
     popup.setUndecorated(true)
     if (popup.peer is DialogWrapperPeerImpl) {
@@ -358,7 +357,28 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     return myProgressWindow is PotemkinProgress
   }
 
-  private inner class MyDialogWrapper : DialogWrapper {
+  private fun createDialog(window: Window): MyDialogWrapper {
+    if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
+      if (window.isShowing) {
+        return object : MyDialogWrapper(window, myProgressWindow.myShouldShowCancel) {
+          override fun useLightPopup(): Boolean {
+            return false
+          }
+        }
+      }
+      return object : MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel) {
+        override fun useLightPopup(): Boolean {
+          return false
+        }
+      }
+    }
+    if (window.isShowing) {
+      return MyDialogWrapper(window, myProgressWindow.myShouldShowCancel)
+    }
+    return MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel)
+  }
+
+  private open inner class MyDialogWrapper : DialogWrapper {
     private val myIsCancellable: Boolean
 
     constructor(project: Project?, cancellable: Boolean) : super(project, false) {
@@ -407,8 +427,8 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
       }
     }
 
-    private fun useLightPopup(): Boolean {
-      return System.getProperty("vintage.progress") == null/* && !isWriteActionProgress()*/ // TODO: KT-46874
+    protected open fun useLightPopup(): Boolean {
+      return true
     }
 
     override fun createPeer(project: Project?, canBeParent: Boolean): DialogWrapperPeer {
