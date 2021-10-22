@@ -166,7 +166,7 @@ internal class ComponentStoreModificationTrackerTest {
 }
 
 private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
-  private class MyStorageManager : StateStorageManagerImpl("application") {
+  class MyStorageManager : StateStorageManagerImpl("application") {
     override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
     override val isUseXmlProlog = false

@@ -1371,7 +1371,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
   }
 
   private class BaseRevisionContentInfo(val baseContent: VcsBaseContentProvider.BaseContent, val charset: Charset) : ContentInfo
-  private class BaseRevisionContent(val text: CharSequence) : TrackerContent
+  class BaseRevisionContent(val text: CharSequence) : TrackerContent
 }
 
 
