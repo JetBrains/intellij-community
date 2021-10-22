@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
@@ -106,7 +107,7 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className == CREATION_CLASS_NAME
 
 fun Location.findPosition(project: Project) =
-    readAction {
+    runReadAction {
         if (declaringType() != null)
             getPosition(project, declaringType().name(), lineNumber())
         else

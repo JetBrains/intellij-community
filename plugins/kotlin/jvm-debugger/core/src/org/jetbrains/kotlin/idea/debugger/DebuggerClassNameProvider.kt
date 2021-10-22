@@ -81,7 +81,7 @@ class DebuggerClassNameProvider(
             getOuterClassNamesForElement(element, emptySet())
         }.toMutableSet()
 
-        for (lambda in position.readAction(::getLambdasAtLineIfAny)) {
+        for (lambda in runReadAction { getLambdasAtLineIfAny(position) }) {
             result += getOrComputeClassNames(lambda) { element ->
                 getOuterClassNamesForElement(element, emptySet())
             }
@@ -117,8 +117,8 @@ class DebuggerClassNameProvider(
                         getOuterClassNamesForElement(element.relevantParentInReadAction, alreadyVisited)
                     else ->
                         // Guaranteed to be non-local class or object
-                        element.readAction { _ ->
-                            if (element is KtClass && runReadAction { element.isInterface() }) {
+                        runReadAction {
+                            if (element is KtClass && element.isInterface()) {
                                 val name = ClassNameCalculator.getClassNameCompat(element)
 
                                 if (name != null)
