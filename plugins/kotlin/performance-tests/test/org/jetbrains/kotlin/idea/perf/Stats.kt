@@ -410,7 +410,7 @@ class Stats(
                 buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
                 agentName = buildProperties["agent.name"]?.toString()
                 buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
-                if (buildBranch == null || buildBranch == "<default>") buildBranch = "master"
+                check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
                 commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
             }
 
