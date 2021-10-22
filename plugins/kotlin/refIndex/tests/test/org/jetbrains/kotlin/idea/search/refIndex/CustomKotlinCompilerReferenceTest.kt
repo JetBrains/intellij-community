@@ -12,9 +12,13 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
 import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.io.path.Path
@@ -309,4 +313,30 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         .findAll()
         .map { it.getKotlinFqName().toString() }
         .sorted()
+
+    fun testNonPresentedClass(): Unit = doTestNonPresentedClass(7)
+
+    fun testNonPresentedClassWithCompanion(): Unit = doTestNonPresentedClass(13)
+
+    private fun doTestNonPresentedClass(declarationsCount: Int) {
+        myFixture.configureByFiles(
+            "Hierarchy.java",
+            "KotlinOnlyClass.kt",
+            "Parameter.java",
+        )
+
+        val kotlinOnlyClass = myFixture.findClass("one.KotlinOnlyClass").unwrapped as KtClass
+        val declarations = kotlinOnlyClass.declarations.fold(mutableListOf<KtDeclaration>()) { list, declaration ->
+            if (declaration is KtObjectDeclaration) list += declaration.declarations else list += declaration
+            list
+        }
+
+        assertEquals(declarationsCount, declarations.size)
+        rebuildProject()
+        for (declaration in declarations) {
+            val referentFiles = getReferentFiles(declaration, withJavaIndex = true) ?: error("${declaration.name}: file is not found")
+            assertTrue(declaration.name, "Hierarchy.java" in referentFiles)
+            assertTrue(declaration.name, "Parameter.java" in referentFiles)
+        }
+    }
 }
