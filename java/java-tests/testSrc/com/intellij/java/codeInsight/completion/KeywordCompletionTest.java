@@ -38,7 +38,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
   public void testFileScope2() { doTest(10, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope1() { doTest(8, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope2() { doTest(8, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
   public void testInnerClassScope() {
