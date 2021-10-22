@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.CommenterOption;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -453,4 +454,25 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public boolean usesCommonKeepLineBreaks() {
     return false;
   }
+
+  /**
+   * Checks if formatter is allowed to enforce a leading space in the
+   * line comment. Formatter will make a transformation like:
+   * <pre>//comment</pre>  =>  <pre>// comment</pre>
+   * in case of {@link CommenterOption#LINE_COMMENT_ADD_SPACE_ON_REFORMAT} is enabled and
+   * the first comment symbol is alphanumeric ('c' in this example).
+   * <br/>
+   * <br/>
+   * This method will be called before transformation to ensure if transformation is possible
+   * to avoid breaking of some compiler directives. For example, Go compiler accepts directives
+   * in the code starts from {@code //go:...} and the space between comment prefix and {@code go}
+   * keyword is not allowed.
+   *
+   * @param commentText  Text of the comment <b>without</b> a comment prefix
+   * @return {@code true} if the transformation is allowed
+   */
+  public boolean canInsertSpaceInLineComment(String commentText) {
+    return true;
+  }
+
 }

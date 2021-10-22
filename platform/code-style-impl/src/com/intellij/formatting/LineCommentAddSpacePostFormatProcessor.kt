@@ -6,6 +6,7 @@ import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
 
@@ -22,7 +23,8 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return rangeToReformat
-    val commentFinder = SingleLineCommentFinder(rangeToReformat, commenter)
+    val languageCodeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language)
+    val commentFinder = SingleLineCommentFinder(rangeToReformat, languageCodeStyleSettingsProvider, commenter)
     source.accept(commentFinder)
 
     val commentOffsets = commentFinder.commentOffsets
@@ -45,7 +47,10 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 }
 
 
-internal class SingleLineCommentFinder(val rangeToReformat: TextRange, commenter: Commenter) : PsiRecursiveElementVisitor() {
+internal class SingleLineCommentFinder(val rangeToReformat: TextRange,
+                                       val languageCodeStyleSettingsProvider: LanguageCodeStyleSettingsProvider?,
+                                       commenter: Commenter) : PsiRecursiveElementVisitor() {
+
   val lineCommentPrefixes = commenter.lineCommentPrefixes.map { it.trim() }
   val commentOffsets = arrayListOf<Int>()
 
@@ -65,6 +70,12 @@ internal class SingleLineCommentFinder(val rangeToReformat: TextRange, commenter
                                 ?.takeIf { commentText[it].isLetterOrDigit() }   // Insert space only before word-like symbols to keep
                               // pseugraphics, shebangs and other fancy stuff
                               ?: return
+
+    if (languageCodeStyleSettingsProvider != null) {
+      if (!languageCodeStyleSettingsProvider.canInsertSpaceInLineComment(commentText.substring(commentPrefixLength))) {
+        return;
+      }
+    }
 
     commentOffsets.add(comment.textRange.startOffset + commentPrefixLength)
   }
