@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsContexts
 
 /**
  * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
@@ -58,15 +60,28 @@ open class UpdateStrategyCustomization {
     return candidateBuild > currentBuild
   }
 
+  /**
+   * Returns `true` if IDE should search for updates in [updateChannel] when the current update channel has [selectedChannel] status.
+   */
   open fun isChannelApplicableForUpdates(updateChannel: UpdateChannel, selectedChannel: ChannelStatus): Boolean {
     return updateChannel.status >= selectedChannel
   }
 
-  open fun isChannelApplicableForPatches(updateChannel: UpdateChannel, selectedChannel: ChannelStatus): Boolean {
+  /**
+   * Returns `true` if IDE may search for intermediate patches in builds from [updateChannel] when there is no direct patch from the current
+   * to the new version.
+   */
+  open fun canBeUsedForIntermediatePatches(updateChannel: UpdateChannel, selectedChannel: ChannelStatus): Boolean {
     return true
   }
 
-  open fun isChannelSelectionDisabled(): Boolean {
-    return ApplicationInfoEx.getInstanceEx().isMajorEAP && forceEapUpdateChannelForEapBuilds()
-  }
+  /**
+   * Returns `null` if user should be allowed to change the update channel in UI. If a non-null value is returned, it is shown in UI instead
+   * of the channel chooser and user won't be able to change the update channel.
+   */
+  @NlsContexts.DetailedDescription
+  open fun getChannelSelectionLockedMessage(): String? =
+    if (ApplicationInfoEx.getInstanceEx().isMajorEAP && forceEapUpdateChannelForEapBuilds())
+      IdeBundle.message("updates.settings.channel.locked")
+    else null
 }
