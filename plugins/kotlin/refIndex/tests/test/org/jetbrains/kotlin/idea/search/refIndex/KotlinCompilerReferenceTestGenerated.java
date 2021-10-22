@@ -948,6 +948,16 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromObject/fieldVariable/");
             }
 
+            @TestMetadata("isProperty")
+            public void testIsProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/isProperty/");
+            }
+
+            @TestMetadata("isVariable")
+            public void testIsVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromObject/isVariable/");
+            }
+
             @TestMetadata("lateinit")
             public void testLateinit() throws Exception {
                 runTest("testData/compilerIndex/properties/fromObject/lateinit/");
@@ -1018,6 +1028,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @TestMetadata("fieldVariable")
                 public void testFieldVariable() throws Exception {
                     runTest("testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable/");
+                }
+
+                @TestMetadata("isProperty")
+                public void testIsProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/fromCompanion/isProperty/");
                 }
 
                 @TestMetadata("isVariable")
@@ -1117,6 +1132,16 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                         runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable/");
                     }
 
+                    @TestMetadata("isProperty")
+                    public void testIsProperty() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/isProperty/");
+                    }
+
+                    @TestMetadata("isVariable")
+                    public void testIsVariable() throws Exception {
+                        runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/isVariable/");
+                    }
+
                     @TestMetadata("lateinit")
                     public void testLateinit() throws Exception {
                         runTest("testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit/");
@@ -1189,6 +1214,16 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 @TestMetadata("fieldVariable")
                 public void testFieldVariable() throws Exception {
                     runTest("testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable/");
+                }
+
+                @TestMetadata("isProperty")
+                public void testIsProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/isProperty/");
+                }
+
+                @TestMetadata("isVariable")
+                public void testIsVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/fromObject/nestedObject/isVariable/");
                 }
 
                 @TestMetadata("lateinit")
@@ -1414,6 +1449,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("isProperty")
+            public void testIsProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/members/isProperty/");
+            }
+
             @TestMetadata("isVariable")
             public void testIsVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/members/isVariable/");
@@ -1538,6 +1578,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("extensionVariableWithJvmNameOnProperty")
             public void testExtensionVariableWithJvmNameOnProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/topLevel/extensionVariableWithJvmNameOnProperty/");
+            }
+
+            @TestMetadata("isProperty")
+            public void testIsProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/topLevel/isProperty/");
             }
 
             @TestMetadata("isVariableWithCustomFileName")
