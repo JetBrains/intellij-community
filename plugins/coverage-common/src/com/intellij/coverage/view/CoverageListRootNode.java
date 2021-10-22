@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class CoverageListRootNode extends CoverageListNode {
-  private List<AbstractTreeNode<?>> myTopLevelPackages;
+  private volatile List<AbstractTreeNode<?>> myTopLevelPackages;
 
   public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
@@ -18,7 +18,11 @@ public class CoverageListRootNode extends CoverageListNode {
     super(project, classOrPackage, bundle, stateBean);
   }
 
-  private List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
+  public synchronized void reset() {
+    myTopLevelPackages = null;
+  }
+
+  private synchronized List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
     if (myTopLevelPackages == null) {
       myTopLevelPackages = bundle.getCoverageEngine().createCoverageViewExtension(project, bundle, stateBean).createTopLevelNodes();
       for (AbstractTreeNode abstractTreeNode : myTopLevelPackages) {

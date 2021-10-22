@@ -204,8 +204,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   private void processSubPackage(final PsiPackage aPackage,
                                  List<AbstractTreeNode<?>> children,
                                  GlobalSearchScope searchScope) {
-    if (ReadAction.compute(() -> isInCoverageScope(aPackage)
-                                 && (!myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0))) {
+    if (shouldIncludePackage(aPackage, searchScope)) {
       final JavaCoverageNode node = new JavaCoverageNode(aPackage.getProject(), aPackage, mySuitesBundle, myStateBean);
       children.add(node);
     }
@@ -215,6 +214,16 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (myStateBean.myFlattenPackages) {
       collectSubPackages(children, aPackage, searchScope);
     }
+  }
+
+  private boolean shouldIncludePackage(PsiPackage aPackage, GlobalSearchScope searchScope) {
+    return ReadAction.compute(() -> isInCoverageScope(aPackage)
+                                    && (myAnnotator.isLoading() || getPackageCoverageInfo(aPackage) != null)
+                                    && (!myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0));
+  }
+
+  private boolean shouldIncludeClass(PsiClass aClass) {
+    return myAnnotator.isLoading() || getClassCoverageInfo(aClass) != null;
   }
 
   @Override
@@ -235,7 +244,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
           final PsiFile[] childFiles = getFiles(psiPackage, searchScope);
           for (final PsiFile file : childFiles) {
-            collectFileChildren(file, node, children);
+            collectFileChildren(file, children);
           }
         }
         else if (!myStateBean.myFlattenPackages) {
@@ -265,14 +274,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return ReadAction.compute(() -> psiPackage.isValid() ? psiPackage.getSubPackages(searchScope) : PsiPackage.EMPTY_ARRAY);
   }
 
-  protected void collectFileChildren(final PsiFile file, AbstractTreeNode<?> node, List<? super AbstractTreeNode<?>> children) {
+  protected void collectFileChildren(final PsiFile file, List<? super AbstractTreeNode<?>> children) {
     if (file instanceof PsiClassOwner) {
       PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
       for (PsiClass aClass : classes) {
-        if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) {
-          continue;
+        if (shouldIncludeClass(aClass)) {
+          children.add(new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean));
         }
-        children.add(new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean));
       }
     }
   }
@@ -280,6 +288,11 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Nullable
   private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
     return myAnnotator.getClassCoverageInfo(ReadAction.compute(() -> aClass.isValid() ? aClass.getQualifiedName() : null));
+  }
+
+  @Nullable
+  private PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(final PsiPackage aPackage) {
+    return ReadAction.compute(() -> myAnnotator.getPackageCoverageInfo(aPackage.getQualifiedName(), myStateBean.myFlattenPackages));
   }
 
   @Override

@@ -318,7 +318,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
 
   public void resetView() {
-    resetModel();
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
+      ((CoverageListRootNode)myTreeStructure.getRootElement()).reset();
+      resetModel();
+    });
   }
 
   private void resetModel() {
