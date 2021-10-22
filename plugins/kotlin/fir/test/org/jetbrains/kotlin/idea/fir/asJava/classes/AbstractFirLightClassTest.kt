@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.analysis.api.impl.base.components.AbstractKtCallResolver
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.caches.resolve.LightClassTestCommon
 import org.jetbrains.kotlin.idea.caches.resolve.PsiElementChecker
@@ -33,6 +34,8 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     private fun doTestImpl() {
+        println(AbstractKtCallResolver::class.java.name)
+
         val fileName = fileName()
         val extraFilePath = when {
             fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra" + fileExtension)
