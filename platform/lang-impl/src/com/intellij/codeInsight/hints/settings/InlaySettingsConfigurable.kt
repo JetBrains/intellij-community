@@ -48,6 +48,6 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
 
 class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
-    return if (Registry.`is`("new.inlay.settings", false)) InlaySettingsConfigurable(project) else InlayHintsConfigurable(project)
+    return if (Registry.`is`("new.inlay.settings", true)) InlaySettingsConfigurable(project) else InlayHintsConfigurable(project)
   }
 }
