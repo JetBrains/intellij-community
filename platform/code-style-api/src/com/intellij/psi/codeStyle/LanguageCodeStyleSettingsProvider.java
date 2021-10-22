@@ -24,6 +24,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.lang.Character.isLetterOrDigit;
+
 /**
  * Base class and extension point for common code style settings for a specific language.
  */
@@ -459,20 +461,26 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * Checks if formatter is allowed to enforce a leading space in the
    * line comment. Formatter will make a transformation like:
    * <pre>//comment</pre>  =>  <pre>// comment</pre>
-   * in case of {@link CommenterOption#LINE_COMMENT_ADD_SPACE_ON_REFORMAT} is enabled and
-   * the first comment symbol is alphanumeric ('c' in this example).
+   * in case of {@link CommenterOption#LINE_COMMENT_ADD_SPACE_ON_REFORMAT}
+   * is enabled.
    * <br/>
    * <br/>
    * This method will be called before transformation to ensure if transformation is possible
    * to avoid breaking of some compiler directives. For example, Go compiler accepts directives
    * in the code starts from {@code //go:...} and the space between comment prefix and {@code go}
    * keyword is not allowed.
+   * <br/>
+   * <br/>
+   * The default implementation checks whether comment is not empty and starts from
+   * alphanumeric character. The typical implementation should add its own guard conditions
+   * first and then return the super-call.
    *
-   * @param commentText  Text of the comment <b>without</b> a comment prefix
-   * @return {@code true} if the transformation is allowed
+   * @param commentContents Text of the comment <b>without</b> a comment prefix
+   * @return {@code true} if and only if the transformation is allowed
    */
-  public boolean canInsertSpaceInLineComment(String commentText) {
+  public boolean canInsertSpaceInLineComment(@NotNull String commentContents) {
+    if (commentContents.isBlank()) return false;
+    if (!isLetterOrDigit(commentContents.charAt(0))) return false;
     return true;
   }
-
 }

@@ -67,13 +67,13 @@ internal class SingleLineCommentFinder(val rangeToReformat: TextRange,
                                 .find { commentText.startsWith(it) }             // Find the line comment prefix
                                 ?.length                                         // Not found -> not a line comment
                                 ?.takeUnless { commentText.length == it }        // Empty comment, no need to add a trailing space
-                                ?.takeIf { commentText[it].isLetterOrDigit() }   // Insert space only before word-like symbols to keep
-                              // pseugraphics, shebangs and other fancy stuff
                               ?: return
 
-    if (languageCodeStyleSettingsProvider != null) {
-      if (!languageCodeStyleSettingsProvider.canInsertSpaceInLineComment(commentText.substring(commentPrefixLength))) {
-        return;
+    val commentContents = commentText.substring(commentPrefixLength)
+
+    languageCodeStyleSettingsProvider?.let {
+      if (!it.canInsertSpaceInLineComment(commentContents)) {
+        return
       }
     }
 
