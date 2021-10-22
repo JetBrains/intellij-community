@@ -4,7 +4,6 @@ package com.intellij.openapi.rd.util
 import com.jetbrains.rd.framework.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlinx.coroutines.*
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import java.util.concurrent.CompletableFuture
 
@@ -116,11 +115,11 @@ suspend fun <T> withNonUrgentBackgroundContext(lifetime: Lifetime = Lifetime.Ete
 
 
 @ExperimentalCoroutinesApi
-fun <T> Deferred<T>.toPromise(shouldLogErrors: Boolean = true): Promise<T> = object : AsyncPromise<T>() {
-  override fun shouldLogErrors(): Boolean {
-    return shouldLogErrors && super.shouldLogErrors()
-  }
-}.also { promise ->
+@Deprecated("Use the overload without `shouldLogErrors` argument", ReplaceWith("toPromise()"))
+fun <T> Deferred<T>.toPromise(shouldLogErrors: Boolean): Promise<T> = toPromise()
+
+@ExperimentalCoroutinesApi
+fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
   invokeOnCompletion { throwable ->
     if (throwable != null) {
       promise.setError(throwable)
@@ -131,12 +130,14 @@ fun <T> Deferred<T>.toPromise(shouldLogErrors: Boolean = true): Promise<T> = obj
   }
 }
 
-fun <T> CompletableFuture<T>.toPromise(): Promise<T> = AsyncPromise<T>().also { promise ->
+fun <T> CompletableFuture<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
   whenComplete { result, throwable ->
     if (throwable != null) {
       promise.setError(throwable)
-    } else {
+    }
+    else {
       promise.setResult(result)
     }
   }
 }
+
