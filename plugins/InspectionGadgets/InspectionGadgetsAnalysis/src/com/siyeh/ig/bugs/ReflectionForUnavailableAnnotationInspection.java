@@ -17,10 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -65,6 +65,7 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
     return null;
   }
 
+  @IntentionName
   private static String getText(@NotNull PsiClass aClass) {
     return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element.as", "annotation", aClass.getName(),
                                       "Retention(RetentionPolicy.RUNTIME)");
