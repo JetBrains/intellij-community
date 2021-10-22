@@ -207,6 +207,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete4() { doParserTest("while(cond)"); }
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
 
+  public void testExprStmtStarts() { doParserTest("col < allCells[0]"); }
+
   public void testConstructorRef() { doParserTest("Foo::new"); }
   public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }
 
