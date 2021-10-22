@@ -663,6 +663,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myPrependWithSeparator;
     private final @NlsContexts.Separator String mySeparatorText;
     private final @NlsContexts.DetailedDescription String myDescription;
+    private final @NlsContexts.DetailedDescription String myTooltip;
     private final @NlsContexts.ListItem String myValue;
 
     ActionItem(@NotNull AnAction action,
@@ -670,6 +671,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable Character mnemonicChar,
                boolean mnemonicsEnabled,
                @Nullable @NlsContexts.DetailedDescription String description,
+               @Nullable @NlsContexts.DetailedDescription String tooltip,
                boolean enabled,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
@@ -686,6 +688,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
       myDescription = description;
+      myTooltip = tooltip;
       myValue = value;
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
         if (evt.getPropertyName() == Presentation.PROP_TEXT) {
@@ -732,7 +735,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isEnabled() { return myIsEnabled; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
-      return myDescription;
+      return myDescription == null ? myTooltip : myDescription;
+    }
+
+    public @NlsContexts.DetailedDescription String getTooltip() {
+      return myTooltip;
     }
 
     @Nullable
