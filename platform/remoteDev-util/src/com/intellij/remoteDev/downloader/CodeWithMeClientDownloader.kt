@@ -310,10 +310,14 @@ object CodeWithMeClientDownloader {
 
             if (Registry.`is`("codewithme.check.guest.signature")) {
               LOG.info("Signature verification is on, preparing for it")
-              download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL),
-                tempDir.resolve("KEYS"))
-              download(data.url.addPathSuffix(SHA256_SUFFIX), data.archivePath.addSuffix(SHA256_SUFFIX))
-              download(data.url.addPathSuffix(SHA256_ASC_SUFFIX), data.archivePath.addSuffix(SHA256_ASC_SUFFIX))
+              val pgpKeyRingFile = Files.createTempFile(tempDir, "KEYS", "")
+              download(URI(sessionInfoResponse.downloadPgpPublicKeyUrl ?: JetBrainsPgpConstants.JETBRAINS_DOWNLOADS_PGP_SUB_KEYS_URL), pgpKeyRingFile)
+
+              val checksumPath = data.archivePath.addSuffix(SHA256_SUFFIX)
+              val signaturePath = data.archivePath.addSuffix(SHA256_ASC_SUFFIX)
+
+              download(data.url.addPathSuffix(SHA256_SUFFIX), checksumPath)
+              download(data.url.addPathSuffix(SHA256_ASC_SUFFIX), signaturePath)
 
               val pgpVerifier = PgpSignaturesVerifier(object : PgpSignaturesVerifierLogger {
                 override fun info(message: String) {
@@ -324,12 +328,13 @@ object CodeWithMeClientDownloader {
               LOG.info("Running checksum signature verifier for ${data.archivePath}")
               Sha256ChecksumSignatureVerifier(pgpVerifier).verifyChecksumAndSignature(
                 file = data.archivePath,
-                detachedSignatureFile = data.archivePath.addSuffix(SHA256_ASC_SUFFIX),
-                checksumFile = data.archivePath.addSuffix(SHA256_SUFFIX),
+                detachedSignatureFile = signaturePath,
+                checksumFile = checksumPath,
                 expectedFileName = data.url.path.substringAfterLast('/'),
-                untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(tempDir.resolve("KEYS"))),
+                untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(pgpKeyRingFile)),
                 trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
               )
+              LOG.info("Signature verified for ${data.archivePath}")
             }
           }
           catch (ex: IOException) {
