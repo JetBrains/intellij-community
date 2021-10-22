@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
 import com.intellij.openapi.updateSettings.impl.UpdateChannel;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,15 +61,30 @@ public class UpdateStrategyCustomization {
     return candidateBuild.compareTo(currentBuild) > 0;
   }
 
+  /**
+   * Returns {@code true} if IDE should search for updates in {@code updateChannel} when the current update channel has {@code selectedChannel} status.
+   */
   public boolean isChannelApplicableForUpdates(UpdateChannel updateChannel, ChannelStatus selectedChannel) {
     return updateChannel.getStatus().compareTo(selectedChannel) >= 0;
   }
 
-  public boolean isChannelApplicableForPatches(UpdateChannel updateChannel, ChannelStatus selectedChannel) {
+  /**
+   * Returns {@code true} if IDE may search for intermediate patches in builds from {@code updateChannel} when there is no direct patch from the current
+   * to the new version.
+   */
+  public boolean canBeUsedForIntermediatePatches(UpdateChannel updateChannel, ChannelStatus selectedChannel) {
     return true;
   }
 
-  public boolean isChannelSelectionDisabled() {
-    return ApplicationInfoEx.getInstanceEx().isMajorEAP() && forceEapUpdateChannelForEapBuilds();
+  /**
+   * Returns {@code null} if user should be allowed to change the update channel in UI. If a non-null value is returned, it is shown in UI instead
+   * of the channel chooser and user won't be able to change the update channel.
+   */
+  @NlsContexts.DetailedDescription
+  public String getChannelSelectionLockedMessage() {
+    if (ApplicationInfoEx.getInstanceEx().isMajorEAP() && forceEapUpdateChannelForEapBuilds())
+      return IdeBundle.message("updates.settings.channel.locked");
+    else
+      return null;
   }
 }
