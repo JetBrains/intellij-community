@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
+import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.util.BuildNumber
 
 /**
@@ -54,5 +56,17 @@ open class UpdateStrategyCustomization {
    */
   open fun isNewerVersion(candidateBuild: BuildNumber, currentBuild: BuildNumber): Boolean {
     return candidateBuild > currentBuild
+  }
+
+  open fun isChannelApplicableForUpdates(updateChannel: UpdateChannel, selectedChannel: ChannelStatus): Boolean {
+    return updateChannel.status >= selectedChannel
+  }
+
+  open fun isChannelApplicableForPatches(updateChannel: UpdateChannel, selectedChannel: ChannelStatus): Boolean {
+    return true
+  }
+
+  open fun isChannelSelectionDisabled(): Boolean {
+    return ApplicationInfoEx.getInstanceEx().isMajorEAP && forceEapUpdateChannelForEapBuilds()
   }
 }

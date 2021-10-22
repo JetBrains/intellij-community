@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -38,7 +37,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
     val manager = ExternalUpdateManager.ACTUAL
-    val eapLocked = ApplicationInfoEx.getInstanceEx().isMajorEAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()
+    val isChannelSelectionHidden = UpdateStrategyCustomization.getInstance().isChannelSelectionDisabled()
     val appInfo = ApplicationInfo.getInstance()
     val channelModel = CollectionComboBoxModel(settings.activeChannels)
 
@@ -52,7 +51,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           manager != null -> {
             comment(IdeBundle.message("updates.settings.external", manager.toolName))
           }
-          eapLocked -> {
+          isChannelSelectionHidden -> {
             checkBox(IdeBundle.message("updates.settings.checkbox"))
               .bindSelected(settings.state::isCheckNeeded)
             comment(IdeBundle.message("updates.settings.channel.locked"))
