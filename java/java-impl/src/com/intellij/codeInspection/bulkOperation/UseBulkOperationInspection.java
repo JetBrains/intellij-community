@@ -251,7 +251,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                             @NotNull BulkMethodInfo info,
                             @NotNull PsiReferenceExpression methodExpression) {
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(methodExpression));
-        if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        if (qualifier instanceof PsiQualifiedExpression) {
           PsiMethod method = PsiTreeUtil.getParentOfType(iterable, PsiMethod.class);
           // Likely we are inside of the bulk method implementation
           if (method != null && method.getName().equals(info.getBulkName())) return;
@@ -265,7 +265,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
       @Contract("null -> false")
       private boolean isSupportedQualifier(PsiExpression qualifier) {
-        if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return true;
+        if (qualifier instanceof PsiQualifiedExpression) return true;
         if (qualifier instanceof PsiReferenceExpression) {
           PsiExpression subQualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
           return subQualifier == null || isSupportedQualifier(subQualifier);
