@@ -16,7 +16,7 @@ import git4idea.push.GitPushOperation
 import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushSupport
 import git4idea.push.GitRejectedPushUpdateDialog
-import git4idea.push.GitRejectedPushUpdateDialog.REBASE_EXIT_CODE
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.REBASE_EXIT_CODE
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.nio.file.Path

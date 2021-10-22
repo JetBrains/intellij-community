@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
-class PushUpdateSettings {
+public class PushUpdateSettings {
 
   private final boolean myUpdateAllRoots;
   @NotNull private final UpdateMethod myUpdateMethod;
