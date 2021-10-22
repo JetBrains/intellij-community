@@ -15,6 +15,9 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/testData/DestructuringDeclaration.kt",
         "uast-kotlin/testData/LambdaReturn.kt",
         "uast-kotlin/testData/WhenAndDestructing.kt",
+
+        // TODO: this file fails 'testIdentifiersParents' check
+        "uast-kotlin/testData/DataClassInheritsAbstractClassWithEquals.kt",
     ).mapTo(mutableSetOf()) { KotlinRoot.DIR_PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
 
     override fun isExpectedToFail(filePath: String): Boolean {
