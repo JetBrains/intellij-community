@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -26,7 +27,7 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
         private val RETURN_AND_THROW = TokenSet.create(KtTokens.RETURN_KEYWORD, KtTokens.THROW_KEYWORD)
 
         private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-            if (target !is LeafPsiElement || target.elementType !in RETURN_AND_THROW) {
+            if (target !is LeafPsiElement || (target.elementType !in RETURN_AND_THROW && target.parent !is KtLabelReferenceExpression)) {
                 return null
             }
 
@@ -76,6 +77,16 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                 } else {
                     target.getRelevantDeclaration()
                 }
+
+            if (target is KtReturnExpression || target is KtThrowExpression) {
+                when (relevantFunction) {
+                    is KtNamedFunction -> relevantFunction.nameIdentifier?.let { addOccurrence(it) }
+                    is KtFunctionLiteral -> relevantFunction.getStrictParentOfType<KtLambdaArgument>()
+                        ?.getStrictParentOfType<KtCallExpression>()
+                        ?.calleeExpression
+                        ?.let { addOccurrence(it) }
+                }
+            }
 
             relevantFunction?.accept(object : KtVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
