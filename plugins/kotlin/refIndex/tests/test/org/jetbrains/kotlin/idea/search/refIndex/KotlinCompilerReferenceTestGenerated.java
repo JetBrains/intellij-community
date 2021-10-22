@@ -649,6 +649,34 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/functions/members/interfaceDefault")
+            public static class InterfaceDefault extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("extension")
+                public void testExtension() throws Exception {
+                    runTest("testData/compilerIndex/functions/members/interfaceDefault/extension/");
+                }
+
+                @TestMetadata("function")
+                public void testFunction() throws Exception {
+                    runTest("testData/compilerIndex/functions/members/interfaceDefault/function/");
+                }
+
+                @TestMetadata("get")
+                public void testGet() throws Exception {
+                    runTest("testData/compilerIndex/functions/members/interfaceDefault/get/");
+                }
+
+                @TestMetadata("invoke")
+                public void testInvoke() throws Exception {
+                    runTest("testData/compilerIndex/functions/members/interfaceDefault/invoke/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members/operators")
             public static class Operators extends AbstractKotlinCompilerReferenceTest {
                 private void runTest(String testDataFilePath) throws Exception {
@@ -1439,6 +1467,34 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("variableWithReceiver")
             public void testVariableWithReceiver() throws Exception {
                 runTest("testData/compilerIndex/properties/members/variableWithReceiver/");
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/properties/members/interfaceDefault")
+            public static class InterfaceDefault extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isProperty")
+                public void testIsProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/members/interfaceDefault/isProperty/");
+                }
+
+                @TestMetadata("isVariable")
+                public void testIsVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/members/interfaceDefault/isVariable/");
+                }
+
+                @TestMetadata("property")
+                public void testProperty() throws Exception {
+                    runTest("testData/compilerIndex/properties/members/interfaceDefault/property/");
+                }
+
+                @TestMetadata("variable")
+                public void testVariable() throws Exception {
+                    runTest("testData/compilerIndex/properties/members/interfaceDefault/variable/");
+                }
             }
         }
 
