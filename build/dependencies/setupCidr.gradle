@@ -34,7 +34,7 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldb: [
-    version: "e0cccbacab5cf5ee621edddca1ea452353192e6b",
+    version: "d37893e63d098eef2c75de1e339770f18fb4b600",
     platforms: [
       win: [
         version: "6f6d0a12e1260e0fd79fbcd1f5df2ebb48002db8",
@@ -46,7 +46,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "0032789384f4def07039342271a7104ffa72814c",
+    version: "621b7413902928389f14047e07af34288cda6f89",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
