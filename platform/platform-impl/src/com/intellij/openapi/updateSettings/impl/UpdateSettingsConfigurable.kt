@@ -44,7 +44,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
   override fun createPanel(): DialogPanel {
     val settings = UpdateSettings.getInstance()
     val manager = ExternalUpdateManager.ACTUAL
-    val isChannelSelectionHidden = UpdateStrategyCustomization.getInstance().isChannelSelectionDisabled()
+    val channelSelectionLockedMessage = UpdateStrategyCustomization.getInstance().getChannelSelectionLockedMessage()
     val appInfo = ApplicationInfo.getInstance()
     val channelModel = CollectionComboBoxModel(settings.activeChannels)
 
@@ -62,9 +62,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             manager != null -> {
               contextLabel(IdeBundle.message("updates.settings.external", manager.toolName))
             }
-            isChannelSelectionHidden -> {
+            channelSelectionLockedMessage != null -> {
               checkBox(IdeBundle.message("updates.settings.checkbox"), settings.state::isCheckNeeded)
-              contextLabel(IdeBundle.message("updates.settings.channel.locked")).withLargeLeftGap()
+              contextLabel(channelSelectionLockedMessage).withLargeLeftGap()
             }
             else -> {
               val checkBox = checkBox(IdeBundle.message("updates.settings.checkbox.for"), settings.state::isCheckNeeded)

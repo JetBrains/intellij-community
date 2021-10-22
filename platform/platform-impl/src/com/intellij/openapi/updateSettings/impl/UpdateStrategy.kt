@@ -74,7 +74,7 @@ class UpdateStrategy @JvmOverloads constructor(
     val number = Regex("\\d+")
 
     product.channels
-      .filter { ch -> customization.isChannelApplicableForPatches(ch, selectedChannel) }
+      .filter { ch -> customization.canBeUsedForIntermediatePatches(ch, selectedChannel) }
       .forEach { channel ->
       channel.builds.forEach { build ->
         val toBuild = build.number.withoutProductCode()
