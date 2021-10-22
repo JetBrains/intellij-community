@@ -48,4 +48,4 @@ private class JvmFqNameBasedWrapper(override val jvmFqName: String) : FqNameWrap
 }
 
 fun FqNameWrapper.asJavaCompilerClassRef(nameEnumerator: NameEnumerator): CompilerRef.JavaCompilerClassRef =
-    CompilerRef.JavaCompilerClassRef(nameEnumerator.tryEnumerate(jvmFqName))
+    JavaCompilerClassRefWithSearchId.create(jvmFqName, nameEnumerator)

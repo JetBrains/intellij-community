@@ -265,7 +265,10 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
               return true;
             });
             try {
-              SearchId searchId = CompilerHierarchySearchType.DIRECT_INHERITOR.convertToId(curClass, myIndex.getByteSeqEum());
+              SearchId searchId = curClass instanceof SearchIdHolder
+                                  ? ((SearchIdHolder)curClass).getSearchId()
+                                  : CompilerHierarchySearchType.DIRECT_INHERITOR.convertToId(curClass, myIndex.getByteSeqEum());
+
               for (DirectInheritorProvider provider : directInheritorProviders) {
                 q.addAll(provider.findDirectInheritors(searchId, myIndex.getByteSeqEum()));
               }
