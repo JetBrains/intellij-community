@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -46,7 +47,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val annotationEntry = uAnnotation.sourcePsi
         analyseForUast(annotationEntry) {
             val resolvedAnnotationCall = annotationEntry.resolveCall() as? KtAnnotationCall ?: return null
-            val parameter = resolvedAnnotationCall.argumentMapping[arg] ?: return null
+            val parameter = resolvedAnnotationCall.argumentMapping.get<Any, KtValueParameterSymbol>(arg) ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }
