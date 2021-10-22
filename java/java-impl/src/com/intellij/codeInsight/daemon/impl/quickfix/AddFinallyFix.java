@@ -46,6 +46,8 @@ public class AddFinallyFix extends BaseIntentionAction {
     PsiStatement replacement =
       JavaPsiFacade.getElementFactory(project).createStatementFromText(myTryStatement.getText() + "finally {\n\n}", myTryStatement);
     PsiTryStatement result = (PsiTryStatement)myTryStatement.replace(replacement);
-    JavaWithTryFinallySurrounder.moveCaretToFinallyBlock(project, editor, Objects.requireNonNull(result.getFinallyBlock()));
+    if (result.isPhysical()) {
+      JavaWithTryFinallySurrounder.moveCaretToFinallyBlock(project, editor, Objects.requireNonNull(result.getFinallyBlock()));
+    }
   }
 }
