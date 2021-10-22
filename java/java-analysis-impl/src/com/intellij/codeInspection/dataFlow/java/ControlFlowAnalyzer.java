@@ -43,7 +43,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -1057,7 +1056,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void processPatternInSwitch(@NotNull PsiPattern pattern, @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
-    processPattern(pattern, pattern, expressionValue, checkType, null, new SmartList<>());
+    DeferredOffset endPatternOffset = new DeferredOffset();
+    processPattern(pattern, pattern, expressionValue, checkType, null, endPatternOffset);
+    endPatternOffset.setOffset(getInstructionCount());
     addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
   }
 
@@ -1066,7 +1067,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean instanceofCanBePotentiallyRedundant = pattern instanceof PsiTypeTestPattern ||
                                                   JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern;
     DfaAnchor instanceofAnchor = instanceofCanBePotentiallyRedundant ? new JavaExpressionAnchor(expression) : null;
-    processPattern(pattern, pattern, expressionValue, checkType, instanceofAnchor, new SmartList<>());
+    DeferredOffset endPatternOffset = new DeferredOffset();
+    processPattern(pattern, pattern, expressionValue, checkType, instanceofAnchor, endPatternOffset);
+    endPatternOffset.setOffset(getInstructionCount());
     if (!instanceofCanBePotentiallyRedundant) {
       addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
     }
@@ -1074,11 +1077,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType,
-                              @Nullable DfaAnchor instanceofAnchor, @NotNull List<DeferredOffset> deferredOffsets) {
+                              @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
     if (innerPattern instanceof PsiGuardedPattern) {
       PsiPrimaryPattern primaryPattern = ((PsiGuardedPattern)innerPattern).getPrimaryPattern();
-      processPattern(sourcePattern, primaryPattern, expressionValue, checkType, instanceofAnchor, deferredOffsets);
+      processPattern(sourcePattern, primaryPattern, expressionValue, checkType, instanceofAnchor, endPatternOffset);
       PsiExpression expression = ((PsiGuardedPattern)innerPattern).getGuardingExpression();
       if (expression != null) {
         expression.accept(this);
@@ -1087,15 +1090,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
 
       addInstruction(new PushValueInstruction(DfTypes.FALSE));
-      DeferredOffset gotoInstrOffset = new DeferredOffset();
-      addInstruction(new GotoInstruction(gotoInstrOffset));
-      deferredOffsets.add(gotoInstrOffset);
+      addInstruction(new GotoInstruction(endPatternOffset));
 
       condGotoOffset.setOffset(getInstructionCount());
     }
     else if (innerPattern instanceof PsiParenthesizedPattern) {
       PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
-      processPattern(sourcePattern, unwrappedPattern, expressionValue, checkType, instanceofAnchor, deferredOffsets);
+      processPattern(sourcePattern, unwrappedPattern, expressionValue, checkType, instanceofAnchor, endPatternOffset);
     }
     else if (innerPattern instanceof PsiTypeTestPattern) {
       PsiPatternVariable variable = ((PsiTypeTestPattern)innerPattern).getPatternVariable();
@@ -1115,9 +1116,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
         addInstruction(new PopInstruction());
         addInstruction(new PushValueInstruction(DfTypes.FALSE));
-        DeferredOffset gotoInstrOffset = new DeferredOffset();
-        addInstruction(new GotoInstruction(gotoInstrOffset));
-        deferredOffsets.add(gotoInstrOffset);
+        addInstruction(new GotoInstruction(endPatternOffset));
       }
 
       DfaVariableValue patternDfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
@@ -1130,9 +1129,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (sourcePattern == innerPattern) {
       addInstruction(new PushValueInstruction(DfTypes.TRUE));
-      for (DeferredOffset offset : deferredOffsets) {
-        offset.setOffset(getInstructionCount());
-      }
     }
   }
 
