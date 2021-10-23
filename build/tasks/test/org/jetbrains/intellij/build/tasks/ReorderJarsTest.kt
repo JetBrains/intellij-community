@@ -64,7 +64,7 @@ class ReorderJarsTest {
     val archiveFile = fsRule.fs.getPath("/archive.jar")
     zip(archiveFile, mapOf(rootDir to ""), addDirEntries = true)
 
-    doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent, TaskTest.logger)
+    doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
     ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
       assertThat(zipFile.entriesInPhysicalOrder.asSequence().map { it.name }.sorted().joinToString(separator = "\n")).isEqualTo("""
         __packageIndex__
@@ -87,7 +87,7 @@ class ReorderJarsTest {
     val tempDir = tempDir.createDir()
     Files.createDirectories(tempDir)
 
-    doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path, "idea.jar"), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path, "idea.jar"), path, tempDir)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     assertThat(files).hasSize(1)
@@ -111,7 +111,7 @@ class ReorderJarsTest {
     Files.createDirectories(tempDir)
 
     val path = testDataPath
-    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path, "idea.jar"), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path, "idea.jar"), path, tempDir)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     val file = files[0]

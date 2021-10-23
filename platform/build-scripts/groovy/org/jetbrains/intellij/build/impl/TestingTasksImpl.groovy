@@ -163,12 +163,12 @@ class TestingTasksImpl extends TestingTasks {
         !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
       }
       List<String> excludedRoots = excludedModules.collectMany {
-        [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
+        [context.getModuleOutputDir(it).toString(), context.getModuleTestsOutputPath(it)]
       }
-      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
-      FileUtilRt.createParentDirs(excludedRootsFile)
-      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
-      additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
+      java.nio.file.Path excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
+      Files.createDirectories(excludedRootsFile.parent)
+      Files.writeString(excludedRootsFile, String.join("\n", excludedRoots.findAll { Files.exists(java.nio.file.Path.of(it)) }))
+      additionalSystemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
     }
 
     runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)

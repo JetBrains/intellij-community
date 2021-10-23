@@ -124,7 +124,7 @@ class ZipTest {
       fs.getPathMatcher("glob:**/entry-item*"),
       fs.getPathMatcher("glob:test-relative-ignore"),
       fs.getPathMatcher("glob:**/icon-robots.txt"),
-    ))), logger = null)
+    ))))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
     zipFile.use {

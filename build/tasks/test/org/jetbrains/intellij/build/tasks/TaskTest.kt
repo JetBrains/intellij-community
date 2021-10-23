@@ -1,4 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -42,7 +43,7 @@ class TaskTest {
   @Test
   fun `broken plugins`() {
     val targetFile = fsRule.fs.getPath("/result")
-    buildBrokenPlugins(targetFile, "2020.3", isInDevelopmentMode = false, logger)
+    buildBrokenPlugins(targetFile, "2020.3", isInDevelopmentMode = false)
     val data = Files.readAllBytes(targetFile)
     Assertions.assertThat(data).isNotEmpty()
     Assertions.assertThat(data[0]).isEqualTo(1)

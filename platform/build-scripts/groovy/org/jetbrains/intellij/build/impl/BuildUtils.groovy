@@ -191,6 +191,7 @@ final class BuildUtils {
       }
     }
     catch (NoSuchFileException ignore) {
+      return null
     }
   }
 }

@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
-import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -515,7 +514,7 @@ final class CommunityRepositoryModules {
         @Override
         File generateResources(BuildContext buildContext) {
           for (JpsModule module in buildContext.project.modules) {
-            Files.createDirectories(Path.of(buildContext.getModuleOutputPath(module)))
+            Files.createDirectories(buildContext.getModuleOutputDir(module))
           }
           return null
         }

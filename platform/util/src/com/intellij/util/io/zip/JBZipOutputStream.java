@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
-
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import java.util.zip.*;
 
 import static com.intellij.util.io.zip.JBZipFile.*;
 
-class JBZipOutputStream {
+final class JBZipOutputStream {
   private static final int ZIP64_MIN_VERSION = 45;
   private static final int ZIP_MIN_VERSION = 10;
 

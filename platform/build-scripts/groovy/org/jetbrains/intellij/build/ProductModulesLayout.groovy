@@ -112,7 +112,7 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  List<String> compatiblePluginsToIgnore = []
+  List<String> compatiblePluginsToIgnore = new ArrayList<>()
 
   /**
    * Module names which should be excluded from this product.
