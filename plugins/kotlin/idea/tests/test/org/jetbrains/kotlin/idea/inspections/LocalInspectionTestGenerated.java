@@ -2052,6 +2052,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLast.kt");
             }
 
+            @TestMetadata("onMapImplementationClass.kt")
+            public void testOnMapImplementationClass() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/onMapImplementationClass.kt");
+            }
+
             @TestMetadata("saveComment.kt")
             public void testSaveComment() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment.kt");
