@@ -2,10 +2,14 @@
 package com.intellij.feedback.dialog
 
 import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.dialog.ProjectCreationFeedbackSystemInfoData.Companion.createProjectCreationFeedbackSystemInfoData
 import com.intellij.feedback.notification.ThanksForFeedbackNotification
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.feedback.RatingComponent
+import com.intellij.ide.feedback.ZenDeskRequests
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -20,10 +24,13 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.layout.*
+import com.intellij.util.readXmlAsModel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.event.ActionEvent
@@ -33,11 +40,26 @@ import javax.swing.JPanel
 
 class ProjectCreationFeedbackDialog(
   private val project: Project?,
-  private val createdProjectTypeName: String
+  createdProjectTypeName: String
 ) : DialogWrapper(project) {
 
   private val PRIVACY_POLICY_URL: String = "https://www.jetbrains.com/legal/docs/privacy/privacy.html"
   private val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/legal/docs/privacy/third-parties.html"
+
+  private val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
+
+  private val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"
+
+  private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
+  private val TICKET_DEFAULT_TEXT_ZENDESK = "This is an automatically created ticket by the feedback collection system in the IDE. " +
+                                            "All data is in custom fields."
+
+  private val TICKET_PROBLEMS_MULTISELECT_EMPTY_PROJECT_ID = "in-ide_empty_project"
+  private val TICKET_PROBLEMS_MULTISELECT_HARD_TO_FIND_ID = "in-ide_hard_to_find"
+  private val TICKET_PROBLEMS_MULTISELECT_LACK_OF_FRAMEWORK_ID = "in-ide_lack_of_framework"
+  private val TICKET_PROBLEMS_MULTISELECT_OTHER_ID = "in-ide_other_problem"
+
+  private val systemInfoData: ProjectCreationFeedbackSystemInfoData = createProjectCreationFeedbackSystemInfoData(createdProjectTypeName)
 
   private val propertyGraph = PropertyGraph()
   private val ratingProperty = propertyGraph.graphProperty { 0 }
@@ -63,6 +85,8 @@ class ProjectCreationFeedbackDialog(
   private val textFieldOtherColumnSize = 41
   private val textAreaOverallFeedbackColumnSize = 42
 
+  private val jsonConverter = Json { prettyPrint = true }
+
   private val checkBoxFrameworkComponentPredicate = object : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
       checkBoxFrameworkProperty.afterChange {
@@ -83,7 +107,48 @@ class ProjectCreationFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    ThanksForFeedbackNotification().notify(project)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val stream = ProjectCreationFeedbackDialog::class.java.classLoader.getResourceAsStream(PATH_TO_FEEDBACK_FORM_XML)
+                   ?: throw RuntimeException("Resource not found: $PATH_TO_FEEDBACK_FORM_XML")
+      val xmlElement = readXmlAsModel(stream)
+      val form = ZenDeskForm.parse(xmlElement)
+      ZenDeskRequests().submit(
+        form,
+        if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
+        TICKET_TITLE_ZENDESK,
+        textAreaOverallFeedbackProperty.get().ifBlank { TICKET_DEFAULT_TEXT_ZENDESK },
+        mapOf("rating" to ratingProperty.get(),
+              "project_type" to systemInfoData.createdProjectTypeName,
+              "problems" to createProblemsResultList(),
+              "problems_other" to if (checkBoxOtherProperty.get()) textFieldOtherProblemProperty.get() else "",
+              "system_info" to jsonConverter.encodeToString(systemInfoData)),
+        {},
+        {}
+      )
+    }
+    ApplicationManager.getApplication().invokeLater {
+      ThanksForFeedbackNotification().notify(project)
+    }
+  }
+
+  private fun createProblemsResultList(): List<String> {
+    val problemsList = mutableListOf<String>()
+    if (checkBoxNoProblemProperty.get()) {
+      // TODO: Need 'No problems' option in zendesk field
+    }
+    if (checkBoxEmptyProjectDontWorkProperty.get()) {
+      problemsList.add(TICKET_PROBLEMS_MULTISELECT_EMPTY_PROJECT_ID)
+    }
+    if (checkBoxHardFindDesireProjectProperty.get()) {
+      problemsList.add(TICKET_PROBLEMS_MULTISELECT_HARD_TO_FIND_ID)
+    }
+    if (checkBoxFrameworkProperty.get()) {
+      problemsList.add(TICKET_PROBLEMS_MULTISELECT_LACK_OF_FRAMEWORK_ID)
+    }
+    if (checkBoxOtherProperty.get()) {
+      problemsList.add(TICKET_PROBLEMS_MULTISELECT_OTHER_ID)
+    }
+    return problemsList
   }
 
   override fun createCenterPanel(): JComponent {
@@ -110,7 +175,7 @@ class ProjectCreationFeedbackDialog(
 
         missingRatingTooltip = label(FeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
           border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
-            JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
+                                         JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
           background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
           isVisible = false
           isOpaque = true
@@ -200,20 +265,20 @@ class ProjectCreationFeedbackDialog(
           layout = GridLayout(3, 1, 0, 0)
 
           add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
-            FeedbackBundle.message("dialog.created.project.consent.1.2"),
-            FeedbackBundle.message("dialog.created.project.consent.1.3")) {
-            ProjectCreationFeedbackSystemInfo(project, createdProjectTypeName).show()
+                                  FeedbackBundle.message("dialog.created.project.consent.1.2"),
+                                  FeedbackBundle.message("dialog.created.project.consent.1.3")) {
+            ProjectCreationFeedbackSystemInfo(project, systemInfoData).show()
           })
 
           add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2.1"),
-            FeedbackBundle.message("dialog.created.project.consent.2.2"),
-            FeedbackBundle.message("dialog.created.project.consent.2.3")) {
+                                  FeedbackBundle.message("dialog.created.project.consent.2.2"),
+                                  FeedbackBundle.message("dialog.created.project.consent.2.3")) {
             BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
           })
 
           add(createLineOfConsent("",
-            FeedbackBundle.message("dialog.created.project.consent.3.2"),
-            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
+                                  FeedbackBundle.message("dialog.created.project.consent.3.2"),
+                                  FeedbackBundle.message("dialog.created.project.consent.3.3")) {
             BrowserUtil.browse(PRIVACY_POLICY_URL, project)
           })
         })
@@ -231,7 +296,7 @@ class ProjectCreationFeedbackDialog(
     val text = HtmlBuilder()
       .append(prefixTest) //NON-NLS
       .append(HtmlChunk.tag("hyperlink")
-        .addText(linkText)) //NON-NLS
+                .addText(linkText)) //NON-NLS
       .append(postfix) //NON-NLS
     val label = HyperlinkLabel().apply {
       setTextWithHyperlink(text.toString())
