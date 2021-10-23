@@ -315,11 +315,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
-      PsiType type = iterable.getType();
-      String iterableText = iterable instanceof PsiSuperExpression ? "this" : ct.text(iterable);
-      if (type instanceof PsiArrayType) {
-        iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
-      }
+      String iterableText = calculateIterableText(iterable, ct);
       if (parent instanceof PsiDeclarationStatement) {
         PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
         if (loop != null && loop.getParent() == parent.getParent()) {
@@ -330,6 +326,21 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                                                                + (parent instanceof PsiStatement ? ";" : ""));
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
+    }
+
+    @NotNull
+    private static String calculateIterableText(PsiExpression iterable, CommentTracker ct) {
+      if (iterable instanceof PsiSuperExpression) {
+        PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)iterable).getQualifier();
+        return (qualifier != null) ? ct.text(qualifier) + ".this" : "this";
+      }
+      String iterableText;
+      PsiType type = iterable.getType();
+      iterableText = ct.text(iterable);
+      if (type instanceof PsiArrayType) {
+        iterableText = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iterableText + ")";
+      }
+      return iterableText;
     }
   }
 }
