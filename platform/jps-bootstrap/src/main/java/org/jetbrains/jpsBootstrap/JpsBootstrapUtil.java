@@ -12,6 +12,8 @@ import java.util.Map;
 public class JpsBootstrapUtil {
   public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
+  private static boolean verboseEnabled = false;
+
   public static void warn(String message) {
     if (underTeamCity) {
       System.out.println(new Message(message, "WARNING", null).asString());
@@ -36,7 +38,9 @@ public class JpsBootstrapUtil {
       attributes.put("tc:tags", "tc:internal");
       System.out.println(new MessageWithAttributes(ServiceMessageTypes.MESSAGE, attributes) {}.asString());
     } else {
-      System.out.println(message);
+      if (verboseEnabled) {
+        System.out.println(message);
+      }
     }
   }
 
@@ -57,5 +61,9 @@ public class JpsBootstrapUtil {
     }
 
     System.exit(1);
+  }
+
+  public static void setVerboseEnabled(boolean verboseEnabled) {
+    JpsBootstrapUtil.verboseEnabled = verboseEnabled;
   }
 }

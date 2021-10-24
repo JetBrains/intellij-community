@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.apache.commons.cli.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -43,6 +45,18 @@ public class JpsBootstrapMain {
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
 
+  private static final String ARG_HELP = "help";
+  private static final String ARG_VERBOSE = "verbose";
+
+  private static Options createCliOptions() {
+    Options opts = new Options();
+
+    opts.addOption(Option.builder("h").longOpt("help").argName(ARG_HELP).build());
+    opts.addOption(Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").argName(ARG_VERBOSE).build());
+
+    return opts;
+  }
+
   public static void main(String[] args) {
     try {
       mainImpl(args);
@@ -57,14 +71,27 @@ public class JpsBootstrapMain {
 
   @SuppressWarnings("ConfusingArgumentToVarargsMethod")
   private static void mainImpl(String[] args) throws Throwable {
-    long startTime = System.currentTimeMillis();
-
-    if (args.length != 2) {
-      fatal("Usage: jps-bootstrap MODULE_NAME CLASS_NAME");
+    CommandLine cmdline;
+    try {
+      cmdline = (new DefaultParser()).parse(createCliOptions(), args, true);
+    }
+    catch (ParseException e) {
+      e.printStackTrace();
+      showUsagesAndExit();
+      throw new IllegalStateException("NOT_REACHED");
     }
 
-    String moduleName = args[0];
-    String className = args[1];
+    final String[] freeArgs = cmdline.getArgs();
+    if (cmdline.hasOption(ARG_HELP) || freeArgs.length < 2) {
+      showUsagesAndExit();
+    }
+
+    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE));
+
+    long startTime = System.currentTimeMillis();
+
+    String moduleName = freeArgs[0];
+    String className = freeArgs[1];
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
@@ -152,17 +179,31 @@ public class JpsBootstrapMain {
     for (File file : enumerator.classes().getRoots()) {
       URL toURL = file.toURI().toURL();
       roots.add(toURL);
-      verbose("CLASSPATH: " + toURL);
+    }
+    roots.sort(Comparator.comparing(URL::toString));
+
+    for (URL rootUrl : roots) {
+      verbose("  CLASSPATH " + rootUrl);
     }
 
     info("Running class " + className + " from module " + moduleName);
 
     try (URLClassLoader classloader = new URLClassLoader(roots.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
-      Class<?> mainClass = classloader.loadClass(className);
+      Class<?> mainClass;
+      try {
+        mainClass = classloader.loadClass(className);
+      }
+      catch (ClassNotFoundException ex) {
+        for (URL rootUrl : roots) {
+          info("  CLASSPATH " + rootUrl);
+        }
+
+        throw new IllegalStateException("Class '" + className + "' was not found. See the class path above");
+      }
 
       MethodHandles.lookup()
         .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
-        .invokeExact(args);
+        .invokeExact(Arrays.copyOfRange(freeArgs, 2, freeArgs.length));
     }
   }
 
@@ -236,5 +277,13 @@ public class JpsBootstrapMain {
     for (String moduleUrl : readModulesFromReleaseFile(Path.of(sdkHome))) {
       additionalSdk.addRoot(moduleUrl, JpsOrderRootType.COMPILED);
     }
+  }
+
+  @Contract("->fail")
+  private static void showUsagesAndExit() {
+    HelpFormatter formatter = new HelpFormatter();
+    formatter.setWidth(1000);
+    formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions());
+    System.exit(1);
   }
 }
