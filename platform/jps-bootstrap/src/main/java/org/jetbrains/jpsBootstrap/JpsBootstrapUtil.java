@@ -6,10 +6,17 @@ import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.Contract;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class JpsBootstrapUtil {
+  public static final String TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE";
+
   public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
   private static boolean verboseEnabled = false;
@@ -65,5 +72,23 @@ public class JpsBootstrapUtil {
 
   public static void setVerboseEnabled(boolean verboseEnabled) {
     JpsBootstrapUtil.verboseEnabled = verboseEnabled;
+  }
+
+  public static Properties getTeamCitySystemProperties() throws IOException {
+    if (!underTeamCity) {
+      throw new IllegalStateException("Not under TeamCity");
+    }
+
+    final String buildPropertiesFile = System.getenv(TEAMCITY_BUILD_PROPERTIES_FILE_ENV);
+    if (buildPropertiesFile == null || buildPropertiesFile.length() == 0) {
+      throw new IllegalStateException("'TEAMCITY_BUILD_PROPERTIES_FILE_ENV' env. variable is missing or empty under TeamCity build");
+    }
+
+    Properties properties = new Properties();
+    try (BufferedReader reader = Files.newBufferedReader(Path.of(buildPropertiesFile))) {
+      properties.load(reader);
+    }
+
+    return properties;
   }
 }

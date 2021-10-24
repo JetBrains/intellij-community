@@ -36,6 +36,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
@@ -186,6 +187,8 @@ public class JpsBootstrapMain {
       verbose("  CLASSPATH " + rootUrl);
     }
 
+    setSystemPropertiesFromTeamCityBuild();
+
     info("Running class " + className + " from module " + moduleName);
 
     try (URLClassLoader classloader = new URLClassLoader(roots.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
@@ -204,6 +207,18 @@ public class JpsBootstrapMain {
       MethodHandles.lookup()
         .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
         .invokeExact(Arrays.copyOfRange(freeArgs, 2, freeArgs.length));
+    }
+  }
+
+  private static void setSystemPropertiesFromTeamCityBuild() throws IOException {
+    if (!underTeamCity) return;
+
+    final Properties systemProperties = getTeamCitySystemProperties();
+    for (String propertyName : systemProperties.stringPropertyNames().stream().sorted().collect(Collectors.toList())) {
+      String value = systemProperties.getProperty(propertyName);
+
+      verbose("Setting system property '" + propertyName + "' to '" + value + "' from TeamCity build parameters");
+      System.setProperty(propertyName, value);
     }
   }
 
