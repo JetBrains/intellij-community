@@ -17,6 +17,7 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -227,6 +228,7 @@ public class JpsBootstrapMain {
     final String[] firstError = {null};
 
     Path dataStorageRoot = workDir.resolve("jps-build-data");
+    final Set<String> moduleNames = model.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     Standalone.runBuild(
       () -> model,
       dataStorageRoot.toFile(),
@@ -251,7 +253,12 @@ public class JpsBootstrapMain {
             break;
           default:
             if (!msg.getMessageText().isBlank()) {
-              info(textAndKind);
+              if (moduleNames.contains(msg.getMessageText())) {
+                verbose(textAndKind);
+              }
+              else {
+                info(textAndKind);
+              }
             }
             break;
         }
