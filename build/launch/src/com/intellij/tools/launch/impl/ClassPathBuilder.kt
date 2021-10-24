@@ -52,7 +52,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     //pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinPath.canonicalPath)
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    JpsProjectLoader.loadProject(model.project, pathVariables, paths.ultimateRootFolder.canonicalPath)
+    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.canonicalPath)
 
     val productionOutput = paths.outputRootFolder.resolve("production")
     if (!productionOutput.isDirectory) {
