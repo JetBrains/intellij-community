@@ -25,7 +25,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val inputMaskField = EventFields.Long("input_mask")
 
     //events
-    private val activity = GROUP.registerIdeActivity("new_project_wizard")
+    private val activity = GROUP.registerIdeActivity("new_project_wizard", finishEventAdditionalFields = arrayOf(isSucceededField))
 
     private val open = GROUP.registerEvent("wizard.dialog.open", sessionIdField)
     private val screen = GROUP.registerEvent("screen", sessionIdField, screenNumField)
