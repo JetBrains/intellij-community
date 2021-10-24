@@ -48,13 +48,12 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                 return
               }
               else {
-                throw RemoteSdkException("Python interpreter returned the empty output as a version string",
-                  processOutput.stdout, processOutput.stderr)
+                throw RemoteSdkException(PyBundle.message("python.sdk.empty.version.string"), processOutput.stdout, processOutput.stderr)
               }
             }
             else {
-              throw RemoteSdkException("Python interpreter process exited with non-zero exit code ${processOutput.exitCode}",
-                processOutput.stdout, processOutput.stderr)
+              throw RemoteSdkException(
+                PyBundle.message("python.sdk.non.zero.exit.code", processOutput.exitCode), processOutput.stdout, processOutput.stderr)
             }
           }
           catch (e: Exception) {
