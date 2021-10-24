@@ -57,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -374,7 +375,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     if (isNewWizard()) {
       if (context.isCreatingNewProject()) {
+        EmptyModuleBuilder emptyModuleBuilder = new EmptyModuleBuilder(){
+          @Override
+          public Icon getNodeIcon() {
+            return EmptyIcon.ICON_0;
+          }
+        };
         groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
+        groups.add(0, new TemplatesGroup(emptyModuleBuilder));
         groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
         groups.addAll(getUserTemplatesMap(context));
       }
