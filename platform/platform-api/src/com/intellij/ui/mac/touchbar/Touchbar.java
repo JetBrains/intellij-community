@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -74,18 +75,20 @@ public class Touchbar {
                                       @Nullable ActionGroup extraActions) {
     if (ApplicationManager.getApplication() == null) return;
 
-    final DefaultActionGroup result = new DefaultActionGroup();
-    if (buttons != null) {
-      result.add(buildActionsFromButtons(buttons, defaultButton, false));
-    }
-    if (extraActions != null) {
-      result.add(extraActions);
-    }
-    if (principal != null) {
-      result.add(buildActionsFromButtons(principal, defaultButton, true));
-    }
+    ActionManagerEx.doWithLazyActionManager(instance -> {
+      DefaultActionGroup result = new DefaultActionGroup();
+      if (buttons != null) {
+        result.add(buildActionsFromButtons(buttons, defaultButton, false));
+      }
+      if (extraActions != null) {
+        result.add(extraActions);
+      }
+      if (principal != null) {
+        result.add(buildActionsFromButtons(principal, defaultButton, true));
+      }
 
-    setActions(component, result);
+      setActions(component, result);
+    });
   }
   public static void addButtonAction(@NotNull JComponent component, JButton button) {
     if (ApplicationManager.getApplication() == null) return;
