@@ -155,6 +155,7 @@
     </group>
 
     <group id="Bookmarks" popup="true">
+      <action id="AddAnotherBookmark" class="com.intellij.ide.bookmark.actions.AddAnotherBookmarkAction"/>
       <action id="EditBookmark" icon="AllIcons.Actions.Edit"
               class="com.intellij.ide.bookmark.actions.EditBookmarkAction"/>
       <action id="ToggleBookmark" class="com.intellij.ide.bookmark.actions.ToggleBookmarkAction"/>
@@ -302,6 +303,7 @@
     </group>
 
     <group id="popup@BookmarkContextMenu">
+      <reference ref="AddAnotherBookmark"/>
       <reference ref="EditBookmark"/>
       <reference ref="ToggleBookmark"/>
       <reference ref="DeleteMnemonicFromBookmark"/>
@@ -309,6 +311,10 @@
       <separator/>
 
       <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
+    </group>
+
+    <group id="popup@ExpandableBookmarkContextMenu" popup="true">
+      <reference ref="popup@BookmarkContextMenu"/>
     </group>
 
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
@@ -780,7 +786,7 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
+      <reference ref="popup@ExpandableBookmarkContextMenu"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
