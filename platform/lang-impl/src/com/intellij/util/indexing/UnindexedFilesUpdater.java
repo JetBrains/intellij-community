@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -56,7 +55,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
@@ -193,7 +191,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
-    myIndex.clearIndicesIfNecessary();
+    if (myPredefinedIndexableFilesIterators == null) {
+      myIndex.clearIndicesIfNecessary();
+    }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
