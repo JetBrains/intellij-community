@@ -8,34 +8,34 @@ UFile (package = ) [public final class BitwiseKt {...]
                 UDeclarationsExpression [var x: int = 715827882]
                     ULocalVariable (name = x) [var x: int = 715827882]
                         ULiteralExpression (value = 715827882) [715827882] : PsiType:int
-                UDeclarationsExpression [var pos: int = x <other> mask]
-                    ULocalVariable (name = pos) [var pos: int = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:int
+                UDeclarationsExpression [var pos: int = x & mask]
+                    ULocalVariable (name = pos) [var pos: int = x & mask]
+                        UBinaryExpression (operator = &) [x & mask] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:int
-                UDeclarationsExpression [var max: int = x <other> mask]
-                    ULocalVariable (name = max) [var max: int = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:int
+                UDeclarationsExpression [var max: int = x | mask]
+                    ULocalVariable (name = max) [var max: int = x | mask]
+                        UBinaryExpression (operator = |) [x | mask] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:int
-                UDeclarationsExpression [var zebra: int = x <other> mask]
-                    ULocalVariable (name = zebra) [var zebra: int = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:int
+                UDeclarationsExpression [var zebra: int = x ^ mask]
+                    ULocalVariable (name = zebra) [var zebra: int = x ^ mask]
+                        UBinaryExpression (operator = ^) [x ^ mask] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:int
-                UDeclarationsExpression [var signed: int = x <other> 2]
-                    ULocalVariable (name = signed) [var signed: int = x <other> 2]
-                        UBinaryExpression (operator = <other>) [x <other> 2] : PsiType:int
+                UDeclarationsExpression [var signed: int = x >> 2]
+                    ULocalVariable (name = signed) [var signed: int = x >> 2]
+                        UBinaryExpression (operator = >>) [x >> 2] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             ULiteralExpression (value = 2) [2] : PsiType:int
-                UDeclarationsExpression [var one: int = x <other> 29]
-                    ULocalVariable (name = one) [var one: int = x <other> 29]
-                        UBinaryExpression (operator = <other>) [x <other> 29] : PsiType:int
+                UDeclarationsExpression [var one: int = x >>> 29]
+                    ULocalVariable (name = one) [var one: int = x >>> 29]
+                        UBinaryExpression (operator = >>>) [x >>> 29] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             ULiteralExpression (value = 29) [29] : PsiType:int
-                UDeclarationsExpression [var zero: int = x <other> 31]
-                    ULocalVariable (name = zero) [var zero: int = x <other> 31]
-                        UBinaryExpression (operator = <other>) [x <other> 31] : PsiType:int
+                UDeclarationsExpression [var zero: int = x << 31]
+                    ULocalVariable (name = zero) [var zero: int = x << 31]
+                        UBinaryExpression (operator = <<) [x << 31] : PsiType:int
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                             ULiteralExpression (value = 31) [31] : PsiType:int
                 UReturnExpression [return pos + zero - zebra * signed / one] : PsiType:Void
@@ -56,34 +56,34 @@ UFile (package = ) [public final class BitwiseKt {...]
                 UDeclarationsExpression [var x: long = 3074457345618258602]
                     ULocalVariable (name = x) [var x: long = 3074457345618258602]
                         ULiteralExpression (value = 3074457345618258602) [3074457345618258602] : PsiType:long
-                UDeclarationsExpression [var pos: long = x <other> mask]
-                    ULocalVariable (name = pos) [var pos: long = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:long
+                UDeclarationsExpression [var pos: long = x & mask]
+                    ULocalVariable (name = pos) [var pos: long = x & mask]
+                        UBinaryExpression (operator = &) [x & mask] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:long
-                UDeclarationsExpression [var max: long = x <other> mask]
-                    ULocalVariable (name = max) [var max: long = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:long
+                UDeclarationsExpression [var max: long = x | mask]
+                    ULocalVariable (name = max) [var max: long = x | mask]
+                        UBinaryExpression (operator = |) [x | mask] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:long
-                UDeclarationsExpression [var zebra: long = x <other> mask]
-                    ULocalVariable (name = zebra) [var zebra: long = x <other> mask]
-                        UBinaryExpression (operator = <other>) [x <other> mask] : PsiType:long
+                UDeclarationsExpression [var zebra: long = x ^ mask]
+                    ULocalVariable (name = zebra) [var zebra: long = x ^ mask]
+                        UBinaryExpression (operator = ^) [x ^ mask] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             USimpleNameReferenceExpression (identifier = mask) [mask] : PsiType:long
-                UDeclarationsExpression [var signed: long = x <other> 2]
-                    ULocalVariable (name = signed) [var signed: long = x <other> 2]
-                        UBinaryExpression (operator = <other>) [x <other> 2] : PsiType:long
+                UDeclarationsExpression [var signed: long = x >> 2]
+                    ULocalVariable (name = signed) [var signed: long = x >> 2]
+                        UBinaryExpression (operator = >>) [x >> 2] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             ULiteralExpression (value = 2) [2] : PsiType:int
-                UDeclarationsExpression [var one: long = x <other> 61]
-                    ULocalVariable (name = one) [var one: long = x <other> 61]
-                        UBinaryExpression (operator = <other>) [x <other> 61] : PsiType:long
+                UDeclarationsExpression [var one: long = x >>> 61]
+                    ULocalVariable (name = one) [var one: long = x >>> 61]
+                        UBinaryExpression (operator = >>>) [x >>> 61] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             ULiteralExpression (value = 61) [61] : PsiType:int
-                UDeclarationsExpression [var zero: long = x <other> 63]
-                    ULocalVariable (name = zero) [var zero: long = x <other> 63]
-                        UBinaryExpression (operator = <other>) [x <other> 63] : PsiType:long
+                UDeclarationsExpression [var zero: long = x << 63]
+                    ULocalVariable (name = zero) [var zero: long = x << 63]
+                        UBinaryExpression (operator = <<) [x << 63] : PsiType:long
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:long
                             ULiteralExpression (value = 63) [63] : PsiType:int
                 UReturnExpression [return pos + zero - zebra * signed / one] : PsiType:Void
