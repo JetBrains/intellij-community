@@ -46,6 +46,62 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
 
 
 def _modify_new_lines(code_to_modify, all_inserted_code):
+    # Python 3.10 and above uses a different schema for encoding of line numbers.
+    # See PEP 626 for the details.
+    if sys.version_info >= (3, 10):
+        return _make_linetable(code_to_modify, all_inserted_code)
+    return _make_lnotab(code_to_modify, all_inserted_code)
+
+
+def _make_linetable(code_to_modify, all_inserted_code):
+    """A line table generator for Python 3.10 and above.
+
+    Note that the PEP states that the format of the ``co_linetable`` attribute is
+    opaque and may be changed in the future. However, we have to deal with it because
+    a linetable is required for creating new code objects.
+
+    .. seealso::
+
+       :py:func:`~_make_lnotab`
+       `PEP 626`_
+       `lnotab_notes.txt`_
+
+    .. _PEP 626: https://www.python.org/dev/peps/pep-0626/
+    .. _lnotab_notes.txt: https://github.com/python/cpython/blob/5a14f71fe869d4a62dcdeb9a8fbbb5884c75060c/Objects/lnotab_notes.txt
+
+    """
+    assert len(all_inserted_code) == 1, "Generating a linetable from multiple " \
+                                        "inserted code chunks is not supported."
+
+    offset, code_list = all_inserted_code[0]
+
+    if offset == 0:
+        # A shortcut when the breakpoint is on the first line.
+        return bytes([len(code_list), 0]) + code_to_modify.co_linetable
+
+    new_lines, delta = [], len(code_list)
+
+    for i, (start, end, line) in enumerate(code_to_modify.co_lines()):
+        if offset == end:
+            new_lines.append((start, end + delta, line))
+            break
+        new_lines.append((start, end, line))
+    else:
+        return None
+
+    for start, end, line in list(code_to_modify.co_lines())[i+1:]:
+        new_lines.append((start + delta, end + delta, line))
+
+    new_linetable, prev_line = [], code_to_modify.co_firstlineno
+    for start, end, line in new_lines:
+        new_linetable.append(end - start)
+        new_linetable.append(line - prev_line)
+        prev_line = line
+
+    return bytes(new_linetable)
+
+
+def _make_lnotab(code_to_modify, all_inserted_code):
     """
     Generate a new bytecode instruction to line number mapping aka ``lnotab`` after injecting the debugger specific code.
     Note, that the bytecode inserted should be the last instruction of the line preceding a line with the breakpoint.
@@ -232,8 +288,8 @@ def insert_code(code_to_modify, code_to_insert, before_line):
 
 def _insert_code(code_to_modify, code_to_insert, before_line):
     """
-    Insert piece of code `code_to_insert` to `code_to_modify` right inside the line `before_line` before the
-    instruction on this line by modifying original bytecode
+    Insert a piece of code `code_to_insert` to `code_to_modify` right inside the line
+    `before_line` before the instruction on this line by modifying original bytecode
 
     :param code_to_modify: Code to modify
     :param code_to_insert: Code to insert
@@ -263,8 +319,8 @@ def _insert_code(code_to_modify, code_to_insert, before_line):
                                                      dis.haslocal)
         new_bytes, all_inserted_code = _update_label_offsets(code_to_modify.co_code, offset, list(code_to_insert_list))
 
-        new_lnotab = _modify_new_lines(code_to_modify, all_inserted_code)
-        if new_lnotab is None:
+        new_lines = _modify_new_lines(code_to_modify, all_inserted_code)
+        if new_lines is None:
             return False, code_to_modify
 
     except ValueError:
@@ -284,7 +340,7 @@ def _insert_code(code_to_modify, code_to_insert, before_line):
         code_to_modify.co_filename,  # string
         code_to_modify.co_name,  # string
         code_to_modify.co_firstlineno,  # integer
-        new_lnotab,  # bytes
+        new_lines,  # bytes
         code_to_modify.co_freevars,  # tuple
         code_to_modify.co_cellvars  # tuple
     ]
