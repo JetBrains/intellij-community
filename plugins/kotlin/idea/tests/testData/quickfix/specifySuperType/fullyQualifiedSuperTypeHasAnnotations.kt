@@ -1,5 +1,5 @@
 // "Specify supertype" "true"
-// DIFFERENT FROM FE1.0 AS INTENDED
+// SHOULD_DIFFER_FROM_FE10
 package a.b.c
 
 interface Z {
