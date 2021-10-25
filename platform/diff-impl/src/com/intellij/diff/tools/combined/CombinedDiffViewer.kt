@@ -4,6 +4,7 @@ package com.intellij.diff.tools.combined
 import com.intellij.diff.DiffContext
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
+import com.intellij.diff.impl.ui.DiffInfo
 import com.intellij.diff.tools.binary.OnesideBinaryDiffViewer
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer
 import com.intellij.diff.tools.binary.TwosideBinaryDiffViewer
@@ -60,6 +61,12 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
 
   private val focusListener = FocusListener(this)
 
+  private val diffInfo = object : DiffInfo() {
+    override fun getContentTitles(): List<String?> {
+      return (getCurrentBlockContent()?.viewer as? DiffViewerBase)?.request?.contentTitles ?: return emptyList()
+    }
+  }
+
   internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
     val diffBlockFactory = CombinedDiffBlockFactory.findApplicable(content) ?: return
 
@@ -83,6 +90,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   override fun init(): FrameDiffTool.ToolbarComponents {
     val components = FrameDiffTool.ToolbarComponents()
     components.toolbarActions = createToolbarActions()
+    components.diffInfo = diffInfo
     return components
   }
 
@@ -189,6 +197,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
       val indexOfSelectedBlock = diffBlocks.indexOfFirst { b -> editor == b.content.viewer.editor }
       if (indexOfSelectedBlock != -1) {
         scrollSupport.blockIterable.index = indexOfSelectedBlock
+        diffInfo.update()
       }
     }
 
@@ -201,6 +210,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
 
       if (indexOfSelectedBlock != -1) {
         scrollSupport.blockIterable.index = indexOfSelectedBlock
+        diffInfo.update()
       }
     }
 
