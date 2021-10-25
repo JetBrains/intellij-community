@@ -3,13 +3,14 @@ package com.intellij.openapi.application
 
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.ProtocolHandler
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import java.util.concurrent.CompletableFuture
 
 class JBProtocolHandler : ProtocolHandler {
   override fun getScheme(): String = JBProtocolCommand.SCHEME
 
-  override fun process(query: String): CompletableFuture<@NotificationContent String?> {
+  override fun process(query: String, indicator: ProgressIndicator): CompletableFuture<@NotificationContent String?> {
     val result = CompletableFuture<String?>()
     ApplicationManager.getApplication().invokeLater(
       {
