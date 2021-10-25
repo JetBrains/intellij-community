@@ -216,9 +216,12 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: "AndroidGameDevelopmentTools")
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
+        // Here we overwrite idea.platform.prefix to start the distinct entry point of game tools.
+        filter(token: "ide_jvm_args", value:
+          buildContext.additionalJvmArguments.join(' ') + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
         filter(token: "class_path", value: gameToolsClassPath)
         filter(token: "script_name", value: "game-tools.bat")
+        filter(token: "base_name", value: "game-tools")
       }
     }
     buildContext.ant.move(file: "$distBinDir/executable-template.bat", tofile: "$distBinDir/game-tools.bat")
