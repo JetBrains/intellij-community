@@ -5,39 +5,39 @@ UFile (package = ) [public final class BitwiseKt {...]
                 UDeclarationsExpression [var mask: int = 127] = Undetermined
                     ULocalVariable (name = mask) [var mask: int = 127]
                         ULiteralExpression (value = 127) [127] = 127
-                UDeclarationsExpression [var x: int = 2863311530] = Undetermined
-                    ULocalVariable (name = x) [var x: int = 2863311530]
-                        ULiteralExpression (value = 2863311530) [2863311530] = (long)2863311530
+                UDeclarationsExpression [var x: int = 715827882] = Undetermined
+                    ULocalVariable (name = x) [var x: int = 715827882]
+                        ULiteralExpression (value = 715827882) [715827882] = 715827882
                 UDeclarationsExpression [var pos: int = x <other> mask] = Undetermined
                     ULocalVariable (name = pos) [var pos: int = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = 127)
                 UDeclarationsExpression [var max: int = x <other> mask] = Undetermined
                     ULocalVariable (name = max) [var max: int = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = 127)
                 UDeclarationsExpression [var zebra: int = x <other> mask] = Undetermined
                     ULocalVariable (name = zebra) [var zebra: int = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = 127)
                 UDeclarationsExpression [var signed: int = x <other> 2] = Undetermined
                     ULocalVariable (name = signed) [var signed: int = x <other> 2]
                         UBinaryExpression (operator = <other>) [x <other> 2] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
                             ULiteralExpression (value = 2) [2] = 2
-                UDeclarationsExpression [var one: int = x <other> 31] = Undetermined
-                    ULocalVariable (name = one) [var one: int = x <other> 31]
+                UDeclarationsExpression [var one: int = x <other> 29] = Undetermined
+                    ULocalVariable (name = one) [var one: int = x <other> 29]
+                        UBinaryExpression (operator = <other>) [x <other> 29] = Undetermined
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
+                            ULiteralExpression (value = 29) [29] = 29
+                UDeclarationsExpression [var zero: int = x <other> 31] = Undetermined
+                    ULocalVariable (name = zero) [var zero: int = x <other> 31]
                         UBinaryExpression (operator = <other>) [x <other> 31] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = 715827882)
                             ULiteralExpression (value = 31) [31] = 31
-                UDeclarationsExpression [var zero: int = x <other> 32] = Undetermined
-                    ULocalVariable (name = zero) [var zero: int = x <other> 32]
-                        UBinaryExpression (operator = <other>) [x <other> 32] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)2863311530)
-                            ULiteralExpression (value = 32) [32] = 32
                 UReturnExpression [return pos + zero - zebra * signed / one] = Nothing
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] = Undetermined (depending on: (var pos = Undetermined), (var zero = Undetermined), (var zebra = Undetermined), (var signed = Undetermined), (var one = Undetermined))
                         UBinaryExpression (operator = +) [pos + zero] = Undetermined (depending on: (var pos = Undetermined), (var zero = Undetermined))
@@ -53,39 +53,39 @@ UFile (package = ) [public final class BitwiseKt {...]
                 UDeclarationsExpression [var mask: long = 127] = Undetermined
                     ULocalVariable (name = mask) [var mask: long = 127]
                         ULiteralExpression (value = 127) [127] = (long)127
-                UDeclarationsExpression [var x: long = 6148914691236517205] = Undetermined
-                    ULocalVariable (name = x) [var x: long = 6148914691236517205]
-                        ULiteralExpression (value = 6148914691236517205) [6148914691236517205] = (long)6148914691236517205
+                UDeclarationsExpression [var x: long = 3074457345618258602] = Undetermined
+                    ULocalVariable (name = x) [var x: long = 3074457345618258602]
+                        ULiteralExpression (value = 3074457345618258602) [3074457345618258602] = (long)3074457345618258602
                 UDeclarationsExpression [var pos: long = x <other> mask] = Undetermined
                     ULocalVariable (name = pos) [var pos: long = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = (long)127)
                 UDeclarationsExpression [var max: long = x <other> mask] = Undetermined
                     ULocalVariable (name = max) [var max: long = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = (long)127)
                 UDeclarationsExpression [var zebra: long = x <other> mask] = Undetermined
                     ULocalVariable (name = zebra) [var zebra: long = x <other> mask]
                         UBinaryExpression (operator = <other>) [x <other> mask] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
                             USimpleNameReferenceExpression (identifier = mask) [mask] = (var mask = (long)127)
                 UDeclarationsExpression [var signed: long = x <other> 2] = Undetermined
                     ULocalVariable (name = signed) [var signed: long = x <other> 2]
                         UBinaryExpression (operator = <other>) [x <other> 2] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
                             ULiteralExpression (value = 2) [2] = 2
-                UDeclarationsExpression [var one: long = x <other> 63] = Undetermined
-                    ULocalVariable (name = one) [var one: long = x <other> 63]
+                UDeclarationsExpression [var one: long = x <other> 61] = Undetermined
+                    ULocalVariable (name = one) [var one: long = x <other> 61]
+                        UBinaryExpression (operator = <other>) [x <other> 61] = Undetermined
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
+                            ULiteralExpression (value = 61) [61] = 61
+                UDeclarationsExpression [var zero: long = x <other> 63] = Undetermined
+                    ULocalVariable (name = zero) [var zero: long = x <other> 63]
                         UBinaryExpression (operator = <other>) [x <other> 63] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
+                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)3074457345618258602)
                             ULiteralExpression (value = 63) [63] = 63
-                UDeclarationsExpression [var zero: long = x <other> 64] = Undetermined
-                    ULocalVariable (name = zero) [var zero: long = x <other> 64]
-                        UBinaryExpression (operator = <other>) [x <other> 64] = Undetermined
-                            USimpleNameReferenceExpression (identifier = x) [x] = (var x = (long)6148914691236517205)
-                            ULiteralExpression (value = 64) [64] = 64
                 UReturnExpression [return pos + zero - zebra * signed / one] = Nothing
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] = Undetermined (depending on: (var pos = Undetermined), (var zero = Undetermined), (var zebra = Undetermined), (var signed = Undetermined), (var one = Undetermined))
                         UBinaryExpression (operator = +) [pos + zero] = Undetermined (depending on: (var pos = Undetermined), (var zero = Undetermined))
