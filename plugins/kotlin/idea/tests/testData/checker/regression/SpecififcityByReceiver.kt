@@ -6,6 +6,6 @@ fun main(<warning descr="[UNUSED_PARAMETER] Parameter 'args' is never used">args
 
     val command : Any = 1
 
-    command<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type Any">?.</warning>equals(null)
+    command<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type Any. This expression will have nullable type in future releases">?.</warning>equals(null)
     command.equals(null)
 }
