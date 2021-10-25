@@ -383,14 +383,6 @@ public final class SwitchUtils {
     return null;
   }
 
-  public static @NotNull String suggestPatternCaseName(PsiInstanceOfExpression instanceOf) {
-    final PsiTypeElement typeElement = instanceOf.getCheckType();
-    final PsiType type = typeElement != null ? typeElement.getType() : null;
-    String typeText = typeElement != null ? typeElement.getText() : CommonClassNames.JAVA_LANG_OBJECT;
-    VariableNameGenerator nameGenerator = new VariableNameGenerator(instanceOf, VariableKind.LOCAL_VARIABLE);
-    return nameGenerator.byName(typeText.substring(0, 1)).byType(type).generate(true);
-  }
-
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression) {
@@ -398,8 +390,10 @@ public final class SwitchUtils {
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
       if (pattern != null) return pattern.getText();
       final PsiTypeElement typeElement = instanceOf.getCheckType();
+      final PsiType type = typeElement != null ? typeElement.getType() : null;
+      String name = new VariableNameGenerator(instanceOf, VariableKind.LOCAL_VARIABLE).byType(type).generate(true);
       String typeText = typeElement != null ? typeElement.getText() : CommonClassNames.JAVA_LANG_OBJECT;
-      return typeText + " " + suggestPatternCaseName(instanceOf);
+      return typeText + " " + name;
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
