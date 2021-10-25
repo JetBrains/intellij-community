@@ -1621,4 +1621,29 @@ public class Test {
       config.isMultiLine = currFlag
     }
   }
+
+  fun testIdea122233() {
+    settings.apply {
+      RIGHT_MARGIN = 60
+      WRAP_COMMENTS = true
+    }
+      doTextTest(
+        """
+        /**
+         * object that can be loaded into a {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * object that can be loaded into a
+         * {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
 }
