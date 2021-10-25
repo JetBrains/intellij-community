@@ -236,13 +236,11 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
     fun testResolutionAnchorsAndBuiltins() {
         val jarForCompositeLibrary = KotlinCompilerStandalone(
-            sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart")),
-            target = File("compositeLibraryPart")
+            sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart"))
         ).compile()
         val stdlibJarForCompositeLibrary = KotlinArtifacts.instance.kotlinStdlib
         val jarForSourceDependentLibrary = KotlinCompilerStandalone(
-            sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary")),
-            target = File("sourceDependentLibrary")
+            sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary"))
         ).compile()
 
         val dependencyModule = module("dependencyModule")
