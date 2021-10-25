@@ -12,7 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,23 +194,15 @@ final class PluginUpdateDialog extends DialogWrapper {
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
-          PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, dl -> !dl.tryInstallWithoutRestart(ownerComponent));
-          if (result.getPluginsInstalled().isEmpty()) {
+          List<IdeaPluginDescriptor> installedDescriptors = installPluginUpdates(downloaders);
+          if (installedDescriptors.isEmpty()) {
             return;
           }
 
-          if (!result.getRestartRequired()) {
-            String message;
-            if (result.getPluginsInstalled().size() == 1) {
-              IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
-              message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
-            }
-            else {
-              String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
-              message = IdeBundle.message("notification.content.updated.plugins", names);
-            }
+          if (downloaders.size() == installedDescriptors.size()) {
             UpdateChecker.getNotificationGroupForUpdateResults()
-              .createNotification(message, NotificationType.INFORMATION)
+              .createNotification(getUpdateNotificationMessage(installedDescriptors),
+                                  NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")
               .notify(myProject);
           }
@@ -226,6 +219,34 @@ final class PluginUpdateDialog extends DialogWrapper {
       public void onFinished() {
         if (finishCallback != null) {
           finishCallback.run();
+        }
+      }
+
+      private @NotNull List<IdeaPluginDescriptor> installPluginUpdates(@NotNull List<PluginDownloader> downloaders) {
+        List<IdeaPluginDescriptor> installedDescriptors = new ArrayList<>();
+        for (PluginDownloader downloader : downloaders) {
+          try {
+            if (downloader.installDynamically(ownerComponent)) {
+              installedDescriptors.add(downloader.getDescriptor());
+            }
+          }
+          catch (Exception e) {
+            Logger.getInstance(PluginUpdateDialog.class).info(e);
+          }
+        }
+        return installedDescriptors;
+      }
+
+      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<IdeaPluginDescriptor> descriptors) {
+        if (descriptors.size() == 1) {
+          IdeaPluginDescriptor descriptor = descriptors.get(0);
+          return IdeBundle.message("notification.content.updated.plugin.to.version", descriptor.getName(), descriptor.getVersion());
+        }
+        else {
+          String names = descriptors.stream()
+            .map(IdeaPluginDescriptor::getName)
+            .collect(Collectors.joining(", "));
+          return IdeBundle.message("notification.content.updated.plugins", names);
         }
       }
     }.queue();

@@ -339,28 +339,20 @@ public final class PluginDownloader {
     }
   }
 
-  public boolean tryInstallWithoutRestart(@Nullable JComponent ownerComponent) {
+  public boolean installDynamically(@Nullable JComponent ownerComponent) throws IOException {
     assert myDescriptor instanceof IdeaPluginDescriptorImpl;
     IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myDescriptor;
-    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
-      return false;
+
+    // yes, if no installed plugin by id, it means that something goes wrong, so do not try to install and load
+    boolean appliedWithoutRestart = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor) &&
+                                    (myOldFile == null || unloadDescriptorById(myDescriptor.getPluginId())) &&
+                                    PluginInstaller.installAndLoadDynamicPlugin(getFilePath(), ownerComponent, descriptor);
+
+    if (!appliedWithoutRestart) {
+      install();
     }
 
-    if (myOldFile != null) {
-      IdeaPluginDescriptorImpl installedPlugin = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(myDescriptor.getPluginId());
-      // yes, if no installed plugin by id, it means that something goes wrong, so do not try to install and load
-      if (!(installedPlugin != null &&
-            DynamicPlugins.allowLoadUnloadWithoutRestart(installedPlugin) &&
-            DynamicPlugins.INSTANCE.unloadPlugin(installedPlugin,
-                                                 new DynamicPlugins.UnloadPluginOptions()
-                                                   .withDisable(false)
-                                                   .withUpdate(true)
-                                                   .withWaitForClassloaderUnload(true)))) {
-        return false;
-      }
-    }
-
-    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptor);
+    return appliedWithoutRestart;
   }
 
   private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator, boolean showMessageOnError) {
@@ -378,6 +370,17 @@ public final class PluginDownloader {
       reportError(showMessageOnError, ex.getMessage());
       return null;
     }
+  }
+
+  private static boolean unloadDescriptorById(@NotNull PluginId pluginId) {
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(pluginId);
+    return descriptor != null &&
+           DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor) &&
+           DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
+                                                new DynamicPlugins.UnloadPluginOptions()
+                                                  .withDisable(false)
+                                                  .withUpdate(true)
+                                                  .withWaitForClassloaderUnload(true));
   }
 
   // creators-converters
