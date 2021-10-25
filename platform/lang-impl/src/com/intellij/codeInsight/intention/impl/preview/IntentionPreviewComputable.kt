@@ -86,7 +86,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
     val psiFileCopy = origFile.copy() as PsiFile
     ProgressManager.checkCanceled()
-    val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset)
+    val editorCopy = IntentionPreviewEditor(psiFileCopy, caretOffset, originalEditor.settings)
 
     val writable = originalEditor.document.isWritable
     try {
