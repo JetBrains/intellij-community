@@ -5,7 +5,9 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -25,10 +27,21 @@ enum class LabelPosition {
 @ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
+  /**
+   * @see [Constraints.horizontalAlign]
+   */
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
+  /**
+   * @see [Constraints.verticalAlign]
+   */
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
+  /**
+   * Marks column with the cell as a resizable one. Size and placement of component in columns are managed by [horizontalAlign]
+   *
+   * @see [Grid.resizableColumns]
+   */
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>
@@ -47,6 +60,9 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun visibleIf(predicate: ComponentPredicate): Cell<T>
 
+  /**
+   * Changes [component] font to bold
+   */
   fun bold(): Cell<T>
 
   /**
