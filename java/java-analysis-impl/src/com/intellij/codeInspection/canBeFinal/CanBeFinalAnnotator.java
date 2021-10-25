@@ -90,7 +90,6 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     }
   }
 
-
   @Override
   public void onMarkReferenced(RefElement refWhat,
                                RefElement refFrom,
@@ -98,18 +97,24 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                                boolean forReading,
                                boolean forWriting,
                                PsiElement referenceElement) {
+    if (!forWriting) return;
     if (!(refWhat instanceof RefField)) return;
-    if (!(refFrom instanceof RefMethod) ||
-        !((RefMethod)refFrom).isConstructor() ||
-        ((RefField)refWhat).getUastElement().getUastInitializer() != null ||
-        ((RefMethod)refFrom).getOwnerClass() != ((RefField)refWhat).getOwnerClass() ||
-        ((RefField)refWhat).isStatic()) {
-      if (forWriting &&
-          !(referencedFromClassInitializer && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) == null)) {
+    final RefField refField = (RefField)refWhat;
+    if (refFrom instanceof RefClass && refField.getOwnerClass() != refFrom) {
+      ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
+    }
+    else if (refField.getUastElement().getUastInitializer() != null) {
+      ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
+    }
+    else if (!(refFrom instanceof RefMethod) ||
+             !((RefMethod)refFrom).isConstructor() ||
+             ((RefMethod)refFrom).getOwnerClass() != refField.getOwnerClass() ||
+             refField.isStatic()) {
+      if (!referencedFromClassInitializer || PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) != null) {
         ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
-    else if (forWriting && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) != null) {
+    else if (PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) != null) {
       ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
     }
   }
