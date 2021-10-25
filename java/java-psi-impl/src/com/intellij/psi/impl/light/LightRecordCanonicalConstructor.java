@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
@@ -87,6 +89,31 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
                                             @NotNull PsiSubstitutor substitutor) {
       super(p, substitutor);
       myWrapper = wrapper;
+    }
+
+    public @Nullable PsiRecordComponent getRecordComponent() {
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
+      if (psiClass == null) return null;
+      PsiRecordComponent[] recordComponents = psiClass.getRecordComponents();
+      for (PsiRecordComponent recordComponent : recordComponents) {
+        if (Objects.equals(recordComponent.getName(), this.getName())) {
+          return recordComponent;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public @Nullable PsiModifierList getModifierList() {
+      PsiRecordComponent recordComponent = getRecordComponent();
+      if (recordComponent == null) return super.getModifierList();
+
+      return new LightModifierList(getPrototype()) {
+        @Override
+        public PsiAnnotation @NotNull [] getAnnotations() {
+          return recordComponent.getAnnotations();
+        }
+      };
     }
 
     @Override
