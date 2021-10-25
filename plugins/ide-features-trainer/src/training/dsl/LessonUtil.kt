@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -467,11 +466,17 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     if (clearHighlights) {
       LearningUiHighlightingManager.clearHighlights()
     }
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val result =
+    invokeInBackground {
+      val result = try {
         LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
           ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
         }
+      }
+      catch (e: Throwable) {
+        // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+        feature.complete(false)
+        throw IllegalStateException("Cannot find button for $actionId", e)
+      }
       taskInvokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {
