@@ -600,7 +600,7 @@ public class JBTabsImpl extends JComponent
         showLeftFadeout |= label.getX() < 0;
         boolean needShowRightFadeout = moreRect != null
                           && label.getX() + label.getPreferredSize().width > moreRect.x
-                          && label.getY() == moreRect.y;
+                          && Math.abs(label.getY() - moreRect.y) < moreRect.height / 2;
         if (needShowRightFadeout && !showRightFadeout) {
           moreY = label.getY();
           moreHeight = label.getHeight();
@@ -748,7 +748,8 @@ public class JBTabsImpl extends JComponent
     if (NEW_TABS) {
       return myTabsLayout != null && myTabsLayout.ignoreTabLabelLimitedWidthWhenPaint();
     } else {
-      return myLayout instanceof ScrollableSingleRowLayout /*|| myLayout instanceof TableLayout*/;
+      return myLayout instanceof ScrollableSingleRowLayout
+             || (myLayout instanceof TableLayout && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow());
     }
   }
 
