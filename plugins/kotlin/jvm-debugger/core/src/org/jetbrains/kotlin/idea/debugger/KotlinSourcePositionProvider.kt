@@ -20,6 +20,7 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.load.java.possibleGetMethodNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope.Companion.possibleGetMethodNames
 
 class KotlinSourcePositionProvider : SourcePositionProvider() {
     override fun computeSourcePosition(
