@@ -39,7 +39,7 @@ class UsageInGeneratedCodeFilteringRuleProvider : UsageFilteringRuleProvider {
 
 private class UsageInGeneratedCodeFilteringRule(private val project: Project) : UsageFilteringRule {
 
-  override fun isVisible(usage: Usage, targets: Array<out UsageTarget>?): Boolean {
+  override fun isVisible(usage: Usage, targets: Array<out UsageTarget>): Boolean {
     return usage !is UsageInFile || usage.file.let { file ->
       file == null || !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)
     }

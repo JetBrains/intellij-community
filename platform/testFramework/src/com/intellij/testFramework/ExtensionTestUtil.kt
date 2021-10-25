@@ -17,7 +17,7 @@ object ExtensionTestUtil {
    */
   @JvmOverloads
   @JvmStatic
-  fun <T> maskExtensions(pointName: ExtensionPointName<T>,
+  fun <T: Any> maskExtensions(pointName: ExtensionPointName<T>,
                          newExtensions: List<T>,
                          parentDisposable: Disposable,
                          fireEvents: Boolean = true,
@@ -34,7 +34,7 @@ object ExtensionTestUtil {
    */
   @JvmStatic
   @JvmOverloads
-  fun <T> addExtensions(pointName: ExtensionPointName<T>,
+  fun <T: Any> addExtensions(pointName: ExtensionPointName<T>,
                         extensionsToAdd: List<T>,
                         parentDisposable: Disposable,
                         fireEvents: Boolean = true,
