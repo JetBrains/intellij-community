@@ -4,5 +4,4 @@ package org.jetbrains.uast.test.kotlin.comparison
 
 import org.jetbrains.uast.test.common.kotlin.LegacyUastValuesTestBase
 
-
 abstract class AbstractFE1LegacyUastValuesTest : AbstractFE1UastValuesTest(), LegacyUastValuesTestBase
