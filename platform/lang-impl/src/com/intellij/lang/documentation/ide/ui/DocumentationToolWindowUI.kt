@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import javax.swing.JComponent
@@ -43,11 +42,7 @@ internal class DocumentationToolWindowUI(
     }
 
     Disposer.register(preview, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, browser)))
-    Disposer.register(preview, browser.addStateListener { request, _, byLink ->
-      if (byLink && Registry.`is`("documentation.v2.turn.off.preview.by.links")) {
-        turnOffPreview()
-        return@addStateListener
-      }
+    Disposer.register(preview, browser.addStateListener { request, _, _ ->
       val presentation = request.presentation
       content.icon = presentation.icon
       content.displayName = "* ${presentation.presentableText}"
