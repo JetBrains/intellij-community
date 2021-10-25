@@ -12195,6 +12195,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replacePutWithAssignment/nonMap.kt");
         }
 
+        @TestMetadata("notMutableMapPut.kt")
+        public void testNotMutableMapPut() throws Exception {
+            runTest("testData/inspectionsLocal/replacePutWithAssignment/notMutableMapPut.kt");
+        }
+
+        @TestMetadata("notMutableMapPut2.kt")
+        public void testNotMutableMapPut2() throws Exception {
+            runTest("testData/inspectionsLocal/replacePutWithAssignment/notMutableMapPut2.kt");
+        }
+
         @TestMetadata("putAsExpression.kt")
         public void testPutAsExpression() throws Exception {
             runTest("testData/inspectionsLocal/replacePutWithAssignment/putAsExpression.kt");
