@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableAllInspe
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableSingleInspection
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
+import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
@@ -58,10 +59,15 @@ class PerformanceSuite {
             stats: StatsScope,
             block: (StatsScope) -> Unit
         ) {
-            TeamCity.suite(name) {
-                stats.stats.use {
-                    block(stats)
+            ExpressionsOfTypeProcessor.prodMode()
+            try {
+                TeamCity.suite(name) {
+                    stats.stats.use {
+                        block(stats)
+                    }
                 }
+            } finally {
+                ExpressionsOfTypeProcessor.resetMode()
             }
         }
 
