@@ -53,9 +53,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
       JavaSdkVersion sdkVersion = ((JavaSdk)sdk.getSdkType()).getVersion(sdk);
-      if (sdkVersion != null && sdkVersion.getMaxLanguageLevel().isLessThan(LanguageLevel.JDK_1_6)) {
-        return;
-      }
+      if (sdkVersion != null && sdkVersion.getMaxLanguageLevel().isLessThan(LanguageLevel.JDK_1_6)) return;
     }
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
@@ -94,6 +92,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
         moduleProfile.setEnabled(true);
         compilerConfiguration.addModuleProcessorProfile(moduleProfile);
       }
+      if (!moduleProfile.isEnabled()) return;
 
       moduleProfile.setOutputRelativeToContentRoot(true);
       moduleProfile.setObtainProcessorsFromClasspath(true);
