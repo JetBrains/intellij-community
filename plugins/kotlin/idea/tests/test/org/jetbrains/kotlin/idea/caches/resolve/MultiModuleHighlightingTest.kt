@@ -234,39 +234,6 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         checkHighlightingInProject()
     }
 
-    fun testJvmExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(sources, options = extraOptions).compile()
-
-        module("usage").addLibrary(lib)
-        checkHighlightingInProject()
-    }
-
-    fun testJsExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(
-            sources,
-            platform = KotlinCompilerStandalone.Platform.JavaScript(MockLibraryFacility.MOCK_LIBRARY_NAME, "lib"),
-            options = extraOptions
-        ).compile()
-
-        val usageModule = module("usage")
-        usageModule.makeJsModule()
-        usageModule.addLibrary(lib, kind = JSLibraryKind)
-
-        checkHighlightingInProject()
-    }
-
     fun testResolutionAnchorsAndBuiltins() {
         val jarForCompositeLibrary = KotlinCompilerStandalone(
             sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart")),
@@ -324,10 +291,4 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         }
     }
 
-    private fun Module.makeJsModule() {
-        setupKotlinFacet {
-            settings.compilerArguments = K2JSCompilerArguments()
-            settings.targetPlatform = JSLibraryKind.compilerPlatform
-        }
-    }
 }
