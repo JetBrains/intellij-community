@@ -62,6 +62,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
       if (element instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)element;
         RefClass aClass = refMethod.getOwnerClass();
+        if (aClass != null) aClass.waitForInitialized();
         if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || (aClass != null && aClass.isAnonymous()) ||
             (aClass != null && aClass.isInterface())) {
