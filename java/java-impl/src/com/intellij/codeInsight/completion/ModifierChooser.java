@@ -96,11 +96,11 @@ public final class ModifierChooser {
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
     if (HighlightingFeature.SEALED_CLASSES.isAvailable(scope)) {
-      final List<String> ret = new ArrayList<>();
       if (list == null) {
-        ContainerUtil.addAll(ret, CLASS_MODIFIERS_WITH_SEALED);
+        return CLASS_MODIFIERS_WITH_SEALED.clone();
       }
       else {
+        final List<String> ret = new ArrayList<>();
         addIfNotPresent(PsiModifier.PUBLIC, list, ret);
         if (!list.hasModifierProperty(PsiModifier.FINAL)) {
           boolean hasNonSealed = list.hasModifierProperty(PsiModifier.NON_SEALED);
@@ -119,8 +119,8 @@ public final class ModifierChooser {
             }
           }
         }
+        return ArrayUtilRt.toStringArray(ret);
       }
-      return ArrayUtilRt.toStringArray(ret);
     }
     return addKeywords(list, CLASS_MODIFIERS);
   }
