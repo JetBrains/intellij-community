@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtProperty;
 
@@ -28,6 +29,11 @@ public class KotlinTopLevelPropertyFqnNameIndex extends StringStubIndexExtension
     @Override
     public StubIndexKey<String, KtProperty> getKey() {
         return KEY;
+    }
+
+    @NotNull
+    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtProperty> processor) {
+        StubIndex.getInstance().processElements(KEY,  s,project, scope, KtProperty.class, processor);
     }
 
     @NotNull

@@ -141,9 +141,10 @@ class StaticMembersCompletion(
         extensionsFromObjects.asSequence()
             .filter { it !in alreadyAdded }
             .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
-            .forEach { collector.addElement(it) }
-
-        collector.flushToResultSet()
+            .forEach {
+                collector.addElement(it)
+                collector.flushToResultSet()
+            }
     }
 
     /**
@@ -163,25 +164,28 @@ class StaticMembersCompletion(
     ) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
 
-        val objectMemberExtensions = indicesHelper.getAllCallablesFromSubclassObjects(
+        indicesHelper.processAllCallablesFromSubclassObjects(
             callTypeAndReceiver,
             receiverTypes,
-            nameFilter = { prefixMatcher.prefixMatches(it) }
+            nameFilter = { prefixMatcher.prefixMatches(it) },
+            processor = { callableDescriptor ->
+                if (callableDescriptor.isExtension && callableDescriptor !in alreadyAdded) {
+                    for (element in factory.createStandardLookupElementsForDescriptor(callableDescriptor, useReceiverTypes = true)) {
+                        collector.addElement(element)
+                        collector.flushToResultSet()
+                    }
+                }
+            }
         )
-
-        objectMemberExtensions
-            .filter { it.isExtension && it !in alreadyAdded }
-            .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
-            .forEach { collector.addElement(it) }
-
-        collector.flushToResultSet()
     }
 
     fun completeFromIndices(indicesHelper: KotlinIndicesHelper, collector: LookupElementsCollector) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
-        processMembersFromIndices(indicesHelper) {
-            factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true).forEach { collector.addElement(it) }
-            collector.flushToResultSet()
+        processMembersFromIndices(indicesHelper) { descriptor ->
+            factory.createStandardLookupElementsForDescriptor(descriptor, useReceiverTypes = true).forEach {
+                collector.addElement(it)
+                collector.flushToResultSet()
+            }
         }
     }
 }

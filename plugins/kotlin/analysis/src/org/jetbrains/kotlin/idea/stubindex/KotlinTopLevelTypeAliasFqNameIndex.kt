@@ -7,16 +7,18 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class KotlinTopLevelTypeAliasFqNameIndex : StringStubIndexExtension<KtTypeAlias>() {
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
     override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        StubIndex.getElements<String, KtTypeAlias>(
-            KEY, s, project,
-            scope, KtTypeAlias::class.java
-        )
+        StubIndex.getElements<String, KtTypeAlias>(KEY, s, project, scope, KtTypeAlias::class.java)
+
+    fun processElements(fqName: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtTypeAlias>) {
+        StubIndex.getInstance().processElements(KEY, fqName, project, scope, KtTypeAlias::class.java, processor)
+    }
 
     companion object {
         val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelTypeAliasFqNameIndex::class.java)

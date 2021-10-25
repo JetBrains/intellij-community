@@ -47,11 +47,13 @@ class AllClassesCompletion(
             }
         }
 
-        kotlinIndicesHelper.getKotlinClasses({ prefixMatcher.prefixMatches(it) }, kindFilter = kindFilter)
-            .forEach { classifierDescriptorCollector(it) }
+        kotlinIndicesHelper.processKotlinClasses(
+            { prefixMatcher.prefixMatches(it) },
+            kindFilter = kindFilter,
+            processor = { classifierDescriptorCollector(it) })
 
         if (includeTypeAliases) {
-            kotlinIndicesHelper.getTopLevelTypeAliases(prefixMatcher.asStringNameFilter()).forEach { classifierDescriptorCollector(it) }
+            kotlinIndicesHelper.processTopLevelTypeAliases(prefixMatcher.asStringNameFilter()) { classifierDescriptorCollector(it) }
         }
 
         if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {

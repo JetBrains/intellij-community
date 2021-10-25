@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
+import com.intellij.util.Processors
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
@@ -254,7 +255,11 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 
                 indicesHelper.getClassesByName(expression, name).filterTo(result, filterByCallType)
 
-                indicesHelper.getTopLevelTypeAliases { it == name }.filterTo(result, filterByCallType)
+                indicesHelper.processTopLevelTypeAliases({ it == name }, {
+                    if (filterByCallType(it)) {
+                        result.add(it)
+                    }
+                })
 
                 indicesHelper.getTopLevelCallablesByName(name).filterTo(result, filterByCallType)
             }
@@ -726,15 +731,21 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
 
 
 private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> =
-    if (TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile).isJvm())
+    if (TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile).isJvm()) {
         getJvmClassesByName(name)
-    else
-        getKotlinClasses(
+    } else {
+        val result = mutableListOf<ClassDescriptor>()
+        val processor = Processors.cancelableCollectProcessor(result)
+        // Enum entries should be contributed with members import fix
+        processKotlinClasses(
             nameFilter = { it == name },
             // Enum entries should be contributed with members import fix
             psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
             kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY },
+            processor = { processor.process(it) }
         )
+        result
+    }
 
 private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDescriptor ->
     callType.descriptorKindFilter.accepts(descriptor)

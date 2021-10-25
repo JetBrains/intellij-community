@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
@@ -35,5 +36,10 @@ public class KotlinFullClassNameIndex extends StringStubIndexExtension<KtClassOr
     @Override
     public Collection<KtClassOrObject> get(@NotNull String fqName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
         return StubIndex.getElements(KEY, fqName, project, scope, KtClassOrObject.class);
+    }
+
+    @NotNull
+    public void processElements(@NotNull String fqName, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtClassOrObject> processor) {
+        StubIndex.getInstance().processElements(KEY,  fqName,project, scope, KtClassOrObject.class, processor);
     }
 }

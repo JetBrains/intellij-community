@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 abstract class KotlinExtensionsByReceiverTypeIndex : StringStubIndexExtension<KtCallableDeclaration>() {
@@ -16,6 +17,10 @@ abstract class KotlinExtensionsByReceiverTypeIndex : StringStubIndexExtension<Kt
 
     final override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> =
       StubIndex.getElements(key, s, project, scope, KtCallableDeclaration::class.java)
+
+    final fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtCallableDeclaration>) {
+        StubIndex.getInstance().processElements(key, s, project, scope, KtCallableDeclaration::class.java, processor)
+    }
 
     private companion object {
         private const val SEPARATOR = '\n'
