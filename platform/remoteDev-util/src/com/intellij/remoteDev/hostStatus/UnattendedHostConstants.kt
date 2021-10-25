@@ -11,7 +11,6 @@ data class UnattendedHostPerProjectStatus(
   var dateLastOpened: Long? = null,
 
   val joinLink: String,
-  val permaLink: String? = null,
   val httpLink: String?,
   val gatewayLink: String?,
 
