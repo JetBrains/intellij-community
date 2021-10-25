@@ -899,6 +899,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return myStatusPanel;
   }
 
+  public @Nullable String getStatusMessage() {
+    return myStatusPanel.getMessage();
+  }
+
   @RequiresEdt
   public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
     if (myReadOnlyLockSet && respectReadOnlyLock) return false;
