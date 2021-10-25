@@ -31,6 +31,10 @@ public interface RemoteCredentials {
 
   boolean isStorePassphrase();
 
+  default boolean isUseOpenSSHConfig() {
+    return true;
+  }
+
   @ApiStatus.Experimental
   default @Nullable SshConnectionConfigPatch getConnectionConfigPatch() {
     return null;

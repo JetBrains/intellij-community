@@ -26,6 +26,8 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
 
   void setAuthType(@NotNull AuthType authType);
 
+  void setUseOpenSSHConfig(boolean useOpenSSHConfig);
+
   @ApiStatus.Experimental
   void setConnectionConfigPatch(@Nullable SshConnectionConfigPatch patch);
 }
