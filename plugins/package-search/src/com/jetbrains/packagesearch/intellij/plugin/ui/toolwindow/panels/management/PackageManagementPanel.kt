@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.newCoroutineContext
@@ -110,7 +111,8 @@ internal class PackageManagementPanel(
     init {
         updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
 
-        project.uiStateSource.targetModulesFlow.onEach { targetModulesChannel.send(it) }
+        project.uiStateSource.targetModulesFlow
+            .onEach { targetModulesChannel.send(it) }
             .launchIn(this)
 
         modulesScrollPanel.apply {
@@ -123,7 +125,9 @@ internal class PackageManagementPanel(
         packagesListPanel.content.minimumSize = Dimension(250.scaled(), 0)
 
         project.packageSearchProjectService.moduleModelsStateFlow
-            .onEach { data -> modulesTree.display(computeModuleTreeModel(data)) }
+            .map { computeModuleTreeModel(it) }
+            .flowOn(Dispatchers.Default)
+            .onEach { modulesTree.display(it) }
             .flowOn(Dispatchers.AppUI)
             .launchIn(this)
 
@@ -134,16 +138,17 @@ internal class PackageManagementPanel(
             packagesListPanel.onlyStableStateFlow
         ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
             targetModules, onlyStable ->
-            packageDetailsPanel.display(
-                PackageDetailsPanel.ViewModel(
-                    selectedPackageModel = selectedUiPackageModel,
-                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                    targetModules = targetModules,
-                    onlyStable = onlyStable,
-                    invokeLaterScope = this
-                )
+            PackageDetailsPanel.ViewModel(
+                selectedPackageModel = selectedUiPackageModel,
+                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                targetModules = targetModules,
+                onlyStable = onlyStable,
+                invokeLaterScope = this
             )
-        }.launchIn(this)
+        }.flowOn(Dispatchers.Default)
+            .onEach { packageDetailsPanel.display(it) }
+            .flowOn(Dispatchers.AppUI)
+            .launchIn(this)
     }
 
     private fun updatePackageDetailsVisible(becomeVisible: Boolean) {

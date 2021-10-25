@@ -86,6 +86,7 @@ internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
 internal fun PackageVersionUtils.highestSensibleVersionByNameOrNull(
     availableVersions: List<NormalizedPackageVersion<*>>
 ): NormalizedPackageVersion<*>? {
+
     require(availableVersions.isNotEmpty()) { "Cannot find highest version in an empty list" }
 
     return availableVersions.asSequence()

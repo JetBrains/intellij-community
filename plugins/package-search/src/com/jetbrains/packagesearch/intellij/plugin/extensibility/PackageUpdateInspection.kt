@@ -21,9 +21,12 @@ import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsFor
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
@@ -107,51 +110,53 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             ?: return null
 
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
-        for (packageUpdateInfo in availableUpdates) {
-            val currentVersion = packageUpdateInfo.usageInfo.version
-            val scope = packageUpdateInfo.usageInfo.scope
-            val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
-            val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: continue
-            if (versionElement.containingFile != file) continue
+        runBlocking {
+            availableUpdates.parallelForEach { packageUpdateInfo ->
+                val currentVersion = packageUpdateInfo.usageInfo.version
+                val scope = packageUpdateInfo.usageInfo.scope
+                val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
+                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@parallelForEach
+                if (versionElement.containingFile != file) return@parallelForEach
 
-            val targetModules = TargetModules.One(moduleModel)
-            val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
+                val targetModules = TargetModules.One(moduleModel)
+                val allKnownRepositories = service.allInstalledKnownRepositoriesFlow.value
 
-            val packageOperations = computeActionsFor(
-                packageModel = packageUpdateInfo.packageModel,
-                targetModules = targetModules,
-                knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
-                onlyStable = onlyStable
-            )
+                val packageOperations = project.lifecycleScope.computeActionsFor(
+                    packageModel = packageUpdateInfo.packageModel,
+                    targetModules = targetModules,
+                    knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules),
+                    onlyStable = onlyStable
+                )
 
-            val identifier = packageUpdateInfo.packageModel.identifier
-            if (!packageOperations.canUpgradePackage) {
-                logWarn { "Expecting to have upgrade actions for package ${identifier.rawValue} to $targetModules" }
-                continue
-            }
-
-            problemsHolder.registerProblem(
-                versionElement,
-                PackageSearchBundle.message(
-                    "packagesearch.inspection.upgrade.description",
-                    packageUpdateInfo.targetVersion.originalVersion.displayName
-                ),
-                PackageSearchDependencyUpgradeQuickFix(
-                    element = versionElement,
-                    identifier = identifier,
-                    targetVersion = packageUpdateInfo.targetVersion.originalVersion,
-                    operations = packageOperations.primaryOperations
-                ),
-                LocalQuickFix(
-                    PackageSearchBundle.message(
-                        "packagesearch.quickfix.upgrade.exclude",
-                        identifier.rawValue
-                    )
-                ) {
-                    excludeList.add(identifier.rawValue)
-                    ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+                val identifier = packageUpdateInfo.packageModel.identifier
+                if (!packageOperations.canUpgradePackage) {
+                    logWarn { "Expecting to have upgrade actions for package ${identifier.rawValue} to $targetModules" }
+                    return@parallelForEach
                 }
-            )
+
+                problemsHolder.registerProblem(
+                    versionElement,
+                    PackageSearchBundle.message(
+                        "packagesearch.inspection.upgrade.description",
+                        packageUpdateInfo.targetVersion.originalVersion.displayName
+                    ),
+                    PackageSearchDependencyUpgradeQuickFix(
+                        element = versionElement,
+                        identifier = identifier,
+                        targetVersion = packageUpdateInfo.targetVersion.originalVersion,
+                        operations = packageOperations.primaryOperations.await()
+                    ),
+                    LocalQuickFix(
+                        PackageSearchBundle.message(
+                            "packagesearch.quickfix.upgrade.exclude",
+                            identifier.rawValue
+                        )
+                    ) {
+                        excludeList.add(identifier.rawValue)
+                        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+                    }
+                )
+            }
         }
 
         return problemsHolder.resultsArray

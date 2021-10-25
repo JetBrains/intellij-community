@@ -17,20 +17,20 @@ internal data class RootDataModel(
     val searchQuery: String
 ) {
 
-    companion object {
-
-        val EMPTY = RootDataModel(
-            moduleModels = emptyList(),
-            packageModels = emptyList(),
-            packagesToUpdate = PackagesToUpgrade.EMPTY,
-            headerData = PackagesHeaderData.EMPTY,
-            targetModules = TargetModules.None,
-            allKnownRepositories = KnownRepositories.All.EMPTY,
-            knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY,
-            selectedPackage = null,
-            filterOptions = FilterOptions(),
-            traceInfo = TraceInfo.EMPTY,
-            searchQuery = ""
-        )
-    }
+//    companion object {
+//
+//        val EMPTY = RootDataModel(
+//            moduleModels = emptyList(),
+//            packageModels = emptyList(),
+//            packagesToUpdate = PackagesToUpgrade.EMPTY,
+//            headerData = PackagesHeaderData.EMPTY,
+//            targetModules = TargetModules.None,
+//            allKnownRepositories = KnownRepositories.All.EMPTY,
+//            knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY,
+//            selectedPackage = null,
+//            filterOptions = FilterOptions(),
+//            traceInfo = TraceInfo.EMPTY,
+//            searchQuery = ""
+//        )
+//    }
 }

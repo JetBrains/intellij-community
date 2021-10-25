@@ -6,6 +6,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFailure
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOn
@@ -21,25 +22,30 @@ internal open class PackageManagementOperationExecutor(
 
     private val operationExecutor = ModuleOperationExecutor()
 
+    private suspend fun execute(operations: List<PackageSearchOperation<*>>) {
+        val failures = operations.asFlow()
+            .mapNotNull { operationExecutor.doOperation(it) }
+            .flowOn(Dispatchers.AppUI)
+            .toList()
+
+        if (failures.size == operations.size) {
+            onOperationsSuccessful()
+            onOperationsFail(FailureType.SOME, failures)
+        } else if (failures.isNotEmpty()) {
+            onOperationsFail(FailureType.ALL, failures)
+        } else onOperationsSuccessful()
+    }
+
+    override fun executeOperations(operations: Deferred<List<PackageSearchOperation<*>>>) {
+        coroutineScope.launch { operations.await().takeIf { it.isNotEmpty() }?.let { execute(it) } }
+    }
+
     override fun executeOperations(operations: List<PackageSearchOperation<*>>) {
         if (operations.isEmpty()) {
             return
         }
 
-        coroutineScope.launch {
-            val failures = operations.asFlow()
-                .mapNotNull { operationExecutor.doOperation(it) }
-                .flowOn(Dispatchers.AppUI)
-                .toList()
-
-            if (failures.size == operations.size) {
-                onOperationsSuccessful()
-                onOperationsFail(FailureType.SOME, failures)
-            } else if (failures.isNotEmpty()) {
-                onOperationsFail(FailureType.ALL, failures)
-            } else onOperationsSuccessful()
-
-        }
+        coroutineScope.launch { execute(operations) }
     }
 
     enum class FailureType {

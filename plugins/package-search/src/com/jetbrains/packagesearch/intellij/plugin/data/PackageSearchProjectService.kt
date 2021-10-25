@@ -17,16 +17,15 @@ import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
+import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,7 +35,6 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -47,7 +45,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 import kotlin.time.toDuration
 
@@ -63,7 +60,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     private val installedPackagesLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
 
-    private val operationExecutedChannel = Channel<Unit>(onBufferOverflow = BufferOverflow.DROP_LATEST)
+    private val operationExecutedChannel = Channel<Unit>()
 
     val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
@@ -215,11 +212,3 @@ private fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackVa
         retryChannel?.send(Unit)
         emit(fallbackValue)
     }
-
-private fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
-    if (emitAtStartup) emit(Unit)
-    while (true) {
-        delay(each)
-        emit(Unit)
-    }
-}

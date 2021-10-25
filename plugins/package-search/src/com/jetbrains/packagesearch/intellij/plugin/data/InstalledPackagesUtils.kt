@@ -27,7 +27,7 @@ internal suspend fun installedPackages(
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
 
     for (module in projectModules) {
-        for (dependency in dependenciesByModule[module] ?: emptyList()) {
+        dependenciesByModule[module]?.forEach { dependency ->
             // Skip packages we don't know the version for
             val rawVersion = dependency.coordinates.version
 
