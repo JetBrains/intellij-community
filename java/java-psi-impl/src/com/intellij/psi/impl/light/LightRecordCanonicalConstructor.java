@@ -117,6 +117,13 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     }
 
     @Override
+    public @NotNull PsiElement getNavigationElement() {
+      PsiRecordComponent recordComponent = getRecordComponent();
+      if (recordComponent != null) return recordComponent;
+      return super.getNavigationElement();
+    }
+
+    @Override
     public PsiElement getParent() {
       return myWrapper;
     }
