@@ -17,6 +17,21 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.6.0-RC2</h3>
+    <ul>
+      <li>Stabilization of new features from 1.6.0-M1 and 1.6.0-RC</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.0-RC2">changelog</a>.
+    <br><br>
+    <h3>1.6.0-RC</h3>
+    <ul>
+      <li>New language features enabled by default: suspend functions as supertypes, sealed whens, instantiation of annotation classes</li>
+      <li>Gradle: removed deprecated options noReflect, useIR, includeRuntime</li>
+      <li>Stdlib: stabilization of experimental APIs, aligning behavior of some functions on the JS platform with that on JVM</li>
+      <li>Stabilization of new features from 1.6.0-M1</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.0-RC">changelog</a>.
+    <br><br>
     <h3>1.6.0-M1</h3>
     <ul>
       <li>Language: support for conversions from regular functional types to suspending ones, support for repeatable annotations with the `RUNTIME` retention</li>
