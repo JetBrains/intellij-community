@@ -321,11 +321,11 @@ public class EditorComposite implements Disposable {
     manageTopOrBottomComponent(editor, component, true, true);
   }
 
-  void addBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
+  public void addBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, false, false);
   }
 
-  void removeBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
+  public void removeBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, false, true);
   }
 

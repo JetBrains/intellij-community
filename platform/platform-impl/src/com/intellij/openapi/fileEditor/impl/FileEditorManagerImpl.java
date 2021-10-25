@@ -983,8 +983,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                  @NotNull VirtualFile file,
                                                                  @Nullable HistoryEntry entry,
                                                                  @NotNull FileEditorOpenOptions options,
-                                                                 FileEditorProvider[] newProviders,
-                                                                 AsyncFileEditorProvider.Builder[] builders) {
+                                                                 FileEditorProvider @Nullable [] newProviders,
+                                                                 AsyncFileEditorProvider.Builder @Nullable [] builders) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
@@ -993,29 +993,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     if (newEditor) {
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
 
-      FileEditor[] newEditors = new FileEditor[newProviders.length];
-      for (int i = 0; i < newProviders.length; i++) {
-        try {
-          FileEditorProvider provider = newProviders[i];
-          FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
-          LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " +
-                                           (provider == null ? null : provider.getClass().getName()));
-          newEditors[i] = editor;
-          // Register PropertyChangeListener into editor
-          editor.addPropertyChangeListener(myEditorPropertyChangeListener);
-          editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception | AssertionError e) {
-          LOG.error(e);
-        }
-      }
-
-      // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
-      // After that we have to select opened editor.
-      composite = createComposite(file, newEditors, newProviders);
+      LOG.assertTrue(newProviders != null && builders != null);
+      composite = createComposite(file, newProviders, builders);
       if (composite == null) return null;
 
       myOpenedEditors.add(composite);
@@ -1115,6 +1094,36 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       });
     }
 
+    return composite;
+  }
+
+  protected @Nullable EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
+                                                                  FileEditorProvider @NotNull [] providers,
+                                                                  AsyncFileEditorProvider.Builder @NotNull [] builders) {
+    EditorWithProviderComposite composite;
+    FileEditor[] newEditors = new FileEditor[providers.length];
+    for (int i = 0; i < providers.length; i++) {
+      try {
+        FileEditorProvider provider = providers[i];
+        FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
+        LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " +
+                                         (provider == null ? null : provider.getClass().getName()));
+        newEditors[i] = editor;
+        editor.addPropertyChangeListener(myEditorPropertyChangeListener);
+        editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception | AssertionError e) {
+        LOG.error(e);
+      }
+    }
+
+    // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
+    // After that we have to select opened editor.
+    composite = createComposite(file, newEditors, providers);
+    if (composite == null) return null;
     return composite;
   }
 
@@ -1721,7 +1730,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return status != FileStatus.UNKNOWN && status != FileStatus.NOT_CHANGED;
   }
 
-  void disposeComposite(@NotNull EditorWithProviderComposite editor) {
+  protected void disposeComposite(@NotNull EditorComposite editor) {
     myOpenedEditors.remove(editor);
 
     if (getAllEditors().length == 0) {
