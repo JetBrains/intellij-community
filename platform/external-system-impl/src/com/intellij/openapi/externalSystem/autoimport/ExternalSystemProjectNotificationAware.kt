@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -10,24 +9,24 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
-class ProjectNotificationAware(private val project: Project) : Disposable {
+class ExternalSystemProjectNotificationAware(private val project: Project) : ProjectNotificationAware, Disposable {
   private val isHidden = AtomicBoolean(false)
   private val projectsWithNotification = ContainerUtil.newConcurrentSet<ExternalSystemProjectId>()
 
-  fun notificationNotify(projectAware: ExternalSystemProjectAware) {
+  override fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
     LOG.debug("${projectId.debugName}: Notify notification")
     projectsWithNotification.add(projectId)
     revealNotification()
   }
 
-  fun notificationExpire(projectId: ExternalSystemProjectId) {
+  override fun notificationExpire(projectId: ExternalSystemProjectId) {
     LOG.debug("${projectId.debugName}: Expire notification")
     projectsWithNotification.remove(projectId)
     revealNotification()
   }
 
-  fun notificationExpire() {
+  override fun notificationExpire() {
     LOG.debug("Expire notification")
     projectsWithNotification.clear()
     revealNotification()
@@ -44,13 +43,13 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
 
   private fun revealNotification() = setHideStatus(false)
 
-  fun hideNotification() = setHideStatus(true)
+  override fun hideNotification() = setHideStatus(true)
 
-  fun isNotificationVisible(): Boolean {
+  override fun isNotificationVisible(): Boolean {
     return !isHidden.get() && projectsWithNotification.isNotEmpty()
   }
 
-  fun getSystemIds(): Set<ProjectSystemId> {
+  override fun getSystemIds(): Set<ProjectSystemId> {
     return projectsWithNotification.map { it.systemId }.toSet()
   }
 
@@ -61,8 +60,5 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
-
-    @JvmStatic
-    fun getInstance(project: Project) = project.service<ProjectNotificationAware>()
   }
 }

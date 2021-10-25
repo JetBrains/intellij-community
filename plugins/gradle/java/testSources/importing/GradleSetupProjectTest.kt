@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
@@ -83,7 +84,7 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
   }
 
   override fun assertDefaultProjectState(project: Project) {
-    val notificationAware = ProjectNotificationAware.getInstance(myProject)
+    val notificationAware = ProjectNotificationAware.getInstance(myProject) as ExternalSystemProjectNotificationAware
     invokeAndWaitIfNeeded {
       assertEmpty(notificationAware.getProjectsWithNotification())
     }
