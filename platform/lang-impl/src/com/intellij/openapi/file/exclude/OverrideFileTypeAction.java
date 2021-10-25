@@ -75,7 +75,7 @@ class OverrideFileTypeAction extends AnAction {
     return Arrays.stream(files)
       .filter(file -> file != null && !file.isDirectory())
       .filter(additionalPredicate)
-      .toArray(VirtualFile[]::new);
+      .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
 
   private static class ChangeToThisFileTypeAction extends AnAction {
