@@ -921,7 +921,7 @@ public final class ConfigImportHelper {
           downloader.setDownloadFunction(options.downloadFunction);
         }
         if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
-          PluginInstaller.unpackPlugin(downloader.getFile().toPath(), newPluginsDir);
+          PluginInstaller.unpackPlugin(downloader.getFilePath(), newPluginsDir);
           log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
           iterator.remove();
         }

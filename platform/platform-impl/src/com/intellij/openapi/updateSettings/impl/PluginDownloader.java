@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.application.options.RegistryManager;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
@@ -146,8 +148,13 @@ public final class PluginDownloader {
     return myDescriptor;
   }
 
-  public File getFile() {
-    return myFile;
+  public @NotNull Path getFilePath() throws IOException {
+    if (myFile != null) {
+      return myFile.toPath();
+    }
+    else {
+      throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
+    }
   }
 
   public boolean isShownErrors() {
@@ -316,16 +323,16 @@ public final class PluginDownloader {
   }
 
   public void install() throws IOException {
-    if (myFile == null) {
-      throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
-    }
+    boolean loaded = LoadingState.COMPONENTS_LOADED.isOccurred();
 
-    boolean deletePluginSource = !Registry.is("ide.plugins.keep.archive", true);
-    PluginInstaller.installAfterRestart(myFile.toPath(), deletePluginSource, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(getFilePath(),
+                                        !loaded || RegistryManager.getInstance().is("ide.plugins.keep.archive"),
+                                        myOldFile,
+                                        myDescriptor);
 
-    InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
-    if (state != null) {
-      state.onPluginInstall(myDescriptor, PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
+    if (loaded) {
+      InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,
+                                                          PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
     }
     else {
       InstalledPluginsState.addPreInstalledPlugin(myDescriptor);
