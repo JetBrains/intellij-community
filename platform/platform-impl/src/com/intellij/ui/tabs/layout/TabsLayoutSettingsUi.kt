@@ -32,7 +32,9 @@ class TabsLayoutSettingsUi {
           return@addActionListener
         }
 
-        var availableTabsPositions: Array<Int>? = selectedInfo.getAvailableTabsPositions();
+        @Suppress("UNCHECKED_CAST")
+        var availableTabsPositions: Array<Int>? = selectedInfo.getAvailableTabsPositions() as Array<Int>?;
+
         if (availableTabsPositions == null || availableTabsPositions.isEmpty()) {
           tabPlacementComboBoxModel.removeAllElements()
           tabPlacementComboBoxModel.addElement(TOP);
