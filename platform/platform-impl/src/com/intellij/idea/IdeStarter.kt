@@ -142,8 +142,8 @@ open class IdeStarter : ApplicationStarter {
       }
 
       val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
       @Suppress("DEPRECATION")
@@ -200,8 +200,8 @@ open class IdeStarter : ApplicationStarter {
                                      app: ApplicationEx,
                                      lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
       val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
 
@@ -211,7 +211,7 @@ open class IdeStarter : ApplicationStarter {
 
       val recentProjectManager = RecentProjectsManager.getInstance()
       return (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
-      else CompletableFuture.completedFuture(true))
+              else CompletableFuture.completedFuture(true))
         .thenAccept { isOpened ->
           if (!isOpened) {
             ApplicationManager.getApplication().invokeLater {
