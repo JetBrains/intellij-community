@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized.Parameters
 import java.io.File
 
 @RunWith(value = Parameterized::class)
+@Suppress("ACCIDENTAL_OVERRIDE")
 class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     companion object {
         @JvmStatic
