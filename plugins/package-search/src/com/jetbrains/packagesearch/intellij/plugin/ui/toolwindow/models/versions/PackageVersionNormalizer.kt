@@ -6,10 +6,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.TimestampLike
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 import org.apache.commons.collections.map.LRUMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 internal class PackageVersionNormalizer private constructor() {
 
     private val versionsCache = LRUMap(2_000)
+
+    private val lock = ReentrantReadWriteLock()
 
     private val HEX_STRING_LETTER_CHARS = 'a'..'f'
 
@@ -61,7 +66,9 @@ internal class PackageVersionNormalizer private constructor() {
 
     fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
         @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
-        val cachedValue = versionsCache[version] as NormalizedPackageVersion<PackageVersion.Named>?
+        val cachedValue =
+            lock.read { versionsCache[version] as NormalizedPackageVersion<PackageVersion.Named>? }
+
         if (cachedValue != null) return cachedValue
 
         // Before parsing, we rule out git commit hashes — those are garbage as far as we're concerned.
@@ -71,30 +78,30 @@ internal class PackageVersionNormalizer private constructor() {
         // (that is, it realistically can't be sorted if not by timestamp, and by hoping for the best).
         val garbage = Garbage(version)
         if (version.looksLikeGitCommitOrOtherHash()) {
-            versionsCache[version] = garbage
+            lock.write { versionsCache[version] = garbage }
             return garbage
         }
 
         val timestampPrefix = VeryLenientDateTimeExtractor.extractTimestampLookingPrefixOrNull(version.versionName)
         if (timestampPrefix != null) {
             val normalized = parseTimestampVersion(version, timestampPrefix)
-            versionsCache[version] = normalized
+            lock.write { versionsCache[version] = normalized }
             return normalized
         }
 
         if (version.isOneBigHexadecimalBlob()) {
-            versionsCache[version] = garbage
+            lock.write { versionsCache[version] = garbage }
             return garbage
         }
 
         val semanticVersionPrefix = version.semanticVersionPrefixOrNull()
         if (semanticVersionPrefix != null) {
             val normalized = parseSemanticVersion(version, semanticVersionPrefix)
-            versionsCache[version] = normalized
+            lock.write { versionsCache[version] = normalized }
             return normalized
         }
 
-        versionsCache[version] = garbage
+        lock.write { versionsCache[version] = garbage }
         return garbage
     }
 

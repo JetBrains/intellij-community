@@ -30,6 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchRe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.matchesCoordinates
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
@@ -41,13 +42,22 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelFilterNot
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelFlatMap
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
+import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,6 +76,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.util.concurrent.TimeUnit.MINUTES
 import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -74,6 +85,10 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JViewport
 import javax.swing.event.DocumentEvent
+import kotlin.time.Duration
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
+import kotlin.time.toDuration
 
 internal class PackagesListPanel(
     private val project: Project,
@@ -82,6 +97,15 @@ internal class PackagesListPanel(
     viewModelFlow: Flow<ViewModel>,
     private val dataProvider: ProjectDataProvider
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
+
+    private val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
+        CoroutineLRUCache(2000)
+
+    private val searchCache: CoroutineLRUCache<SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
+        CoroutineLRUCache(200)
+
+    private val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
+        CoroutineLRUCache(1000)
 
     private val searchFieldFocus = Channel<Unit>()
 
@@ -133,7 +157,7 @@ internal class PackagesListPanel(
             }
 
     private val mainToolbar = ActionManager.getInstance().createActionToolbar("Packages.Manage", createActionGroup(), true).apply {
-        setTargetComponent(toolbar)
+        targetComponent = toolbar
         component.background = PackageSearchUI.HeaderBackgroundColor
         component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.paneBackground())
     }
@@ -161,7 +185,7 @@ internal class PackagesListPanel(
 
     private val headerPanel = HeaderPanel {
         logDebug("PackagesListPanel.headerPanel#onUpdateAllLinkClicked()") {
-            "The user has clicked the update all link. This will cause ${it.size} operation(s) to be executed."
+            "The user has clicked the update all link. This will cause many operation(s) to be executed."
         }
         operationExecutor.executeOperations(it)
     }
@@ -216,6 +240,12 @@ internal class PackagesListPanel(
         val apiSearchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?
     )
 
+    private data class ViewModels(
+        val targetModules: TargetModules,
+        val headerData: PackagesHeaderData,
+        val viewModel: PackagesTable.ViewModel
+    )
+
     init {
         registerForUiEvents()
 
@@ -223,87 +253,135 @@ internal class PackagesListPanel(
             combine(onlyStableStateFlow, onlyMultiplatformStateFlow, searchQueryStateFlow) { onlyStable, onlyMultiplatform, searchQuery ->
                 isSearchingStateFlow.emit(true)
                 SearchCommandModel(onlyStable, onlyMultiplatform, searchQuery)
-            }.debounce(250)
-                .mapLatest { (onlyStable, onlyMultiplatform, searchQuery) ->
-                    val model = SearchResultsModel(
-                        onlyStable,
-                        onlyMultiplatform,
-                        searchQuery,
-                        runCatching { dataProvider.doSearch(searchQuery, FilterOptions(onlyStable, onlyMultiplatform)) }.getOrNull()
-                    )
-                    isSearchingStateFlow.emit(false)
-                    model
+            }
+                .debounce(150)
+                .mapLatest { searchCommand ->
+                    val (result, time) = measureTimedValue {
+                        val results = searchCache.getOrTryPutDefault(searchCommand) {
+                            dataProvider.doSearch(
+                                searchCommand.searchQuery,
+                                FilterOptions(searchCommand.onlyStable, searchCommand.onlyMultiplatform)
+                            )
+                        }
+                        val model = SearchResultsModel(
+                            searchCommand.onlyStable,
+                            searchCommand.onlyMultiplatform,
+                            searchCommand.searchQuery,
+                            results
+                        )
+                        isSearchingStateFlow.emit(false)
+                        model
+                    }
+                    logInfo("PackagesListPanel main flow") { "Search took $time" }
+                    result
                 }
 
         combine(
             viewModelFlow,
             searchResultsFlow,
             searchResultsUiStateOverridesState
-        ) { (targetModules, installedPackages, packagesUpdateCandidates,
-            knownRepositoriesInTargetModules), (onlyStable, onlyMultiplatform,
-            searchQuery, apiSearchResults),
-            searchResultsUiStateOverrides ->
+        ) { viewModel, searchResults, overrides ->
+            Triple(viewModel, searchResults, overrides)
+        }.mapLatest { (viewModel, searchResults, searchResultsUiStateOverrides) ->
+            val (targetModules, installedPackages, packagesUpdateCandidates,
+                knownRepositoriesInTargetModules) = viewModel
+            val (onlyStable, onlyMultiplatform, searchQuery, apiSearchResults) = searchResults
+
             isLoadingStateFlow.emit(true)
-            val packagesToUpgrade = packagesUpdateCandidates.getPackagesToUpgrade(onlyStable)
-            val filteredPackageUpgrades = when (targetModules) {
-                is TargetModules.All -> packagesToUpgrade.allUpdates
-                is TargetModules.One -> packagesToUpgrade.getUpdatesForModule(targetModules.module)
-                TargetModules.None -> emptyList()
-            }
+            val (result, time) = measureTimedValue {
+                val (result, time) = measureTimedValue {
+                    val packagesToUpgrade = packagesUpdateCandidates.getPackagesToUpgrade(onlyStable)
+                    val filteredPackageUpgrades = when (targetModules) {
+                        is TargetModules.All -> packagesToUpgrade.allUpdates
+                        is TargetModules.One -> packagesToUpgrade.getUpdatesForModule(targetModules.module)
+                        TargetModules.None -> emptyList()
+                    }
+                    val filteredInstalledPackages = installedPackages.filterByTargetModules(targetModules)
+                    filteredPackageUpgrades to filteredInstalledPackages
+                }
 
-            val filteredInstalledPackages = installedPackages.filterByTargetModules(targetModules)
+                logInfo("PackagesListPanel main flow") { "Initial computation took $time" }
 
-            val filteredInstalledPackagesUiModels = filteredInstalledPackages
-                .let { list -> if (onlyMultiplatform) list.filter { it.isKotlinMultiplatform } else list }
-                .map { it.toUiPackageModel(targetModules, project, knownRepositoriesInTargetModules, onlyStable) }
-                .filter { it.sortedVersions.isNotEmpty() && it.packageModel.searchableInfo.contains(searchQuery) }
+                val (filteredPackageUpgrades, filteredInstalledPackages) = result
 
-            val searchResultModels = computeSearchResultModels(
-                apiSearchResults,
-                filteredInstalledPackagesUiModels,
-                onlyStable,
-                targetModules,
-                searchResultsUiStateOverrides,
-                knownRepositoriesInTargetModules,
-                project
-            )
+                fun onComplete(computationName: String): (Duration) -> Unit =
+                    { time -> logInfo("PackagesListPanel main flow") { "Took $time for \"$computationName\"" } }
 
-            val tableItems = computePackagesTableItems(
-                packages = filteredInstalledPackagesUiModels + searchResultModels,
-                targetModules = targetModules
-            )
-
-            val headerData = computeHeaderData(
-                totalItemsCount = tableItems.size,
-                packageUpdateInfos = filteredPackageUpgrades,
-                hasSearchResults = apiSearchResults?.packages?.isNotEmpty() ?: false,
-                targetModules = targetModules,
-                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                operationFactory = operationFactory
-            )
-
-            withContext(Dispatchers.AppUI) {
-                updateListEmptyState(targetModules)
-
-                headerPanel.display(headerData)
-
-                packagesTable.display(
-                    PackagesTable.ViewModel(
-                        tableItems,
-                        onlyStable,
-                        targetModules,
-                        knownRepositoriesInTargetModules
-                    )
+                val filteredInstalledPackagesUiModels = computeFilteredInstalledPackagesUiModels(
+                    packages = filteredInstalledPackages,
+                    onlyMultiplatform = onlyMultiplatform,
+                    targetModules = targetModules,
+                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                    onlyStable = onlyStable,
+                    searchQuery = searchQuery,
+                    onComplete = onComplete("filteredInstalledPackagesUiModelsTime")
                 )
 
-                tableScrollPane.isVisible = tableItems.isNotEmpty()
+                val searchResultModels = computeSearchResultModels(
+                    searchResults = apiSearchResults,
+                    installedPackages = filteredInstalledPackagesUiModels,
+                    onlyStable = onlyStable,
+                    targetModules = targetModules,
+                    searchResultsUiStateOverrides = searchResultsUiStateOverrides,
+                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                    project = project,
+                    cache = searchPackageModelCache,
+                    onComplete = onComplete("searchResultModels")
+                )
 
-                listPanel.updateAndRepaint()
-                packagesTable.updateAndRepaint()
-                packagesPanel.updateAndRepaint()
+                val tableItems = computePackagesTableItems(
+                    packages = filteredInstalledPackagesUiModels + searchResultModels,
+                    targetModules = targetModules,
+                    onComplete = onComplete("tableItemsTime")
+                )
+
+                val headerData = project.lifecycleScope.computeHeaderData(
+                    totalItemsCount = tableItems.size,
+                    packageUpdateInfos = filteredPackageUpgrades,
+                    hasSearchResults = apiSearchResults?.packages?.isNotEmpty() ?: false,
+                    targetModules = targetModules,
+                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                    operationFactory = operationFactory,
+                    cache = headerOperationsCache,
+                    onComplete = onComplete("headerDataTime")
+                )
+
+                ViewModels(
+                    targetModules = targetModules,
+                    headerData = headerData,
+                    viewModel = PackagesTable.ViewModel(
+                        items = tableItems,
+                        onlyStable = onlyStable,
+                        targetModules = targetModules,
+                        knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+                    )
+                )
             }
-            isLoadingStateFlow.emit(false)
-        }.catch { logWarn("Error in PackagesListPanel main flow", it) }
+            logInfo("PackagesListPanel main flow") { "Total elaboration took $time" }
+            result
+        }
+            .flowOn(Dispatchers.Default)
+            .onEach { (targetModules, headerData, packagesTableViewModel) ->
+                val renderingTime = measureTime {
+                    updateListEmptyState(targetModules)
+
+                    headerPanel.display(headerData)
+
+                    packagesTable.display(packagesTableViewModel)
+
+                    tableScrollPane.isVisible = packagesTableViewModel.items.isNotEmpty()
+
+                    listPanel.updateAndRepaint()
+                    packagesTable.updateAndRepaint()
+                    packagesPanel.updateAndRepaint()
+                }
+                logInfo("PackagesListPanel main flow") {
+                    "Rendering took $renderingTime for ${packagesTableViewModel.items.size} items"
+                }
+                isLoadingStateFlow.emit(false)
+            }
+            .flowOn(Dispatchers.AppUI)
+            .catch { logWarn("Error in PackagesListPanel main flow", it) }
             .launchIn(project.lifecycleScope)
 
         combineTransform(
@@ -318,6 +396,33 @@ internal class PackagesListPanel(
 
         project.lookAndFeelFlow.onEach { updateUiOnLafChange() }
             .launchIn(project.lifecycleScope)
+
+        // results may have changed server side. Better clear caches...
+        timer(20.toDuration(MINUTES))
+            .onEach {
+                searchPackageModelCache.clear()
+                searchCache.clear()
+                headerOperationsCache.clear()
+            }
+            .launchIn(project.lifecycleScope)
+    }
+
+    private suspend fun computeFilteredInstalledPackagesUiModels(
+        packages: List<PackageModel.Installed>,
+        onlyMultiplatform: Boolean,
+        targetModules: TargetModules,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        onlyStable: Boolean,
+        searchQuery: String,
+        onComplete: (Duration) -> Unit = {}
+    ): List<UiPackageModel.Installed> {
+        val (result, time) = measureTimedValue {
+            packages.let { list -> if (onlyMultiplatform) list.filter { it.isKotlinMultiplatform } else list }
+                .parallelMap { it.toUiPackageModel(targetModules, project, knownRepositoriesInTargetModules, onlyStable) }
+                .filter { it.sortedVersions.isNotEmpty() && it.packageModel.searchableInfo.contains(searchQuery) }
+        }
+        onComplete(time)
+        return result
     }
 
     private fun updateListEmptyState(targetModules: TargetModules) {
@@ -419,46 +524,54 @@ private fun SearchTextField.addOnTextChangedListener(action: (String) -> Unit) =
 internal fun JCheckBox.addSelectionChangedListener(action: (Boolean) -> Unit) =
     addItemListener { e -> action(e.stateChange == ItemEvent.SELECTED) }
 
-private fun computeHeaderData(
+private fun CoroutineScope.computeHeaderData(
     totalItemsCount: Int,
     packageUpdateInfos: List<PackagesToUpgrade.PackageUpgradeInfo>,
     hasSearchResults: Boolean,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    operationFactory: PackageSearchOperationFactory
+    operationFactory: PackageSearchOperationFactory,
+    cache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>>,
+    onComplete: (Duration) -> Unit = {}
 ): PackagesHeaderData {
-    val moduleNames = if (targetModules is TargetModules.One) {
-        targetModules.module.projectModule.name
-    } else {
-        PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").lowercase()
-    }
-
-    val title = if (hasSearchResults) {
-        PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.searchResults")
-    } else {
-        PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.installedPackages.addedIn", moduleNames)
-    }
-
-    val operations = packageUpdateInfos.asSequence()
-        .flatMap { packageUpdateInfo ->
-            val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-                packageModel = packageUpdateInfo.packageModel,
-                selectedVersion = packageUpdateInfo.targetVersion.originalVersion
-            )
-            operationFactory.createChangePackageVersionOperations(
-                packageModel = packageUpdateInfo.packageModel,
-                newVersion = packageUpdateInfo.targetVersion.originalVersion,
-                targetModules = targetModules,
-                repoToInstall = repoToInstall
-            )
+    val (result, time) = measureTimedValue {
+        val moduleNames = if (targetModules is TargetModules.One) {
+            targetModules.module.projectModule.name
+        } else {
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").lowercase()
         }
 
-    return PackagesHeaderData(
-        labelText = title,
-        count = totalItemsCount.coerceAtLeast(0),
-        availableUpdatesCount = packageUpdateInfos.distinctBy { it.packageModel.identifier }.size,
-        updateOperations = operations.toList()
-    )
+        val title = if (hasSearchResults) {
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.searchResults")
+        } else {
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.installedPackages.addedIn", moduleNames)
+        }
+        val operations = async {
+            packageUpdateInfos.parallelFlatMap { packageUpdateInfo ->
+                cache.getOrPut(packageUpdateInfo) {
+                    val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+                        packageModel = packageUpdateInfo.packageModel,
+                        selectedVersion = packageUpdateInfo.targetVersion.originalVersion
+                    )
+                    operationFactory.createChangePackageVersionOperations(
+                        packageModel = packageUpdateInfo.packageModel,
+                        newVersion = packageUpdateInfo.targetVersion.originalVersion,
+                        targetModules = targetModules,
+                        repoToInstall = repoToInstall
+                    )
+                }
+            }
+        }
+
+        PackagesHeaderData(
+            labelText = title,
+            count = totalItemsCount.coerceAtLeast(0),
+            availableUpdatesCount = packageUpdateInfos.distinctBy { it.packageModel.identifier }.size,
+            updateOperations = operations
+        )
+    }
+    onComplete(time)
+    return result
 }
 
 private fun List<PackageModel.Installed>.filterByTargetModules(
@@ -477,26 +590,41 @@ private fun List<PackageModel.Installed>.filterByTargetModules(
     TargetModules.None -> emptyList()
 }
 
-private fun computeSearchResultModels(
+private suspend fun computeSearchResultModels(
     searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
     installedPackages: List<UiPackageModel.Installed>,
     onlyStable: Boolean,
     targetModules: TargetModules,
     searchResultsUiStateOverrides: Map<PackageIdentifier, SearchResultUiState>,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    project: Project
+    project: Project,
+    onComplete: (Duration) -> Unit = {},
+    cache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult>
 ): List<UiPackageModel.SearchResult> {
-    if (searchResults == null || searchResults.packages.isEmpty()) return emptyList()
+    val (result, time) = measureTimedValue {
+        if (searchResults == null || searchResults.packages.isEmpty()) return@measureTimedValue emptyList()
 
-    val installedDependencies = installedPackages.map { it.packageModel }
-        .map { InstalledDependency(it.groupId, it.artifactId) }
-
-    return searchResults.packages
-        .filterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-        .mapNotNull { PackageModel.fromSearchResult(it) }
-        .map {
-            val uiState = searchResultsUiStateOverrides[it.identifier]
-            it.toUiPackageModel(targetModules, project, uiState, knownRepositoriesInTargetModules, onlyStable)
-        }
-        .toList()
+        val installedDependencies = installedPackages
+            .map { InstalledDependency(it.packageModel.groupId, it.packageModel.artifactId) }
+        val index = searchResults.packages.parallelMap { "${it.groupId}:${it.artifactId}" }
+        searchResults.packages
+            .parallelFilterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
+            .parallelMapNotNull { PackageModel.fromSearchResult(it) }
+            .parallelMap {
+                val uiState = searchResultsUiStateOverrides[it.identifier]
+                cache.getOrPut(UiPackageModelCacheKey(targetModules, uiState, onlyStable, it)) {
+                    it.toUiPackageModel(targetModules, project, uiState, knownRepositoriesInTargetModules, onlyStable)
+                }
+            }
+            .sortedBy { index.indexOf(it.identifier.rawValue) }
+    }
+    onComplete(time)
+    return result
 }
+
+private data class UiPackageModelCacheKey(
+    val targetModules: TargetModules,
+    val uiState: SearchResultUiState?,
+    val onlyStable: Boolean,
+    val searchResult: PackageModel.SearchResult
+)
