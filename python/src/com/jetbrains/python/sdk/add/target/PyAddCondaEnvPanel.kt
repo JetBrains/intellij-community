@@ -148,7 +148,7 @@ open class PyAddCondaEnvPanel(
     else
       listOfNotNull(validateSdkComboBox(interpreterCombobox, this), CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
 
-  override fun getOrCreateSdk(): Sdk? = super.getOrCreateSdk(targetEnvironmentConfiguration = null)
+  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? =
     when (val item = interpreterCombobox.selectedItem) {
