@@ -55,6 +55,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
 
   Key<List<DiffEditorTitleCustomizer>> EDITORS_TITLE_CUSTOMIZER = Key.create("Diff.EditorsTitleCustomizer");
+  Key<Boolean> EDITORS_HIDE_TITLE = Key.create("Diff.EditorsHideTitle");
 
   Key<DiffNavigationContext> NAVIGATION_CONTEXT = Key.create("Diff.NavigationContext");
 

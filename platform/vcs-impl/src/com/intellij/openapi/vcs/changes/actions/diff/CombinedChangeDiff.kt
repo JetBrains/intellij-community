@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.*
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.progress.ProgressIndicator
@@ -48,6 +49,7 @@ internal class CombinedChangeDiffRequestProducer(private val project: Project?,
     VcsDiffUtil.putFilePathsIntoChangeContext(change, changeContext)
     val requestProducer = ChangeDiffRequestProducer.create(project, change, changeContext) ?: return null
     val childRequest = requestProducer.process(context, indicator) as? ContentDiffRequest ?: return null
+    childRequest.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
 
     return CombinedDiffRequest.ChildDiffRequest(childRequest, ChangesUtil.getFilePath(change), change.fileStatus)
   }
