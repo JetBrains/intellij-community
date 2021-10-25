@@ -162,6 +162,14 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testLocalAssignmentDuplicates(){
+    doTest();
+  }
+
+  fun testWrongLocalAssignmentDuplicates(){
+    doTest();
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
