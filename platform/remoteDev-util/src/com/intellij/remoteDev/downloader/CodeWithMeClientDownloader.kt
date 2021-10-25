@@ -89,7 +89,7 @@ object CodeWithMeClientDownloader {
     Done
   }
 
-  private val buildNumberRegex = Regex("""[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)""")
+  val buildNumberRegex = Regex("""[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)""")
 
   fun getCwmGuestCachesDir(): Path {
     return System.getProperty(cwmTestsGuestCachesSystemProperty)?.let { Path.of(it) }
