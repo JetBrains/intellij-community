@@ -668,12 +668,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
-    if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
-      state.ideAAType = AntialiasingType.GREYSCALE
-    }
-    if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
-      state.editorAAType = AntialiasingType.GREYSCALE
-    }
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
