@@ -239,7 +239,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showStandardOptions(CommenterOption.LINE_COMMENT_ADD_SPACE_ON_REFORMAT.name());
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",

@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Reusable commenter settings form.
@@ -65,9 +63,7 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     myLineCommentAddSpaceCb.addActionListener(e -> {
       boolean addSpace = myLineCommentAddSpaceCb.isSelected();
       myLineCommentAddSpaceOnReformatCb.setEnabled(addSpace);
-      if (!addSpace) {
-        myLineCommentAddSpaceOnReformatCb.setSelected(false);
-      }
+      myLineCommentAddSpaceOnReformatCb.setSelected(addSpace);
     });
     myLineCommentAddSpaceOnReformatCb.setVisible(false);
     customizeSettings();
@@ -83,7 +79,7 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     myLineCommentAddSpaceCb.setEnabled(!langSettings.LINE_COMMENT_AT_FIRST_COLUMN);
 
     myLineCommentAddSpaceOnReformatCb.setEnabled(langSettings.LINE_COMMENT_ADD_SPACE);
-    myLineCommentAddSpaceOnReformatCb.setSelected(langSettings.LINE_COMMENT_ADD_SPACE && langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT);
+    myLineCommentAddSpaceOnReformatCb.setSelected(langSettings.LINE_COMMENT_ADD_SPACE_ON_REFORMAT);
 
     myBlockCommentAddSpaceCb.setSelected(langSettings.BLOCK_COMMENT_ADD_SPACE);
   }
@@ -143,8 +139,7 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     myLineCommentAddSpaceCb.setVisible(isVisible);
     myBlockCommentAtFirstJBCheckBox.setVisible(isVisible);
     myBlockCommentAddSpaceCb.setVisible(isVisible);
-    // myLineCommentAddSpaceOnReformatCb is not a default option,
-    // should be explicitly set via LanguageCodeStyleSettingsProvider
+    myLineCommentAddSpaceOnReformatCb.setVisible(isVisible);
   }
 
   private void customizeSettings() {
