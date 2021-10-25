@@ -57,6 +57,7 @@ interface StatsPerIndexer {
 
 interface IndexingTimes {
   val indexingReason: String?
+  val wasFullIndexing: Boolean
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime

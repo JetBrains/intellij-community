@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -13,7 +13,9 @@ import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicLong
 
 @ApiStatus.Internal
-data class ProjectIndexingHistoryImpl(override val project: Project, override val indexingReason: String?): ProjectIndexingHistory {
+data class ProjectIndexingHistoryImpl(override val project: Project,
+                                      override val indexingReason: String?,
+                                      private val wasFullIndexing: Boolean) : ProjectIndexingHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
   }
@@ -22,7 +24,8 @@ data class ProjectIndexingHistoryImpl(override val project: Project, override va
 
   private val biggestContributorsPerFileTypeLimit = 10
 
-  override val times = IndexingTimesImpl(indexingReason = indexingReason, updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
+  override val times = IndexingTimesImpl(indexingReason = indexingReason, wasFullIndexing = wasFullIndexing,
+                                         updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -122,6 +125,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project, override va
 
   data class IndexingTimesImpl(
     override val indexingReason: String?,
+    override val wasFullIndexing: Boolean,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
