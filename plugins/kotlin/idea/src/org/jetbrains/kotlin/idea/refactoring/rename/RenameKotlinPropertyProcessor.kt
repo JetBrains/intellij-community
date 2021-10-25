@@ -428,7 +428,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         searchInCommentsAndStrings: Boolean
     ): Collection<PsiReference> {
         val referenceSearchScope = if (element is KtParameter && element.isPrivate()) {
-            element.ownerFunction.safeAs<KtPrimaryConstructor>()?.codeUsageScope() ?: searchScope
+            element.ownerFunction.safeAs<KtPrimaryConstructor>()?.codeUsageScope()?.union(searchScope) ?: searchScope
         } else {
             searchScope
         }
