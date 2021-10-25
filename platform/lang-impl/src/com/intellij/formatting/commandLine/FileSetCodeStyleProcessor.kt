@@ -26,7 +26,6 @@ import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PlatformUtils
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.Closeable
-import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.util.*
@@ -195,13 +194,14 @@ abstract class FileSetCodeStyleProcessor(
   override fun processVirtualFile(virtualFile: VirtualFile) {
     messageOutput.info("$operationContinuous ${virtualFile.canonicalPath}...")
 
-    val resultMessage = if (virtualFile.fileType.isBinary) {
-      RESULT_MESSAGE_BINARY_FILE
-    }
-    else {
-      VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
-      processFileInternal(virtualFile)
-    }
+    VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+    val resultMessage =
+      if (virtualFile.fileType.isBinary) {
+        RESULT_MESSAGE_BINARY_FILE
+      }
+      else {
+        processFileInternal(virtualFile)
+      }
     messageOutput.info("$resultMessage\n")
   }
 
