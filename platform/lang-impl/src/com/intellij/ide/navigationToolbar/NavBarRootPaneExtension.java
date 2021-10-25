@@ -220,7 +220,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return uiSettings.getShowNavigationBar() &&
            !uiSettings.getShowMainToolbar() &&
            !uiSettings.getPresentationMode() &&
-           !ToolbarSettings.getInstance().isVisible();
+           (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
   }
 
   private static void alignVertically(Container container) {
