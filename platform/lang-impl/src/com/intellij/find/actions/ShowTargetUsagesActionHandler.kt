@@ -14,7 +14,7 @@ import com.intellij.usages.UsageSearchPresentation
 import com.intellij.usages.UsageSearcher
 
 // data class for `copy` method
-internal data class ShowTargetUsagesActionHandler<O>(
+internal data class ShowTargetUsagesActionHandler<O: Any>(
   private val project: Project,
   private val target: SearchTarget,
   private val usageHandler: UsageHandler<O>,
@@ -64,7 +64,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
       ShowUsagesAction.showElementUsages(parameters, createActionHandler(project, searchScope, target, target.usageHandler))
     }
 
-    private fun <O> createActionHandler(project: Project,
+    private fun <O: Any> createActionHandler(project: Project,
                                         searchScope: SearchScope,
                                         target: SearchTarget,
                                         usageHandler: UsageHandler<O>): ShowTargetUsagesActionHandler<O> {

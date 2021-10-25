@@ -129,6 +129,6 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
 
   private fun findSymbolTypes(text: String): List<PsiElement> {
     myFixture.configureByText(PythonFileType.INSTANCE, text)
-    return GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset).asList()
+    return GotoTypeDeclarationAction.findSymbolTypes(myFixture.editor, myFixture.caretOffset)?.asList().orEmpty()
   }
 }

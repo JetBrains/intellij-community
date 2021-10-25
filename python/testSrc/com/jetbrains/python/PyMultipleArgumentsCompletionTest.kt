@@ -116,7 +116,7 @@ class PyMultipleArgumentsCompletionTest: PyTestCase() {
 
   private fun doTestVariantsContainFinished(element: String) {
     doTestVariantsContain(element)
-    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == element }
+    myFixture.lookup.currentItem = myFixture.lookupElements?.find { it.lookupString == element }
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
     myFixture.checkResultByFile("multipleArgumentsCompletion/${getTestName(true)}.after.py")
   }

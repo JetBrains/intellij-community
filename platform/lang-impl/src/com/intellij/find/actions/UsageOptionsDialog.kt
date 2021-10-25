@@ -27,7 +27,7 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class UsageOptionsDialog<O>(
+internal class UsageOptionsDialog<O: Any>(
   private val project: Project,
   @NlsContexts.Label presentableText: String?,
   private val handler: UsageHandler<O>,
@@ -40,10 +40,10 @@ internal class UsageOptionsDialog<O>(
   private var myFindUsages: Boolean = allOptions.options.isUsages
   private var myScope: SearchScope = allOptions.options.searchScope
   private var myTextSearch: Boolean? = allOptions.textSearch
-  private val myOptionEditor: OptionEditor<O>? = allOptions.customOptions?.let { OptionEditorProvider.forOptions(it) }
+  private val myOptionEditor: OptionEditor<O> = OptionEditorProvider.forOptions(allOptions.customOptions)
 
   @Suppress("UNCHECKED_CAST")
-  private fun customResult(): O = myOptionEditor?.result() as O
+  private fun customResult(): O = myOptionEditor.result()
 
   // ui
   private val myDialogPanel: DialogPanel = panel {
@@ -58,7 +58,7 @@ internal class UsageOptionsDialog<O>(
         checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
       }
       row {
-        myOptionEditor?.component?.let { editorComponent ->
+        myOptionEditor.component.let { editorComponent ->
           if (editorComponent is DialogPanel) {
             onGlobalApply {
               editorComponent.apply()

@@ -50,7 +50,7 @@ class ModuleRootComponentBridge(
   }
 
   init {
-    MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
+    MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         dropRootModelCache()
       }

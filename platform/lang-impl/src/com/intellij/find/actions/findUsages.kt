@@ -28,7 +28,7 @@ fun findUsages(showDialog: Boolean, project: Project, selectedScope: SearchScope
   findUsages(showDialog, project, target, target.usageHandler, selectedScope)
 }
 
-private fun <O> findUsages(showDialog: Boolean,
+private fun <O: Any> findUsages(showDialog: Boolean,
                            project: Project,
                            target: SearchTarget,
                            handler: UsageHandler<O>,
@@ -41,7 +41,7 @@ private fun <O> findUsages(showDialog: Boolean,
   findUsages(showDialog, project, target, handler, allOptions)
 }
 
-private fun <O> findUsages(showDialog: Boolean,
+private fun <O: Any> findUsages(showDialog: Boolean,
                            project: Project,
                            target: SearchTarget,
                            handler: UsageHandler<O>,
@@ -60,7 +60,7 @@ private fun <O> findUsages(showDialog: Boolean,
   }
 }
 
-internal fun <O> findUsages(project: Project, target: SearchTarget, handler: UsageHandler<O>, allOptions: AllSearchOptions<O>) {
+internal fun <O: Any> findUsages(project: Project, target: SearchTarget, handler: UsageHandler<O>, allOptions: AllSearchOptions<O>) {
   val query = buildUsageViewQuery(project, target, handler, allOptions)
   val factory = Factory {
     UsageSearcher {
@@ -97,7 +97,7 @@ private fun canReuseTab(project: Project): Boolean {
 internal val SearchTarget.displayString: String get() = presentation.presentableText
 
 @Nls(capitalization = Nls.Capitalization.Title)
-internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
+internal fun <O: Any> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
   return getSearchString(allOptions.options, allOptions.customOptions)
 }
 

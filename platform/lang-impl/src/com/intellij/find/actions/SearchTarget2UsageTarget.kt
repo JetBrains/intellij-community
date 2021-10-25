@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class SearchTarget2UsageTarget<O>(
+class SearchTarget2UsageTarget<O: Any>(
   private val project: Project,
   target: SearchTarget,
   private val allOptions: AllSearchOptions<O>
