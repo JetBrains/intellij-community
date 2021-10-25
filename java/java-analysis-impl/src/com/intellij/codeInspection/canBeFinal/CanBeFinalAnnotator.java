@@ -58,28 +58,19 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     }
     else if (refElement instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refElement;
-      final PsiElement element = refMethod.getPsiElement();
-      if (element instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)element;
-        RefClass aClass = refMethod.getOwnerClass();
-        if (aClass != null) aClass.waitForInitialized();
-        if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
-            PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || (aClass != null && aClass.isAnonymous()) ||
-            (aClass != null && aClass.isInterface())) {
-          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-        }
-        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) && refMethod.getOwner() != null &&
-            !(aClass != null && aClass.getOwner() instanceof RefElement)) {
-          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-        }
-        for (PsiMethod psiSuperMethod : psiMethod.findSuperMethods()) {
-          if (myManager.belongsToScope(psiSuperMethod)) {
-            RefMethod refSuperMethod = (RefMethod)myManager.getReference(psiSuperMethod);
-            if (refSuperMethod != null) {
-              ((RefMethodImpl)refSuperMethod).setFlag(false, CAN_BE_FINAL_MASK);
-            }
-          }
-        }
+      RefClass aClass = refMethod.getOwnerClass();
+      if (aClass != null) aClass.waitForInitialized();
+      if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
+          PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || (aClass != null && aClass.isAnonymous()) ||
+          (aClass != null && aClass.isInterface())) {
+        ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
+      }
+      if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) && refMethod.getOwner() != null &&
+          !(aClass != null && aClass.getOwner() instanceof RefElement)) {
+        ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
+      }
+      for (RefMethod refSuperMethod : refMethod.getSuperMethods()) {
+        ((RefMethodImpl)refSuperMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
     else if (refElement instanceof RefField) {
