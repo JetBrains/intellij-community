@@ -131,7 +131,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     return EntityReferenceImpl(this.id)
   }
 
-  override fun toString(): String = "$id"
+  override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
