@@ -555,6 +555,8 @@ class ExpressionsOfTypeProcessor(
     private fun processClassUsageInUserType(userType: KtUserType): Boolean {
         val typeRef = userType.parents.lastOrNull { it is KtTypeReference }
         when (val typeRefParent = typeRef?.parent) {
+            // TODO: type alias
+            //is KtTypeAlias -> {}
             is KtCallableDeclaration -> {
                 when (typeRef) {
                     typeRefParent.typeReference -> { // usage in type of callable declaration
@@ -629,6 +631,13 @@ class ExpressionsOfTypeProcessor(
             is KtBinaryExpressionWithTypeRHS -> { // <expr> as <class name>
                 processSuspiciousExpression(typeRefParent)
                 return true
+            }
+
+            is KtTypeParameter -> { // <expr> as `<reified T : ClassName>`
+                typeRefParent.extendsBound?.let {
+                    addCallableDeclarationOfOurType(it)
+                    return true
+                }
             }
         }
 
