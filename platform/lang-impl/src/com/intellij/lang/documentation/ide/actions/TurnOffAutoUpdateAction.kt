@@ -13,7 +13,7 @@ internal class TurnOffAutoUpdateAction : ToolWindowContextMenuActionBase() {
 
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     e.presentation.isEnabledAndVisible = toolWindow.id == DocumentationToolWindowManager.TOOL_WINDOW_ID
-                                         && content?.toolWindowUI != null
+                                         && content != null && content.toolWindowUI.isPreview
                                          && Registry.`is`("documentation.v2.turn.off.preview.by.action")
   }
 

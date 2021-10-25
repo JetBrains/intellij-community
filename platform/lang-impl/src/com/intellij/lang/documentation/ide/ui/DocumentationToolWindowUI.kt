@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
 import javax.swing.JComponent
 
@@ -16,13 +17,17 @@ internal class DocumentationToolWindowUI(
   private val content: Content,
 ) : Disposable {
 
-  override fun dispose() {}
-
   val browser: DocumentationBrowser get() = ui.browser
 
   val contentComponent: JComponent get() = ui.scrollPane
 
   private var preview: Disposable?
+
+  val isPreview: Boolean
+    get() {
+      EDT.assertIsEdt()
+      return preview != null
+    }
 
   // Disposable tree:
   // content
@@ -31,9 +36,9 @@ internal class DocumentationToolWindowUI(
   // - > preview
   // - - > auto-updater
   // - - > asterisk content tab updater
-  // - - > content user data cleaner
   // - > content tab updater (after preview is turned off)
   init {
+    content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
     Disposer.register(this, ui)
 
@@ -47,11 +52,10 @@ internal class DocumentationToolWindowUI(
       content.icon = presentation.icon
       content.displayName = "* ${presentation.presentableText}"
     })
+  }
 
-    content.putUserData(TW_UI_KEY, this)
-    Disposer.register(preview) {
-      content.putUserData(TW_UI_KEY, null)
-    }
+  override fun dispose() {
+    content.putUserData(TW_UI_KEY, null)
   }
 
   fun turnOffPreview() {
@@ -64,7 +68,7 @@ internal class DocumentationToolWindowUI(
   }
 }
 
-internal val Content.toolWindowUI: DocumentationToolWindowUI? get() = getUserData(TW_UI_KEY)
+internal val Content.toolWindowUI: DocumentationToolWindowUI get() = checkNotNull(getUserData(TW_UI_KEY))
 
 private val TW_UI_KEY: Key<DocumentationToolWindowUI> = Key.create("documentation.tw.ui")
 
