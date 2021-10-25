@@ -321,7 +321,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         psiFile
       }
       if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
-      val map: Map<String, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
+      val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
         Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
         file, file.textRange, true, false, DaemonProgressIndicator(), PairProcessor.alwaysTrue())
 

@@ -120,12 +120,12 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
 
     // indicator can be null when run from EDT
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
-    Map<String, List<ProblemDescriptor>> map =
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
       InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, progress, elements, PairProcessor.alwaysTrue());
 
-    for (Map.Entry<String, List<ProblemDescriptor>> entry : map.entrySet()) {
+    for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
       List<ProblemDescriptor> descriptors = entry.getValue();
-      String shortName = entry.getKey();
+      String shortName = entry.getKey().getShortName();
       for (ProblemDescriptor problemDescriptor : descriptors) {
         if (problemDescriptor instanceof ProblemDescriptorBase) {
           final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();

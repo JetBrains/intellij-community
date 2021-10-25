@@ -317,7 +317,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
-        Map<String, List<ProblemDescriptor>> result =
+        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> result =
           InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(localTool)), getFile(), myRestrictRange,
                                            true,
                                            progress, ContainerUtil.concat(inside, outside),
@@ -855,9 +855,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     PsiElement host = InjectedLanguageManager.getInstance(injectedPsi.getProject()).getInjectionHost(injectedPsi);
 
-    Map<String, ? extends LocalInspectionToolWrapper> shortNames =
-      ContainerUtil.map2Map(wrappers, wrapper -> Pair.create(wrapper.getShortName(), wrapper));
-    Map<String, List<ProblemDescriptor>> map =
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
       InspectionEngine.inspectEx(wrappers, injectedPsi, injectedPsi.getTextRange(), isOnTheFly, false, indicator, (wrapper, descriptor) -> {
         if (host != null && myIgnoreSuppressed && wrapper.getTool().isSuppressedFor(host)) {
           registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
@@ -868,9 +866,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         return true;
       });
-    for (Map.Entry<String, List<ProblemDescriptor>> entry : map.entrySet()) {
-      String shortName = entry.getKey();
-      LocalInspectionToolWrapper wrapper = shortNames.get(shortName);
+    for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+      LocalInspectionToolWrapper wrapper = entry.getKey();
       List<ProblemDescriptor> descriptors = entry.getValue();
       appendDescriptors(injectedPsi, descriptors, wrapper);
     }
