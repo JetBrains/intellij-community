@@ -2,6 +2,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -38,7 +40,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
@@ -158,11 +163,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     if (targetInstanceOf.getPattern() != null) return;
     PsiTypeElement type = targetInstanceOf.getCheckType();
     if (type == null) return;
-    Collection<PsiTypeCastExpression> castExpressions =
-      PsiTreeUtil.findChildrenOfType(ifStatement.getThenBranch(), PsiTypeCastExpression.class);
+
     List<PsiTypeCastExpression> relatedCastExpressions =
-      ContainerUtil.filter(castExpressions, castExpression -> InstanceOfUtils.findPatternCandidate(castExpression) == targetInstanceOf);
-    if (relatedCastExpressions.isEmpty()) return;
+      SyntaxTraverser.psiTraverser(ifStatement.getThenBranch())
+        .filter(PsiTypeCastExpression.class)
+        .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
+        .toList();
 
     PsiLocalVariable castedVariable = null;
     for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
@@ -170,7 +176,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (castedVariable != null) break;
     }
 
-    String name = castedVariable != null ? castedVariable.getName() : SwitchUtils.suggestPatternCaseName(targetInstanceOf);
+    String name = castedVariable != null
+                  ? castedVariable.getName()
+                  : new VariableNameGenerator(targetInstanceOf, VariableKind.LOCAL_VARIABLE).byType(type.getType()).generate(true);
 
     CommentTracker ct = new CommentTracker();
     for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
@@ -185,11 +193,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     );
   }
 
-  private static @Nullable PsiLocalVariable findCastedLocalVariable(PsiTypeCastExpression castExpression){
+  private static @Nullable PsiLocalVariable findCastedLocalVariable(PsiTypeCastExpression castExpression) {
     PsiLocalVariable variable = PsiTreeUtil.getParentOfType(castExpression, PsiLocalVariable.class);
     if (variable == null) return null;
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (initializer != castExpression) return null;
+    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
+    if (scope == null) return null;
+    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
     return variable;
   }
 
