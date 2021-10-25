@@ -41,6 +41,18 @@ class Test {
     }
   }
 
+  void testParenthesizedPattern(String s) {
+    if (s instanceof (<error descr="Pattern type 'String' is the same as expression type">String</error> s1)) {
+      System.out.println(s1);
+    }
+  }
+
+  void testDeepParenthesizedPattern(String s) {
+    if (s instanceof ( ((( ((  <error descr="Pattern type 'String' is the same as expression type">String</error> s1)) ))     ) )) {
+      System.out.println(s1);
+    }
+  }
+
   private String getString() {
     return "str";
   }

@@ -997,7 +997,6 @@ public final class HighlightUtil {
       PsiClass aClass = (PsiClass)modifierOwner;
       boolean privateOrProtected = PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier);
       if (aClass.isInterface()) {
-        //noinspection DuplicateExpressions
         if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiClass;
         }
@@ -1018,7 +1017,6 @@ public final class HighlightUtil {
                        !modifierOwnerParent.isPhysical());
         }
         else {
-          //noinspection DuplicateExpressions
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
                         (PsiModifier.STATIC.equals(modifier) || ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
@@ -1341,9 +1339,9 @@ public final class HighlightUtil {
 
   private static final Pattern FP_LITERAL_PARTS =
     Pattern.compile("(?:" +
-                    "(?:0x([_\\p{XDigit}]*)\\.?([_\\p{XDigit}]*)p[+-]?([_\\d]*))" +
+                    "0x([_\\p{XDigit}]*)\\.?([_\\p{XDigit}]*)p[+-]?([_\\d]*)" +
                     "|" +
-                    "(?:([_\\d]*)\\.?([_\\d]*)e?[+-]?([_\\d]*))" +
+                    "([_\\d]*)\\.?([_\\d]*)e?[+-]?([_\\d]*)" +
                     ")[fd]?");
 
   private static HighlightInfo checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
@@ -1671,7 +1669,10 @@ public final class HighlightUtil {
   }
 
   public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
-    PsiTypeTestPattern pattern = tryCast(expression.getPattern(), PsiTypeTestPattern.class);
+    PsiPattern innerMostPattern = stripPattern(expression.getPattern());
+    if (innerMostPattern == null) return null;
+
+    PsiTypeTestPattern pattern = tryCast(innerMostPattern, PsiTypeTestPattern.class);
     if (pattern == null) return null;
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
@@ -1694,6 +1695,12 @@ public final class HighlightUtil {
     return null;
   }
 
+  private static @Nullable PsiPattern stripPattern(@Nullable PsiPattern pattern) {
+    while (pattern instanceof PsiParenthesizedPattern) {
+      pattern = ((PsiParenthesizedPattern)pattern).getPattern();
+    }
+    return pattern;
+  }
 
   static HighlightInfo checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
     PsiExpression[] operands = expression.getOperands();
