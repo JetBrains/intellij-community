@@ -17,6 +17,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.util.regex.Pattern
 import javax.swing.JDialog
 import javax.swing.JTable
@@ -67,7 +68,7 @@ class PythonQuickFixesRefactoringLesson
       showQuickFixesTaskId = taskId
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.invoke.intentions", action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains("foo(")
+        item.isToStringContains("foo(")
       }
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample)

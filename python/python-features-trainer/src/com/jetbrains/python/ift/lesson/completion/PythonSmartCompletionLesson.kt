@@ -9,6 +9,7 @@ import training.dsl.TaskContext
 import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
 class PythonSmartCompletionLesson
   : KLesson("Smart completion", LessonsBundle.message("smart.completion.lesson.name")) {
@@ -32,7 +33,7 @@ class PythonSmartCompletionLesson
           text(PythonLessonsBundle.message("python.smart.completion.use.smart.completion",
                                            code("x"), action(it)))
           triggerByListItemAndHighlight { ui ->
-            ui.toString().contains(methodName)
+            ui.isToStringContains(methodName)
           }
           proposeRestoreMe()
           test { actions(it) }

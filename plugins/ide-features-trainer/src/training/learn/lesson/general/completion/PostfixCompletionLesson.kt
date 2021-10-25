@@ -9,6 +9,7 @@ import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.util.regex.Pattern
 
 abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name")) {
@@ -27,7 +28,7 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
     task {
       text(LessonsBundle.message("postfix.completion.intro") + " " + getTypeTaskText())
       triggerByListItemAndHighlight {
-        it.toString().contains(completionItem)
+        it.isToStringContains(completionItem)
       }
       proposeRestore {
         checkExpectedStateOfEditor(sample) { completionSuffix.startsWith(it) }
