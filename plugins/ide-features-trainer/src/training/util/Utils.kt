@@ -205,8 +205,12 @@ fun learningToolWindow(project: Project): ToolWindow? {
   return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
 }
 
-fun Any.toNullableString(): String? {
-  return excludeNullCheck(toString())
+fun Any?.toNullableString(): String? {
+  return if (this == null) null else excludeNullCheck(toString())
+}
+
+fun Any?.isToStringContains(string: String): Boolean {
+  return this.toNullableString()?.contains(string) ?: false
 }
 
 private fun excludeNullCheck(value: String?): String? {

@@ -7,6 +7,7 @@ import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
 abstract class CompletionWithTabLesson(private val proposal: String) :
   KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name")) {
@@ -19,7 +20,7 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
 
       task("CodeCompletion") {
         text(LessonsBundle.message("completion.with.tab.begin.completion", action(it), code(proposal)))
-        triggerByListItemAndHighlight { item -> item.toString().contains(proposal) }
+        triggerByListItemAndHighlight { item -> item.isToStringContains(proposal) }
         restoreIfModifiedOrMoved()
         test { actions(it) }
       }

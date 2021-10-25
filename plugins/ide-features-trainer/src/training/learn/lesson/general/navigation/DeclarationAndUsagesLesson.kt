@@ -17,6 +17,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
 abstract class DeclarationAndUsagesLesson
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
@@ -73,7 +74,7 @@ abstract class DeclarationAndUsagesLesson
         text(LessonsBundle.message("declaration.and.usages.find.usages", action(it)))
 
         triggerByUiComponentAndHighlight { ui: BaseLabel ->
-          ui.javaClass.simpleName == "ContentTabLabel" && (ui.text?.contains(entityName) ?: false)
+          ui.javaClass.simpleName == "ContentTabLabel" && ui.text.isToStringContains(entityName)
         }
         restoreIfModifiedOrMoved()
         test {
@@ -89,7 +90,7 @@ abstract class DeclarationAndUsagesLesson
           }
         }
         triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
-          ui.text?.contains(pinTabText) ?: false
+          ui.text.isToStringContains(pinTabText)
         }
         restoreByUi()
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))

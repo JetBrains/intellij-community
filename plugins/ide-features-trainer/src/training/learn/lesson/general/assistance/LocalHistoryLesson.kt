@@ -47,6 +47,7 @@ import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
+import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
@@ -159,7 +160,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
       triggerByUiComponentAndHighlight { ui: ActionMenu ->
-        ui.text?.contains(localHistoryActionText) == true
+        ui.text.isToStringContains(localHistoryActionText)
       }
       test {
         ideFrame { robot().rightClick(editor.component) }
@@ -176,7 +177,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item: ActionMenu -> item.text?.contains(localHistoryActionText) == true }.click()
+          jMenuItem { item: ActionMenu -> item.text.isToStringContains(localHistoryActionText) }.click()
           jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
         }
       }
