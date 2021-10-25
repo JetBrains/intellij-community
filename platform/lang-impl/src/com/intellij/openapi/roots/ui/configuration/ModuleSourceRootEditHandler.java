@@ -15,6 +15,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Inherit from this class and register the implementation as {@code projectStructure.sourceRootEditHandler} extension in plugin.xml to
+ * specify how source roots of a custom {@link JpsModuleSourceRootType type} should be shown in Project Structure dialog. There must be only
+ * one instance of this class for each {@link JpsModuleSourceRootType}.
+ */
 public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public static final ExtensionPointName<ModuleSourceRootEditHandler> EP_NAME = ExtensionPointName.create("com.intellij.projectStructure.sourceRootEditHandler");
   private final JpsModuleSourceRootType<P> myRootType;
