@@ -77,7 +77,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
    */
   fun focusVisiblePreview(): Boolean {
-    val content = getVisiblePreviewContent()?.content ?: return false
+    val content = getVisiblePreviewContent() ?: return false
     contentManager.requestFocus(content, false)
     return true
   }
@@ -106,7 +106,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     }
     else {
       previewContent.toolWindowUI.browser.resetBrowser(request)
-      makeVisible(previewContent.content)
+      makeVisible(previewContent)
     }
   }
 
@@ -122,7 +122,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     }
     else {
       Disposer.dispose(previewContent.toolWindowUI)
-      previewContent.content
+      previewContent
     }
     previewInToolWindow(ui, content)
   }
@@ -138,26 +138,19 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     toolWindow.show()
   }
 
-  private data class PreviewContent(
-    val toolWindowUI: DocumentationToolWindowUI,
-    val content: Content,
-  )
-
-  private fun getVisiblePreviewContent(): PreviewContent? {
+  private fun getVisiblePreviewContent(): Content? {
     if (!toolWindow.isVisible) {
       return null
     }
-    val selectedContent = contentManager.selectedContent ?: return null
-    val toolWindowUI = selectedContent.toolWindowUI ?: return null
-    return PreviewContent(toolWindowUI, selectedContent)
+    return contentManager.selectedContent?.takeIf {
+      it.toolWindowUI.isPreview
+    }
   }
 
-  private fun getPreviewContent(): PreviewContent? {
-    for (content in contentManager.contents) {
-      val toolWindowUI = content.toolWindowUI ?: continue
-      return PreviewContent(toolWindowUI, content)
+  private fun getPreviewContent(): Content? {
+    return contentManager.contents.firstOrNull {
+      it.toolWindowUI.isPreview
     }
-    return null
   }
 
   private fun addNewContent(): Content {
