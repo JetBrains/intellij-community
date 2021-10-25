@@ -134,6 +134,23 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }
   }
 
+  @Test fun `filtering unwanted files`() {
+    val oldConfigDir = createConfigDir("2021.2")
+    val newConfigDir = createConfigDir("2021.3")
+
+    val jdkFile = oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk")
+    val otherFile = oldConfigDir.resolve("other.xml")
+    Files.write(jdkFile, listOf("..."))
+    Files.write(otherFile, listOf("..."))
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+
+    assertThat(newConfigDir.resolve(jdkFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
+  }
+
   @Test fun `migrate plugins to empty directory`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))

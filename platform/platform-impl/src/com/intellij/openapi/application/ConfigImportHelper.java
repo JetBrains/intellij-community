@@ -86,6 +86,8 @@ public final class ConfigImportHelper {
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
 
+  private static final Set<String> SESSION_FILES = Set.of(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
+
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
@@ -1067,8 +1069,9 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldSkipFileDuringImport(String fileName) {
-    List<String> filesToSkip = Arrays.asList(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
-    return filesToSkip.contains(fileName) || fileName.startsWith(CHROME_USER_DATA);
+    return SESSION_FILES.contains(fileName) ||
+           fileName.startsWith(CHROME_USER_DATA) ||
+           fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName()));
   }
 
   private static String defaultConfigPath(String selector) {
