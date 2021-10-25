@@ -164,7 +164,8 @@ public class TableLayout extends TabLayout implements MorePopupAware {
           calculateRawLengths(unpinned, data);
           if (getTotalLength(unpinned, data) > standardLengthToFit) {
             int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
-            data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
+            int entryPointsWidth = pinned.isEmpty() ? myTabs.getEntryPointPreferredSize().width : 0;
+            data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth - entryPointsWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
             calculateRawLengths(unpinned, data);
           }
         }
@@ -402,8 +403,9 @@ public class TableLayout extends TabLayout implements MorePopupAware {
       myScrollOffset = 0;
     }
     else {
+      int entryPointsWidth = data.moreRect.y == data.entryPointRect.y ? data.entryPointRect.width + 1 : 0;
       myScrollOffset = Math.max(0, Math.min(myScrollOffset,
-                                            data.requiredLength - data.toFitRec.width + data.moreRect.width /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
+                                            data.requiredLength - data.toFitRec.width + data.moreRect.width + entryPointsWidth /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
     }
   }
 
