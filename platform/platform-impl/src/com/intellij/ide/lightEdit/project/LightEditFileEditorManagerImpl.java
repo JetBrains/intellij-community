@@ -7,10 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -135,7 +132,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   }
 
   @Override
-  protected @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
+  protected @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
     return LightEditUtil.findEditorComposite(editor);
   }
 
