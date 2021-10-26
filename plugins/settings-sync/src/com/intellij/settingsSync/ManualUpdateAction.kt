@@ -18,4 +18,8 @@ class ManualUpdateAction : DumbAwareAction() {
       }
     }.queue()
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isSettingsSyncEnabled()
+  }
 }

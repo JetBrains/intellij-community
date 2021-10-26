@@ -10,4 +10,8 @@ class ManualPushAction : DumbAwareAction() {
     val facade = service<SettingsSyncFacade>()
     facade.pushSettingsToServer()
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isSettingsSyncEnabled()
+  }
 }
