@@ -28,7 +28,6 @@ public class PyPackageInstallationErrorDialog extends DialogWrapper {
                                           @NotNull PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription) {
     super(false);
     init();
-    setResizable(false);
     setTitle(title);
     final String output = errorDescription.getOutput();
     final String packageName = errorDescription.getPackageName();
