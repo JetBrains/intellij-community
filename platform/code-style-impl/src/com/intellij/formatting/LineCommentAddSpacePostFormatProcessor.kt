@@ -23,7 +23,8 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return rangeToReformat
-    val languageCodeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language)
+    val languageCodeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language) ?: return rangeToReformat
+
     val commentFinder = SingleLineCommentFinder(rangeToReformat, languageCodeStyleSettingsProvider, commenter)
     source.accept(commentFinder)
 
@@ -48,7 +49,7 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
 
 internal class SingleLineCommentFinder(val rangeToReformat: TextRange,
-                                       val languageCodeStyleSettingsProvider: LanguageCodeStyleSettingsProvider?,
+                                       val languageCodeStyleSettingsProvider: LanguageCodeStyleSettingsProvider,
                                        commenter: Commenter) : PsiRecursiveElementVisitor() {
 
   val lineCommentPrefixes = commenter.lineCommentPrefixes.map { it.trim() }
@@ -71,10 +72,8 @@ internal class SingleLineCommentFinder(val rangeToReformat: TextRange,
 
     val commentContents = commentText.substring(commentPrefixLength)
 
-    languageCodeStyleSettingsProvider?.let {
-      if (!it.canInsertSpaceInLineComment(commentContents)) {
-        return
-      }
+    if (!languageCodeStyleSettingsProvider.canInsertSpaceInLineComment(commentContents)) {
+      return
     }
 
     commentOffsets.add(comment.textRange.startOffset + commentPrefixLength)
