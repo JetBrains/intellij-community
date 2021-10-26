@@ -157,6 +157,9 @@ class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRender
 
     @Test
     fun testComments() = doTest("Comments")
+
+    @Test
+    fun testBrokenDataClass() = doTest("BrokenDataClass")
 }
 
 fun withForceUInjectionHostValue(call: () -> Unit) {
