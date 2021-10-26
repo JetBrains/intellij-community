@@ -253,7 +253,8 @@ abstract class ToolWindowHeader internal constructor(
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow))
 
       if (this.drawBottomLine != drawBottomLine) {
-        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine, drawBottomLine)
+        //no active header for new UI
+        activeImage = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
         this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
         this.drawBottomLine = drawBottomLine
       }
