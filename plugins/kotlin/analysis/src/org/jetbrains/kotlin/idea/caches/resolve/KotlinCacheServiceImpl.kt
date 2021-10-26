@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiCodeFragment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -342,7 +343,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         {
             CachedValueProvider.Result<KotlinSuppressCache>(
                 object : KotlinSuppressCache() {
-                    override fun getSuppressionAnnotations(annotated: KtAnnotated): List<AnnotationDescriptor> {
+                    override fun getSuppressionAnnotations(annotated: PsiElement): List<AnnotationDescriptor> {
+                        if (annotated !is KtAnnotated) return emptyList()
                         if (annotated.annotationEntries.none {
                                 it.calleeExpression?.text?.endsWith(SUPPRESS_ANNOTATION_SHORT_NAME) == true
                             }
