@@ -259,6 +259,9 @@ public final class ExternalDiffToolUtil {
       patterns.put("%4", outputFile.getPath());
 
       final Process process = execute(settings.getMergeExePath(), settings.getMergeParameters(), patterns);
+      
+      InputStream is = process.getInputStream();
+      try { is.close(); } catch (Exception ignore) {}
 
       if (settings.isMergeTrustExitCode()) {
         final Ref<Boolean> resultRef = new Ref<>();
@@ -340,7 +343,11 @@ public final class ExternalDiffToolUtil {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.addParameters(args);
-    return commandLine.createProcess();
+    
+    Process result = commandLine.createProcess();
+    InputStream is = result.getInputStream();
+    try { is.close(); } catch (Exception ignore) {}
+    return result;
   }
 
   //
