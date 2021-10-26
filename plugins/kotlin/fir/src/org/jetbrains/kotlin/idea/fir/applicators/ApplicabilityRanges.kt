@@ -7,11 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityTarget
+import org.jetbrains.kotlin.idea.util.nameIdentifierTextRangeInThis
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
 
 object ApplicabilityRanges {
     val SELF = applicabilityTarget<PsiElement> { it }
@@ -36,5 +34,9 @@ object ApplicabilityRanges {
         } else {
             listOf(TextRange(0, element.textLength))
         }
+    }
+
+    val DECLARATION_NAME = applicabilityTarget<KtNamedDeclaration> {  element ->
+        element.nameIdentifier
     }
 }
