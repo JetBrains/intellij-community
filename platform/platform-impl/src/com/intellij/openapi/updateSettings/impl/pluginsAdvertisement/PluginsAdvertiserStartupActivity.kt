@@ -74,7 +74,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     @JvmStatic
     private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, Set<PluginData>> {
       val params = mapOf("featureType" to featureType)
-      return MarketplaceRequests.Instance
+      return MarketplaceRequests.getInstance()
         .getFeatures(params)
         .groupBy(
           { it.implementationName!! },

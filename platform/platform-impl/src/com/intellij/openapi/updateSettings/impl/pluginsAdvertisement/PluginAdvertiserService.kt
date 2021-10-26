@@ -60,7 +60,7 @@ open class PluginAdvertiserService {
         dependencies[implementationName].forEach { putFeature(it) }
       }
       else {
-        MarketplaceRequests.Instance
+        MarketplaceRequests.getInstance()
           .getFeatures(featureType, implementationName)
           .mapNotNull { it.toPluginData() }
           .forEach { putFeature(it) }

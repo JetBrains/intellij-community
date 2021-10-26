@@ -51,16 +51,12 @@ class MarketplaceRequests : PluginInfoProvider {
 
     private val objectMapper by lazy { ObjectMapper() }
 
-    private val applicationInfo
-      get() = ApplicationInfoImpl.getShadowInstanceImpl()
-
-    private val PLUGIN_MANAGER_URL = applicationInfo.pluginManagerUrl.trimEnd('/')
+    private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstanceImpl().pluginManagerUrl.trimEnd('/')
 
     private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
     @JvmStatic
-    val Instance
-      get() = PluginInfoProvider.getInstance() as MarketplaceRequests
+    fun getInstance(): MarketplaceRequests = PluginInfoProvider.getInstance() as MarketplaceRequests
 
     @JvmStatic
     fun parsePluginList(reader: Reader): List<PluginNode> {
@@ -196,7 +192,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(applicationInfo.pluginsCompatibleBuild)
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild)
 
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
@@ -246,7 +242,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val param = mapOf(
       "featureType" to featureType,
       "implementationName" to implementationName,
-      "build" to applicationInfo.pluginsCompatibleBuild,
+      "build" to ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild,
     )
     return getFeatures(param)
   }
