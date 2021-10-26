@@ -1,0 +1,2 @@
+[*.cs]
+file_header_template = <copyright file="{filename}" company="{companyname}" />
