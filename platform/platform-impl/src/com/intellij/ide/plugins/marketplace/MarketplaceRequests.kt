@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -113,7 +114,7 @@ class MarketplaceRequests : PluginInfoProvider {
           }
       }
       catch (e: Exception) {
-        logWarnOrPrintIfDebug("Can not get compatible updates from Marketplace", e)
+        LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
         return emptyList()
       }
     }
@@ -181,11 +182,11 @@ class MarketplaceRequests : PluginInfoProvider {
             return@connect Files.newBufferedReader(file).use(parser)
           }
           catch (e: HttpRequests.HttpStatusException) {
-            LOG.warnWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
+            LOG.infoWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
             throw e
           }
           catch (e: Exception) {
-            LOG.warnWithDebug("Error reading Marketplace file: ${e} (file=${file} URL=${url})", e)
+            LOG.infoWithDebug("Error reading Marketplace file: ${e} (file=${file} URL=${url})", e)
             if (file != null && LOG.isDebugEnabled) {
               LOG.debug("File content:\n${runCatching { Files.readString(file) }.getOrElse { IoErrorText.message(e) }}")
             }
@@ -233,7 +234,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get features from Marketplace", e)
+      LOG.infoOrDebug("Can not get features from Marketplace", e)
       return emptyList()
     }
   }
@@ -269,7 +270,7 @@ class MarketplaceRequests : PluginInfoProvider {
         getMarketplacePlugins(indicator)
       }
       catch (e: IOException) {
-        logWarnOrPrintIfDebug("Cannot get plugins from Marketplace", e)
+        LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
         emptySet()
       }
     })
@@ -312,7 +313,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get organizations from Marketplace", e)
+      LOG.infoOrDebug("Can not get organizations from Marketplace", e)
       return emptyList()
     }
   }
@@ -327,7 +328,7 @@ class MarketplaceRequests : PluginInfoProvider {
       ) { objectMapper.readValue(it, object : TypeReference<List<MarketplaceBrokenPlugin>>() {}) }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get broken plugins file from Marketplace", e)
+      LOG.infoOrDebug("Can not get broken plugins file from Marketplace", e)
       return emptyMap()
     }
 
@@ -366,7 +367,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get tags from Marketplace", e)
+      LOG.infoOrDebug("Can not get tags from Marketplace", e)
       return emptyList()
     }
   }
@@ -438,7 +439,7 @@ class MarketplaceRequests : PluginInfoProvider {
         ?.let { PluginId.getId(it) }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
+      LOG.infoOrDebug("Can not get compatible update by module from Marketplace", e)
       return null
     }
   }
@@ -461,7 +462,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
+      LOG.infoOrDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
       jetBrainsPluginsIds = null
     }
   }
@@ -492,7 +493,7 @@ class MarketplaceRequests : PluginInfoProvider {
         }
     }
     catch (e: Exception) {
-      logWarnOrPrintIfDebug("Can not get supported extensions from Marketplace", e)
+      LOG.infoOrDebug("Can not get supported extensions from Marketplace", e)
       extensionsForIdes = null
     }
   }
@@ -573,11 +574,14 @@ private data class CompatibleUpdateForModuleRequest(
   )
 }
 
-private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
-  if (LOG.isDebugEnabled) {
-    LOG.debug(message, throwable)
+private fun Logger.infoOrDebug(
+  message: String,
+  throwable: Throwable,
+) {
+  if (isDebugEnabled) {
+    debug(message, throwable)
   }
   else {
-    LOG.warn("${message}: ${throwable.message}")
+    info("$message: ${throwable.message}")
   }
 }

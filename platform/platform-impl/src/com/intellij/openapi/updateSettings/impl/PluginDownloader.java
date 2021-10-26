@@ -366,7 +366,7 @@ public final class PluginDownloader {
              downloader.downloadPlugin(myPluginUrl, indicator);
     }
     catch (IOException ex) {
-      LOG.warn(ex);
+      LOG.info(ex);
       reportError(showMessageOnError, ex.getMessage());
       return null;
     }
