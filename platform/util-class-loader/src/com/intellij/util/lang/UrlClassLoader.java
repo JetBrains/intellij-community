@@ -531,8 +531,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         .invokeExact(message, t);
     }
     catch (Throwable tt) {
-      tt.addSuppressed(t);
-      tt.printStackTrace(System.err);
+      t.addSuppressed(tt);
+      System.err.println(getClass().getName() + ": " +  message);
+      t.printStackTrace(System.err);
     }
   }
 
