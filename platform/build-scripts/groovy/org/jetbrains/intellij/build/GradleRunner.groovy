@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -18,11 +17,6 @@ final class GradleRunner {
   private final List<String> additionalParams
   private final BuildOptions options
 
-  @Lazy
-  private volatile GradleRunner modularGradleRunner = {
-    createModularRunner()
-  }()
-
   GradleRunner(
     File gradleProjectDir,
     String projectDir,
@@ -37,6 +31,10 @@ final class GradleRunner {
     this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
     this.additionalParams = additionalParams
+
+    if (!isModularRuntime()) {
+      throw new IllegalStateException("Running Gradle on runtime < 11 is not supported anymore")
+    }
   }
 
   /**
@@ -58,15 +56,6 @@ final class GradleRunner {
    */
   boolean run(String title, File buildFile, String... tasks) {
     return runInner(title, buildFile, false, false, tasks)
-  }
-
-  /**
-   *
-   * @see GradleRunner#run(java.lang.String, java.lang.String [ ])
-   */
-  boolean runWithModularRuntime(String title, String... tasks) {
-    if (isModularRuntime()) return run(title, tasks)
-    return modularGradleRunner.run(title, tasks)
   }
 
   /**
@@ -156,18 +145,5 @@ final class GradleRunner {
     return JdkVersionDetector.instance
              .detectJdkVersionInfo(javaHome)
              .@version.feature >= 11
-  }
-
-  private GradleRunner createModularRunner() {
-    if (isModularRuntime()) {
-      return this
-    }
-    run('Downloading JBR 11', 'setupJbr11')
-    def modularRuntime = "$projectDir/build/jdk/11"
-    if (SystemInfoRt.isMac) {
-      modularRuntime += '/Contents/Home'
-    }
-    modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)
-    return new GradleRunner(gradleProjectDir, projectDir, messages, options, modularRuntime)
   }
 }
