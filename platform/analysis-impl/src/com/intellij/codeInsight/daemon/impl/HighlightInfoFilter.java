@@ -21,6 +21,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This extension point allows highlighting subsystem to ignore the particular {@link HighlightInfo}.
+ */
 public interface HighlightInfoFilter {
   HighlightInfoFilter[] EMPTY_ARRAY = new HighlightInfoFilter[0];
   ExtensionPointName<HighlightInfoFilter> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.daemon.highlightInfoFilter");
