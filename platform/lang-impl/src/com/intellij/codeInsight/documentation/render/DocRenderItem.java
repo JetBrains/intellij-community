@@ -191,14 +191,12 @@ public final class DocRenderItem {
         editor.getScrollingModel().addVisibleAreaListener(iconVisibilityController, connection);
         Disposer.register(connection, iconVisibilityController);
 
-        MyVisibleAreaListener visibleAreaListener = new MyVisibleAreaListener(editor);
-        editor.getScrollingModel().addVisibleAreaListener(visibleAreaListener, connection);
+        editor.getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(editor), connection);
         if (useOldBackend(editor)) {
           editor.getInlayModel().addListener(new MyInlayListener(), connection);
         }
         else {
           ((EditorEx)editor).getFoldingModel().addListener(new MyFoldingListener(), connection);
-          editor.getDocument().addDocumentListener(visibleAreaListener, connection);
         }
 
         Disposer.register(connection, () -> DocRenderer.clearCachedLoadingPane(editor));
@@ -560,10 +558,9 @@ public final class DocRenderItem {
     }
   }
 
-  private static final class MyVisibleAreaListener implements VisibleAreaListener, DocumentListener {
+  private static final class MyVisibleAreaListener implements VisibleAreaListener {
     private int lastWidth;
     private AffineTransform lastFrcTransform;
-    private Editor delayedEditorUpdate;
 
     private MyVisibleAreaListener(@NotNull Editor editor) {
       lastWidth = DocRenderer.calcWidth(editor);
@@ -578,23 +575,6 @@ public final class DocRenderItem {
     public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (e.getNewRectangle().isEmpty()) return; // ignore switching between tabs
       Editor editor = e.getEditor();
-      if (!useOldBackend(editor) && ((EditorEx)editor).getDocument().isInEventsHandling()) {
-        delayedEditorUpdate = editor;
-      }
-      else {
-        updateRenderersIfNeeded(editor);
-      }
-    }
-
-    @Override
-    public void documentChanged(@NotNull DocumentEvent event) {
-      if (delayedEditorUpdate != null) {
-        updateRenderersIfNeeded(delayedEditorUpdate);
-        delayedEditorUpdate = null;
-      }
-    }
-
-    private void updateRenderersIfNeeded(@NotNull Editor editor) {
       int newWidth = DocRenderer.calcWidth(editor);
       AffineTransform transform = getTransform(editor);
       if (newWidth != lastWidth || !Objects.equals(transform, lastFrcTransform)) {
