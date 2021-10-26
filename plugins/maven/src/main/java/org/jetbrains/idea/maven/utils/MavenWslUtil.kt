@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
+import com.intellij.build.events.MessageEvent
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.navigation.Place
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -37,6 +39,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
+import org.jetbrains.idea.maven.server.wsl.BuildIssueWslJdk
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder
 import java.io.File
 import java.util.function.Function
@@ -60,6 +63,9 @@ internal object MavenWslUtil : MavenUtil() {
       val jdk = ProjectRootManager.getInstance(project).projectSdk
       if (jdk != null && jdk.sdkType is JavaSdkType && projectWslDistr == tryGetWslDistributionForPath(jdk.homePath)) {
         return jdk
+      } else {
+        MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(BuildIssueWslJdk(), MessageEvent.Kind.ERROR);
+        throw InvalidSdkException(name)
       }
     }
     val sdkByExactName = getSdkByExactName(name)
@@ -88,7 +94,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun tryGetWslDistributionForPath(path: String?): WSLDistribution? {
-    return path?.let { WslPath.getDistributionByWindowsUncPath(it)}
+    return path?.let { WslPath.getDistributionByWindowsUncPath(it) }
   }
 
   /**
@@ -237,8 +243,8 @@ internal object MavenWslUtil : MavenUtil() {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
     return resolveWslAware(project,
-                    { resolveLocalRepository(overriddenLocalRepository, mavenHome, settingPath) },
-                    { wsl: WSLDistribution -> wsl.resolveLocalRepository(overriddenLocalRepository, mavenHome, settingPath) })
+                           { resolveLocalRepository(overriddenLocalRepository, mavenHome, settingPath) },
+                           { wsl: WSLDistribution -> wsl.resolveLocalRepository(overriddenLocalRepository, mavenHome, settingPath) })
   }
 
   @JvmStatic
@@ -248,8 +254,8 @@ internal object MavenWslUtil : MavenUtil() {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
     return resolveWslAware(project,
-                    { resolveUserSettingsFile(settingPath) },
-                    { wsl: WSLDistribution -> wsl.resolveUserSettingsFile(settingPath) })
+                           { resolveUserSettingsFile(settingPath) },
+                           { wsl: WSLDistribution -> wsl.resolveUserSettingsFile(settingPath) })
   }
 
   @JvmStatic
@@ -257,8 +263,8 @@ internal object MavenWslUtil : MavenUtil() {
     val filePath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
     if (filePath != null) return File(filePath)
     return resolveWslAware(project,
-                    { resolveGlobalSettingsFile(globalSettingsPath) },
-                    { wsl: WSLDistribution -> wsl.resolveGlobalSettingsFile(globalSettingsPath) })
+                           { resolveGlobalSettingsFile(globalSettingsPath) },
+                           { wsl: WSLDistribution -> wsl.resolveGlobalSettingsFile(globalSettingsPath) })
   }
 
   @JvmStatic
@@ -366,7 +372,11 @@ internal object MavenWslUtil : MavenUtil() {
     return true
   }
 
-  private fun findOrDownloadNewJdk(project: Project, projectWslDistr: WSLDistribution?, sdk: Sdk, notification: Notification, listener: NotificationListener) {
+  private fun findOrDownloadNewJdk(project: Project,
+                                   projectWslDistr: WSLDistribution?,
+                                   sdk: Sdk,
+                                   notification: Notification,
+                                   listener: NotificationListener) {
     val jdkTask = object : Task.Backgroundable(null, MavenProjectBundle.message("wsl.jdk.searching"), false) {
       override fun run(indicator: ProgressIndicator) {
         val sdkPath = service<JdkFinder>().suggestHomePaths().filter {
@@ -406,5 +416,20 @@ internal object MavenWslUtil : MavenUtil() {
       }
     }
     ProgressManager.getInstance().run(jdkTask)
+  }
+}
+
+class MavenWslCache {
+  fun getOrCachedWslDistribution() {
+
+  }
+}
+
+
+class CachedMavenWslDistribution(val original: WSLDistribution) : WSLDistribution(original) {
+  private val myEnv: Map<String, String> by lazy { super.getEnvironment() }
+  private val myJDKs = HashMap<String, Sdk>()
+  override fun getEnvironment(): Map<String, String> {
+    return myEnv
   }
 }
