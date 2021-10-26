@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.testFramework.relativePath
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
@@ -59,6 +60,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                         .joinToString(separator = "-")
                 suite(suiteName = suiteName) {
                     app {
+                        ExpressionsOfTypeProcessor.prodMode()
                         warmUpProject()
 
                         with(config) {
