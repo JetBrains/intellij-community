@@ -161,7 +161,19 @@ final class BuildDependenciesDownloader {
     info(" * Extracting $archiveFile to $targetDirectory")
 
     Files.createDirectories(targetDirectory)
-    BuildDependenciesUtil.extractZip(archiveFile, targetDirectory)
+
+    byte[] start = Files.newInputStream(archiveFile).withCloseable { it.readNBytes(2) }
+    if (start.length < 2) {
+      throw new IllegalStateException("File $archiveFile is smaller than 2 bytes, could not be extracted")
+    }
+
+    if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
+      BuildDependenciesUtil.extractZip(archiveFile, targetDirectory)
+    } else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+      BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory)
+    } else {
+      throw new IllegalStateException("Unknown archive format at $archiveFile. Currently only .tar.gz or .zip are supported")
+    }
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory))
     if (!checkFlagFile(archiveFile, flagFile, targetDirectory)) {

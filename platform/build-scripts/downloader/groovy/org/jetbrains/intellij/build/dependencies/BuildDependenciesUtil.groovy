@@ -2,8 +2,11 @@
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 
@@ -17,6 +20,7 @@ import java.nio.file.attribute.PosixFilePermissions
 final class BuildDependenciesUtil {
   static boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 
+  @SuppressWarnings('HttpUrlsUsage')
   static DocumentBuilder createDocumentBuilder() {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
 
@@ -149,6 +153,27 @@ final class BuildDependenciesUtil {
           }
 
           if (isPosix && (entry.unixMode & 0111) != 0) {
+            Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"))
+          }
+        }
+      }
+    }
+  }
+
+  static void extractTarGz(Path archiveFile, Path target) {
+    new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(archiveFile)))).withCloseable { archive ->
+      while (true) {
+        TarArchiveEntry entry = (TarArchiveEntry) archive.getNextEntry()
+        if (Objects.isNull(entry)) break
+
+        def entryPath = entryFile(target, entry.name)
+        if (entry.isDirectory()) {
+          Files.createDirectories(entryPath)
+        }
+        else {
+          Files.copy(archive, entryPath)
+
+          if (isPosix && (entry.mode & 0111) != 0) {
             Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"))
           }
         }
