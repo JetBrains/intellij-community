@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -23,6 +24,7 @@ import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
 import java.awt.EventQueue
@@ -131,19 +133,16 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
           preLoadCommitData(toLoad, CollectConsumer(result))
           result.sortedBy { commits[storage.getCommitIndex(it.id, it.root)] }
           notifyLoaded()
+          runInEdt(this@AbstractDataGetter) {
+            consumer.consume(result)
+          }
         }
-        catch (e: VcsException) {
-          LOG.warn(e)
-          throw RuntimeException(e)
+        catch (_: ProcessCanceledException) {
         }
-      }
-
-      override fun onSuccess() {
-        consumer.consume(result)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        errorConsumer.consume(error)
+        catch (t: Throwable) {
+          if (t !is VcsException) LOG.error(t)
+          runInEdt(this@AbstractDataGetter) { errorConsumer.consume(t) }
+        }
       }
     }
     runInBackgroundThread(indicator, task)
