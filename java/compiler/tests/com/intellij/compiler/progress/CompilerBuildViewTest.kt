@@ -75,8 +75,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
-      assertThat(output).startsWith("Clearing build system data…\n" +
-                                    "Executing pre-compile tasks…\n" +
+      assertThat(output).startsWith("Clearing build system data...\n" +
+                                    "Executing pre-compile tasks...\n" +
                                     "Loading Ant configuration...\n" +
                                     "Running Ant tasks...\n" +
                                     "Cleaning output directories…\n" +
@@ -91,16 +91,16 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches…\n" +
-                                  "Executing post-compile tasks…\n" +
+                                  "Executing post-compile tasks...\n" +
                                   "Loading Ant configuration...\n" +
                                   "Running Ant tasks...\n" +
-                                  "Synchronizing output directories…")
+                                  "Synchronizing output directories...")
     }
 
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
-      assertThat(output).startsWith("Executing pre-compile tasks…\n" +
+      assertThat(output).startsWith("Executing pre-compile tasks...\n" +
                                     "Loading Ant configuration...\n" +
                                     "Running Ant tasks...\n" +
                                     "Cleaning output directories…\n" +
@@ -115,10 +115,10 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches…\n" +
-                                  "Executing post-compile tasks…\n" +
+                                  "Executing post-compile tasks...\n" +
                                   "Loading Ant configuration...\n" +
                                   "Running Ant tasks...\n" +
-                                  "Synchronizing output directories…")
+                                  "Synchronizing output directories...")
     }
   }
 
