@@ -23,8 +23,8 @@ abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement
     private val elementClass: Class<TElement>,
     textGetter: () -> String
 ) : SelfTargetingIntention<TList>(listClass, textGetter) {
-    override fun allowCaretInsideElement(element: PsiElement) =
-        element !is KtValueArgument && super.allowCaretInsideElement(element)
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+        element is KtValueArgument || super.skipProcessingFurtherElementsAfter(element)
 
     open fun leftParOnNewLine(commonCodeStyleSettings: CommonCodeStyleSettings): Boolean = false
 
