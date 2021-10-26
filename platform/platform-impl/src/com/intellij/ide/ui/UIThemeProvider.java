@@ -15,16 +15,28 @@ import java.io.InputStream;
 import java.util.function.Function;
 
 /**
+ * Extension point for adding ui themes.
+ * <br/>
+ * {@link #path} and {@link #id} are required to register a theme.
+ * <br/>
+ * Read more about <a href=https://plugins.jetbrains.com/docs/intellij/themes.html>theme developing</a>
+ *
  * @author Konstantin Bulenkov
  */
 public final class UIThemeProvider implements PluginAware {
   public static final ExtensionPointName<UIThemeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.themeProvider");
   private PluginDescriptor myPluginDescriptor;
 
+  /**
+   * Path to *.theme.json file
+   */
   @Attribute("path")
   @RequiredElement
   public String path;
 
+  /**
+   * Unique theme identifier. For example, MyTheme123
+   */
   @Attribute("id")
   @RequiredElement
   public String id;
