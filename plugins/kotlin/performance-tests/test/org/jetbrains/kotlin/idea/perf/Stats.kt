@@ -5,10 +5,13 @@ package org.jetbrains.kotlin.idea.perf
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.util.PerformanceCounter
+import java.io.BufferedReader
 import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.*
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
@@ -430,6 +433,18 @@ class Stats(
                 buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
                 agentName = buildProperties["agent.name"]?.toString()
                 buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
+                if (buildBranch == null || buildBranch == "<default>") {
+                    val gitPath = System.getenv("TEAMCITY_GIT_PATH") ?: "git"
+                    val processBuilder = ProcessBuilder(gitPath, "branch", "--show-current")
+                    val process = processBuilder.start()
+                    var line: String?
+                    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                        line = reader.readLine()
+                    }
+                    if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                        buildBranch = line
+                    }
+                }
                 check(buildBranch != null && buildBranch != "<default>") { "buildBranch='$buildBranch' is expected to be set by TeamCity" }
                 commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
             }
