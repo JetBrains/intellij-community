@@ -55,7 +55,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  public @NotNull String ID() {
+  public @NotNull
+  String ID() {
     return ID;
   }
 
@@ -114,7 +115,9 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @NlsContexts.Tooltip @Nullable String getToolTip(@Nullable GitRepository repository) {
+  protected @NlsContexts.Tooltip
+  @Nullable
+  String getToolTip(@Nullable GitRepository repository) {
     if (repository != null && repository.getState() == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached");
     }
@@ -136,12 +139,15 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   public static class Factory implements StatusBarWidgetFactory {
     @Override
-    public @NotNull String getId() {
+    public @NotNull
+    String getId() {
       return ID;
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @Nls
+    @NotNull
+    String getDisplayName() {
       return GitBundle.message("git.status.bar.widget.name");
     }
 
@@ -152,13 +158,14 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     }
 
     @Override
-    public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    public @NotNull
+    StatusBarWidget createWidget(@NotNull Project project) {
       return new GitBranchWidget(project);
     }
 
     @Override
     public boolean isEnabledByDefault() {
-      return !ToolbarSettings.getInstance().isVisible();
+      return !ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled();
     }
 
     @Override
