@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -115,15 +115,10 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
     }
     if (toLoad.isEmpty()) {
       currentTaskIndex--
-      val process = Runnable {
+      // client of this code expect start/stop methods to get called for the provided indicator
+      runInCurrentThread(indicator) {
         result.sortedBy { commits[storage.getCommitIndex(it.id, it.root)] }
         consumer.consume(result)
-      }
-      if (indicator != null) {
-        ProgressManager.getInstance().runProcess(process, indicator)
-      }
-      else {
-        process.run()
       }
       return
     }
@@ -151,12 +146,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
         errorConsumer.consume(error)
       }
     }
-    if (indicator != null) {
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator)
-    }
-    else {
-      ProgressManager.getInstance().run(task)
-    }
+    runInBackgroundThread(indicator, task)
   }
 
   override fun getCommitDataIfAvailable(hash: Int): T? {
@@ -283,6 +273,24 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
         commits[commitId] = row
       }
       return commits
+    }
+
+    private fun runInCurrentThread(indicator: ProgressIndicator?, runnable: () -> Unit) {
+      if (indicator != null) {
+        ProgressManager.getInstance().runProcess(runnable, indicator)
+      }
+      else {
+        runnable.invoke()
+      }
+    }
+
+    private fun runInBackgroundThread(indicator: ProgressIndicator?, task: Task.Backgroundable) {
+      if (indicator != null) {
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator)
+      }
+      else {
+        ProgressManager.getInstance().run(task)
+      }
     }
   }
 }
