@@ -333,7 +333,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
     }
 
-    private static boolean isLessOrEqual(LanguageVersion version, LanguageVersion upperBound) {
+    private static boolean isLessOrEqual(LanguageOrApiVersion version, LanguageOrApiVersion upperBound) {
         return VersionComparatorUtil.compare(version.getVersionString(), upperBound.getVersionString()) <= 0;
     }
 
@@ -344,8 +344,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void restrictAPIVersions(VersionView upperBoundView) {
         VersionView selectedAPIView = getSelectedAPIVersionView();
-        LanguageVersion selectedAPIVersion = selectedAPIView.getVersion();
-        LanguageVersion upperBound = upperBoundView.getVersion();
+        LanguageOrApiVersion selectedAPIVersion = selectedAPIView.getVersion();
+        LanguageOrApiVersion upperBound = upperBoundView.getVersion();
         List<VersionView> permittedAPIVersions = new ArrayList<>(LanguageVersion.values().length + 1);
         if (isLessOrEqual(VersionView.LatestStable.INSTANCE.getVersion(), upperBound)) {
             permittedAPIVersions.add(VersionView.LatestStable.INSTANCE);
@@ -353,7 +353,12 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         ArraysKt.mapNotNullTo(
                 LanguageVersion.values(),
                 permittedAPIVersions,
-                version -> isLessOrEqual(version, upperBound) && !version.isUnsupported() ? new VersionView.Specific(version) : null
+                languageVersion -> {
+                    ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
+                    if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) return new VersionView.Specific(apiVersion);
+
+                    return null;
+                }
         );
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
@@ -428,15 +433,21 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             kotlinJpsPluginVersionPanel.setVisible(false);
         }
 
-        for (LanguageVersion version : LanguageVersion.values()) {
-            if (version.isUnsupported() ||
-                !LanguageVersionSettingsKt.isStableOrReadyForPreview(version) && !ApplicationManager.getApplication().isInternal()) {
+        for (LanguageVersion languageVersion : LanguageVersion.values()) {
+            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion) &&
+                !ApplicationManager.getApplication().isInternal()
+            ) {
                 continue;
             }
 
-            VersionView.Specific specificVersion = new VersionView.Specific(version);
-            languageVersionComboBox.addItem(specificVersion);
-            apiVersionComboBox.addItem(specificVersion);
+            ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
+
+            if (!apiVersion.isUnsupported()) {
+                apiVersionComboBox.addItem(new VersionView.Specific(apiVersion));
+            }
+            if (!languageVersion.isUnsupported()) {
+                languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+            }
         }
         languageVersionComboBox.setRenderer(new DescriptionListCellRenderer());
         kotlinJpsPluginVersionComboBox.setRenderer(new DescriptionListCellRenderer());
@@ -850,7 +861,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     VersionView selectedItem = (VersionView) component.getSelectedItem();
                     if (selectedItem == null) return null;
 
-                    LanguageVersion version = selectedItem.getVersion();
+                    LanguageOrApiVersion version = selectedItem.getVersion();
                     if (version.isUnsupported()) {
                         return new ValidationInfo(KotlinBundle.message(messageKey, version.getVersionString()), component);
                     }
