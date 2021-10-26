@@ -1,31 +1,110 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
+import com.intellij.util.EmptyConsumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
+import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import it.unimi.dsi.fastutil.ints.IntConsumer
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
+import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
+import it.unimi.dsi.fastutil.ints.*
+import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
                                              storage: VcsLogStorage,
                                              logProviders: Map<VirtualFile, VcsLogProvider>,
                                              private val topCommitsDetailsCache: TopCommitsCache,
-                                             index: VcsLogIndex,
+                                             private val index: VcsLogIndex,
                                              parentDisposable: Disposable) :
-  AbstractDataGetterWithSequentialLoader<VcsCommitMetadata>(storage, logProviders, index, parentDisposable) {
+  AbstractDataGetter<VcsCommitMetadata>(storage, logProviders, parentDisposable) {
 
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
+  private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, VcsCommitMetadata>()
+  private val loader = SequentialLimitedLifoExecutor(this, MAX_LOADING_TASKS) { task: TaskDescriptor ->
+    doLoadCommitsData(task.commits, EmptyConsumer.getInstance())
+    notifyLoaded()
+  }
+  /**
+   * The sequence number of the current "loading" task.
+   */
+  private var currentTaskIndex: Long = 0
+  private val loadingFinishedListeners = ArrayList<Runnable>()
+
+  override fun getCommitData(commit: Int): VcsCommitMetadata {
+    return getCommitData(commit, setOf(commit))
+  }
+
+  fun getCommitData(commit: Int, neighbourHashes: Iterable<Int>): VcsCommitMetadata {
+    if (!EventQueue.isDispatchThread()) {
+      LOG.warn("Accessing MiniDetailsGetter from background thread")
+      return cache.getIfPresent(commit)
+             ?: return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+    val details = getCommitDataIfAvailable(commit)
+    if (details != null) return details
+
+    val toLoad = IntOpenHashSet(neighbourHashes.iterator())
+    val taskNumber = currentTaskIndex++
+    toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
+    loader.queue(TaskDescriptor(toLoad))
+    // now it is in the cache as "Loading Details" (cacheCommit puts it there)
+    return cache.getIfPresent(commit)!!
+  }
+
+  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+    LOG.assertTrue(EventQueue.isDispatchThread())
+    val details = cache.getIfPresent(commit)
+    if (details != null) {
+      if (details is LoadingDetailsImpl) {
+        if (details.loadingTaskIndex <= currentTaskIndex - MAX_LOADING_TASKS) {
+          // don't let old "loading" requests stay in the cache forever
+          cache.asMap().remove(commit, details)
+          return null
+        }
+      }
+      return details
+    }
+    return topCommitsDetailsCache[commit]
+  }
+
+  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
+    val detailsFromCache = commits.associateNotNull {
+      val details = getCommitDataIfAvailable(it)
+      if (details is LoadingDetails) {
+        return@associateNotNull null
+      }
+      details
+    }
+    return detailsFromCache
+  }
+
+  override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
+
+  private fun cacheCommit(commitId: Int, taskNumber: Long) {
+    // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
+    // even if it will be loaded within a previous query
+    if (cache.getIfPresent(commitId) == null) {
+      cache.put(commitId, createPlaceholderCommit(commitId, taskNumber))
+    }
+  }
+
+  override fun cacheCommits(commits: IntOpenHashSet) {
+    val taskNumber = currentTaskIndex++
+    commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
+  }
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
@@ -34,7 +113,7 @@ class MiniDetailsGetter internal constructor(project: Project,
                       indicator: ProgressIndicator) {
     val toLoad = IntOpenHashSet()
     for (id in commits) {
-      val details = getFromCache(id)
+      val details = cache.getIfPresent(id)
       if (details == null || details is LoadingDetails) {
         toLoad.add(id)
       }
@@ -49,8 +128,28 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
   }
 
-  override fun getFromAdditionalCache(commit: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache[commit]
+  @RequiresBackgroundThread
+  @Throws(VcsException::class)
+  override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
+    val dataGetter = index.dataGetter
+    if (dataGetter == null) {
+      super.doLoadCommitsData(commits, consumer)
+      return
+    }
+    val notIndexed = IntOpenHashSet()
+    commits.forEach(IntConsumer { commit: Int ->
+      val metadata = IndexedDetails.createMetadata(commit, dataGetter, storage, factory)
+      if (metadata == null) {
+        notIndexed.add(commit)
+      }
+      else {
+        saveInCache(commit, metadata)
+        consumer.consume(metadata)
+      }
+    })
+    if (!notIndexed.isEmpty()) {
+      super.doLoadCommitsData(notIndexed, consumer)
+    }
   }
 
   @RequiresBackgroundThread
@@ -62,27 +161,53 @@ class MiniDetailsGetter internal constructor(project: Project,
     logProvider.readMetadata(root, hashes, consumer)
   }
 
-  @RequiresBackgroundThread
-  @Throws(VcsException::class)
-  override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
+  private fun createPlaceholderCommit(commit: Int, taskNumber: Long): VcsCommitMetadata {
     val dataGetter = index.dataGetter
-    if (dataGetter == null) {
-      super.doLoadCommitsData(commits, consumer)
-      return
+    return if (dataGetter != null && Registry.`is`("vcs.log.use.indexed.details")) {
+      IndexedDetails(dataGetter, storage, commit, taskNumber)
     }
-    val notIndexed = IntOpenHashSet()
-    commits.forEach(IntConsumer { commit: Int ->
-      val metadata = createMetadata(commit, dataGetter, storage, factory)
-      if (metadata == null) {
-        notIndexed.add(commit)
-      }
-      else {
-        saveInCache(commit, metadata)
-        consumer.consume(metadata)
+    else {
+      LoadingDetailsImpl(Computable { storage.getCommitId(commit)!! }, taskNumber)
+    }
+  }
+
+  /**
+   * This listener will be notified when any details loading process finishes.
+   * The notification will happen in the EDT.
+   */
+  fun addDetailsLoadedListener(runnable: Runnable) {
+    loadingFinishedListeners.add(runnable)
+  }
+
+  fun removeDetailsLoadedListener(runnable: Runnable) {
+    loadingFinishedListeners.remove(runnable)
+  }
+
+  override fun notifyLoaded() {
+    UIUtil.invokeAndWaitIfNeeded(Runnable {
+      for (loadingFinishedListener in loadingFinishedListeners) {
+        loadingFinishedListener.run()
       }
     })
-    if (!notIndexed.isEmpty()) {
-      super.doLoadCommitsData(notIndexed, consumer)
+  }
+
+  override fun dispose() {
+    loadingFinishedListeners.clear()
+  }
+
+  private class TaskDescriptor(val commits: IntSet)
+
+  companion object {
+    private val LOG = Logger.getInstance(AbstractDataGetter::class.java)
+    private const val MAX_LOADING_TASKS = 10
+
+    private inline fun <V> Iterable<Int>.associateNotNull(transform: (Int) -> V?): Int2ObjectMap<V> {
+      val result = Int2ObjectOpenHashMap<V>()
+      for (element in this) {
+        val value = transform(element) ?: continue
+        result[element] = value
+      }
+      return result
     }
   }
 }
