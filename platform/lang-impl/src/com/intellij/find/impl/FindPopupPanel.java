@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -1067,12 +1067,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myCbFileFilter.putClientProperty("dontRequestFocus", null);
     }
     myFileMaskField.removeAllItems();
-    List<@NlsSafe String> variants = Arrays.asList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFileMasks()));
-    for (@NlsSafe String variant : variants) {
-      myFileMaskField.addItem(variant);
+    FindSettings findSettings = FindSettings.getInstance();
+    @NlsSafe String[] fileMasks = findSettings.getRecentFileMasks();
+    for (int i = fileMasks.length - 1; i >= 0; i--) {
+      myFileMaskField.addItem(fileMasks[i]);
     }
-    if (!variants.isEmpty()) {
-      myFileMaskField.setSelectedItem(variants.get(0));
+    if (fileMasks.length > 0) {
+      String fileMask = findSettings.getFileMask();
+      myFileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
     }
     myFileMaskField.setEnabled(isThereFileFilter);
     String toSearch = myModel.getStringToFind();

@@ -636,4 +636,13 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       });
     });
   }
+
+  // PY-49156
+  public void testFromPackageImportIntoInitConflictWithAssignment() {
+    myFixture.copyDirectoryToProject("fromPackageImportIntoInitConflictWithAssignment/pack", "pack");
+    final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
+    final PsiElement result = doResolve(psiFile);
+    assertInstanceOf(result, PyFile.class);
+    assertEquals("mod.py", ((PyFile)result).getName());
+  }
 }

@@ -123,6 +123,16 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
       .getOverloads(function, TypeEvalContext.codeInsightFallback(element.getProject()))
       .forEach(overload -> allRenames.put(overload, newName));
 
+    final PsiElement originalElement = PyiUtil.getOriginalElement(function);
+    if (originalElement != null) {
+      allRenames.put(originalElement, newName);
+    }
+
+    final PsiElement stubElement = PyiUtil.getPythonStub(function);
+    if (stubElement != null) {
+      allRenames.put(stubElement, newName);
+    }
+
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {
       final Property property = containingClass.findPropertyByCallable(function);

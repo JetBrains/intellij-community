@@ -140,10 +140,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
-    myFixture.checkResult("record\n" +
-                          "java.util.Map;\n" +
-                          "\n" +
-                          "class Foo {}");
+    myFixture.checkResult("class Foo {}");
   }
 
   public void testRemovingAllUnusedImports() {

@@ -4,6 +4,7 @@ package com.jetbrains.numpy.codeInsight
 import com.google.common.collect.ImmutableMap
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider
+import com.jetbrains.python.documentation.PythonDocumentationMap
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import java.io.BufferedReader
 import java.io.IOException
@@ -38,7 +39,8 @@ class SciPyDocumentationLinkProvider : PythonDocumentationLinkProvider {
   override fun getExternalDocumentationUrl(element: PsiElement?, originalElement: PsiElement?): String? {
     val qname = PythonDocumentationProvider.getFullQualifiedName(element)
 
-    return if (qname != null && qname.firstComponent in listOf("numpy", "scipy")) {
+    return if (qname != null && qname.firstComponent in listOf("numpy", "scipy") &&
+               !PythonDocumentationMap.getInstance().entries.containsKey(qname.firstComponent)) {
       val webPage = nameToWebpageName.get(qname.toString())
       if (webPage != null) {
         "https://docs.scipy.org/doc/${qname.firstComponent}/reference/generated/$webPage.html"

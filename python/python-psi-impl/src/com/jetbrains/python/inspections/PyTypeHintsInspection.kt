@@ -84,7 +84,9 @@ class PyTypeHintsInspection : PyInspection() {
 
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
-        if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES) {
+        val hasImportFromFuture = (node.containingFile as? PyFile)?.hasImportFromFuture(FutureFeature.ANNOTATIONS) ?: false
+          if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES &&
+            !hasImportFromFuture) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.builtin.cannot.be.parameterized.directly", qualifier.name),
                           ReplaceWithTypingGenericAliasQuickFix())
         }

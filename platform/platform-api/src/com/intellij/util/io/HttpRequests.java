@@ -432,7 +432,7 @@ public final class HttpRequests {
 
       boolean deleteFile = true;
       try (OutputStream out = new FileOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong());
         deleteFile = false;
       }
       catch (HttpStatusException e) {
@@ -456,7 +456,7 @@ public final class HttpRequests {
 
       boolean deleteFile = true;
       try (OutputStream out = Files.newOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong());
         deleteFile = false;
       }
       catch (HttpStatusException e) {

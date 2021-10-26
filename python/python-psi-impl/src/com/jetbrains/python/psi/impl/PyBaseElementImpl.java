@@ -54,14 +54,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return className;
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    // TODO: Limit to classes, functions, targets?
-    final PsiElement element = PyiUtil.getOriginalElement(this);
-    return element != null ? element : super.getNavigationElement();
-  }
-
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));

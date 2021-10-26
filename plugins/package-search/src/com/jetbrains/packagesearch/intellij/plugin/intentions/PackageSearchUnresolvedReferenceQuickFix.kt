@@ -20,7 +20,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.packageSearchDataService.setSearchQuery(ref.canonicalText)
+            project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(ref.canonicalText)
         }
     }
 

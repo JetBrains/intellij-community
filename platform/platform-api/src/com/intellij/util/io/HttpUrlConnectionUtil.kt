@@ -19,8 +19,11 @@ object HttpUrlConnectionUtil {
   @JvmStatic
   @Throws(IOException::class, ProcessCanceledException::class)
   fun readBytes(inputStream: InputStream, connection: URLConnection, progressIndicator: ProgressIndicator?): BufferExposingByteArrayOutputStream {
-    val contentLength = connection.contentLength
-    val out = BufferExposingByteArrayOutputStream(if (contentLength > 0) contentLength else BLOCK_SIZE)
+    val contentLength = connection.contentLengthLong
+    if (contentLength > Int.MAX_VALUE) {
+      throw IOException("Cannot download >2GB ($contentLength bytes)")
+    }
+    val out = BufferExposingByteArrayOutputStream(if (contentLength > 0) contentLength.toInt() else BLOCK_SIZE)
     NetUtils.copyStreamContent(progressIndicator, inputStream, out, contentLength)
     return out
   }

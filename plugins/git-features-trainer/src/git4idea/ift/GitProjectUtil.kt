@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.actions.GitInit
 import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepositoryManager
 import training.project.FileUtils
@@ -18,7 +20,7 @@ import java.io.File
 object GitProjectUtil {
   private const val remoteProjectName = "RemoteLearningProject"
 
-  fun restoreGitLessonsFiles(project: Project) {
+  fun restoreGitLessonsFiles(project: Project, branch: String) {
     val learningProjectRoot = refreshAndGetProjectRoot(project)
     val gitProjectRoot = invokeAndWaitIfNeeded {
       runWriteAction {
@@ -30,12 +32,19 @@ object GitProjectUtil {
       }
     }
 
-    copyGitProject(gitProjectRoot.toNioPath().toFile()).also {
-      if (it) {
-        GitInit.refreshAndConfigureVcsMappings(project, gitProjectRoot, gitProjectRoot.path)
-      }
-      else error("Failed to copy git project")
+    val root = gitProjectRoot.toNioPath().toFile()
+    if (copyGitProject(root)) {
+      checkout(root, branch)
+      GitInit.refreshAndConfigureVcsMappings(project, gitProjectRoot, gitProjectRoot.path)
     }
+    else error("Failed to copy git project")
+  }
+
+  private fun checkout(root: File, branch: String) {
+    val handler = GitLineHandler(null, root, GitCommand.CHECKOUT)
+    handler.addParameters(branch)
+    handler.endOptions()
+    Git.getInstance().runCommand(handler).throwOnError()
   }
 
   fun createRemoteProject(remoteName: String, project: Project): File {

@@ -66,3 +66,17 @@ class ForMultiLanguageSupport {
     // Das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // Das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 }
+
+/**
+ * Returns `an true` if expression is part of when condition expression that looks like
+ * ```
+ * when {
+ * a && b -> ...
+ * a && !b -> ...
+ * }
+ * ```
+ * * This is <warning descr="EN_A_VS_AN">a</warning> error.
+ * ```
+ * An non-checked code fragment
+ * ```
+ */

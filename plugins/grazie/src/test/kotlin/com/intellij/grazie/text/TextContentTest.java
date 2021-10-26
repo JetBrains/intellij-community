@@ -3,8 +3,14 @@ package com.intellij.grazie.text;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
+import org.jetbrains.jetCheck.PropertyChecker;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.PLAIN_TEXT;
@@ -98,5 +104,73 @@ public class TextContentTest extends BasePlatformTestCase {
       }
     }
     return sb.toString();
+  }
+
+  public void testUnknownAndExcludeOrderDoesNotMatter() {
+    TextContent initial = TextContent.psiFragment(PLAIN_TEXT, myFixture.configureByText("a.txt", "abc"));
+    TextContent c1 = initial.markUnknown(new TextRange(1, 1)).excludeRange(new TextRange(1, 2));
+    TextContent c2 = initial.excludeRange(new TextRange(1, 2)).markUnknown(new TextRange(1, 1));
+    assertEquals("a|c", unknownOffsets(c1));
+    assertEquals("a|c", unknownOffsets(c2));
+    assertEquals(c1, c2);
+  }
+
+  public void testExcludeNearUnknownOffsetPreservesIt() {
+    TextContent initial = TextContent.psiFragment(PLAIN_TEXT, myFixture.configureByText("a.txt", "abc"));
+    assertEquals("|b|c", unknownOffsets(
+      initial.markUnknown(new TextRange(2, 2)).markUnknown(new TextRange(1, 1)).excludeRange(new TextRange(0, 1))));
+  }
+
+  public void testBatchExcludeWholeText() {
+    checkBatchSequentialExclusion("a", List.of(new TextContent.Exclusion(0, 0, false), new TextContent.Exclusion(0, 1, false)));
+  }
+
+  public void testBatchRangeExclusionIsEquivalentToSequential() {
+    PropertyChecker
+      .checkScenarios(() -> env -> {
+        String text = env.generateValue(Generator.stringsOf("abc"), "Text %s");
+        List<TextContent.Exclusion> ranges = generateSortedRanges(env, text);
+        env.logMessage("Ranges " + ranges);
+
+        checkBatchSequentialExclusion(text, ranges);
+      });
+  }
+
+  private void checkBatchSequentialExclusion(String text, List<TextContent.Exclusion> ranges) {
+    TextContent initial = TextContent.psiFragment(PLAIN_TEXT, myFixture.configureByText("a.txt", text));
+    TextContent batchExcluded = initial.excludeRanges(ranges);
+    TextContent sequentiallyExcluded = excludeSequentially(ranges, initial);
+    if (!sequentiallyExcluded.equals(batchExcluded)) {
+      assertEquals(((TextContentImpl)sequentiallyExcluded).tokens, ((TextContentImpl)batchExcluded).tokens);
+    }
+  }
+
+  private static TextContent excludeSequentially(List<TextContent.Exclusion> ranges, TextContent initial) {
+    TextContent result = initial;
+    for (TextContent.Exclusion exclusion : ContainerUtil.reverse(ranges)) {
+      TextRange range = new TextRange(exclusion.start, exclusion.end);
+      result = exclusion.markUnknown ? result.markUnknown(range) : result.excludeRange(range);
+    }
+    return result;
+  }
+
+  private static List<TextContent.Exclusion> generateSortedRanges(ImperativeCommand.Environment env, String text) {
+    int rangeCount = env.generateValue(Generator.integers(0, 100), null);
+    int[] offsets = new int[rangeCount * 2];
+    for (int i = 0; i < offsets.length; i++) {
+      offsets[i] = env.generateValue(Generator.integers(0, text.length()), null);
+    }
+    Arrays.sort(offsets);
+    List<TextContent.Exclusion> ranges = new ArrayList<>();
+    int min = 0;
+    for (int i = 0; i < rangeCount; i++) {
+      int start = Math.max(min, offsets[i * 2]);
+      if (start > text.length()) break;
+
+      int end = Math.max(Math.max(min, offsets[i * 2 + 1]), start);
+      ranges.add(new TextContent.Exclusion(start, end, env.generateValue(Generator.booleans(), null)));
+      min = end;
+    }
+    return ranges;
   }
 }

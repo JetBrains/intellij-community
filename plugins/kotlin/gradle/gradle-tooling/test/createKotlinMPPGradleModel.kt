@@ -42,7 +42,7 @@ internal fun createKotlinSourceSet(
         apiVersion = null,
         isProgressiveMode = false,
         enabledLanguageFeatures = emptySet(),
-        experimentalAnnotationsInUse = emptySet(),
+        optInAnnotationsInUse = emptySet(),
         compilerPluginArguments = emptyArray(),
         compilerPluginClasspath = emptySet(),
         freeCompilerArgs = emptyArray()

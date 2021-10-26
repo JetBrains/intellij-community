@@ -54,7 +54,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.jetbrains.jdi.ArrayReferenceImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
@@ -838,7 +838,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
+      return XDebuggerUtilImpl.createNavigatable(project, this);
     }
 
     @Nullable

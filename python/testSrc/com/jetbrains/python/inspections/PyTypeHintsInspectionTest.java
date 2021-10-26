@@ -1101,6 +1101,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "    <warning descr=\"Type alias must be top-level declaration\">Alias</warning>: TypeAlias = str");
   }
 
+  // PY-46602
+  public void testNoInspectionTypedDictInPython38() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> {
+      doTestByText("from __future__ import annotations\n" +
+                   "\n" +
+                   "def hello(i: dict[str, str]):\n" +
+                   "    return i");
+    });
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
@@ -772,7 +772,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     String beforeText = file.getText();
     long oldStamp = document.getModificationStamp();
-    DocumentUtil.writeInRunUndoTransparentAction(() -> JavaCodeStyleManager.getInstance(project).optimizeImports(file));
+    DocumentUtil.writeInRunUndoTransparentAction(() -> new OptimizeImportsProcessor(project, file).run());
     if (oldStamp != document.getModificationStamp()) {
       String afterText = file.getText();
       if (Comparing.strEqual(beforeText, afterText)) {
