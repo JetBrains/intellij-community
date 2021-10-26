@@ -270,7 +270,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       EditorEx newEditor = createEditor();
       releaseEditorNow();
       myEditor = newEditor;
-      add(editor.getComponent(), BorderLayout.CENTER);
+      add(newEditor.getComponent(), BorderLayout.CENTER);
 
       validate();
       if (isFocused) {
