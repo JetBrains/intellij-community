@@ -8,7 +8,9 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.LoadingDetailsImpl
 import com.intellij.vcs.log.data.VcsLogStorage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
                      private val commitIndex: Int,
