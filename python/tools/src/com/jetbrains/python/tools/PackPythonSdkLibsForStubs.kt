@@ -15,8 +15,6 @@ fun main() {
     File(baseDir).mkdirs()
   }
 
-  var atLeastOneExecutableFound = false
-
   for (python in File(pythons).listFiles()!!) {
     if (python.name.startsWith(".")) {
       continue
@@ -30,7 +28,6 @@ fun main() {
       continue
     }
     else {
-      atLeastOneExecutableFound = true
       println("Packing stdlib of $sdkHome")
     }
 
@@ -43,9 +40,5 @@ fun main() {
     BufferedReader(InputStreamReader(process.errorStream)).use {
       it.lines().forEach(::println)
     }
-  }
-
-  if (!atLeastOneExecutableFound) {
-    throw IllegalStateException("No pythons on $pythons")
   }
 }
