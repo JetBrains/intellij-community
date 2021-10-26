@@ -66,9 +66,9 @@ import kotlin.reflect.full.memberProperties
  *
  *       override fun persistentId(): NameId = NameId(name)
  *
-*        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
-*            addMetaData(it, snapshot)
-*        }
+ *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
+ *            addMetaData(it, snapshot)
+ *        }
  *   }
  *   ```
  *
