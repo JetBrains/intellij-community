@@ -1,7 +1,8 @@
+// PROBLEM: none
 abstract class Parent {
     abstract val foo: Int?
 }
 
 class Child : Parent() {
-    override val foo: Nothing? = null
+    override val <caret>foo = null
 }
