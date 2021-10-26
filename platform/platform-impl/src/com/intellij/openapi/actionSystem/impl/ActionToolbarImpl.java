@@ -1114,7 +1114,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setVisible(boolean visible) {
-    if (Registry.is("ide.experimental.ui")) {
+    if (ExperimentalUI.isNewUI()) {
       myAlphaContext.getAnimator().setVisible(visible);
     }
     else {

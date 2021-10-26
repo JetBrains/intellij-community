@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -49,6 +48,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.ui.ExperimentalUI.isNewUI;
 import static javax.swing.SwingConstants.*;
 
 public final class InternalDecoratorImpl extends InternalDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
@@ -545,8 +545,8 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   void updateActiveAndHoverState() {
     ActionToolbar toolbar = getHeaderToolbar();
-    if (toolbar != null && Registry.is("ide.experimental.ui")) {
-      toolbar.getComponent().setVisible(isWindowHovered || toolWindow.isActive());
+    if (toolbar != null) {
+      toolbar.getComponent().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
     }
   }
 

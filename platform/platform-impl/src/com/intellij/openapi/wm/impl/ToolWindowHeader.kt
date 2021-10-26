@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -12,12 +12,12 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
@@ -96,7 +96,6 @@ abstract class ToolWindowHeader internal constructor(
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
     component.isOpaque = false
-    component.isVisible = !Registry.`is`("ide.experimental.ui")
     @Suppress("LeakingThis")
     add(component)
 
@@ -247,7 +246,7 @@ abstract class ToolWindowHeader internal constructor(
     val drawTopLine = type != ToolWindowType.FLOATING && !UIUtil.isClientPropertyTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
-    if (Registry.`is`("ide.experimental.ui")) {
+    if (isNewUI()) {
       drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow))
