@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class TableLayout extends TabLayout implements MorePopupAware {
+public class TableLayout extends TabLayout {
   private int myScrollOffset = 0;
   private boolean myScrollSelectionInViewPending = false;
 
@@ -416,31 +416,6 @@ public class TableLayout extends TabLayout implements MorePopupAware {
   public void scrollSelectionInView() {
     myScrollSelectionInViewPending = true;
     doScrollSelectionInView(myLastTableLayout);
-  }
-
-  @Override
-  public boolean canShowMorePopup() {
-    return myLastTableLayout != null && !myLastTableLayout.moreRect.isEmpty();
-  }
-
-  @Override
-  public void showMorePopup() {
-    Rectangle rect = myLastTableLayout != null ? myLastTableLayout.moreRect : null;
-    if (rect == null || rect.isEmpty()) return;
-
-    JBPopupMenu menu = new JBPopupMenu();
-    for (final TabInfo each : myLastTableLayout.invisible) {
-      menu.add(createMenuItem(each));
-    }
-    menu.show(myTabs, rect.x, rect.y + rect.height);
-  }
-
-  private JBMenuItem createMenuItem(@NotNull TabInfo tabInfo) {
-    final JBMenuItem item = new JBMenuItem(tabInfo.getText(), tabInfo.getIcon());
-    item.setForeground(tabInfo.getDefaultForeground());
-    item.setBackground(tabInfo.getTabColor());
-    item.addActionListener(__ -> myTabs.select(tabInfo, true));
-    return item;
   }
 
   private void doScrollSelectionInView(TablePassInfo data) {
