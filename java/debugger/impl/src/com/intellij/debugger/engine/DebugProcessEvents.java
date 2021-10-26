@@ -376,6 +376,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                    });
       }
 
+      // Workaround for IDEA-280752 for 212 (a call to getExtensionList will sort and cache the extensions)
+      PositionManagerFactory.EP_NAME.getExtensionList();
+
       // fill position managers and watch for dynamic changes
       PositionManagerFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         final Map<PositionManagerFactory, PositionManager> mapping = new HashMap<>();
