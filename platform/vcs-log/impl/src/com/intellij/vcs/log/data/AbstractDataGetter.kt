@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.EmptyConsumer
 import com.intellij.util.containers.MultiMap
@@ -90,48 +89,43 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
     return getFromCache(hash)!!
   }
 
-  override fun loadCommitsData(hashes: List<Int>, consumer: Consumer<in List<T>>,
-                               errorConsumer: Consumer<in Throwable>, indicator: ProgressIndicator?) {
+  override fun loadCommitsData(commits: List<Int>,
+                               consumer: Consumer<in List<T>>,
+                               errorConsumer: Consumer<in Throwable>,
+                               indicator: ProgressIndicator?) {
     LOG.assertTrue(EventQueue.isDispatchThread())
-    loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator)
-  }
 
-  private fun loadCommitsData(commits: Int2IntMap,
-                              consumer: Consumer<in List<T>>,
-                              errorConsumer: Consumer<in Throwable>,
-                              indicator: ProgressIndicator?) {
-    val result = ArrayList<T>()
-    val toLoad = IntOpenHashSet()
-    val taskNumber = currentTaskIndex++
-    val keyIterator = commits.keys.iterator()
-    while (keyIterator.hasNext()) {
-      val id = keyIterator.nextInt()
-      val details = getCommitDataIfAvailable(id)
-      if (details == null || details is LoadingDetails) {
-        toLoad.add(id)
-        cacheCommit(id, taskNumber)
+    val detailsFromCache = commits.associateNotNull {
+      val details = getCommitDataIfAvailable(it)
+      if (details is LoadingDetails) {
+        return@associateNotNull null
       }
-      else {
-        result.add(details)
-      }
+      details
     }
-    if (toLoad.isEmpty()) {
-      currentTaskIndex--
+    if (detailsFromCache.size == commits.size) {
       // client of this code expect start/stop methods to get called for the provided indicator
       runInCurrentThread(indicator) {
-        result.sortedBy { commits[storage.getCommitIndex(it.id, it.root)] }
-        consumer.consume(result)
+        consumer.consume(commits.mapNotNull { detailsFromCache[it] })
       }
       return
     }
+
+    val toLoad = IntOpenHashSet(commits).apply { removeAll(detailsFromCache.keys) }
+
+    val taskNumber = currentTaskIndex++
+    toLoad.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
+
     val task = object : Task.Backgroundable(null,
                                             VcsLogBundle.message("vcs.log.loading.selected.details.process"),
                                             true, ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
         indicator.checkCanceled()
         try {
-          preLoadCommitData(toLoad, CollectConsumer(result))
-          result.sortedBy { commits[storage.getCommitIndex(it.id, it.root)] }
+          val detailsFromProvider = Int2ObjectOpenHashMap<T>()
+          preLoadCommitData(toLoad) { metadata ->
+            detailsFromProvider[storage.getCommitIndex(metadata.id, metadata.root)] = metadata
+          }
+          val result = commits.mapNotNull { detailsFromCache[it] ?: detailsFromProvider[it] }
           notifyLoaded()
           runInEdt(this@AbstractDataGetter) {
             consumer.consume(result)
@@ -290,6 +284,15 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
       else {
         ProgressManager.getInstance().run(task)
       }
+    }
+
+    private inline fun <V> Iterable<Int>.associateNotNull(transform: (Int) -> V?): Int2ObjectMap<V> {
+      val result = Int2ObjectOpenHashMap<V>()
+      for (element in this) {
+        val value = transform(element) ?: continue
+        result[element] = value
+      }
+      return result
     }
   }
 }
