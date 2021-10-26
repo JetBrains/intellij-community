@@ -8,6 +8,7 @@
 // ACTION: Move to constructor
 // ACTION: Specify type explicitly
 // ACTION: Add use-site target 'field'
+// ACTION: Remove @JvmField annotation
 class Foo {
     <caret>@JvmField private val a = "Lorem ipsum"
 }

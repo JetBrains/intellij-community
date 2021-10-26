@@ -10395,6 +10395,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/jvmField.kt");
+        }
+
+        @TestMetadata("jvmFieldOnOverridingProperty.kt")
+        public void testJvmFieldOnOverridingProperty() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/jvmFieldOnOverridingProperty.kt");
+        }
+
         @TestMetadata("jvmOverloads.kt")
         public void testJvmOverloads() throws Exception {
             runTest("testData/quickfix/removeAnnotation/jvmOverloads.kt");

@@ -6,4 +6,5 @@
 // ACTION: Make public
 // ACTION: Remove explicit type specification
 // ACTION: Add use-site target 'field'
+// ACTION: Remove @JvmField annotation
 <caret>@JvmField private val number: Int? = 42
