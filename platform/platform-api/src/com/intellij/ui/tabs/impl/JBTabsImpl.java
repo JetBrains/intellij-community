@@ -1057,19 +1057,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean canShowMorePopup() {
-    if (myLayout instanceof MorePopupAware)
-      return ((MorePopupAware)myLayout).canShowMorePopup();
     Rectangle moreRect = getMoreRect();
     return moreRect != null;
   }
 
   @Override
   public void showMorePopup() {
-    if (myLayout instanceof MorePopupAware) {
-      ((MorePopupAware)myLayout).showMorePopup();
-      return;
-    }
-
     Rectangle rect = getMoreRect();
     if (rect == null) return;
 
