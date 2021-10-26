@@ -6,30 +6,36 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
+import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
+import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -39,14 +45,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import java.util.concurrent.TimeUnit
-import kotlin.time.measureTimedValue
-import kotlin.time.toDuration
+import kotlin.time.Duration
 
 internal class PackageSearchProjectService(val project: Project) : CoroutineScope by project.lifecycleScope {
 
@@ -57,20 +61,25 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     private val knownRepositoriesLoadingFlow = MutableStateFlow(false)
     private val moduleModelsLoadingFlow = MutableStateFlow(false)
     private val allInstalledKnownRepositoriesLoadingFlow = MutableStateFlow(false)
-    private val installedPackagesLoadingFlow = MutableStateFlow(false)
+    private val installedPackagesStep1LoadingFlow = MutableStateFlow(false)
+    private val installedPackagesStep2LoadingFlow = MutableStateFlow(false)
+    private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
 
-    private val operationExecutedChannel = Channel<Unit>()
+    private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
     val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
         knownRepositoriesLoadingFlow,
         moduleModelsLoadingFlow,
         allInstalledKnownRepositoriesLoadingFlow,
-        installedPackagesLoadingFlow,
+        installedPackagesStep1LoadingFlow,
+        installedPackagesStep2LoadingFlow,
+        installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
     ) { booleans -> emit(booleans.any { it }) }
         .stateIn(this, SharingStarted.Eagerly, false)
+
 
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { trustedState ->
         when (trustedState) {
@@ -78,7 +87,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             else -> flowOf(emptyList())
         }
     }
-        .replayOnSignals(retryFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, operationExecutedChannel.consumeAsFlow())
+        .replayOnSignals(retryFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, timer(Duration.minutes(15)))
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
             val moduleTransformations = project.moduleTransformers.map { transformer ->
                 async { readAction { transformer.transformModules(project, modules) } }
@@ -100,12 +109,13 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .flowOn(Dispatchers.Default)
         .shareIn(this, SharingStarted.Eagerly)
 
-    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(this, SharingStarted.Eagerly, emptyList())
+    val projectModulesStateFlow = projectModulesSharedFlow
+        .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
 
-    private val knownRepositoriesFlow = timer(1.toDuration(TimeUnit.HOURS))
+    private val knownRepositoriesFlow = timer(Duration.hours(1))
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#knownRepositoriesFlow",
@@ -118,7 +128,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .mapLatestTimedWithLoading(
             "moduleModelsStateFlow",
             moduleModelsLoadingFlow
-        ) { projectModules -> readAction { projectModules.map { ModuleModel(it) } } }
+        ) { projectModules -> projectModules.parallelMap { readAction { ModuleModel(it) } } }
         .catchAndLog(
             context = "${this::class.qualifiedName}#moduleModelsStateFlow",
             message = "Error while evaluating modules models",
@@ -127,9 +137,28 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
+    val projectModulesChangesFlow = projectModulesSharedFlow
+        .flatMapLatest { modules ->
+            project.filesChangedEventFlow.throttle(Duration.seconds(5))
+                .map { changedFilesEvents ->
+                    modules.filter { it.buildFile.hashable in changedFilesEvents.mapNotNull { it.file?.hashable } }
+                }
+        }
+        .filter { it.isNotEmpty() }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#projectModulesChangesFlow",
+            message = "Error while checking Modules changes",
+            fallbackValue = emptyList()
+        )
+        .shareIn(this, SharingStarted.Eagerly)
+
     val allInstalledKnownRepositoriesFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
-            .mapLatestTimedWithLoading("allInstalledKnownRepositoriesFlow", allInstalledKnownRepositoriesLoadingFlow) { (moduleModels, repos) ->
+            .replayOnSignals(projectModulesChangesFlow)
+            .mapLatestTimedWithLoading(
+                loggingContext = "allInstalledKnownRepositoriesFlow",
+                loadingFlow = allInstalledKnownRepositoriesLoadingFlow
+            ) { (moduleModels, repos) ->
                 allKnownRepositoryModels(moduleModels, repos)
             }
             .catchAndLog(
@@ -140,8 +169,31 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    val installedPackagesStateFlow = projectModulesSharedFlow
-        .mapLatestTimedWithLoading("installedPackagesStateFlow", installedPackagesLoadingFlow) {
+    val dependenciesByModuleStateFlow = projectModulesSharedFlow
+        .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) { it.fetchProjectDependencies() }
+        .modifiedBy(
+            merge(projectModulesChangesFlow, operationExecutedChannel.consumeAsFlow())
+                .throttle(Duration.seconds(5))
+        ) { installed, changedModules ->
+            val (result, time) = installedPackagesDifferenceLoadingFlow.whileLoading {
+                installed.toMutableMap().also { map ->
+                    changedModules.parallelForEach { map[it] = it.installedDependencies() }
+                }
+            }
+            logTrace("installedPackagesStep1LoadingFlow") {
+                "Took ${time} to elaborate diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
+            }
+            result
+        }
+        .catchAndLog(
+            context = "${this::class.qualifiedName}#dependenciesByModuleStateFlow",
+            message = "Error while evaluating installed dependencies",
+            fallbackValue = emptyMap()
+        )
+        .shareIn(this, SharingStarted.Eagerly)
+
+    val installedPackagesStateFlow = dependenciesByModuleStateFlow
+        .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
             installedPackages(
                 it,
                 project,
@@ -181,34 +233,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             .launchIn(this)
     }
 
-    fun notifyOperationExecuted() {
-        operationExecutedChannel.trySend(Unit)
+    fun notifyOperationExecuted(successes: List<ProjectModule>) {
+        operationExecutedChannel.trySend(successes)
     }
 }
-
-private fun <T, R> Flow<T>.mapLatestTimedWithLoading(
-    loggingContext: String,
-    loadingFlow: MutableStateFlow<Boolean>,
-    transform: suspend CoroutineScope.(T) -> R
-) =
-    mapLatest {
-        measureTimedValue {
-            loadingFlow.emit(true)
-            val result = try {
-                coroutineScope { transform(it) }
-            } finally {
-                loadingFlow.emit(false)
-            }
-            result
-        }
-    }.map {
-        logInfo(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
-        it.value
-    }
-
-private fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackValue: T, retryChannel: SendChannel<Unit>? = null) =
-    catch {
-        logInfo(context, it) { message }
-        retryChannel?.send(Unit)
-        emit(fallbackValue)
-    }

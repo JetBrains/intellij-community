@@ -129,7 +129,14 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
         selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing,
         selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems,
-        packageOperations = coroutineScope.computeActionsFor(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
+        packageOperations = coroutineScope.computeActionsFor(
+            packageModel = this,
+            targetModules = targetModules,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            onlyStable = onlyStable,
+            selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
+            selectedVersion = searchResultUiState?.selectedVersion ?: NormalizedPackageVersion.Missing
+        ),
         sortedVersions = sortedVersions
     )
 }
