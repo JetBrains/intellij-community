@@ -15,7 +15,10 @@ internal val SETTINGS_CHANGED_TOPIC: Topic<SettingsChangeListener> = Topic(Setti
 @Topic.AppLevel
 internal val SETTINGS_LOGGED_TOPIC: Topic<SettingsLoggedListener> = Topic(SettingsLoggedListener::class.java)
 
-internal const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
+private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
+
+internal fun isSettingsSyncEnabled() : Boolean =
+  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
 class SettingsSyncFacade {
   internal val updateChecker: SettingsSyncUpdateChecker = getMain().controls.updateChecker
@@ -34,7 +37,7 @@ internal class SettingsSyncMain : ApplicationLoadListener {
   internal lateinit var controls: SettingsSyncControls
 
   override fun beforeApplicationLoaded(application: Application, appConfigPath: Path) {
-    if (application.isUnitTestMode || !SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)) {
+    if (application.isUnitTestMode || !isSettingsSyncEnabled()) {
       return
     }
 
