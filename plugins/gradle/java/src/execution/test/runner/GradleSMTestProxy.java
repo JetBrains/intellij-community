@@ -16,7 +16,11 @@ public class GradleSMTestProxy extends SMTestProxy {
   @Nullable private TestEventResult myLastResult;
 
   public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
-    super(testName, isSuite, locationUrl);
+    this(testName, testName, isSuite, locationUrl, className);
+  }
+
+  public GradleSMTestProxy(String testName, String testDisplayName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
+    super(testName, testDisplayName, isSuite, locationUrl);
     myClassName = className;
   }
 
