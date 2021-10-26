@@ -9,7 +9,9 @@
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlDynamicPlugin -->
     <ApplicationLoadListener implementation="com.intellij.settingsSync.SettingsSyncMain"/>
+
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
     <applicationConfigurable id="settings.sync"
                              key="title.settings.sync"
