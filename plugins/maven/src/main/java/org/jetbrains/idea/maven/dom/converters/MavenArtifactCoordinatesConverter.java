@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -396,10 +397,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       PsiManager psiManager = context.getPsiManager();
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(psiManager.getProject());
 
-      File artifactFile = MavenArtifactUtil
-        .getArtifactFile(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+      Path artifactFile = MavenArtifactUtil
+        .getArtifactNioPath(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(artifactFile);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
       if (virtualFile != null) {
         return psiManager.findFile(virtualFile);
       }

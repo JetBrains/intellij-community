@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.*;
 
 public class MavenProjectResolver {
@@ -167,31 +168,30 @@ public class MavenProjectResolver {
     embedder.customizeForResolve(console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
 
-    Set<File> filesToRefresh = new HashSet<>();
+    Set<Path> filesToRefresh = new HashSet<>();
 
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
-      Map<MavenPlugin, File> unresolvedPlugins = new HashMap<>();
+      Map<MavenPlugin, @Nullable Path> unresolvedPlugins = new HashMap<>();
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
-        File file = MavenUtil.getRepositoryParentFile(project, each.getMavenId());
         Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
 
         for (MavenArtifact artifact : artifacts) {
-          File pluginJar = artifact.getFile();
-          File pluginDir = pluginJar.getParentFile();
+          Path pluginJar = artifact.getFile().toPath();
+          Path pluginDir = pluginJar.getParent();
           if (pluginDir != null) {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
-          unresolvedPlugins.put(each, file);
+          unresolvedPlugins.put(each, MavenUtil.getRepositoryParentFile(project, each.getMavenId()));
         }
       }
       if (!unresolvedPlugins.isEmpty()) {
-        Collection<File> files = unresolvedPlugins.values();
+        Collection<@Nullable Path> files = unresolvedPlugins.values();
         CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
         for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
           MavenProjectsManager.getInstance(myProject)
@@ -205,7 +205,7 @@ public class MavenProjectResolver {
     }
     finally {
       if (filesToRefresh.size() > 0) {
-        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh);
       }
 
       embeddersManager.release(embedder);
