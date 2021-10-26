@@ -26,5 +26,14 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.fir.inspections.diagnosticBased.HLUnusedVariableInspection"
+                     groupPath="Kotlin"
+                     groupName="Redundant constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.unused.variable.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
