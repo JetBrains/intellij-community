@@ -2,10 +2,11 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.jps.model.java.JdkVersionDetector
 
+import java.nio.file.Path
 import java.util.function.Supplier
 
 @CompileStatic
@@ -13,7 +14,7 @@ final class GradleRunner {
   final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
-  private final String javaHome
+  private final Supplier<Path> javaHome
   private final List<String> additionalParams
   private final BuildOptions options
 
@@ -22,7 +23,7 @@ final class GradleRunner {
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
-    String javaHome,
+    Supplier<Path> javaHome,
     List<String> additionalParams = getDefaultAdditionalParams()
   ) {
     this.messages = messages
@@ -31,10 +32,6 @@ final class GradleRunner {
     this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
     this.additionalParams = additionalParams
-
-    if (!isModularRuntime()) {
-      throw new IllegalStateException("Running Gradle on runtime < 11 is not supported anymore")
-    }
   }
 
   /**
@@ -134,16 +131,18 @@ final class GradleRunner {
     command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
-    processBuilder.environment().put("JAVA_HOME", javaHome)
+
+    Path javaHomeValue = javaHome.get()
+    if (javaHomeValue != null) {
+      processBuilder.environment().put("JAVA_HOME", javaHomeValue.toString())
+    }
+    else {
+      processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
+    }
+
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
     return process.waitFor() == 0
-  }
-
-  private boolean isModularRuntime() {
-    return JdkVersionDetector.instance
-             .detectJdkVersionInfo(javaHome)
-             .@version.feature >= 11
   }
 }

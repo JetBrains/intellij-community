@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.CompoundRuntimeException
@@ -427,8 +426,6 @@ idea.fatal.error.notification=disabled
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
     logFreeDiskSpace("after compilation")
 
-    ForkJoinTask<?> setupJetBrainsRuntimeTask = context.shouldBuildDistributions() ? createSetupJbreTask()?.fork() : null
-
     MavenArtifactsProperties mavenArtifacts = context.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       context.executeStep("generate maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP, new Runnable() {
@@ -471,7 +468,6 @@ idea.fatal.error.notification=disabled
 
     if (context.shouldBuildDistributions()) {
       layoutShared(context)
-      setupJetBrainsRuntimeTask?.join()
 
       Path propertiesFile = patchIdeaPropertiesFile()
       Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
@@ -566,38 +562,6 @@ idea.fatal.error.notification=disabled
   @Override
   void generateProjectStructureMapping(File targetFile) {
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
-  }
-
-  @Nullable
-  private ForkJoinTask<?> createSetupJbreTask(String targetArch = null) {
-    String message = "downloading JetBrains Runtime"
-    return BuildHelper.getInstance(buildContext).createSkippableTask(
-      spanBuilder(message).setAttribute("targetArch", targetArch),
-      BuildOptions.RUNTIME_DOWNLOADING_STEP,
-      buildContext,
-      new Runnable() {
-        @Override
-        void run() {
-          logFreeDiskSpace("before downloading runtime")
-          String[] args = [
-            "setupJbre", "-Dintellij.build.target.os=$buildContext.options.targetOS",
-            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledRuntimeVersion"
-          ]
-          if (targetArch != null) {
-            args += "-Dintellij.build.target.arch=" + targetArch
-          }
-          String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
-          if (prefix != null) {
-            args += "-Dintellij.build.bundled.jre.prefix=" + prefix
-          }
-          if (buildContext.options.bundledRuntimeBuild != null) {
-            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledRuntimeBuild
-          }
-          buildContext.gradle.run(message, args)
-          logFreeDiskSpace("after downloading runtime")
-        }
-      }
-    )
   }
 
   private void setupBundledMaven() {
@@ -986,22 +950,15 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     BuildContext buildContext = buildContext
+    def currentOs = OsFamily.currentOs
+
     buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
-    OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
-                         SystemInfoRt.isMac ? OsFamily.MACOS :
-                         SystemInfoRt.isLinux ? OsFamily.LINUX : null
-    if (currentOs == null) {
-      buildContext.messages.error("Update from source isn't supported for '$SystemInfoRt.OS_NAME'")
-    }
     buildContext.options.targetOS = currentOs.osId
     buildContext.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
 
     setupBundledMaven()
     compileModulesForDistribution(buildContext).buildJARs(buildContext, true)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
-    if (includeBinAndRuntime) {
-      createSetupJbreTask(arch.name()).fork().join()
-    }
     layoutShared(buildContext)
 
     if (includeBinAndRuntime) {
@@ -1019,7 +976,7 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      buildContext.bundledJreManager.extractJreTo(currentOs, targetDirectory.resolve("jbr"), arch)
+      buildContext.bundledJreManager.extractJreTo(BundledJreManager.getProductJbrPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)

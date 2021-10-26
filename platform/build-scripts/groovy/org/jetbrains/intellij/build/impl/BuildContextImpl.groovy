@@ -81,13 +81,10 @@ final class BuildContextImpl extends BuildContext {
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
-    bundledJreManager = new BundledJreManager(this)
-
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar")
-    dependenciesProperties = new DependenciesProperties(this)
     applicationInfo = new ApplicationInfoProperties(project, productProperties, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
@@ -115,13 +112,10 @@ final class BuildContextImpl extends BuildContext {
     linuxDistributionCustomizer = parent.linuxDistributionCustomizer
     macDistributionCustomizer = parent.macDistributionCustomizer
 
-    bundledJreManager = new BundledJreManager(this)
-
     buildNumber = parent.buildNumber
 
     xBootClassPathJarNames = parent.xBootClassPathJarNames
     bootClassPathJarNames = parent.bootClassPathJarNames
-    dependenciesProperties = parent.dependenciesProperties
     applicationInfo = parent.applicationInfo
   }
 
@@ -173,8 +167,18 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  DependenciesProperties getDependenciesProperties() {
+    compilationContext.dependenciesProperties
+  }
+
+  @Override
   BuildPaths getPaths() {
     compilationContext.paths
+  }
+
+  @Override
+  BundledJreManager getBundledJreManager() {
+    compilationContext.bundledJreManager
   }
 
   @Override

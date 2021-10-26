@@ -4,6 +4,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.ZipUtil
 import groovy.transform.CompileStatic
 
+import java.nio.file.Path
+
 @CompileStatic
 final class ExternalPluginBundler {
   static void bundle(String pluginName,
@@ -12,7 +14,7 @@ final class ExternalPluginBundler {
                      String targetDirectory,
                      String buildTaskName = pluginName) {
     def dependenciesProjectDir = new File(dependenciesPath)
-    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options, SystemProperties.getJavaHome()).run(
+    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options, { Path.of(SystemProperties.getJavaHome()) }).run(
       "Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     Properties properties = new Properties()
     new File(dependenciesProjectDir, "gradle.properties").withInputStream {

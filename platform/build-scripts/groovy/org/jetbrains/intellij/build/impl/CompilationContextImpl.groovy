@@ -31,6 +31,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 
 @CompileStatic
@@ -46,6 +47,8 @@ final class CompilationContextImpl implements CompilationContext {
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   final Map<String, JpsModule> nameToModule
+  final DependenciesProperties dependenciesProperties
+  final BundledJreManager bundledJreManager
   JpsCompilationData compilationData
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -58,6 +61,9 @@ final class CompilationContextImpl implements CompilationContext {
 
   static CompilationContextImpl create(String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
+    // ensure TracerManager is initialized before all other thing since only it can configure GlobalOpenTelemetry correctly
+    TracerManager.spanBuilder("x")
+
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
@@ -67,16 +73,19 @@ final class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '11', null, "JDK_11_x64"))
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options, gradleJdk)
-    projectHome = toCanonicalPath(projectHome)
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
-    kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
+    kotlinBinaries.setUpCompilerIfRequired(ant)
     def model = loadProject(projectHome, kotlinBinaries, messages)
-    def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, messages, oldToNewModuleName,
+
+    AtomicReference<Path> jdkHomeRef = new AtomicReference<>()
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options, { jdkHomeRef.get() })
+
+    projectHome = toCanonicalPath(projectHome)
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
+    def jdkHome = defineJavaSdk(context)
+    jdkHomeRef.set(jdkHome)
     context.prepareForBuild()
 
     // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
@@ -86,54 +95,46 @@ final class CompilationContextImpl implements CompilationContext {
     return context
   }
 
-  private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
-    def sdks = []
-    def jbrDir = jbrTargetDir(projectHome, options)
-    def jbrVersionName = jbrVersionName(options)
-    sdks << jbrVersionName
-    def jbrDefaultDir = "$jbrDir/$jbrVersionName"
-    def jbrEnvVar = "JDK_${options.jbrVersion < 9 ? "1$options.jbrVersion" : options.jbrVersion}_x64"
-    def jbrHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, jbrVersionName, jbrDefaultDir, jbrEnvVar))
-    JdkUtils.defineJdk(model.global, jbrVersionName, jbrHome, messages)
-    readModulesFromReleaseFile(model, jbrVersionName, jbrHome)
-    model.project.modules
+  private static Path defineJavaSdk(CompilationContext context) {
+    def homePath = context.bundledJreManager.getSdkHomeForCurrentOsAndArch()
+    def jbrHome = toCanonicalPath(homePath.toString())
+    def jbrVersionName = "11"
+
+    JdkUtils.defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
+    readModulesFromReleaseFile(context.projectModel, jbrVersionName, jbrHome)
+
+    context.projectModel.project.modules
       .collect { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
-      .findAll { it != null && !sdks.contains(it) }
-      .toSet().each { sdkName ->
+      .findAll { it != null }
+      .toSet()
+      .each { sdkName ->
       def vendorPrefixEnd = sdkName.indexOf("-")
       def sdkNameWithoutVendor = vendorPrefixEnd != -1 ? sdkName.substring(vendorPrefixEnd + 1) : sdkName
-      def sdkHome = JdkUtils.computeJdkHome(messages, sdkNameWithoutVendor, "$jbrDir/$sdkNameWithoutVendor", null)?.with {
-        toCanonicalPath(it)
+      if (sdkNameWithoutVendor != "11") {
+        throw new IllegalStateException("Project model at $context.paths.projectHomeDir requested SDK $sdkNameWithoutVendor, but only '11' is supported as SDK in intellij project")
       }
-      if (sdkHome != null) {
-        JdkUtils.defineJdk(model.global, sdkName, sdkHome, messages)
-        readModulesFromReleaseFile(model, sdkName, sdkHome)
-      }
-      else {
-        messages.warning("JDK $sdkName is required to compile the project but it's not found")
+
+      if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
+        JdkUtils.defineJdk(context.projectModel.global, sdkName, jbrHome, context.messages)
+        readModulesFromReleaseFile(context.projectModel, sdkName, jbrHome)
       }
     }
-    return jbrHome
+
+    return homePath
   }
 
   private static def readModulesFromReleaseFile(JpsModel model, String sdkName, String sdkHome) {
     def additionalSdk = model.global.libraryCollection.findLibrary(sdkName)
+    if (additionalSdk == null) {
+      throw new IllegalStateException("Sdk '" + sdkName + "' is not found")
+    }
+
     def urls = additionalSdk.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
     JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
       if (!urls.contains(it)) {
         additionalSdk.addRoot(it, JpsOrderRootType.COMPILED)
       }
     }
-  }
-
-  static String jbrTargetDir(String projectHome, BuildOptions options) {
-    options.jbrTargetDir?.with {
-      new File(it).exists() ? it : null
-    } ?: "$projectHome/build/jdk"
-  }
-
-  private static String jbrVersionName(BuildOptions options) {
-    "${options.jbrVersion < 9 ? "1.$options.jbrVersion" : options.jbrVersion}"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -151,7 +152,7 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
-                                 String projectHome, String jdkHome, BuildMessages messages,
+                                 String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
@@ -174,13 +175,15 @@ final class CompilationContextImpl implements CompilationContext {
 
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     Path logDir = options.logPath != null ? Path.of(options.logPath) : Path.of(buildOutputRoot, "log")
-    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, logDir)
+    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, logDir)
+
+    this.dependenciesProperties = new DependenciesProperties(this)
+    this.bundledJreManager = new BundledJreManager(this)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     CompilationContextImpl copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome,
-                                                             paths.jdkHome,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
@@ -198,7 +201,9 @@ final class CompilationContextImpl implements CompilationContext {
     this.newToOldModuleName = context.newToOldModuleName
     this.nameToModule = context.nameToModule
     this.paths = context.paths
-    this.compilationData = compilationData
+    this.compilationData = context.compilationData
+    this.dependenciesProperties = context.dependenciesProperties
+    this.bundledJreManager = context.bundledJreManager
   }
 
   CompilationContextImpl cloneForContext(BuildMessages messages) {
@@ -209,7 +214,7 @@ final class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.kotlinCompilerHome/kotlinc")
     }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
@@ -217,17 +222,6 @@ final class CompilationContextImpl implements CompilationContext {
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
     messages.info("Loaded project $projectHome: ${model.project.modules.size()} modules, ${model.project.libraryCollection.libraries.size()} libraries")
     model
-  }
-
-  private static boolean dependenciesInstalled
-  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options, boolean isKotlinCompilerRequired = true) {
-    if (!dependenciesInstalled) {
-      dependenciesInstalled = true
-      String[] args = ['setupJdks']
-      if (isKotlinCompilerRequired) args += KotlinBinaries.SET_UP_COMPILER_GRADLE_TASK
-      if (options.jbrTargetDir != null) args += "-D$BuildOptions.JBR_TARGET_DIR_OPTION=$options.jbrTargetDir".toString()
-      gradle.run('Setting up compilation dependencies', args)
-    }
   }
 
   void prepareForBuild() {
@@ -461,14 +455,13 @@ final class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 final class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, Path logDir) {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, Path logDir) {
     super(Path.of(communityHome).toAbsolutePath().normalize(),
           Path.of(buildOutputRoot).toAbsolutePath().normalize(),
           logDir.toAbsolutePath().normalize())
 
     this.projectHome = projectHome
     this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
-    this.jdkHome = jdkHome
     artifactDir = buildOutputDir.resolve("artifacts")
     artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
   }

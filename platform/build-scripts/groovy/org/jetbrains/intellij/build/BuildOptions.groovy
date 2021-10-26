@@ -224,18 +224,6 @@ final class BuildOptions {
   String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Directory path to unpack JetBrains Runtime builds into
-   */
-  static final String JBR_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
-  String jbrTargetDir = System.getProperty(JBR_TARGET_DIR_OPTION)
-
-  /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
-   */
-  static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
-
-  /**
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"

@@ -219,6 +219,8 @@ final class BuildDependenciesDownloader {
           .setHeader("User-Agent", "Build Script Downloader")
           .build()
 
+        info(" * Downloading $uri -> $target")
+
         HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile))
         if (response.statusCode() != 200) {
           throw new IllegalStateException("Error downloading $uri: non-200 http status code ${response.statusCode()}")

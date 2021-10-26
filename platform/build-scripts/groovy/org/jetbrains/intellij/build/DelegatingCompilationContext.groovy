@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.BundledJreManager
+import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -92,11 +94,22 @@ abstract class DelegatingCompilationContext implements CompilationContext {
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {
+    //noinspection GrDeprecatedAPIUsage
     delegate.notifyArtifactBuilt(artifactPath)
   }
 
   @Override
   void notifyArtifactWasBuilt(Path artifactPath) {
     delegate.notifyArtifactWasBuilt(artifactPath)
+  }
+
+  @Override
+  DependenciesProperties getDependenciesProperties() {
+    return delegate.getDependenciesProperties()
+  }
+
+  @Override
+  BundledJreManager getBundledJreManager() {
+    return delegate.getBundledJreManager()
   }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -12,7 +13,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
-import org.jetbrains.jps.model.java.JdkVersionDetector
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -50,12 +50,10 @@ final class CompilationTasksImpl extends CompilationTasks {
       resolveProjectDependencies()
     }
     else {
-      CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
-      def currentJdk = JdkUtils.currentJdk
-      def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(currentJdk)
-      if (jdkInfo.version.feature != 11) {
-        context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java $jdkInfo.version ($currentJdk)")
+      if (!JavaVersion.current().isAtLeast(11)) {
+        context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java ${JavaVersion.current()}")
       }
+
       resolveProjectDependencies()
       context.messages.progress("Compiling project")
       JpsCompilationRunner runner = new JpsCompilationRunner(context)

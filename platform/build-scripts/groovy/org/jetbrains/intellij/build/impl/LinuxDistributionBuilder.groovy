@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -80,7 +81,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX, JvmArchitecture.x64)
+      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(BundledJreManager.getProductJbrPrefix(buildContext), OsFamily.LINUX, JvmArchitecture.x64)
       Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
@@ -147,7 +148,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
+  private Path buildTarGz(@Nullable String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     Path tarPath = buildContext.paths.artifactDir.resolve("${baseName}${suffix}.tar.gz")
@@ -157,7 +158,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
+      if (!Files.exists(Path.of(jreDirectoryPath, javaExecutablePath))) {
+        throw new IllegalStateException(javaExecutablePath + " was not found under " + jreDirectoryPath)
+      }
     }
+
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir

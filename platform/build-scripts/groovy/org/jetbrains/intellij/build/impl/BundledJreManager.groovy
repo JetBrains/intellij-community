@@ -5,14 +5,14 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.StatusCode
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -21,86 +21,111 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 import static java.nio.file.attribute.PosixFilePermission.*
 
 @CompileStatic
 final class BundledJreManager {
-  private final BuildContext buildContext
+  private final CompilationContext context
 
-  @Lazy private String jreBuild = {
-    buildContext.options.bundledRuntimeBuild ?: buildContext.dependenciesProperties.property('runtimeBuild')
+  @Lazy private String runtimeBuild = {
+    context.options.bundledRuntimeBuild ?: context.dependenciesProperties.property('runtimeBuild')
   }()
 
-  BundledJreManager(BuildContext buildContext) {
-    this.buildContext = buildContext
+  BundledJreManager(CompilationContext context) {
+    this.context = context
   }
 
-  Path extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    Path targetDir = Path.of(buildContext.paths.buildOutputRoot, "jre_${os.jbrArchiveSuffix}_$arch")
-    if (Files.isDirectory(targetDir)) {
-      Span.current().addEvent("JRE is already extracted", Attributes.of(AttributeKey.stringKey("dir"), targetDir.toString()))
-      return targetDir
+  @NotNull
+  Path getSdkHomeForCurrentOsAndArch() {
+    def path = extractJre("jbrsdk-", OsFamily.currentOs, JvmArchitecture.currentArch)
+
+    Path jdkHome;
+    if (OsFamily.currentOs == OsFamily.MACOS) {
+      jdkHome = path.resolve("jbr/Contents/Home")
+    }
+    else {
+      jdkHome = path.resolve("jbr")
     }
 
-    Path archive = findJreArchive(os, arch)
-    if (archive == null) {
-      return null
+    Path releaseFile = jdkHome.resolve("release")
+    if (!Files.exists(releaseFile)) {
+      throw new IllegalStateException("Unable to find release file " + releaseFile + " after extracting JBR at " + path)
     }
 
-    doExtractJbr(archive, targetDir.resolve("jbr"), os, buildContext)
+    return jdkHome
+  }
+
+  // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
+  @NotNull
+  Path extractJre(String prefix, OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
+    Path targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${os.jbrArchiveSuffix}_$arch")
+    def jbrDir = targetDir.resolve("jbr")
+
+    Path archive = findJreArchiveImpl(prefix, os, runtimeBuild, arch, context.options, context.paths)
+    BuildDependenciesDownloader.extractFile(
+      archive, jbrDir,
+      new BuildDependenciesCommunityRoot(context.paths.communityHomeDir),
+      BuildDependenciesExtractOptions.STRIP_ROOT,
+    )
+    fixJbrPermissions(jbrDir, os == OsFamily.WINDOWS)
+
+    Path releaseFile
+    if (os == OsFamily.MACOS) {
+      releaseFile = jbrDir.resolve("Contents/Home/release")
+    }
+    else {
+      releaseFile = jbrDir.resolve("release")
+    }
+
+    if (!Files.exists(releaseFile)) {
+      throw new IllegalStateException("Unable to find release file " + releaseFile + " after extracting JBR at " + archive)
+    }
+
     return targetDir
   }
 
-  void extractJreTo(OsFamily os, Path destinationDir, JvmArchitecture arch) {
-    Path archive = findJreArchive(os, arch)
+  void extractJreTo(String prefix, OsFamily os, Path destinationDir, JvmArchitecture arch) {
+    Path archive = findJreArchiveImpl(prefix, os, runtimeBuild, arch, context.options, context.paths)
     if (archive != null) {
-      doExtractJbr(archive, destinationDir, os, buildContext)
+      doExtractJbr(archive, destinationDir, os)
     }
   }
 
-  private static void doExtractJbr(Path archive, Path destinationDir, OsFamily os, BuildContext context) {
-    BuildHelper.getInstance(context).span(TracerManager.spanBuilder("extract JBR")
-                                            .setAttribute("archive", archive.toString())
-                                            .setAttribute("os", os.osName)
-                                            .setAttribute("destination", destinationDir.toString())) {
+  private static void doExtractJbr(Path archive, Path destinationDir, OsFamily os) {
+    Span span = TracerManager.spanBuilder("extract JBR")
+      .setAttribute("archive", archive.toString())
+      .setAttribute("os", os.osName)
+      .setAttribute("destination", destinationDir.toString())
+      .startSpan()
+    try {
       NioFiles.deleteRecursively(destinationDir)
-      unTar(archive, destinationDir, context)
+      unTar(archive, destinationDir)
       fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
     }
+    catch (Throwable e) {
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR)
+      throw e
+    }
+    finally {
+      span.end()
+    }
   }
 
-  Path findJreArchive(OsFamily os, JvmArchitecture arch) {
-    String jreBuild = buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}")
-      ?: buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}")
-                        ?: jreBuild
-
-    //noinspection SpellCheckingInspection
-    Path jreDir = buildContext.paths.communityHomeDir.resolve("build/dependencies/build/jbre")
-    Path jreArchive = jreDir.resolve(jbrArchiveName(jreBuild, buildContext.options.bundledRuntimeVersion, arch, os, buildContext))
-    if (Files.exists(jreArchive)) {
-      return jreArchive
-    }
-
-    List<String> existingFiles = jreDir.toFile().listFiles().collect { jreDir.relativize(it.toPath()).toString() }
-    if (buildContext.options.isInDevelopmentMode) {
-      buildContext.messages.warning("Cannot extract $os.osName JRE: file $jreArchive is not found (${ existingFiles})")
-    }
-    else {
-      RuntimeException error = new RuntimeException("cannot extract JRE")
-      Span.current().recordException(error, Attributes.of(
-        AttributeKey.stringKey("os"), os.osName,
-        AttributeKey.stringKey("arch"), arch.name(),
-        AttributeKey.stringKey("archiveName"), jreArchive.fileName.toString(),
-        AttributeKey.stringArrayKey("existingFiles"), existingFiles,
-        ))
-      throw error
-    }
-    return null
+  Path findJreArchive(String prefix, OsFamily os, JvmArchitecture arch) {
+    return findJreArchiveImpl(prefix, os, runtimeBuild, arch, context.options, context.paths)
   }
 
-  private static void unTar(Path archive, Path destination, BuildContext context) {
+  private static Path findJreArchiveImpl(String prefix, OsFamily os, String jreBuild, JvmArchitecture arch, BuildOptions options, BuildPaths paths) {
+    String archiveName = jbrArchiveName(prefix, jreBuild, options.bundledRuntimeVersion, arch, os)
+    URI url = new URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(new BuildDependenciesCommunityRoot(paths.communityHomeDir), url)
+  }
+
+  private static void unTar(Path archive, Path destination) {
     // CompressorStreamFactory requires input stream with mark support
     String rootDir = createTarGzInputStream(archive).withCloseable {
       it.nextTarEntry?.name
@@ -131,7 +156,18 @@ final class BundledJreManager {
       args.add("--directory")
       args.add(destination.toString())
 
-      BuildHelper.runProcess(context, args, archive.parent)
+      // return BuildHelper.runProcess(context, args, archive.parent) when we switch to jps-bootstrap
+
+      ProcessBuilder builder = new ProcessBuilder(args).inheritIO().directory(archive.parent.toFile())
+      Process process = builder.start()
+      if (!process.waitFor(10, TimeUnit.MINUTES)) {
+        process.destroyForcibly().waitFor()
+        throw new IllegalStateException("Cannot execute $args: 10 min timeout")
+      }
+      int exitCode = process.exitValue()
+      if (exitCode != 0) {
+        throw new RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+      }
     }
   }
 
@@ -168,14 +204,25 @@ final class BundledJreManager {
     })
   }
 
+  static String getProductJbrPrefix(BuildContext buildContext) {
+    if (buildContext.options.bundledRuntimePrefix != null) {
+      return buildContext.options.bundledRuntimePrefix
+    }
+    else if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
+      return "jbr-"
+    }
+    else {
+      return "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
+    }
+  }
+
   /**
    * Update this method together with:
-   *  `build/dependencies/setupJbre.gradle`
    *  `build/dependencies/setupJdk.gradle`
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
   */
   @SuppressWarnings('SpellCheckingInspection')
-  private static String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os, BuildContext buildContext) {
+  private static String jbrArchiveName(String prefix, String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
     String update, build
     String[] split = jreBuild.split('b')
     if (split.length > 2) {
@@ -190,17 +237,6 @@ final class BundledJreManager {
     else {
       // [11, b96]
       (update, build) = [version.toString(), jreBuild]
-    }
-
-    String prefix
-    if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
-      prefix = "jbr-"
-    }
-    else if (buildContext.options.bundledRuntimePrefix != null) {
-      prefix = buildContext.options.bundledRuntimePrefix
-    }
-    else {
-      prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
     }
 
     String archSuffix = getJBRArchSuffix(arch)
