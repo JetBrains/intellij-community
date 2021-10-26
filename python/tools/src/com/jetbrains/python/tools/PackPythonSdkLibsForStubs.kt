@@ -15,14 +15,24 @@ fun main() {
     File(baseDir).mkdirs()
   }
 
+  var atLeastOneExecutableFound = false
+
   for (python in File(pythons).listFiles()!!) {
     if (python.name.startsWith(".")) {
       continue
     }
     val sdkHome = python.absolutePath
 
-    val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
-    println("Packing stdlib of $sdkHome")
+    val executable = PythonSdkUtil.getPythonExecutable(sdkHome)?.let { File(it) }
+
+    if (executable == null) {
+      println("No python on $sdkHome")
+      continue
+    }
+    else {
+      atLeastOneExecutableFound = true
+      println("Packing stdlib of $sdkHome")
+    }
 
     val process = ProcessBuilder(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir).start()
 
@@ -33,5 +43,9 @@ fun main() {
     BufferedReader(InputStreamReader(process.errorStream)).use {
       it.lines().forEach(::println)
     }
+  }
+
+  if (!atLeastOneExecutableFound) {
+    throw IllegalStateException("No pythons on $pythons")
   }
 }
