@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.synthetic.SamAdapterExtensionFunctionDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 import java.awt.Font
+import javax.swing.Icon
 
 class BasicLookupElementFactory(
     private val project: Project,
@@ -40,6 +41,18 @@ class BasicLookupElementFactory(
         val SHORT_NAMES_RENDERER = DescriptorRenderer.SHORT_NAMES_IN_TYPES.withOptions {
             enhancedTypes = true
             parameterNamesInFunctionalTypes = false
+        }
+
+        private fun getIcon(lookupObject: DeclarationLookupObject, descriptor: DeclarationDescriptor, flags: Int): Icon? {
+            // KotlinDescriptorIconProvider does not use declaration if it is KtElement,
+            // so, do not try to look up psiElement for known Kotlin descriptors as it could be a heavy deserialization (e.g. from kotlin libs)
+            val declaration = when (descriptor) {
+                is DeserializedDescriptor, is ReceiverParameterDescriptor -> null
+                else -> {
+                    lookupObject.psiElement
+                }
+            }
+            return KotlinDescriptorIconProvider.getIcon(descriptor, declaration, flags)
         }
     }
 
@@ -63,7 +76,7 @@ class BasicLookupElementFactory(
         includeClassTypeArguments: Boolean = true
     ): LookupElement {
         val lookupObject = object : DeclarationLookupObjectImpl(null) {
-            override val psiElement: PsiElement?
+            override val psiElement: PsiElement
                 get() = psiClass
 
             override fun getIcon(flags: Int) = psiClass.getIcon(flags)
@@ -143,7 +156,7 @@ class BasicLookupElementFactory(
                 val classifierDescriptor = descriptor.containingDeclaration
                 lookupObject = object : DeclarationLookupObjectImpl(descriptor) {
                     override val psiElement by lazy { DescriptorToSourceUtilsIde.getAnyDeclaration(project, classifierDescriptor) }
-                    override fun getIcon(flags: Int) = KotlinDescriptorIconProvider.getIcon(classifierDescriptor, psiElement, flags)
+                    override fun getIcon(flags: Int): Icon? = getIcon(this, classifierDescriptor, flags)
                 }
                 classifierDescriptor.name.asString()
             }
@@ -151,7 +164,7 @@ class BasicLookupElementFactory(
             is SyntheticJavaPropertyDescriptor -> {
                 lookupObject = object : DeclarationLookupObjectImpl(descriptor) {
                     override val psiElement by lazy { DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor.getMethod) }
-                    override fun getIcon(flags: Int) = KotlinDescriptorIconProvider.getIcon(descriptor, null, flags)
+                    override fun getIcon(flags: Int): Icon? = getIcon(this, descriptor, flags)
                 }
                 descriptor.name.asString()
             }
@@ -165,7 +178,7 @@ class BasicLookupElementFactory(
                         )
                     }
 
-                    override fun getIcon(flags: Int) = KotlinDescriptorIconProvider.getIcon(descriptor, psiElement, flags)
+                    override fun getIcon(flags: Int): Icon? = getIcon(this, descriptor, flags)
                 }
                 descriptor.name.asString()
             }
