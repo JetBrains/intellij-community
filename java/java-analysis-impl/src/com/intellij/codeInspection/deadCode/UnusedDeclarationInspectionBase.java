@@ -20,7 +20,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -28,7 +28,6 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -555,7 +554,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
-  private static final Ref<Boolean> needLog = Ref.create(true);
   void checkForReachableRefs(@NotNull final GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
 
@@ -573,57 +571,29 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
-      entry.accept(codeScanner);
+      try {
+        codeScanner.needToLog = true;
+        entry.accept(codeScanner);
+      }
+      catch (StackOverflowPreventedException e) {
+        // to prevent duplicates
+        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
+          String path = codeScanner.composePath();
+          if (path != null) {
+            LOG.warn(e.getMessage());
+            LOG.warn(path);
+          }
+        }
+      }
+      finally {
+        codeScanner.clearLogs();
+        codeScanner.needToLog = false;
+      }
     }
 
     while (codeScanner.newlyInstantiatedClassesCount() != 0) {
       codeScanner.cleanInstantiatedClassesCount();
       codeScanner.processDelayedMethods();
-    }
-  }
-
-  private static void logFromEntryPoint(RefElement entry) {
-    List<List<RefElement>> paths = new ArrayList<>();
-    paths.add(new ArrayList<>());
-    List<Integer> pathIndexesWithCycles = new ArrayList<>();
-    traverse(entry, paths, 0, pathIndexesWithCycles);
-    LOG.warn(String.format("%s %s (owner: %s, reachable: %s)", entry.getClass().getSimpleName(), entry.getName(), entry.getOwner(),
-                           entry.isReachable()));
-    for (int pathIndex : pathIndexesWithCycles) {
-      boolean containsLambda = ContainerUtil.exists(paths.get(pathIndex), elem -> elem instanceof RefFunctionalExpression);
-      if (!containsLambda) continue;
-      // interested only in paths with lambdas
-      LOG.warn("PATH " + (pathIndex + 1) + ":");
-      int elementCounter = 1;
-      for (RefElement element : paths.get(pathIndex)) {
-        String elementText = String.format("%d) %s %s (owner: %s, reachable: %s)", elementCounter++, element.getClass().getSimpleName(), element.getName(),
-                                           element.getOwner(), element.isReachable());
-        LOG.warn(" --> " + elementText);
-      }
-    }
-  }
-
-  private static void traverse(RefElement element, List<List<RefElement>> paths, Integer depth, List<Integer> pathIndexesWithCycles) {
-    int lastPathsIndex = paths.size() - 1;
-    List<RefElement> path = paths.get(lastPathsIndex);
-    int elementIndex;
-    if ((elementIndex = path.indexOf(element)) > -1) {
-      LOG.warn(String.format("Cycle is detected on the element %s, path index: %d, element index in path: %d", element.getName(),
-                             lastPathsIndex + 1, elementIndex));
-      pathIndexesWithCycles.add(lastPathsIndex);
-      return;
-    }
-    path.add(element);
-    List<RefElement> outRefs = new ArrayList<>(element.getOutReferences());
-    for (int i = 0; i < outRefs.size(); i++) {
-      RefElement outRef = outRefs.get(i);
-      if (i > 0) {
-        List<RefElement> pathCopy = new ArrayList<>(path.subList(0, depth + 1));
-        paths.add(pathCopy);
-      }
-      depth++;
-      traverse(outRef, paths, depth, pathIndexesWithCycles);
-      depth--;
     }
   }
 
@@ -637,6 +607,52 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
     private final Set<RefFunctionalExpression> myProcessedFunctionalExpressions = new HashSet<>();
+
+    // todo to be deleted
+    private boolean needToLog = false;
+    private final Set<RefElement> refElements = new LinkedHashSet<>();
+    private static final int MAX_VISITED_NODES = 200;
+    private int visitedCounter = 0;
+
+    private void logIfNotOverflowed(@NotNull RefElement element) {
+      if (!needToLog) return;
+      boolean added = refElements.add(element);
+      String errorMessage;
+      if (++visitedCounter < MAX_VISITED_NODES) {
+        if (added) return;
+        errorMessage = "Cycle is detected";
+      }
+      else {
+        // just in case, probably we have too long path
+        errorMessage = "Stack frames limit is exceeded";
+      }
+      // maybe the graph could be deeper, so we take only bounded amount of stack frames just in case
+      throw new StackOverflowPreventedException(errorMessage);
+    }
+
+    private String composePath() {
+      if (visitedCounter < MAX_VISITED_NODES) return null;
+      StringJoiner result = new StringJoiner(" -> ");
+      refElements.forEach(el -> result.add(log(el)));
+      return result.toString();
+    }
+
+    private void removeNode(@NotNull RefElement refElement) {
+      if (!needToLog) return;
+      refElements.remove(refElement);
+      visitedCounter--;
+    }
+
+    private void clearLogs() {
+      visitedCounter = 0;
+      refElements.clear();
+    }
+
+    private static String log(@NotNull RefElement element) {
+      RefEntity owner = element.getOwner();
+      return String.format("%s %s (owner: %s %s)", element.getClass().getSimpleName(), element.getName(),
+                           owner.getClass().getSimpleName(), owner.getName());
+    }
 
     @Override
     public void visitMethod(@NotNull RefMethod method) {
@@ -722,8 +738,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
+      logIfNotOverflowed(refElement);
       for (RefElement refCallee : refElement.getOutReferences()) {
         refCallee.accept(this);
+        removeNode(refCallee);
       }
     }
 
