@@ -176,10 +176,10 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
-import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
@@ -500,7 +500,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLocalInspectionTest> {
-            model("inspectionsLocal", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
+            model(
+                "inspectionsLocal", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"),
+                // In FE1.0, this is a quickfix rather than a local inspection
+                excludedDirectories = listOf("unusedVariable")
+            )
         }
 
         testClass<AbstractHierarchyTest> {
@@ -1057,7 +1061,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/supercalls", pattern = pattern)
-            model("quickfix/variables", pattern = pattern, isRecursive = false)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
             model("quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("quickfix/when", pattern = pattern)
@@ -1111,6 +1114,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir", testDataPath = "..") {
         testClass<AbstractHLLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }

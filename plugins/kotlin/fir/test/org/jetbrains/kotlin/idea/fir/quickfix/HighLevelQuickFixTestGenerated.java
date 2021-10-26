@@ -1751,64 +1751,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/quickfix/variables")
-    public static class Variables extends AbstractHighLevelQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("unusedVariableInDestructuringDeclaration.kt")
-        public void testUnusedVariableInDestructuringDeclaration() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableInDestructuringDeclaration.kt");
-        }
-
-        @TestMetadata("unusedVariableWithAnonymousFunctionInitialize1.kt")
-        public void testUnusedVariableWithAnonymousFunctionInitialize1() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithAnonymousFunctionInitialize1.kt");
-        }
-
-        @TestMetadata("unusedVariableWithAnonymousFunctionInitialize2.kt")
-        public void testUnusedVariableWithAnonymousFunctionInitialize2() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithAnonymousFunctionInitialize2.kt");
-        }
-
-        @TestMetadata("unusedVariableWithConstantInitializer.kt")
-        public void testUnusedVariableWithConstantInitializer() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithConstantInitializer.kt");
-        }
-
-        @TestMetadata("unusedVariableWithInitializer.kt")
-        public void testUnusedVariableWithInitializer() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithInitializer.kt");
-        }
-
-        @TestMetadata("unusedVariableWithInitializerAndComment.kt")
-        public void testUnusedVariableWithInitializerAndComment() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithInitializerAndComment.kt");
-        }
-
-        @TestMetadata("unusedVariableWithLambdaInitializer1.kt")
-        public void testUnusedVariableWithLambdaInitializer1() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithLambdaInitializer1.kt");
-        }
-
-        @TestMetadata("unusedVariableWithLambdaInitializer2.kt")
-        public void testUnusedVariableWithLambdaInitializer2() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithLambdaInitializer2.kt");
-        }
-
-        @TestMetadata("unusedVariableWithNullInitializer.kt")
-        public void testUnusedVariableWithNullInitializer() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithNullInitializer.kt");
-        }
-
-        @TestMetadata("unusedVariableWithoutInitializer.kt")
-        public void testUnusedVariableWithoutInitializer() throws Exception {
-            runTest("../idea/tests/testData/quickfix/variables/unusedVariableWithoutInitializer.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/variables/changeMutability")
     public static class ChangeMutability extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

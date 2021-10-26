@@ -175,10 +175,6 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
     }
 
-    private val unused = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.UnusedVariable::class, RemovePsiElementSimpleFix.RemoveVariableFactory)
-    }
-
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
         propertyInitialization,
@@ -190,6 +186,5 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         typeMismatch,
         superKeyword,
         vararg,
-        unused,
     )
 }
