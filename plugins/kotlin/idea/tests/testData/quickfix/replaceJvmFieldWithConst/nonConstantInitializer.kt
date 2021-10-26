@@ -6,5 +6,6 @@
 // ACTION: Make public
 // ACTION: Remove explicit type specification
 // ACTION: Add use-site target 'field'
+// ACTION: Remove @JvmField annotation
 fun getText() = ""
 <caret>@JvmField private val text: String = getText()
