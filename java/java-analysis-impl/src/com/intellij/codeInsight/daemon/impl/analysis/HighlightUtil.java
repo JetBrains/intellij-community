@@ -66,6 +66,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.*;
@@ -1669,10 +1670,9 @@ public final class HighlightUtil {
   }
 
   public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
-    PsiPattern innerMostPattern = stripPattern(expression.getPattern());
-    if (innerMostPattern == null) return null;
+    if (expression == null) return null;
 
-    PsiTypeTestPattern pattern = tryCast(innerMostPattern, PsiTypeTestPattern.class);
+    PsiTypeTestPattern pattern = getTypeTestPattern(expression.getPattern());
     if (pattern == null) return null;
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
@@ -1695,11 +1695,24 @@ public final class HighlightUtil {
     return null;
   }
 
-  private static @Nullable PsiPattern stripPattern(@Nullable PsiPattern pattern) {
-    while (pattern instanceof PsiParenthesizedPattern) {
-      pattern = ((PsiParenthesizedPattern)pattern).getPattern();
-    }
-    return pattern;
+  @Contract(value = "null -> null", pure = true)
+  private static @Nullable PsiTypeTestPattern getTypeTestPattern(@Nullable PsiPattern expressionPattern) {
+    final PsiPattern innerMostPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(expressionPattern);
+    if (innerMostPattern == null) return null;
+
+    final PsiTypeTestPattern pattern = tryCast(innerMostPattern, PsiTypeTestPattern.class);
+    if (pattern != null) return pattern;
+
+    final PsiGuardedPattern guardedPattern = tryCast(innerMostPattern, PsiGuardedPattern.class);
+    if (guardedPattern == null) return null;
+
+    final Object condition = ExpressionUtils.computeConstantExpression(guardedPattern.getGuardingExpression());
+    if (!Boolean.TRUE.equals(condition)) return null;
+
+    final PsiPattern patternInGuard = JavaPsiPatternUtil.skipParenthesizedPatternDown(guardedPattern.getPrimaryPattern());
+    if (patternInGuard == null || patternInGuard instanceof PsiTypeTestPattern) return (PsiTypeTestPattern)patternInGuard;
+
+    return getTypeTestPattern(patternInGuard);
   }
 
   static HighlightInfo checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
