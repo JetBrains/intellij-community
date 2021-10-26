@@ -7,7 +7,7 @@ abstract class X<S> implements T<S> {
     }
 
     @Override
-    public void setFoo(S foo) {
+    public void setFoo(S value) {
 
     }
 }
@@ -44,7 +44,7 @@ class W implements T<Integer> {
     }
 
     @Override
-    public void setFoo(Integer foo) {
+    public void setFoo(Integer value) {
 
     }
 }
