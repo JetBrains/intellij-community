@@ -17,20 +17,20 @@ class FileSetFormatValidatorTest : FileSetCodeStyleProcessorTestBase() {
 
   fun testFormatDryRun_needsFormatting() {
     processor?.apply {
-      val sourceDir = createSourceDir("original")
+      val sourceDir = createSourceDir("baseTest/original")
       addEntry(sourceDir.canonicalPath)
       processFiles()
-      compareDirs(File(BASE_PATH).resolve("original"), sourceDir) // No modifications expected
+      compareDirs(File(BASE_PATH).resolve("baseTest/original"), sourceDir) // No modifications expected
       assertNotSame(processed, succeeded)
     }
   }
 
   fun testFormatDryRun_wellFormatted() {
     processor?.apply {
-      val sourceDir = createSourceDir("expected")
+      val sourceDir = createSourceDir("baseTest/expected")
       addEntry(sourceDir.canonicalPath)
       processFiles()
-      compareDirs(File(BASE_PATH).resolve("expected"), sourceDir) // No modifications expected
+      compareDirs(File(BASE_PATH).resolve("baseTest/expected"), sourceDir) // No modifications expected
       TestCase.assertEquals(processed, succeeded)
     }
   }
