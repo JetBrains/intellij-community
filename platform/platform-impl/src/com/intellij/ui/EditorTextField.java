@@ -37,6 +37,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -855,6 +856,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public final void addNotify() {
     myInHierarchy = true;
+    if (myManualDisposable == null && myEditor == null && !Registry.is("editor.text.field.init.on.shown")) {
+      initEditor();
+    }
     super.addNotify();
   }
 
