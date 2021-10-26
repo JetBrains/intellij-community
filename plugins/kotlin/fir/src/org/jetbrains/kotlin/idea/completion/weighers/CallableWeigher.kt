@@ -77,7 +77,7 @@ internal object CallableWeigher {
         // local function as a class member. Hence, here we return null so that it's handled by other logic.
         if (symbol.callableIdIfNonLocal == null) return null
 
-        val expectedDispatchReceiverType = (symbol as? KtPossibleMemberSymbol)?.dispatchType
+        val expectedDispatchReceiverType = (symbol as? KtPossibleMemberSymbol)?.getDispatchReceiverType()
         val weightBasedOnDispatchReceiver = expectedDispatchReceiverType?.let { receiverType ->
             callableWeightByReceiver(
                 symbol,

@@ -434,7 +434,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
 }
 
 private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtPossibleMemberSymbol): ReceiverParameterDescriptor? {
-    val ktDispatchTypeAndAnnotations = ktSymbol.dispatchType ?: return null
+    val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
 
