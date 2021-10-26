@@ -3,5 +3,5 @@ abstract class Parent {
 }
 
 class Child : Parent() {
-    override val <caret>foo = null
+    override var foo: Nothing? = null
 }
