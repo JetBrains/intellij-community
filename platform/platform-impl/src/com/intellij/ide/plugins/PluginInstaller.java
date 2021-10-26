@@ -283,10 +283,8 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("custom-repository.certificate.signature.check")) {
-        if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
-          return false;
-        }
+      if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
+        return false;
       }
 
       Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
