@@ -45,7 +45,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -76,7 +76,6 @@ import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import java.util.concurrent.TimeUnit.MINUTES
 import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -88,7 +87,6 @@ import javax.swing.event.DocumentEvent
 import kotlin.time.Duration
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
-import kotlin.time.toDuration
 
 internal class PackagesListPanel(
     private val project: Project,
@@ -251,12 +249,12 @@ internal class PackagesListPanel(
 
         val searchResultsFlow =
             combine(onlyStableStateFlow, onlyMultiplatformStateFlow, searchQueryStateFlow) { onlyStable, onlyMultiplatform, searchQuery ->
-                isSearchingStateFlow.emit(true)
                 SearchCommandModel(onlyStable, onlyMultiplatform, searchQuery)
             }
                 .debounce(150)
                 .mapLatest { searchCommand ->
                     val (result, time) = measureTimedValue {
+                        isSearchingStateFlow.emit(true)
                         val results = searchCache.getOrTryPutDefault(searchCommand) {
                             dataProvider.doSearch(
                                 searchCommand.searchQuery,
@@ -272,7 +270,7 @@ internal class PackagesListPanel(
                         isSearchingStateFlow.emit(false)
                         model
                     }
-                    logInfo("PackagesListPanel main flow") { "Search took $time" }
+                    logTrace("PackagesListPanel main flow") { "Search took $time" }
                     result
                 }
 
@@ -300,12 +298,12 @@ internal class PackagesListPanel(
                     filteredPackageUpgrades to filteredInstalledPackages
                 }
 
-                logInfo("PackagesListPanel main flow") { "Initial computation took $time" }
+                logTrace("PackagesListPanel main flow") { "Initial computation took $time" }
 
                 val (filteredPackageUpgrades, filteredInstalledPackages) = result
 
                 fun onComplete(computationName: String): (Duration) -> Unit =
-                    { time -> logInfo("PackagesListPanel main flow") { "Took $time for \"$computationName\"" } }
+                    { time -> logTrace("PackagesListPanel main flow") { "Took $time for \"$computationName\"" } }
 
                 val filteredInstalledPackagesUiModels = computeFilteredInstalledPackagesUiModels(
                     packages = filteredInstalledPackages,
@@ -314,7 +312,8 @@ internal class PackagesListPanel(
                     knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
                     onlyStable = onlyStable,
                     searchQuery = searchQuery,
-                    onComplete = onComplete("filteredInstalledPackagesUiModelsTime")
+                    project = project,
+                    onComplete = onComplete("filteredInstalledPackagesUiModelsTime"),
                 )
 
                 val searchResultModels = computeSearchResultModels(
@@ -357,7 +356,7 @@ internal class PackagesListPanel(
                     )
                 )
             }
-            logInfo("PackagesListPanel main flow") { "Total elaboration took $time" }
+            logTrace("PackagesListPanel main flow") { "Total elaboration took $time" }
             result
         }
             .flowOn(Dispatchers.Default)
@@ -375,7 +374,7 @@ internal class PackagesListPanel(
                     packagesTable.updateAndRepaint()
                     packagesPanel.updateAndRepaint()
                 }
-                logInfo("PackagesListPanel main flow") {
+                logTrace("PackagesListPanel main flow") {
                     "Rendering took $renderingTime for ${packagesTableViewModel.items.size} items"
                 }
                 isLoadingStateFlow.emit(false)
@@ -398,31 +397,13 @@ internal class PackagesListPanel(
             .launchIn(project.lifecycleScope)
 
         // results may have changed server side. Better clear caches...
-        timer(20.toDuration(MINUTES))
+        timer(Duration.minutes(10))
             .onEach {
                 searchPackageModelCache.clear()
                 searchCache.clear()
                 headerOperationsCache.clear()
             }
             .launchIn(project.lifecycleScope)
-    }
-
-    private suspend fun computeFilteredInstalledPackagesUiModels(
-        packages: List<PackageModel.Installed>,
-        onlyMultiplatform: Boolean,
-        targetModules: TargetModules,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        onlyStable: Boolean,
-        searchQuery: String,
-        onComplete: (Duration) -> Unit = {}
-    ): List<UiPackageModel.Installed> {
-        val (result, time) = measureTimedValue {
-            packages.let { list -> if (onlyMultiplatform) list.filter { it.isKotlinMultiplatform } else list }
-                .parallelMap { it.toUiPackageModel(targetModules, project, knownRepositoriesInTargetModules, onlyStable) }
-                .filter { it.sortedVersions.isNotEmpty() && it.packageModel.searchableInfo.contains(searchQuery) }
-        }
-        onComplete(time)
-        return result
     }
 
     private fun updateListEmptyState(targetModules: TargetModules) {
@@ -617,6 +598,25 @@ private suspend fun computeSearchResultModels(
                 }
             }
             .sortedBy { index.indexOf(it.identifier.rawValue) }
+    }
+    onComplete(time)
+    return result
+}
+
+private suspend fun computeFilteredInstalledPackagesUiModels(
+    packages: List<PackageModel.Installed>,
+    onlyMultiplatform: Boolean,
+    targetModules: TargetModules,
+    knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+    onlyStable: Boolean,
+    searchQuery: String,
+    project: Project,
+    onComplete: (Duration) -> Unit = {}
+): List<UiPackageModel.Installed> {
+    val (result, time) = measureTimedValue {
+        packages.let { list -> if (onlyMultiplatform) list.filter { it.isKotlinMultiplatform } else list }
+            .parallelMap { it.toUiPackageModel(targetModules, project, knownRepositoriesInTargetModules, onlyStable) }
+            .filter { it.sortedVersions.isNotEmpty() && it.packageModel.searchableInfo.contains(searchQuery) }
     }
     onComplete(time)
     return result

@@ -2,28 +2,38 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.codehaus.groovy.runtime.memoize.LRUCache
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.max
 import kotlin.time.Duration
+import kotlin.time.TimedValue
+import kotlin.time.measureTimedValue
 
 internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -> Unit) =
     onEach { withContext(context) { action(it) } }
@@ -114,53 +124,83 @@ internal suspend fun <T, R> Iterable<T>.parallelFlatMap(transform: suspend (T) -
     map { async { transform(it) } }.flatMap { it.await() }
 }
 
-@Suppress("UNCHECKED_CAST")
-class CoroutineLRUCache<K : Any, V>(maxSize: Int) {
-
-    private val cache = LRUCache(maxSize)
-    private val syncMutex = Mutex()
-    private val mutexMap = mutableMapOf<K, Mutex>().withDefault { Mutex() }
-
-    private suspend inline fun <R> withLock(key: K, action: () -> R) =
-        syncMutex.withLock { mutexMap.getValue(key) }.withLock { action() }
-
-    suspend fun getOrNull(key: K): V? = withLock(key) { cache.get(key) as? V }
-
-    suspend fun get(key: K): V = checkNotNull(getOrNull(key)) { "Key $key not available" }
-
-    suspend fun put(key: K, value: V) {
-        withLock(key) { cache.put(key, value) }
-    }
-
-    suspend fun getOrElse(key: K, default: suspend () -> V) = withLock(key) {
-        val value = cache.get(key) as? V
-        value ?: default()
-    }
-
-    suspend fun getOrPut(key: K, default: suspend () -> V) = withLock(key) {
-        val value = cache.get(key) as? V
-        value ?: default().also { cache.put(key, it) }
-    }
-
-    suspend fun getOrTryPutDefault(key: K, default: suspend () -> V) = withLock(key) {
-        val value = cache.get(key) as? V
-
-        value ?: runCatching { default() }.getOrNull()?.also { cache.put(key, it) }
-    }
-
-    suspend fun clear() = syncMutex.withLock {
-        for (key in mutexMap.keys) {
-            cache.put(key, null)
-        }
-        mutexMap.clear()
-        cache.cleanUpNullReferences()
-    }
-}
-
 internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     if (emitAtStartup) emit(Unit)
     while (true) {
         delay(each)
         emit(Unit)
     }
+}
+
+internal fun <T> Flow<T>.throttle(time: Duration, debounce: Boolean = true) =
+    throttle(time.inWholeMilliseconds, debounce)
+
+internal fun <T> Flow<T>.throttle(timeMillis: Int, debounce: Boolean = true) =
+    throttle(timeMillis.toLong(), debounce)
+
+internal fun <T> Flow<T>.throttle(timeMillis: Long, debounce: Boolean = true) = channelFlow {
+    var last = System.currentTimeMillis() - timeMillis * 2
+    var refireJob: Job? = null
+    collect {
+        val elapsedTime = System.currentTimeMillis() - last
+        refireJob?.cancel()
+        when {
+            elapsedTime > timeMillis -> {
+                send(it)
+                last = System.currentTimeMillis()
+            }
+            else -> {
+                if (debounce) {
+                    refireJob = launch {
+                        delay(max(timeMillis - elapsedTime, 0))
+                        send(it)
+                    }
+                }
+            }
+        }
+    }
+}
+
+internal fun <T, R> Flow<T>.modifiedBy(modifierFlow: Flow<R>, transform: suspend (T, R) -> T): Flow<T> = channelFlow {
+    val syncMutex = Mutex()
+    val state = onEach {
+        syncMutex.withLock { send(it) }
+    }.stateIn(this)
+    modifierFlow.collect {
+        syncMutex.withLock { send(transform(state.value, it)) }
+    }
+}
+
+internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
+    loggingContext: String,
+    loadingFlow: MutableStateFlow<Boolean>,
+    transform: suspend CoroutineScope.(T) -> R
+) =
+    mapLatest {
+        measureTimedValue {
+            loadingFlow.emit(true)
+            val result = try {
+                coroutineScope { transform(it) }
+            } finally {
+                loadingFlow.emit(false)
+            }
+            result
+        }
+    }.map {
+        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
+        it.value
+    }
+
+internal fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackValue: T, retryChannel: SendChannel<Unit>? = null) =
+    catch {
+        logWarn(context, it) { message }
+        retryChannel?.send(Unit)
+        emit(fallbackValue)
+    }
+
+internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {
+    emit(true)
+    val r = measureTimedValue { action() }
+    emit(false)
+    return r
 }

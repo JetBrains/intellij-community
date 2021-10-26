@@ -12,21 +12,18 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 internal suspend fun installedPackages(
-    projectModules: List<ProjectModule>,
+    dependenciesByModule: Map<ProjectModule, List<UnifiedDependency>>,
     project: Project,
     dataProvider: ProjectDataProvider,
     traceInfo: TraceInfo
 ): List<PackageModel.Installed> {
-    val dependenciesByModule = fetchProjectDependencies(projectModules, traceInfo)
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
-
-    for (module in projectModules) {
+    for (module in dependenciesByModule.keys) {
         dependenciesByModule[module]?.forEach { dependency ->
             // Skip packages we don't know the version for
             val rawVersion = dependency.coordinates.version
@@ -64,15 +61,13 @@ internal suspend fun installedPackages(
     }.filterNotNull().sortedBy { it.sortKey }
 }
 
-private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
+internal suspend fun List<ProjectModule>.fetchProjectDependencies(): Map<ProjectModule, List<UnifiedDependency>> =
     coroutineScope {
-        modules.associateWith { module -> async { module.installedDependencies(traceInfo) } }
+        associateWith { module -> async { module.installedDependencies() } }
             .mapValues { (_, value) -> value.await() }
     }
 
-private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
-    logDebug(traceInfo, "installedDependencies()") { "Fetching installed dependencies for module $name..." }
-    return readAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType) }
-        ?.let { provider -> readAction { provider.listDependenciesInModule(this@installedDependencies) } }
-        ?.toList() ?: emptyList()
-}
+internal suspend fun ProjectModule.installedDependencies() =
+    readAction { ProjectModuleOperationProvider.forProjectModuleType(moduleType)?.listDependenciesInModule(this@installedDependencies) }
+        ?.toList()
+        ?: emptyList()

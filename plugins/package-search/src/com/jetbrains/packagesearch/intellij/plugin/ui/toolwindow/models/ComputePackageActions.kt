@@ -20,7 +20,9 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsFor(
     packageModel: T,
     targetModules: TargetModules,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    onlyStable: Boolean
+    onlyStable: Boolean,
+    selectedScope: PackageScope? = null,
+    selectedVersion: NormalizedPackageVersion<out PackageVersion>? = null
 ): PackageOperations {
     val operationFactory = PackageSearchOperationFactory()
 
@@ -34,7 +36,7 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsFor(
         else -> null
     }
 
-    val highestAvailableVersion = availableVersions.takeIf { it.isNotEmpty() }
+    val highestAvailableVersion = selectedVersion ?: availableVersions.takeIf { it.isNotEmpty() }
         ?.let { PackageVersionUtils.highestSensibleVersionByNameOrNull(availableVersions) }
 
     val primaryOperationType = decidePrimaryOperationTypeFor(packageModel, upgradeVersion)
@@ -55,7 +57,7 @@ internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsFor(
                         operationFactory.computeInstallActionsFor(
                             packageModel = packageModel,
                             moduleModel = moduleModel,
-                            defaultScope = targetModules.defaultScope(project),
+                            defaultScope = selectedScope ?: targetModules.defaultScope(project),
                             knownRepositories = knownRepositoriesInTargetModules,
                             targetVersion = highestAvailableVersion
                         )

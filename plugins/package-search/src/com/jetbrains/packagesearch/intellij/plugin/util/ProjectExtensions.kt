@@ -11,6 +11,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
@@ -26,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlin.streams.toList
@@ -70,6 +74,17 @@ internal val Project.nativeModulesChangesFlow
         )
         awaitClose { connection.disconnect() }
     }.mapLatest { it.toList() }
+
+internal val Project.filesChangedEventFlow
+    get() = channelFlow {
+        val connection = messageBus.simpleConnect()
+        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            override fun after(events: MutableList<out VFileEvent>) {
+                trySend(events)
+            }
+        })
+        awaitClose { connection.disconnect() }
+    }
 
 internal fun Project.getNativeModules(): Array<Module> = ModuleManager.getInstance(this).modules
 

@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management
 
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -13,10 +14,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import org.apache.commons.collections.CollectionUtils
 
 internal open class PackageManagementOperationExecutor(
     private val coroutineScope: CoroutineScope,
-    private val onOperationsSuccessful: () -> Unit,
+    private val onOperationsSuccessful: (List<ProjectModule>) -> Unit,
     private val onOperationsFail: (FailureType, List<PackageSearchOperationFailure>) -> Unit
 ) : OperationExecutor {
 
@@ -28,12 +30,14 @@ internal open class PackageManagementOperationExecutor(
             .flowOn(Dispatchers.AppUI)
             .toList()
 
+        val successes = operations.map { it.projectModule } difference failures.map { it.operation.projectModule }
+
         if (failures.size == operations.size) {
-            onOperationsSuccessful()
+            onOperationsSuccessful(successes)
             onOperationsFail(FailureType.SOME, failures)
         } else if (failures.isNotEmpty()) {
             onOperationsFail(FailureType.ALL, failures)
-        } else onOperationsSuccessful()
+        } else onOperationsSuccessful(successes)
     }
 
     override fun executeOperations(operations: Deferred<List<PackageSearchOperation<*>>>) {
@@ -53,3 +57,6 @@ internal open class PackageManagementOperationExecutor(
         ALL
     }
 }
+
+private inline infix fun <reified E> Collection<E>.difference(other: List<E>) =
+    CollectionUtils.removeAll(this, other).filterIsInstance<E>()
