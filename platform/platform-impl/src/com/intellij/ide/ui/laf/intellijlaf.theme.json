@@ -789,6 +789,7 @@
     },
 
     "ToolWindow": {
+      "background": "grey15",
       "Button": {
         "hoverBackground": "#55555528",
         "selectedBackground": "#55555555",

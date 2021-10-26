@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -20,6 +21,7 @@ abstract class ToolwindowToolbar : JPanel() {
   init {
     layout = BorderLayout()
     isOpaque = true
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
   abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?

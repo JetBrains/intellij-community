@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.Color
 import java.awt.Graphics
@@ -12,6 +13,7 @@ import java.awt.Rectangle
  */
 class SquareStripeButtonLook : IdeaActionButtonLook() {
   override fun paintLookBackground(g: Graphics, rect: Rectangle, color: Color) {
+    g.color = JBUI.CurrentTheme.ToolWindow.background()
     super.paintLookBackground(g, toSquareButtonRect(rect), color)
   }
 

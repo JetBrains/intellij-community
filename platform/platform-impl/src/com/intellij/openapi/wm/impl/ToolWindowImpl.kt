@@ -28,15 +28,13 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.ApiStatus
@@ -104,6 +102,17 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private val contentManager = lazy {
     createContentManager()
+      .apply {
+        if (ExperimentalUI.isNewToolWindowsStripes()) {
+          addContentManagerListener(UpdateBackgroundContentManager())
+        }
+      }
+  }
+
+  private class UpdateBackgroundContentManager : ContentManagerListener {
+    override fun contentAdded(event: ContentManagerEvent) {
+      UIUtil.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+    }
   }
 
   init {
@@ -540,6 +549,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       ensureContentManagerInitialized()
     }
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      UIUtil.setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
+    }
   }
 
   override fun getHelpId() = helpId

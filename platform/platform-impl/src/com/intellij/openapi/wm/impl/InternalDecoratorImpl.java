@@ -15,10 +15,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -45,7 +43,9 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -121,6 +121,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
+    }
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      setBackground(JBUI.CurrentTheme.ToolWindow.background());
     }
 
     getContentManager().addContentManagerListener(new ContentManagerListener() {

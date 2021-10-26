@@ -691,7 +691,7 @@ public class JBUI {
     public static final class ToolWindow {
       @NotNull
       public static Color background() {
-        return JBColor.namedColor("ToolWindow.background", JBColor.background());
+        return JBColor.namedColor("ToolWindow.background");
       }
 
       @NotNull
