@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -90,7 +91,8 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
           else -> joinTargetPaths(config.userHome, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
         }
       }
-      addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), project, targetEnvironmentConfiguration)
+      addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), project, targetEnvironmentConfiguration,
+                              FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
     baseInterpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
     inheritSitePackagesCheckBox = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))

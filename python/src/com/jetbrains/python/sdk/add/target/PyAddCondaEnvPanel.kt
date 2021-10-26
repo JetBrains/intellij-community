@@ -62,8 +62,7 @@ open class PyAddCondaEnvPanel(
     path?.let {
       text = it
     }
-    // TODO [targets] Requires target-based browser
-    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), project, targetEnvironmentConfiguration,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -73,7 +72,7 @@ open class PyAddCondaEnvPanel(
   }
 
   protected val pathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), project, targetEnvironmentConfiguration,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
