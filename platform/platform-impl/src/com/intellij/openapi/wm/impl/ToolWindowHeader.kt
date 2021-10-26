@@ -164,7 +164,7 @@ abstract class ToolWindowHeader internal constructor(
       westPanel.add(contentUi.tabComponent, CC().growY())
     val toolbar = toolbarWest
     if (toolbar != null) {
-      westPanel.add(toolbar.component) //It always should stay after tab component
+      westPanel.add(toolbar.component, CC().pushX()) //It always should stay after tab component
     }
   }
 
@@ -215,7 +215,7 @@ abstract class ToolWindowHeader internal constructor(
         setReservePlaceAutoPopupIcon(false)
         isOpaque = false
         border = JBUI.Borders.empty()
-        westPanel.add(this, CC().growY().pushX())
+        westPanel.add(this, CC().pushX())
       }
     }
     actionGroupWest.removeAll()
