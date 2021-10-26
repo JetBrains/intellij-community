@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,6 +93,8 @@ public class EditorComposite implements Disposable {
   private final Map<FileEditor, @NlsContexts.TabTitle String> myDisplayNames = new HashMap<>();
 
   private FileEditorProvider[] myProviders;
+
+  private final EventDispatcher<EditorCompositeListener> myDispatcher = EventDispatcher.create(EditorCompositeListener.class);
 
   /**
    * @param file {@code file} for which composite is being constructed
@@ -220,11 +223,13 @@ public class EditorComposite implements Disposable {
    * Sets new "pinned" state
    */
   void setPinned(final boolean pinned) {
+    if (pinned == myPinned) return;
     myPinned = pinned;
     Container parent = getComponent().getParent();
     if (parent instanceof JComponent) {
       ((JComponent)parent).putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null);
     }
+    myDispatcher.getMulticaster().isPinnedChanged(pinned);
   }
 
   public boolean isPreview() {
@@ -232,7 +237,9 @@ public class EditorComposite implements Disposable {
   }
 
   void setPreview(final boolean preview) {
+    if (preview == myPreview) return;
     myPreview = preview;
+    myDispatcher.getMulticaster().isPreviewChanged(preview);
   }
 
   private void fireSelectedEditorChanged(@NotNull FileEditor oldSelectedEditor, @NotNull FileEditor newSelectedEditor) {
@@ -251,6 +258,9 @@ public class EditorComposite implements Disposable {
     }
   }
 
+  public void addListener(EditorCompositeListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
+  }
 
   /**
    * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to
@@ -335,13 +345,28 @@ public class EditorComposite implements Disposable {
 
     if (remove) {
       container.remove(component.getParent());
+      EditorCompositeListener multicaster = myDispatcher.getMulticaster();
+      if (top) {
+        multicaster.topComponentRemoved(editor, component);
+      }
+      else {
+        multicaster.bottomComponentRemoved(editor,component);
+      }
     }
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
       if (!Boolean.TRUE.equals(component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED))) {
         wrapper.setBorder(createTopBottomSideBorder(top));
       }
-      container.add(wrapper, calcComponentInsertionIndex(component, container));
+      int index = calcComponentInsertionIndex(component, container);
+      container.add(wrapper, index);
+      EditorCompositeListener multicaster = myDispatcher.getMulticaster();
+      if (top) {
+        multicaster.topComponentAdded(editor, index, component);
+      }
+      else {
+        multicaster.bottomComponentAdded(editor, index, component);
+      }
     }
     container.revalidate();
   }
@@ -367,6 +392,7 @@ public class EditorComposite implements Disposable {
     assert index != -1;
 
     myDisplayNames.put(editor, name);
+    myDispatcher.getMulticaster().displayNameChanged(editor, name);
     if (myTabbedPaneWrapper != null) {
       myTabbedPaneWrapper.setTitleAt(index, name);
     }
@@ -602,5 +628,6 @@ public class EditorComposite implements Disposable {
   public void addEditor(@NotNull FileEditor editor, @NotNull FileEditorProvider provider) {
     addEditor(editor);
     myProviders = ArrayUtil.append(myProviders, provider);
+    myDispatcher.getMulticaster().editorAdded(editor, provider);
   }
 }
