@@ -81,6 +81,10 @@ public final class MavenArtifactUtil {
     return Objects.equals(groupId1, groupId2);
   }
 
+  /**
+   * @deprecated use {@link #getArtifactNioPath(File, String, String, String, String)} instead
+   */
+  @Deprecated
   @NotNull
   public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
     return getArtifactNioPath(localRepository, groupId, artifactId, version, type).toFile();
