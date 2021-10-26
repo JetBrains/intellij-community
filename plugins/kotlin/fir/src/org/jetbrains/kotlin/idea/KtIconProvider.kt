@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.psi.KtClass
@@ -60,7 +61,7 @@ object KtIconProvider {
             is KtPackageSymbol -> PlatformIcons.PACKAGE_ICON
             is KtFunctionLikeSymbol -> {
                 val isExtension = symbol.isExtension
-                val isMember = (symbol as? KtPossibleMemberSymbol)?.dispatchType != null
+                val isMember = symbol is KtPossibleMemberSymbol && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
                 when {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION

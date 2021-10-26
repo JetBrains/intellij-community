@@ -6,10 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
@@ -85,6 +82,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                 receiver != null -> {
                     val actualReceiverType = receiver.getKtType() ?: return false
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
+
+                    // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
                     actualReceiverType isSubTypeOf expectedReceiverType
                 }
                 else -> {
@@ -109,8 +108,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    private fun getReceiverType(symbol: KtCallableSymbol): KtType? {
-        return symbol.receiverType?.type ?: (symbol as? KtPossibleMemberSymbol)?.dispatchType
+    private fun KtAnalysisSession.getReceiverType(symbol: KtCallableSymbol): KtType? {
+        return symbol.receiverType?.type ?: (symbol as? KtPossibleMemberSymbol)?.getDispatchReceiverType()
     }
 
 
