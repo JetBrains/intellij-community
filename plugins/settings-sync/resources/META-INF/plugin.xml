@@ -25,7 +25,6 @@
 
   <actions>
     <group id="SettingsSync">
-      <action class="com.intellij.settingsSync.ToggleSyncAction" id="settingsSync.toggleSync" icon="AllIcons.Actions.Checked"/>
       <action class="com.intellij.settingsSync.ManualUpdateAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" />
 
