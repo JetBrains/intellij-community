@@ -71,17 +71,21 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, pr
             return listOf(
                 object : RemovePsiElementSimpleFix(ktProperty, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
                     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-                        val initializer = ktProperty.initializer
-                        if (initializer != null && initializer !is KtConstantExpression) {
-                            val commentSaver = CommentSaver(ktProperty)
-                            val replaced = ktProperty.replace(initializer)
-                            commentSaver.restore(replaced)
-                        } else {
-                            ktProperty.delete()
-                        }
+                        removeProperty(ktProperty)
                     }
                 }
             )
+        }
+
+        fun removeProperty(ktProperty: KtProperty) {
+            val initializer = ktProperty.initializer
+            if (initializer != null && initializer !is KtConstantExpression) {
+                val commentSaver = CommentSaver(ktProperty)
+                val replaced = ktProperty.replace(initializer)
+                commentSaver.restore(replaced)
+            } else {
+                ktProperty.delete()
+            }
         }
     }
 }
