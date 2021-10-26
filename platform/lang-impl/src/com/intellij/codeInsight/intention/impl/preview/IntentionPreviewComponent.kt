@@ -50,6 +50,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
             editor.text = html
             editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
             val panel = JPanel(BorderLayout())
+            panel.background = editor.background
             panel.add(editor, BorderLayout.CENTER)
             panel.border = JBEmptyBorder(5)
             return panel
