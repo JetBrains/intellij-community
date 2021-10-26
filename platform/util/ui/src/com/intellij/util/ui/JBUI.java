@@ -737,8 +737,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static int headerTabPadding() {
-        return getInt("ToolWindow.HeaderTab.padding", JBUIScale.scale(6));
+      public static Insets headerTabInsets() {
+        return insets("ToolWindow.HeaderTab.insets", insets(0, 12, 0, 12));
       }
 
       /**
@@ -784,8 +784,9 @@ public class JBUI {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
       }
 
-      public static int headerPadding() {
-        return getInt("ToolWindow.Header.padding", JBUIScale.scale(6));
+      @NotNull
+      public static Insets headerInsets() {
+        return insets("ToolWindow.Header.insets", insets(4, 8, 4, 8));
       }
 
       /**
