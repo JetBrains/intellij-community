@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.Repository;
@@ -55,8 +54,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  public @NotNull
-  String ID() {
+  public @NotNull String ID() {
     return ID;
   }
 
@@ -115,9 +113,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @NlsContexts.Tooltip
-  @Nullable
-  String getToolTip(@Nullable GitRepository repository) {
+  protected @NlsContexts.Tooltip @Nullable String getToolTip(@Nullable GitRepository repository) {
     if (repository != null && repository.getState() == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached");
     }
@@ -139,15 +135,12 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   public static class Factory implements StatusBarWidgetFactory {
     @Override
-    public @NotNull
-    String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
     @Override
-    public @Nls
-    @NotNull
-    String getDisplayName() {
+    public @Nls @NotNull String getDisplayName() {
       return GitBundle.message("git.status.bar.widget.name");
     }
 
@@ -158,8 +151,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     }
 
     @Override
-    public @NotNull
-    StatusBarWidget createWidget(@NotNull Project project) {
+    public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new GitBranchWidget(project);
     }
 
