@@ -888,18 +888,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected Dimension updatePreferredSize(Dimension preferredSize) {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
-    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);//it doesn't take into account wrapping
-    if (bounds.isEmpty()) return JBUI.emptySize();
-    int forcedHeight = 0;
+    int forcedHeight;
     if (getWidth() > 0 && getLayoutPolicy() == ActionToolbar.WRAP_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL) {
-      final List<Rectangle> limitedBounds = new ArrayList<>();
-      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), limitedBounds);
+      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), bounds);
       Rectangle union = null;
-      for (Rectangle bound : limitedBounds) {
+      for (Rectangle bound : bounds) {
         union = union == null ? bound : union.union(bound);
       }
       forcedHeight = union != null ? union.height : 0;
+    } else {
+      calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds); // it doesn't take into account wrapping
+      forcedHeight = 0;
     }
+    if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;

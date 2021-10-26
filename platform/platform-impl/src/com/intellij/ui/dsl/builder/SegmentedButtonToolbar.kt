@@ -43,6 +43,14 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, horizontal: Boolean, priv
     minimumSize: Dimension): ActionButton {
     return SegmentedButton(action as SegmentedButtonAction<*>, presentation, place, minimumSize, spacingConfiguration)
   }
+
+  override fun addNotify() {
+    super.addNotify()
+
+    // Create actions immediately, otherwise first SegmentedButtonToolbar preferred size calculation can be done without actions.
+    // In such case SegmentedButtonToolbar will keep narrow width for preferred size because of ActionToolbar.WRAP_LAYOUT_POLICY
+    updateActionsImmediately(true)
+  }
 }
 
 @ApiStatus.Experimental
