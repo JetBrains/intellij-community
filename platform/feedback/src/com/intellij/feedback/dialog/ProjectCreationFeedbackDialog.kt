@@ -37,6 +37,7 @@ import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 class ProjectCreationFeedbackDialog(
   private val project: Project?,
@@ -286,8 +287,9 @@ class ProjectCreationFeedbackDialog(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
       checkBoxFrameworkProperty.afterChange {
-        pack()
-        repaint()
+        SwingUtilities.invokeLater {
+          pack()
+        }
       }
     }
   }
