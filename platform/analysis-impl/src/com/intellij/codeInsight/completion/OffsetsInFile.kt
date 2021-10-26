@@ -48,8 +48,10 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
     tempDocument.replaceString(startOffset, endOffset, replacement)
 
     val copyDocument = fileCopy.viewProvider.document!!
+    val node = fileCopy.node as? FileElement
+               ?: throw IllegalStateException("Node is not a FileElement ${fileCopy.javaClass.name} / ${fileCopy.fileType} / ${fileCopy.node}")
     val applyPsiChange = (PomManager.getModel(file.project) as PomModelImpl).reparseFile(fileCopy,
-                                                                                         fileCopy.node as FileElement,
+                                                                                         node,
                                                                                          tempDocument.immutableCharSequence)
     return Supplier {
       applyPsiChange?.run()
