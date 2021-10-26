@@ -134,7 +134,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
   private fun cloneIconsRepoToTempDir(): Path {
     val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
-    log("$iconsRepoArg not found. Have to perform full clone of $uri")
+    log("Please clone $uri to the same folder where IntelliJ root is. Cloning to temporary directory..")
     val tmp = Files.createTempDirectory("icons-sync")
     Runtime.getRuntime().addShutdownHook(thread(start = false) {
       tmp.toFile().deleteRecursively()
