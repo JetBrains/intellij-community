@@ -20,8 +20,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -38,10 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -252,22 +248,18 @@ final class PluginUpdateDialog extends DialogWrapper {
     }.queue();
   }
 
-  private static List<PluginDownloader> downloadPluginUpdates(Collection<PluginDownloader> toDownload, ProgressIndicator indicator) {
-    List<String> errors = new ArrayList<>();
+  private static @NotNull List<PluginDownloader> downloadPluginUpdates(@NotNull Collection<PluginDownloader> toDownload,
+                                                                       @NotNull ProgressIndicator indicator) {
+    LinkedHashSet<@Nls String> errors = new LinkedHashSet<>();
     try {
-      for (PluginDownloader downloader : toDownload) {
-        downloader.setErrorsCollector(errors);
-      }
-      return UpdateInstaller.downloadPluginUpdates(toDownload, indicator);
+      List<PluginDownloader> downloaders = ContainerUtil.map(toDownload,
+                                                             downloader -> downloader.withErrorsConsumer(errors::add));
+      return UpdateInstaller.downloadPluginUpdates(downloaders, indicator);
     }
     finally {
-      for (PluginDownloader downloader : toDownload) {
-        downloader.setErrorsCollector(null);
-      }
       if (!errors.isEmpty()) {
-        String text = StringUtil.join(errors, "\n\n");
-        String title = IdeBundle.message("title.plugin.installation");
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
+        String text = String.join("\n\n", errors); //NON-NLS
+        PluginDownloader.showErrorDialog(text);
       }
     }
   }

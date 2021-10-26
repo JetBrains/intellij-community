@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -14,6 +14,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.exists
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
+import org.jetbrains.annotations.ApiStatus
 import java.io.*
 import java.net.URLConnection
 import java.nio.file.Path
@@ -32,12 +33,10 @@ private const val FILENAME = "filename="
 
 private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
 
+@ApiStatus.Internal
 open class MarketplacePluginDownloadService {
 
   companion object {
-
-    @JvmStatic
-    val instance = MarketplacePluginDownloadService()
 
     @JvmStatic
     @Throws(IOException::class)

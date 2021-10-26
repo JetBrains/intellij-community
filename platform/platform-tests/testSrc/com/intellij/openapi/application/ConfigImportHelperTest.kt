@@ -4,14 +4,15 @@ package com.intellij.openapi.application
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginBuilder
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.ThrowableNotNullBiFunction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.util.SystemProperties
@@ -22,6 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -179,15 +181,19 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
-    options.downloadFunction = ThrowableNotNullBiFunction { _, _ ->
-      val path = localTempDir.newDirectory("pluginTemp")
-        .toPath()
-        .resolve("my-plugin-new.jar")
-      PluginBuilder()
-        .id(oldBuilder.id)
-        .buildJar(path)
-      path.toFile()
+    options.downloadService = object : MarketplacePluginDownloadService() {
+
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+        val path = localTempDir.newDirectory("pluginTemp")
+          .toPath()
+          .resolve("my-plugin-new.jar")
+        PluginBuilder()
+          .id(oldBuilder.id)
+          .buildJar(path)
+        return path.toFile()
+      }
     }
+
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin-new.jar" }
   }
@@ -205,7 +211,11 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
-    options.downloadFunction = ThrowableNotNullBiFunction { _, _ -> throw IOException("404") }
+    options.downloadService = object : MarketplacePluginDownloadService() {
+
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+        throw IOException("404")
+    }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin.jar" }
   }
@@ -302,7 +312,11 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
-    options.downloadFunction = ThrowableNotNullBiFunction { _, _ -> throw AssertionError("No file download should be requested") }
+    options.downloadService = object : MarketplacePluginDownloadService() {
+
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+        throw AssertionError("No file download should be requested")
+    }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName.toString() == "my-plugin-1.1.jar" }

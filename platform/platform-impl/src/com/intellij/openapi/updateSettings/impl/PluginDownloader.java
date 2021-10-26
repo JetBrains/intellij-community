@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.ThrowableNotNullBiFunction;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -38,8 +37,10 @@ import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public final class PluginDownloader {
+
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private final @NotNull PluginId myPluginId;
@@ -54,18 +55,21 @@ public final class PluginDownloader {
   private final @NotNull String myPluginUrl;
   private final BuildNumber myBuildNumber;
 
+  private final @NotNull Consumer<@NotNull @Nls String> myErrorsConsumer;
+  private final @Nullable MarketplacePluginDownloadService myDownloadService;
+
   private @NlsSafe String myPluginVersion;
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
   private Path myOldFile;
-  private MarketplacePluginDownloadService myDownloadService;
 
   private boolean myShownErrors;
-  private @Nullable List<String> myErrors;
 
   private PluginDownloader(@NotNull IdeaPluginDescriptor descriptor,
-                           @NotNull String url,
-                           @Nullable BuildNumber buildNumber) {
+                           @NotNull String pluginUrl,
+                           @Nullable BuildNumber buildNumber,
+                           @NotNull Consumer<@NotNull @Nls String> errorsConsumer,
+                           @Nullable MarketplacePluginDownloadService service) {
     myPluginId = descriptor.getPluginId();
     myPluginName = descriptor.getName();
     myProductCode = descriptor.getProductCode();
@@ -75,20 +79,29 @@ public final class PluginDownloader {
     myDescription = descriptor.getDescription();
     myDependencies = descriptor.getDependencies();
 
-    myPluginUrl = url;
+    myPluginUrl = pluginUrl;
     myBuildNumber = buildNumber;
 
     myPluginVersion = descriptor.getVersion();
     myDescriptor = descriptor;
+    myErrorsConsumer = errorsConsumer;
+    myDownloadService = service;
   }
 
-  public void setDownloadFunction(@NotNull ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction) {
-    myDownloadService = new MarketplacePluginDownloadService() {
-      @Override
-      public @NotNull File downloadPlugin(@NotNull String pluginUrl, @NotNull ProgressIndicator indicator) throws IOException {
-        return downloadFunction.fun(pluginUrl, indicator);
-      }
-    };
+  public @NotNull PluginDownloader withErrorsConsumer(@NotNull Consumer<@NotNull @Nls String> errorsConsumer) {
+    return new PluginDownloader(myDescriptor,
+                                myPluginUrl,
+                                myBuildNumber,
+                                errorsConsumer,
+                                myDownloadService);
+  }
+
+  public @NotNull PluginDownloader withDownloadService(@Nullable MarketplacePluginDownloadService downloadService) {
+    return new PluginDownloader(myDescriptor,
+                                myPluginUrl,
+                                myBuildNumber,
+                                myErrorsConsumer,
+                                downloadService);
   }
 
   /**
@@ -159,31 +172,18 @@ public final class PluginDownloader {
     return myShownErrors;
   }
 
-  public void setErrorsCollector(@Nullable List<String> errors) {
-    myErrors = errors;
-  }
-
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
-    return prepareToInstallAndLoadDescriptor(indicator) != null;
-  }
-
-  public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator) throws IOException {
-    return prepareToInstallAndLoadDescriptor(indicator, true);
-  }
-
-  public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator,
-                                                                              boolean showMessageOnError) throws IOException {
     myShownErrors = false;
 
     if (myFile != null) {
       IdeaPluginDescriptorImpl actualDescriptor = loadDescriptorFromArtifact();
       if (actualDescriptor == null) {
-        reportError(showMessageOnError, IdeBundle.message("error.descriptor.load.failed", myFile.getPath()));
-        return null;
+        reportError(IdeBundle.message("error.descriptor.load.failed", myFile.getPath()));
+        return false;
       }
 
       myDescriptor = actualDescriptor;
-      return actualDescriptor;
+      return true;
     }
 
     IdeaPluginDescriptor descriptor = null;
@@ -194,7 +194,7 @@ public final class PluginDownloader {
       LOG.assertTrue(descriptor != null);
       if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        return null;
+        return false;
       }
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
@@ -206,35 +206,34 @@ public final class PluginDownloader {
       LOG.info(e);
 
       String message = e.getMessage();
-      reportError(showMessageOnError,
-                  message != null ? message : IdeBundle.message("unknown.error"));
-      return null;
+      reportError(message != null ? message : IdeBundle.message("unknown.error"));
+      return false;
     }
 
     boolean loaded = LoadingState.COMPONENTS_LOADED.isOccurred(); // plugins can be requested during initial IDE setup (e.g. in Rider initial setup wizard).
     if (loaded &&
-        !PluginSignatureChecker.verifyIfRequired(myDescriptor, myFile, isFromMarketplace(), showMessageOnError)) {
+        !PluginSignatureChecker.verifyIfRequired(myDescriptor, myFile, isFromMarketplace(), true)) {
       myShownErrors = true;
-      return null;
+      return false;
     }
 
     IdeaPluginDescriptorImpl actualDescriptor = loadDescriptorFromArtifact();
     if (actualDescriptor == null) {
-      reportError(showMessageOnError, IdeBundle.message("error.downloaded.descriptor.load.failed"));
-      return null;
+      reportError(IdeBundle.message("error.downloaded.descriptor.load.failed"));
+      return false;
     }
 
     if (loaded &&
         InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.getPluginId())) {
-      reportError(showMessageOnError, IdeBundle.message("error.pending.update", getPluginName()));
-      return null; //already updated
+      reportError(IdeBundle.message("error.pending.update", getPluginName()));
+      return false; //already updated
     }
 
     myPluginVersion = actualDescriptor.getVersion();
     if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
       LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-      reportError(showMessageOnError, IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
-      return null; //was not updated
+      reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
+      return false; //was not updated
     }
 
     myDescriptor = actualDescriptor;
@@ -244,35 +243,33 @@ public final class PluginDownloader {
     if (incompatibleError != null) {
       LOG.info("Plugin " + myPluginId + " is incompatible with current installation " +
                "(since:" + actualDescriptor.getSinceBuild() + " until:" + actualDescriptor.getUntilBuild() + ")");
-      reportError(showMessageOnError,
-                  IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())));
-      return null; //host outdated plugins, no compatible plugin for new version
+      reportError(IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())));
+      return false; //host outdated plugins, no compatible plugin for new version
     }
 
-    return actualDescriptor;
+    return true;
   }
 
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), myBuildNumber);
   }
 
-  private void reportError(boolean showMessageOnError,
-                           @NotNull @Nls String errorMessage) {
+  private void reportError(@NotNull @Nls String errorMessage) {
     LOG.info("PluginDownloader error: " + errorMessage);
-    Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      myShownErrors = true;
-      if (showMessageOnError || myErrors != null) {
-        String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-        if (myErrors != null) {
-          myErrors.add(text);
-        }
-        else if (showMessageOnError) {
-          String title = IdeBundle.message("title.plugin.installation");
-          app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
-        }
-      }
+    myShownErrors = true;
+    myErrorsConsumer.accept(IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage));
+  }
+
+  public static void showErrorDialog(@NotNull @Nls String text) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isDisposed()) {
+      return;
     }
+
+    application.invokeLater(() -> {
+      Messages.showErrorDialog(text,
+                               IdeBundle.message("title.plugin.installation"));
+    }, ModalityState.any());
   }
 
   public static String getMarketplaceDownloadsUUID() {
@@ -337,7 +334,7 @@ public final class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : MarketplacePluginDownloadService.getInstance();
+    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
       return myOldFile != null ?
              downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
              downloader.downloadPlugin(myPluginUrl, indicator);
@@ -367,7 +364,9 @@ public final class PluginDownloader {
                  getUrl(descriptor.getPluginId(), buildNumber);
     return new PluginDownloader(descriptor,
                                 url,
-                                buildNumber);
+                                buildNumber,
+                                PluginDownloader::showErrorDialog,
+                                null);
   }
 
   public @NotNull PluginNode toPluginNode() {

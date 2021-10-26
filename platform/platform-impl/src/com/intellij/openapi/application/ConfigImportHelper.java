@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.Main;
@@ -717,7 +718,7 @@ public final class ConfigImportHelper {
     boolean headless;
     boolean importPlugins = true;
     BuildNumber compatibleBuildNumber = null;
-    ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction = null;
+    MarketplacePluginDownloadService downloadService = null;
     Path bundledPluginPath = null;
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
@@ -916,11 +917,11 @@ public final class ConfigImportHelper {
       }
 
       try {
-        PluginDownloader downloader = PluginDownloader.createDownloader(plugin);
-        if (options.downloadFunction != null) {
-          downloader.setDownloadFunction(options.downloadFunction);
-        }
-        if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
+        PluginDownloader downloader = PluginDownloader.createDownloader(plugin)
+          .withErrorsConsumer(__ -> {})
+          .withDownloadService(options.downloadService);
+
+        if (downloader.prepareToInstall(indicator)) {
           PluginInstaller.unpackPlugin(downloader.getFilePath(), newPluginsDir);
           log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
           iterator.remove();
