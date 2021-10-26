@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,7 +25,7 @@ internal fun KtAnalysisSession.detectImportStrategy(symbol: KtSymbol): ImportStr
 }
 
 internal fun KtAnalysisSession.detectImportStrategyForCallableSymbol(symbol: KtCallableSymbol): ImportStrategy {
-    if (symbol !is KtPossibleMemberSymbol || symbol.dispatchType != null) return ImportStrategy.DoNothing
+    if (symbol !is KtPossibleMemberSymbol || symbol.symbolKind == KtSymbolKind.CLASS_MEMBER) return ImportStrategy.DoNothing
 
     val propertyId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
 
