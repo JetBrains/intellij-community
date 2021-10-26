@@ -123,7 +123,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             )
         }
 
-        if (isOnTheFly) {
+        if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
             scheduleOptimizeImportsOnTheFly(file, data.optimizerData)
         }
 
