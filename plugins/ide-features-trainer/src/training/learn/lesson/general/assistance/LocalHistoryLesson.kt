@@ -259,7 +259,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
         previous.ui?.isShowing != true
       }
       test {
-        Thread.sleep(500)
+        invokeActionViaShortcut("ESCAPE")
+        // sometimes some small popup appears at mouse position so the first Escape may close just that popup
         invokeActionViaShortcut("ESCAPE")
       }
     }
