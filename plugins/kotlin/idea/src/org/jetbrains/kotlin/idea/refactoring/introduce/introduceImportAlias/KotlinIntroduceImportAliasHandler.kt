@@ -125,8 +125,10 @@ private fun invokeRename(
     elementToRename: PsiNamedElement?,
     suggestionsName: Collection<String>
 ) {
+    val pointer = if (elementToRename != null) SmartPointerManager.createPointer(elementToRename) else null
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-    val rename = VariableInplaceRenamer(elementToRename, editor, project)
+    val element = pointer?.element ?: return
+    val rename = VariableInplaceRenamer(element, editor, project)
     rename.performInplaceRefactoring(LinkedHashSet(suggestionsName))
 }
 
