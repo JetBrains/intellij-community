@@ -7,7 +7,6 @@ import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
@@ -19,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
+import java.awt.image.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -35,9 +33,6 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
  * @author tav
  */
 class JBCefOsrHandler implements CefRenderHandler {
-  // [tav] todo: consider volatile image as alternative
-  private @Nullable JBHiDPIScaledImage myImage;
-
   private final @NotNull JComponent myComponent;
   private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
@@ -45,7 +40,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
-  private final @NotNull Object myImageLock = new Object();
+  private volatile @Nullable JBHiDPIScaledImage myImage;
+  private volatile @Nullable VolatileImage myVolatileImage;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<JComponent, Rectangle> screenBoundsProvider) {
     myComponent = component;
@@ -111,31 +107,51 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
-    synchronized (myImageLock) {
-      Dimension size = getDevImageSize();
-      if (size.width != width || size.height != height) {
-        updateImage(width, height);
-      }
-      //noinspection ConstantConditions
-      BufferedImage bi = (BufferedImage)myImage.getDelegate();
-      @SuppressWarnings("ConstantConditions")
-      int[] dst = ((DataBufferInt)bi.getRaster().getDataBuffer()).getData();
-      IntBuffer src = buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+    JBHiDPIScaledImage image = myImage;
+    VolatileImage volatileImage = myVolatileImage;
 
-      for (Rectangle rect : dirtyRects) {
-        if (rect.width < width) {
-          for (int line = rect.y; line < rect.y + rect.height; line++) {
-            int offset = line * width + rect.x;
-            src.position(offset).get(dst, offset, Math.min(rect.width, src.capacity() - offset));
-          }
+    Dimension size = getDevImageSize();
+    if (size.width != width || size.height != height) {
+      image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
+      volatileImage = myComponent.createVolatileImage(width, height);
+    }
+    assert volatileImage != null && image != null;
+
+    if (volatileImage.contentsLost()) volatileImage.validate(myComponent.getGraphicsConfiguration());
+
+    BufferedImage bi = (BufferedImage)image.getDelegate();
+    assert bi != null;
+    int[] dst = ((DataBufferInt)bi.getRaster().getDataBuffer()).getData();
+    IntBuffer src = buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+
+    for (Rectangle rect : dirtyRects) {
+      if (rect.width < width) {
+        for (int line = rect.y; line < rect.y + rect.height; line++) {
+          int offset = line * width + rect.x;
+          src.position(offset).get(dst, offset, Math.min(rect.width, src.capacity() - offset));
         }
-        else { // optimized for a buffer wide dirty rect
-          int offset = rect.y * width;
-          src.position(offset).get(dst, offset, Math.min(rect.height * width, src.capacity() - offset));
-        }
+      }
+      else { // optimized for a buffer wide dirty rect
+        int offset = rect.y * width;
+        src.position(offset).get(dst, offset, Math.min(rect.height * width, src.capacity() - offset));
       }
     }
-    myComponent.repaint(scaleDown(findOuterRect(dirtyRects)));
+    Rectangle outerRect = findOuterRect(dirtyRects);
+    Graphics2D viGr = (Graphics2D)volatileImage.getGraphics().create();
+    try {
+      double sx = viGr.getTransform().getScaleX();
+      double sy = viGr.getTransform().getScaleY();
+      viGr.scale(1 / sx, 1 / sy);
+      viGr.drawImage(bi,
+                     outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
+                     outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
+                     null);
+    } finally {
+      viGr.dispose();
+    }
+    myImage = image;
+    myVolatileImage = volatileImage;
+    myComponent.repaint(scaleDown(outerRect));
   }
 
   @Override
@@ -154,12 +170,11 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   public void paint(Graphics2D g) {
+    // The dirty rects passed to onPaint are set as the clip on the graphics, so here we draw the whole image.
     myFpsMeter.paintFrameStarted();
-    synchronized (myImageLock) {
-      if (myImage != null) {
-        // the graphics has correct clip set in onPaint, so here we draw the whole image
-        UIUtil.drawImage(g, myImage, 0, 0, null);
-      }
+    VolatileImage image = myVolatileImage;
+    if (image != null && !image.contentsLost()) {
+      g.drawImage(image, 0, 0, null);
     }
     myFpsMeter.paintFrameFinished(g);
   }
@@ -195,20 +210,12 @@ class JBCefOsrHandler implements CefRenderHandler {
     return myLocationOnScreenRef.get().getLocation();
   }
 
-  private void updateImage(int width, int height) {
-    synchronized (myImageLock) {
-      Dimension size = getDevImageSize();
-      if (size.width != width || size.height != height) {
-        myImage = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB), myScale.getJreBiased(), null);
-      }
-    }
-  }
-
   private @NotNull Dimension getDevImageSize() {
-    if (myImage == null) return new Dimension(0, 0);
+    JBHiDPIScaledImage image = myImage;
+    if (image == null) return new Dimension(0, 0);
 
-    BufferedImage bi = (BufferedImage)myImage.getDelegate();
-    //noinspection ConstantConditions
+    BufferedImage bi = (BufferedImage)image.getDelegate();
+    assert bi != null;
     return new Dimension(bi.getWidth(), bi.getHeight());
   }
 
