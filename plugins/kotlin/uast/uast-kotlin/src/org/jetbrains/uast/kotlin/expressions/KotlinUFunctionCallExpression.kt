@@ -55,10 +55,14 @@ class KotlinUFunctionCallExpression(
                 KotlinUIdentifier(calleeExpression.getReferencedNameElement(), this)
             is KtConstructorDelegationReferenceExpression ->
                 KotlinUIdentifier(calleeExpression.firstChild ?: calleeExpression, this)
-            is KtConstructorCalleeExpression ->
-                KotlinUIdentifier(
-                    calleeExpression.constructorReferenceExpression?.getReferencedNameElement() ?: calleeExpression, this
-                )
+            is KtConstructorCalleeExpression -> {
+                val referencedNameElement = calleeExpression.constructorReferenceExpression?.getReferencedNameElement()
+                when {
+                    referencedNameElement != null -> KotlinUIdentifier(referencedNameElement, this)
+                    calleeExpression.firstChild == null -> KotlinUIdentifier(calleeExpression, this)
+                    else -> null
+                }
+            }
             is KtLambdaExpression ->
                 KotlinUIdentifier(calleeExpression.functionLiteral.lBrace, this)
             else -> KotlinUIdentifier(
