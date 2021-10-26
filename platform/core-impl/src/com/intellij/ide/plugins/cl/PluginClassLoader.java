@@ -486,7 +486,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     }
 
     if (canonicalPath.startsWith("/") && classPath.findResource(canonicalPath.substring(1)) != null) {
-      // see `UrlClassLoader#doFindResource`
+      // reporting malformed paths only when there's a resource at the right one - which is rarely the case
+      // (see also `UrlClassLoader#doFindResource`)
       String message = "Calling `ClassLoader#getResource` with leading slash doesn't work; strip";
       Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
     }
