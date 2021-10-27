@@ -16,6 +16,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -136,7 +137,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
               }
             }
 
-            boolean includeTests = true; // use the biggest scope by default
+            final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
             if (configuration instanceof JavaRunConfigurationBase) {
               try {
                 // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
@@ -144,14 +145,16 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                 final String runClass = conf.getRunClass();
                 final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
                 if (runClass != null && confModule != null) {
-                  includeTests = (JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0;
+                  DumbService.getInstance(confModule.getProject()).runWithAlternativeResolveEnabled(
+                    () -> includeTests.set((JavaParametersUtil.getClasspathType(confModule, runClass, false, true) & JavaParameters.TESTS_ONLY) != 0)
+                  );
                 }
               }
               catch (CantRunException ignored) {
               }
             }
 
-            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests);
+            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests.get());
           }
           else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
             projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
