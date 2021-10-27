@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -98,9 +100,15 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     return result
   }
 
+  private fun obtainCommittedDocument(): Document? {
+    val file = table.containingFile
+    return file?.let { PsiDocumentManager.getInstance(table.project).getLastCommittedDocument(it) }
+  }
+
   private fun calculateRowWidth(): Int {
     val header = table.headerRow ?: return 0
-    return fontMetrics.stringWidth(editor.document.getText(header.textRange))
+    val document = obtainCommittedDocument() ?: return 0
+    return fontMetrics.stringWidth(document.getText(header.textRange))
   }
 
   private fun updateSelectedIndexIfNeeded(index: Int?) {
@@ -113,7 +121,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
 
   private fun buildBarsModel(): List<Rectangle> {
     val header = requireNotNull(table.headerRow)
-    val text = editor.document.immutableCharSequence
+    val text = obtainCommittedDocument()?.text ?: return emptyList()
     val positions = calculatePositions(header, text)
     val sectors = buildSectors(positions)
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
