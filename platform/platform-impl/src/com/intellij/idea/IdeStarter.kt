@@ -7,10 +7,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
@@ -19,7 +17,6 @@ import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +25,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -174,24 +170,17 @@ open class IdeStarter : ApplicationStarter {
 
   private fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
     ApplicationManager.getApplication().invokeLater {
-      val result = CommandLineProcessor.processProtocolCommand(uri)
-      ProcessIOExecutorService.INSTANCE.execute {
-        runCatching { result.future.get() }
-          .recover {
-            logger<IdeStarter>().error(it)
-            val title = IdeBundle.message("ide.protocol.cannot.title")
-            val message = IdeBundle.message("ide.protocol.exception", it.javaClass.simpleName, it.message)
-            Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, message, NotificationType.WARNING)
-              .addAction(ShowLogAction.notificationAction())
-              .notify(null)
-            CliResult.OK
-          }
-          .onSuccess {
-            if (it.exitCode == 0) {
-              WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+      CommandLineProcessor.processProtocolCommand(uri)
+        .thenAccept {
+          if (it.exitCode == ProtocolHandler.PLEASE_QUIT) {
+            ApplicationManager.getApplication().invokeLater {
+              ApplicationManagerEx.getApplicationEx().exit(false, true)
             }
           }
-      }
+          else if (it.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+          }
+        }
     }
   }
 
