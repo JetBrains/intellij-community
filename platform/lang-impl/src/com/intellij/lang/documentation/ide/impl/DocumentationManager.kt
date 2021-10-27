@@ -125,7 +125,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
     if (skipPopup) {
-      toolWindowManager.previewInToolWindow(request)
+      toolWindowManager.showInToolWindow(request)
       return
     }
 
