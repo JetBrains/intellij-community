@@ -50,10 +50,11 @@ class AllClassesCompletion(
         kotlinIndicesHelper.processKotlinClasses(
             { prefixMatcher.prefixMatches(it) },
             kindFilter = kindFilter,
-            processor = { classifierDescriptorCollector(it) })
+            processor = classifierDescriptorCollector::invoke
+        )
 
         if (includeTypeAliases) {
-            kotlinIndicesHelper.processTopLevelTypeAliases(prefixMatcher.asStringNameFilter()) { classifierDescriptorCollector(it) }
+            kotlinIndicesHelper.processTopLevelTypeAliases(prefixMatcher.asStringNameFilter(), classifierDescriptorCollector::invoke)
         }
 
         if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {

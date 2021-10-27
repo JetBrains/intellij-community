@@ -742,7 +742,7 @@ private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpres
             // Enum entries should be contributed with members import fix
             psiFilter = { ktDeclaration -> ktDeclaration !is KtEnumEntry },
             kindFilter = { kind -> kind != ClassKind.ENUM_ENTRY },
-            processor = { processor.process(it) }
+            processor = processor::process
         )
         result
     }

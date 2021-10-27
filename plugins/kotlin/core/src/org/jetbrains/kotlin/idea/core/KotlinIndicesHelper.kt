@@ -165,42 +165,44 @@ class KotlinIndicesHelper(
     ): Collection<CallableDescriptor> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val topLevelExtensionsIndex = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
-        val suitableTopLevelExtensions = topLevelExtensionsIndex.getSuitableExtensions(
+        val suitableTopLevelExtensions = mutableListOf<CallableDescriptor>()
+        KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
-            callTypeAndReceiver
+            callTypeAndReceiver,
+            processor = suitableTopLevelExtensions::add
         )
 
-        val additionalDescriptors = ArrayList<CallableDescriptor>(0)
+        val additionalDescriptors = ArrayList<CallableDescriptor>()
 
         val lookupLocation = this.file?.let { KotlinLookupLocation(it) } ?: NoLookupLocation.FROM_IDE
         for (extension in @Suppress("DEPRECATION") KotlinIndicesHelperExtension.getInstances(project)) {
             extension.appendExtensionCallables(additionalDescriptors, moduleDescriptor, receiverTypes, nameFilter, lookupLocation)
         }
 
-        return if (additionalDescriptors.isNotEmpty())
+        return if (additionalDescriptors.isNotEmpty()) {
             suitableTopLevelExtensions + additionalDescriptors
-        else
+        } else {
             suitableTopLevelExtensions
+        }
     }
 
-    fun getCallableExtensionsDeclaredInObjects(
+    fun processCallableExtensionsDeclaredInObjects(
         callTypeAndReceiver: CallTypeAndReceiver<*, *>,
         receiverTypes: Collection<KotlinType>,
         nameFilter: (String) -> Boolean,
-        declarationFilter: (KtDeclaration) -> Boolean = { true }
-    ): Collection<CallableDescriptor> {
-        if (receiverTypes.isEmpty()) return emptyList()
+        declarationFilter: (KtDeclaration) -> Boolean = { true },
+        processor: (CallableDescriptor) -> Unit
+    ) {
+        if (receiverTypes.isEmpty()) return
 
-        val extensionsInObjectsIndex = KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE
-
-        return extensionsInObjectsIndex.getSuitableExtensions(
+        KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
-            callTypeAndReceiver
+            callTypeAndReceiver,
+            processor
         )
     }
 
@@ -225,15 +227,15 @@ class KotlinIndicesHelper(
         return out.values.toSet()
     }
 
-    private fun KotlinExtensionsByReceiverTypeIndex.getSuitableExtensions(
+    private fun KotlinExtensionsByReceiverTypeIndex.processSuitableExtensions(
         receiverTypes: Collection<KotlinType>,
         nameFilter: (String) -> Boolean,
         declarationFilter: (KtDeclaration) -> Boolean,
-        callTypeAndReceiver: CallTypeAndReceiver<*, *>
-    ): Collection<CallableDescriptor> {
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        processor: (CallableDescriptor) -> Unit
+    ) {
         val receiverTypeNames = collectAllNamesOfTypes(receiverTypes)
 
-        val result = LinkedHashSet<CallableDescriptor>()
         val callType = callTypeAndReceiver.callType
 
         val declarationProcessor = Processor<KtCallableDeclaration> { callableDeclaration ->
@@ -241,7 +243,7 @@ class KotlinIndicesHelper(
             if (declarationFilter(callableDeclaration)) {
                 callableDeclaration.resolveToDescriptors<CallableDescriptor>().forEach { descriptor ->
                     if (descriptor.extensionReceiverParameter != null && descriptorFilter(descriptor)) {
-                        result.addAll(descriptor.substituteExtensionIfCallable(receiverTypes, callType))
+                        descriptor.substituteExtensionIfCallable(receiverTypes, callType).forEach(processor::invoke)
                     }
                 }
             }
@@ -252,8 +254,6 @@ class KotlinIndicesHelper(
                 processElements(it, project, scope, declarationProcessor)
             }
         }
-
-        return result
     }
 
     private fun possibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
