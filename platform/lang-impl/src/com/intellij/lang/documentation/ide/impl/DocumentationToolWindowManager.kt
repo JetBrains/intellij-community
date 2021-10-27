@@ -98,11 +98,11 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * orders it to display [request],
    * and makes it visible.
    */
-  fun previewInToolWindow(request: DocumentationRequest) {
+  fun showInToolWindow(request: DocumentationRequest) {
     val previewContent = getPreviewContent()
     if (previewContent == null) {
       val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
-      previewInToolWindow(DocumentationUI(project, browser), addNewContent())
+      showInToolWindow(DocumentationUI(project, browser), addNewContent())
     }
     else {
       previewContent.toolWindowUI.browser.resetBrowser(request)
@@ -114,7 +114,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * Creates a new preview tab, or replaces existing tab content, and displays [ui] in it.
    * The [ui] will be disposed once the tab is closed.
    */
-  fun previewInToolWindow(ui: DocumentationUI) {
+  fun showInToolWindow(ui: DocumentationUI) {
     EDT.assertIsEdt()
     val previewContent = getPreviewContent()
     val content = if (previewContent == null) {
@@ -124,10 +124,10 @@ internal class DocumentationToolWindowManager(private val project: Project) {
       Disposer.dispose(previewContent.toolWindowUI)
       previewContent
     }
-    previewInToolWindow(ui, content)
+    showInToolWindow(ui, content)
   }
 
-  private fun previewInToolWindow(ui: DocumentationUI, content: Content) {
+  private fun showInToolWindow(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
     content.component = newUI.contentComponent
     makeVisible(content)
