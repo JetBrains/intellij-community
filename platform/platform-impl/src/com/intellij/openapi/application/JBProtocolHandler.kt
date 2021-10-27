@@ -2,23 +2,23 @@
 package com.intellij.openapi.application
 
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.ide.CliResult
 import com.intellij.ide.ProtocolHandler
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.NlsContexts.NotificationContent
 import java.util.concurrent.CompletableFuture
 
 class JBProtocolHandler : ProtocolHandler {
   override fun getScheme(): String = JBProtocolCommand.SCHEME
 
-  override fun process(query: String, indicator: ProgressIndicator): CompletableFuture<@NotificationContent String?> {
-    val result = CompletableFuture<String?>()
+  override fun process(query: String, indicator: ProgressIndicator): CompletableFuture<CliResult> {
+    val result = CompletableFuture<CliResult>()
     ApplicationManager.getApplication().invokeLater(
       {
         val commandResult = runCatching { JBProtocolCommand.execute(query) }
         ProcessIOExecutorService.INSTANCE.execute {
           commandResult.mapCatching { it.get() }
             .onFailure { result.completeExceptionally(it) }
-            .onSuccess { result.complete(it) }
+            .onSuccess { result.complete(CliResult(0, it)) }
         }
       },
       ModalityState.NON_MODAL)
