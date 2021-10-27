@@ -242,6 +242,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract String runningTargetName();
 
+  public boolean isTerminalSessionPersistent() {
+    return true;
+  }
+
   @Nullable
   private static String getParentDirectoryPath(@Nullable VirtualFile file) {
     VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
