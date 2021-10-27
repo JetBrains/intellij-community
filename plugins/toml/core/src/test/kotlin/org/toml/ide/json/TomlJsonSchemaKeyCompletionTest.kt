@@ -5,7 +5,7 @@
 
 package org.toml.ide.json
 
-class TomlJsonSchemaCompletionTest : TomlJsonSchemaCompletionTestBase() {
+class TomlJsonSchemaKeyCompletionTest : TomlJsonSchemaCompletionTestBase() {
     fun `test top level completion`() = checkContainsCompletion(listOf("package", "dependencies"), """
         <caret>
     """)
