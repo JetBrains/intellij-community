@@ -5,10 +5,8 @@ import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.ChooseByNameBase
-import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
-import com.intellij.lang.documentation.ide.actions.TOGGLE_AUTO_SHOW_ACTION_ID
-import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_ID
-import com.intellij.lang.documentation.ide.actions.navigationActions
+import com.intellij.ide.util.propComponentProperty
+import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.isReusable
@@ -18,7 +16,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -40,6 +40,17 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
     fun instance(project: Project): DocumentationToolWindowManager = project.service()
+
+    private var autoUpdate_: Boolean by propComponentProperty(name = "documentation.auto.update", defaultValue = true)
+
+    var autoUpdate: Boolean
+      get() = autoUpdate_
+      set(value) {
+        autoUpdate_ = value
+        for (openProject in ProjectManager.getInstance().openProjects) {
+          openProject.serviceIfCreated<DocumentationToolWindowManager>()?.getReusableContent()?.toolWindowUI?.toggleAutoUpdate(value)
+        }
+      }
   }
 
   private val toolWindow: ToolWindowEx = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closableSecondary(
@@ -55,6 +66,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
       ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID),
       ToggleShowDocsOnHoverAction(),
       ActionManager.getInstance().getAction(TOGGLE_AUTO_SHOW_ACTION_ID),
+      ActionManager.getInstance().getAction(TOGGLE_AUTO_UPDATE_ACTION_ID),
       AdjustFontSizeAction(), // TODO this action doesn't work because of wrong DataContext
     ))
     if (Registry.`is`("documentation.v2.tw.navigation.actions")) {
@@ -84,7 +96,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   }
 
   private fun getVisibleAutoUpdatingContent(): Content? {
-    if (!toolWindow.isVisible) {
+    if (!autoUpdate || !toolWindow.isVisible) {
       return null
     }
     return contentManager.selectedContent?.takeIf {
@@ -142,7 +154,9 @@ internal class DocumentationToolWindowManager(private val project: Project) {
 
   private fun showInToolWindow(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
-    newUI.toggleAutoUpdate(state = true)
+    if (autoUpdate) {
+      newUI.toggleAutoUpdate(state = true)
+    }
     content.component = newUI.contentComponent
     makeVisible(content)
   }
