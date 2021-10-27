@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.regex.Pattern
 
@@ -30,7 +29,7 @@ final class CrossPlatformDistributionBuilder {
   String buildCrossPlatformZip(Path winDistPath, Path linuxDistPath, Path macDistPath) {
     buildContext.messages.block("Building cross-platform zip") {
       def executableName = buildContext.productProperties.baseFileName
-      Path zipDir = Paths.get(buildContext.paths.temp, "cross-platform-zip")
+      Path zipDir = buildContext.paths.tempDir.resolve("cross-platform-zip")
       Files.createDirectories(zipDir)
       buildContext.ant.copy(todir: "$zipDir/bin/win") {
         fileset(dir: "$winDistPath/bin") {
@@ -49,7 +48,8 @@ final class CrossPlatformDistributionBuilder {
           include(name: "idea.properties")
         }
       }
-      Files.copy(macDistPath.resolve("bin/${executableName}.vmoptions"), zipDir.resolve("bin/mac/${executableName}64.vmoptions"), StandardCopyOption.REPLACE_EXISTING)
+      Files.copy(macDistPath.resolve("bin/${executableName}.vmoptions"), zipDir.resolve("bin/mac/${executableName}64.vmoptions"),
+                 StandardCopyOption.REPLACE_EXISTING)
       buildContext.ant.copy(todir: "$zipDir/bin") {
         fileset(dir: "$macDistPath/bin") {
           include(name: "*.jnilib")
