@@ -76,7 +76,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   /**
    * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
    */
-  fun focusVisible(): Boolean {
+  fun focusVisiblePreview(): Boolean {
     val content = getVisiblePreviewContent() ?: return false
     contentManager.requestFocus(content, false)
     return true
@@ -98,11 +98,11 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * orders it to display [request],
    * and makes it visible.
    */
-  fun showInToolWindow(request: DocumentationRequest) {
+  fun previewInToolWindow(request: DocumentationRequest) {
     val previewContent = getPreviewContent()
     if (previewContent == null) {
       val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
-      showInToolWindow(DocumentationUI(project, browser), addNewContent())
+      previewInToolWindow(DocumentationUI(project, browser), addNewContent())
     }
     else {
       previewContent.toolWindowUI.browser.resetBrowser(request)
@@ -114,7 +114,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * Creates a new preview tab, or replaces existing tab content, and displays [ui] in it.
    * The [ui] will be disposed once the tab is closed.
    */
-  fun showInToolWindow(ui: DocumentationUI) {
+  fun previewInToolWindow(ui: DocumentationUI) {
     EDT.assertIsEdt()
     val previewContent = getPreviewContent()
     val content = if (previewContent == null) {
@@ -124,10 +124,10 @@ internal class DocumentationToolWindowManager(private val project: Project) {
       Disposer.dispose(previewContent.toolWindowUI)
       previewContent
     }
-    showInToolWindow(ui, content)
+    previewInToolWindow(ui, content)
   }
 
-  private fun showInToolWindow(ui: DocumentationUI, content: Content) {
+  private fun previewInToolWindow(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
     content.component = newUI.contentComponent
     makeVisible(content)

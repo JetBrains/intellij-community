@@ -67,7 +67,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
     if (lookup == null && quickSearchComponent == null) {
       // no popups
-      if (toolWindowManager.focusVisible()) {
+      if (toolWindowManager.focusVisiblePreview()) {
         // Explicit invocation moves focus to a visible preview tab.
         return
       }
@@ -125,7 +125,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
     if (skipPopup) {
-      toolWindowManager.showInToolWindow(request)
+      toolWindowManager.previewInToolWindow(request)
       return
     }
 
