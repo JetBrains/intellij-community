@@ -28,8 +28,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class MigrateExperimentalToRequiresOptInFix(
     annotationEntry: KtAnnotationEntry,
     private val requiresOptInInnerText: String?
-) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry), CleanupFix
-{
+) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry), CleanupFix {
     override fun getText(): String = KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.replace")
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.replace")
@@ -53,8 +52,8 @@ class MigrateExperimentalToRequiresOptInFix(
      * the "Remove annotation" action is proposed to get rid of the obsolete `@Experimental` annotation
      * (we don't check if the `level` arguments match in both annotations).
      *
-     * If there is only an `@Experimental` annotation, the factory generates a quick fix a "Replace annotation"
-     * quick fix that removes the `@Experimental` annotation and creates a `@RequiresOptIn` annotation
+     * If there is only an `@Experimental` annotation, the factory generates a "Replace annotation" quick fix
+     * that removes the `@Experimental` annotation and creates a `@RequiresOptIn` annotation
      * with the matching value of the `level` argument.
      */
     companion object : KotlinSingleIntentionActionFactory() {
@@ -65,20 +64,24 @@ class MigrateExperimentalToRequiresOptInFix(
             val annotationDescriptor = annotationEntry.resolveToDescriptorIfAny() ?: return null
             if (annotationDescriptor.fqName == OptInNames.OLD_EXPERIMENTAL_FQ_NAME) {
                 val annotationOwner = annotationEntry.getStrictParentOfType<KtModifierListOwner>() ?: return null
-                if (annotationOwner.findAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) != null) {
+                if (annotationOwner.findAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) != null)
                     return RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.remove"), annotationEntry)
-                } else {
-                    val level = annotationDescriptor.argumentValue("level")?.safeAs<EnumValue>()?.enumEntryName?.asString()
-                    val requiresOptInInnerText = when (level) {
-                        "ERROR" -> "level = RequiresOptIn.Level.ERROR"
-                        "WARNING" -> "level = RequiresOptIn.Level.WARNING"
-                        else -> null
-                    }
-                    return MigrateExperimentalToRequiresOptInFix(annotationEntry, requiresOptInInnerText)
+
+                val requiresOptInInnerText = when (
+                    annotationDescriptor
+                        .argumentValue("level")
+                        ?.safeAs<EnumValue>()
+                        ?.enumEntryName
+                        ?.asString()
+                ) {
+                    "ERROR" -> "level = RequiresOptIn.Level.ERROR"
+                    "WARNING" -> "level = RequiresOptIn.Level.WARNING"
+                    else -> null
                 }
-            } else {
-                return null
+                return MigrateExperimentalToRequiresOptInFix(annotationEntry, requiresOptInInnerText)
             }
+
+            return null
         }
     }
 }
