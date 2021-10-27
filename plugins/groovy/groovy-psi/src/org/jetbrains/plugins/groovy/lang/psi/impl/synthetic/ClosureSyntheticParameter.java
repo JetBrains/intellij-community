@@ -79,6 +79,10 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     return new LocalSearchScope(closure);
   }
 
+  public boolean isStillValid() {
+    return myClosure.getElement() != null;
+  }
+
   public GrClosableBlock getClosure() {
     GrClosableBlock closure = myClosure.getElement();
     if (closure == null) {
