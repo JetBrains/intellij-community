@@ -88,6 +88,16 @@ public final class JavaModuleGraphUtil {
         });
       }
     }
+    else {
+      root = index.getSourceRootForFile(file);
+      if (root != null) {
+        VirtualFile moduleDescriptor = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
+        PsiFile psiFile = moduleDescriptor != null ? PsiManager.getInstance(project).findFile(moduleDescriptor) : null;
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
+      }
+    }
 
     return null;
   }
