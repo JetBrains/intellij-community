@@ -29,10 +29,6 @@ public class JBInsets extends Insets {
     unscaled = new Insets(top, left, bottom, right);
   }
 
-  private JBInsets(int topBottom, int leftRight) {
-    this(topBottom, leftRight, topBottom, leftRight);
-  }
-
   public int width() {
     return left + right;
   }
@@ -45,9 +41,7 @@ public class JBInsets extends Insets {
    * topBottom and leftRight should be unscaled
    */
   public static @NotNull JBInsets create(int topBottom, int leftRight) {
-    int topBottomScaled = JBUIScale.scale(topBottom);
-    int leftRightScaled = JBUIScale.scale(leftRight);
-    return new JBInsets(topBottomScaled, leftRightScaled);
+    return new JBInsets(topBottom, leftRight, topBottom, leftRight);
   }
 
   public static @NotNull JBInsets create(@NotNull Insets insets) {
