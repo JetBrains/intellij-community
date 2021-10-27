@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +77,12 @@ class TypeDfaState {
 
   TypeDfaState() {
     myVarTypes = new HashMap<>();
-    myProhibitedCachingVars = new HashSet<>();
+    myProhibitedCachingVars = CollectionFactory.createSmallMemoryFootprintSet();
   }
 
   TypeDfaState(TypeDfaState another) {
     myVarTypes = new HashMap<>(another.myVarTypes);
-    myProhibitedCachingVars = new HashSet<>(another.myProhibitedCachingVars);
+    myProhibitedCachingVars = CollectionFactory.createSmallMemoryFootprintSet(another.myProhibitedCachingVars);
   }
 
   Map<VariableDescriptor, DFAType> getVarTypes() {
