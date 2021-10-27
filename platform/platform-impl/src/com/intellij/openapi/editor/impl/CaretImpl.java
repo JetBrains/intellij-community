@@ -1146,7 +1146,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         }
       }
       else {
-        setRangeMarkerEndPositionIsLead(true); // for compatibility with older behaviour
+        setRangeMarkerEndPositionIsLead(endOffset != getOffset());
       }
       mySelectionMarker = marker;
 
