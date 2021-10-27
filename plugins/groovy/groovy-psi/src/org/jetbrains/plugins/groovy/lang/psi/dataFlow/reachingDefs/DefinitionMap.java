@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
@@ -20,7 +17,7 @@ public final class DefinitionMap {
   public void registerDef(int varIndex, Instruction instruction) {
     IntSet defs = myMap.get(varIndex);
     if (defs == null) {
-      myMap.put(varIndex, defs = new IntOpenHashSet());
+      myMap.put(varIndex, defs = new IntArraySet(1));
     }
     else {
       defs.clear();
