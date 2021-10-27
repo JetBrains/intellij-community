@@ -3,12 +3,11 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-abstract class KotlinExtensionsByReceiverTypeIndex : StringStubIndexExtension<KtCallableDeclaration>() {
+abstract class KotlinExtensionsByReceiverTypeIndex : AbstractStringStubIndexExtension<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
     fun buildKey(receiverTypeName: String, callableName: String): String = receiverTypeName + SEPARATOR + callableName
 
     fun receiverTypeNameFromKey(key: String): String = key.substringBefore(SEPARATOR, "")
@@ -18,7 +17,7 @@ abstract class KotlinExtensionsByReceiverTypeIndex : StringStubIndexExtension<Kt
     final override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> =
       StubIndex.getElements(key, s, project, scope, KtCallableDeclaration::class.java)
 
-    final fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtCallableDeclaration>) {
+    fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in KtCallableDeclaration>) {
         StubIndex.getInstance().processElements(key, s, project, scope, KtCallableDeclaration::class.java, processor)
     }
 

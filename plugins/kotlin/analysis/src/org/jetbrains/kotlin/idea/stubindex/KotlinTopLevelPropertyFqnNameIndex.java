@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.Processor;
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtProperty;
 
 import java.util.Collection;
 
-public class KotlinTopLevelPropertyFqnNameIndex extends StringStubIndexExtension<KtProperty> {
+public class KotlinTopLevelPropertyFqnNameIndex extends AbstractStringStubIndexExtension<KtProperty> {
     private static final StubIndexKey<String, KtProperty> KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelPropertyFqnNameIndex.class);
 
     private static final KotlinTopLevelPropertyFqnNameIndex INSTANCE = new KotlinTopLevelPropertyFqnNameIndex();
@@ -23,7 +22,9 @@ public class KotlinTopLevelPropertyFqnNameIndex extends StringStubIndexExtension
         return INSTANCE;
     }
 
-    private KotlinTopLevelPropertyFqnNameIndex() {}
+    private KotlinTopLevelPropertyFqnNameIndex() {
+        super(KtProperty.class);
+    }
 
     @NotNull
     @Override
@@ -31,8 +32,7 @@ public class KotlinTopLevelPropertyFqnNameIndex extends StringStubIndexExtension
         return KEY;
     }
 
-    @NotNull
-    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtProperty> processor) {
+    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super KtProperty> processor) {
         StubIndex.getInstance().processElements(KEY,  s,project, scope, KtProperty.class, processor);
     }
 

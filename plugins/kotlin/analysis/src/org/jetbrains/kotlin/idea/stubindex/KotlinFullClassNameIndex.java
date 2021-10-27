@@ -4,17 +4,15 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 
 import java.util.Collection;
 
-public class KotlinFullClassNameIndex extends StringStubIndexExtension<KtClassOrObject> {
+public class KotlinFullClassNameIndex extends AbstractStringStubIndexExtension<KtClassOrObject> {
     public static final StubIndexKey<String, KtClassOrObject> KEY = KotlinIndexUtil.createIndexKey(KotlinFullClassNameIndex.class);
 
     private static final KotlinFullClassNameIndex ourInstance = new KotlinFullClassNameIndex();
@@ -24,7 +22,9 @@ public class KotlinFullClassNameIndex extends StringStubIndexExtension<KtClassOr
         return ourInstance;
     }
 
-    private KotlinFullClassNameIndex() {}
+    private KotlinFullClassNameIndex() {
+        super(KtClassOrObject.class);
+    }
 
     @NotNull
     @Override
@@ -38,8 +38,7 @@ public class KotlinFullClassNameIndex extends StringStubIndexExtension<KtClassOr
         return StubIndex.getElements(KEY, fqName, project, scope, KtClassOrObject.class);
     }
 
-    @NotNull
-    public void processElements(@NotNull String fqName, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtClassOrObject> processor) {
+    public void processElements(@NotNull String fqName, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super KtClassOrObject> processor) {
         StubIndex.getInstance().processElements(KEY,  fqName,project, scope, KtClassOrObject.class, processor);
     }
 }

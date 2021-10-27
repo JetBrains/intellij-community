@@ -4,17 +4,14 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtNamedDeclaration;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
-
 import java.util.Collection;
 
-public class KotlinPropertyShortNameIndex extends StringStubIndexExtension<KtNamedDeclaration> {
+public class KotlinPropertyShortNameIndex extends AbstractStringStubIndexExtension<KtNamedDeclaration> {
     private static final StubIndexKey<String, KtNamedDeclaration> KEY = KotlinIndexUtil.createIndexKey(KotlinPropertyShortNameIndex.class);
 
     private static final KotlinPropertyShortNameIndex ourInstance = new KotlinPropertyShortNameIndex();
@@ -23,7 +20,9 @@ public class KotlinPropertyShortNameIndex extends StringStubIndexExtension<KtNam
         return ourInstance;
     }
 
-    private KotlinPropertyShortNameIndex() {}
+    private KotlinPropertyShortNameIndex() {
+        super(KtNamedDeclaration.class);
+    }
 
     @NotNull
     @Override
@@ -37,8 +36,7 @@ public class KotlinPropertyShortNameIndex extends StringStubIndexExtension<KtNam
         return StubIndex.getElements(KEY, s, project, scope, KtNamedDeclaration.class);
     }
 
-    @NotNull
-    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtNamedDeclaration> processor) {
+    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super KtNamedDeclaration> processor) {
         StubIndex.getInstance().processElements(KEY,  s,project, scope, KtNamedDeclaration.class, processor);
     }
 }

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.Processor
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
  * See [org.jetbrains.kotlin.idea.core.KotlinIndicesHelper.processAllCallablesFromSubclassObjects]
  * for a usage example.
  */
-class KotlinSubclassObjectNameIndex : StringStubIndexExtension<KtObjectDeclaration>() {
+class KotlinSubclassObjectNameIndex : AbstractStringStubIndexExtension<KtObjectDeclaration>(KtObjectDeclaration::class.java) {
     override fun getKey(): StubIndexKey<String, KtObjectDeclaration> = KEY
 
     fun processElements(fqName: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtObjectDeclaration>) {

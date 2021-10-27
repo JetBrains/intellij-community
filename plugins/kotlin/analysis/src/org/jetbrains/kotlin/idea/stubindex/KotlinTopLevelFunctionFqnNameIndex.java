@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.Processor;
@@ -16,7 +15,7 @@ import java.util.Collection;
 /**
  * Stores package top level function (both extension and non-extension) full qualified names.
  */
-public class KotlinTopLevelFunctionFqnNameIndex extends StringStubIndexExtension<KtNamedFunction> {
+public class KotlinTopLevelFunctionFqnNameIndex extends AbstractStringStubIndexExtension<KtNamedFunction> {
     private static final StubIndexKey<String, KtNamedFunction> KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelFunctionFqnNameIndex.class);
 
     private static final KotlinTopLevelFunctionFqnNameIndex INSTANCE = new KotlinTopLevelFunctionFqnNameIndex();
@@ -26,7 +25,9 @@ public class KotlinTopLevelFunctionFqnNameIndex extends StringStubIndexExtension
         return INSTANCE;
     }
 
-    private KotlinTopLevelFunctionFqnNameIndex() {}
+    private KotlinTopLevelFunctionFqnNameIndex() {
+        super(KtNamedFunction.class);
+    }
 
     @NotNull
     @Override
@@ -40,8 +41,7 @@ public class KotlinTopLevelFunctionFqnNameIndex extends StringStubIndexExtension
         return StubIndex.getElements(KEY, s, project, scope, KtNamedFunction.class);
     }
 
-    @NotNull
-    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<KtNamedFunction> processor) {
+    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super KtNamedFunction> processor) {
         StubIndex.getInstance().processElements(KEY,  s,project, scope, KtNamedFunction.class, processor);
     }
 
