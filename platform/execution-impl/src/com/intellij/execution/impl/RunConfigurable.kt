@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
@@ -43,10 +42,7 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Alarm
-import com.intellij.util.ArrayUtilRt
-import com.intellij.util.IconUtil
-import com.intellij.util.PlatformIcons
+import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
@@ -90,12 +86,12 @@ fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
+open class RunConfigurable @JvmOverloads constructor(protected val project: Project, private var _runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
   @Volatile private var isDisposed: Boolean = false
+
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
   val tree = Tree(treeModel)
-  private val myChangeRunConfigurationNodeAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, project)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -105,7 +101,25 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private var isFolderCreating = false
   protected val toolbarAddAction = MyToolbarAddAction()
   private var isModified = false
-  private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+
+  var runDialog: RunDialogBase?
+    get() = _runDialog
+    set(value) {
+      if (_runDialog != null || value == null) return
+      _runDialog = value
+
+      val changeRunConfigurationNodeAlarm = SingleAlarm(
+        task = ::selectRunConfiguration,
+        delay = 300,
+        parentDisposable = value.getDisposable(),
+        threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+        modalityState = ModalityState.stateForComponent(tree)
+      )
+      tree.addTreeSelectionListener {
+        if (changeRunConfigurationNodeAlarm.isDisposed) return@addTreeSelectionListener
+        changeRunConfigurationNodeAlarm.cancelAndRequest()
+      }
+    }
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
@@ -202,19 +216,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
     addRunConfigurationsToModel(root)
 
-    if (!isUnitTestMode) {
-      tree.addTreeSelectionListener {
-        if (myChangeRunConfigurationNodeAlarm.isDisposed) return@addTreeSelectionListener
-        myChangeRunConfigurationNodeAlarm.cancelAllRequests()
-        myChangeRunConfigurationNodeAlarm.addRequest({
-          runInEdt(ModalityState.stateForComponent(tree)) { selectRunConfiguration() }
-        }, 300)
-      }
-    }
-    else {
-      tree.addTreeSelectionListener {
-        selectRunConfiguration()
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      tree.addTreeSelectionListener { selectRunConfiguration() }
     }
 
     tree.registerKeyboardAction({ clickDefaultButton() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
@@ -730,7 +733,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun updateDialog() {
-    val runDialog = runDialog
+    val runDialog = _runDialog
     val executor = runDialog?.executor ?: return
     val buffer = StringBuilder()
     buffer.append(executor.id)
@@ -775,7 +778,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun clickDefaultButton() {
-    runDialog?.clickDefaultButton()
+    _runDialog?.clickDefaultButton()
   }
 
   private val selectedConfigurationTypeNode: DefaultMutableTreeNode?
