@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -191,7 +192,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           @Override
           protected void prepareEditor(EditorEx editor) {
             super.prepareEditor(editor);
-            editor.setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+            editor.setPlaceholder(XDebuggerBundle.message(
+              "debugger.evaluate.expression.or.add.a.watch.hint",
+              KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)),
+              KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE, null))
+            ));
             editor.addFocusListener(new FocusChangeListener() {
               private final Set<FocusEvent.Cause> myCauses = Set.of(
                 FocusEvent.Cause.UNKNOWN,
