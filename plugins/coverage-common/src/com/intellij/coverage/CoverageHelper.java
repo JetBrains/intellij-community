@@ -33,9 +33,8 @@ public final class CoverageHelper {
 
     // register new coverage suite
     Project project = configuration.getProject();
-    ApplicationManager.getApplication().invokeLater(() -> covConfig.setCurrentCoverageSuite(CoverageDataManager.getInstance(project).addCoverageSuite(covConfig)), 
-                                                    ModalityState.NON_MODAL, 
-                                                    project.getDisposed());
+    ApplicationManager.getApplication().invokeAndWait(() -> covConfig.setCurrentCoverageSuite(CoverageDataManager.getInstance(project).addCoverageSuite(covConfig)), 
+                                                      ModalityState.NON_MODAL);
   }
 
   public static void doReadExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
