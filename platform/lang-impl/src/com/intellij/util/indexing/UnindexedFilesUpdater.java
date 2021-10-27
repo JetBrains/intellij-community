@@ -49,10 +49,6 @@ import com.intellij.util.progress.SubTaskProgressIndicator;
 import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -166,13 +162,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    Instant pushPropertiesStart = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
       }
     } finally {
-      projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -181,7 +177,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
     snapshot = PerformanceWatcher.takeSnapshot();
-    Instant scanFilesStart = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
@@ -191,7 +187,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
     } finally {
-      projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
@@ -224,11 +220,11 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     myIndex.resetSnapshotInputMappingStatistics();
 
-    Instant startIndexing = Instant.now();
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
     try {
       indexFiles(orderedProviders, providerToFiles, projectIndexingHistory, poweredIndicator);
     } finally {
-      projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(startIndexing, Instant.now()));
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
     }
 
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Finished for " + myProject.getName() + ". Unindexed files update"));
@@ -314,24 +310,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
                                                                    @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-
-      private volatile Instant suspensionStart = null;
-
       @Override
       public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
         if (suspender == changedSuspender) {
           if (suspender.isSuspended()) {
-            suspensionStart = Instant.now();
+            projectIndexingHistory.suspendStages();
           } else {
-            Instant now = Instant.now();
-            Instant start = suspensionStart;
-            suspensionStart = null;
-            if (start != null && start.compareTo(now) < 0) {
-              Duration thisDuration = Duration.between(start, now);
-              Duration currentTotalDuration = projectIndexingHistory.getTimes().getSuspendedDuration();
-              Duration newTotalSuspendedDuration = currentTotalDuration.plus(thisDuration);
-              projectIndexingHistory.getTimes().setSuspendedDuration(newTotalSuspendedDuration);
-            }
+            projectIndexingHistory.stopSuspendingStages();
           }
         }
       }
@@ -531,7 +516,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       updateUnindexedFiles(projectIndexingHistory, indicator);
     }
     catch (Throwable e) {
-      projectIndexingHistory.getTimes().setWasInterrupted(true);
+      projectIndexingHistory.setWasInterrupted(true);
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
       }
@@ -541,8 +526,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
       myIndex.filesUpdateFinished(myProject);
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
-      projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
-      projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
+      projectIndexingHistory.finishTotalUpdatingTime();
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
     }
     return projectIndexingHistory;

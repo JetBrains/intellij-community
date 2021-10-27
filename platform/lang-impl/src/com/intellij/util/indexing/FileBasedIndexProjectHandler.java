@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -126,22 +123,19 @@ public final class FileBasedIndexProjectHandler {
           index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads
         );
         IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
-        Instant indexingStart = Instant.now();
+        projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
         String fileSetName = "Refreshed files";
         IndexUpdateRunner.FileSet fileSet = new IndexUpdateRunner.FileSet(project, fileSetName, files);
         try {
           indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
-          projectIndexingHistory.getTimes().setWasInterrupted(true);
+          projectIndexingHistory.setWasInterrupted(true);
           interruptedException = e;
         }
         finally {
-          Instant now = Instant.now();
-          projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
-          projectIndexingHistory.getTimes().setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
-          projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
-          projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
+          projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
+          projectIndexingHistory.finishTotalUpdatingTime();
         }
         ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
         scanningStatistics.setNumberOfScannedFiles(files.size());
@@ -156,6 +150,7 @@ public final class FileBasedIndexProjectHandler {
       }
       finally {
         IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
+        projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
     }

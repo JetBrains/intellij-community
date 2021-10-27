@@ -1,16 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.util.SmartList
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
+import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.reflect.KMutableProperty1
 
 @ApiStatus.Internal
 data class ProjectIndexingHistoryImpl(override val project: Project,
@@ -18,14 +23,17 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
                                       private val wasFullIndexing: Boolean) : ProjectIndexingHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
+    val log = thisLogger()
   }
 
   override val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
 
   private val biggestContributorsPerFileTypeLimit = 10
 
-  override val times = IndexingTimesImpl(indexingReason = indexingReason, wasFullIndexing = wasFullIndexing,
-                                         updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
+  override val times: IndexingTimes by ::timesImpl
+
+  private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, wasFullIndexing = wasFullIndexing,
+                                            updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -34,6 +42,16 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   override val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
 
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
+
+  private val stages = MultiMap<Stage, Pair<StageEvent, Instant>>()
+
+  init {
+    synchronized(stages) {
+      for (stage in Stage.values()) {
+        stages.putValues(stage, SmartList())
+      }
+    }
+  }
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
@@ -95,6 +113,126 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
       totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
       totalStats.snapshotInputMappingStats.misses += mappingsStatistic.totalMisses
     }
+  }
+
+  fun startStage(stage: Stage) {
+    synchronized(stages) {
+      stages[stage].add(Pair(StageEvent.Started, Instant.now()))
+    }
+  }
+
+  fun stopStage(stage: Stage) {
+    synchronized(stages) {
+      stages[stage].add(Pair(StageEvent.Stopped, Instant.now()))
+    }
+  }
+
+  fun suspendStages() {
+    val pause = Pair(StageEvent.Suspended, Instant.now())
+    for (stage in Stage.values()) {
+      stages[stage].add(pause)
+    }
+  }
+
+  fun stopSuspendingStages() {
+    val unpause = Pair(StageEvent.Unsuspended, Instant.now())
+    synchronized(stages) {
+      for (stage in Stage.values()) {
+        stages[stage].add(unpause)
+      }
+    }
+  }
+
+  fun indexingFinished() {
+    writeStagesToDurations()
+  }
+
+  fun setWasInterrupted(interrupted: Boolean) {
+    timesImpl.wasInterrupted = interrupted
+  }
+
+  fun finishTotalUpdatingTime() {
+    timesImpl.updatingEnd = ZonedDateTime.now(ZoneOffset.UTC)
+    timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+  }
+
+  fun setScanFilesDuration(duration: Duration) {
+    timesImpl.scanFilesDuration = duration
+  }
+
+  private fun writeStagesToDurations() {
+    synchronized(stages) {
+      var suspendedDuration: Duration? = Duration.ZERO
+      var suspensionStart: Instant? = null
+      for (stage in Stage.values()) {
+        val events = stages[stage]
+        var duration = Duration.ZERO
+        var start: Instant? = null
+        var isSuspended = false
+        for (event in events) {
+          when (event.first) {
+            StageEvent.Started -> {
+              log.assertTrue(start == null, "$stage is already started. Events $events")
+              start = event.second
+            }
+            StageEvent.Suspended -> {
+              if (suspendedDuration != null) {
+                suspensionStart = event.second
+              }
+              if (start != null) {
+                duration = duration.plus(Duration.between(start, event.second))
+                start = null
+                isSuspended = true
+              }
+            }
+            StageEvent.Unsuspended -> {
+              if (suspendedDuration != null) {
+                log.assertTrue(suspensionStart != null, "Suspension was not started, but stopped. Events $events")
+                suspendedDuration = suspendedDuration.plus(Duration.between(suspensionStart, event.second))
+                suspensionStart = null
+              }
+              log.assertTrue(start == null, "$stage is not paused, tries to unpause. Events $events")
+              if (isSuspended) {
+                start = event.second
+                isSuspended = false
+              }
+            }
+            StageEvent.Stopped -> {
+              log.assertTrue(start != null, "$stage is not started, tries to stop. Events $events")
+              duration = duration.plus(Duration.between(start, event.second))
+              start = null
+            }
+          }
+        }
+        stage.getProperty().set(timesImpl, duration)
+        if (suspendedDuration != null) {
+          timesImpl.suspendedDuration = suspendedDuration
+          suspendedDuration = null
+        }
+      }
+    }
+  }
+
+  /** Just a stage, don't have to cover whole indexing period, may intersect **/
+  enum class Stage {
+    Scanning {
+      override fun getProperty() = IndexingTimesImpl::scanFilesDuration
+    },
+
+    Indexing {
+      override fun getProperty() = IndexingTimesImpl::indexingDuration
+    },
+
+    PushProperties {
+      override fun getProperty() = IndexingTimesImpl::pushPropertiesDuration
+    };
+
+
+    abstract fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration>
+  }
+
+  enum class StageEvent {
+    Started, Suspended, Unsuspended, Stopped
   }
 
   data class StatsPerFileTypeImpl(

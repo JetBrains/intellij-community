@@ -72,7 +72,7 @@ fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )
 
-fun ProjectIndexingHistoryImpl.IndexingTimesImpl.toJson() =
+fun IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
     wasFullIndexing = wasFullIndexing,
@@ -91,7 +91,8 @@ fun ProjectIndexingHistoryImpl.IndexingTimesImpl.toJson() =
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
 fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
-  times.contentLoadingDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
+  (times as ProjectIndexingHistoryImpl.IndexingTimesImpl).contentLoadingDuration =
+    Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
   return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
