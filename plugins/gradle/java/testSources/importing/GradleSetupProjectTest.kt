@@ -7,8 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -84,7 +83,7 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
   }
 
   override fun assertDefaultProjectState(project: Project) {
-    val notificationAware = ProjectNotificationAware.getInstance(myProject) as ExternalSystemProjectNotificationAware
+    val notificationAware = AutoImportProjectNotificationAware.getInstance(myProject)
     invokeAndWaitIfNeeded {
       assertEmpty(notificationAware.getProjectsWithNotification())
     }

@@ -6,10 +6,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
-class ExternalSystemProjectNotificationAware(private val project: Project) : ProjectNotificationAware, Disposable {
+@ApiStatus.Experimental
+class AutoImportProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
   private val isHidden = AtomicBoolean(false)
   private val projectsWithNotification = ContainerUtil.newConcurrentSet<ExternalSystemProjectId>()
 
@@ -60,5 +62,11 @@ class ExternalSystemProjectNotificationAware(private val project: Project) : Pro
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
+
+    @TestOnly
+    @JvmStatic
+    fun getInstance(project: Project): AutoImportProjectNotificationAware {
+      return ExternalSystemProjectNotificationAware.getInstance(project) as AutoImportProjectNotificationAware
+    }
   }
 }

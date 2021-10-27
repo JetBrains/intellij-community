@@ -3,8 +3,10 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
-interface ProjectNotificationAware {
+@ApiStatus.Experimental
+interface ExternalSystemProjectNotificationAware {
   fun notificationNotify(projectAware: ExternalSystemProjectAware)
   fun notificationExpire()
   fun notificationExpire(projectId: ExternalSystemProjectId)
@@ -14,6 +16,6 @@ interface ProjectNotificationAware {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ProjectNotificationAware = project.getService(ProjectNotificationAware::class.java)
+    fun getInstance(project: Project): ExternalSystemProjectNotificationAware = project.getService(ExternalSystemProjectNotificationAware::class.java)
   }
 }

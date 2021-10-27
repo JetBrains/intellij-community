@@ -47,7 +47,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
 
   protected lateinit var testDisposable: Disposable
-  private val notificationAware get() = ProjectNotificationAware.getInstance(myProject) as ExternalSystemProjectNotificationAware
+  private val notificationAware get() =  AutoImportProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 

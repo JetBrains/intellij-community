@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -26,7 +26,7 @@ import java.util.Map;
 public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
 
   private MavenProjectsManager myProjectsManager;
-  private ExternalSystemProjectNotificationAware myNotificationAware;
+  private AutoImportProjectNotificationAware myNotificationAware;
   private ExternalSystemProjectTracker myProjectTracker;
   private MavenProjectTreeTracker myProjectsTreeTracker;
 
@@ -34,7 +34,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
   protected void setUp() throws Exception {
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    myNotificationAware = (ExternalSystemProjectNotificationAware)ProjectNotificationAware.getInstance(myProject);
+    myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     myProjectsTreeTracker = new MavenProjectTreeTracker();
 
