@@ -42,7 +42,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
       return@runSuspendingAction null
     }
     val preview = withContext(Dispatchers.EDT) {
-      DocumentationToolWindowManager.instance(project).updateVisiblePreview(request)
+      DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
     }
     if (preview) {
       return@runSuspendingAction null
