@@ -60,12 +60,11 @@ object CodeWithMeClientDownloader {
   const val cwmTestsGuestCachesSystemProperty = "codeWithMe.tests.guest.caches.dir"
   const val DEFAULT_GUEST_CACHES_DIR_NAME = "JetBrainsClientDist"
 
-  private fun isJbrSymlink(file: Path): Boolean {
-    return file.name == "jbr" && FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
-  }
+  private fun isJbrSymlink(file: Path): Boolean = file.name == "jbr" && isSymlink(file)
+  private fun isSymlink(file: Path): Boolean = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
-  val cwmGuestManifestFilter: (Path) -> Boolean = { !isJbrSymlink(it) && !it.isDirectory() }
-  val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() }
+  val cwmGuestManifestFilter: (Path) -> Boolean = { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+  val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
   private val DEFAULT_CWM_GUEST_DOWNLOAD_LOCATION
     get() = System.getProperty(gatewayTestsCwmGuestDownloadLocationProperty)?.let { URI(it) }
@@ -358,8 +357,9 @@ object CodeWithMeClientDownloader {
           require(data.targetPath.notExists()) { "Target path \"${data.targetPath}\" for $archivePath already exists" }
           FileManifestUtil.decompressWithManifest(archivePath, data.targetPath, data.includeInManifest)
 
-          require(FileManifestUtil.isUpToDate(data.targetPath,
-            data.includeInManifest)) { "Manifest verification failed for archive: $archivePath -> ${data.targetPath}" }
+          require(FileManifestUtil.isUpToDate(data.targetPath, data.includeInManifest)) {
+            "Manifest verification failed for archive: $archivePath -> ${data.targetPath}"
+          }
 
           dataProgressIndicator.fraction = 1.0
           data.status = DownloadableFileState.Done
