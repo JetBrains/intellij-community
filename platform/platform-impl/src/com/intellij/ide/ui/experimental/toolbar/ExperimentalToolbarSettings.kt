@@ -54,6 +54,8 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
     Disposer.register(application, this)
     newToolbarEnabled.addListener(ToolbarRegistryListener(), this)
+
+    UISettings.instance.state.showNavigationBar = !(isEnabled && !navBarVisible)
   }
 
   override fun getState(): ExperimentalToolbarSettingsState = toolbarState
@@ -64,6 +66,8 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     if (isEnabled) {
       logger.info("Loaded state: $state")
     }
+
+    UISettings.instance.state.showNavigationBar = !(isEnabled && !navBarVisible)
   }
 
   override fun dispose() {}
@@ -82,12 +86,16 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     get() = toolbarState.showNewMainToolbar
     set(value) {
       toolbarState.showNewMainToolbar = value
-
       val uiSettingState = UISettings.instance.state
       uiSettingState.showMainToolbar = !value && uiSettingState.showMainToolbar
       UISettings.instance.fireUISettingsChanged()
-      if(value) {
-        uiSettingState.showNavigationBar = false
+    }
+
+  override var navBarVisible: Boolean
+    get() = toolbarState.showNavBarWithNewToolbar
+    set(value) {
+      if (isEnabled && isVisible) {
+        toolbarState.showNavBarWithNewToolbar = value
       }
     }
 }
