@@ -148,7 +148,7 @@ public final class TipUIUtil {
         cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
       }
 
-      updateShortcuts(text);
+      updateShortcuts(text, tip.toString());
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       String major = ApplicationInfo.getInstance().getMajorVersion();
       replaced = replaced.replace("&majorVersion;", major);
@@ -281,7 +281,7 @@ public final class TipUIUtil {
     }
   }
 
-  private static void updateShortcuts(StringBuilder text) {
+  private static void updateShortcuts(StringBuilder text, String tipDescription) {
     int lastIndex = 0;
     while(true) {
       lastIndex = text.indexOf(SHORTCUT_ENTITY, lastIndex);
@@ -303,7 +303,8 @@ public final class TipUIUtil {
         }
       }
       if (shortcutText == null) {
-        shortcutText = "<no shortcut for action " + actionId + ">";
+        LOG.warn(tipDescription + ": no shortcut is assigned for the action " + actionId);
+        shortcutText = "&lt;No shortcut is assigned for the action&gt;";
       }
       text.replace(lastIndex, actionIdEnd + 1, shortcutText);
       lastIndex += shortcutText.length();
