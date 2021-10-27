@@ -193,11 +193,13 @@ class QuickFixRegistrar : QuickFixContributor {
         INVISIBLE_SETTER.registerFactory(MakeVisibleFactory)
 
         for (exposed in listOf(
-            EXPOSED_FUNCTION_RETURN_TYPE, EXPOSED_PARAMETER_TYPE, EXPOSED_PROPERTY_TYPE, EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
+            EXPOSED_FUNCTION_RETURN_TYPE, EXPOSED_PARAMETER_TYPE, EXPOSED_PROPERTY_TYPE,
             EXPOSED_RECEIVER_TYPE, EXPOSED_SUPER_CLASS, EXPOSED_SUPER_INTERFACE, EXPOSED_TYPE_PARAMETER_BOUND, EXPOSED_FROM_PRIVATE_IN_FILE
         )) {
             exposed.registerFactory(ChangeVisibilityOnExposureFactory)
         }
+
+        EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.registerFactory(ChangeVisibilityOnExposureFactory)
 
         REDUNDANT_NULLABLE.registerFactory(RemoveNullableFix.removeForRedundant)
         NULLABLE_SUPERTYPE.registerFactory(RemoveNullableFix.removeForSuperType)

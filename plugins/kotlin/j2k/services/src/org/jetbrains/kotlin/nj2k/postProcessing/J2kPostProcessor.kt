@@ -147,7 +147,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.EXPOSED_FUNCTION_RETURN_TYPE,
             Errors.EXPOSED_PARAMETER_TYPE,
             Errors.EXPOSED_PROPERTY_TYPE,
-            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.errorFactory,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.warningFactory,
             Errors.EXPOSED_RECEIVER_TYPE,
             Errors.EXPOSED_SUPER_CLASS,
             Errors.EXPOSED_SUPER_INTERFACE
