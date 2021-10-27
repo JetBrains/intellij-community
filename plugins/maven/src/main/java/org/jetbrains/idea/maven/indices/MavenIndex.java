@@ -75,9 +75,9 @@ public final class MavenIndex implements MavenSearchIndex {
   private volatile Long myUpdateTimestamp;
   private volatile IndexData myData;
   private volatile String myFailureMessage;
+  private volatile boolean isBroken;
 
   private String myDataDirName;
-  private boolean isBroken;
   private final IndexListener myListener;
   private final Lock indexUpdateLock = new ReentrantLock();
 
@@ -540,12 +540,7 @@ public final class MavenIndex implements MavenSearchIndex {
         IndexedMavenId id = indexData.addArtifact(artifactFile);
         if (id == null) return true;
 
-        indexData.hasGroupCache.put(id.groupId, true);
-
         String groupWithArtifact = id.groupId + ":" + id.artifactId;
-
-        indexData.hasArtifactCache.put(groupWithArtifact, true);
-        indexData.hasVersionCache.put(groupWithArtifact + ':' + id.version, true);
 
         addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
         addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
@@ -571,9 +566,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   public Collection<String> getGroupIds() {
-    return doIndexTask(() -> {
-      return getGroupIdsRaw();
-    }, Collections.emptySet());
+    return doIndexTask(() -> getGroupIdsRaw(), Collections.emptySet());
   }
 
   public Set<String> getArtifactIds(final String groupId) {
@@ -598,14 +591,15 @@ public final class MavenIndex implements MavenSearchIndex {
     if (isBroken) return false;
 
     IndexData indexData = myData;
-    return hasValue(indexData.groupToArtifactMap, indexData.hasGroupCache, groupId);
+    return doIndexTask(() -> indexData.groupToArtifactMap.containsMapping(groupId), false);
   }
 
   public boolean hasArtifactId(String groupId, String artifactId) {
     if (isBroken) return false;
 
     IndexData indexData = myData;
-    return hasValue(indexData.groupWithArtifactToVersionMap, indexData.hasArtifactCache, groupId + ":" + artifactId);
+    String key = groupId + ":" + artifactId;
+    return doIndexTask(() -> indexData.groupWithArtifactToVersionMap.containsMapping(key), false);
   }
 
   public boolean hasVersion(String groupId, String artifactId, final String version) {
@@ -614,13 +608,7 @@ public final class MavenIndex implements MavenSearchIndex {
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
     String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
     IndexData indexData = myData;
-    return indexData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexTask(
-      () -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version),
-      false));
-  }
-
-  private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.containsMapping(v), false));
+    return doIndexTask(() -> notNullize(indexData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version), false);
   }
 
   public Set<MavenArtifactInfo> search(final String pattern, final int maxResult) {
@@ -658,11 +646,14 @@ public final class MavenIndex implements MavenSearchIndex {
       try {
         return task.doTask();
       }
+      catch (ProcessCanceledException e) {
+        return defaultValue;
+      }
       catch (Exception e) {
         MavenLog.LOG.warn(e);
+        markAsBroken();
       }
     }
-    markAsBroken();
     return defaultValue;
   }
 
@@ -670,6 +661,9 @@ public final class MavenIndex implements MavenSearchIndex {
     if (!isBroken) {
       try {
         return task.doTask();
+      }
+      catch (ProcessCanceledException e) {
+        return defaultValue;
       }
       catch (Exception e1) {
         MavenLog.LOG.warn(e1);
@@ -703,10 +697,6 @@ public final class MavenIndex implements MavenSearchIndex {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
     final PersistentHashMap<String, Set<String>> archetypeIdToDescriptionMap;
-
-    final Map<String, Boolean> hasGroupCache = new ConcurrentHashMap<>();
-    final Map<String, Boolean> hasArtifactCache = new ConcurrentHashMap<>();
-    final Map<String, Boolean> hasVersionCache = new ConcurrentHashMap<>();
 
     final MavenIndexId mavenIndexId;
 
@@ -756,7 +746,7 @@ public final class MavenIndex implements MavenSearchIndex {
       }
     }
 
-    void flush() throws IOException {
+    void flush() {
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
       archetypeIdToDescriptionMap.force();

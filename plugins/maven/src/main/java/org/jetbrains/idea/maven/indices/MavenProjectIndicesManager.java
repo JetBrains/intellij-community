@@ -15,7 +15,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -38,6 +37,7 @@ import java.util.Set;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent implements Disposable {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
+  private @Nullable volatile MavenIndex myLocalIndex;
   private final DependencySearchService myDependencySearchService;
   private final MergingUpdateQueue myUpdateQueue;
 
@@ -116,6 +116,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         myDependencySearchService.updateProviders();
 
         myProjectIndices = newProjectIndices;
+        myLocalIndex = ContainerUtil.find(myProjectIndices, mi -> mi.getKind() == MavenSearchIndex.Kind.LOCAL);
         if (consumer != null) {
           consumer.consume(myProjectIndices);
         }
@@ -249,86 +250,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     return result;
   }
 
-  /**
-   * @deprecated use {@link #hasProjectGroupId(String)}
-   */
-  @Deprecated
-  public boolean hasGroupId(String groupId) {
-    if (groupId == null) {
-      return false;
-    }
-    ProgressIndicatorProvider.checkCanceled();
-    return hasProjectGroupId(groupId) || myProjectIndices.stream().anyMatch(i -> i.hasGroupId(groupId));
-  }
-
-  /**
-   * @deprecated use {@link #hasProjectArtifactId(String, String)}
-   */
-  @Deprecated
-  public boolean hasArtifactId(String groupId, String artifactId) {
-    if (groupId == null || artifactId == null) {
-      return false;
-    }
-    ProgressIndicatorProvider.checkCanceled();
-    return hasProjectArtifactId(groupId, artifactId) || myProjectIndices.stream().anyMatch(i -> i.hasArtifactId(groupId, artifactId));
-  }
-
-  /**
-   * @deprecated use {@link #hasProjectVersion(String, String, String)}
-   */
-  @Deprecated
-  public boolean hasVersion(String groupId, String artifactId, String version) {
-    if (hasProjectVersion(groupId, artifactId, version)) return true;
-    ProgressIndicatorProvider.checkCanceled();
-    return hasProjectVersion(groupId, artifactId, version) ||
-           myProjectIndices.stream().anyMatch(i -> i.hasVersion(groupId, artifactId, version));
-  }
-
-  private Set<String> getProjectGroupIds() {
-    Set<String> result = new HashSet<>();
-    for (MavenId each : getProjectsIds()) {
-      result.add(each.getGroupId());
-    }
-    return result;
-  }
-
-  private Set<String> getProjectArtifactIds(String groupId) {
-    Set<String> result = new HashSet<>();
-    for (MavenId each : getProjectsIds()) {
-      if (groupId.equals(each.getGroupId())) {
-        result.add(each.getArtifactId());
-      }
-    }
-    return result;
-  }
-
-  private Set<String> getProjectVersions(String groupId, String artifactId) {
-    Set<String> result = new HashSet<>();
-    for (MavenId each : getProjectsIds()) {
-      if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) {
-        result.add(each.getVersion());
-      }
-    }
-    return result;
-  }
-
-  private boolean hasProjectGroupId(String groupId) {
-    return getProjectGroupIds().contains(groupId);
-  }
-
-  private boolean hasProjectArtifactId(String groupId, String artifactId) {
-    return getProjectArtifactIds(groupId).contains(artifactId);
-  }
-
-  private boolean hasProjectVersion(String groupId, String artifactId, String version) {
-    return getProjectVersions(groupId, artifactId).contains(version);
-  }
-
-  private Set<MavenId> getProjectsIds() {
-    Set<MavenId> result = new HashSet<>();
-    for (MavenProject each : MavenProjectsManager.getInstance(myProject).getProjects()) {
-      result.add(each.getMavenId());
-    }
-    return result;
+  @Nullable
+  public MavenIndex getLocalIndex() {
+    return myLocalIndex;
   }
 }

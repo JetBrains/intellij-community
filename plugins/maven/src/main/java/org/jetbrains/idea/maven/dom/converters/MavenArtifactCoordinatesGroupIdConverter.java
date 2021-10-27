@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -21,8 +22,6 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())) return false;
 
-    if (manager.hasGroupId(id.getGroupId())) return true;
-
     // Check if artifact was found on importing.
     MavenProject mavenProject = findMavenProject(context);
     if (mavenProject != null) {
@@ -33,7 +32,8 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       }
     }
 
-    return false;
+    MavenIndex localIndex = manager.getLocalIndex();
+    return localIndex != null && localIndex.hasGroupId(id.getGroupId());
   }
 
   @Override
