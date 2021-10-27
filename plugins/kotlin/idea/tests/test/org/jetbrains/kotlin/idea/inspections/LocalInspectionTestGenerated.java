@@ -1722,6 +1722,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("commentInFirstCallLambda.kt")
+            public void testCommentInFirstCallLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentInFirstCallLambda.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda.kt")
+            public void testCommentOutsideLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda2.kt")
+            public void testCommentOutsideLambda2() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda2.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda3.kt")
+            public void testCommentOutsideLambda3() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda3.kt");
+            }
+
             @TestMetadata("filterAny.kt")
             public void testFilterAny() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterAny.kt");
@@ -2055,21 +2075,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("onMapImplementationClass.kt")
             public void testOnMapImplementationClass() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/onMapImplementationClass.kt");
-            }
-
-            @TestMetadata("saveComment.kt")
-            public void testSaveComment() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment.kt");
-            }
-
-            @TestMetadata("saveComment2.kt")
-            public void testSaveComment2() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment2.kt");
-            }
-
-            @TestMetadata("saveComment3.kt")
-            public void testSaveComment3() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment3.kt");
             }
 
             @TestMetadata("sortedByDescendingFirst.kt")
