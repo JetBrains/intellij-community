@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -20,6 +21,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.util.function.Predicate
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.event.TreeSelectionListener
@@ -327,6 +329,22 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       if (treeNode != null) {
         TreeUtil.selectNode(tree, treeNode)
       }
+    }
+  }
+
+  fun selectModel(language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
+    val languages = LanguageUtil.getBaseLanguages(language).toSet()
+    val node = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
+      if (selector == null) {
+        language in languages
+      }
+      else {
+        val model = it.userObject as? InlayProviderSettingsModel
+        model != null && selector.test(model) && model.language in languages
+      }
+    }
+    if (node != null) {
+      TreeUtil.selectNode(tree, node)
     }
   }
 }
