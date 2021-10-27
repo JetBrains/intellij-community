@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.formatting.commandLine
+package com.intellij.formatting.commandLine;
 
-import java.io.PrintWriter
+import org.jetbrains.annotations.NotNull;
 
+import java.io.PrintWriter;
 
-open class MessageOutput(val infoOut: PrintWriter, val errorOut: PrintWriter) {
+public class MessageOutput {
 
-  fun info(message: String) = infoOut.printAndFlush(message)
+  private final PrintWriter myErrorOutput;
+  private final PrintWriter myInfoOutput;
 
-  fun error(message: String) = errorOut.printAndFlush(message)
-
-  private fun PrintWriter.printAndFlush(message: String) {
-    print(message)
-    flush()
+  public MessageOutput(PrintWriter infoOutput, PrintWriter errorOuput) {
+    myInfoOutput = infoOutput;
+    myErrorOutput = errorOuput;
   }
 
-}
+  public void info(@NotNull String message) {
+    myInfoOutput.print(message);
+    myInfoOutput.flush();
+  }
 
-object StdIoMessageOutput : MessageOutput(PrintWriter(System.out), PrintWriter(System.err))
+  public void error(@NotNull String message) {
+    myErrorOutput.print(message);
+    myErrorOutput.flush();
+  }
+}

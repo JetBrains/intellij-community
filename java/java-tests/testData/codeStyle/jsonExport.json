@@ -130,7 +130,6 @@
       "lambda_brace_style": "end_of_line",
       "layout_static_imports_separately": true,
       "line_comment_add_space": false,
-      "line_comment_add_space_on_reformat": false,
       "line_comment_at_first_column": true,
       "method_annotation_wrap": "split_into_lines",
       "method_brace_style": "next_line_if_wrapped",
