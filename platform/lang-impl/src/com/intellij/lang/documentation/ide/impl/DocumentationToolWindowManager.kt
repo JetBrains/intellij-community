@@ -12,8 +12,10 @@ import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.isReusable
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -30,10 +32,11 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.*
 import javax.swing.JPanel
 
 @Service
-internal class DocumentationToolWindowManager(private val project: Project) {
+internal class DocumentationToolWindowManager(private val project: Project) : Disposable {
 
   companion object {
 
@@ -61,6 +64,9 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   )) as ToolWindowEx
   private val contentManager: ContentManager = toolWindow.contentManager
 
+  private val cs = CoroutineScope(SupervisorJob())
+  private var waitForFocusRequest: Boolean = false
+
   init {
     toolWindow.setAdditionalGearActions(DefaultActionGroup(
       ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID),
@@ -77,6 +83,10 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     toolWindow.installWatcher(contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
+  }
+
+  override fun dispose() {
+    cs.cancel()
   }
 
   /**
@@ -108,6 +118,12 @@ internal class DocumentationToolWindowManager(private val project: Project) {
    * @return `true` if a reusable tab is visible, `false` if no such tab exists, or if it is hidden
    */
   fun focusVisibleReusableTab(): Boolean {
+    if (!autoUpdate) {
+      if (!waitForFocusRequest) {
+        return false
+      }
+      waitForFocusRequest = false
+    }
     if (!toolWindow.isVisible) {
       return false
     }
@@ -164,6 +180,7 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   private fun makeVisible(content: Content) {
     contentManager.setSelectedContent(content)
     toolWindow.show()
+    waitForFocusRequest()
   }
 
   private fun getReusableContent(): Content? {
@@ -179,5 +196,17 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     }
     contentManager.addContent(content)
     return content
+  }
+
+  private fun waitForFocusRequest() {
+    if (autoUpdate) {
+      return
+    }
+    EDT.assertIsEdt()
+    waitForFocusRequest = true
+    cs.launch(Dispatchers.EDT) {
+      delay(Registry.intValue("documentation.v2.tw.focus.invocation.timeout").toLong())
+      waitForFocusRequest = false
+    }
   }
 }
