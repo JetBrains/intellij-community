@@ -271,46 +271,46 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
             val newConfiguration = newResult.configuration
             if (newConfiguration == null) {
                 saveReports(file, newResult.reports)
-            } else {
-                val old = getCachedConfigurationState(file)
-                val oldConfiguration = old?.applied?.configuration
-                if (oldConfiguration != null && areSimilar(oldConfiguration, newConfiguration)) {
+                return
+            }
+            val old = getCachedConfigurationState(file)
+            val oldConfiguration = old?.applied?.configuration
+            if (oldConfiguration != null && areSimilar(oldConfiguration, newConfiguration)) {
+                saveReports(file, newResult.reports)
+                file.removeScriptDependenciesNotificationPanel(project)
+                return
+            }
+            val skipNotification = forceSkipNotification
+                    || oldConfiguration == null
+                    || ApplicationManager.getApplication().isUnitTestModeWithoutScriptLoadingNotification
+
+            if (skipNotification) {
+                if (oldConfiguration != null) {
+                    file.removeScriptDependenciesNotificationPanel(project)
+                }
+                saveReports(file, newResult.reports)
+                setAppliedConfiguration(file, newResult, syncUpdate = true)
+                return
+            }
+            scriptingDebugLog(file) {
+                "configuration changed, notification is shown: old = $oldConfiguration, new = $newConfiguration"
+            }
+
+            // restore reports for applied configuration in case of previous error
+            old?.applied?.reports?.let {
+                saveReports(file, it)
+            }
+
+            file.addScriptDependenciesNotificationPanel(
+                newConfiguration, project,
+                onClick = {
                     saveReports(file, newResult.reports)
                     file.removeScriptDependenciesNotificationPanel(project)
-                } else {
-                    val skipNotification = forceSkipNotification
-                            || oldConfiguration == null
-                            || ApplicationManager.getApplication().isUnitTestModeWithoutScriptLoadingNotification
-
-                    if (skipNotification) {
-                        if (oldConfiguration != null) {
-                            file.removeScriptDependenciesNotificationPanel(project)
-                        }
-                        saveReports(file, newResult.reports)
-                        setAppliedConfiguration(file, newResult, syncUpdate = true)
-                    } else {
-                        scriptingDebugLog(file) {
-                            "configuration changed, notification is shown: old = $oldConfiguration, new = $newConfiguration"
-                        }
-
-                        // restore reports for applied configuration in case of previous error
-                        old?.applied?.reports?.let {
-                            saveReports(file, it)
-                        }
-
-                        file.addScriptDependenciesNotificationPanel(
-                            newConfiguration, project,
-                            onClick = {
-                                saveReports(file, newResult.reports)
-                                file.removeScriptDependenciesNotificationPanel(project)
-                                manager.updater.update {
-                                    setAppliedConfiguration(file, newResult)
-                                }
-                            }
-                        )
+                    manager.updater.update {
+                        setAppliedConfiguration(file, newResult)
                     }
                 }
-            }
+            )
         }
     }
 
