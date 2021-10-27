@@ -34,7 +34,7 @@ fun demoComments(): DialogPanel {
     }
 
     row("Row5:") {
-      commentHtml("Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>") {
+      comment("Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>") {
         Messages.showMessageDialog("Link '${it.description}' is clicked", "Message", null)
       }
     }

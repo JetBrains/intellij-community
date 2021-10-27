@@ -277,6 +277,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
             entities["Row 2"] = row("Row 2") {
               entities["textField2"] = textField()
                 .text("textField2")
+                .comment("Comment with a <a>link</a>")
             }
 
             entities["Row 3"] = row("Row 3") {
@@ -468,7 +469,7 @@ private class CommentPanelBuilder(val type: CommentComponentType) {
             customComponent("Component1 extra width")
               .comment("Component1 comment")
             customComponent("Component2 extra width")
-              .comment("<html>Component2 comment<br>second line")
+              .comment("Component2 comment<br>second line")
             customComponent("One More Long Component3")
               .comment("Component3 comment")
             button("button") { }

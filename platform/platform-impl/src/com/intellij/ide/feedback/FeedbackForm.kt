@@ -178,7 +178,7 @@ class FeedbackForm(
         }
       }
       row {
-        commentHtml(ApplicationBundle.message("feedback.form.consent"))
+        comment(ApplicationBundle.message("feedback.form.consent"))
       }
     }
   }

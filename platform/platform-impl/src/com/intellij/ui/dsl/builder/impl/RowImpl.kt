@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +23,8 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
+import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
@@ -85,8 +86,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun rowComment(comment: String, maxLineLength: Int): RowImpl {
-    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+  override fun rowComment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int, action: HyperlinkEventAction): RowImpl {
+    this.rowComment = createComment(comment, maxLineLength, action)
     return this
   }
 
@@ -259,16 +260,14 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(createHtml(text, action))
   }
 
-  override fun comment(text: String, maxLineLength: Int): CellImpl<JLabel> {
-    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
+  override fun comment(text: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JLabel> {
+    val comment = createComment(text, maxLineLength, action)
+    return cell(comment)
   }
 
   override fun commentNoWrap(text: String): CellImpl<JLabel> {
-    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
-  }
-
-  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
-    return cell(createHtmlComment(text, action))
+    val comment = createCommentNoWrap(text)
+    return cell(comment)
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
+import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -98,10 +99,12 @@ interface Row {
   fun resizableRow(): Row
 
   /**
-   * Adds comment after the row. Visibility and enabled state of the row affects row comment as well
+   * Adds comment after the row. Visibility and enabled state of the row affects row comment as well.
+   * [comment] can contain html tags except <html>, which is added automatically in this method
    */
   fun rowComment(@NlsContexts.DetailedDescription comment: String,
-                 maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
+                 maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
+                 action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
@@ -177,12 +180,13 @@ interface Row {
   fun labelHtml(@NlsContexts.Label text: String,
                 action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = -1): Cell<JLabel>
+  /**
+   * Adds comment. [text] can contain html tags except <html>, which is added automatically in this method
+   */
+  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = -1,
+              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JLabel>
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
-
-  fun commentHtml(@NlsContexts.DetailedDescription text: String,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]

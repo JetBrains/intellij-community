@@ -112,6 +112,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (myEditorPane != null) {
+      myEditorPane.setEnabled(enabled);
+    }
+  }
+
+  @Override
   public void setAnchor(@Nullable JComponent anchor) {
     myAnchor = anchor;
   }

@@ -306,8 +306,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   }
 
   @NotNull
-  private static JEditorPane createReaderModeComment() {
-    return UtilsKt.createHtmlComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"),
+  private static JBLabel createReaderModeComment() {
+    return UtilsKt.createComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"), -1,
                                      e -> goToReaderMode()
     );
   }
@@ -330,7 +330,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridx = 1;
     target.add(mySecondaryCombo, c);
     c.gridy ++;
-    JBLabel fallbackLabel = new JBLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
+    JBLabel fallbackLabel = new JBLabel("<html>" + ApplicationBundle.message("label.fallback.fonts.list.description"));
     fallbackLabel.setFont(JBUI.Fonts.smallFont());
     fallbackLabel.setForeground(UIUtil.getContextHelpForeground());
     target.add(fallbackLabel, c);

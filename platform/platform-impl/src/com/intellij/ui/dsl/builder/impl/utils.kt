@@ -4,10 +4,12 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -63,8 +65,20 @@ internal val JComponent.origin: JComponent
     }
   }
 
-internal fun createHtmlComment(text: String, action: HyperlinkEventAction): JEditorPane {
-  return createHtmlPane(text, action, JBUI.CurrentTheme.ContextHelp.FOREGROUND)
+internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {
+  val result = DslLabel("")
+  result.action = action
+  result.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+  result.font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
+  result.setHtmlText(text, maxLineLength)
+  return result
+}
+
+internal fun createCommentNoWrap(@NlsContexts.Label text: String): DslLabel {
+  val result = DslLabel(text)
+  result.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+  result.font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
+  return result
 }
 
 internal fun createHtml(text: String, action: HyperlinkEventAction): JEditorPane {
@@ -84,7 +98,7 @@ private fun createHtmlPane(text: String, action: HyperlinkEventAction, foregroun
   val processedText = text.replace("<a>", "<a href=''>", ignoreCase = true)
   val font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
   val result = htmlComponent(processedText, font = font, foreground = foreground, hyperlinkListener = hyperlinkAdapter)
-  // JEditorPane doesn't support baseline, calculate is manually from font
+  // JEditorPane doesn't support baseline, calculate it manually from font
   result.putClientProperty(DslComponentProperty.BASELINE_FROM_FONT, true)
   return result
 }
