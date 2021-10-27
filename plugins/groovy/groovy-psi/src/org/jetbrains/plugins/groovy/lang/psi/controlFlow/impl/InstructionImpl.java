@@ -13,14 +13,15 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction
 
 import java.util.Collections;
 import java.util.Deque;
+import java.util.Set;
 
 /**
  * @author ven
  */
 public class InstructionImpl implements Instruction {
-  private final ObjectArraySet<Instruction> myPredecessors = new ObjectArraySet<>(1);
-  private final ObjectArraySet<Instruction> mySuccessors = new ObjectArraySet<>(1);
-  private ObjectArraySet<NegatingGotoInstruction> myNegations;
+  private final Set<Instruction> myPredecessors = new ObjectArraySet<>(1);
+  private final Set<Instruction> mySuccessors = new ObjectArraySet<>(1);
+  private Set<NegatingGotoInstruction> myNegations;
 
   protected final PsiElement myPsiElement;
   private int myNumber = -1;
