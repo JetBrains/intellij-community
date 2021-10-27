@@ -548,6 +548,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
+    editor.getSettings().setDndEnabled(false);
 
     // color scheme settings:
     setupEditorFont(editor);
