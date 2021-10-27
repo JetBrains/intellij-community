@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.*;
@@ -16,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
 
@@ -123,10 +125,9 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   @NotNull
   public EditorWithProviderComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
     editorInfo.getFileEditor().putUserData(DUMB_AWARE, true); // Needed for composite not to postpone loading via DumbService.wrapGently()
-    EditorWithProviderComposite composite = createComposite(
-      editorInfo.getFile(),
-      new FileEditor[]{editorInfo.getFileEditor()},
-      new FileEditorProvider[]{((LightEditorInfoImpl)editorInfo).getProvider()});
+    FileEditorProvider editorProvider = ((LightEditorInfoImpl)editorInfo).getProvider();
+    FileEditorWithProvider editorWithProvider = new FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider);
+    EditorWithProviderComposite composite = createComposite(editorInfo.getFile(), List.of(editorWithProvider));
     assert composite != null;
     return composite;
   }
