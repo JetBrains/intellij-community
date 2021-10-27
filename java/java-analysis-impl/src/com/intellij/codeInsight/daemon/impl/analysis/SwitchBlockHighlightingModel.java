@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -941,10 +940,9 @@ public class SwitchBlockHighlightingModel {
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    var dominatedPatterns = patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates).entrySet().stream()
-      .filter(entry -> entry.getKey() instanceof PsiPattern && entry.getValue() instanceof PsiPattern)
-      .map(t -> t.getKey())
-      .collect(Collectors.toSet());
+    var dominatedPatterns =
+      StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
+        .filter(key -> key instanceof PsiPattern).toSet();
     result.addAll(dominatedPatterns);
 
     return result;
