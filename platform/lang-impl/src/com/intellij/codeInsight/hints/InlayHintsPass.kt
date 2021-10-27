@@ -103,8 +103,8 @@ class InlayHintsPass(
         updateOrDispose(existingBlockBelowInlays, hints, Inlay.Placement.BELOW_LINE, factory, editor)
         if (hints != null) {
           addInlineHints(hints, inlayModel)
-          addBlockHints(inlayModel, hints.blockAboveHints, true)
-          addBlockHints(inlayModel, hints.blockBelowHints, false)
+          addBlockHints(factory, inlayModel, hints.blockAboveHints, true)
+          addBlockHints(factory, inlayModel, hints.blockBelowHints, false)
         }
       }
     }
@@ -132,9 +132,11 @@ class InlayHintsPass(
       }
     }
 
-    private fun addBlockHints(inlayModel: InlayModel,
-                              map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
-                              showAbove: Boolean
+    private fun addBlockHints(
+      factory: PresentationFactory,
+      inlayModel: InlayModel,
+      map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
+      showAbove: Boolean
     ) {
       for (entry in Int2ObjectMaps.fastIterable(map)) {
         val presentations = entry.value
@@ -144,7 +146,7 @@ class InlayHintsPass(
           constraints?.relatesToPrecedingText ?: true,
           showAbove,
           constraints?.priority ?: 0,
-          BlockInlayRenderer(presentations)
+          BlockInlayRenderer(factory, presentations)
         ) ?: break
         postprocessInlay(inlay)
         if (!showAbove) {
