@@ -489,7 +489,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     var titlePanel: JPanel? = null
 
     if (notification.hasTitle()) {
-      val titleContent = NotificationsUtil.buildHtml(notification, "white-space:nowrap;", false, null, null)
+      val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
       val title = JBLabel(titleContent)
 
       if (notification.isSuggestionType) {
@@ -498,14 +498,24 @@ private class NotificationComponent(val notification: Notification, timeComponen
       else {
         titlePanel = JPanel(BorderLayout())
         titlePanel.isOpaque = false
-        titlePanel.add(title, BorderLayout.WEST)
+        titlePanel.add(title)
         centerPanel.add(titlePanel)
       }
     }
 
     if (notification.hasContent()) {
       val textContent = NotificationsUtil.buildHtml(notification, null, true, null, null)
-      centerPanel.add(createTextComponent(textContent))
+      val text = createTextComponent(textContent)
+
+      if (!notification.hasTitle() && !notification.isSuggestionType) {
+        titlePanel = JPanel(BorderLayout())
+        titlePanel.isOpaque = false
+        titlePanel.add(text)
+        centerPanel.add(titlePanel)
+      }
+      else {
+        centerPanel.add(text)
+      }
     }
 
     val actions = notification.actions
@@ -590,6 +600,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
       timeComponent.putClientProperty(TIME_KEY, notification.timestamp)
+      timeComponent.verticalAlignment = SwingConstants.TOP
+      timeComponent.verticalTextPosition = SwingConstants.TOP
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
       timeComponent.font = JBFont.small()
