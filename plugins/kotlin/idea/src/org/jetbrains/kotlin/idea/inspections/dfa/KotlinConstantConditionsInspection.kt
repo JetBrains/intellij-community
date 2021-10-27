@@ -457,7 +457,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return false
     }
 
-    private fun isCompilationWarning(anchor: KtExpression): Boolean
+    private fun isCompilationWarning(anchor: KtElement): Boolean
     {
         val context = anchor.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(anchor).any
@@ -483,9 +483,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
-        val context = condition.analyze(BodyResolveMode.FULL)
-        if (context.diagnostics.forElement(condition).any { it.factory == Errors.USELESS_IS_CHECK }) return true
-        return false
+        return isCompilationWarning(condition)
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {
