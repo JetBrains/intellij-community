@@ -647,7 +647,7 @@ public final class MavenIndex implements MavenSearchIndex {
         return task.doTask();
       }
       catch (ProcessCanceledException e) {
-        return defaultValue;
+        throw e;
       }
       catch (Exception e) {
         MavenLog.LOG.warn(e);
@@ -663,7 +663,7 @@ public final class MavenIndex implements MavenSearchIndex {
         return task.doTask();
       }
       catch (ProcessCanceledException e) {
-        return defaultValue;
+        throw e;
       }
       catch (Exception e1) {
         MavenLog.LOG.warn(e1);
