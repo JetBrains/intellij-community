@@ -19,10 +19,11 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.*
 import kotlin.math.floor
 
 internal class InsertEmptyTableAction: DumbAwareAction() {
@@ -48,11 +49,12 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     hint.setForceShowAsPopup(true)
     val hintManager = HintManagerImpl.getInstanceImpl()
     val position = hintManager.getHintPosition(hint, editor, HintManager.DEFAULT)
+    hint.setFocusRequestor(hintComponent)
     hintManager.showEditorHint(
       hint,
       editor,
       position,
-      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING or HintManager.HIDE_BY_ANY_KEY,
+      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
       0,
       true
     )
@@ -94,7 +96,23 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       add(label, "align center")
       gridPanel.addMouseMotionListener(mouseListener)
       gridPanel.addMouseListener(mouseListener)
+      registerAction(KeyEvent.VK_RIGHT, "selectRight", ArrowAction { 0 to 1 })
+      registerAction(KeyEvent.VK_LEFT, "selectLeft", ArrowAction { 0 to -1 })
+      registerAction(KeyEvent.VK_UP, "selectUp", ArrowAction { -1 to 0 })
+      registerAction(KeyEvent.VK_DOWN, "selectDown", ArrowAction { 1 to 0})
+      registerAction(KeyEvent.VK_ENTER, "confirmSelection", object: AbstractAction() {
+        override fun actionPerformed(event: ActionEvent) {
+          parentHint.hide()
+          selectedCallback.invoke(selectedCellRow, selectedCellColumn)
+        }
+      })
       updateSelection(0, 0)
+    }
+
+    private fun registerAction(key: Int, actionKey: String, action: Action) {
+      val inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW)
+      inputMap.put(KeyStroke.getKeyStroke(key, 0), actionKey)
+      actionMap.put(actionKey, action)
     }
 
     private fun fillGrid() {
@@ -146,6 +164,17 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         parentHint.pack()
         parentHint.component.revalidate()
         parentHint.component.repaint()
+      }
+    }
+
+    private inner class ArrowAction(private val calcDiff: () -> Pair<Int, Int>): AbstractAction() {
+      override fun actionPerformed(event: ActionEvent) {
+        val (rowDiff, columnDiff) = calcDiff.invoke()
+        var row = selectedCellRow + rowDiff
+        var column = selectedCellColumn + columnDiff
+        row = row.coerceAtMost(rows - 1).coerceAtLeast(0)
+        column = column.coerceAtMost(columns - 1).coerceAtLeast(0)
+        updateSelection(row, column)
       }
     }
 
