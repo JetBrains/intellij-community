@@ -9,6 +9,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -156,14 +158,40 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testXmlHtml() {
-    assertEquals("|abc|", unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
-    assertEquals("abc", extractText("a.xml", "<code>abc</code>", 6).toString());
-    assertEquals("|characters with markup|", unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]></b>", 22)));
+    checkHtmlXml(false);
+
+    Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(true, getTestRootDisposable());
+    checkHtmlXml(true);
+  }
+
+  private void checkHtmlXml(boolean inlineTagsSupported) {
+    assertEquals(inlineTagsSupported ? "abc" : "|abc|", unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
+    assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<b>abc</b>", 4)));
+
+    assertEquals("|characters with markup\nand without it|",
+                 unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]>and without it</b>", 22)));
+
     assertEquals("abcd", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd\"/>", 14)));
     assertEquals("comment", extractText("a.xml", "<!-- comment -->", 10).toString());
 
+    assertEquals("top-level text", unknownOffsets(extractText("a.html", "top-level text", 2)));
+
     //nothing in HTML <code> tag
-    assertNull(extractText("a.html", "<code>abc</code>", 7));
+    assertNull(extractText("a.html", "<code>abc</code>def", 7));
+    assertEquals("|def", unknownOffsets(extractText("a.html", "<code>abc</code>def", 18)));
+    assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<code>abc</code>", 6)));
+
+    if (inlineTagsSupported) {
+      String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
+      assertEquals("Hello world|", unknownOffsets(extractText("a.html", longHtml, 9)));
+      assertEquals("|Another text.", unknownOffsets(extractText("a.html", longHtml, 70)));
+
+      assertEquals("|Hello world!|", unknownOffsets(extractText("a.html", "<div>Hello <span>world</span>!</div>", 20)));
+      assertEquals("|Hello\nworld!|", unknownOffsets(extractText("a.html", "<div>\n  Hello\n  world!\n</div>", 20)));
+      assertEquals("|def", unknownOffsets(extractText("a.html", "<div>abc</div>def", 16)));
+
+      assertOrderedEquals(extractText("a.html", "<div>Hello world!</div>", 10).getRangesInFile(), new TextRange(5, 17));
+    }
   }
 
   public void testBuildingPerformance_concatenation() {
