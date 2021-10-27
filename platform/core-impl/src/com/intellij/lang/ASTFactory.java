@@ -31,51 +31,41 @@ public abstract class ASTFactory {
 
   // interface methods
 
-  @Nullable
-  public LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, final CharSequence text) {
+  public @Nullable LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, CharSequence text) {
     return null;
   }
 
-  @Nullable
-  public CompositeElement createComposite(@NotNull IElementType type) {
+  public @Nullable CompositeElement createComposite(@NotNull IElementType type) {
     return null;
   }
 
-  @Nullable
-  public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
+  public @Nullable LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     return null;
   }
 
   // factory methods
 
-  @NotNull
-  public static LazyParseableElement lazy(@NotNull final ILazyParseableElementType type, CharSequence text) {
-    final ASTNode node = type.createNode(text);
+  public static @NotNull LazyParseableElement lazy(@NotNull ILazyParseableElementType type, CharSequence text) {
+    ASTNode node = type.createNode(text);
     if (node != null) return (LazyParseableElement)node;
 
-    if (type == TokenType.CODE_FRAGMENT) {
-      return new CodeFragmentElement(null);
-    }
-    if (type == TokenType.DUMMY_HOLDER) {
-      return new DummyHolderElement(text);
-    }
+    if (type == TokenType.CODE_FRAGMENT) return new CodeFragmentElement(null);
+    if (type == TokenType.DUMMY_HOLDER) return new DummyHolderElement(text);
 
-    final LazyParseableElement customLazy = factory(type).createLazy(type, text);
+    LazyParseableElement customLazy = factory(type).createLazy(type, text);
     return customLazy != null ? customLazy : DefaultFactoryHolder.DEFAULT.createLazy(type, text);
   }
 
-  @NotNull
-  public static CompositeElement composite(@NotNull final IElementType type) {
+  public static @NotNull CompositeElement composite(@NotNull IElementType type) {
     if (type instanceof ICompositeElementType) {
       return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
     }
 
-    final CompositeElement customComposite = factory(type).createComposite(type);
+    CompositeElement customComposite = factory(type).createComposite(type);
     return customComposite != null ? customComposite : DefaultFactoryHolder.DEFAULT.createComposite(type);
   }
 
-  @NotNull
-  public static LeafElement leaf(@NotNull final IElementType type, @NlsSafe @NotNull CharSequence text) {
+  public static @NotNull LeafElement leaf(@NotNull IElementType type, @NlsSafe @NotNull CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
       return new PsiWhiteSpaceImpl(text);
     }
@@ -84,17 +74,16 @@ public abstract class ASTFactory {
       return (LeafElement)((ILeafElementType)type).createLeafNode(text);
     }
 
-    final LeafElement customLeaf = factory(type).createLeaf(type, text);
+    LeafElement customLeaf = factory(type).createLeaf(type, text);
     return customLeaf != null ? customLeaf : DefaultFactoryHolder.DEFAULT.createLeaf(type, text);
   }
 
-  private static ASTFactory factory(final IElementType type) {
+  private static ASTFactory factory(IElementType type) {
     return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }
 
-  @NotNull
-  public static LeafElement whitespace(final CharSequence text) {
-    final PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
+  public static @NotNull LeafElement whitespace(CharSequence text) {
+    PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
     CodeEditUtil.setNodeGenerated(w, true);
     return w;
   }
@@ -102,7 +91,6 @@ public abstract class ASTFactory {
   public static final class DefaultFactoryHolder {
     public static final DefaultASTFactoryImpl DEFAULT = new DefaultASTFactoryImpl();
 
-    private DefaultFactoryHolder() {
-    }
+    private DefaultFactoryHolder() { }
   }
 }
