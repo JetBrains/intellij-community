@@ -16,7 +16,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -501,7 +500,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testModuleInSources() {
     val classInLibrary = myFixture.javaFacade.findClass("lib.named.C", GlobalSearchScope.allScope(project))!!
     val elementInSources = classInLibrary.navigationElement
-    Assert.assertNotNull(JavaModuleGraphUtil.findDescriptorByFile (PsiUtilCore.getVirtualFile(elementInSources), project))
+    assertThat(JavaModuleGraphUtil.findDescriptorByFile (PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
   }
 
   //<editor-fold desc="Helpers.">
