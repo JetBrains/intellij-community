@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
@@ -28,7 +29,14 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       val text = TableModificationUtils.buildEmptyTable(rows, columns)
       runWriteAction {
         executeCommand(event.project) {
-          EditorModificationUtil.insertStringAtCaret(editor, text)
+          val caret = editor.caretModel.currentCaret
+          val document = editor.document
+          val currentLine = document.getLineNumber(caret.offset)
+          val content = when {
+            currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
+            else -> text
+          }
+          EditorModificationUtil.insertStringAtCaret(editor, content)
         }
       }
     }
