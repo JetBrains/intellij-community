@@ -17,7 +17,7 @@ public final class IndexAccessValidator {
 
   private void checkAccessingIndexDuringOtherIndexProcessing(@NotNull ID<?, ?> indexKey) {
     ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();
-    if (alreadyProcessingIndex == null) {
+    if (alreadyProcessingIndex == null || alreadyProcessingIndex == indexKey) {
       return;
     }
 
@@ -32,7 +32,7 @@ public final class IndexAccessValidator {
       throw exception;
     }
 
-    FileBasedIndexImpl.LOG.error(exception); // RuntimeException to skip rebuild
+    Logger.getInstance(FileBasedIndexImpl.class).error(exception); // RuntimeException to skip rebuild
   }
 
   public <T, E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {
