@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -11,6 +10,7 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
 import java.util.function.Consumer
+
 /**
  * Base class for all editions of IntelliJ IDEA
  */
@@ -173,22 +173,15 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
-      fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
-    }
-
+    BuildHelper buildHelper = BuildHelper.getInstance(context)
     if (isAntRequired) {
-      context.ant.copy(todir: "$targetDirectory/lib/ant") {
-        fileset(dir: "$context.paths.communityHome/lib/ant") {
-          exclude(name: "**/src/**")
-        }
+      buildHelper.copyDir(Path.of("$context.paths.communityHome/lib/ant"), Path.of("$targetDirectory/lib/ant")) {
+        !it.endsWith("src")
       }
     }
 
-    Path targetDir = Path.of(targetDirectory).toAbsolutePath().normalize()
-
+    Path targetDir = Path.of(targetDirectory)
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
     // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
