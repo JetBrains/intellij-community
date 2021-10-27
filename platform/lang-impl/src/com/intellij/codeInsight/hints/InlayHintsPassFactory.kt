@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
@@ -26,16 +28,9 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     val currentStamp = getCurrentModificationStamp(file)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
-    val settings = InlayHintsSettings.instance()
     val language = file.language
-    val collectors = if (isHintsEnabledForEditor(editor)) {
-      HintUtils.getHintProvidersForLanguage(language, file.project)
-        .filter { settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key) }
-        .mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
-    }
-    else {
-      emptyList()
-    }
+    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language) }
+
     return InlayHintsPass(file, collectors, editor)
   }
 
@@ -108,5 +103,27 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       editor.putUserData(ALWAYS_ENABLED_HINTS_PROVIDERS, keySet)
       forceHintsUpdateOnNextPass()
     }
+
+    private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<out Any>> {
+      if (!isHintsEnabledForEditor(editor)) return emptyList()
+
+      val settings = InlayHintsSettings.instance()
+      val language = element.language
+
+      return HintUtils.getHintProvidersForLanguage(language, element.project)
+        .filter { settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key) }
+    }
+
+    @ApiStatus.Internal
+    fun collectPlaceholders(file: PsiFile, editor: Editor): HintsBuffer? {
+      val collector = getProviders(file, editor).firstNotNullOfOrNull { it.getPlaceholdersCollectorFor(file, editor) }
+
+      return collector?.collectTraversing(editor, file, true)
+    }
+
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer) =
+      InlayHintsPass.applyCollected(hints, file, editor, true)
   }
 }

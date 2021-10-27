@@ -72,10 +72,9 @@ class InlayHintsPass(
   companion object {
     private const val BULK_CHANGE_THRESHOLD = 1000
     private val MANAGED_KEY = Key.create<Boolean>("managed.inlay")
+    private val PLACEHOLDER_KEY = Key.create<Boolean>("inlay.placeholder")
 
-    internal fun applyCollected(hints: HintsBuffer?,
-                                element: PsiElement,
-                                editor: Editor) {
+    internal fun applyCollected(hints: HintsBuffer?, element: PsiElement, editor: Editor, isPlaceholder: Boolean = false) {
       val startOffset = element.textOffset
       val endOffset = element.textRange.endOffset
       val inlayModel = editor.inlayModel
@@ -103,16 +102,17 @@ class InlayHintsPass(
         updateOrDispose(existingBlockBelowInlays, hints, Inlay.Placement.BELOW_LINE, factory, editor)
         if (hints != null) {
           addInlineHints(hints, inlayModel)
-          addBlockHints(factory, inlayModel, hints.blockAboveHints, true)
-          addBlockHints(factory, inlayModel, hints.blockBelowHints, false)
+          addBlockHints(factory, inlayModel, hints.blockAboveHints, true, isPlaceholder)
+          addBlockHints(factory, inlayModel, hints.blockBelowHints, false, isPlaceholder)
         }
       }
     }
 
 
-    private fun postprocessInlay(inlay: Inlay<out PresentationContainerRenderer<*>>) {
+    private fun postprocessInlay(inlay: Inlay<out PresentationContainerRenderer<*>>, isPlaceholder: Boolean) {
       inlay.renderer.setListener(InlayContentListener(inlay))
       inlay.putUserData(MANAGED_KEY, true)
+      if (isPlaceholder) inlay.putUserData(PLACEHOLDER_KEY, true)
     }
 
 
@@ -128,7 +128,7 @@ class InlayHintsPass(
           inlayModel.addInlineElement(entry.intKey, isRelatedToPrecedingText, renderer) ?: break
         }
 
-        inlay?.let { postprocessInlay(it) }
+        inlay?.let { postprocessInlay(it, false) }
       }
     }
 
@@ -136,7 +136,8 @@ class InlayHintsPass(
       factory: PresentationFactory,
       inlayModel: InlayModel,
       map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
-      showAbove: Boolean
+      showAbove: Boolean,
+      isPlaceholder: Boolean
     ) {
       for (entry in Int2ObjectMaps.fastIterable(map)) {
         val presentations = entry.value
@@ -148,7 +149,7 @@ class InlayHintsPass(
           constraints?.priority ?: 0,
           BlockInlayRenderer(factory, presentations)
         ) ?: break
-        postprocessInlay(inlay)
+        postprocessInlay(inlay, isPlaceholder)
         if (!showAbove) {
           break
         }
@@ -183,10 +184,11 @@ class InlayHintsPass(
         val offset = inlay.offset
         val elements = hints?.remove(offset, placement)
         if (elements == null) {
-          Disposer.dispose(inlay)
+          if (inlay.getUserData(PLACEHOLDER_KEY) != true) Disposer.dispose(inlay)
           continue
         }
         else {
+          inlay.putUserData(PLACEHOLDER_KEY, null)
           inlay.renderer.addOrUpdate(elements, factory, placement, editor)
         }
       }

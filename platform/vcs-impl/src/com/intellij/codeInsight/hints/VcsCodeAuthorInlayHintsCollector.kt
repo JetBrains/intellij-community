@@ -46,12 +46,6 @@ internal class VcsCodeAuthorInlayHintsCollector(
     return true
   }
 
-  private fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
-    val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
-
-    return TextRange.create(start.startOffset, element.endOffset)
-  }
-
   private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor): VcsCodeAuthorInfo {
     val startLine = editor.document.getLineNumber(range.startOffset)
     val endLine = editor.document.getLineNumber(range.endOffset)
@@ -95,6 +89,14 @@ internal class VcsCodeAuthorInlayHintsCollector(
     MenuOnClickPresentation(this, project) {
       getDefaultInlayHintsProviderPopupActions(VcsCodeAuthorInlayHintsProvider.KEY, messagePointer("title.code.author.inlay.hints"))
     }
+
+  companion object {
+    internal fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
+      val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
+
+      return TextRange.create(start.startOffset, element.endOffset)
+    }
+  }
 }
 
 private class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: Int, val isModified: Boolean) {

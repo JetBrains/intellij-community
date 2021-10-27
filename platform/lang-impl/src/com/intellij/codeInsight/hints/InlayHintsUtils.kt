@@ -45,6 +45,14 @@ fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile, edit
   return CollectorWithSettings(collector, key, language, sink)
 }
 
+internal fun <T : Any> ProviderWithSettings<T>.getPlaceholdersCollectorFor(file: PsiFile, editor: Editor): CollectorWithSettings<T>? {
+  val key = provider.key
+  val sink = InlayHintsSinkImpl(editor)
+  val collector = provider.getPlaceholdersCollectorFor(file, editor, settings, sink) ?: return null
+
+  return CollectorWithSettings(collector, key, language, sink)
+}
+
 internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, config: InlayHintsSettings): ProviderWithSettings<T> {
   val settings = getActualSettings(config, language)
   return ProviderWithSettings(ProviderInfo(language, this), settings)
@@ -53,7 +61,7 @@ internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, co
 internal fun <T : Any> InlayHintsProvider<T>.getActualSettings(config: InlayHintsSettings, language: Language): T =
   config.findSettings(key, language) { createSettings() }
 
-internal fun <T: Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
+internal fun <T : Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
   val settings = provider.createSettings()
   // Workaround to make a deep copy of settings. The other way is to parametrize T with something like
   // interface DeepCopyable<T> { fun deepCopy(from: T): T }, but there will be a lot of problems with recursive type bounds
