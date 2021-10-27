@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -123,7 +123,7 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     long usedMem = allocatedMem - unusedMem;
 
     int usedBarLength = (int)(barWidth * usedMem / maxMem);
-    int unusedBarLength = (int)(size.height * unusedMem / maxMem);
+    int unusedBarLength = (int)(barWidth * unusedMem / maxMem);
 
     // background
     g.setColor(UIUtil.getPanelBackground());
