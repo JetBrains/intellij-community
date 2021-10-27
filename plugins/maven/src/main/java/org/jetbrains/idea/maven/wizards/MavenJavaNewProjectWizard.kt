@@ -94,11 +94,13 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
           put("artifactId", artifactId)
           put("version", version)
 
-          put("archetypeGroupId", archetype.groupId)
-          put("archetypeArtifactId", archetype.artifactId)
-          put("archetypeVersion", archetype.version)
-          if (archetype.repository != null) {
-            put("archetypeRepository", archetype.repository)
+          archetypeProperty.get()?.let { archetype ->
+            put("archetypeGroupId", archetype.groupId)
+            put("archetypeArtifactId", archetype.artifactId)
+            put("archetypeVersion", archetype.version)
+            if (archetype.repository != null) {
+              put("archetypeRepository", archetype.repository)
+            }
           }
         }
       }
