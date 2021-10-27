@@ -352,8 +352,8 @@
             class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
     <action id="Documentation.ToggleAutoShow"
             class="com.intellij.lang.documentation.ide.actions.ToggleAutoShowAction"/>
-    <action id="Documentation.TurnOffAutoUpdate"
-            class="com.intellij.lang.documentation.ide.actions.TurnOffAutoUpdateAction"
+    <action id="Documentation.KeepTab"
+            class="com.intellij.lang.documentation.ide.actions.KeepTabAction"
             icon="AllIcons.Toolbar.Pin"
             use-shortcut-of="QuickJavaDoc">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
