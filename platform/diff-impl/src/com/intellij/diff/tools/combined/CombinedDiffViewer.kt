@@ -3,7 +3,6 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.impl.ui.DiffInfo
 import com.intellij.diff.tools.binary.OnesideBinaryDiffViewer
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer
@@ -155,12 +154,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   private fun createToolbarActions(): List<AnAction> {
     val textSettings = TextDiffViewerUtil.getTextSettings(context)
 
-    return listOf(
-      CombinedIgnorePolicySettingAction(textSettings),
-      CombinedHighlightPolicySettingAction(textSettings),
-      CombinedToggleExpandByDefaultAction(textSettings, getFoldingModels()),
-      SetEditorSettingsAction(textSettings, editors).apply { applyDefaults() }
-    )
+    return listOf(CombinedEditorSettingsAction(textSettings, getFoldingModels(), editors).apply { applyDefaults() })
   }
 
   private fun getFoldingModels(): List<FoldingModelSupport> {
