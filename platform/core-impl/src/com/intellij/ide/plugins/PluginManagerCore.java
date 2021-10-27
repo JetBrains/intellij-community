@@ -937,12 +937,7 @@ public final class PluginManagerCore {
       return result;
     }
 
-    for (IdeaPluginDescriptorImpl plugin : pluginSet.allPlugins) {
-      if (id.equals(plugin.getPluginId())) {
-        return plugin;
-      }
-    }
-    return null;
+    return pluginSet.findInstalledPlugin(id);
   }
 
   @ApiStatus.Internal
@@ -961,16 +956,8 @@ public final class PluginManagerCore {
       return false;
     }
 
-    if (pluginSet.isPluginEnabled(id)) {
-      return true;
-    }
-
-    for (IdeaPluginDescriptor plugin : pluginSet.allPlugins) {
-      if (id.equals(plugin.getPluginId())) {
-        return true;
-      }
-    }
-    return false;
+    return pluginSet.isPluginEnabled(id) ||
+           pluginSet.isPluginInstalled(id);
   }
 
   @ApiStatus.Internal
