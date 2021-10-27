@@ -1068,7 +1068,7 @@ class JavaToJKTreeBuilder constructor(
     }
 
 
-    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with (declarationMapper) {
+    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with(declarationMapper) {
         val statements = body?.statements ?: return emptyList()
         val cases = mutableListOf<JKJavaSwitchCase>()
         for (statement in statements) {
@@ -1077,7 +1077,9 @@ class JavaToJKTreeBuilder constructor(
                     cases += when {
                         statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
                         else -> JKJavaClassicLabelSwitchCase(
-                            with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                            with(expressionTreeMapper) {
+                                statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                            },
                             emptyList()
                         )
                     }.withFormattingFrom(statement)
@@ -1087,7 +1089,9 @@ class JavaToJKTreeBuilder constructor(
                         statement.isDefaultCase -> JKJavaDefaultSwitchCase(listOf(body))
                         else -> {
                             JKJavaArrowSwitchLabelCase(
-                                with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                                with(expressionTreeMapper) {
+                                    statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                                },
                                 listOf(body),
                             )
                         }
@@ -1102,7 +1106,7 @@ class JavaToJKTreeBuilder constructor(
                     }
             }
         }
-       return cases
+        return cases
     }
 
     companion object {
