@@ -106,7 +106,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myRenderedDocCheckBox)
-        commentHtml(IdeBundle.message("checkbox.also.in.reader.mode")) {
+        comment(IdeBundle.message("checkbox.also.in.reader.mode")) {
           ReaderModeSettingsListener.goToEditorReaderMode()
         }
       }

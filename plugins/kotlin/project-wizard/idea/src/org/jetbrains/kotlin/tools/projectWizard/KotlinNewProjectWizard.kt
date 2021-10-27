@@ -38,7 +38,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             version: String? = "1.0-SNAPSHOT"
         ) {
             val builder = presetBuilder ?: NewProjectWizardModuleBuilder()
-            val modules = builder.apply {
+            builder.apply {
                 wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
 
                 wizard.jdk = sdk
@@ -78,7 +78,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override fun setupUI(builder: Panel) {
             with(builder) {
                 row(EMPTY_LABEL) {
-                    commentHtml(KotlinBundle.message("project.wizard.new.project.kotlin.comment")) {
+                    comment(KotlinBundle.message("project.wizard.new.project.kotlin.comment")) {
                         context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID)
                     }
                 }.bottomGap(BottomGap.SMALL)
