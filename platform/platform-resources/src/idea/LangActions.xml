@@ -352,6 +352,8 @@
             class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
     <action id="Documentation.ToggleAutoShow"
             class="com.intellij.lang.documentation.ide.actions.ToggleAutoShowAction"/>
+    <action id="Documentation.ToggleAutoUpdate"
+            class="com.intellij.lang.documentation.ide.actions.ToggleAutoUpdateAction"/>
     <action id="Documentation.KeepTab"
             class="com.intellij.lang.documentation.ide.actions.KeepTabAction"
             icon="AllIcons.Toolbar.Pin"
