@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -232,7 +233,15 @@ public final class HighlightMethodUtil {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(
       description).create();
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
+    if (method instanceof LightRecordMethod) {
+      for (IntentionAction fix : 
+        HighlightFixUtil.getChangeVariableTypeFixes(((LightRecordMethod)method).getRecordComponent(), substitutedSuperReturnType)) {
+        QuickFixAction.registerQuickFixAction(errorResult, fix);
+      }
+    }
+    else {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
+    }
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
     final PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
     if (returnClass != null && substitutedSuperReturnType instanceof PsiClassType) {
