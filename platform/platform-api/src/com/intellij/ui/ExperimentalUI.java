@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,15 +132,21 @@ public final class ExperimentalUI {
   }
 
   private static void patchUIDefaults(RegistryValue value) {
-    if (!value.asBoolean()) return;
     UIDefaults defaults = UIManager.getDefaults();
-    setUIProperty("EditorTabs.underlineArc", 4, defaults);
-    EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
-    setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
+    if (value.asBoolean()) {
+      setUIProperty("EditorTabs.underlineArc", 4, defaults);
+      EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      Color tabsHover = ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
+      setUIProperty("EditorTabs.hoverInactiveBackground", tabsHover, defaults);
 
-    if (is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
-      installInterFont();
+      if (is("ide.experimental.ui.inter.font") && SystemInfo.isJetBrainsJvm) {
+        installInterFont();
+      }
+
+      setUIProperty("StatusBar.widgetInsets", JBUI.insets(6, 8), defaults);
+    }
+    else {
+      defaults.remove("StatusBar.widgetInsets");
     }
   }
 

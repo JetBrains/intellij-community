@@ -31,16 +31,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +52,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "ActionMacroManager", storages = @Storage("macros.xml"), category = SettingsCategory.UI)
 public final class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
@@ -165,7 +165,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
     private Widget(StatusBar statusBar) {
       myStatusBar = statusBar;
-      myIcon.setBorder(StatusBarWidget.WidgetBorder.ICON);
+      myIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
       myPresentation = new WidgetPresentation() {
         @Override
         public String getTooltipText() {

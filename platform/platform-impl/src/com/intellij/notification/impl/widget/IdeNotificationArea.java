@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   private @Nullable StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    setBorder(WidgetBorder.ICON);
+    setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
   }
 
   @Override
