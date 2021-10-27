@@ -23,10 +23,10 @@ import java.awt.event.MouseEvent
 abstract class LinearOrderInlayRenderer<Constraint : Any>(
   constrainedPresentations: Collection<ConstrainedPresentation<*, Constraint>>,
   private val createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
-  private val comparator: (ConstrainedPresentation<*, Constraint>) -> Int
+  private val comparator: Comparator<ConstrainedPresentation<*, Constraint>> = compareBy { it.priority }
 ) : PresentationContainerRenderer<Constraint> {
   // Supposed to be changed rarely and rarely contains more than 1 element
-  private var presentations: List<ConstrainedPresentation<*, Constraint>> = SmartList(constrainedPresentations.sortedBy(comparator))
+  private var presentations: List<ConstrainedPresentation<*, Constraint>> = SmartList(constrainedPresentations.sortedWith(comparator))
 
   init {
     assert(presentations.isNotEmpty())
@@ -38,7 +38,7 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
 
   override fun addOrUpdate(new: List<ConstrainedPresentation<*, Constraint>>, editor: Editor, factory: InlayPresentationFactory) {
     assert(new.isNotEmpty())
-    updateSorted(new.sortedBy(comparator), editor, factory)
+    updateSorted(new.sortedWith(comparator), editor, factory)
   }
 
   override fun setListener(listener: PresentationListener) {
@@ -54,7 +54,7 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
                            editor: Editor,
                            factory: InlayPresentationFactory) {
     // TODO [roman.ivanov] here can be handled 1 old to 1 new situation without complex algorithms and allocations
-    val tmp = produceUpdatedRootList(sorted, presentations, editor, factory)
+    val tmp = produceUpdatedRootList(sorted, presentations, comparator, editor, factory)
     val oldSize = dimension()
     presentations = tmp
     _listener?.let {

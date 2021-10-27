@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
@@ -13,16 +13,10 @@ class BlockInlayRenderer(
       1 -> constrained.first().root
       else -> VerticalListInlayPresentation(constrained.map { it.root })
     }
-
-  },
-  comparator = COMPARISON
+  }
 ) {
 
   override fun isAcceptablePlacement(placement: Inlay.Placement): Boolean {
     return placement == Inlay.Placement.BELOW_LINE || placement == Inlay.Placement.ABOVE_LINE
-  }
-
-  companion object {
-    private val COMPARISON: (ConstrainedPresentation<*, BlockConstraints>) -> Int = { it.priority }
   }
 }

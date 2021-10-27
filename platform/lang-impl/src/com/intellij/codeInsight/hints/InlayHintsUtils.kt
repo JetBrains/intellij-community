@@ -147,6 +147,7 @@ object InlayHintsUtils {
   fun <Constraint : Any> produceUpdatedRootList(
     new: List<ConstrPresent<Constraint>>,
     old: List<ConstrPresent<Constraint>>,
+    comparator: Comparator<ConstrPresent<Constraint>>,
     editor: Editor,
     factory: InlayPresentationFactory
   ): List<ConstrPresent<Constraint>> {
@@ -165,16 +166,15 @@ object InlayHintsUtils {
     while (true) {
       val newEl = new[newIndex]
       val oldEl = old[oldIndex]
-      val newPriority = newEl.priority
-      val oldPriority = oldEl.priority
+      val value = comparator.compare(newEl, oldEl)
       when {
-        newPriority > oldPriority -> {
+        value > 0 -> {
           oldIndex++
           if (oldIndex == oldSize) {
             break@loop
           }
         }
-        newPriority < oldPriority -> {
+        value < 0 -> {
           updatedPresentations.add(newEl)
           newIndex++
           if (newIndex == newSize) {
