@@ -67,14 +67,14 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
     if (lookup == null && quickSearchComponent == null) {
       // no popups
-      if (toolWindowManager.focusVisiblePreview()) {
+      if (toolWindowManager.focusVisibleReusableTab()) {
         // Explicit invocation moves focus to a visible preview tab.
         return
       }
     }
     else {
       // some popup is already visible
-      if (toolWindowManager.hasVisiblePreview()) {
+      if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
         // don't show another popup is a preview tab is visible, it will be updated
         return
       }
@@ -189,7 +189,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (request == null) {
       return
     }
-    if (toolWindowManager.updateVisiblePreview(request)) {
+    if (toolWindowManager.updateVisibleAutoUpdatingTab(request)) {
       return
     }
     coroutineScope {

@@ -11,6 +11,7 @@ import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_I
 import com.intellij.lang.documentation.ide.actions.navigationActions
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
+import com.intellij.lang.documentation.ide.ui.isReusable
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.openapi.actionSystem.ActionManager
@@ -67,68 +68,81 @@ internal class DocumentationToolWindowManager(private val project: Project) {
   }
 
   /**
-   * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
+   * @return `true` if an auto-updating tab is visible, `false` if no such tab exists, or if it is hidden
    */
-  fun hasVisiblePreview(): Boolean {
-    return getVisiblePreviewContent() != null
+  fun hasVisibleAutoUpdatingTab(): Boolean = getVisibleAutoUpdatingContent() != null
+
+  /**
+   * Orders existing visible reusable tab to display [request].
+   *
+   * @return `true` if an auto-updating tab is visible, `false` if no such tab exists, or if it is hidden
+   */
+  fun updateVisibleAutoUpdatingTab(request: DocumentationRequest): Boolean {
+    val content = getVisibleAutoUpdatingContent() ?: return false
+    content.toolWindowUI.browser.resetBrowser(request)
+    return true
+  }
+
+  private fun getVisibleAutoUpdatingContent(): Content? {
+    if (!toolWindow.isVisible) {
+      return null
+    }
+    return contentManager.selectedContent?.takeIf {
+      it.toolWindowUI.isAutoUpdate
+    }
   }
 
   /**
-   * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
+   * @return `true` if a reusable tab is visible, `false` if no such tab exists, or if it is hidden
    */
-  fun focusVisiblePreview(): Boolean {
-    val content = getVisiblePreviewContent() ?: return false
+  fun focusVisibleReusableTab(): Boolean {
+    if (!toolWindow.isVisible) {
+      return false
+    }
+    val content = contentManager.selectedContent?.takeIf {
+      it.isReusable
+    } ?: return false
     contentManager.requestFocus(content, false)
     return true
   }
 
   /**
-   * Orders existing visible preview tab to display [request].
-   *
-   * @return `true` if a preview tab is visible, `false` if no preview exists, or if a preview is hidden
-   */
-  fun updateVisiblePreview(request: DocumentationRequest): Boolean {
-    val previewContent = getVisiblePreviewContent() ?: return false
-    previewContent.toolWindowUI.browser.resetBrowser(request)
-    return true
-  }
-
-  /**
-   * Creates a new preview tab if no preview tab exists,
+   * Creates a new reusable tab if no reusable tab exists,
    * orders it to display [request],
    * and makes it visible.
    */
   fun showInToolWindow(request: DocumentationRequest) {
-    val previewContent = getPreviewContent()
-    if (previewContent == null) {
+    val reusableContent = getReusableContent()
+    if (reusableContent == null) {
       val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
       showInToolWindow(DocumentationUI(project, browser), addNewContent())
     }
     else {
-      previewContent.toolWindowUI.browser.resetBrowser(request)
-      makeVisible(previewContent)
+      reusableContent.toolWindowUI.browser.resetBrowser(request)
+      makeVisible(reusableContent)
     }
   }
 
   /**
-   * Creates a new preview tab, or replaces existing tab content, and displays [ui] in it.
+   * Creates a new reusable tab, or replaces existing tab content, and displays [ui] in it.
    * The [ui] will be disposed once the tab is closed.
    */
   fun showInToolWindow(ui: DocumentationUI) {
     EDT.assertIsEdt()
-    val previewContent = getPreviewContent()
-    val content = if (previewContent == null) {
+    val reusableContent = getReusableContent()
+    val content = if (reusableContent == null) {
       addNewContent()
     }
     else {
-      Disposer.dispose(previewContent.toolWindowUI)
-      previewContent
+      Disposer.dispose(reusableContent.toolWindowUI)
+      reusableContent
     }
     showInToolWindow(ui, content)
   }
 
   private fun showInToolWindow(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
+    newUI.toggleAutoUpdate(state = true)
     content.component = newUI.contentComponent
     makeVisible(content)
   }
@@ -138,18 +152,9 @@ internal class DocumentationToolWindowManager(private val project: Project) {
     toolWindow.show()
   }
 
-  private fun getVisiblePreviewContent(): Content? {
-    if (!toolWindow.isVisible) {
-      return null
-    }
-    return contentManager.selectedContent?.takeIf {
-      it.toolWindowUI.isPreview
-    }
-  }
-
-  private fun getPreviewContent(): Content? {
+  private fun getReusableContent(): Content? {
     return contentManager.contents.firstOrNull {
-      it.toolWindowUI.isPreview
+      it.isReusable
     }
   }
 

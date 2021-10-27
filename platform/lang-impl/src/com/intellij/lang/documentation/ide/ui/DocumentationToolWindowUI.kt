@@ -21,61 +21,82 @@ internal class DocumentationToolWindowUI(
 
   val contentComponent: JComponent get() = ui.scrollPane
 
-  private var preview: Disposable?
+  private var reusable: Disposable?
 
-  val isPreview: Boolean
+  val isReusable: Boolean
     get() {
       EDT.assertIsEdt()
-      return preview != null
+      return reusable != null
+    }
+
+  private val autoUpdater = DocumentationToolWindowUpdater(project, browser)
+  private var autoUpdate: Disposable? = null
+
+  val isAutoUpdate: Boolean
+    get() {
+      EDT.assertIsEdt()
+      return autoUpdate != null
     }
 
   // Disposable tree:
   // content
   // > this
   // - > ui
-  // - > preview
-  // - - > auto-updater
+  // - > autoUpdate
+  // - > reuse
   // - - > asterisk content tab updater
-  // - > content tab updater (after preview is turned off)
+  // - > content tab updater (after tab is kept)
   init {
     content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
     Disposer.register(this, ui)
 
-    val preview = Disposer.newDisposable(this, "documentation preview").also {
-      this.preview = it
+    reusable = updateContentTab(browser, content, asterisk = true).also {
+      Disposer.register(this, it)
     }
-
-    Disposer.register(preview, UiNotifyConnector(ui.scrollPane, DocumentationToolWindowUpdater(project, browser)))
-    Disposer.register(preview, browser.addStateListener { request, _, _ ->
-      val presentation = request.presentation
-      content.icon = presentation.icon
-      content.displayName = "* ${presentation.presentableText}"
-    })
   }
 
   override fun dispose() {
     content.putUserData(TW_UI_KEY, null)
   }
 
-  fun turnOffPreview() {
-    val preview = requireNotNull(this.preview) {
-      "the preview was turned off already"
+  fun toggleAutoUpdate(state: Boolean) {
+    check(isReusable)
+    EDT.assertIsEdt()
+    if (state) {
+      check(!isAutoUpdate)
+      autoUpdate = UiNotifyConnector(ui.scrollPane, autoUpdater).also {
+        Disposer.register(this, it)
+      }
     }
-    this.preview = null
-    Disposer.dispose(preview)
-    Disposer.register(this, updateContentTab(browser, content))
+    else {
+      check(isAutoUpdate)
+      Disposer.dispose(checkNotNull(autoUpdate))
+      autoUpdate = null
+    }
+  }
+
+  fun keep() {
+    Disposer.dispose(checkNotNull(reusable))
+    reusable = null
+    Disposer.register(this, updateContentTab(browser, content, asterisk = false))
+    autoUpdate?.let {
+      Disposer.dispose(it)
+      autoUpdate = null
+    }
   }
 }
 
 internal val Content.toolWindowUI: DocumentationToolWindowUI get() = checkNotNull(getUserData(TW_UI_KEY))
 
+internal val Content.isReusable: Boolean get() = toolWindowUI.isReusable
+
 private val TW_UI_KEY: Key<DocumentationToolWindowUI> = Key.create("documentation.tw.ui")
 
-private fun updateContentTab(browser: DocumentationBrowser, content: Content): Disposable {
+private fun updateContentTab(browser: DocumentationBrowser, content: Content, asterisk: Boolean): Disposable {
   return browser.addStateListener { request, _, _ ->
     val presentation = request.presentation
     content.icon = presentation.icon
-    content.displayName = presentation.presentableText
+    content.displayName = if (asterisk) "* ${presentation.presentableText}" else presentation.presentableText
   }
 }
