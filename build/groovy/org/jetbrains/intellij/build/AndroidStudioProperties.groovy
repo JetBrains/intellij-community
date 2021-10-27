@@ -19,6 +19,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import java.nio.file.Path
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.jps.model.module.JpsModule
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -44,6 +45,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildCrossPlatformDistribution = true
 
     allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
+    includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
 
     productLayout.productApiModules = JAVA_IDE_API_MODULES
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
