@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.dsl.builder
+package com.intellij.ui.dsl.builder.components
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
@@ -18,7 +19,6 @@ import java.awt.Dimension
  * Implement focus
  * https://www.figma.com/file/IT8EVCtINhpc59ECCbBGdM/IntelliJ-Platform-UI-Kit?node-id=79165%3A16120
  */
-
 @ApiStatus.Experimental
 class SegmentedButtonToolbar(actionGroup: ActionGroup, horizontal: Boolean, private val spacingConfiguration: SpacingConfiguration) :
   ActionToolbarImpl("ButtonSelector", actionGroup, horizontal, true) {

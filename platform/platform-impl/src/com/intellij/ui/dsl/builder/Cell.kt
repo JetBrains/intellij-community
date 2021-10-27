@@ -5,11 +5,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.Grid
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -68,19 +64,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds comment under the cell aligned by left edge. The comment occupies available width before next comment (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects comment as well.
+   * [comment] can contain html tags except <html>, which is added automatically in this method
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
    * can be implemented later)
    */
   fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Cell<T>
-
-  /**
-   * Adds html comment under the cell.
-   * See doc for comment method
-   */
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
+              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
+              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method

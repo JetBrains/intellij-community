@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.Cell
@@ -122,13 +121,8 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
-    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    return this
-  }
-
-  override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
-    this.comment = if (comment == null) null else createHtmlComment(comment, action)
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
+    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
   }
 
