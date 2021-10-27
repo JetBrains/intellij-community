@@ -1014,7 +1014,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     try {
       descriptorImpl.setDeleted(true);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(descriptorImpl);
-      InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, needRestartForUninstall);
+      InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, !needRestartForUninstall);
       if (!needRestartForUninstall) {
         myDynamicPluginsToUninstall.add(descriptorImpl);
       }
