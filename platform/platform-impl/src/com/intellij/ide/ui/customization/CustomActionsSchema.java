@@ -308,6 +308,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
+  @Nullable
+  public String getDisplayName(@NotNull String id) {
+    return myIdToName.get(id);
+  }
+
   public void invalidateCustomizedActionGroup(String groupId) {
     ActionGroup group = myIdToActionGroup.get(groupId);
     if (group instanceof CustomisedActionGroup) {
