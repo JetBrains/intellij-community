@@ -221,8 +221,13 @@ public final class TextDiffViewerUtil {
     @NotNull
     protected abstract @Nls String getText(@NotNull T option);
 
-    private class MyAction extends AnAction implements DumbAware {
+    private class MyAction extends AnAction implements Toggleable, DumbAware {
       @NotNull private final T myOption;
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
+      }
 
       MyAction(@NotNull T option) {
         super(getText(option));
