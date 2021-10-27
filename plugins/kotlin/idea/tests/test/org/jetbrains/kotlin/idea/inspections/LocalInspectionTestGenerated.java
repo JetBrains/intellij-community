@@ -8703,6 +8703,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/property/getterWithBody.kt");
             }
 
+            @TestMetadata("hasTransientAnnotation.kt")
+            public void testHasTransientAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/redundantNullableReturnType/property/hasTransientAnnotation.kt");
+            }
+
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/property/initializer.kt");
