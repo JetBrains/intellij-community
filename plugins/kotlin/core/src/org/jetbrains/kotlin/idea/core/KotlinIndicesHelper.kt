@@ -101,11 +101,10 @@ class KotlinIndicesHelper(
 
     fun processTopLevelCallables(nameFilter: (String) -> Boolean, processor: (CallableDescriptor) -> Unit) {
         fun processIndex(index: StringStubIndexExtension<out KtCallableDeclaration>, processor: (String) -> Unit) {
-            index.processAllKeys(project) { key ->
+            index.getAllKeys(project).forEach { key ->
                 if (nameFilter(key.substringAfterLast('.', key))) {
                     processor(key)
                 }
-                true
             }
         }
 
@@ -248,11 +247,10 @@ class KotlinIndicesHelper(
             }
             true
         }
-        processAllKeys(project) {
+        getAllKeys(project).forEach {
             if (receiverTypeNameFromKey(it) in receiverTypeNames && nameFilter(callableNameFromKey(it))) {
                 processElements(it, project, scope, declarationProcessor)
             }
-            true
         }
 
         return result
@@ -411,8 +409,6 @@ class KotlinIndicesHelper(
     ) {
         val descriptorKindFilter = DescriptorKindFilter.CALLABLES
 
-        val objectsIndex = KotlinSubclassObjectNameIndex.getInstance()
-
         val objectDeclarationProcessor = Processor<KtObjectDeclaration> { objectDeclaration ->
             objectDeclaration.resolveToDescriptors<ClassDescriptor>().asSequence()
                 .map { it.unsubstitutedMemberScope }
@@ -428,9 +424,9 @@ class KotlinIndicesHelper(
             true
         }
 
-        objectsIndex.processAllKeys(project) { key ->
+        val objectsIndex = KotlinSubclassObjectNameIndex.getInstance()
+        objectsIndex.getAllKeys(project).forEach { key ->
             objectsIndex.processElements(key, project, scope, objectDeclarationProcessor)
-            true
         }
     }
 
@@ -500,11 +496,10 @@ class KotlinIndicesHelper(
             }
             true
         }
-        index.processAllKeys(project) { fqName ->
+        index.getAllKeys(project).forEach { fqName ->
             if (nameFilter(fqName.substringAfterLast('.'))) {
                 index.processElements(fqName, project, scope, classOrObjectProcessor)
             }
-            true
         }
     }
 
@@ -512,17 +507,16 @@ class KotlinIndicesHelper(
         val index = KotlinTopLevelTypeAliasFqNameIndex.getInstance()
         val typeAliasProcessor = Processor<KtTypeAlias> { typeAlias ->
             typeAlias.resolveToDescriptors<TypeAliasDescriptor>().forEach {
-                if (descriptorFilter.invoke(it)) {
+                if (descriptorFilter(it)) {
                     processor.invoke(it)
                 }
             }
             true
         }
-        index.processAllKeys(project) { fqName ->
+        index.getAllKeys(project).forEach { fqName ->
             if (nameFilter(fqName.substringAfterLast('.'))) {
                 index.processElements(fqName, project, scope, typeAliasProcessor)
             }
-            true
         }
     }
 
@@ -533,11 +527,10 @@ class KotlinIndicesHelper(
         processor: (DeclarationDescriptor) -> Unit
     ) {
         fun processIndex(index: StringStubIndexExtension<out KtNamedDeclaration>, processor: (String) -> Unit) {
-            index.processAllKeys(project) { name ->
+            index.getAllKeys(project).forEach { name ->
                 if (nameFilter(name)) {
                     processor(name)
                 }
-                true
             }
         }
 
