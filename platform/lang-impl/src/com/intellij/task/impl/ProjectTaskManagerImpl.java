@@ -22,7 +22,6 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -111,22 +110,13 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(Module module,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-  }
-
-  @Override
-  public ProjectTask createModulesBuildTask(Module[] modules,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(Arrays.asList(modules), module ->
-             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    if (modules.length == 1) {
+      return new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests);
+    }
+    return new ProjectTaskList(
+      map(Arrays.asList(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests))
+    );
   }
 
   @Override

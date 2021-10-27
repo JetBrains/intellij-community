@@ -192,9 +192,7 @@ public final class CompileDriver {
     return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
   }
 
-  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext,
-                                                    CompileScope scope,
-                                                    Collection<String> paths) {
+  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext, CompileScope scope, Collection<String> paths) {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     final boolean forceBuild = !compileContext.isMake();
     List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
@@ -205,7 +203,20 @@ public final class CompileDriver {
       CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
-      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+      final Collection<ModuleSourceSet> sourceSets = scope.getAffectedSourceSets();
+      boolean includeTests = sourceSets.isEmpty();
+      for (ModuleSourceSet sourceSet : sourceSets) {
+        if (sourceSet.getType().isTest()) {
+          includeTests = true;
+          break;
+        }
+      }
+      if (includeTests) {
+        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+      }
+      else {
+        scopes.add(CmdlineProtoUtil.createAllModulesProductionScope(forceBuild));
+      }
     }
     if (paths.isEmpty()) {
       scopes = mergeScopesFromProviders(scope, scopes, forceBuild);

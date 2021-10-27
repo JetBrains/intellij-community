@@ -28,6 +28,7 @@ public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuil
   private final Module myModule;
   private final boolean myIncludeDependentModules;
   private final boolean myIncludeRuntimeDependencies;
+  private final boolean myIncludeTests;
 
   public ModuleBuildTaskImpl(@NotNull Module module) {
     this(module, true);
@@ -37,14 +38,16 @@ public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuil
     this(module, isIncrementalBuild, true, false);
   }
 
-  public ModuleBuildTaskImpl(@NotNull Module module,
-                             boolean isIncrementalBuild,
-                             boolean includeDependentModules,
-                             boolean includeRuntimeDependencies) {
+  public ModuleBuildTaskImpl(@NotNull Module module, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    this(module, isIncrementalBuild, includeDependentModules,includeRuntimeDependencies, true);
+  }
+  
+  public ModuleBuildTaskImpl(@NotNull Module module, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
     super(isIncrementalBuild);
     myModule = module;
     myIncludeDependentModules = includeDependentModules;
     myIncludeRuntimeDependencies = includeRuntimeDependencies;
+    myIncludeTests = includeTests;
   }
 
   @NotNull
@@ -61,6 +64,11 @@ public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuil
   @Override
   public boolean isIncludeRuntimeDependencies() {
     return myIncludeRuntimeDependencies;
+  }
+
+  @Override
+  public boolean isIncludeTests() {
+    return myIncludeTests;
   }
 
   @NotNull

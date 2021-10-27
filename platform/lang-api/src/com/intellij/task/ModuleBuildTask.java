@@ -28,4 +28,8 @@ public interface ModuleBuildTask extends BuildTask {
   boolean isIncludeDependentModules();
 
   boolean isIncludeRuntimeDependencies();
+
+  default boolean isIncludeTests() {
+    return true;
+  }
 }

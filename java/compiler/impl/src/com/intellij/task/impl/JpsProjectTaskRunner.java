@@ -113,17 +113,17 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
     if (ContainerUtil.isEmpty(buildTasks)) return;
 
-    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
+    ModulesBuildSettings buildSettings = assembleModulesBuildSettings(buildTasks);
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
-    if (modulesBuildSettings.isRebuild()){
+    if (buildSettings.isRebuild()){
       compilerManager.rebuild(new MyCompileStatusNotification(notificationCollector));
     }
     else {
       CompileScope scope = createScope(
-        compilerManager, context, modulesBuildSettings.modules, modulesBuildSettings.includeDependentModules, modulesBuildSettings.includeRuntimeDependencies
+        compilerManager, context, buildSettings.modules, buildSettings.includeDependentModules, buildSettings.includeRuntimeDependencies, buildSettings.includeTests
       );
-      if (modulesBuildSettings.isIncrementalBuild) {
+      if (buildSettings.isIncrementalBuild) {
         compilerManager.make(scope, new MyCompileStatusNotification(notificationCollector));
       }
       else {
@@ -139,7 +139,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     if (ContainerUtil.isEmpty(buildTasks)) return;
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
-    CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false);
+    CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false, true);
     // this will effectively run all before- and after- compilation tasks registered within CompilerManager
     EmptyCompileScopeBuildTask task = (EmptyCompileScopeBuildTask)buildTasks.iterator().next();
     if (task.isIncrementalBuild()) {
@@ -159,15 +159,14 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
-    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
-    CompileScope scope = createScope(compilerManager, context,
-                                     modulesBuildSettings.modules,
-                                     modulesBuildSettings.includeDependentModules,
-                                     modulesBuildSettings.includeRuntimeDependencies);
-    List<String> moduleNames = ContainerUtil.map(modulesBuildSettings.modules, Module::getName);
+    ModulesBuildSettings buildSettings = assembleModulesBuildSettings(buildTasks);
+    CompileScope scope = createScope(
+      compilerManager, context, buildSettings.modules, buildSettings.includeDependentModules, buildSettings.includeRuntimeDependencies, buildSettings.includeTests
+    );
+    List<String> moduleNames = ContainerUtil.map(buildSettings.modules, Module::getName);
     CompileScopeUtil.setResourcesScopeForExternalBuild(scope, moduleNames);
 
-    if (modulesBuildSettings.isIncrementalBuild) {
+    if (buildSettings.isIncrementalBuild) {
       compilerManager.make(scope, new MyCompileStatusNotification(notificationCollector));
     }
     else {
@@ -179,15 +178,18 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     final boolean isIncrementalBuild;
     final boolean includeDependentModules;
     final boolean includeRuntimeDependencies;
+    final boolean includeTests;
     final Collection<? extends Module> modules;
 
     ModulesBuildSettings(boolean isIncrementalBuild,
                          boolean includeDependentModules,
                          boolean includeRuntimeDependencies,
+                         boolean includeTests,
                          Collection<? extends Module> modules) {
       this.isIncrementalBuild = isIncrementalBuild;
       this.includeDependentModules = includeDependentModules;
       this.includeRuntimeDependencies = includeRuntimeDependencies;
+      this.includeTests = includeTests;
       this.modules = modules;
     }
 
@@ -206,6 +208,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     Collection<ModuleBuildTask> incrementalTasks = new SmartList<>();
     Collection<ModuleBuildTask> excludeDependentTasks = new SmartList<>();
     Collection<ModuleBuildTask> excludeRuntimeTasks = new SmartList<>();
+    Collection<ModuleBuildTask> excludeTests = new SmartList<>();
 
     for (ProjectTask buildProjectTask : buildTasks) {
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
@@ -220,11 +223,15 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       if (!moduleBuildTask.isIncludeRuntimeDependencies()) {
         excludeRuntimeTasks.add(moduleBuildTask);
       }
+      if (!moduleBuildTask.isIncludeTests()) {
+        excludeTests.add(moduleBuildTask);
+      }
     }
 
     boolean isIncrementalBuild = incrementalTasks.size() == buildTasks.size();
     boolean includeDependentModules = excludeDependentTasks.size() != buildTasks.size();
     boolean includeRuntimeDependencies = excludeRuntimeTasks.size() != buildTasks.size();
+    boolean includeTests = excludeTests.size() != buildTasks.size();
 
     if (!isIncrementalBuild && !incrementalTasks.isEmpty()) {
       assertModuleBuildSettingsConsistent(incrementalTasks, "will be built ignoring incremental build setting");
@@ -235,7 +242,10 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     if (includeRuntimeDependencies && !excludeRuntimeTasks.isEmpty()) {
       assertModuleBuildSettingsConsistent(excludeRuntimeTasks, "will be built along with runtime dependencies");
     }
-    return new ModulesBuildSettings(isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, modules);
+    if (includeTests && !excludeTests.isEmpty()) {
+      assertModuleBuildSettingsConsistent(excludeTests, "will be built along with test classes");
+    }
+    return new ModulesBuildSettings(isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests, modules);
   }
 
   private static void assertModuleBuildSettingsConsistent(Collection<? extends ModuleBuildTask> moduleBuildTasks, String warnMsg) {
@@ -247,9 +257,10 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
                                           ProjectTaskContext context,
                                           Collection<? extends Module> modules,
                                           boolean includeDependentModules,
-                                          boolean includeRuntimeDependencies) {
+                                          boolean includeRuntimeDependencies,
+                                          boolean includeTests) {
     CompileScope scope = !modules.isEmpty()?
-      compilerManager.createModulesCompileScope(modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies):
+      compilerManager.createModulesCompileScope(modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies, includeTests):
       new CompositeScope(CompileScope.EMPTY_ARRAY);
 
     if (context.isAutoRun()) {
