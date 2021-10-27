@@ -103,7 +103,7 @@ public final class TipUIUtil {
     return tip;
   }
 
-  private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
+  static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
     if (tip == null) return IdeBundle.message("no.tip.of.the.day");
     try {
       StringBuilder text = new StringBuilder();

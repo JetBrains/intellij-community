@@ -117,6 +117,7 @@
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
         <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
+        <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
       </group>
 
       <separator/>
