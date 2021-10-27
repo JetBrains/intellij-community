@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
@@ -115,6 +117,16 @@ fun InlayPresentation.fireUpdateEvent(previousDimension: Dimension) {
 fun InlayPresentation.dimension() = Dimension(width, height)
 
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
+
+@ApiStatus.Experimental
+fun InlayHintsSink.addCodeVisionElement(editor: Editor, offset: Int, priority: Int, presentation: InlayPresentation) {
+  val line = editor.document.getLineNumber(offset)
+  val column = offset - editor.document.getLineStartOffset(line)
+  val root = RecursivelyUpdatingRootPresentation(presentation)
+  val constraints = BlockConstraints(false, priority, InlayGroup.CODE_VISION_GROUP.ordinal, column)
+
+  addBlockElement(line, true, root, constraints)
+}
 
 object InlayHintsUtils {
   fun getDefaultInlayHintsProviderPopupActions(

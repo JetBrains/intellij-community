@@ -40,9 +40,9 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
     val info = getCodeAuthorInfo(element.project, range, editor)
-    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
+    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project)
 
-    sink.addBlockElement(range.startOffset, false, true, BlockInlayPriority.CODE_VISION, presentation)
+    sink.addCodeVisionElement(editor, range.startOffset, BlockInlayPriority.CODE_AUTHOR, presentation)
     return true
   }
 
@@ -95,13 +95,6 @@ internal class VcsCodeAuthorInlayHintsCollector(
     MenuOnClickPresentation(this, project) {
       getDefaultInlayHintsProviderPopupActions(VcsCodeAuthorInlayHintsProvider.KEY, messagePointer("title.code.author.inlay.hints"))
     }
-
-  private fun InlayPresentation.shiftTo(offset: Int, editor: Editor): InlayPresentation {
-    val document = editor.document
-    val column = offset - document.getLineStartOffset(document.getLineNumber(offset))
-
-    return factory.seq(factory.textSpacePlaceholder(column, true), this)
-  }
 }
 
 private class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: Int, val isModified: Boolean) {

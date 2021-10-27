@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.codeInsight.hints.InlayHintsUtilsKt.addCodeVisionElement;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings> {
@@ -74,9 +75,9 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
           PsiElement identifier = namedElement.getNameIdentifier();
           if (identifier == null) return;
           int offset = ProjectProblemUtils.getMemberOffset(psiMember);
-          InlayPresentation presentation =
-            ProjectProblemUtils.getPresentation(project, editor, document, factory, offset, psiMember, memberProblems);
-          sink.addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, presentation);
+          InlayPresentation presentation = ProjectProblemUtils.getPresentation(project, editor, factory, psiMember, memberProblems);
+
+          addCodeVisionElement(sink, editor, offset, BlockInlayPriority.PROBLEMS, presentation);
           highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember, identifier));
         });
 

@@ -14,7 +14,6 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmLanguage;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -53,23 +52,17 @@ public final class ProjectProblemUtils {
 
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
-                                                    @NotNull Document document,
                                                     @NotNull PresentationFactory factory,
-                                                    int offset,
                                                     @NotNull PsiMember member,
                                                     @NotNull Set<Problem> relatedProblems) {
-    int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
-    InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
     InlayPresentation errorTextPresentation =
       new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor,
                                      new WithAttributesPresentation.AttributesFlags());
     InlayPresentation problemsPresentation =
       factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
-    InlayPresentation withMenu =
-      new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
 
-    return factory.seq(problemsOffset, withMenu);
+    return new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
   }
 
   private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
