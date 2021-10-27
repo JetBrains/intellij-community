@@ -18,9 +18,12 @@ import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import kotlin.math.floor
 
 internal class InsertEmptyTableAction: DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
@@ -66,25 +69,31 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     private var columns: Int = 4,
     private val expandFactor: Int = 2,
     private val selectedCallback: (Int, Int) -> Unit
-  ): JPanel(MigLayout("insets 8, gap 3")) {
+  ): JPanel(MigLayout("insets 8")) {
     lateinit var parentHint: LightweightHint
     private val cells = arrayListOf<ArrayList<Cell>>()
     private var selectedCellRow = 0
     private var selectedCellColumn = 0
 
+    private val gridPanel = JPanel(MigLayout("insets 0, gap 3"))
     private val label = JBLabel()
+
+    private val mouseListener = MyMouseListener()
+    private val childMouseListener = object: MouseAdapter() {
+      override fun mouseClicked(event: MouseEvent) {
+        mouseListener.mouseClicked(SwingUtilities.convertMouseEvent(event.component, event, this@TableGridComponent))
+      }
+    }
 
     init {
       for (rowIndex in 0 until rows) {
-        val row = ArrayList<Cell>(columns)
-        for (columnIndex in 0 until columns) {
-          val cell = Cell()
-          addCellListeners(cell, rowIndex, columnIndex)
-          row.add(cell)
-        }
-        cells.add(row)
+        cells.add(generateSequence { Cell() }.take(columns).toCollection(ArrayList(columns)))
       }
       fillGrid()
+      add(gridPanel, "wrap")
+      add(label, "align center")
+      gridPanel.addMouseMotionListener(mouseListener)
+      gridPanel.addMouseListener(mouseListener)
       updateSelection(0, 0)
     }
 
@@ -92,49 +101,31 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       for (row in 0 until rows) {
         for (column in 0 until columns) {
           val cell = cells[row][column]
-          when (column) {
-            columns - 1 -> add(cell, "wrap")
-            else -> add(cell)
+          when {
+            column == columns - 1 && row != rows - 1 -> gridPanel.add(cell, "wrap")
+            else -> gridPanel.add(cell)
           }
         }
       }
-      add(label, "span, align center")
     }
 
-    private fun expandGrid() {
-      removeAll()
-      for ((index, row) in cells.withIndex()) {
+    private fun expandGrid(expandRows: Boolean, expandColumns: Boolean) {
+      gridPanel.removeAll()
+      if (expandRows) {
         repeat(expandFactor) {
-          val cell = Cell()
-          addCellListeners(cell, index, columns - 1 + it)
-          row.add(Cell())
+          cells.add(generateSequence { Cell() }.take(columns).toCollection(ArrayList(columns)))
         }
+        rows += expandFactor
       }
-      repeat(expandFactor) {
-        val row = ArrayList<Cell>(columns - 1 + expandFactor)
-        for (index in 0 until (rows + expandFactor)) {
-          val cell = Cell()
-          addCellListeners(cell, cells.lastIndex + 1, index)
-          row.add(cell)
+      if (expandColumns) {
+        for (row in cells) {
+          repeat(expandFactor) {
+            row.add(Cell())
+          }
         }
-        cells.add(row)
+        columns += expandFactor
       }
-      rows += expandFactor
-      columns += expandFactor
       fillGrid()
-    }
-
-    private fun addCellListeners(cell: Cell, row: Int, column: Int) {
-      cell.addMouseListener(object: MouseAdapter() {
-        override fun mouseEntered(event: MouseEvent) {
-          updateSelection(row, column)
-        }
-
-        override fun mouseClicked(event: MouseEvent) {
-          updateSelection(row, column)
-          selectedCallback.invoke(selectedCellRow + 1, selectedCellColumn + 1)
-        }
-      })
     }
 
     private fun updateSelection(selectedRow: Int, selectedColumn: Int) {
@@ -148,20 +139,47 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         }
       }
       repaint()
-      if (selectedRow + 1 == rows && selectedColumn + 1 == columns && rows < maxRows && columns < maxColumns) {
-        expandGrid()
+      val shouldExpandRows = rows < maxRows && selectedRow + 1 == rows
+      val shouldExpandColumns = columns < maxColumns && selectedColumn + 1 == columns
+      if (shouldExpandRows || shouldExpandColumns) {
+        expandGrid(expandRows = shouldExpandRows, expandColumns = shouldExpandColumns)
         parentHint.pack()
         parentHint.component.revalidate()
         parentHint.component.repaint()
       }
     }
 
-    private class Cell: JPanel() {
+    private inner class MyMouseListener: MouseAdapter() {
+      private fun obtainIndices(point: Point): Pair<Int, Int> {
+        val panelWidth = gridPanel.width.toFloat()
+        val panelHeight = gridPanel.height.toFloat()
+        val tileWidth = panelWidth / columns
+        val tileHeight = panelHeight / rows
+        val column = floor(point.x.toFloat() / tileWidth).toInt()
+        val row = floor(point.y.toFloat() / tileHeight).toInt()
+        return row to column
+      }
+
+      override fun mouseMoved(event: MouseEvent) {
+        val (row, column) = obtainIndices(event.point)
+        updateSelection(row, column)
+      }
+
+      override fun mouseClicked(event: MouseEvent) {
+        val (row, column) = obtainIndices(event.point)
+        updateSelection(row, column)
+        selectedCallback.invoke(row, column)
+      }
+    }
+
+    private inner class Cell: JPanel() {
       init {
         background = UIUtil.getTextFieldBackground()
         size = Dimension(15, 15)
         preferredSize = size
         border = IdeBorderFactory.createBorder()
+        border = IdeBorderFactory.createBorder()
+        addMouseListener(childMouseListener)
       }
 
       var isSelected = false
