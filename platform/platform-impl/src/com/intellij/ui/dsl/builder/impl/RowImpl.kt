@@ -251,9 +251,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun label(text: String): CellImpl<JLabel> {
-    val result = Label(text)
-    result.putClientProperty(DslComponentProperty.LABEL, true)
-    return cell(result)
+    return cell(Label(text))
   }
 
   override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {

@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -41,7 +42,7 @@ class NewProjectWizardStepPanel(val step: NewProjectWizardStep) {
       return false
     }
     val constraints = layout.getConstraints(label)
-    return constraints != null && constraints.x == 0 && constraints.gaps.left == 0
+    return label.getClientProperty(DslComponentProperty.ROW_LABEL) == true && constraints != null && constraints.gaps.left == 0
   }
 
   private fun JComponent.setMinimumWidth(width: Int) {
