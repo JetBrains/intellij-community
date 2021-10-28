@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.findUsages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isConstructorUsage
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.processCompanionObjectInternalReferences
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindClassUsagesDialog
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -29,10 +29,8 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.*
 
 class KotlinFindClassUsagesHandler(
@@ -80,7 +78,7 @@ class KotlinFindClassUsagesHandler(
             }
 
             if (kotlinOptions.isUsages && classOrObject is KtObjectDeclaration && classOrObject.isCompanion() && classOrObject in options.searchScope) {
-                if (!processCompanionObjectInternalReferences(classOrObject)) return false
+                if (!processCompanionObjectInternalReferences(classOrObject, referenceProcessor)) return false
             }
 
             if (kotlinOptions.searchConstructorUsages) {
@@ -144,16 +142,6 @@ class KotlinFindClassUsagesHandler(
                 usagesQuery = FilteredQuery(usagesQuery) { it.isConstructorUsage(classOrObject) }
             }
             addTask { usagesQuery.forEach(referenceProcessor) }
-        }
-
-        private fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration): Boolean {
-            val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
-            return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
-                if (element == companionObject) return false // skip companion object itself
-                return if (element.isCallReceiverRefersToCompanionObject(companionObject)) {
-                    element.references.any { !referenceProcessor.process(it) }
-                } else false
-            })
         }
 
         private fun processMemberReferencesLater(classOrObject: KtClassOrObject) {
