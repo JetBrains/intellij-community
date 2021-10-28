@@ -36,7 +36,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                       tabId: String,
                       keysTyped: Int,
                       backspacesTyped: Int,
-                      queryLength: Int) {
+                      searchQuery: String) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -46,7 +46,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        queryLength, providersCaches)
+        searchQuery, providersCaches)
     }
 
     if (prevState != null && isMLSupportedTab(prevState.tabId)) {

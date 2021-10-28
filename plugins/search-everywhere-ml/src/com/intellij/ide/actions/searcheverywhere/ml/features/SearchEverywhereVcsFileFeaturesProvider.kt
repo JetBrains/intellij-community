@@ -19,7 +19,11 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
     }
   }
 
-  override fun getElementFeatures(element: Any, currentTime: Long, queryLength: Int, elementPriority: Int, cache: Any?): Map<String, Any> {
+  override fun getElementFeatures(element: Any,
+                                  currentTime: Long,
+                                  searchQuery: String,
+                                  elementPriority: Int,
+                                  cache: Any?): Map<String, Any> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
       is PsiFileSystemItem -> element

@@ -737,6 +737,28 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(expected)
   }
 
+  fun `test prefix exact match when query contains only filename`() {
+    checkThatFeature("prefixExact")
+      .ofElement(testFile)
+      .withQuery(testFile.virtualFile.nameWithoutExtension)
+      .isEqualTo(true)
+  }
+
+  fun `test prefix exact match when query contains filename with extension`() {
+    checkThatFeature("prefixExact")
+      .ofElement(testFile)
+      .withQuery(testFile.virtualFile.name)
+      .isEqualTo(true)
+  }
+
+  fun `test prefix exact match when query contains directory and filename`() {
+    val query = "${testFile.virtualFile.parent.name}${File.separatorChar}${testFile.virtualFile.nameWithoutExtension}"
+    checkThatFeature("prefixExact")
+      .ofElement(testFile)
+      .withQuery(query)
+      .isEqualTo(true)
+  }
+
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {
     val mockVirtualFile = object : MockVirtualFile("file.txt") {
       override fun getTimeStamp(): Long {

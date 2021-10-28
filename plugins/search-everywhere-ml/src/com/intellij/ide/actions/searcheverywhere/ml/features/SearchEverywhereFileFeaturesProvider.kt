@@ -18,7 +18,9 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.Time.*
+import java.io.File
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
@@ -90,7 +92,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
+                                  searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
     val item = when (element) {
@@ -100,11 +102,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     val fileTypeStats = cache as Cache
-    return getFeatures(item, currentTime, elementPriority, fileTypeStats)
+    return getFeatures(item, currentTime, searchQuery, elementPriority, fileTypeStats)
   }
 
   private fun getFeatures(item: PsiFileSystemItem,
                           currentTime: Long,
+                          searchQuery: String,
                           elementPriority: Int,
                           cache: Cache): Map<String, Any> {
     val data = hashMapOf<String, Any>(
@@ -114,6 +117,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       IS_EXACT_MATCH_DATA_KEY to (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE),
     )
 
+    data.putAll(getNameMatchingFeatures(item, searchQuery))
     data.putAll(getFileLocationStats(item))
 
     calculatePackageDistance(item, cache.openedFile)?.let {
@@ -143,6 +147,29 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   private fun isFavorite(item: PsiFileSystemItem): Boolean {
     val favoritesManager = FavoritesManager.getInstance(item.project)
     return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
+  }
+
+  private fun getNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Map<String, Any> {
+    fun changeToCamelCase(str: String): String {
+      val words = str.split('_')
+      val firstWord = words.first()
+      if (words.size == 1) {
+        return firstWord
+      } else {
+        return firstWord.plus(
+          words.subList(1, words.size)
+            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
+        )
+      }
+    }
+
+    // Remove the directory and the extension if they are present
+    val filename = searchQuery.substringAfterLast(File.separatorChar).substringBeforeLast('.')
+
+    val features = mutableMapOf<String, Any>()
+    PrefixMatchingUtil.calculateFeatures(item.virtualFile.nameWithoutExtension, filename, features)
+    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
+      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 
   private fun isOpened(item: PsiFileSystemItem): Boolean {
