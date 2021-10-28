@@ -6,8 +6,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 
 interface KotlinFindUsagesSupport {
 
@@ -15,10 +19,13 @@ interface KotlinFindUsagesSupport {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.getServiceSafe()
 
         val KtParameter.isDataClassComponentFunction: Boolean
-            get() =  getInstance(project).isDataClassComponentFunction(this)
+            get() = getInstance(project).isDataClassComponentFunction(this)
 
-        fun KtElement.isCallReceiverRefersToCompanionObject(companionObject: KtObjectDeclaration): Boolean =
-            getInstance(project).isCallReceiverRefersToCompanionObject(this, companionObject)
+        fun processCompanionObjectInternalReferences(
+            companionObject: KtObjectDeclaration,
+            referenceProcessor: Processor<PsiReference>
+        ): Boolean =
+            getInstance(companionObject.project).processCompanionObjectInternalReferences(companionObject, referenceProcessor)
 
         fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> =
             getInstance(target.project).getTopMostOverriddenElementsToHighlight(target)
@@ -36,7 +43,7 @@ interface KotlinFindUsagesSupport {
             getInstance(project).sourcesAndLibraries(delegate, project)
     }
 
-    fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean
+    fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration, referenceProcessor: Processor<PsiReference>): Boolean
 
     fun isDataClassComponentFunction(element: KtParameter): Boolean
 
