@@ -44,7 +44,7 @@ public class EnterBetweenBracesDelegate {
 
   /**
    * Reformats the line at the specified offset in the specified file, modifying only the line indent
-   * and leaving all other whitespace intact. The document is not committed in time of call.
+   * and leaving all other whitespace intact. At the time of call, the document is in the uncommitted state.
    *
    * @param file   The PSI file to reformat.
    * @param offset The offset the line at which should be reformatted.
