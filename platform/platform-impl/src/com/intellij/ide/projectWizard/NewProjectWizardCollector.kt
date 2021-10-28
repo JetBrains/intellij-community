@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import java.lang.Integer.min
 
 class NewProjectWizardCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
@@ -50,7 +51,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logStarted(project: Project?) = activity.started(project)
     @JvmStatic fun logScreen(context: WizardContext, screenNumber: Int) = screen.log(context.project, context.sessionId.id, screenNumber)
     @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project, context.sessionId.id)
-    @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, context.sessionId.id, chars, results)
+    @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, context.sessionId.id, min(chars, 10), results)
     @JvmStatic fun logLocationChanged(context: WizardContext, generator: Class<*>) = location.log(context.project, context.sessionId.id, generator)
     @JvmStatic fun logNameChanged(context: WizardContext, generator: Class<*>) = name.log(context.project, context.sessionId.id, generator)
     @JvmStatic fun logLanguageChanged(context: WizardContext, language: Class<*>) = languageSelected.log(context.project, context.sessionId.id, language)
