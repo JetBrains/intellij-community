@@ -9,41 +9,51 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
-    override fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean {
+    override fun processCompanionObjectInternalReferences(
+        companionObject: KtObjectDeclaration,
+        referenceProcessor: Processor<PsiReference>
+    ): Boolean {
+        // TODO: implement this
         return false
     }
 
     override fun isDataClassComponentFunction(element: KtParameter): Boolean {
+        // TODO: implement this
         return false
     }
 
     override fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
+        // TODO: implement this
         return emptyList()
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? {
+        // TODO: implement this
         return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
     }
 
     override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
+        // TODO: implement this
         return false
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
+        // TODO: implement this
         return emptyList()
     }
 
