@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Test {
     fun test() {
         val some : <caret>
