@@ -1,0 +1,10 @@
+// "Make 'inlineFun' internal" "true"
+open class Base {
+    fun baseFun(param: Any) {}
+}
+
+open class Derived : Base() {
+    internal inline fun inlineFun() {
+        super.baseFun("123")
+    }
+}
