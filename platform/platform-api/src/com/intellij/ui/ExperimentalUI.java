@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.Arrays;
@@ -173,18 +172,18 @@ public final class ExperimentalUI {
       defaults.put(key, inter);
     }
 
-      if (JBColor.isBright()) {
-        Color menuBg = new ColorUIResource(0x242933);
-        Color menuFg = new ColorUIResource(0xFFFFFF);
-        setUIProperty("PopupMenu.background", menuBg, defaults);
-        setUIProperty("MenuItem.background", menuBg, defaults);
-        setUIProperty("MenuItem.foreground", menuFg, defaults);
-        setUIProperty("Menu.background", menuBg, defaults);
-        setUIProperty("Menu.foreground", menuFg, defaults);
-        setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
-        setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
-        setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
-        setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
-      }
-    }
+    //if (JBColor.isBright()) {
+    //  Color menuBg = new ColorUIResource(0x242933);
+    //  Color menuFg = new ColorUIResource(0xFFFFFF);
+    //  setUIProperty("PopupMenu.background", menuBg, defaults);
+    //  setUIProperty("MenuItem.background", menuBg, defaults);
+    //  setUIProperty("MenuItem.foreground", menuFg, defaults);
+    //  setUIProperty("Menu.background", menuBg, defaults);
+    //  setUIProperty("Menu.foreground", menuFg, defaults);
+    //  setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
+    //  setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
+    //  setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
+    //  setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
+    //}
+  }
 }
