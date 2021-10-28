@@ -78,6 +78,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @NotNull private State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
+  private final List<ActionMenu> myScreenMenus = Menu.isJbScreenMenuEnabled() ? new ArrayList<>() : null;
 
   @NotNull
   public static IdeMenuBar createMenuBar() {
@@ -85,8 +86,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected IdeMenuBar() {
-    Menu.isEnabled(); // load native library
-
     if (FrameInfoHelper.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
       myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
@@ -401,29 +400,33 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     myVisibleActions = myNewVisibleActions;
 
     removeAll();
+    List<MenuItem> newScreenMenuItems = null;
+    if (myScreenMenus != null) {
+      myScreenMenus.clear();
+      newScreenMenuItems = new ArrayList<>();
+    }
     boolean isDarkMenu = isDarkMenu();
-    List<MenuItem> newItems = Menu.isEnabled() ? new ArrayList<>() : null;
     for (AnAction action : myVisibleActions) {
       Menu rootMenuPeer = null;
-      if (newItems != null) {
-        rootMenuPeer = new Menu(myPresentationFactory.getPresentation(action).getText(enableMnemonics));
-        newItems.add(rootMenuPeer);
-      }
-      ActionMenu actionMenu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, rootMenuPeer);
+      if (newScreenMenuItems != null) newScreenMenuItems.add(rootMenuPeer = new Menu(myPresentationFactory.getPresentation(action).getText(enableMnemonics)));
+      ActionMenu actionMenu =
+        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu,
+                       rootMenuPeer);
 
-      if(IdeFrameDecorator.isCustomDecorationActive()) {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
         actionMenu.setOpaque(false);
         actionMenu.setFocusable(false);
       }
 
-      add(actionMenu);
+      if (myScreenMenus == null)
+        add(actionMenu);
+      else
+        myScreenMenus.add(actionMenu);
     }
+
     myPresentationFactory.resetNeedRebuild();
 
-    if (newItems != null) {
-      // TODO: ensure that newItems will be release (for example if refillMainMenu wasn't invoked because of exception)
-      Menu.refillMainMenu(newItems);
-    }
+    if (newScreenMenuItems != null) Menu.refillMainMenu(newScreenMenuItems);
 
     updateGlobalMenuRoots();
     if (myClockPanel != null) {

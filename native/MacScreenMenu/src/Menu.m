@@ -160,11 +160,11 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeAddItem
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu
  * Method:    nativeRefill
- * Signature: (J[J)V
+ * Signature: (J[JZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
-(JNIEnv *env, jobject peer, jlong menuObj, jlongArray newItems)
+(JNIEnv *env, jobject peer, jlong menuObj, jlongArray newItems, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
 
@@ -186,7 +186,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
 
     // 3. schedule on AppKit
     Menu * __strong menu = (Menu *)menuObj;
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_block_t block = ^{
         // NOTE: when use [menu->nsMenu removeAllItems] => selection is dropped
         // so don't allow menu to be empty: remove all except first
         NSInteger countBefore = [menu->nsMenu numberOfItems];
@@ -210,7 +210,12 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
         if (countBefore > 0) {
             [menu->nsMenu removeItemAtIndex:0];
         }
-    });
+    };
+
+    if (onAppKit)
+        dispatch_async(dispatch_get_main_queue(), block);
+    else
+        block();
 
     JNI_COCOA_EXIT();
 }
@@ -218,11 +223,11 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu
  * Method:    nativeRefillMainMenu
- * Signature: ([J)V
+ * Signature: ([JZ)V
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
-(JNIEnv *env, jclass peerClass, jlongArray newItems)
+(JNIEnv *env, jclass peerClass, jlongArray newItems, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
     if (sjc_Menu == NULL) {
@@ -252,7 +257,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
     }
 
     // 3. schedule on AppKit
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_block_t block = ^{
         NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
         // remove all except first (AppMenu)
 //        for (int i = [mainMenu numberOfItems]; i-1 > 0 ; i--) {
@@ -282,7 +287,12 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefillMainMenu
             }
         }
         free(newItemsPtrs);
-    });
+    };
+
+    if (onAppKit)
+        dispatch_async(dispatch_get_main_queue(), block);
+    else
+        block();
 
     JNI_COCOA_EXIT();
 }
