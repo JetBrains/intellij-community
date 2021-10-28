@@ -96,7 +96,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
         val actionGroup = action as? ActionGroup
                           ?: throw IllegalArgumentException("Action group '$actionId' not found; actual action: $action")
         val toolbar = ActionManager.getInstance().createActionToolbar(
-          ActionPlaces.RUN_TOOLBAR,
+          ActionPlaces.MAIN_TOOLBAR,
           actionGroup,
           true,
         )
