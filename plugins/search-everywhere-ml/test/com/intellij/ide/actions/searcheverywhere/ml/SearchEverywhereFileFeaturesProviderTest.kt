@@ -1,5 +1,6 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
+import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
@@ -10,7 +11,11 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXCLUDED_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_IN_SOURCE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_IN_TEST_SOURCES_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_SAME_MODULE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE_NORMALIZED_DATA_KEY
@@ -143,6 +148,74 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .ofElement(testFile)
       .withPriority(priority)
       .isEqualTo(priority)
+  }
+
+  fun testIsExactMatch() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      .isEqualTo(true)
+  }
+
+  fun testIsNotExactMatch() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
+      .ofElement(testFile)
+      .withPriority(10101)
+      .isEqualTo(false)
+  }
+
+  fun testIsFromSources() {
+    val module = module {
+      source {
+        file("testFile.txt")
+      }
+    }
+
+    val file = module.getFromSource("testFile.txt").toPsi()
+
+    checkThatFeatures()
+      .ofElement(file)
+      .isEqualTo(mapOf(
+        IS_IN_SOURCE_DATA_KEY to true,
+        IS_IN_TEST_SOURCES_DATA_KEY to false,
+        IS_EXCLUDED_DATA_KEY to false,
+      ))
+  }
+
+  fun testIsFromTestSources() {
+    val module = module {
+      test {
+        file("testFile.txt")
+      }
+    }
+
+    val file = module.getFromTestSource("testFile.txt").toPsi()
+
+    checkThatFeatures()
+      .ofElement(file)
+      .isEqualTo(mapOf(
+        IS_IN_SOURCE_DATA_KEY to true,  // Test source is also a source content
+        IS_IN_TEST_SOURCES_DATA_KEY to true,
+        IS_EXCLUDED_DATA_KEY to false,
+      ))
+  }
+
+  fun testIsFromExcluded() {
+    val module = module {
+      excluded {
+        file("testFile.txt")
+      }
+    }
+
+    val file = module.getFromExcluded("testFile.txt").toPsi()
+
+    checkThatFeatures()
+      .ofElement(file)
+      .isEqualTo(mapOf(
+        IS_IN_SOURCE_DATA_KEY to false,
+        IS_IN_TEST_SOURCES_DATA_KEY to false,
+        IS_EXCLUDED_DATA_KEY to true,
+      ))
   }
 
   fun `test file type usage ratio for the most popular file type`() {

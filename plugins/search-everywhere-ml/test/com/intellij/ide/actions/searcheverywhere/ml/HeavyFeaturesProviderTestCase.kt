@@ -24,6 +24,7 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
   inner class ModuleBuilder(moduleName: String) {
     private val defaultSourceName = "src"
     private val defaultTestSourceName = "test"
+    private val defaultExcludedName = "excluded"
 
     private val moduleDirectory = createTempDir(moduleName)
     private val module = createModuleAt(moduleName, project, moduleType, moduleDirectory.toPath())
@@ -50,6 +51,17 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
       }
     }
 
+    fun excluded(name: String = defaultExcludedName, init: Content.() -> Unit) {
+      val content = Content(name)
+      content.init()
+
+      ModuleRootModificationUtil.updateModel(module) {
+        val excludedDirectoryUrl = VfsUtilCore.pathToUrl(content.contentDirectory.path)
+        val contentEntry = it.addContentEntry(excludedDirectoryUrl)
+        contentEntry.addExcludeFolder(excludedDirectoryUrl)
+      }
+    }
+
     private fun get(filename: String, packageName: String = "", contentRoot: String): VirtualFile {
       val packageDirectory = packageName.replace('.', File.separatorChar)
       val pathInsideModule = listOf(contentRoot, packageDirectory, filename).joinToString(File.separator)
@@ -69,6 +81,10 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
     fun getFromTestSource(filename: String, packageName: String = "", contentRoot: String = defaultTestSourceName) = get(filename,
                                                                                                                          packageName,
                                                                                                                          contentRoot)
+
+    fun getFromExcluded(filename: String, packageName: String = "", contentRoot: String = defaultExcludedName) = get(filename,
+                                                                                                                     packageName,
+                                                                                                                     contentRoot)
 
     inner class Content(name: String) {
       val contentDirectory = File(moduleDirectory, name).apply { mkdir() }

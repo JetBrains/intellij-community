@@ -8,6 +8,7 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
   companion object {
     private const val IS_IGNORED_DATA_KEY = "isIgnored"
     private const val IS_CHANGED_DATA_KEY = "isChanged"
+    private const val FILE_STATUS_DATA_KEY = "fileStatus"
   }
 
   override fun isElementSupported(element: Any): Boolean {
@@ -38,6 +39,7 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
     return hashMapOf(
       IS_CHANGED_DATA_KEY to changeListManager.isFileAffected(item.virtualFile),
       IS_IGNORED_DATA_KEY to changeListManager.isIgnoredFile(item.virtualFile),
+      FILE_STATUS_DATA_KEY to changeListManager.getStatus(item.virtualFile).id
     )
   }
 }
