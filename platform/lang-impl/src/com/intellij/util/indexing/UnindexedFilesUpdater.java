@@ -102,16 +102,14 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       myProject.putUserData(CONTENT_SCANNED, null);
     }
 
-    synchronized (ourLastRunningTaskLock) {
-      UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
-      //two tasks with limited checks should be just run one after other
-      if (runningTask == null || isFullIndexUpdate()) {
-        myProject.putUserData(RUNNING_TASK, this);
-
-        if (runningTask != null) { // => isFullIndexUpdate() == null
+    if (isFullIndexUpdate()) {
+      synchronized (ourLastRunningTaskLock) {
+        UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
+        if (runningTask != null) {
+          // Two tasks with limited checks should be just run one after other.
           // A case of a full check followed by a limited change cancelling first one and making a full check anew results
           // in endless restart of full checks on Windows with empty Maven cache.
-          // So only in case the second one is a full check the first one will be cancelled.
+          // So only in case the second one is a full check should the first one be cancelled.
           DumbService.getInstance(project).cancelTask(runningTask);
         }
       }
@@ -557,6 +555,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
+    synchronized (ourLastRunningTaskLock) {
+      myProject.putUserData(RUNNING_TASK, this);
+    }
     performScanningAndIndexing(indicator);
   }
 
