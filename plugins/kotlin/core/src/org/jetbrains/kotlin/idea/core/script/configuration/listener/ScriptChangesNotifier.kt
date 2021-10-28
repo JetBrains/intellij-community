@@ -27,7 +27,7 @@ internal class ScriptChangesNotifier(
 
     init {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
-        scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
+        scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
         project.messageBus.connect(parentDisposable).subscribe(
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
@@ -42,10 +42,10 @@ internal class ScriptChangesNotifier(
 
                 private fun runScriptDependenciesUpdateIfNeeded(file: VirtualFile) {
                     if (isUnitTestMode()) {
-                        getListener(project, file)?.editorActivated(file)
+                        updateScriptDependenciesIfNeeded(file)
                     } else {
                         AppExecutorUtil.getAppExecutorService().submit {
-                            getListener(project, file)?.editorActivated(file)
+                            updateScriptDependenciesIfNeeded(file)
                         }
                     }
                 }
@@ -91,6 +91,10 @@ internal class ScriptChangesNotifier(
             addAll(LISTENER.getExtensions(project))
             add(defaultListener)
         }
+
+    internal fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+        getListener(project, file)?.editorActivated(file)
+    }
 
     private fun getListener(project: Project, file: VirtualFile): ScriptChangeListener? {
         if (project.isDisposed || areListenersDisabled()) return null

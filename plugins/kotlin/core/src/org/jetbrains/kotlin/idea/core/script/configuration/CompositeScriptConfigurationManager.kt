@@ -69,6 +69,10 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         plugins
     }
 
+    fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+        notifier.updateScriptDependenciesIfNeeded(file)
+    }
+
     fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? {
         return classpathRoots.getLightScriptInfo(locationId)?.definition
     }

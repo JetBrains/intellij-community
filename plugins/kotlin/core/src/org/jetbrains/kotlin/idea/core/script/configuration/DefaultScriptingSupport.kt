@@ -168,8 +168,10 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
 
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
 
-        val syncLoader = sync.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
-        if (syncLoader == null) {
+        val syncLoader =
+            sync.filter { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }.firstOrNull()
+
+        return if (syncLoader == null) {
             if (!fromCacheOnly) {
                 if (forceSync) {
                     loaders.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
@@ -192,9 +194,9 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
                 }
             }
 
-            return false
+            false
         } else {
-            return true
+            true
         }
     }
 
@@ -441,18 +443,17 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     }
 
     /**
-     * Load new configuration and suggest to apply it (only if it is changed)
+     * Load new configuration and suggest applying it (only if it is changed)
      */
     fun ensureUpToDatedConfigurationSuggested(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
         reloadIfOutOfDate(file, skipNotification, forceSync)
     }
 
     private fun reloadIfOutOfDate(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return
+        if (!forceSync && !ScriptDefinitionsManager.getInstance(project).isReady()) return
 
         manager.updater.update {
-            val virtualFile = file.originalFile.virtualFile
-            if (virtualFile != null) {
+            file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
                 if (state == null || forceSync || !state.isUpToDate(project, virtualFile, file)) {
                     reloadOutOfDateConfiguration(
