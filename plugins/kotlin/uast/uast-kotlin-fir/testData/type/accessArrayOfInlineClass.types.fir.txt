@@ -12,7 +12,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         UReturnExpression [return <init>(42)]
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(42)] : PsiType:Z
                                 UIdentifier (Identifier (Z)) [UIdentifier (Identifier (Z))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Z
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Z) [<init>] : PsiType:Z
                                 ULiteralExpression (value = 42) [42] : PsiType:int
         UMethod (name = getXs) [public static final fun getXs() : Z[] = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
@@ -23,7 +23,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         ULiteralExpression (value = 0) [0] : PsiType:int
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(12)] : PsiType:Z
                         UIdentifier (Identifier (Z)) [UIdentifier (Identifier (Z))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Z
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Z) [<init>] : PsiType:Z
                         ULiteralExpression (value = 12) [12] : PsiType:int
                 UDeclarationsExpression [var t: Z = xs[0]]
                     ULocalVariable (name = t) [var t: Z = xs[0]]
@@ -43,3 +43,5 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                             USimpleNameReferenceExpression (identifier = t) [t] : PsiType:Z
                 UReturnExpression [return "OK"] : PsiType:Void
                     ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+    UClass (name = Z) [public final class Z {...}]
+        UMethod (name = getData) [public final fun getData() : int = UastEmptyExpression]
