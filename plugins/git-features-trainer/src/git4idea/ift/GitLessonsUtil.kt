@@ -11,6 +11,8 @@ import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
@@ -127,21 +129,16 @@ object GitLessonsUtil {
     }
   }
 
-  // Returns future that completes when checkout is started
-  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }): CompletableFuture<Boolean> {
-    val checkoutStartedFuture = CompletableFuture<Boolean>()
+  fun TaskContext.triggerOnCheckout(checkBranch: (String) -> Boolean = { true }) {
     addFutureStep {
       subscribeForMessageBus(BranchChangeListener.VCS_BRANCH_CHANGED, object : BranchChangeListener {
-        override fun branchWillChange(branchName: String) {
-          checkoutStartedFuture.complete(true)
-        }
+        override fun branchWillChange(branchName: String) {}
 
         override fun branchHasChanged(branchName: String) {
           if (checkBranch(branchName)) completeStep()
         }
       })
     }
-    return checkoutStartedFuture
   }
 
   fun TaskContext.gotItStep(position: Balloon.Position,
@@ -157,6 +154,21 @@ object GitLessonsUtil {
     test(waitEditorToBeReady = false) {
       ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
     }
+  }
+
+  /**
+   * Restores task if [PreviousTaskInfo.ui] is not showing and background task is not running
+   */
+  fun TaskContext.restoreByUiAndBackgroundTask(taskTitleRegex: @Nls String, delayMillis: Int = 0, restoreId: TaskContext.TaskId? = null) {
+    val regex = Regex(taskTitleRegex)
+    restoreState(restoreId, delayMillis) {
+      previous.ui?.isShowing != true && !isBackgroundableTaskRunning(regex)
+    }
+  }
+
+  private fun isBackgroundableTaskRunning(titleRegex: Regex): Boolean {
+    val indicators = CoreProgressManager.getCurrentIndicators()
+    return indicators.find { it is BackgroundableProcessIndicator && it.isRunning && titleRegex.find(it.title) != null } != null
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = false) {

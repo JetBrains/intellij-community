@@ -32,6 +32,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.dsl.*
@@ -268,7 +269,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(VcsBundle.message("vcs.unshelving.changes"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         Thread.sleep(500)
         ideFrame { button(unshelveChangesButtonText).click() }

@@ -2,16 +2,15 @@
 package git4idea.ift.lesson
 
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
@@ -32,6 +31,7 @@ import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.openUpdateDialogText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
@@ -112,21 +112,14 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      lateinit var curBranchName: String
-      before {
-        curBranchName = repository.currentBranchName ?: error("Not found information about active branch")
-      }
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
       triggerByListItemAndHighlight(clearPreviousHighlights = false) { item ->
         (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
-      val checkoutStartedFuture = triggerOnCheckout { newBranch -> newBranch == main }
-      restoreState(firstShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
-        val newBranchName = repository.currentBranchName
-        val checkoutWrongBranch = newBranchName != curBranchName && newBranchName != main
-        (previous.ui?.isShowing != true && !checkoutStartedFuture.isDone) || checkoutWrongBranch
-      }
+      triggerOnCheckout { newBranch -> newBranch == main }
+      restoreByUiAndBackgroundTask(GitBundle.message("branch.checking.out.process", main),
+                                   delayMillis = 2 * defaultRestoreDelay, restoreId = firstShowBranchesTaskId)
       test {
         ideFrame {
           jList(main).clickItem(main)
@@ -158,9 +151,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       highlightSubsequentCommitsInGitLog { commit ->
         commit.fullMessage == commitMessage
       }
-      restoreState(delayMillis = 6 * defaultRestoreDelay) {
-        previous.ui?.isShowing != true && !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
-      }
+      restoreByUiAndBackgroundTask(ActionsBundle.actionText("Vcs.UpdateProject").dropMnemonic(), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame { button(CommonBundle.getOkButtonText()).click() }
       }
@@ -199,9 +190,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         item.toString().contains(checkoutAndRebaseText)
       }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
-      restoreState(secondShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
-        previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
-      }
+      restoreByUiAndBackgroundTask(GitBundle.message("branch.rebasing.process", branchName),
+                                   delayMillis = defaultRestoreDelay, secondShowBranchesTaskId)
       test {
         ideFrame {
           jList(branchName).clickItem(branchName)
@@ -240,7 +230,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
-      restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      restoreByUiAndBackgroundTask(DvcsBundle.message("push.process.pushing"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame { button(forcePushText).click() }
       }
