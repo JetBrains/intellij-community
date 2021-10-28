@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides simple text inlays (elements rendered inside of line) for a given language.
+ * Provides simple text inlays (info elements rendered inside source code) for a given language.
  * The order of hints which share the same offset is not guaranteed.
  *
  * @see InlayHintsProvider for more interactive inlays.
