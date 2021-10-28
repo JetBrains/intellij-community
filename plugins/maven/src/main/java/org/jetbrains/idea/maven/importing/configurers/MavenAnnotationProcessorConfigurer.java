@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
@@ -22,7 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -216,13 +215,18 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
   @Nullable
   private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest) {
     String annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
-    File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
+    Path annotationProcessorDirectoryFile = Path.of(annotationProcessorDirectory);
     if (!annotationProcessorDirectoryFile.isAbsolute()) {
       return annotationProcessorDirectory;
     }
 
     String absoluteProjectDirectory = mavenProject.getDirectory();
-    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), annotationProcessorDirectoryFile);
+    try {
+      return Path.of(absoluteProjectDirectory).relativize(annotationProcessorDirectoryFile).toString();
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   private static boolean shouldEnableAnnotationProcessors(MavenProject mavenProject) {
