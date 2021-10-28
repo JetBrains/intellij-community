@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.completion.ml.common
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.textMatching
 
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.codeStyle.NameUtil
 
 object PrefixMatchingUtil {
   const val baseName = "prefix"
 
-  fun calculateFeatures(element: LookupElement, prefix: String, features: MutableMap<String, Any>) {
-    if (prefix.isEmpty() || element.lookupString.isEmpty()) return
-    val prefixMatchingScores = PrefixMatchingScores.Builder().build(prefix, element.lookupString)
+  fun calculateFeatures(elementText: String, prefix: String, features: MutableMap<String, Any>) {
+    if (prefix.isEmpty() || elementText.isEmpty()) return
+    val prefixMatchingScores = PrefixMatchingScores.Builder().build(prefix, elementText)
     // how many chars of the prefix are matched with the beginning of the lookup string
     features.addFeature("same_start_count", prefixMatchingScores.start, 0)
     // greedy matcher tries to match chars of the prefix with a word in the lookup string
