@@ -132,7 +132,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     else {
       config.pythonInterpreterPath.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          baseInterpreterCombobox.addSdkItem(PyDetectedSdk(introspectedPythonPath))
+          baseInterpreterCombobox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
         }
       }
     }
