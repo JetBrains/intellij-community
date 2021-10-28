@@ -13,6 +13,7 @@ internal class ToggleAutoShowAction : ToggleAction(), ActionToIgnore {
     val project = e.project
     val visible = project != null && LookupManager.getInstance(project).activeLookup != null
     e.presentation.isEnabledAndVisible = visible
+    super.update(e)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
