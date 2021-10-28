@@ -24,7 +24,9 @@ abstract class RunWidgetAvailabilityManager {
     listeners.forEach { it.availabilityChanged(value) }
   }
 
-  interface RunWidgetAvailabilityListener {
+  @FunctionalInterface
+  fun interface RunWidgetAvailabilityListener {
+
     fun availabilityChanged(value: Boolean)
   }
 }

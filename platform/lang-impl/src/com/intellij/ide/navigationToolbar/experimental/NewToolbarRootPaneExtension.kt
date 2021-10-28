@@ -13,11 +13,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
-import com.intellij.util.application
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -27,8 +25,12 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-interface NewToolbarPaneListener {
+@FunctionalInterface
+fun interface NewToolbarPaneListener {
+
   companion object {
+
+    @JvmField
     val TOPIC: Topic<NewToolbarPaneListener> = Topic(
       NewToolbarPaneListener::class.java,
       Topic.BroadcastDirection.NONE,
@@ -39,18 +41,18 @@ interface NewToolbarPaneListener {
   fun stateChanged()
 }
 
-class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneNorthExtension(), Disposable {
+class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNorthExtension(),
+                                                                  Disposable {
+
   companion object {
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
 
     private val logger = logger<NewToolbarRootPaneExtension>()
   }
 
-  private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(myProject)
-  private val runWidgetListener = object : RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
-    override fun availabilityChanged(value: Boolean) {
-      reinitAndPaintAll()
-    }
+  private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(project)
+  private val runWidgetListener = RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
+    reinitAndPaintAll()
   }
 
   private val myPanel: JPanel = object : JPanel(NewToolbarBorderLayout()) {
@@ -65,15 +67,13 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   }
 
   init {
-    Disposer.register(myProject, this)
+    Disposer.register(project, this)
 
-    myProject.messageBus
+    project.messageBus
       .connect(this)
-      .subscribe(NewToolbarPaneListener.TOPIC, object : NewToolbarPaneListener {
-        override fun stateChanged() {
-          myPanel.doLayout()
-          myPanel.repaint()
-        }
+      .subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
+        myPanel.doLayout()
+        myPanel.repaint()
       })
 
     runWidgetAvailabilityManager.addListener(runWidgetListener)
@@ -102,16 +102,12 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
         )
         toolbar.targetComponent = myPanel
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-        application.invokeLater {
-          toolbar.component.revalidate()
-          toolbar.component.repaint()
-        }
+
         myPanel.add(toolbar as JComponent, layoutConstrains)
       }
     }
 
-    myPanel.revalidate()
-    myPanel.repaint()
+    revalidate()
   }
 
   override fun getComponent(): JComponent = myPanel
@@ -121,29 +117,21 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
 
     val toolbarSettings = ToolbarSettings.Instance
     myPanel.isEnabled = toolbarSettings.isEnabled
-    myPanel.isVisible = myPanel.isEnabled && toolbarSettings.isVisible && !settings.presentationMode
+    myPanel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
 
     reinitAndPaintAll()
-    updateStatusBar()
   }
 
-  private fun updateStatusBar() {
-    for (project in ProjectManager.getInstance().openProjects) {
-      project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
-    }
-  }
-
-  override fun copy() = NewToolbarRootPaneExtension(myProject)
+  override fun copy() = NewToolbarRootPaneExtension(project)
 
   override fun dispose() {
     runWidgetAvailabilityManager.removeListener(runWidgetListener)
   }
 
-  /**
-   * This method is empty because all repaint logic in the new toolbar
-   * is based on the ui settings changes
-   */
   override fun revalidate() {
-  }
+    myPanel.revalidate()
+    myPanel.repaint()
 
+    project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+  }
 }
