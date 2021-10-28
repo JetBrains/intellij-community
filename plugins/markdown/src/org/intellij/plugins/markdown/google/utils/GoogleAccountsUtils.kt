@@ -64,11 +64,11 @@ internal object GoogleAccountsUtils {
       createCredentialsForGoogleApi(accountCredentials)
     }
     catch (e: TimeoutException) {
-      LOG.error(e)
+      LOG.debug(e)
       null
     }
     catch (e: IllegalStateException) {
-      LOG.error(e)
+      LOG.debug(e)
       null
     }
   }
@@ -173,12 +173,12 @@ internal object GoogleAccountsUtils {
         }
       }
       else {
-        LOG.error("Status code: ${response.statusCode()}\n${response.body()}")
+        LOG.info("Status code: ${response.statusCode()}\n${response.body()}")
         return null
       }
     }
     catch (e: ConnectException) {
-      LOG.error(GoogleAppCredentialsException())
+      LOG.info(GoogleAppCredentialsException())
       return null
     }
   }

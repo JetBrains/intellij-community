@@ -55,7 +55,7 @@ internal class GoogleAccountsDetailsProvider(
       when(it.cause) {
         is GoogleAuthorizedUserException -> unauthenticatedUser()
         is UnrecognizedPropertyException -> {
-          LOG.error(it.localizedMessage)
+          LOG.debug(it.localizedMessage)
           failedToLoadInfo()
         }
         else -> failedToLoadInfo()

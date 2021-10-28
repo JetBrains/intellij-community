@@ -87,7 +87,7 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
         when (t) {
           is ProcessCanceledException -> LOG.info("The authorization process has been canceled")
           is GoogleAppCredentialsException -> parentComponent?.let { showNetworkErrorMessage(it) }
-          else -> LOG.error(t.localizedMessage)
+          else -> LOG.info(t.localizedMessage)
         }
 
         credentialsFuture.cancel(true)

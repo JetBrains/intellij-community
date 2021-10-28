@@ -79,7 +79,7 @@ class GoogleDocsFileLoader {
         }.toFile()
     }
     catch (e: IOException) {
-      LOG.error(e)
+      LOG.debug(e)
       return tempFile
     }
   }
@@ -93,12 +93,12 @@ class GoogleDocsFileLoader {
           title = MarkdownBundle.message("markdown.google.file.download.error.title")
         )
 
-        LOG.error(
+        LOG.debug(
           MarkdownBundle.message("markdown.google.file.download.error.title"),
           MarkdownBundle.message("markdown.google.file.download.error.msg")
         )
       }
-      else -> LOG.error(e.localizedMessage)
+      else -> LOG.info(e.localizedMessage)
     }
 
   companion object {
