@@ -1017,11 +1017,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       return tools.getTool().isCleanupTool();
     });
     boolean includeDoNotShow = includeDoNotShow(profile);
-    RefManagerImpl refManager = (RefManagerImpl)getRefManager();
-    refManager.inspectionReadActionStarted();
     List<ProblemDescriptor> descriptors = new ArrayList<>();
     Set<PsiFile> files = new HashSet<>();
-    try {
+    ((RefManagerImpl)getRefManager()).runInsideInspectionReadAction(() -> {
       scope.accept(new PsiElementVisitor() {
         private int myCount;
         @Override
@@ -1052,8 +1050,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               LocalInspectionsPass pass = new LocalInspectionsPass(file, file.getViewProvider().getDocument(), range != null ? range.getStartOffset() : 0,
                                                                    range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                    HighlightInfoProcessor.getEmpty(), true);
-              Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, lTools);
-              ApplicationManager.getApplication().runReadAction(runnable);
+              ApplicationManager.getApplication().runReadAction(() -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, lTools));
 
               Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
               for (LocalInspectionToolWrapper tool : lTools) {
@@ -1090,10 +1087,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
         }
       });
-    }
-    finally {
-      refManager.inspectionReadActionFinished();
-    }
+    });
 
     return new CleanupProblems(files, descriptors, searchScope instanceof GlobalSearchScope);
   }

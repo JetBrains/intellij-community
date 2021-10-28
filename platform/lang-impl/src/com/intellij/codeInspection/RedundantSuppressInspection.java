@@ -133,86 +133,84 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
     final GlobalInspectionContextBase globalContext = createContext(file);
     globalContext.setCurrentScope(scope);
-    final RefManagerImpl refManager = (RefManagerImpl)globalContext.getRefManager();
-    refManager.inspectionReadActionStarted();
-    final List<ProblemDescriptor> result;
-    try {
-      result = new ArrayList<>();
-      for (InspectionToolWrapper<?, ?> toolWrapper : suppressedTools.keySet()) {
-        String toolId = suppressedTools.get(toolWrapper);
-        toolWrapper.initialize(globalContext);
-        final Collection<CommonProblemDescriptor> descriptors;
-        if (toolWrapper instanceof LocalInspectionToolWrapper) {
-          LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)toolWrapper;
-          if (local.isUnfair()) {
-            continue; // can't work with passes other than LocalInspectionPass
+    List<ProblemDescriptor> result = new ArrayList<>();
+    ((RefManagerImpl)globalContext.getRefManager()).runInsideInspectionReadAction(() -> {
+      try {
+        for (InspectionToolWrapper<?, ?> toolWrapper : suppressedTools.keySet()) {
+          String toolId = suppressedTools.get(toolWrapper);
+          toolWrapper.initialize(globalContext);
+          final Collection<CommonProblemDescriptor> descriptors;
+          if (toolWrapper instanceof LocalInspectionToolWrapper) {
+            LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)toolWrapper;
+            if (local.isUnfair()) {
+              continue; // can't work with passes other than LocalInspectionPass
+            }
+            LocalInspectionTool tool = local.getTool();
+            List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
+            // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
+            InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(), false,
+                                       true, ProgressIndicatorProvider.getGlobalProgressIndicator(), (wrapper, descriptor) -> found.add(descriptor));
+            descriptors = new ArrayList<>(found);
           }
-          LocalInspectionTool tool = local.getTool();
-          List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
-          // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
-          InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(), false,
-                                     true, ProgressIndicatorProvider.getGlobalProgressIndicator(), (wrapper, descriptor) -> found.add(descriptor));
-          descriptors = new ArrayList<>(found);
-        }
-        else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-          final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;
-          GlobalInspectionTool globalTool = global.getTool();
-          //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
-          if (globalTool.isGraphNeeded()) continue;
-          if (globalTool instanceof RedundantSuppressInspection) continue;
-          descriptors = new ArrayList<>(InspectionEngine.runInspectionOnFile(file, global, globalContext));
-        }
-        else {
-          continue;
+          else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+            final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;
+            GlobalInspectionTool globalTool = global.getTool();
+            //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
+            if (globalTool.isGraphNeeded()) continue;
+            if (globalTool instanceof RedundantSuppressInspection) continue;
+            descriptors = new ArrayList<>(InspectionEngine.runInspectionOnFile(file, global, globalContext));
+          }
+          else {
+            continue;
+          }
+          for (PsiElement suppressedScope : suppressedScopes.keySet()) {
+            Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
+            if (!suppressedIds.contains(toolId)) continue;
+            for (CommonProblemDescriptor descriptor : descriptors) {
+              if (!(descriptor instanceof ProblemDescriptor)) continue;
+              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (element == null) continue;
+              PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
+              if (extension.isSuppressionFor(suppressedScope, ObjectUtils.notNull(host, element), toolId)) {
+                suppressedIds.remove(toolId);
+                break;
+              }
+            }
+          }
         }
         for (PsiElement suppressedScope : suppressedScopes.keySet()) {
           Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
-          if (!suppressedIds.contains(toolId)) continue;
-          for (CommonProblemDescriptor descriptor : descriptors) {
-            if (!(descriptor instanceof ProblemDescriptor)) continue;
-            PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
-            if (element == null) continue;
-            PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
-            if (extension.isSuppressionFor(suppressedScope, ObjectUtils.notNull(host, element), toolId)) {
-              suppressedIds.remove(toolId);
-              break;
-            }
-          }
-        }
-      }
-      for (PsiElement suppressedScope : suppressedScopes.keySet()) {
-        Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
-        for (String toolId : suppressedIds) {
-          PsiElement documentedElement = globalContext.getRefManager().getContainerElement(suppressedScope);
-          if (documentedElement != null && documentedElement.isValid()) {
-            QuickFix<?> fix;
-            synchronized (this) {
-              if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
-              String key = toolId + ";" + suppressedScope.getLanguage().getID();
-              fix = myQuickFixes.get(key);
-              if (fix == null) {
-                fix = createQuickFix(key);
-                myQuickFixes.put(key, fix);
+          for (String toolId : suppressedIds) {
+            PsiElement documentedElement = globalContext.getRefManager().getContainerElement(suppressedScope);
+            if (documentedElement != null && documentedElement.isValid()) {
+              QuickFix<?> fix;
+              synchronized (this) {
+                if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
+                String key = toolId + ";" + suppressedScope.getLanguage().getID();
+                fix = myQuickFixes.get(key);
+                if (fix == null) {
+                  fix = createQuickFix(key);
+                  myQuickFixes.put(key, fix);
+                }
               }
+              PsiElement identifier;
+              if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope == documentedElement) {
+                identifier = ObjectUtils.notNull(((PsiNameIdentifierOwner)suppressedScope).getNameIdentifier(), suppressedScope);
+              }
+              else {
+                identifier = suppressedScope;
+              }
+              result.add(
+                manager.createProblemDescriptor(identifier, InspectionsBundle.message("inspection.redundant.suppression.description"), (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                false));
             }
-            PsiElement identifier;
-            if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope == documentedElement) {
-              identifier = ObjectUtils.notNull(((PsiNameIdentifierOwner)suppressedScope).getNameIdentifier(), suppressedScope);
-            }
-            else {
-              identifier = suppressedScope;
-            }
-            result.add(
-              manager.createProblemDescriptor(identifier, InspectionsBundle.message("inspection.redundant.suppression.description"), (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                              false));
           }
         }
       }
-    }
-    finally {
-      refManager.inspectionReadActionFinished();
-      globalContext.close(true);
-    }
+      finally {
+        globalContext.close(true);
+      }
+    });
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 

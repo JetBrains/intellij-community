@@ -132,8 +132,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       for (InspectionToolWrapper<?, ?> toolWrapper : toolsCopy) {
         toolWrapper.initialize(context);
       }
-      ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-      try {
+      ((RefManagerImpl)context.getRefManager()).runInsideInspectionReadAction(() -> {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator == null) {
           ProgressManager.getInstance()
@@ -149,10 +148,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
             addOccurrence(element);
           }
         }
-      }
-      finally {
-        ((RefManagerImpl)context.getRefManager()).inspectionReadActionFinished();
-      }
+      });
     }
   }
 }

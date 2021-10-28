@@ -358,10 +358,7 @@ public class RefManagerImpl extends RefManager {
         future.get();
       }
     }
-    catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InterruptedException e) {
+    catch (ExecutionException | InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
@@ -419,17 +416,20 @@ public class RefManagerImpl extends RefManager {
     return myDeclarationsFound.get();
   }
 
-  public void inspectionReadActionStarted() {
+  public void runInsideInspectionReadAction(@NotNull Runnable runnable) {
     myIsInProcess = true;
-  }
-
-  public void inspectionReadActionFinished() {
-    myTasks = null; // remove any pending tasks
-    waitForTasksToComplete();
-    myIsInProcess = false;
-    if (myScope != null) myScope.invalidate();
-
-    myCachedSortedRefs = null;
+    try {
+      runnable.run();
+    }
+    finally {
+      myTasks = null; // remove any pending tasks
+      waitForTasksToComplete();
+      myIsInProcess = false;
+      if (myScope != null) {
+        myScope.invalidate();
+      }
+      myCachedSortedRefs = null;
+    }
   }
 
   public void startOfflineView() {
@@ -438,10 +438,6 @@ public class RefManagerImpl extends RefManager {
 
   public boolean isOfflineView() {
     return myOfflineView;
-  }
-
-  public boolean isInProcess() {
-    return myIsInProcess;
   }
 
   @Override

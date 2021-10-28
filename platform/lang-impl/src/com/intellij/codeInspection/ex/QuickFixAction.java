@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
@@ -136,20 +135,10 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
-    final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
-    final boolean initial = refManager.isInProcess();
+    final Set<PsiElement> resolvedElements = new HashSet<>();
+    performFixesInBatch(project, descriptors, context, resolvedElements);
 
-    refManager.inspectionReadActionFinished();
-
-    try {
-      final Set<PsiElement> resolvedElements = new HashSet<>();
-      performFixesInBatch(project, descriptors, context, resolvedElements);
-
-      refreshViews(project, resolvedElements, myToolWrapper);
-    }
-    finally { //to make offline view lazy
-      if (initial) refManager.inspectionReadActionStarted();
-    }
+    refreshViews(project, resolvedElements, myToolWrapper);
   }
 
   protected boolean startInWriteAction() {
@@ -181,29 +170,18 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private void doApplyFix(final RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
-    final RefManagerImpl refManager = (RefManagerImpl)view.getGlobalInspectionContext().getRefManager();
-
-    final boolean initial = refManager.isInProcess();
-
-    refManager.inspectionReadActionFinished();
-
-    try {
-      final boolean[] refreshNeeded = {false};
-      if (refElements.length > 0) {
-        final Project project = refElements[0].getRefManager().getProject();
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            refreshNeeded[0] = applyFix(refElements);
-          });
-        }, getTemplatePresentation().getText(), null);
-      }
-      if (refreshNeeded[0]) {
-        refreshViews(view.getProject(), refElements, myToolWrapper);
-      }
+    final boolean[] refreshNeeded = {false};
+    if (refElements.length > 0) {
+      final Project project = refElements[0].getRefManager().getProject();
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          refreshNeeded[0] = applyFix(refElements);
+        });
+      }, getTemplatePresentation().getText(), null);
     }
-    finally {  //to make offline view lazy
-      if (initial) refManager.inspectionReadActionStarted();
+    if (refreshNeeded[0]) {
+      refreshViews(view.getProject(), refElements, myToolWrapper);
     }
   }
 
