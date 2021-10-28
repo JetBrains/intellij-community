@@ -15,6 +15,7 @@ import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.load.java.propertyNamesBySetMethodName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -175,6 +177,13 @@ private val PsiMethod.canBeSetter: Boolean
 
 private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
 private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
+private val PsiMethod.isFinalProperty: Boolean
+    get() {
+        val property = unwrapped as? KtProperty ?: return false
+        if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+        val containingClassOrObject = property.containingClassOrObject ?: return true
+        return containingClassOrObject is KtObjectDeclaration
+    }
 
 val PsiMethod.syntheticAssessors: Collection<Name>
     get() {
@@ -187,7 +196,8 @@ val PsiMethod.syntheticAssessors: Collection<Name>
         }
     }
 
-val PsiMethod.canHaveSyntheticAssessors: Boolean get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters()
+val PsiMethod.canHaveSyntheticAssessors: Boolean
+    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
 
 val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticAssessors && canBeGetter) getterName else null
 
