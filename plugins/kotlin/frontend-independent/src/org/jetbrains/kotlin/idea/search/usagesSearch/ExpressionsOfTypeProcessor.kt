@@ -884,7 +884,7 @@ class ExpressionsOfTypeProcessor(
                     prevElements.add(element)
                 }
             } else {
-                assert(restricted == GlobalSearchScope.EMPTY_SCOPE)
+                assert(SearchScope.isEmptyScope(restricted))
             }
 
         }

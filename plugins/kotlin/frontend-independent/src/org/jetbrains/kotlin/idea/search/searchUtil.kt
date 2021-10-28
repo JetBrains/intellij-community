@@ -56,7 +56,7 @@ fun SearchScope.restrictByFileType(fileType: FileType): SearchScope = when (this
     is LocalSearchScope -> {
         val elements = scope.filter { it.containingFile.fileType == fileType }
         when (elements.size) {
-            0 -> GlobalSearchScope.EMPTY_SCOPE
+            0 -> LocalSearchScope.EMPTY
             scope.size -> this
             else -> LocalSearchScope(elements.toTypedArray())
         }
@@ -80,7 +80,7 @@ fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
         if (filteredElements.isNotEmpty())
             LocalSearchScope(filteredElements.toTypedArray())
         else
-            GlobalSearchScope.EMPTY_SCOPE
+            LocalSearchScope.EMPTY
     }
 }
 

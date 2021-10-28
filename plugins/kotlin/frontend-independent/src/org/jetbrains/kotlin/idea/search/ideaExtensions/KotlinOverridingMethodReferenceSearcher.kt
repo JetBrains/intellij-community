@@ -6,7 +6,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.search.MethodTextOccurrenceProcessor
 import com.intellij.psi.impl.search.MethodUsagesSearcher
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.util.MethodSignatureUtil
@@ -40,7 +40,7 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
                 .restrictToKotlinSources()
         }
 
-        if (searchScope === GlobalSearchScope.EMPTY_SCOPE) return
+        if (SearchScope.isEmptyScope(searchScope)) return
 
         super.processQuery(MethodReferencesSearch.SearchParameters(method, searchScope, p.isStrictSignatureSearch, p.optimizer), consumer)
 

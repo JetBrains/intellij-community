@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
@@ -21,7 +21,7 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
         runReadAction {
             val method = queryParameters.method
             val onlyKotlinFiles = queryParameters.effectiveSearchScope.restrictToKotlinSources()
-            if (onlyKotlinFiles == GlobalSearchScope.EMPTY_SCOPE) return@runReadAction null
+            if (SearchScope.isEmptyScope(onlyKotlinFiles)) return@runReadAction null
 
             val propertyNames = propertyNames(method)
             val function = {
