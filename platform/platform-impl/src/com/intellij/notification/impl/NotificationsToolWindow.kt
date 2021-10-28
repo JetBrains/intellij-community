@@ -12,6 +12,7 @@ import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -131,7 +132,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     val myNotifications = ArrayList<Notification>()
 
     val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
-    val consumer = Consumer<Notification> { notification ->
+    val addConsumer = Consumer<Notification> { notification ->
       if (notification.isSuggestionType) {
         suggestions.add(notification)
       }
@@ -141,9 +142,9 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       myNotifications.add(notification)
       updateIcon(toolWindow, myNotifications)
     }
-    content.putUserData(ADD_KEY, consumer)
+    content.putUserData(ADD_KEY, addConsumer)
 
-    content.putUserData(REMOVE_KEY, Consumer<Notification?> { notification ->
+    val removeConsumer = Consumer<Notification?> { notification ->
       if (notification == null) {
         myNotifications.clear()
         suggestions.clear()
@@ -159,7 +160,9 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
         myNotifications.remove(notification)
       }
       updateIcon(toolWindow, myNotifications)
-    })
+    }
+    content.putUserData(REMOVE_KEY, removeConsumer)
+    suggestions.setRemoveCallback(removeConsumer)
 
     timeline.setClearCallback { notifications: List<Notification> ->
       myNotifications.removeAll(notifications)
@@ -175,7 +178,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       })
 
       for (notification in myNotificationList) {
-        consumer.accept(notification)
+        addConsumer.accept(notification)
       }
       myNotificationList.clear()
     }
@@ -220,7 +223,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
   private val myList = JPanel(VerticalLayout(JBUI.scale(18)))
   private val myScrollPane = object : JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
     override fun setupCorners() {
       super.setupCorners()
       border = null
@@ -245,6 +248,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val mySuggestionGotItPanel = JPanel(BorderLayout())
 
   private lateinit var myClearCallback: (List<Notification>) -> Unit
+  private lateinit var myRemoveCallback: Consumer<Notification?>
 
   init {
     background = NotificationComponent.BG_COLOR
@@ -362,6 +366,14 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     updateContent()
+
+    if (mySuggestionType) {
+      component.setDoNotAskHandler { forProject ->
+        component.notification.setDoNotAsFor(if (forProject) myProject else null)
+        myRemoveCallback.accept(component.notification)
+        component.notification.hideBalloon()
+      }
+    }
   }
 
   private fun updateLayout() {
@@ -372,6 +384,10 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       layout.removeLayoutComponent(component)
       layout.addLayoutComponent(null, component)
     }
+  }
+
+  fun setRemoveCallback(callback: Consumer<Notification?>) {
+    myRemoveCallback = callback
   }
 
   fun remove(notification: Notification) {
@@ -472,6 +488,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
   private val myMoreButton: Component?
   private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
+  private lateinit var myDoNotAskHandler: (Boolean) -> Unit
 
   init {
     isOpaque = true
@@ -559,19 +576,22 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (notification.isSuggestionType) {
       val group = DefaultActionGroup()
       group.isPopup = true
+      @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
         override fun actionPerformed(e: AnActionEvent) {
           TODO("Not yet implemented")
         }
       })
+      @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
         override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
+          myDoNotAskHandler.invoke(true)
         }
       })
+      @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
         override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
+          myDoNotAskHandler.invoke(false)
         }
       })
 
@@ -585,8 +605,10 @@ private class NotificationComponent(val notification: Notification, timeComponen
           val popup = super.createAndShowActionGroupPopup(actionGroup, event)
           popup.addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
-              myMorePopupVisible = false
-              isVisible = myHoverState
+              ApplicationManager.getApplication().invokeLater {
+                myMorePopupVisible = false
+                isVisible = myHoverState
+              }
             }
           })
           return popup
@@ -653,6 +675,10 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     return component
+  }
+
+  fun setDoNotAskHandler(handler: (Boolean) -> Unit) {
+    myDoNotAskHandler = handler
   }
 
   fun isHover(): Boolean = myHoverState

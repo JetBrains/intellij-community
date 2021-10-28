@@ -284,6 +284,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (isDummyEnvironment()) {
       return null;
     }
+    if (!notification.canShowFor(project)) {
+      return null;
+    }
 
     Window window = findWindowForBalloon(project);
     if (!(window instanceof IdeFrame)) {
@@ -330,10 +333,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (balloon instanceof BalloonImpl) {
       ((BalloonImpl)balloon).startFadeoutTimer(0);
-      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0) {
+      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || Registry.is("ide.notification.action.center", false)) {
         frameActivateBalloonListener(balloon, () -> {
           if (!balloon.isDisposed()) {
-            ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+            int delay = 10000;
+            if (Registry.is("ide.notification.action.center", false) && displayType == NotificationDisplayType.STICKY_BALLOON) {
+              delay = 300000;
+            }
+            ((BalloonImpl)balloon).startSmartFadeoutTimer(delay);
           }
         });
       }
