@@ -3,12 +3,11 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
 
-class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
+class RunToolbarWidgetAction : SegmentedBarActionComponent() {
 
   init {
     ActionManager.getInstance().getAction("RunToolbarMainActionsGroup")?.let {

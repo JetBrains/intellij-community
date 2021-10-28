@@ -65,9 +65,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   }
 
-  override fun isInsideNavBar(): Boolean {
-    return true
-  }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     if (!isActive) {

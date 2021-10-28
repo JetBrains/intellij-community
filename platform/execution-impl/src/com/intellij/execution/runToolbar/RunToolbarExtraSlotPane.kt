@@ -199,7 +199,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun createComponent(): SlotComponent {
     val group = DefaultActionGroup()
-    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.RUN_TOOLBAR, group)
+    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.MAIN_TOOLBAR, group)
 
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize
