@@ -125,6 +125,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     /** Update Grazie config state */
     @Synchronized
     fun update(change: (State) -> State) = instance.loadState(change(get()))
+
+    fun stateChanged(prevState: State, newState: State) {
+      service<GrazieInitializerManager>().publisher.update(prevState, newState)
+
+      ProjectManager.getInstance().openProjects.forEach {
+        DaemonCodeAnalyzer.getInstance(it).restart()
+      }
+    }
   }
 
   class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
@@ -140,11 +148,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     myState = migrateLTRuleIds(VersionedState.migrate(state))
 
     if (prevState != myState) {
-      service<GrazieInitializerManager>().publisher.update(prevState, myState)
-
-      ProjectManager.getInstance().openProjects.forEach {
-        DaemonCodeAnalyzer.getInstance(it).restart()
-      }
+      stateChanged(prevState, myState)
     }
   }
 }
