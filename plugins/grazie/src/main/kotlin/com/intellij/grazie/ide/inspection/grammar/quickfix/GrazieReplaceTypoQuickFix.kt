@@ -23,7 +23,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import kotlin.math.min
 
-internal object GrazieReplaceTypoQuickFix {
+object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
     HighPriorityAction
 
@@ -37,7 +37,11 @@ internal object GrazieReplaceTypoQuickFix {
     private val replacementRange: SmartPsiFileRange,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
-    override fun getName(): String = suggestion.takeIf { it.isNotEmpty() } ?: msg("grazie.grammar.quickfix.remove.typo.tooltip")
+    override fun getName(): String {
+      if (suggestion.isEmpty()) return msg("grazie.grammar.quickfix.remove.typo.tooltip")
+      if (suggestion[0].isWhitespace() || suggestion.last().isWhitespace()) return "'$suggestion'"
+      return suggestion
+    }
 
     override fun getTooltipText(): String = if (suggestion.isNotEmpty()) {
       msg("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
