@@ -8,8 +8,9 @@ import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.project.DumbAware
 
-internal class AdjustFontSizeAction : AnAction(CodeInsightBundle.message("javadoc.adjust.font.size")), ActionToIgnore {
+internal class AdjustFontSizeAction : AnAction(CodeInsightBundle.message("javadoc.adjust.font.size")), ActionToIgnore, DumbAware {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is DocumentationEditorPane
