@@ -75,6 +75,7 @@ public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
+  public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -188,12 +189,18 @@ public final class ConfigImportHelper {
         if (!guessedOldConfigDirs.fromSameProduct) {
           // do not import plugins from other products even if configs are imported
           configImportOptions.importPlugins = false;
-          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.getFileName().toString());
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
         else if (importScenarioStatistics == null) {
           importScenarioStatistics = IMPORTED_FROM_PREVIOUS_VERSION;
         }
+
+        if (guessedOldConfigDirs.fromSameProduct) {
+          System.setProperty(CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY, oldConfigDir.toString());
+        } else {
+          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.toString());
+        }
+
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         if (settings != null) {
