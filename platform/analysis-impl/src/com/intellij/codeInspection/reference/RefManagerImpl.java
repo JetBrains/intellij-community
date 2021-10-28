@@ -8,7 +8,6 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -53,6 +52,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
@@ -525,6 +525,9 @@ public class RefManagerImpl extends RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
+
+    private final AtomicLong lastClearedTimeStamp = new AtomicLong();
+
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
@@ -616,8 +619,11 @@ public class RefManagerImpl extends RefManager {
           }
         }
       }
-      myPsiManager.dropResolveCaches();
-      InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
+      long timeStamp = System.currentTimeMillis();
+      long last = lastClearedTimeStamp.get();
+      if (timeStamp - last >= 500 && lastClearedTimeStamp.compareAndSet(last, timeStamp)) {
+        myPsiManager.dropResolveCaches();
+      }
     }
   }
 
