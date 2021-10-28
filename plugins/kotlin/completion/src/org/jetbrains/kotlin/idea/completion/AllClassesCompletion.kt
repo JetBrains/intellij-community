@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.AllClassesGetter
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiLiteral
 import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -14,12 +13,11 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
-import org.jetbrains.kotlin.idea.core.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.refactoring.fqName.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
+import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
@@ -97,16 +95,9 @@ class AllClassesCompletion(
         }
     }
 
-    private fun PsiClass.isSyntheticKotlinClass(): Boolean {
-        if ('$' !in name!!) return false // optimization to not analyze annotations of all classes
-        val metadata = modifierList?.findAnnotation(JvmAnnotationNames.METADATA_FQ_NAME.asString())
-        return (metadata?.findAttributeValue(JvmAnnotationNames.KIND_FIELD_NAME) as? PsiLiteral)?.value ==
-                KotlinClassHeader.Kind.SYNTHETIC_CLASS.id
-    }
-
     private fun isNotToBeUsed(javaClass: PsiClass): Boolean {
         if (includeJavaClassesNotToBeUsed) return false
         val fqName = javaClass.getKotlinFqName()
-        return fqName != null && isJavaClassNotToBeUsedInKotlin(fqName)
+        return fqName?.isJavaClassNotToBeUsedInKotlin() == true
     }
 }
