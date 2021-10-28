@@ -58,7 +58,7 @@ fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion {
 fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   val featureVersion = javaVersion.feature
   return when {
-    featureVersion == 17 -> GradleVersion.version("7.2")
+    featureVersion >= 17 -> GradleVersion.version("7.2")
     featureVersion >= 16 -> GradleVersion.version("7.0")
     featureVersion >= 15 -> GradleVersion.version("6.7")
     featureVersion >= 14 -> GradleVersion.version("6.3")
