@@ -40,8 +40,7 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
       isVisible = booleanValue
 
       val uiSettings = UISettings.instance
-      val uiSettingsState = uiSettings.state
-      uiSettingsState.showNavigationBar = !booleanValue
+      uiSettings.showNavigationBar = !booleanValue && uiSettings.showNavigationBar
       uiSettings.fireUISettingsChanged()
     }
   }
@@ -54,8 +53,6 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
     Disposer.register(application, this)
     newToolbarEnabled.addListener(ToolbarRegistryListener(), this)
-
-    UISettings.instance.state.showNavigationBar = !(isEnabled && !navBarVisible)
   }
 
   override fun getState(): ExperimentalToolbarSettingsState = toolbarState
@@ -66,36 +63,19 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     if (isEnabled) {
       logger.info("Loaded state: $state")
     }
-
-    UISettings.instance.state.showNavigationBar = !(isEnabled && !navBarVisible)
   }
 
   override fun dispose() {}
 
-  /**
-   * True if new the toolbar is enabled
-   */
   override var isEnabled: Boolean
     get() = newToolbarEnabled.asBoolean()
     set(value) = newToolbarEnabled.setValue(value)
 
-  /**
-   * True if new the toolbar is visible
-   */
   override var isVisible: Boolean
     get() = toolbarState.showNewMainToolbar
     set(value) {
       toolbarState.showNewMainToolbar = value
       val uiSettingState = UISettings.instance.state
       uiSettingState.showMainToolbar = !value && uiSettingState.showMainToolbar
-      UISettings.instance.fireUISettingsChanged()
-    }
-
-  override var navBarVisible: Boolean
-    get() = toolbarState.showNavBarWithNewToolbar
-    set(value) {
-      if (isEnabled && isVisible) {
-        toolbarState.showNavBarWithNewToolbar = value
-      }
     }
 }
