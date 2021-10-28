@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *  The class is responsible for recognizing the input context of the Enter key (new line) to support indentation.
  *  The indentation procedure in the context can be delegated to a language-specific implementation.
- *  The procedure can avoid the parsing after the typing, if the language-specific implementation is inherited
+ *  The procedure can skip parsing during typing only if the language-specific implementation is inherited
  *  from <code>{@link EnterBetweenBracesNoCommitDelegate}</code>.
  */
 public class EnterBetweenBracesDelegate {
@@ -25,8 +25,8 @@ public class EnterBetweenBracesDelegate {
   static final LanguageExtension<EnterBetweenBracesDelegate> EP_NAME = new LanguageExtension<>("com.intellij.enterBetweenBracesDelegate");
 
   /**
-   * Checks that braces are within the same syntax element and indentation need not be calculated or can be simplified.
-   * Usually the implementation checks to see if both braces are within the same string literal or comment.
+   * Checks that the braces belong to the same syntax element, and whether there is a need to calculate indentation or it can be simplified.
+   * Usually the implementation checks if both braces are within the same string literal or comment.
    *
    * @param file         The PSI file associated with the document.
    * @param editor       The editor.
@@ -61,7 +61,7 @@ public class EnterBetweenBracesDelegate {
 
   /**
    * Detects if the offset in the file is within the comment.
-   * An indentation inside the comment is delegated to standard procedure.
+   * Indentation inside the comment is delegated to the standard procedure.
    *
    * @param file   The PSI file associated with the document.
    * @param editor The editor.
