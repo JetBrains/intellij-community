@@ -293,13 +293,8 @@ public final class Utils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
-    List<MenuItem> newItems = null;
-    if (component instanceof ActionMenu) {
-      if (((ActionMenu)component).getScreenMenuPeer() != null) {
-        newItems = new ArrayList<>();
-      }
-    }
-
+    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    if (nativePeer != null) nativePeer.beginFill();
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -320,34 +315,22 @@ public final class Utils {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
-          if (newItems != null) {
-            newItems.add(null); // separator
-          }
+          if (nativePeer != null) nativePeer.add(null);
         }
       }
       else if (action instanceof ActionGroup &&
                !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
-        Menu submenu = null;
-        if (newItems != null) {
-          newItems.add(submenu = new Menu(presentation.getText(enableMnemonics)));
-        }
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons, submenu);
+        Menu submenuPeer = nativePeer != null ? (Menu)nativePeer.add(new Menu(presentation.getText(enableMnemonics))) : null;
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons, submenuPeer);
         component.add(menu);
         children.add(menu);
       }
       else {
-        MenuItem menuItem = null;
-        if (newItems != null) {
-          newItems.add(menuItem = new MenuItem());
-        }
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons, menuItem);
+        MenuItem menuItemPeer = nativePeer != null ? nativePeer.add(new MenuItem()) : null;
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons, menuItemPeer);
         component.add(each);
         children.add(each);
       }
-    }
-
-    if (newItems != null) {
-      ((ActionMenu)component).getScreenMenuPeer().refill(newItems);
     }
 
     if (list.isEmpty()) {
