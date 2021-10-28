@@ -33,6 +33,7 @@ import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
@@ -236,8 +237,9 @@ fun <S> SettingsFragmentsContainer<S>.addEnvironmentFragment(
 fun <S> SettingsFragmentsContainer<S>.addPathFragment(
   project: Project,
   pathFragmentInfo: PathFragmentInfo,
-  getPath: S.() -> String?,
-  setPath: S.(String?) -> Unit
+  getPath: S.() -> String,
+  setPath: S.(String) -> Unit,
+  defaultPath: S.() -> String = { "" }
 ) = addRemovableLabeledTextSettingsEditorFragment(
   textFieldWithBrowseButton(
     project,
@@ -252,22 +254,25 @@ fun <S> SettingsFragmentsContainer<S>.addPathFragment(
     pathFragmentInfo.fileChooserDescriptor
   ) { getPresentablePath(it.path) },
   pathFragmentInfo,
-  { getPath()?.let(::getPresentablePath) },
-  { setPath(it?.let(::getCanonicalPath)) }
+  { getPath().let(::getPresentablePath).nullize() },
+  { setPath(it?.let(::getCanonicalPath) ?: "") },
+  { defaultPath().let(::getPresentablePath).nullize() }
 )
 
 fun <S, C> SettingsFragmentsContainer<S>.addRemovableLabeledTextSettingsEditorFragment(
   component: C,
   info: LabeledSettingsFragmentInfo,
   getter: S.() -> String?,
-  setter: S.(String?) -> Unit
+  setter: S.(String?) -> Unit,
+  default: S.() -> String? = { null }
 ) where C : JComponent, C : TextAccessor = addRemovableLabeledSettingsEditorFragment(
   component,
   info,
   TextAccessor::getText,
   TextAccessor::setText,
   getter,
-  setter
+  setter,
+  default
 )
 
 fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSettingsEditorFragment(
@@ -276,18 +281,8 @@ fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSett
   getterC: C.() -> V,
   setterC: C.(V) -> Unit,
   getterS: S.() -> V?,
-  setterS: S.(V?) -> Unit
-) = addRemovableLabeledSettingsEditorFragment(
-  component, info, getterC, setterC, { null }, getterS, setterS)
-
-fun <S, C : JComponent, V> SettingsFragmentsContainer<S>.addRemovableLabeledSettingsEditorFragment(
-  component: C,
-  info: LabeledSettingsFragmentInfo,
-  getterC: C.() -> V,
-  setterC: C.(V) -> Unit,
-  defaultS: S.() -> V?,
-  getterS: S.() -> V?,
-  setterS: S.(V?) -> Unit
+  setterS: S.(V?) -> Unit,
+  defaultS: S.() -> V? = { null }
 ): SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>> {
   val ref = Ref<SettingsEditorFragment<S, SettingsEditorLabeledComponent<C>>>()
   return addLabeledSettingsEditorFragment(
