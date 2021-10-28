@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.lookup.LookupEvent;
@@ -50,7 +50,7 @@ public final class PopupPositionManager {
                                                  Position @NotNull ... relationToExistingPopup) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
-      new PositionAdjuster(lookup.getComponent()).adjust(hint, relationToExistingPopup);
+      new PositionAdjuster(lookup.getComponent()).adjust(hint, PositionAdjuster.getPopupSize(hint), relationToExistingPopup);
       lookup.addLookupListener(new LookupListener() {
         @Override
         public void lookupCanceled(@NotNull LookupEvent event) {
@@ -64,7 +64,7 @@ public final class PopupPositionManager {
 
     final PositionAdjuster positionAdjuster = createPositionAdjuster(hint);
     if (positionAdjuster != null) {
-      positionAdjuster.adjust(hint, relationToExistingPopup);
+      positionAdjuster.adjust(hint, PositionAdjuster.getPopupSize(hint), relationToExistingPopup);
       return;
     }
 
@@ -183,10 +183,12 @@ public final class PopupPositionManager {
       adjust(popup, DEFAULT_POSITION_ORDER);
     }
 
-    public void adjust(final JBPopup popup, Position... traversalPolicy) {
-      if (traversalPolicy.length == 0) traversalPolicy = DEFAULT_POSITION_ORDER;
+    public void adjust(@NotNull JBPopup popup, @NotNull Position @NotNull ... traversalPolicy) {
+      adjust(popup, getPopupSize(popup), traversalPolicy);
+    }
 
-      final Dimension d = getPopupSize(popup);
+    public void adjust(@NotNull JBPopup popup, @NotNull Dimension d, @NotNull Position @NotNull ... traversalPolicy) {
+      if (traversalPolicy.length == 0) traversalPolicy = DEFAULT_POSITION_ORDER;
 
       Rectangle popupRect = null;
       Rectangle r = null;
