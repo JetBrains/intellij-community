@@ -3,6 +3,7 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.impl.ui.DiffInfo
 import com.intellij.diff.tools.binary.OnesideBinaryDiffViewer
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer
@@ -20,6 +21,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -39,6 +41,8 @@ import java.awt.event.FocusEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
+
+var COMBINED_DIFF_VIEWER = DataKey.create<CombinedDiffViewer>("combined_diff_viewer")
 
 class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Boolean) : FrameDiffTool.DiffViewer, DataProvider {
   private val project = context.project
@@ -100,6 +104,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return scrollSupport.currentPrevNextIterable
     if (DiffDataKeys.NAVIGATABLE.`is`(dataId)) return getCurrentDataProvider()?.let(DiffDataKeys.NAVIGATABLE::getData)
     if (DiffDataKeys.DIFF_VIEWER.`is`(dataId)) return getCurrentDiffViewer()
+    if (COMBINED_DIFF_VIEWER.`is`(dataId)) return this
 
     return if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) getCurrentDiffViewer()?.editor else null
   }
@@ -114,9 +119,9 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
 
   internal fun getBlocksIterable(): PrevNextDifferenceIterable = scrollSupport.blockIterable
 
-  internal fun getCurrentDiffViewer(): FrameDiffTool.DiffViewer? = getDiffViewer(scrollSupport.blockIterable.index)
+  internal fun getCurrentDiffViewer(): DiffViewer? = getDiffViewer(scrollSupport.blockIterable.index)
 
-  internal fun getDiffViewer(index: Int): FrameDiffTool.DiffViewer? {
+  internal fun getDiffViewer(index: Int): DiffViewer? {
     return diffBlocks.getOrNull(index)?.content?.viewer
   }
 
@@ -131,7 +136,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     selectDiffBlock(scrollSupport.blockIterable.index, scrollPolicy)
   }
 
-  private fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
+  internal fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
     diffBlocks.getOrNull(index)?.run {
       selectDiffBlock(index, this, scrollPolicy, onSelected)
     }
@@ -175,7 +180,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
       return currentDiffViewer
     }
 
-    return currentDiffViewer?.let(FrameDiffTool.DiffViewer::getComponent)?.let(DataManager::getDataProvider)
+    return currentDiffViewer?.let(DiffViewer::getComponent)?.let(DataManager::getDataProvider)
   }
 
   private val editors: List<Editor>

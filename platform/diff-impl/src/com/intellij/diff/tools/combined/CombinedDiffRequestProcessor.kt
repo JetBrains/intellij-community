@@ -17,6 +17,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
@@ -36,12 +37,37 @@ open class CombinedDiffRequestProcessor(project: Project?,
   protected val request get() = activeRequest as? CombinedDiffRequest
 
   //
+  // Global, shortcuts only navigation actions
+  //
+
+  private val openInEditorAction = object : MyOpenInEditorAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+
+  private val prevFileAction = object : MyPrevChangeAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+  private val nextFileAction = object : MyNextChangeAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+
+  //
   // Navigation
   //
 
   override fun getNavigationActions(): List<AnAction> {
     val goToChangeAction = createGoToChangeAction()
-    return listOfNotNull(MyPrevDifferenceAction(), MyNextDifferenceAction(), MyDifferencesLabel(goToChangeAction))
+    return listOfNotNull(MyPrevDifferenceAction(), MyNextDifferenceAction(), MyDifferencesLabel(goToChangeAction),
+                         openInEditorAction, prevFileAction, nextFileAction)
   }
   final override fun isNavigationEnabled(): Boolean = requestProducer.getFilesSize() > 0
 
