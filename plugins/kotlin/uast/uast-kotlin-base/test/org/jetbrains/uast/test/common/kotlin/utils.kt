@@ -32,3 +32,7 @@ fun checkDescriptorsLeak(node: UElement) {
             } ?: true
         })
 }
+
+fun <T> T?.orFail(msg: String): T {
+    return this ?: throw AssertionError(msg)
+}

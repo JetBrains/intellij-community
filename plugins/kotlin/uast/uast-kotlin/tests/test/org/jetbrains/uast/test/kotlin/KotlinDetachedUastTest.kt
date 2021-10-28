@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.findFunctionByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.test.common.kotlin.orFail
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 import org.jetbrains.uast.test.env.kotlin.assertEqualsToFile
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -208,6 +209,3 @@ class KotlinDetachedUastTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
 }
-
-
-fun <T> T?.orFail(msg: String): T = this ?: error(msg)
