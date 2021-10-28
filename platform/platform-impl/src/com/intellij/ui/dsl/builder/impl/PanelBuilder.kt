@@ -185,14 +185,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
-      val label = (cell as? CellImpl<*>)?.component as? JLabel
-      val nextComponent = cells.getOrNull(cellIndex + 1) as? CellImpl<*>
-      if (label != null && label.getClientProperty(DslComponentProperty.LABEL) == true &&
-          cell.rightGap == RightGap.SMALL && cell.verticalAlign == VerticalAlign.CENTER && cell.horizontalAlign == HorizontalAlign.LEFT &&
-          isAllowedLabel(nextComponent) && nextComponent?.label == null) {
-        warn("Panel.row(label) or Cell.label should be used for labeled components, label = ${label.text}")
-      }
-
       buildCell(cell, firstCellLabel && cellIndex == 0, leftGap, lastCell, width, panel, builder)
     }
   }
@@ -236,7 +228,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   private fun getComponentGaps(left: Int, right: Int, component: JComponent): Gaps {
     val top = getDefaultVerticalGap(component)
     var bottom = top
-    if (component is JLabel && component.getClientProperty(DslComponentProperty.LABEL_NO_BOTTOM_GAP) == true) {
+    if (component is JLabel && component.getClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP) == true) {
       bottom = 0
     }
     return Gaps(top = top, left = left, bottom = bottom, right = right)
@@ -419,7 +411,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   private fun getComponentHelper(component: JComponent): ComponentHelper? {
-    if (component.getClientProperty(DslComponentProperty.BASELINE_FROM_FONT) == true) {
+    if (component.getClientProperty(DslComponentPropertyInternal.BASELINE_FROM_FONT) == true) {
       return FontBaselineComponentHelper(component)
     }
     return null

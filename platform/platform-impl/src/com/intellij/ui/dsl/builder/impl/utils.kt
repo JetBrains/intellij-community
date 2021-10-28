@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.htmlComponent
-import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -23,7 +22,7 @@ import javax.swing.text.JTextComponent
  * Internal component properties for UI DSL
  */
 @ApiStatus.Internal
-internal enum class DslComponentProperty {
+internal enum class DslComponentPropertyInternal {
   /**
    * Removes standard bottom gap from label
    */
@@ -33,11 +32,6 @@ internal enum class DslComponentProperty {
    * Baseline for component should be obtained from [JComponent.font] property
    */
   BASELINE_FROM_FONT,
-
-  /**
-   * A mark that component is created by [Row.label]. Used for validation
-   */
-  LABEL
 }
 
 /**
@@ -99,7 +93,7 @@ private fun createHtmlPane(text: String, action: HyperlinkEventAction, foregroun
   val font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
   val result = htmlComponent(processedText, font = font, foreground = foreground, hyperlinkListener = hyperlinkAdapter)
   // JEditorPane doesn't support baseline, calculate it manually from font
-  result.putClientProperty(DslComponentProperty.BASELINE_FROM_FONT, true)
+  result.putClientProperty(DslComponentPropertyInternal.BASELINE_FROM_FONT, true)
   return result
 }
 
