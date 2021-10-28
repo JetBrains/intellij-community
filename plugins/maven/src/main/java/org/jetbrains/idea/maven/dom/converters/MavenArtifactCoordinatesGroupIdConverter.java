@@ -24,7 +24,13 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     if (StringUtil.isEmpty(id.getGroupId())) return false;
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
-    if (projectsManager.findProject(id) != null) return true;
+    if (StringUtil.isNotEmpty(id.getArtifactId()) && StringUtil.isNotEmpty(id.getVersion())) {
+      if (projectsManager.findProject(id) != null) return true;
+    } else {
+      for (MavenProject project : projectsManager.getProjects()) {
+        if (id.getGroupId().equals(project.getMavenId().getGroupId())) return true;
+      }
+    }
 
     // Check if artifact was found on importing.
     VirtualFile projectFile = getMavenProjectFile(context);
