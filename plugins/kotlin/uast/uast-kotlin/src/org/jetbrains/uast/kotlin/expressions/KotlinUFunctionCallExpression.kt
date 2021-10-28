@@ -57,11 +57,11 @@ class KotlinUFunctionCallExpression(
                 KotlinUIdentifier(calleeExpression.firstChild ?: calleeExpression, this)
             is KtConstructorCalleeExpression -> {
                 val referencedNameElement = calleeExpression.constructorReferenceExpression?.getReferencedNameElement()
-                when {
-                    referencedNameElement != null -> KotlinUIdentifier(referencedNameElement, this)
-                    calleeExpression.firstChild == null -> KotlinUIdentifier(calleeExpression, this)
-                    else -> null
-                }
+                if (referencedNameElement != null) KotlinUIdentifier(referencedNameElement, this)
+                else generateSequence<PsiElement>(calleeExpression) { it.firstChild?.takeIf { it.nextSibling == null } }
+                    .lastOrNull()
+                    ?.takeIf { it.firstChild == null }
+                    ?.let { KotlinUIdentifier(it, this) }
             }
             is KtLambdaExpression ->
                 KotlinUIdentifier(calleeExpression.functionLiteral.lBrace, this)
