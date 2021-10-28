@@ -81,6 +81,15 @@ internal interface FeaturesProviderTestCase {
        */
       fun changes(from: Any?, to: Any?) = ChangeOperation(from, to)
 
+      /**
+       * Checks whether feature exists or not
+       */
+      fun exists(expected: Boolean) {
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+        val containsFeature = feature in features.keys
+        assertEquals(expected, containsFeature)
+      }
+
       private fun assert(expectedValue: Any?) {
         features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
 

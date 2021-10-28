@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_MATCHES_QUERY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY
@@ -216,6 +217,27 @@ internal class SearchEverywhereFileFeaturesProviderTest
         IS_IN_TEST_SOURCES_DATA_KEY to false,
         IS_EXCLUDED_DATA_KEY to true,
       ))
+  }
+
+  fun `test no file type match feature when no file type in query`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("a")
+      .exists(false)
+  }
+
+  fun `test file type matches query when specified`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("a.txt")
+      .isEqualTo(true)
+  }
+
+  fun `test file type does not match`() {
+    checkThatFeature(FILETYPE_MATCHES_QUERY_DATA_KEY)
+      .ofElement(testFile)
+      .withQuery("a.java")
+      .isEqualTo(false)
   }
 
   fun `test file type usage ratio for the most popular file type`() {

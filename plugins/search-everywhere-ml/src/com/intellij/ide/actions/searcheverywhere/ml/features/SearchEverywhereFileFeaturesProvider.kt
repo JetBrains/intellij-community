@@ -42,6 +42,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val IS_IN_LIBRARY_DATA_KEY = "isFromLibrary"
     internal const val IS_EXCLUDED_DATA_KEY = "isInExcluded"
 
+    internal const val FILETYPE_MATCHES_QUERY_DATA_KEY = "fileTypeMatchesQuery"
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     internal const val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = "fileTypeUsageRatioToMax"
     internal const val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = "fileTypeUsageRatioToMin"
@@ -134,6 +135,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     data[IS_OPENED_DATA_KEY] = isOpened(item)
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
+    data.putIfValueNotNull(FILETYPE_MATCHES_QUERY_DATA_KEY, matchesFileTypeInQuery(item, searchQuery))
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
     data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(item, cache.openedFile))
@@ -175,6 +177,16 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   private fun isOpened(item: PsiFileSystemItem): Boolean {
     val openedFiles = FileEditorManager.getInstance(item.project).openFiles
     return item.virtualFile in openedFiles
+  }
+
+  private fun matchesFileTypeInQuery(item: PsiFileSystemItem, searchQuery: String): Boolean? {
+    val fileExtension = item.virtualFile.extension
+    val extensionInQuery = searchQuery.substringAfterLast('.', missingDelimiterValue = "")
+    if (extensionInQuery.isEmpty() || fileExtension == null) {
+      return null
+    }
+
+    return extensionInQuery == fileExtension
   }
 
   private fun getRecentFilesIndex(item: PsiFileSystemItem): Int {
