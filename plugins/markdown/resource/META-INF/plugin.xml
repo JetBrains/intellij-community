@@ -315,66 +315,66 @@ Includes the following features:</p>
   <actions>
     <group id="Markdown.TableActions" compact="true" class="org.intellij.plugins.markdown.editor.tables.actions.TableActionsGroup">
       <group id="Markdown.TableColumnActions" compact="true">
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithLeftColumn"
+        <action id="Markdown.Table.SwapColumns.SwapWithLeftColumn"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithLeftColumn"
                 icon="AllIcons.Actions.Back"/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithRightColumn"
+        <action id="Markdown.Table.SwapColumns.SwapWithRightColumn"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithRightColumn"
                 icon="AllIcons.Actions.Forward"/>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertBefore"
+        <action id="Markdown.Table.InsertTableColumn.InsertBefore"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertBefore"
                 icon="MarkdownIcons.EditorActions.AddColumnLeft"/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertAfter"
+        <action id="Markdown.Table.InsertTableColumn.InsertAfter"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertAfter"
                 icon="MarkdownIcons.EditorActions.AddColumnRight"/>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction.SelectContentCells"
+        <action id="Markdown.Table.SelectCurrentColumn.SelectContentCells"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectContentCells"
                 icon="AllIcons.Actions.InSelection"/>
         <separator/>
         <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction.SelectWholeColumn"-->
         <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectWholeColumn"/>-->
-        <group id="Markdown.TableColumnActions.ColumnAlignmentActions"
+        <group id="Markdown.Table.ColumnAlignmentActions"
                compact="true"
                class="org.intellij.plugins.markdown.editor.tables.actions.column.TableColumnAlignmentActionsGroup">
           <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.None"-->
           <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$None"/>-->
-          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Left"
+          <action id="Markdown.Table.SetColumnAlignment.Left"
                   class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Left"
                   icon="MarkdownIcons.EditorActions.LeftAlign"/>
-          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Center"
+          <action id="Markdown.Table.SetColumnAlignment.Center"
                   class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Center"
                   icon="MarkdownIcons.EditorActions.CenterAlign"/>
-          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Right"
+          <action id="Markdown.Table.SetColumnAlignment.Right"
                   class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Right"
                   icon="MarkdownIcons.EditorActions.RightAlign"/>
         </group>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"
+        <action id="Markdown.Table.RemoveCurrentColumn"
                 class="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"
                 icon="AllIcons.Actions.GC"/>
       </group>
       <group id="Markdown.TableRowActions" compact="true">
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction.SwapWithAbove"
+        <action id="Markdown.Table.SwapRows.SwapWithAbove"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithAbove"
                 icon="AllIcons.Actions.PreviousOccurence"/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction.SwapWithBelow"
+        <action id="Markdown.Table.SwapRows.SwapWithBelow"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithBelow"
                 icon="AllIcons.Actions.NextOccurence"/>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertAbove"
+        <action id="Markdown.Table.InsertRow.InsertAbove"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertAbove"
                 icon="MarkdownIcons.EditorActions.AddRowAbove"/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertBelow"
+        <action id="Markdown.Table.InsertRow.InsertBelow"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertBelow"
                 icon="MarkdownIcons.EditorActions.AddRowBelow"/>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SelectRowAction"
+        <action id="Markdown.Table.SelectRow"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.SelectRowAction"
                 icon="AllIcons.Actions.InSelection"/>
         <separator/>
-        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"
+        <action id="Markdown.Table.RemoveCurrentRow"
                 class="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"
                 icon="AllIcons.Actions.GC"/>
       </group>
@@ -383,22 +383,22 @@ Includes the following features:</p>
              class="com.intellij.ide.actions.NonTrivialActionGroup"
              popup="true"
              compact="true">
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertBefore"/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertAfter"/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertAbove"/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertBelow"/>
+        <reference id="Markdown.Table.InsertTableColumn.InsertBefore"/>
+        <reference id="Markdown.Table.InsertTableColumn.InsertAfter"/>
+        <reference id="Markdown.Table.InsertRow.InsertAbove"/>
+        <reference id="Markdown.Table.InsertRow.InsertBelow"/>
         <separator/>
         <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup"
                class="com.intellij.ide.actions.NonTrivialActionGroup"
                popup="true"
                compact="true">
-          <reference id="Markdown.TableColumnActions.ColumnAlignmentActions"/>
+          <reference id="Markdown.Table.ColumnAlignmentActions"/>
         </group>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithLeftColumn"/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithRightColumn"/>
+        <reference id="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
+        <reference id="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
         <separator/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"/>
-        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"/>
+        <reference id="Markdown.Table.RemoveCurrentColumn"/>
+        <reference id="Markdown.Table.RemoveCurrentRow"/>
       </group>
     </group>
 
@@ -452,7 +452,7 @@ Includes the following features:</p>
               icon="MarkdownIcons.EditorActions.Link">
         <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
       </action>
-      <action id="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+      <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="MarkdownIcons.EditorActions.Table"/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
@@ -498,7 +498,7 @@ Includes the following features:</p>
       <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
-    <action id="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"
+    <action id="Markdown.OpenDevtoolsAction"
             class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
   </actions>
 </idea-plugin>
