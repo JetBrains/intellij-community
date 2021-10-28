@@ -4,12 +4,18 @@ package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.search.AllClassesSearchExecutor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.refactoring.fqName.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -95,6 +101,29 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
 
         searchRecursively(originalTypeName)
         return out
+    }
+
+    fun getJavaClasses(nameFilter: (Name) -> Boolean): Collection<PsiClass> {
+        val names = mutableSetOf<String>()
+        AllClassesSearchExecutor.processClassNames(project, scope) { name ->
+            if (nameFilter(Name.identifier(name))) {
+                names.add(name)
+            }
+            true
+        }
+        val result = mutableListOf<PsiClass>()
+        AllClassesSearchExecutor.processClassesByNames(project, scope, names) { psiClass ->
+            // Skip Kotlin classes
+            if (psiClass is KtLightClass ||
+                psiClass.isSyntheticKotlinClass() ||
+                psiClass.getKotlinFqName()?.isJavaClassNotToBeUsedInKotlin() == true
+            )
+                return@processClassesByNames true
+
+            result.add(psiClass)
+            true
+        }
+        return result
     }
 
     companion object {

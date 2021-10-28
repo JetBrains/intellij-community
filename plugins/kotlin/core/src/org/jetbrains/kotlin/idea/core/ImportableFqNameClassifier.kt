@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.core
 
-import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.idea.refactoring.fqName.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.load.java.components.JavaAnnotationMapper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -55,7 +54,7 @@ class ImportableFqNameClassifier(private val file: KtFile) {
         }
 
         return when {
-            isJavaClassNotToBeUsedInKotlin(fqName) -> Classification.notToBeUsedInKotlin
+            fqName.isJavaClassNotToBeUsedInKotlin() -> Classification.notToBeUsedInKotlin
 
             fqName.parent() == file.packageFqName -> Classification.fromCurrentPackage
 
@@ -75,6 +74,3 @@ class ImportableFqNameClassifier(private val file: KtFile) {
     private fun isImportedWithAllUnderImport(name: FqName) = name.parent() in allUnderImports && name !in excludedImports
     private fun hasPreciseImportFromPackage(packageName: FqName) = packageName in preciseImportPackages
 }
-
-fun isJavaClassNotToBeUsedInKotlin(fqName: FqName): Boolean =
-    JavaToKotlinClassMap.isJavaPlatformClass(fqName) || JavaAnnotationMapper.javaToKotlinNameMap[fqName] != null
