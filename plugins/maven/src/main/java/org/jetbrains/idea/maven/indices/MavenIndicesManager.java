@@ -268,6 +268,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public void fixArtifactIndexAsync(File artifactFile, File localRepository) {
+    if (!myKeeper.isDone()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
       if (index != null) {
