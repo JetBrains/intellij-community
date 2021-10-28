@@ -765,19 +765,30 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     PyExpression right = expression.getRightExpression();
     if (left == null || right == null) return null;
 
-    Ref<PyType> leftType = getType(left, context);
-    Ref<PyType> rightType = getType(right, context);
-    if (leftType == null && rightType == null) return null;
+    Ref<PyType> leftTypeRef = getType(left, context);
+    Ref<PyType> rightTypeRef = getType(right, context);
+    if (leftTypeRef == null || rightTypeRef == null) return null;
 
-    PyType union;
-    if (leftType != null && rightType != null) {
-      union = PyUnionType.union(leftType.get(), rightType.get());
-    }
-    else {
-      union = PyUnionType.createWeakType(Objects.requireNonNullElse(leftType, rightType).get());
-    }
+    PyType leftType = leftTypeRef.get();
+    if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context)) return null;
 
+    PyType union = PyUnionType.union(leftType, rightTypeRef.get());
     return union != null ? Ref.create(union) : null;
+  }
+
+  private static boolean typeHasOverloadedBitwiseOr(@NotNull PyType type, @NotNull PyExpression expression,
+                                                    @NotNull Context context) {
+    if (type instanceof PyUnionType) return false;
+
+    PyType typeToClass = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toClass() : type;
+    var resolved = typeToClass.resolveMember("__or__", expression, AccessDirection.READ,
+                                             PyResolveContext.defaultContext(context.getTypeContext()));
+    if (resolved == null || resolved.isEmpty()) return false;
+
+    return StreamEx.of(resolved)
+      .map(it -> it.getElement())
+      .nonNull()
+      .noneMatch(it -> PyBuiltinCache.getInstance(it).isBuiltin(it));
   }
 
   public static boolean isBitwiseOrUnionAvailable(@NotNull TypeEvalContext context) {

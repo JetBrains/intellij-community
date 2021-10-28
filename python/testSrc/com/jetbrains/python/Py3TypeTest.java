@@ -1323,6 +1323,46 @@ public class Py3TypeTest extends PyTestCase {
            "expr = transform(bar)");
   }
 
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnion() {
+    doTest("UnionType",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "expr = Foo | None");
+  }
+
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnionTypeAlias() {
+    doTest("Any",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "Alias = Foo | None\n" +
+           "expr: Alias");
+  }
+
+  // PY-51329
+  public void testBitwiseOrOperatorOverloadUnionTypeAnnotation() {
+    doTest("Any",
+           "class MyMeta(type):\n" +
+           "    def __or__(self, other) -> Any:\n" +
+           "        return other\n" +
+           "\n" +
+           "class Foo(metaclass=MyMeta):\n" +
+           "    ...\n" +
+           "\n" +
+           "expr: Foo | None");
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()

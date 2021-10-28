@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,14 +24,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -42,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -711,16 +707,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
 
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
-
-    final List<PsiElement> resolvedVariants = PyUtil.multiResolveTopPriority(node.getReference(PyResolveContext.defaultContext(context)));
-    for (PsiElement resolved : resolvedVariants) {
-      if (resolved instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)resolved).getContainingClass();
-        if (containingClass == null) return;
-        final String classQualifiedName = containingClass.getQualifiedName();
-        if (!PyNames.TYPE.equals(classQualifiedName) && !"types.UnionType".equals(classQualifiedName)) return;
-      }
-    }
 
     // Consider only full expression not parts to have only one registered problem
     if (PsiTreeUtil.getParentOfType(node, PyBinaryExpression.class, true, PyStatement.class) != null) return;
