@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -123,7 +124,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
             )
         }
 
-        if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (isOnTheFly && !isUnitTestMode()) {
             scheduleOptimizeImportsOnTheFly(file, data.optimizerData)
         }
 
