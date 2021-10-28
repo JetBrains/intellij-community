@@ -1,29 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.uast.test.common.kotlin
 
-package org.jetbrains.uast.test.kotlin
-
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 
-@RunWith(JUnit38ClassRunner::class)
-class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
-
-    override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
-
-
-    fun testResolveStringFromUast() {
+interface UastResolveApiFixtureTestBase : UastPluginSelection {
+    fun checkResolveStringFromUast(myFixture: JavaCodeInsightTestFixture, project: Project) {
         val file = myFixture.addFileToProject(
             "s.kt", """fun foo(){
                 val s = "abc"
@@ -45,7 +38,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testMultiResolve() {
+    fun checkMultiResolve(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
                 fun foo(): Int = TODO()
@@ -79,10 +72,9 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
 
     }
 
-    fun testMultiResolveJava() {
+    fun checkMultiResolveJava(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
-
                 fun main(args: Array<String>) {
                     System.out.print("1"
                 }
@@ -114,7 +106,11 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         TestCase.assertEquals(firstArgument, firstParameter)
     }
 
-    fun testMultiResolveJavaAmbiguous() {
+    private fun methodSignature(psiMethod: PsiMethod): String {
+        return "${psiMethod.returnType} ${psiMethod.name}(${psiMethod.parameterList.parameters.joinToString(", ") { it.type.toString() }})"
+    }
+
+    fun checkMultiResolveJavaAmbiguous(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
             public class JavaClass {
@@ -156,7 +152,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
 
-    fun testResolveFromBaseJava() {
+    fun checkResolveFromBaseJava(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class X {
         |native String getFoo();
@@ -174,21 +170,26 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
                 }
             """.trimIndent()
         )
-        val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("foo").getContainingUMethod()!!
+        val main = myFixture.file.toUElement()!!.findElementByTextFromPsi<UElement>("foo").getContainingUMethod()!!
         main.findElementByText<UElement>("foo = \"java superclass setter\"")
-            .cast<UBinaryExpression>().leftOperand.cast<UReferenceExpression>().let { assigment1 ->
-                val resolvedDeclaration = assigment1.resolve()
-                assertEquals("native void setFoo(@org.jetbrains.annotations.Nls String s);", resolvedDeclaration?.text)
+            .cast<UBinaryExpression>().leftOperand.cast<UReferenceExpression>().let { assignment ->
+                val resolvedDeclaration = assignment.resolve()
+                KotlinLightCodeInsightFixtureTestCaseBase.assertEquals(
+                    "native void setFoo(@org.jetbrains.annotations.Nls String s);",
+                    resolvedDeclaration?.text
+                )
             }
         main.findElementByText<UElement>("this.foo = \"java superclass qualified setter\"")
-            .cast<UBinaryExpression>().leftOperand.cast<UReferenceExpression>().let { assigment1 ->
-                val resolvedDeclaration = assigment1.resolve()
-                assertEquals("native void setFoo(@org.jetbrains.annotations.Nls String s);", resolvedDeclaration?.text)
+            .cast<UBinaryExpression>().leftOperand.cast<UReferenceExpression>().let { assignment ->
+                val resolvedDeclaration = assignment.resolve()
+                KotlinLightCodeInsightFixtureTestCaseBase.assertEquals(
+                    "native void setFoo(@org.jetbrains.annotations.Nls String s);",
+                    resolvedDeclaration?.text
+                )
             }
-
     }
 
-    fun testMultiResolveInClass() {
+    fun checkMultiResolveInClass(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
                 class MyClass {
@@ -225,7 +226,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
     }
 
-    fun testMultiConstructorResolve() {
+    fun checkMultiConstructorResolve(myFixture: JavaCodeInsightTestFixture, project: Project) {
         val file = myFixture.configureByText(
             "s.kt", """
                 class MyClass(int: Int) {
@@ -263,7 +264,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
 
-    fun testMultiInvokableObjectResolve() {
+    fun checkMultiInvokableObjectResolve(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
                 object Foo {
@@ -295,7 +296,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
     }
 
-    fun testMultiResolveJvmOverloads() {
+    fun checkMultiResolveJvmOverloads(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
 
@@ -324,7 +325,7 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
     }
 
-    fun testLocalResolve() {
+    fun checkLocalResolve(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
             fun foo() {
@@ -336,13 +337,15 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         )
 
 
-        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression().orFail("cant convert to UCallExpression")
-        val resolved = uCallExpression.resolve().orFail("cant resolve from $uCallExpression")
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
         TestCase.assertEquals("bar", resolved.name)
     }
 
 
-    fun testResolveCompiledAnnotation() {
+    fun checkResolveCompiledAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
             @Deprecated(message = "deprecated")    
@@ -351,11 +354,12 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         )
 
         val compiledAnnotationParameter = myFixture.file.toUElement()!!.findElementByTextFromPsi<USimpleNameReferenceExpression>("message")
-        val resolved = compiledAnnotationParameter.resolve() as PsiMethod
+        val resolved = (compiledAnnotationParameter.resolve() as? PsiMethod)
+            .orFail("cant resolve annotation parameter")
         TestCase.assertEquals("message", resolved.name)
     }
 
-    fun testAssigningArrayElementType() {
+    fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """ 
             fun foo() {
@@ -380,8 +384,3 @@ class KotlinUastResolveApiTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 }
-
-private fun methodSignature(psiMethod: PsiMethod): String {
-    return "${psiMethod.returnType} ${psiMethod.name}(${psiMethod.parameterList.parameters.joinToString(", ") { it.type.toString() }})"
-}
-
