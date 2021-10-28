@@ -39,10 +39,16 @@ fun getKeyStrokes(vararg actionIds: String): List<KeyStroke> {
     .toList()
 }
 
-fun JComponent.removeKeyStroke(key: KeyStroke) {
+fun JComponent.removeKeyboardAction(vararg keyStrokes: KeyStroke) {
+  removeKeyboardAction(keyStrokes.toList())
+}
+
+fun JComponent.removeKeyboardAction(keyStrokes: List<KeyStroke>) {
   var map: InputMap? = inputMap
   while (map != null) {
-    map.remove(key)
+    for (keyStroke in keyStrokes) {
+      map.remove(keyStroke)
+    }
     map = map.parent
   }
 }
