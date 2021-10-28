@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.util.convertToHtml
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -108,7 +109,7 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      bodyPane.setBody(model.body)
+      bodyPane.setBody(model.body.convertToHtml())
 
       val authorLink = HtmlBuilder()
         .appendLink(model.authorLinkUrl.orEmpty(), model.authorUsername ?: GithubBundle.message("user.someone"))

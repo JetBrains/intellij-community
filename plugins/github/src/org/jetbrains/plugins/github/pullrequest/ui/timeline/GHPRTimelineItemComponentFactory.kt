@@ -44,6 +44,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.util.convertToHtml
 import java.awt.Dimension
 import java.util.*
 import javax.swing.*
@@ -96,14 +97,14 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val contentPanel: JPanel?
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
-      val textPane = HtmlEditorPane(details.bodyHTML)
+      val textPane = HtmlEditorPane(details.body.convertToHtml())
       val panelHandle = GHEditableHtmlPaneHandle(project,
                                                  textPane,
                                                  { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
                                                  { newText ->
                                                    detailsDataProvider.updateDetails(EmptyProgressIndicator(),
                                                                                      description = newText).successOnEdt {
-                                                     textPane.setBody(it.bodyHTML)
+                                                     textPane.setBody(it.body)
                                                    }
                                                  })
       contentPanel = panelHandle.panel
@@ -125,7 +126,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createComponent(comment: GHIssueComment): Item {
-    val textPane = HtmlEditorPane(comment.bodyHTML)
+    val textPane = HtmlEditorPane(comment.body.convertToHtml())
     val panelHandle = GHEditableHtmlPaneHandle(project,
                                                textPane,
                                                { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
@@ -150,8 +151,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createComponent(review: GHPullRequestReview): Item {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
     val panelHandle: GHEditableHtmlPaneHandle?
-    if (review.bodyHTML.isNotEmpty()) {
-      val editorPane = HtmlEditorPane(review.bodyHTML)
+    if (review.body.isNotEmpty()) {
+      val editorPane = HtmlEditorPane(review.body)
       panelHandle =
         GHEditableHtmlPaneHandle(project,
                                  editorPane,

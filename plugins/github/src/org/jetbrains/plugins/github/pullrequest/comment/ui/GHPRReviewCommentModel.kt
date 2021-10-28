@@ -6,6 +6,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
+import org.jetbrains.plugins.github.util.convertToHtml
 import java.util.*
 
 class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentState, dateCreated: Date, body: String,
@@ -42,9 +43,9 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
 
     dateCreated = comment.createdAt
 
-    if (body != comment.bodyHTML)
+    if (body != comment.body)
       updated = true
-    body = comment.bodyHTML
+    body = comment.body
 
     if (authorUsername != comment.author?.login)
       updated = true
@@ -74,7 +75,7 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
 
   companion object {
     fun convert(comment: GHPullRequestReviewComment): GHPRReviewCommentModel =
-      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.bodyHTML,
+      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.body.convertToHtml(),
                              comment.author?.login, comment.author?.url,
                              comment.author?.avatarUrl,
                              comment.viewerCanDelete, comment.viewerCanUpdate)

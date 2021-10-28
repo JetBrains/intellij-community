@@ -11,7 +11,7 @@ import java.util.*
 open class GHPullRequestReview(id: String,
                                val url: String,
                                val author: GHActor?,
-                               val bodyHTML: String,
+                               val body: String,
                                val state: GHPullRequestReviewState,
                                val createdAt: Date,
                                val viewerCanUpdate: Boolean)
