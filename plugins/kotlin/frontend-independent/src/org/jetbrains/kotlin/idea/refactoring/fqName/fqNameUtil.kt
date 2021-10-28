@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -43,4 +45,5 @@ fun ImportPath.isImported(imports: Iterable<ImportPath>, excludedFqNames: Iterab
     return isImported(imports) && (isAllUnder || this.fqName !in excludedFqNames)
 }
 
-
+fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
+    JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
