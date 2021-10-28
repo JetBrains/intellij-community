@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     super(project, runConfigurable, "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
 
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
+    ((RunConfigurable)getConfigurable()).initTreeSelectionListener(getDisposable());
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
     if (factory != null) {
@@ -76,10 +76,5 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   @Override
   protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
-  }
-
-  @Override
-  public void setTitle(@NlsContexts.DialogTitle @NotNull String title) {
-    super.setTitle(title);
   }
 }
