@@ -2290,6 +2290,109 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/callFromPublicInline")
+    public abstract static class CallFromPublicInline extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/callFromPublicInline/nonPublic")
+        public static class NonPublic extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("internalFunction.kt")
+            public void testInternalFunction() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/internalFunction.kt");
+            }
+
+            @TestMetadata("internalFunction2.kt")
+            public void testInternalFunction2() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/internalFunction2.kt");
+            }
+
+            @TestMetadata("internalFunction3.kt")
+            public void testInternalFunction3() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/internalFunction3.kt");
+            }
+
+            @TestMetadata("privateProperty.kt")
+            public void testPrivateProperty() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/privateProperty.kt");
+            }
+
+            @TestMetadata("privateProperty2.kt")
+            public void testPrivateProperty2() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/privateProperty2.kt");
+            }
+
+            @TestMetadata("privateProperty3.kt")
+            public void testPrivateProperty3() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/privateProperty3.kt");
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/nonPublic/reifiedTypeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/callFromPublicInline/protected")
+        public static class Protected extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("protectedFunction.kt")
+            public void testProtectedFunction() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/protectedFunction.kt");
+            }
+
+            @TestMetadata("protectedFunction2.kt")
+            public void testProtectedFunction2() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/protectedFunction2.kt");
+            }
+
+            @TestMetadata("protectedFunction3.kt")
+            public void testProtectedFunction3() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/protectedFunction3.kt");
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/reifiedTypeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/callFromPublicInline/super")
+        public static class Super extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/super/reifiedTypeParameter.kt");
+            }
+
+            @TestMetadata("superFunction.kt")
+            public void testSuperFunction() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/super/superFunction.kt");
+            }
+
+            @TestMetadata("superFunction2.kt")
+            public void testSuperFunction2() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/super/superFunction2.kt");
+            }
+
+            @TestMetadata("superFunction3.kt")
+            public void testSuperFunction3() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/super/superFunction3.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/canBeParameter")
     public static class CanBeParameter extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -10052,64 +10155,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("inFunction2.kt")
         public void testInFunction2() throws Exception {
             runTest("testData/quickfix/moveTypeAliasToTopLevel/inFunction2.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/nonPublicCallFromPublicInline")
-    public static class NonPublicCallFromPublicInline extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("internalFunction.kt")
-        public void testInternalFunction() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction.kt");
-        }
-
-        @TestMetadata("internalFunction2.kt")
-        public void testInternalFunction2() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction2.kt");
-        }
-
-        @TestMetadata("internalFunction3.kt")
-        public void testInternalFunction3() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction3.kt");
-        }
-
-        @TestMetadata("privateProperty.kt")
-        public void testPrivateProperty() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty.kt");
-        }
-
-        @TestMetadata("privateProperty2.kt")
-        public void testPrivateProperty2() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty2.kt");
-        }
-
-        @TestMetadata("privateProperty3.kt")
-        public void testPrivateProperty3() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty3.kt");
-        }
-
-        @TestMetadata("protectedFunction.kt")
-        public void testProtectedFunction() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction.kt");
-        }
-
-        @TestMetadata("protectedFunction2.kt")
-        public void testProtectedFunction2() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction2.kt");
-        }
-
-        @TestMetadata("protectedFunction3.kt")
-        public void testProtectedFunction3() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction3.kt");
-        }
-
-        @TestMetadata("reifiedTypeParameter.kt")
-        public void testReifiedTypeParameter() throws Exception {
-            runTest("testData/quickfix/nonPublicCallFromPublicInline/reifiedTypeParameter.kt");
         }
     }
 

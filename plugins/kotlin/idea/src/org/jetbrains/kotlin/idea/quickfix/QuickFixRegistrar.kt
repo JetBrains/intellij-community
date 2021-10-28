@@ -677,8 +677,9 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(AddEmptyArgumentListFix)
 
-        NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(NonPublicCallFromPublicInlineFactory)
-        PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(NonPublicCallFromPublicInlineFactory)
+        NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
+        PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(CallFromPublicInlineFactory)
+        SUPER_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
 
         IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
     }
