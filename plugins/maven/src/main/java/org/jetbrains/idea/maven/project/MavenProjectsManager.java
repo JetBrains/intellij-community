@@ -382,7 +382,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
 
     myImportingQueue.makeUserAware(myProject);
-    myImportingQueue.makeDumbAware(myProject);
     myImportingQueue.makeModalAware(myProject);
   }
 
