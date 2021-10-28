@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
@@ -135,6 +136,12 @@ object TableUtils {
   fun MarkdownTableImpl.getColumnAlignment(columnIndex: Int): MarkdownTableSeparatorRow.CellAlignment {
     return separatorRow?.getCellAlignment(columnIndex)!!
   }
+
+  val MarkdownTableCellImpl.firstNonWhitespaceOffset
+    get() = startOffset + text.indexOfFirst { it != ' ' }.coerceAtLeast(0)
+
+  val MarkdownTableCellImpl.lastNonWhitespaceOffset
+    get() = startOffset + text.indexOfLast { it != ' ' }.coerceAtLeast(0)
 
   @JvmStatic
   fun isProbablyInsideTableCell(document: Document, caretOffset: Int): Boolean {
