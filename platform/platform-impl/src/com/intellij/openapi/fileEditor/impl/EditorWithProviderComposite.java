@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @deprecated Left around for API compatibility. Please use EditorComposite directly whenever possible.
+ * @deprecated Please use {@link EditorComposite} directly
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
 public class EditorWithProviderComposite extends EditorComposite {
-  public EditorWithProviderComposite(@NotNull VirtualFile file,
-                                     @NotNull List<FileEditorWithProvider> editorWithProviders,
-                                     @NotNull FileEditorManagerEx fileEditorManager) {
+  protected EditorWithProviderComposite(@NotNull VirtualFile file,
+                                        @NotNull List<FileEditorWithProvider> editorWithProviders,
+                                        @NotNull FileEditorManagerEx fileEditorManager) {
     super(file, editorWithProviders, fileEditorManager);
   }
 }

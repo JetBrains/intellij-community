@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
@@ -502,8 +502,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     VirtualFile file = (VirtualFile)tabInfo.getObject();
     Presentation presentation = new Presentation(tabInfo.getText());
     presentation.setIcon(tabInfo.getIcon());
-    EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(file);
-    FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+    EditorComposite composite = myWindow.getComposite(file);
+    FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
     final DockableEditor dockableEditor = createDockableEditor(myProject, img, file, presentation, myWindow, DockManagerImpl.isNorthPanelAvailable(editors));
   }
 
@@ -535,8 +535,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(myFile, true));
       }
       presentation.setIcon(info.getIcon());
-      EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(myFile);
-      FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+      EditorComposite composite = myWindow.getComposite(myFile);
+      FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
       boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
       mySession = getDockManager()
         .createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow, isNorthPanelAvailable));

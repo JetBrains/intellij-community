@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
     VirtualFile candidateFile = candidate.getFile();
     if (candidate.isPinned()) return false;
     if (Comparing.equal(candidateFile, contextFile)) return false;
-    for (EditorWithProviderComposite composite : window.getEditors()) {
+    for (EditorComposite composite : window.getAllComposites()) {
       VirtualFile cursorFile = composite.getFile();
       if (Comparing.equal(cursorFile, contextFile) || Comparing.equal(cursorFile, candidateFile)) {
         return isOKToClose(contextFile, candidateFile, cursorFile);

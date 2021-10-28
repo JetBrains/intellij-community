@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -108,13 +108,13 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
     val impl = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return false
 
     for (window in impl.windows) {
-      for (composite in window.editors) {
-        for (tab in composite.editors) {
+      for (composite in window.allComposites) {
+        for (tab in composite.allEditors) {
           if (tab == this) {
             //move focus to current window
             window.setAsCurrentWindow(true)
             //select editor
-            window.setSelectedEditor(composite, true)
+            window.setSelectedComposite(composite, true)
             //open tab
             composite.fileEditorManager.setSelectedEditor(composite.file, editorProviderId)
             return true

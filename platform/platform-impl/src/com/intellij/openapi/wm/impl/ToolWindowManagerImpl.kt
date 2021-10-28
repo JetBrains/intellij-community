@@ -207,7 +207,7 @@ open class ToolWindowManagerImpl @NonInjectable constructor(val project: Project
           val component = event.component ?: return
           processOpenedProjects { project ->
             for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.editorComposites) {
-              if (composite.editors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
+              if (composite.allEditors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
                 (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
               }
             }

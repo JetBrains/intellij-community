@@ -56,7 +56,7 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite implements Disposable {
+public class EditorComposite extends UserDataHolderBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -182,7 +182,7 @@ public class EditorComposite implements Disposable {
   @NotNull
   private TabbedPaneWrapper.AsJBTabs createTabbedPaneWrapper(MyComponent myComponent) {
     PrevNextActionsDescriptor descriptor = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
-    final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(myFileEditorManager.getProject(), SwingConstants.BOTTOM, descriptor, this);
+    final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(myProject, SwingConstants.BOTTOM, descriptor, this);
 
     boolean firstEditor = true;
     for (FileEditorWithProvider editorWithProvider : myEditorWithProviders) {
@@ -201,7 +201,7 @@ public class EditorComposite implements Disposable {
     JPanel component = new JPanel(new BorderLayout());
     JComponent comp = editor.getComponent();
     if (!FileEditorManagerImpl.isDumbAware(editor)) {
-      comp = DumbService.getInstance(myFileEditorManager.getProject()).wrapGently(comp, editor);
+      comp = DumbService.getInstance(myProject).wrapGently(comp, editor);
     }
 
     component.add(comp, BorderLayout.CENTER);
@@ -259,7 +259,7 @@ public class EditorComposite implements Disposable {
                                    myFile, oldEditorWithProvider.getFileEditor(), oldEditorWithProvider.getProvider(),
                                    myFile, newEditorWithProvider.getFileEditor(), newEditorWithProvider.getProvider());
       final FileEditorManagerListener publisher =
-        myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+        myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
       publisher.selectionChanged(event);
     });
     final JComponent component = newEditorWithProvider.getFileEditor().getComponent();
@@ -430,7 +430,7 @@ public class EditorComposite implements Disposable {
    * @return currently selected myEditor.
    */
   @NotNull
-  FileEditor getSelectedEditor() {
+  public FileEditor getSelectedEditor() {
     return getSelectedWithProvider().getFileEditor();
   }
 
@@ -459,6 +459,12 @@ public class EditorComposite implements Disposable {
   public void setSelectedEditor(@NotNull String providerId) {
     FileEditorWithProvider newSelection = ContainerUtil.find(myEditorWithProviders, it -> it.getProvider().getEditorTypeId().equals(providerId));
     LOG.assertTrue(newSelection != null, "Unable to find providerId=" + providerId);
+    setSelectedEditor(newSelection);
+  }
+
+  public void setSelectedEditor(@NotNull FileEditor editor) {
+    FileEditorWithProvider newSelection = ContainerUtil.find(myEditorWithProviders, it -> it.getFileEditor().equals(editor));
+    LOG.assertTrue(newSelection != null, "Unable to find editor=" + editor);
     setSelectedEditor(newSelection);
   }
 
@@ -506,7 +512,7 @@ public class EditorComposite implements Disposable {
    * @return {@code true} if the composite contains at least one modified myEditor
    */
   public boolean isModified() {
-    return ContainerUtil.exists(getEditors(), editor -> editor.isModified());
+    return ContainerUtil.exists(getAllEditors(), editor -> editor.isModified());
   }
 
   /**

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * A holder for both {@link FileEditor} and {@link FileEditorProvider}
  * The package is suffixed with 'ex' for backward compatibility
  */
-public class FileEditorWithProvider {
+public final class FileEditorWithProvider {
   private final FileEditor myFileEditor;
   private final FileEditorProvider myProvider;
 

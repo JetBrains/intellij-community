@@ -7,7 +7,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.impl.*;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -48,7 +51,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
     FileEditorWithProvider data = getSelectedEditorWithProvider(file);
     return data != null
            ? Pair.create(new FileEditor[]{data.getFileEditor()}, new FileEditorProvider[]{data.getProvider()})
-           : Pair.create(FileEditor.EMPTY_ARRAY, new FileEditorProvider[0]);
+           : Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
   }
 
   @Override
@@ -122,18 +125,15 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
     return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
   }
 
-  @NotNull
-  public EditorWithProviderComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
+  public @NotNull EditorComposite createEditorComposite(@NotNull LightEditorInfo editorInfo) {
     editorInfo.getFileEditor().putUserData(DUMB_AWARE, true); // Needed for composite not to postpone loading via DumbService.wrapGently()
     FileEditorProvider editorProvider = ((LightEditorInfoImpl)editorInfo).getProvider();
     FileEditorWithProvider editorWithProvider = new FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider);
-    EditorWithProviderComposite composite = createComposite(editorInfo.getFile(), List.of(editorWithProvider));
-    assert composite != null;
-    return composite;
+    return createCompositeInstance(editorInfo.getFile(), List.of(editorWithProvider));
   }
 
   @Override
-  protected @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
+  public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
     return LightEditUtil.findEditorComposite(editor);
   }
 

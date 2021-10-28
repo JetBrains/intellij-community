@@ -231,14 +231,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   private void writeWindow(@NotNull Element result, @NotNull EditorWindow window) {
-    EditorWithProviderComposite[] composites = window.getEditors();
-    for (int i = 0; i < composites.length; i++) {
+    List<EditorComposite> composites = window.getAllComposites();
+    for (int i = 0; i < composites.size(); i++) {
       VirtualFile file = window.getFileAt(i);
-      result.addContent(writeComposite(composites[i], window.isFilePinned(file), window.getSelectedEditor()));
+      result.addContent(writeComposite(composites.get(i), window.isFilePinned(file), window.getSelectedComposite()));
     }
   }
 
-  private @NotNull Element writeComposite(@NotNull EditorWithProviderComposite composite, boolean pinned, @Nullable EditorWithProviderComposite selectedEditor) {
+  private @NotNull Element writeComposite(@NotNull EditorComposite composite, boolean pinned, @Nullable EditorComposite selectedEditor) {
     Element fileElement = new Element("file");
     composite.currentStateAsHistoryEntry().writeExternal(fileElement, getManager().getProject());
     fileElement.setAttribute(PINNED, Boolean.toString(pinned));
@@ -265,7 +265,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   void addSelectedEditorsTo(@NotNull Collection<? super FileEditor> result) {
     for (EditorWindow window : myWindows) {
-      EditorWithProviderComposite composite = window.getSelectedEditor();
+      EditorComposite composite = window.getSelectedComposite();
       if (composite != null) {
         FileEditor editor = composite.getSelectedEditor();
         if (!result.contains(editor)) {
@@ -275,7 +275,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null && !myWindows.contains(currentWindow)) {
-      EditorWithProviderComposite composite = currentWindow.getSelectedEditor();
+      EditorComposite composite = currentWindow.getSelectedComposite();
       if (composite != null) {
         FileEditor editor = composite.getSelectedEditor();
         if (!result.contains(editor)) {
@@ -334,8 +334,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   @NotNull List<VirtualFile> getOpenFileList() {
     List<VirtualFile> files = new ArrayList<>();
     for (EditorWindow myWindow : myWindows) {
-      for (EditorWithProviderComposite editor : myWindow.getEditors()) {
-        VirtualFile file = editor.getFile();
+      for (EditorComposite composite : myWindow.getAllComposites()) {
+        VirtualFile file = composite.getFile();
         if (!files.contains(file)) {
           files.add(file);
         }
@@ -383,7 +383,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     List<FileEditor> editors = new ArrayList<>();
     for (EditorWindow window : windows) {
-      EditorWithProviderComposite composite = window.getSelectedEditor();
+      @Nullable EditorComposite composite = window.getSelectedComposite();
       if (composite != null) {
         editors.add(composite.getSelectedEditor());
       }
@@ -434,9 +434,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     EditorColorsScheme colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     for (EditorWindow window : windows) {
-      EditorWithProviderComposite composite = window.findFileComposite(file);
+      EditorComposite composite = window.getComposite(file);
       LOG.assertTrue(composite != null);
-      int index = window.findEditorIndex(composite);
+      int index = window.findCompositeIndex(composite);
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
       TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
@@ -609,12 +609,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     VirtualFile nextFile = findNextFile(file);
     for (EditorWindow window : windows) {
-      LOG.assertTrue(window.getSelectedEditor() != null);
+      LOG.assertTrue(window.getSelectedComposite() != null);
       window.closeFile(file, false, moveFocus);
       if (window.getTabCount() == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
-        EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
+        EditorComposite newComposite = myManager.newEditorComposite(nextFile);
         if (newComposite != null) {
-          window.setEditor(newComposite, moveFocus);
+          window.setComposite(newComposite, moveFocus);
         }
       }
     }
@@ -651,9 +651,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     @Override
     public Component getDefaultComponent(Container focusCycleRoot) {
       if (myCurrentWindow != null) {
-        EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
-        if (selectedEditor != null) {
-          JComponent focusComponent = selectedEditor.getFocusComponent();
+        EditorComposite selectedComposite = myCurrentWindow.getSelectedComposite();
+        if (selectedComposite != null) {
+          JComponent focusComponent = selectedComposite.getFocusComponent();
           if (focusComponent != null) {
             return IdeFocusTraversalPolicy.getPreferredFocusedComponent(focusComponent, this);
           }
@@ -721,17 +721,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
   void setCurrentWindow(@Nullable EditorWindow window, boolean requestFocus) {
-    EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
+    EditorComposite newComposite = window == null ? null : window.getSelectedComposite();
 
-    Runnable fireRunnable = () -> getManager().fireSelectionChanged(newEditor);
+    Runnable fireRunnable = () -> getManager().fireSelectionChanged(newComposite);
 
     setCurrentWindow(window);
 
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
     if (window != null) {
-      EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
-      if (selectedEditor != null) {
+      EditorComposite selectedComposite = window.getSelectedComposite();
+      if (selectedComposite != null) {
         fireRunnable.run();
       }
 
@@ -759,31 +759,38 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return myWindows.contains(window);
   }
 
+  /**
+   * @deprecated Use {@link #getAllComposites()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
-    List<EditorWithProviderComposite> result = new ArrayList<>();
-    for (EditorWindow myWindow : myWindows) {
-      ContainerUtil.addAll(result, myWindow.getEditors());
-    }
-    return result;
+    return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class);
+  }
+
+  public @NotNull List<EditorComposite> getAllComposites() {
+    return ContainerUtil.flatMap(myWindows, it -> it.getAllComposites());
   }
 
   //---------------------------------------------------------
 
+  /**
+   * @deprecated Use {@link #getAllComposites(VirtualFile)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> findEditorComposites(@NotNull VirtualFile file) {
-    List<EditorWithProviderComposite> res = new ArrayList<>();
-    for (EditorWindow window : myWindows) {
-      EditorWithProviderComposite fileComposite = window.findFileComposite(file);
-      if (fileComposite != null) {
-        res.add(fileComposite);
-      }
-    }
-    return res;
+    return ContainerUtil.filterIsInstance(getAllComposites(file), EditorWithProviderComposite.class);
+  }
+
+  public @NotNull List<EditorComposite> getAllComposites(@NotNull VirtualFile file) {
+    return ContainerUtil.mapNotNull(myWindows, it -> it.getComposite(file));
   }
 
   private @NotNull List<EditorWindow> findWindows(@NotNull VirtualFile file) {
     List<EditorWindow> result = new ArrayList<>(myWindows.size());
     for (EditorWindow window : myWindows) {
-      if (window.findFileComposite(file) != null) {
+      if (window.getComposite(file) != null) {
         result.add(window);
       }
     }
@@ -1019,9 +1026,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         fileEditorManager.addSelectionRecord(focusedFile, window);
         VirtualFile finalFocusedFile = focusedFile;
         UIUtil.invokeLaterIfNeeded(() -> {
-          EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
-          if (editor != null) {
-            window.setEditor(editor, true);
+          EditorComposite composite = window.getComposite(finalFocusedFile);
+          if (composite != null) {
+            window.setComposite(composite, true);
           }
         });
       }
@@ -1118,9 +1125,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     EditorWindow window = splittersToFocus.getCurrentWindow();
-    EditorWithProviderComposite editor = window == null ? null : window.getSelectedEditor();
-    if (editor != null) {
-      return editor.getPreferredFocusedComponent();
+    EditorComposite composite = window == null ? null : window.getSelectedComposite();
+    if (composite != null) {
+      return composite.getPreferredFocusedComponent();
     }
     return null;
   }
