@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,6 +46,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -52,6 +56,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
@@ -64,6 +69,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final CoverageViewManager.StateBean myStateBean;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
+  private final int[] myMaxWidth;
 
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
@@ -76,7 +82,26 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
 
-    myTable = new TreeTable(myModel);
+    myMaxWidth = new int[myModel.getColumnCount()];
+    for (int column = 0; column < myModel.getColumnCount(); column++) {
+      myMaxWidth[column] = getStringWidth(myModel.getColumnName(column));
+    }
+    myTable = new TreeTable(myModel) {
+      @Override
+      public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+        final Component component = super.prepareRenderer(renderer, row, column);
+        int preferredWidth = component.getPreferredSize().width;
+        if (preferredWidth > myMaxWidth[column]) {
+          final TableColumn tableColumn = columnModel.getColumn(column);
+          preferredWidth = Math.max(preferredWidth, tableColumn.getPreferredWidth());
+          myMaxWidth[column] = preferredWidth;
+          if (column != 0) {
+            tableColumn.setMaxWidth(preferredWidth);
+          }
+        }
+        return component;
+      }
+    };
     myTable.getTree().setCellRenderer(new NodeDescriptorTableCellRenderer());
     setUpShowRootNode();
 
@@ -84,7 +109,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.setRowSorter(new CoverageRowSorter(myTable, myModel));
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.getColumnModel().getColumn(myTable.convertColumnIndexToView(0)).setPreferredWidth(myStateBean.myElementSize);
+    setWidth();
     JPanel centerPanel = JBUI.Panels.simplePanel().addToCenter(ScrollPaneFactory.createScrollPane(myTable));
     addToCenter(centerPanel);
 
@@ -195,7 +220,43 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   public void saveSize() {
-    myStateBean.myElementSize = myTable.getColumnModel().getColumn(0).getWidth();
+    final int columns = myTable.getColumnCount();
+    final List<Integer> widths = new ArrayList<>();
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    for (int i = 0; i < columns; i++) {
+      widths.add(columnModel.getColumn(i).getWidth());
+    }
+    myStateBean.myColumnSize = widths;
+  }
+
+  private void setWidth() {
+    final int columns = myTable.getColumnCount();
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    if (myStateBean.myColumnSize != null && myStateBean.myColumnSize.size() == columns) {
+      for (int column = 0; column < columns; column++) {
+        final int width = myStateBean.myColumnSize.get(column);
+        columnModel.getColumn(column).setPreferredWidth(width);
+      }
+    }
+    else {
+      for (int column = 1; column < columns; column++) {
+        final int width = Math.max(myMaxWidth[column], getColumnWidth(column));
+        columnModel.getColumn(column).setPreferredWidth(width);
+      }
+      final TableColumn nameColumn = myTable.getColumnModel().getColumn(0);
+      nameColumn.setPreferredWidth(Math.max(myMaxWidth[0], JBUIScale.scale(150)));
+    }
+  }
+
+  private int getColumnWidth(int column) {
+    final String preferredString = myViewExtension.getPercentage(column, (CoverageListNode)myTreeStructure.getRootElement());
+    if (preferredString == null) return JBUIScale.scale(60);
+    return getStringWidth(preferredString);
+  }
+
+  private int getStringWidth(@NotNull String preferredString) {
+    final FontMetrics fontMetrics = getFontMetrics(getFont());
+    return fontMetrics.stringWidth(preferredString);
   }
 
   private static ActionGroup createPopupGroup() {
