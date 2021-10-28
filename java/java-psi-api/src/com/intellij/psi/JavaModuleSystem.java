@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows checking accessibility of a given class.
- *
- * If at least one extension considers class as inaccessible, then it is inaccessible.
+ * <p>
+ * A given class is only accessible if all registered extensions consider it accessible
  *
  * @see com.intellij.codeInsight.JavaModuleSystemEx
  */
@@ -41,7 +41,7 @@ public interface JavaModuleSystem {
   }
 
   /**
-   * Checks availability of element in the package
+   * Checks accessibility of element in the package
    *
    * @param targetPackageName name of the package which element's accessibility should be determined
    * @param targetFile file in which this element is contained
