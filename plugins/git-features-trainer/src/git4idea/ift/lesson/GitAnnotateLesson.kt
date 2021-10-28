@@ -99,14 +99,14 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
+    lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
+      openFirstDiffTaskId = taskId
       highlightAnnotation(null, firstStateText, highlightRight = true)
     }
 
     val showDiffText = ActionsBundle.message("action.Diff.ShowDiff.text")
-    lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
-      openFirstDiffTaskId = taskId
       text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName), strong("Johnny Catsville")))
       text(GitLessonsBundle.message("git.annotate.click.annotation.tooltip"), LearningBalloonConfig(Balloon.Position.above, 0))
       highlightShowDiffMenuItem()
@@ -119,7 +119,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       text(GitLessonsBundle.message("git.annotate.choose.show.diff", strong(showDiffText)))
       trigger("com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation")
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(openFirstDiffTaskId, delayMillis = defaultRestoreDelay)
       test { clickShowDiffAction() }
     }
 

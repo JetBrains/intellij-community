@@ -70,16 +70,16 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     showWarningIfModalCommitEnabled()
 
+    lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
+      highlightLineMarkerTaskId = taskId
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
     }
 
-    lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
-      clickLineMarkerTaskId = taskId
       text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 0))
@@ -104,7 +104,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
-      restoreByUi()
+      restoreByUi(highlightLineMarkerTaskId)
       test {
         ideFrame {
           button(defaultChangelistName).click()
@@ -125,7 +125,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
         }
         else false
       }
-      restoreState(clickLineMarkerTaskId) {
+      restoreState(highlightLineMarkerTaskId) {
         (previous.ui?.isShowing != true).also {
           if (it) HintManager.getInstance().hideAllHints()
         }
@@ -161,15 +161,15 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       proceedLink()
     }
 
+    lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
+      letsShelveTaskId = taskId
       triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
       }
     }
 
-    lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
-      letsShelveTaskId = taskId
       text(GitLessonsBundle.message("git.changelists.shelf.open.context.menu"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.changelist.tooltip", strong(newChangeListName)),
            LearningBalloonConfig(Balloon.Position.above, 250))
@@ -189,7 +189,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.open.shelf.dialog",
                                     strong(ActionsBundle.message("action.ChangesView.Shelve.text")), strong(shelfText)))
       triggerStart("ChangesView.Shelve")
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(letsShelveTaskId, delayMillis = defaultRestoreDelay)
       test {
         ideFrame {
           jMenuItem { item: ActionMenuItem -> item.anAction is ShelveChangesAction }.click()
