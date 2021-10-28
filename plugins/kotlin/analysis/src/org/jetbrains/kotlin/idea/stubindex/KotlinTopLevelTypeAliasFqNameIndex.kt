@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class KotlinTopLevelTypeAliasFqNameIndex : AbstractStringStubIndexExtension<KtTypeAlias>(KtTypeAlias::class.java) {
@@ -14,10 +13,6 @@ class KotlinTopLevelTypeAliasFqNameIndex : AbstractStringStubIndexExtension<KtTy
 
     override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
         StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
-
-    fun processElements(fqName: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtTypeAlias>) {
-        StubIndex.getInstance().processElements(KEY, fqName, project, scope, KtTypeAlias::class.java, processor)
-    }
 
     companion object {
         val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelTypeAliasFqNameIndex::class.java)

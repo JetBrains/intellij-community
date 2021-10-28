@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
@@ -39,10 +38,6 @@ public class KotlinTopLevelFunctionFqnNameIndex extends AbstractStringStubIndexE
     @Override
     public Collection<KtNamedFunction> get(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope) {
         return StubIndex.getElements(KEY, s, project, scope, KtNamedFunction.class);
-    }
-
-    public void processElements(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull Processor<? super KtNamedFunction> processor) {
-        StubIndex.getInstance().processElements(KEY,  s,project, scope, KtNamedFunction.class, processor);
     }
 
     // temporary hack, see comments in findCandidateDeclarationsInIndex (findDecompiledDeclaration.kt)

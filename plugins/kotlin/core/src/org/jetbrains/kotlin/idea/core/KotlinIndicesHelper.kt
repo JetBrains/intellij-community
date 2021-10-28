@@ -113,11 +113,9 @@ class KotlinIndicesHelper(
         }
 
         val filter: (String) -> Boolean = { key -> nameFilter(key.substringAfterLast('.', key)) }
-        KotlinTopLevelFunctionFqnNameIndex.getInstance()
-            .processAllElements(project, scope, filter, callableDeclarationProcessor)
+        KotlinTopLevelFunctionFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
 
-        KotlinTopLevelPropertyFqnNameIndex.getInstance()
-            .processAllElements(project, scope, filter, callableDeclarationProcessor)
+        KotlinTopLevelPropertyFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
     }
 
     fun getCallableTopLevelExtensions(
@@ -221,6 +219,7 @@ class KotlinIndicesHelper(
         val receiverTypeNames = collectAllNamesOfTypes(receiverTypes)
 
         val callType = callTypeAndReceiver.callType
+        val processed = mutableSetOf<CallableDescriptor>()
 
         val declarationProcessor = Processor<KtCallableDeclaration> { callableDeclaration ->
             // Check that function or property with the given qualified name can be resolved in given scope and called on given receiver
@@ -228,7 +227,9 @@ class KotlinIndicesHelper(
             if (declarationFilter(callableDeclaration)) {
                 callableDeclaration.resolveToDescriptors<CallableDescriptor>().forEach { descriptor ->
                     if (descriptor.extensionReceiverParameter != null && descriptorFilter(descriptor)) {
-                        descriptor.substituteExtensionIfCallable(receiverTypes, callType).forEach(processor::invoke)
+                        for (callableDescriptor in descriptor.substituteExtensionIfCallable(receiverTypes, callType)){
+                            if (processed.add(callableDescriptor)) processor(callableDescriptor)
+                        }
                     }
                 }
             }
@@ -250,8 +251,8 @@ class KotlinIndicesHelper(
             ProgressManager.checkCanceled()
             index[typeName, project, scope].asSequence()
                 .filter { it in scope }
-                .mapNotNull { it.name }
-                .filter { out.add(it) }
+                .mapNotNull(KtTypeAlias::getName)
+                .filter(out::add)
                 .forEach(::searchRecursively)
         }
 
@@ -489,7 +490,7 @@ class KotlinIndicesHelper(
             typeAlias.resolveToDescriptors<TypeAliasDescriptor>().forEach {
                 ProgressManager.checkCanceled()
                 if (descriptorFilter(it)) {
-                    processor.invoke(it)
+                    processor(it)
                 }
             }
             true

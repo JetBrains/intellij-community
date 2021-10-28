@@ -13,14 +13,22 @@ abstract class AbstractStringStubIndexExtension<Psi: PsiElement>(protected val v
     fun processAllElements(
         project: Project,
         scope: GlobalSearchScope,
-        filter: (String) -> Boolean = { true },
+        processor: Processor<in Psi>
+    ) {
+        processAllElements(project, scope, { true }, processor)
+    }
+
+    fun processAllElements(
+        project: Project,
+        scope: GlobalSearchScope,
+        filter: (String) -> Boolean,
         processor: Processor<in Psi>
     ) {
         val stubIndex = StubIndex.getInstance()
         val indexKey = key
         getAllKeys(project).forEach { s ->
             if (filter(s)) {
-                stubIndex.processElements(indexKey, s, project, scope, valueClass, processor)
+                if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, processor)) return
             }
         }
     }

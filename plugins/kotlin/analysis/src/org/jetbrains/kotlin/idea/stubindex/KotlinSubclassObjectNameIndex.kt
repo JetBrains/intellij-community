@@ -1,11 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.stubindex
 
-import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 
 /**
@@ -19,10 +15,6 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
  */
 class KotlinSubclassObjectNameIndex : AbstractStringStubIndexExtension<KtObjectDeclaration>(KtObjectDeclaration::class.java) {
     override fun getKey(): StubIndexKey<String, KtObjectDeclaration> = KEY
-
-    fun processElements(fqName: String, project: Project, scope: GlobalSearchScope, processor: Processor<KtObjectDeclaration>) {
-        StubIndex.getInstance().processElements(KEY, fqName, project, scope, KtObjectDeclaration::class.java, processor)
-    }
 
     companion object {
         private val KEY = KotlinIndexUtil.createIndexKey(KotlinSubclassObjectNameIndex::class.java)
