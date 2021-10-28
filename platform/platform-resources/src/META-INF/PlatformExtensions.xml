@@ -158,9 +158,6 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionGroupExpander"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionGroupExpanderImpl"/>
 
