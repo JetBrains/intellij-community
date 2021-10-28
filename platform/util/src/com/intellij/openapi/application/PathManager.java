@@ -549,6 +549,11 @@ public final class PathManager {
         log("Can't read property file '" + path + "': " + e.getMessage());
       }
     }
+
+    // Check and fix conflicting properties.
+    if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
+      sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
+    }
   }
 
   private static String getCustomPropertiesFile() {

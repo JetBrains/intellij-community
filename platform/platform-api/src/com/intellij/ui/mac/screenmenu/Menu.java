@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +17,15 @@ public class Menu extends MenuItem {
   private static Boolean IS_ENABLED = null;
   private static final List<MenuItem> ourRootItems = new ArrayList<>();
   private final List<MenuItem> myItems = new ArrayList<>();
+  private final List<MenuItem> myBuffer = new ArrayList<>();
+  private Runnable onClose;
 
   public Menu(String title) {
     setTitle(title);
+  }
+
+  public void setOnClose(Runnable onClose) {
+    this.onClose = onClose;
   }
 
   public void setTitle(String label) {
@@ -63,14 +69,24 @@ public class Menu extends MenuItem {
     }
   }
 
+  public void beginFill() {
+    for (MenuItem item : myBuffer)
+      if (item != null) item.dispose();
+    myBuffer.clear();
+  }
+
+  public @Nullable MenuItem add(@Nullable MenuItem item) { myBuffer.add(item); return item; }
+
   synchronized
-  public void refill(@NotNull List<MenuItem> newItems) {
+  public void endFill(boolean onAppKit) {
     disposeChildren(0); // NOTE: to test/increase stability use 2000 ms
 
-    long[] newItemsPeers = new long[newItems.size()];
+    if (myBuffer.isEmpty()) return;
+
+    long[] newItemsPeers = new long[myBuffer.size()];
     //System.err.println("refill with " + newItemsPeers.length + " items");
-    for (int c = 0; c < newItems.size(); ++c) {
-      MenuItem menuItem = newItems.get(c);
+    for (int c = 0; c < myBuffer.size(); ++c) {
+      MenuItem menuItem = myBuffer.get(c);
       if (menuItem != null) {
         menuItem.ensureNativePeer();
         newItemsPeers[c] = menuItem.nativePeer;
@@ -80,9 +96,10 @@ public class Menu extends MenuItem {
         newItemsPeers[c] = 0;
       }
     }
+    myBuffer.clear();
 
     ensureNativePeer();
-    nativeRefill(nativePeer, newItemsPeers);
+    nativeRefill(nativePeer, newItemsPeers, onAppKit);
   }
 
   @Override
@@ -103,6 +120,7 @@ public class Menu extends MenuItem {
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
     disposeChildren(1000);
+    if (onClose != null) onClose.run();
   }
 
   //
@@ -123,51 +141,41 @@ public class Menu extends MenuItem {
   private native void nativeAddItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, boolean onAppKit);
 
   // Refill menu
-  // schedules action to perform on AppKit thread
-  private native void nativeRefill(long menuPtr, long[] newItems);
+  private native void nativeRefill(long menuPtr, long[] newItems, boolean onAppKit);
 
   // Refill sharedApplication.mainMenu with new items (except AppMenu, i.e. first item of mainMenu)
-  // schedules action to perform on AppKit thread
   static
-  private native void nativeRefillMainMenu(long[] newItems);
+  private native void nativeRefillMainMenu(long[] newItems, boolean onAppKit);
 
   //
   // Static API
   //
 
-  public static boolean isEnabled() {
+  public static boolean isJbScreenMenuEnabled() {
     if (IS_ENABLED != null)
       return IS_ENABLED;
 
     IS_ENABLED = false;
-    if (SystemInfo.isMacSystemMenu && !Boolean.getBoolean("disableJbScreenMenuBar")) {
-      Field disableJbScreenMenuBarField = null;
-      try {
-        Class aquaMenuBarUIClass = Class.forName("com.apple.laf.AquaMenuBarUI");
-        disableJbScreenMenuBarField = aquaMenuBarUIClass.getDeclaredField("disableJbScreenMenuBar");
-      } catch (ClassNotFoundException e) {
-        Logger.getInstance(Menu.class).info("new screen menu: AquaMenuBarUI not found, " + e.getMessage());
-      } catch (NoSuchFieldException e) {
-        Logger.getInstance(Menu.class).info("new screen menu: AquaMenuBarUI.disableJBScreenMenuBar not found, can't use new menu impl, "
-                                            + e.getMessage());
-      }
 
-      if (disableJbScreenMenuBarField == null) {
-        Logger.getInstance(Menu.class).info("new screen menu: disableJbScreenMenu isn't supported by runtime, new screen menu is disabled");
-      } else {
-        Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
-        try {
-          System.load(lib.toFile().getAbsolutePath());
-          IS_ENABLED = true;
-          Logger.getInstance(Menu.class).info("use new screen menu");
-          // create and dispose native object (just for to test)
-          Menu test = new Menu("test");
-          test.ensureNativePeer();
-          test.dispose();
-        } catch (Throwable e) {
-          Logger.getInstance(Menu.class).info("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
-        }
-      }
+    if (!SystemInfo.isMac) return false;
+    if (!Boolean.getBoolean("jbScreenMenuBar.enabled")) return false;
+    if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
+      Logger.getInstance(Menu.class).info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");
+      return false;
+    }
+
+    Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
+    try {
+      System.load(lib.toFile().getAbsolutePath());
+      Logger.getInstance(Menu.class).info("use new screen menu");
+      // create and dispose native object (just for to test)
+      Menu test = new Menu("test");
+      test.ensureNativePeer();
+      test.dispose();
+      IS_ENABLED = true;
+      Logger.getInstance(Menu.class).info("use new ScreenMenuBar implementation");
+    } catch (Throwable e) {
+      Logger.getInstance(Menu.class).info("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
     }
 
     return IS_ENABLED;
@@ -192,6 +200,6 @@ public class Menu extends MenuItem {
     }
 
     // 3. refill in AppKit thread
-    nativeRefillMainMenu(newItemsPeers);
+    nativeRefillMainMenu(newItemsPeers, true);
   }
 }
