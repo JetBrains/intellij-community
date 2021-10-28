@@ -12,6 +12,7 @@ internal class MarkdownActionPromoter: ActionPromoter {
       "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction",
       "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction",
       "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction",
+      "Markdown.Insert"
     )
   }
 

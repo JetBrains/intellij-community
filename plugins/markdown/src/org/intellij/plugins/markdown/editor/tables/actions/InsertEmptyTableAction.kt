@@ -15,8 +15,10 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ActionEvent
@@ -27,6 +29,12 @@ import javax.swing.*
 import kotlin.math.floor
 
 internal class InsertEmptyTableAction: DumbAwareAction() {
+  init {
+    addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
+      MarkdownBundle.message("action.org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction.insert.popup.text")
+    }
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val hintComponent = TableGridComponent { rows, columns ->

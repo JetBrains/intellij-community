@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,9 +14,16 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.images.ConfigureImageDialog
 import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.images.MarkdownImageData
+import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 
 class InsertImageAction : AnAction(), DumbAware {
+  init {
+    addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
+      MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction.insert.popup.text")
+    }
+  }
+
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = MarkdownActionUtil.findMarkdownTextEditor(event)?.document?.isWritable == true
   }
