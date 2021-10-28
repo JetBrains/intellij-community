@@ -674,5 +674,8 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
 
         ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFix)
+
+        NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(NonPublicCallFromPublicInlineFactory)
+        PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(NonPublicCallFromPublicInlineFactory)
     }
 }
