@@ -6,13 +6,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
+import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isConstructorUsage
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
-    override fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean =
-        org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject(element, companionObject)
+    override fun processCompanionObjectInternalReferences(
+        companionObject: KtObjectDeclaration,
+        referenceProcessor: Processor<PsiReference>
+    ): Boolean {
+        val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
+        return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
+            if (element == companionObject) return false // skip companion object itself
+            return if (isCallReceiverRefersToCompanionObject(element, companionObject)) {
+                element.references.any { !referenceProcessor.process(it) }
+            } else false
+        })
+    }
 
     override fun isDataClassComponentFunction(element: KtParameter): Boolean =
         element.dataClassComponentFunction() != null
