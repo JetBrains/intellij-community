@@ -34,13 +34,13 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
     get() = intValue("ide.animation.showing.delay", 0)
 
   protected val showingDuration
-    get() = intValue("ide.animation.showing.duration", 0)
+    get() = intValue("ide.animation.showing.duration", 130)
 
   protected val hidingDelay
-    get() = intValue("ide.animation.hiding.delay", 250)
+    get() = intValue("ide.animation.hiding.delay", 70)
 
   protected val hidingDuration
-    get() = intValue("ide.animation.hiding.duration", 500)
+    get() = intValue("ide.animation.hiding.duration", 150)
 
   private fun createShowingAnimation(value: Double) = Animation(consumer).apply {
     if (value > 0.0) {
