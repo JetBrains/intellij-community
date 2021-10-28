@@ -17,6 +17,7 @@ internal class SearchEverywhereContextFeaturesProvider {
     private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
 
     private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
+    private const val NUMBER_OF_OPEN_EDITORS_KEY = "numberOfOpenEditors"
   }
 
   fun getContextFeatures(project: Project?): Map<String, Any> {
@@ -37,6 +38,7 @@ internal class SearchEverywhereContextFeaturesProvider {
 
       val fem = FileEditorManager.getInstance(it)
       data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
+      data[NUMBER_OF_OPEN_EDITORS_KEY] = fem.allEditors.size
     }
     return data
   }
