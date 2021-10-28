@@ -99,7 +99,9 @@ internal class IntentionPreviewComputable(private val project: Project,
         val method = try {
           IntentionActionDelegate.unwrap(action).javaClass
             .getMethod("invokeForPreview", Project::class.java, Editor::class.java, PsiFile::class.java)
-        } catch (_: Exception) { null }
+        }
+        catch (_: NoSuchMethodException) { null }
+        catch (_: SecurityException) { null }
         if (method != null && method.declaringClass == IntentionAction::class.java) {
           // Use fallback algorithm only if invokeForPreview is not explicitly overridden
           // in this case, the absence of diff could be intended, thus should not be logged as error
