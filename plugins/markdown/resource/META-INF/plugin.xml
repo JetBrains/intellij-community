@@ -379,15 +379,19 @@ Includes the following features:</p>
                 icon="AllIcons.Actions.GC"/>
       </group>
 
-      <group id="Markdown.TableContextMenu" popup="true" compact="true">
-        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
-        <separator/>
+      <group id="Markdown.TableContextMenuGroup"
+             class="com.intellij.ide.actions.NonTrivialActionGroup"
+             popup="true"
+             compact="true">
         <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertBefore"/>
         <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertAfter"/>
         <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertAbove"/>
         <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertBelow"/>
         <separator/>
-        <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup" popup="true">
+        <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup"
+               class="com.intellij.ide.actions.NonTrivialActionGroup"
+               popup="true"
+               compact="true">
           <reference id="Markdown.TableColumnActions.ColumnAlignmentActions"/>
         </group>
         <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithLeftColumn"/>
@@ -423,13 +427,6 @@ Includes the following features:</p>
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
 
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
-              icon="MarkdownIcons.EditorActions.Link">
-        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
-        <add-to-group group-id="GenerateGroup" anchor="last"/>
-      </action>
-
       <separator/>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
@@ -441,26 +438,44 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
+    </group>
 
-      <separator/>
-
+    <!--
+      This group is supposed to override default generate popup.
+      Please, make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
+    -->
+    <group id="Markdown.InsertGroup">
+      <!-- Also add all insert actions into default generate popup -->
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+              icon="MarkdownIcons.EditorActions.Link">
+        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+      </action>
+      <action id="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+              class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+              icon="MarkdownIcons.EditorActions.Table"/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               icon="AllIcons.General.LayoutPreviewOnly">
         <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
-        <add-to-group group-id="GenerateGroup" anchor="last"/>
-      </action>
-      <action id="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
-              class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
-              icon="MarkdownIcons.EditorActions.Table">
-        <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
     </group>
+    <action id="Markdown.Insert"
+            class="org.intellij.plugins.markdown.ui.actions.InsertAction"
+            use-shortcut-of="Generate"/>
 
     <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
             id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
             icon="MarkdownIcons.EditorActions.Link">
     </action>
+
+    <group id="Markdown.EditorContextMenuGroup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
+      <separator/>
+      <reference id="Markdown.TableContextMenuGroup"/>
+      <reference id="Markdown.Insert"/>
+    </group>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
     </group>
