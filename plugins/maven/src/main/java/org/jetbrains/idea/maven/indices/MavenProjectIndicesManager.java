@@ -30,14 +30,11 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.idea.reposearch.SearchParameters;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent implements Disposable {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
-  private @Nullable volatile MavenIndex myLocalIndex;
+  private @NotNull volatile List<MavenIndex> myLocalIndexes = Collections.emptyList();
   private final DependencySearchService myDependencySearchService;
   private final MergingUpdateQueue myUpdateQueue;
 
@@ -116,7 +113,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         myDependencySearchService.updateProviders();
 
         myProjectIndices = newProjectIndices;
-        myLocalIndex = ContainerUtil.find(myProjectIndices, mi -> mi.getKind() == MavenSearchIndex.Kind.LOCAL);
+        myLocalIndexes = ContainerUtil.filter(myProjectIndices, mi -> mi.getKind() == MavenSearchIndex.Kind.LOCAL);
         if (consumer != null) {
           consumer.consume(myProjectIndices);
         }
@@ -250,8 +247,24 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     return result;
   }
 
-  @Nullable
-  public MavenIndex getLocalIndex() {
-    return myLocalIndex;
+  public boolean hasLocalGroupId(String groupId) {
+    for (MavenIndex index : myLocalIndexes) {
+      if (index.hasGroupId(groupId)) return true;
+    }
+    return false;
+  }
+
+  public boolean hasLocalArtifactId(String groupId, String artifactId) {
+    for (MavenIndex index : myLocalIndexes) {
+      if (index.hasArtifactId(groupId, artifactId)) return true;
+    }
+    return false;
+  }
+
+  public boolean hasLocalVersion(String groupId, String artifactId, String version) {
+    for (MavenIndex index : myLocalIndexes) {
+      if (index.hasVersion(groupId, artifactId, version)) return true;
+    }
+    return false;
   }
 }

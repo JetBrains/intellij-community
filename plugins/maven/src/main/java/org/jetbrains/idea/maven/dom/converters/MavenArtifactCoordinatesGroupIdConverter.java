@@ -3,13 +3,14 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -22,8 +23,12 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())) return false;
 
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
+    if (projectsManager.findProject(id) != null) return true;
+
     // Check if artifact was found on importing.
-    MavenProject mavenProject = findMavenProject(context);
+    VirtualFile projectFile = getMavenProjectFile(context);
+    MavenProject mavenProject = projectFile == null ? null : projectsManager.findProject(projectFile);
     if (mavenProject != null) {
       for (MavenArtifact artifact : mavenProject.findDependencies(id.getGroupId(), id.getArtifactId())) {
         if (MavenArtifactUtilKt.resolved(artifact)) {
@@ -32,8 +37,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       }
     }
 
-    MavenIndex localIndex = manager.getLocalIndex();
-    return localIndex != null && localIndex.hasGroupId(id.getGroupId());
+    return manager.hasLocalGroupId(id.getGroupId());
   }
 
   @Override
