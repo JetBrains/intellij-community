@@ -24,6 +24,7 @@ import java.awt.BorderLayout
 import java.util.function.Predicate
 import javax.swing.JPanel
 import javax.swing.JTree
+import javax.swing.ScrollPaneConstants
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -32,7 +33,7 @@ import javax.swing.tree.TreeNode
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   val tree: CheckboxTree
-  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, width 100%"))
+  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, fillx"))
   private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
@@ -100,7 +101,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
     val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.5f)
     splitter.setHonorComponentsMinimumSize(false)
-    splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree)
+    splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     splitter.secondComponent = rightPanel
     add(splitter, BorderLayout.CENTER)
   }
