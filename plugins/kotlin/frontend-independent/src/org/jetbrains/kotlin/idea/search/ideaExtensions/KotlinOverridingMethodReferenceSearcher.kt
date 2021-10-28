@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.search.MethodTextOccurrenceProcessor
 import com.intellij.psi.impl.search.MethodUsagesSearcher
@@ -28,8 +29,8 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
     override fun processQuery(p: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
         val method = p.method
-        val isConstructor = p.project.runReadActionInSmartMode { method.isConstructor }
-        if (isConstructor) {
+        val canOverride = p.project.runReadActionInSmartMode { !method.hasModifier(JvmModifier.STATIC) && !method.isConstructor }
+        if (!canOverride) {
             return
         }
 
