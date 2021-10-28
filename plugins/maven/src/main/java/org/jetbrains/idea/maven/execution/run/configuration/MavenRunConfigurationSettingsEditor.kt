@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
+import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
@@ -28,8 +29,8 @@ import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
 import com.intellij.util.lockOrSkip
@@ -48,12 +49,12 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
-import java.awt.BorderLayout
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.event.HyperlinkEvent
 
 class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
@@ -148,17 +149,24 @@ class MavenRunConfigurationSettingsEditor(
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
     private val separator = CollapsibleTitledSeparator(group)
-    private val checkBox = JCheckBox()
-    private val settingsLink = htmlComponent(MavenConfigurableBundle.message("maven.run.configuration.options.group.inherit")) {
-      if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        val showSettingsUtil = ShowSettingsUtil.getInstance()
-        showSettingsUtil.showSettingsDialog(project, settingsName)
+    private val checkBox: JCheckBox
+    private val checkBoxWithLink: JComponent
+
+    init {
+      val labelText = MavenConfigurableBundle.message("maven.run.configuration.options.group.inherit")
+      @Suppress("HardCodedStringLiteral") val leadingLabelText = labelText.substringBefore("<a>")
+      @Suppress("HardCodedStringLiteral") val linkLabelText = labelText.substringAfter("<a>").substringBefore("</a>")
+      @Suppress("HardCodedStringLiteral") val trailingLabelText = labelText.substringAfter("</a>")
+      checkBox = JCheckBox(leadingLabelText)
+      checkBoxWithLink = JPanel().apply {
+        layout = HorizontalLayout(0)
+        add(checkBox)
+        add(ActionLink(linkLabelText) {
+          val showSettingsUtil = ShowSettingsUtil.getInstance()
+          showSettingsUtil.showSettingsDialog(project, settingsName)
+        })
+        add(JLabel(trailingLabelText))
       }
-    }
-    private val checkBoxWithLink = JPanel().apply {
-      layout = BorderLayout()
-      add(checkBox, BorderLayout.WEST)
-      add(settingsLink, BorderLayout.CENTER)
     }
 
     override fun createChildren() = SettingsFragmentsContainer.fragments<S> {
