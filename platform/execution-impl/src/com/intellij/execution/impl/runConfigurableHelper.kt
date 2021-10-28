@@ -36,7 +36,7 @@ interface RunDialogBase {
 
   val executor: Executor?
 
-  fun setTitle(title: String)
+  fun setTitle(title: String?)
 
   fun clickDefaultButton()
 

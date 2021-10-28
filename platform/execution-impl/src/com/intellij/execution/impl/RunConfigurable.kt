@@ -60,6 +60,7 @@ import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.*
 import kotlin.math.max
 
@@ -86,7 +87,7 @@ fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(protected val project: Project, private var _runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
+open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
   @Volatile private var isDisposed: Boolean = false
 
   val root = DefaultMutableTreeNode("Root")
@@ -102,24 +103,17 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected val toolbarAddAction = MyToolbarAddAction()
   private var isModified = false
 
-  var runDialog: RunDialogBase?
-    get() = _runDialog
-    set(value) {
-      if (_runDialog != null || value == null) return
-      _runDialog = value
-
-      val changeRunConfigurationNodeAlarm = SingleAlarm(
-        task = ::selectRunConfiguration,
-        delay = 300,
-        parentDisposable = value.getDisposable(),
-        threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-        modalityState = ModalityState.stateForComponent(tree)
-      )
-      tree.addTreeSelectionListener {
-        if (changeRunConfigurationNodeAlarm.isDisposed) return@addTreeSelectionListener
-        changeRunConfigurationNodeAlarm.cancelAndRequest()
-      }
+  init {
+    runDialog?.let {
+      initTreeSelectionListener(it.getDisposable())
     }
+  }
+
+  private lateinit var changeRunConfigurationNodeAlarm: SingleAlarm
+  private val changeRunConfigurationListener = TreeSelectionListener {
+    if (changeRunConfigurationNodeAlarm.isDisposed) return@TreeSelectionListener
+    changeRunConfigurationNodeAlarm.cancelAndRequest()
+  }
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
@@ -228,6 +222,20 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
+  }
+
+  protected fun initTreeSelectionListener(parentDisposable: Disposable) {
+    if (tree.treeSelectionListeners.any { it == changeRunConfigurationListener }) return
+
+    changeRunConfigurationNodeAlarm = SingleAlarm(
+      task = ::selectRunConfiguration,
+      delay = 300,
+      parentDisposable = parentDisposable,
+      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+      modalityState = ModalityState.stateForComponent(tree)
+    )
+
+    tree.addTreeSelectionListener(changeRunConfigurationListener)
   }
 
   private fun selectRunConfiguration() {
@@ -733,7 +741,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun updateDialog() {
-    val runDialog = _runDialog
+    val runDialog = runDialog
     val executor = runDialog?.executor ?: return
     val buffer = StringBuilder()
     buffer.append(executor.id)
@@ -778,7 +786,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun clickDefaultButton() {
-    _runDialog?.clickDefaultButton()
+    runDialog?.clickDefaultButton()
   }
 
   private val selectedConfigurationTypeNode: DefaultMutableTreeNode?
