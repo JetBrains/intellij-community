@@ -418,9 +418,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     mySettingsStep = null;
     myHeaderPanel.removeAll();
     if (groupModuleBuilder != null && groupModuleBuilder.getModuleType() != null) {
-      if (!isNewWizard()) {
-        mySettingsStep = groupModuleBuilder.modifyProjectTypeStep(this);
-      }
+      mySettingsStep = groupModuleBuilder.modifyProjectTypeStep(this);
     }
 
     if (groupModuleBuilder == null || (!isNewWizard() && groupModuleBuilder.isTemplateBased())) {
