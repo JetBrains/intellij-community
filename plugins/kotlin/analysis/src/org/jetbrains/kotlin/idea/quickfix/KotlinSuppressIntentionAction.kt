@@ -7,6 +7,7 @@ import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -76,7 +77,14 @@ class KotlinSuppressIntentionAction private constructor(
         val fileAnnotationList: KtFileAnnotationList? = ktFile.fileAnnotationList
         if (fileAnnotationList == null) {
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(suppressAnnotationText(id, false))
-            val createAnnotationList = replaceFileAnnotationList(ktFile, newAnnotationList)
+            val packageDirective = ktFile.packageDirective
+            val createAnnotationList = if (packageDirective != null &&
+                PsiTreeUtil.skipWhitespacesForward(packageDirective) == ktFile.importList) {
+                // packageDirective could be empty but suppression still should be added before it to generate consistent PSI
+                ktFile.addBefore(newAnnotationList, packageDirective) as KtFileAnnotationList
+            } else {
+                replaceFileAnnotationList(ktFile, newAnnotationList)
+            }
             ktFile.addAfter(psiFactory.createWhiteSpace(kind), createAnnotationList)
 
             return
