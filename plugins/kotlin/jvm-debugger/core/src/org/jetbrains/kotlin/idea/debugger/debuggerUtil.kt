@@ -86,7 +86,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
     var result: T? = null
     val command: DebuggerCommandImpl = object : DebuggerCommandImpl() {
         override fun action() {
-            result = runReadAction { f(debuggerContext) }
+            result = f(debuggerContext)
         }
     }
 
