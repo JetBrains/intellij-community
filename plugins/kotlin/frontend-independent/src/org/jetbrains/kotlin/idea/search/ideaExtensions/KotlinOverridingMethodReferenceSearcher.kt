@@ -34,9 +34,7 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
         }
 
         val searchScope = p.project.runReadActionInSmartMode {
-            p.effectiveSearchScope
-                .intersectWith(method.useScope)
-                .restrictToKotlinSources()
+            p.effectiveSearchScope.restrictToKotlinSources()
         }
 
         if (SearchScope.isEmptyScope(searchScope)) return
