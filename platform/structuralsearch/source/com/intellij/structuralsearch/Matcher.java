@@ -191,12 +191,15 @@ public class Matcher {
       if (scheduler == null) scheduler = new TaskScheduler();
       matchContext.getSink().setMatchingProcess(scheduler);
       scheduler.init();
-      findMatches();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        findMatches();
 
-      if (scheduler.getTaskQueueEndAction() == null) {
-        scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
-      }
-      scheduler.executeNext();
+        if (scheduler.getTaskQueueEndAction() == null) {
+          scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
+        }
+        scheduler.executeNext();
+        return null;
+      });
     }
   }
 
@@ -315,7 +318,10 @@ public class Matcher {
     public void resume() {
       if (!suspended) return;
       suspended = false;
-      executeNext();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        executeNext();
+        return null;
+      });
     }
 
     @Override
@@ -367,20 +373,15 @@ public class Matcher {
       assert project != null;
       ended = false;
       suspended = false;
-      PsiManager.getInstance(project).startBatchFilesProcessingMode();
     }
 
     private void clearSchedule() {
       assert project != null;
       if (tasks != null) {
         taskQueueEndAction.run();
-        if (!project.isDisposed()) {
-          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
-        }
         tasks = null;
       }
     }
-
   }
 
   /**

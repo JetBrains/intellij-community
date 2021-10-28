@@ -198,9 +198,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     String name = ReadAction.compute(() -> property.getName());
     if (name == null) return true;
 
-    psiManager.startBatchFilesProcessingMode();
-
-    try {
+    return psiManager.runInBatchFilesMode(() -> {
       CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<>() {
         @Override
         protected boolean accept(VirtualFile virtualFile) {
@@ -213,14 +211,12 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
         ProgressManager.checkCanceled();
 
         PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(vfile));
-        if (!processReferences(processor, file, name, property, filterScope)) return false;
+        if (!processReferences(processor, file, name, property, filterScope)) {
+          return false;
+        }
       }
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
-
-    return true;
+      return true;
+    });
   }
 
   private static boolean processReferencesInUIForms(final Processor<? super PsiReference> processor,
@@ -244,19 +240,16 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                   PsiElement element,
                                                   LocalSearchScope filterScope,
                                                   Processor<? super PsiReference> processor) {
-    psiManager.startBatchFilesProcessingMode();
-
-    try {
+    return psiManager.runInBatchFilesMode(() -> {
       for (PsiFile file : files) {
         ProgressManager.checkCanceled();
 
         if (file.getFileType() != GuiFormFileType.INSTANCE) continue;
-        if (!processReferences(processor, file, baseName, element, filterScope)) return false;
+        if (!processReferences(processor, file, baseName, element, filterScope)) {
+          return false;
+        }
       }
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
-    return true;
+      return true;
+    });
   }
 }
