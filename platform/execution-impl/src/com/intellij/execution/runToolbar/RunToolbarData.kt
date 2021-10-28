@@ -8,11 +8,10 @@ import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.SingleConfigurationConfigurable
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -44,6 +43,12 @@ interface RunToolbarData {
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
   val waitingForProcess: MutableSet<String>
+}
+
+internal fun RunContentDescriptor.environment(): ExecutionEnvironment? {
+  return this.attachedContent?.component?.let {
+    ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(it))
+  }
 }
 
 internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
