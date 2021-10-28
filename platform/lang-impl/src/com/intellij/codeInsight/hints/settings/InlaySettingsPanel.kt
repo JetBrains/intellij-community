@@ -32,7 +32,7 @@ import javax.swing.tree.TreeNode
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   val tree: CheckboxTree
-  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20"))
+  private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, width 100%"))
   private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
@@ -98,7 +98,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       TreeUtil.selectNode(tree, nodeToSelect)
     }
 
-    val splitter = JBSplitter(false, 0.3f)
+    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.5f)
+    splitter.setHonorComponentsMinimumSize(false)
     splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree)
     splitter.secondComponent = rightPanel
     add(splitter, BorderLayout.CENTER)
@@ -187,7 +188,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           isRightMarginShown = false
         }
       }
-      rightPanel.add(editorTextField, "growx")
+      rightPanel.add(ScrollPaneFactory.createScrollPane(editorTextField), "growx")
     }
   }
 
@@ -201,7 +202,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addDescription(@Nls s: String?) {
     val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
-    rightPanel.add(htmlLabel, "growy, width 200:300:300")
+    rightPanel.add(htmlLabel, "growy")
   }
 
   private fun getProviderId(treeNode: CheckedTreeNode): String {
