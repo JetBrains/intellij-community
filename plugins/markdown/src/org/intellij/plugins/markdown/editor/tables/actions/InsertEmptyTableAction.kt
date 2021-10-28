@@ -31,7 +31,7 @@ import kotlin.math.floor
 internal class InsertEmptyTableAction: DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
-      MarkdownBundle.message("action.org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction.insert.popup.text")
+      MarkdownBundle.message("action.Markdown.InsertEmptyTable.insert.popup.text")
     }
   }
 
