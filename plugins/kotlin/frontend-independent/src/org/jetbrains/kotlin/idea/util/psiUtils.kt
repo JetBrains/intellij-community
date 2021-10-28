@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
+import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -58,7 +60,7 @@ fun PsiClass.classIdIfNonLocal(): ClassId? {
     val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
     val packageFqName = FqName(packageName)
 
-    val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
+    val classesNames = parentsOfType<PsiClass>().map { it.name }.toList().asReversed()
     if (classesNames.any { it == null }) return null
     return ClassId(packageFqName, FqName(classesNames.joinToString(separator = ".")), false)
 }
@@ -208,4 +210,11 @@ tailrec fun KtCallableDeclaration.isExplicitTypeReferenceNeededForTypeInference(
         }
         else -> false
     }
+}
+
+fun PsiClass.isSyntheticKotlinClass(): Boolean {
+    if ('$' !in name!!) return false // optimization to not analyze annotations of all classes
+    val metadata = modifierList?.findAnnotation(JvmAnnotationNames.METADATA_FQ_NAME.asString())
+    return (metadata?.findAttributeValue(JvmAnnotationNames.KIND_FIELD_NAME) as? PsiLiteral)?.value ==
+            KotlinClassHeader.Kind.SYNTHETIC_CLASS.id
 }

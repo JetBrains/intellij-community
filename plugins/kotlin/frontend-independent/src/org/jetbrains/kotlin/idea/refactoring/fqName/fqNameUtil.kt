@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -51,3 +53,6 @@ val KotlinType.fqName: FqName?
         is AbbreviatedType -> abbreviation.fqName
         else -> constructor.declarationDescriptor?.fqNameOrNull()
     }
+
+fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
+    JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
