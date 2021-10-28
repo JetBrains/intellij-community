@@ -17,10 +17,9 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.syntheticAssessors
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -46,9 +45,7 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
 
         p.project.runReadActionInSmartMode {
             val containingClass = method.containingClass ?: return@runReadActionInSmartMode
-
-            val nameCandidates = getPropertyNamesCandidatesByAccessorName(Name.identifier(method.name))
-            for (name in nameCandidates) {
+            for (name in method.syntheticAssessors) {
                 p.optimizer.searchWord(
                     name.asString(),
                     searchScope,

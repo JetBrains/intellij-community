@@ -12,7 +12,6 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.compiler.server.PortableCachesLoadListener
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
@@ -47,13 +46,11 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.not
+import org.jetbrains.kotlin.idea.search.syntheticAssessors
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -455,17 +452,8 @@ private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
 
     val fqName = psiMethod.getKotlinFqName() ?: return null
     val listOfFqName = listOf(fqName)
-    if (psiMethod.hasModifier(JvmModifier.STATIC)) return listOfFqName
-
-    val name = psiMethod.name
-    val parametersSize = psiMethod.parameters.size
-    if (psiMethod.hasTypeParameters() ||
-        JvmAbi.isGetterName(name) && parametersSize != 0 ||
-        JvmAbi.isSetterName(name) && parametersSize != 1
-    ) {
-        return listOfFqName
-    }
+    val propertyAssessors = psiMethod.syntheticAssessors.ifEmpty { return listOfFqName }
 
     val parentFqName = fqName.parent()
-    return listOfFqName + getPropertyNamesCandidatesByAccessorName(Name.identifier(name)).map { parentFqName.child(it) }
+    return listOfFqName + propertyAssessors.map { parentFqName.child(it) }
 }
