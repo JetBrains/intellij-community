@@ -86,6 +86,14 @@ class ButtonSelectorToolbar @JvmOverloads constructor(
     ActionToolbarBorder.setOutlined(this, true)
   }
 
+  override fun addNotify() {
+    super.addNotify()
+
+    // Create actions immediately, otherwise first ButtonSelectorToolbar preferred size calculation can be done without actions.
+    // In such case ButtonSelectorToolbar will keep narrow width for preferred size because of ActionToolbar.WRAP_LAYOUT_POLICY
+    updateActionsImmediately(true)
+  }
+
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
     return Dimension(size.width, calcHeight(forceFieldHeight, size.height)) // there can be non-default font-size
