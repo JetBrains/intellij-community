@@ -777,6 +777,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testMouseSelectionWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
     initText("abcdef");
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
     getEditor().getSettings().setBlockCursor(true);
@@ -805,6 +806,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testMouseSelectionAtLineEndWithBlockCaret() {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
     initText("abc\ndef");
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
     getEditor().getSettings().setBlockCursor(true);
@@ -867,6 +869,7 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testSelectionOutsideVisibleAreaWithBlockCaret() throws Exception {
+    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
     initText(StringUtil.repeatSymbol('\n', 20));
     EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);  // enable drag testing
     getEditor().getSettings().setBlockCursor(true);
