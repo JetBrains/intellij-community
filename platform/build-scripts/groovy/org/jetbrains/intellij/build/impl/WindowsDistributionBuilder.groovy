@@ -5,10 +5,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.PathUtilRt
 import com.intellij.util.Processor
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
@@ -116,16 +119,17 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
 
         jreDirectoryPaths = [jreDir]
-      } else {
+      }
+      else {
         jreDirectoryPaths = []
       }
       zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
-    buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+    buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
       generateProductJson(productJsonDir, jreDir != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath.toString(), jreDir.toString()], [])
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
       exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, '')
     }
 
@@ -134,26 +138,26 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (!SystemInfoRt.isLinux) {
-      buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
+      Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
       return
     }
 
-    buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
+    Span.current().addEvent("compare ${PathUtilRt.getFileName(zipPath)} vs. ${PathUtilRt.getFileName(exePath)}")
 
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
       BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
-      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath), tempZip)
       //noinspection SpellCheckingInspection
-      FileUtil.delete(tempExe.resolve("\$PLUGINSDIR"))
+      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
       BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
-      RepairUtilityBuilder.generateManifest(buildContext, tempExe.toString(), Paths.get(exePath).fileName.toString())
+      RepairUtilityBuilder.generateManifest(buildContext, tempExe, Path.of(exePath).fileName.toString())
     }
     finally {
-      FileUtil.delete(tempZip)
-      FileUtil.delete(tempExe)
+      NioFiles.deleteRecursively(tempZip)
+      NioFiles.deleteRecursively(tempExe)
     }
   }
 
@@ -294,9 +298,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
 
       String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
+      List<Path> dirs = [buildContext.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
       BuildHelper.zipWithPrefix(buildContext, targetFile, dirs, zipPrefix)
-      ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
+      ProductInfoValidator.checkInArchive(buildContext, targetFile, zipPrefix)
       buildContext.notifyArtifactWasBuilt(targetFile)
       return targetFile
     }
