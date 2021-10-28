@@ -17,6 +17,12 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 
+/**
+ * This class is responsible for auxiliary tasks (like build process or project-specific scripts execution)
+ * that might be called just before run configuration start.
+ * Exact list of tasks should be specified for every run configuration (or template) by user in dedicated UI.
+ */
+
 public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   public static final ProjectExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
