@@ -195,7 +195,7 @@ public final class UITheme {
       Object v = colors.get(colorKey);
       if (v instanceof String) {
         String value = (String)v;
-        Object namedColor = theme.colors.get(value);
+        Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
         if (namedColor instanceof String) {
           value = (String)namedColor;
         }
