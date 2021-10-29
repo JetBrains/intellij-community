@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.util.ui.JBUI
 
 @Suppress("DialogTitleCapitalization")
 @Demo(title = "Tips",
@@ -41,6 +42,13 @@ fun demoTips(): DialogPanel {
       link("Config...") {}
       link("About") {}
     }.rowComment("Use Cell.resizableColumn if column should occupy whole free space. Remaining cells are adjusted to the right")
+
+    row {
+      text("If needed text color of Row.text() can be changed to comment color with the following code:<br>" +
+           "foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND<br>" +
+           "It differs from Row.comment() because comments can use smaller font size on macOS")
+        .applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
+    }
 
     group("Use Row.cell() to disable expanding components on whole width") {
       row("Row 1:") {
