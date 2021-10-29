@@ -6,9 +6,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Declares document range to be shown in quick definition popup when {@link PsiElement} is selected 
- * 
- * Used by "Quick Definition" action 
+ * Declares document range to be shown in quick definition popup when {@link PsiElement} is selected. 
+ * Used by "Quick Definition" action.
+ * Register as "lang.implementationTextSelectioner" language extension.
  */
 public interface ImplementationTextSelectioner {
   /**
