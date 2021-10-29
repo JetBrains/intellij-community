@@ -56,7 +56,7 @@ public final class ProcessInfoUtil {
       if (process instanceof WinConPtyProcess) {
         return ((WinConPtyProcess)process).getWorkingDirectory();
       }
-      throw new IllegalStateException("Cwd can be fetched for " + WinPtyProcess.class + " only, got " + process.getClass());
+      throw new IllegalStateException("Cwd cannot be fetched for " + process.getClass());
     }
     throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
   }
