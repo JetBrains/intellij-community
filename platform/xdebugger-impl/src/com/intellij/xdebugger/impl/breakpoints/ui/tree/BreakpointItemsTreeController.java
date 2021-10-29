@@ -21,7 +21,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
- * @author nik, zajac
+ * @author zajac
  */
 public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.Delegate {
   private static final TreeNodeComparator COMPARATOR = new TreeNodeComparator();
