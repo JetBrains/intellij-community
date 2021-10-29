@@ -4,6 +4,7 @@ package com.intellij.grazie.ide.inspection.grammar.quickfix
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInspection.LocalQuickFix
@@ -25,7 +26,12 @@ import kotlin.math.min
 
 object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction
+    HighPriorityAction {
+    override fun compareTo(other: IntentionAction): Int {
+      if (other is GrazieCustomFixWrapper) return -1
+      return super.compareTo(other)
+    }
+  }
 
   private class ChangeToVariantAction(
     private val rule: Rule,
@@ -69,6 +75,11 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun startInWriteAction(): Boolean = true
+
+    override fun compareTo(other: IntentionAction): Int {
+      if (other is GrazieCustomFixWrapper) return -1
+      return super.compareTo(other)
+    }
   }
 
   @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
@@ -83,7 +94,7 @@ object GrazieReplaceTypoQuickFix {
     val replacedText = replacementRange.subSequence(problem.text)
     val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
-    val familyName = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
+    @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
     problem.corrections.forEachIndexed { index, suggestion ->
       val commonPrefix = commonPrefixLength(suggestion, replacedText)
@@ -97,6 +108,9 @@ object GrazieReplaceTypoQuickFix {
     }
     return result
   }
+
+  fun familyName(problem: TextProblem): @IntentionFamilyName String =
+    GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
 
   // custom common prefix/suffix calculation to honor cases when the text is separated by a synthetic \n,
   // but LT suggests a space instead (https://github.com/languagetool-org/languagetool/issues/5297)

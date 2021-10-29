@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.language.commit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.text.*;
@@ -39,12 +40,14 @@ public class CommitAnnotator implements Annotator {
         return null;
       }
 
+      ProblemDescriptor descriptor = runner.toProblemDescriptors(problem, true).get(0);
+
       AnnotationBuilder annotation = holder
         .newAnnotation(HighlightSeverity.WARNING, problem.getDescriptionTemplate(true))
         .tooltip(problem.getTooltipTemplate())
         .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
         .range(text.textRangeToFile(problem.getHighlightRange()));
-      for (QuickFix<?> fix : runner.toFixes(problem)) {
+      for (QuickFix<?> fix : runner.toFixes(problem, descriptor)) {
         annotation = annotation.withFix((IntentionAction)fix);
       }
       annotation.create();
