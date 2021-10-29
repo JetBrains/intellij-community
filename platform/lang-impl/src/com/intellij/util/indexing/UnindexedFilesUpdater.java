@@ -57,6 +57,8 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 
 @ApiStatus.Internal
 public class UnindexedFilesUpdater extends DumbModeTask {
+  // should be used only for test debugging purpose
+  private static final List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
@@ -181,7 +183,12 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
-      orderedProviders = getOrderedProviders();
+      orderedProviders = getProviders();
+      if (!allowedIteratorPatterns.isEmpty()) {
+        orderedProviders = ContainerUtil.filter(orderedProviders, p -> {
+          return allowedIteratorPatterns.stream().anyMatch(pattern -> p.getDebugName().contains(pattern));
+        });
+      }
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);
@@ -331,13 +338,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
 
-  /**
-   * Returns providers of files. Since LAB-22 (Smart Dumb Mode) is not implemented yet, the order of the providers is not strictly specified.
-   * For shared indexes it is a good idea to index JDKs in the last turn (because they likely have shared index available)
-   * so this method moves all SDK providers to the end.
-   */
   @NotNull
-  private List<IndexableFilesIterator> getOrderedProviders() {
+  private List<IndexableFilesIterator> getProviders() {
     if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
 
     List<IndexableFilesIterator> originalOrderedProviders = myIndex.getIndexableFilesProviders(myProject);
