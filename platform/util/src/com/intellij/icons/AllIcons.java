@@ -346,6 +346,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsRight = load("diff/applyNotConflictsRight.svg", -336068841948579553L, 2);
     /** 12x12 */ public static final @NotNull Icon Arrow = load("diff/arrow.svg", -7836097041821429743L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowLeftDown = load("diff/arrowLeftDown.svg", -820363719686844613L, 2);
+    /** 16x16 */ public static final @NotNull Icon ArrowLeftRight = load("diff/arrowLeftRight.svg", 4235443314577506245L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowRight = load("diff/arrowRight.svg", 8793156269469164122L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowRightDown = load("diff/arrowRightDown.svg", 2372859479439755474L, 2);
     /** 16x16 */ public static final @NotNull Icon Compare3LeftMiddle = load("diff/compare3LeftMiddle.svg", 4491397575224313917L, 2);
