@@ -23,7 +23,7 @@
       </vspacer>
       <component id="98a1c" class="com.intellij.ui.components.JBCheckBox" binding="myLineCommentAddSpaceCb">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.line.comment.add.space"/>
@@ -31,7 +31,7 @@
       </component>
       <component id="dedd8" class="com.intellij.ui.components.JBCheckBox" binding="myLineCommentAddSpaceOnReformatCb">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="4" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.line.comment.add.space.on.reformat"/>
