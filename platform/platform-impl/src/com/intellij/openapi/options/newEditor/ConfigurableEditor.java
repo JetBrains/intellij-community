@@ -101,12 +101,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     Disposer.register(this, myCardPanel);
     MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
     messageBus.subscribe(AnActionListener.TOPIC, this);
-    messageBus.subscribe(ExternalUpdateRequest.EXTERNAL_UPDATE_REQUEST_TOPIC, new ExternalUpdateRequest() {
-      @Override
-      public void requestUpdate(Configurable configurable) {
-        updateCurrent(configurable, false);
-      }
-    });
+    messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
