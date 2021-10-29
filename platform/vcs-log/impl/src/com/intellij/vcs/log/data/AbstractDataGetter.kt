@@ -81,8 +81,11 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
     val details = getCommitDataIfAvailable(hash)
     if (details != null) return details
 
-    runLoadCommitsData(neighbourHashes)
-    // now it is in the cache as "Loading Details" (runLoadCommitsData puts it there)
+    val toLoad = IntOpenHashSet(neighbourHashes.iterator())
+    val taskNumber = currentTaskIndex++
+    toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
+    loader.queue(TaskDescriptor(toLoad))
+    // now it is in the cache as "Loading Details" (cacheCommit puts it there)
     return getFromCache(hash)!!
   }
 
@@ -164,19 +167,6 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
    */
   protected abstract fun getFromAdditionalCache(commitId: Int): T?
 
-  private fun runLoadCommitsData(hashes: Iterable<Int>) {
-    val taskNumber = currentTaskIndex++
-    val commits = getCommitsMap(hashes)
-    val toLoad = IntOpenHashSet()
-    val iterator = commits.keys.iterator()
-    while (iterator.hasNext()) {
-      val id = iterator.nextInt()
-      cacheCommit(id, taskNumber)
-      toLoad.add(id)
-    }
-    loader.queue(TaskDescriptor(toLoad))
-  }
-
   private fun cacheCommit(commitId: Int, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
@@ -252,14 +242,6 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
   companion object {
     private val LOG = Logger.getInstance(AbstractDataGetter::class.java)
     private const val MAX_LOADING_TASKS = 10
-
-    private fun getCommitsMap(hashes: Iterable<Int>): Int2IntMap {
-      val commits: Int2IntMap = Int2IntOpenHashMap()
-      for ((row, commitId) in hashes.withIndex()) {
-        commits[commitId] = row
-      }
-      return commits
-    }
 
     private fun runInCurrentThread(indicator: ProgressIndicator?, runnable: () -> Unit) {
       if (indicator != null) {
