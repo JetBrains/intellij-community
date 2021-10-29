@@ -248,7 +248,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createNPEFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected @NotNull List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -372,7 +372,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
     if (statement instanceof PsiSwitchStatement) {
-      // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
+      // Cannot do anything if we have already single branch, and we cannot restore flow due to non-terminal breaks
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
@@ -599,13 +599,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                            Map<PsiExpression, ConstantResult> expressions) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
+      boolean nullLiteral = ExpressionUtils.isNullLiteral(PsiUtil.skipParenthesizedExprDown(expression));
       if (!REPORT_UNSOUND_WARNINGS) {
-        if (expression == null) continue;
-        PsiExpression unwrapped = PsiUtil.skipParenthesizedExprDown(expression);
-        if (!ExpressionUtils.isNullLiteral(unwrapped) && expressions.get(expression) != ConstantResult.NULL) {
-          continue;
-        }
+        if (expression == null || !nullLiteral && expressions.get(expression) != ConstantResult.NULL) continue;
       }
+      // Expression of null type: could be failed LVTI, skip it to avoid confusion
+      if (expression != null && !nullLiteral && PsiType.NULL.equals(expression.getType())) continue;
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly());
         reporter
@@ -1081,7 +1080,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
           // always true operand makes always true OR-chain and does not affect the result of AND-chain
           // Note that in `assert unknownExpression && trueExpression;` the trueExpression should not be reported
-          // because this assert is essentially the shortened `assert unknownExpression; assert trueExpression;`
+          // because this assertion is essentially the shortened `assert unknownExpression; assert trueExpression;`
           // which is not reported.
           boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == evaluatesToTrue) &&
                                        ArrayUtil.getLastElement(((PsiPolyadicExpression)parent).getOperands()) != anchor;
