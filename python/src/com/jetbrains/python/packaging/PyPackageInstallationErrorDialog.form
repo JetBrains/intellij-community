@@ -126,30 +126,29 @@
               <text resource-bundle="messages/PySdkBundle" key="python.sdk.packaging.installation.failure.field.troubleshooting.steps"/>
             </properties>
           </component>
-          <vspacer id="de3ff">
-            <constraints>
-              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-          <scrollpane id="69c18" class="com.intellij.ui.components.JBScrollPane">
+          <scrollpane id="69c18" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPaneForCommandToTry">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="700" height="50"/>
               </grid>
             </constraints>
-            <properties/>
-            <border type="none"/>
+            <properties>
+              <verticalScrollBarPolicy value="22"/>
+            </properties>
+            <border type="empty">
+              <size top="8" left="12" bottom="8" right="12"/>
+            </border>
             <children>
               <component id="3008a" class="javax.swing.JTextArea" binding="myCommandToTry" default-binding="true">
                 <constraints/>
                 <properties>
                   <editable value="false"/>
-                  <margin top="8" left="12" bottom="8" right="12"/>
+                  <margin top="0" left="0" bottom="0" right="0"/>
                 </properties>
               </component>
             </children>
           </scrollpane>
-          <component id="52088" class="com.intellij.ui.components.JBLabel" binding="myLabel">
+          <component id="52088" class="com.intellij.ui.components.JBLabel" binding="myLabelWithLink">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
