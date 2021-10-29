@@ -306,6 +306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
+  private boolean myForcePushHappened;
 
   private CaretImpl myPrimaryCaret;
 
@@ -515,7 +516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
         SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
-      MacGestureSupportInstaller.installOnComponent(getComponent());
+      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
@@ -3860,6 +3861,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
+      myForcePushHappened = false;
       clearDnDContext();
 
       myMousePressedEvent = e;
@@ -4380,8 +4382,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         EVENT_LOG.debug(e.toString());
       }
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) {
-        // on Mac we receive events even if drag-n-drop is in progress
-        return;
+        return; // on Mac we receive events even if drag-n-drop is in progress
+      }
+      if (myForcePushHappened) {
+        return; // avoid selection creation on accidental mouse move/drag after force push
       }
       validateMousePointer(e, null);
       EditorMouseEvent event = createEditorMouseEvent(e);
