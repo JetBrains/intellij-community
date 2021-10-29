@@ -175,6 +175,8 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
     private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(SpecifyExplicitTypeFixFactories.ambiguousAnonymousTypeInferred)
+        registerApplicator(SpecifyExplicitTypeFixFactories.noExplicitReturnTypeInApiMode)
+        registerApplicator(SpecifyExplicitTypeFixFactories.noExplicitReturnTypeInApiModeWarning)
     }
 
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
