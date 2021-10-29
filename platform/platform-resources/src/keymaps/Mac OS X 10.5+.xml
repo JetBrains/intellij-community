@@ -453,6 +453,9 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="meta alt F3"/>
+  </action>
 
   <action id="ImplementMethods">
     <keyboard-shortcut first-keystroke="control I"/>
