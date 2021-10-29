@@ -4,12 +4,14 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
+@FunctionalInterface
 public interface ExternalUpdateRequest {
   @Topic.AppLevel
-  Topic<ExternalUpdateRequest> EXTERNAL_UPDATE_REQUEST_TOPIC = new Topic<>(ExternalUpdateRequest.class, Topic.BroadcastDirection.NONE);
+  Topic<ExternalUpdateRequest> TOPIC = new Topic<>(ExternalUpdateRequest.class, Topic.BroadcastDirection.NONE);
 
-  void requestUpdate(Configurable configurable);
+  void requestUpdate(@NotNull Configurable configurable);
 }
