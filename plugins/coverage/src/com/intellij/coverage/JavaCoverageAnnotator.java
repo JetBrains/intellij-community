@@ -254,11 +254,14 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
+  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(@Nullable String classFQName) {
+    if (classFQName == null) return null;
     return myClassCoverageInfos.get(classFQName);
   }
 
-  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(PsiNamedElement value) {
+  @Nullable
+  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
+    if (value == null) return null;
     PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
     if (cachedInfo != null) {
       return cachedInfo;
