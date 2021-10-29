@@ -126,7 +126,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       }
 
       int ret = Messages.showYesNoCancelDialog(project,
-                                               JavaBundle.message("where.do.you.want.to.move.directory.prompt", SymbolPresentationUtil.getFilePathPresentation(directories[0])),
+                                               JavaBundle.message("where.do.you.want.to.move.directory.prompt", "../" + SymbolPresentationUtil.getFilePathPresentation(directories[0])),
                                                JavaBundle.message("dialog.title.move.directory"), JavaBundle.message("button.to.another.directory"), JavaBundle.message("button.to.another.source.root"), CommonBundle.getCancelButtonText(),
                                                Messages.getQuestionIcon());
       if (ret == Messages.YES) {
