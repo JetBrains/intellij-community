@@ -74,18 +74,18 @@ internal class DslLabel(private val type: DslLabelType) : JEditorPane() {
     }
 
     @Suppress("HardCodedStringLiteral")
-    var processedText = HtmlChunk.raw(text.replace("<a>", "<a href=''>", ignoreCase = true))
-
+    val processedText = HtmlChunk.raw(text.replace("<a>", "<a href=''>", ignoreCase = true))
+    var body = HtmlChunk.body()
     if (maxLineLength > 0 && maxLineLength != MAX_LINE_LENGTH_NO_WRAP && text.length > maxLineLength) {
       val width = getFontMetrics(font).stringWidth(text.substring(0, maxLineLength))
-      processedText = processedText.wrapWith(HtmlChunk.div().attr("width", width))
+      body = body.attr("width", width)
     }
 
     @NonNls val css = createCss(maxLineLength != MAX_LINE_LENGTH_NO_WRAP)
     setText(HtmlBuilder()
               .append(HtmlChunk.raw(css))
-              .append(processedText.wrapWith("body"))
-              .wrapWith("html")
+              .append(processedText.wrapWith(body))
+              .wrapWith(HtmlChunk.html())
               .toString())
   }
 
