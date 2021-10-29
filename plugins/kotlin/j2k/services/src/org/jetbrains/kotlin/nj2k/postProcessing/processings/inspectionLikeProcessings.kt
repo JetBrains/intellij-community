@@ -23,9 +23,8 @@ import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.isInSingleLine
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -428,7 +427,7 @@ class RemoveExplicitGetterInspectionBasedProcessing :
         element.isRedundantGetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantGetterFix.removeRedundantGetter(element)
+        removeRedundantGetter(element)
     }
 }
 
@@ -438,7 +437,7 @@ class RemoveExplicitSetterInspectionBasedProcessing :
         element.isRedundantSetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantSetterFix.removeRedundantSetter(element)
+        removeRedundantSetter(element)
     }
 }
 
