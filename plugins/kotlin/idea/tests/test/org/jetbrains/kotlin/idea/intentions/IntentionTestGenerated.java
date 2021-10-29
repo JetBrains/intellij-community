@@ -2061,6 +2061,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backticks.kt")
+        public void testBackticks() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticks.kt");
+        }
+
+        @TestMetadata("backticksWithThrows.kt")
+        public void testBackticksWithThrows() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticksWithThrows.kt");
+        }
+
+        @TestMetadata("backticksWithThrowsExceptionClasses.kt")
+        public void testBackticksWithThrowsExceptionClasses() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/backticksWithThrowsExceptionClasses.kt");
+        }
+
         @TestMetadata("fqName.kt")
         public void testFqName() throws Exception {
             runTest("testData/intentions/addThrowsAnnotation/fqName.kt");
