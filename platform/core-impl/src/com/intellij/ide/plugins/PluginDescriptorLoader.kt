@@ -556,8 +556,8 @@ fun getDescriptorsToMigrate(dir: Path,
                             compatibleBuildNumber: BuildNumber?,
                             bundledPluginsPath: Path?,
                             brokenPluginVersions: Map<PluginId, Set<String>>?,
-                            pluginsToMigrate: MutableList<IdeaPluginDescriptorImpl?>,
-                            incompatiblePlugins: MutableList<IdeaPluginDescriptorImpl?>) {
+                            pluginsToMigrate: MutableList<IdeaPluginDescriptor?>,
+                            incompatiblePlugins: MutableList<IdeaPluginDescriptor?>) {
   val loadingResult = PluginLoadingResult(brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
                                           productBuildNumber = Supplier { compatibleBuildNumber ?: PluginManagerCore.getBuildNumber() }
   )
