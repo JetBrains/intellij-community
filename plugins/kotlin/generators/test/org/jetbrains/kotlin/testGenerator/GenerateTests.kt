@@ -1074,6 +1074,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithArrayCallInAnnotation", pattern = pattern)
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
+            model("quickfix/specifyVisibilityInExplicitApiMode", pattern = pattern)
             model("quickfix/supercalls", pattern = pattern)
             model("quickfix/surroundWithArrayOfForNamedArgumentsToVarargs", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)

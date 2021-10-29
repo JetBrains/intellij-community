@@ -198,6 +198,11 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
     }
 
+    private val visibility = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiMode)
+        registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
+    }
+
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
         propertyInitialization,
@@ -210,5 +215,6 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         needExplicitType,
         superKeyword,
         vararg,
+        visibility,
     )
 }
