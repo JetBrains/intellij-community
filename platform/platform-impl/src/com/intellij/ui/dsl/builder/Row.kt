@@ -182,7 +182,7 @@ interface Row {
 
   /**
    * Adds text. [text] can contain html tags except <html>, which is added automatically in this method.
-   * It is preferable to use [label] method when [maxLineLength] and [action] are not used because labels are simpler
+   * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
