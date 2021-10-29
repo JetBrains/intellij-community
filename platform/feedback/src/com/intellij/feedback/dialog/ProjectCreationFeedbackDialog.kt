@@ -30,7 +30,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.event.ActionEvent
@@ -52,13 +52,12 @@ class ProjectCreationFeedbackDialog(
   private val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"
 
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
-  private val TICKET_DEFAULT_TEXT_ZENDESK = "This is an automatically created ticket by the feedback collection system in the IDE. " +
-                                            "All data is in custom fields."
 
-  private val TICKET_PROBLEMS_MULTISELECT_EMPTY_PROJECT_ID = "in-ide_empty_project"
-  private val TICKET_PROBLEMS_MULTISELECT_HARD_TO_FIND_ID = "in-ide_hard_to_find"
-  private val TICKET_PROBLEMS_MULTISELECT_LACK_OF_FRAMEWORK_ID = "in-ide_lack_of_framework"
-  private val TICKET_PROBLEMS_MULTISELECT_OTHER_ID = "in-ide_other_problem"
+  private val NO_PROBLEM = "No problem"
+  private val EMPTY_PROJECT = "Empty project"
+  private val HARD_TO_FIND = "Hard to find"
+  private val LACK_OF_FRAMEWORK = "Lack of framework"
+  private val OTHER = "Other"
 
   private val systemInfoData: ProjectCreationFeedbackSystemInfoData = createProjectCreationFeedbackSystemInfoData(createdProjectTypeName)
 
@@ -117,12 +116,8 @@ class ProjectCreationFeedbackDialog(
         form,
         if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
         TICKET_TITLE_ZENDESK,
-        textAreaOverallFeedbackProperty.get().ifBlank { TICKET_DEFAULT_TEXT_ZENDESK },
-        mapOf("rating" to ratingProperty.get(),
-              "project_type" to systemInfoData.createdProjectTypeName,
-              "problems" to createProblemsResultList(),
-              "problems_other" to if (checkBoxOtherProperty.get()) textFieldOtherProblemProperty.get() else "",
-              "system_info" to jsonConverter.encodeToString(systemInfoData)),
+        createRequestDescription(),
+        mapOf("collected_data" to createCollectedDataJsonString()),
         {},
         {}
       )
@@ -132,24 +127,76 @@ class ProjectCreationFeedbackDialog(
     }
   }
 
-  private fun createProblemsResultList(): List<String> {
-    val problemsList = mutableListOf<String>()
+  private fun createRequestDescription(): String {
+    return buildString {
+      appendLine(FeedbackBundle.message("dialog.creation.project.zendesk.title"))
+      appendLine(FeedbackBundle.message("dialog.creation.project.zendesk.description"))
+      appendLine()
+      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.rating.label"))
+      appendLine(" ${ratingProperty.get()}")
+      appendLine()
+      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.problems.title"))
+      appendLine(createProblemsList())
+      appendLine()
+      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.overallExperience.label"))
+      appendLine(textAreaOverallFeedbackProperty.get())
+    }
+  }
+  
+  private fun createProblemsList(): String {
+    val resultProblemsList = mutableListOf<String>()
     if (checkBoxNoProblemProperty.get()) {
-      // TODO: Need 'No problems' option in zendesk field
+      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.1.label"))
     }
     if (checkBoxEmptyProjectDontWorkProperty.get()) {
-      problemsList.add(TICKET_PROBLEMS_MULTISELECT_EMPTY_PROJECT_ID)
+      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.2.label"))
     }
     if (checkBoxHardFindDesireProjectProperty.get()) {
-      problemsList.add(TICKET_PROBLEMS_MULTISELECT_HARD_TO_FIND_ID)
+      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.3.label"))
     }
     if (checkBoxFrameworkProperty.get()) {
-      problemsList.add(TICKET_PROBLEMS_MULTISELECT_LACK_OF_FRAMEWORK_ID)
+      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.4.label", textFieldFrameworkProperty.get()))
     }
     if (checkBoxOtherProperty.get()) {
-      problemsList.add(TICKET_PROBLEMS_MULTISELECT_OTHER_ID)
+      resultProblemsList.add(textFieldOtherProblemProperty.get())
     }
-    return problemsList
+    return resultProblemsList.joinToString(prefix = "- ", separator = "\n- ")
+  }
+
+  private fun createCollectedDataJsonString(): String {
+    val collectedData = buildJsonObject {
+      put("rating", ratingProperty.get())
+      put("project_type", systemInfoData.createdProjectTypeName)
+      putJsonArray("problems") {
+        if (checkBoxNoProblemProperty.get()) {
+          add(createProblemJsonObject(NO_PROBLEM))
+        }
+        if (checkBoxEmptyProjectDontWorkProperty.get()) {
+          add(createProblemJsonObject(EMPTY_PROJECT))
+        }
+        if (checkBoxHardFindDesireProjectProperty.get()) {
+          add(createProblemJsonObject(HARD_TO_FIND))
+        }
+        if (checkBoxFrameworkProperty.get()) {
+          add(createProblemJsonObject(LACK_OF_FRAMEWORK, textFieldFrameworkProperty.get()))
+        }
+        if (checkBoxOtherProperty.get()) {
+          add(createProblemJsonObject(OTHER, textFieldOtherProblemProperty.get()))
+        }
+      }
+      put("overall_exp", textAreaOverallFeedbackProperty.get())
+      put("system_info", jsonConverter.encodeToJsonElement(systemInfoData))
+    }
+    return jsonConverter.encodeToString(collectedData)
+  }
+
+  private fun createProblemJsonObject(name: String, description: String? = null): JsonObject {
+    return buildJsonObject {
+      put("name", name)
+      if (description != null) {
+        put("description", description)
+      }
+    }
   }
 
   override fun createCenterPanel(): JComponent {
