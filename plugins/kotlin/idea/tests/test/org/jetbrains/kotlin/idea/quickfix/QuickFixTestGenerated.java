@@ -13342,6 +13342,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/typeAddition/noAddErrorType.kt");
         }
 
+        @TestMetadata("noExplicitTypeInApiMode.kt")
+        public void testNoExplicitTypeInApiMode() throws Exception {
+            runTest("testData/quickfix/typeAddition/noExplicitTypeInApiMode.kt");
+        }
+
         @TestMetadata("propertyHasType.kt")
         public void testPropertyHasType() throws Exception {
             runTest("testData/quickfix/typeAddition/propertyHasType.kt");
