@@ -15,11 +15,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-
-    var caretOffset = 0
-    prepareRuntimeTask {
-      caretOffset = editor.caretModel.offset
-    }
+    val caretOffset = sample.getPosition(0).startOffset
 
     actionTask("ParameterInfo") {
       restoreIfModifiedOrMoved()
