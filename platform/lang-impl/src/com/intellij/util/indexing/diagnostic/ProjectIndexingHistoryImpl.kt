@@ -3,8 +3,6 @@ package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.SmartList
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
@@ -43,15 +41,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
-  private val stages = MultiMap<Stage, Pair<StageEvent, Instant>>()
-
-  init {
-    synchronized(stages) {
-      for (stage in Stage.values()) {
-        stages.putValues(stage, SmartList())
-      }
-    }
-  }
+  private val events = mutableListOf<Event>()
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
@@ -115,31 +105,34 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     }
   }
 
+  private sealed interface Event {
+    val instant: Instant
+
+    data class StageEvent(val stage: Stage, val started: Boolean, override val instant: Instant = Instant.now()) : Event
+    data class SuspensionEvent(val started: Boolean, override val instant: Instant = Instant.now()) : Event
+  }
+
   fun startStage(stage: Stage) {
-    synchronized(stages) {
-      stages[stage].add(Pair(StageEvent.Started, Instant.now()))
+    synchronized(events) {
+      events.add(Event.StageEvent(stage, true))
     }
   }
 
   fun stopStage(stage: Stage) {
-    synchronized(stages) {
-      stages[stage].add(Pair(StageEvent.Stopped, Instant.now()))
+    synchronized(events) {
+      events.add(Event.StageEvent(stage, false))
     }
   }
 
   fun suspendStages() {
-    val pause = Pair(StageEvent.Suspended, Instant.now())
-    for (stage in Stage.values()) {
-      stages[stage].add(pause)
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(true))
     }
   }
 
   fun stopSuspendingStages() {
-    val unpause = Pair(StageEvent.Unsuspended, Instant.now())
-    synchronized(stages) {
-      for (stage in Stage.values()) {
-        stages[stage].add(unpause)
-      }
+    synchronized(events) {
+      events.add(Event.SuspensionEvent(false))
     }
   }
 
@@ -160,57 +153,94 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     timesImpl.scanFilesDuration = duration
   }
 
-  private fun writeStagesToDurations() {
-    synchronized(stages) {
-      var suspendedDuration: Duration? = Duration.ZERO
-      var suspensionStart: Instant? = null
-      for (stage in Stage.values()) {
-        val events = stages[stage]
-        var duration = Duration.ZERO
-        var start: Instant? = null
-        var isSuspended = false
-        for (event in events) {
-          when (event.first) {
-            StageEvent.Started -> {
-              log.assertTrue(start == null, "$stage is already started. Events $events")
-              start = event.second
+  /**
+   * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
+   * This normalizations moves moment of suspension start from declared to after all other events between it and suspension end:
+   * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
+   *
+   * Suspended and unsuspended events appear only on pairs with none in between.
+   */
+  private fun getNormalizedEvents(): List<Event> {
+    val normalizedEvents = mutableListOf<Event>()
+    synchronized(events) {
+      var suspensionStartTime: Instant? = null
+      for (event in events) {
+        when (event) {
+          is Event.SuspensionEvent -> {
+            if (event.started) {
+              log.assertTrue(suspensionStartTime == null, "Two suspension starts, no stops. Events $events")
+              suspensionStartTime = event.instant
             }
-            StageEvent.Suspended -> {
-              if (suspendedDuration != null) {
-                suspensionStart = event.second
+            else {
+              //speculate suspension start as time of last meaningful event, if it ever happened
+              if (suspensionStartTime == null) {
+                suspensionStartTime = normalizedEvents.lastOrNull()?.instant
               }
-              if (start != null) {
-                duration = duration.plus(Duration.between(start, event.second))
-                start = null
-                isSuspended = true
+
+              if (suspensionStartTime != null) { //observation may miss the start of suspension, see IDEA-281514
+                normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
+                normalizedEvents.add(Event.SuspensionEvent(false, event.instant))
               }
+              suspensionStartTime = null
             }
-            StageEvent.Unsuspended -> {
-              if (suspendedDuration != null) {
-                if (suspensionStart != null) { //observation may miss the start of suspension, see IDEA-281514
-                  suspendedDuration = suspendedDuration.plus(Duration.between(suspensionStart, event.second))
-                  suspensionStart = null
-                }
-              }
-              log.assertTrue(start == null, "$stage is not paused, tries to unpause. Events $events")
-              if (isSuspended) {
-                start = event.second
-                isSuspended = false
-              }
-            }
-            StageEvent.Stopped -> {
-              log.assertTrue(start != null, "$stage is not started, tries to stop. Events $events")
-              duration = duration.plus(Duration.between(start, event.second))
-              start = null
+          }
+          is Event.StageEvent -> {
+            normalizedEvents.add(event)
+            if (suspensionStartTime != null) {
+              //apparently we haven't stopped yet
+              suspensionStartTime = event.instant
             }
           }
         }
-        stage.getProperty().set(timesImpl, duration)
-        if (suspendedDuration != null) {
-          timesImpl.suspendedDuration = suspendedDuration
-          suspendedDuration = null
+      }
+    }
+    return normalizedEvents
+  }
+
+  private fun writeStagesToDurations() {
+    val normalizedEvents = getNormalizedEvents()
+    var suspendedDuration = Duration.ZERO
+    val startMap = hashMapOf<Stage, Instant>()
+    val durationMap = hashMapOf<Stage, Duration>()
+    for (stage in Stage.values()) {
+      durationMap[stage] = Duration.ZERO
+    }
+    var suspendStart: Instant? = null
+
+    for (event in normalizedEvents) {
+      when (event) {
+        is Event.SuspensionEvent -> {
+          if (event.started) {
+            for (entry in startMap) {
+              durationMap[entry.key] = durationMap[entry.key]!!.plus(Duration.between(entry.value, event.instant))
+            }
+            suspendStart = event.instant
+          }
+          else {
+            if (suspendStart != null) {
+              suspendedDuration = suspendedDuration.plus(Duration.between(suspendStart, event.instant))
+              suspendStart = null
+            }
+            startMap.replaceAll { _, _ -> event.instant } //happens strictly after suspension start event, startMap shouldn't change
+          }
+        }
+        is Event.StageEvent -> {
+          if (event.started) {
+            val oldStart = startMap.put(event.stage, event.instant)
+            log.assertTrue(oldStart == null, "${event.stage} is already started. Events $normalizedEvents")
+          }
+          else {
+            val start = startMap.remove(event.stage)
+            log.assertTrue(start != null, "${event.stage} is not started, tries to stop. Events $normalizedEvents")
+            durationMap[event.stage] = durationMap[event.stage]!!.plus(Duration.between(start, event.instant))
+          }
         }
       }
+
+      for (stage in Stage.values()) {
+        stage.getProperty().set(timesImpl, durationMap[stage]!!)
+      }
+      timesImpl.suspendedDuration = suspendedDuration
     }
   }
 
@@ -230,10 +260,6 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
 
     abstract fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration>
-  }
-
-  enum class StageEvent {
-    Started, Suspended, Unsuspended, Stopped
   }
 
   data class StatsPerFileTypeImpl(
