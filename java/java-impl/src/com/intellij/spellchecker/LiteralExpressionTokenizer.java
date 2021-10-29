@@ -29,6 +29,7 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     }
     else if (expression.isTextBlock()) {
       text = expression.getText();
+      if (text.length() < 7) return;
       text = text.substring(3, text.length() - 3);
     }
     else {
