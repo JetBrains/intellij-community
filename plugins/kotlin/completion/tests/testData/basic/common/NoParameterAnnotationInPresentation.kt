@@ -4,4 +4,4 @@ fun bar() {
     <caret>
 }
 
-// EXIST: { lookupString:"foo", itemText: "foo", tailText: " {...} (p: () -> Unit) (<root>)", typeText:"Unit" }
+// EXIST: { lookupString:"foo", itemText: "foo", tailText: " {...} (p: () -> Unit) (<root>)", typeText:"Unit", icon: "nodes/function.svg"}

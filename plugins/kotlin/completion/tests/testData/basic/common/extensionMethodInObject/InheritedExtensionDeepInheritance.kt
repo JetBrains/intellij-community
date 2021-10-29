@@ -16,4 +16,4 @@ fun usage() {
     T.<caret>
 }
 
-// EXIST: { lookupString: "foo", itemText: "foo" }
+// EXIST: { lookupString: "foo", itemText: "foo", icon: "nodes/function.svg"}

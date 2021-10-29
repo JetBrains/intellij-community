@@ -7,8 +7,8 @@ fun foo(s: String?) {
     s.<caret>
 }
 
-// EXIST: { lookupString: "forNullableString", attributes: "bold" }
-// EXIST: { lookupString: "forNullableAny", attributes: "" }
-// EXIST: { lookupString: "forString", attributes: "grayed" }
-// EXIST: { lookupString: "forAny", attributes: "grayed" }
-// EXIST: { lookupString: "compareTo", attributes: "grayed" }
+// EXIST: { lookupString: "forNullableString", attributes: "bold", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forString", attributes: "grayed", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "forAny", attributes: "grayed", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "compareTo", attributes: "grayed", icon: "nodes/function.svg"}

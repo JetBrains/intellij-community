@@ -10,6 +10,6 @@ fun usage() {
     10.fooE<caret>
 }
 
-// EXIST: { lookupString: "fooExtNumber", itemText: "fooExtNumber" }
-// EXIST: { lookupString: "fooExtAny", itemText: "fooExtAny" }
+// EXIST: { lookupString: "fooExtNumber", itemText: "fooExtNumber", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooExtAny", itemText: "fooExtAny", icon: "nodes/function.svg"}
 // ABSENT: { lookupString: "fooExtCharSequence", itemText: "fooExtCharSequence" }
