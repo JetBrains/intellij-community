@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.config.splitArgumentString
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.core.util.onTextChange
+import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -432,6 +434,9 @@ class KotlinFacetEditorGeneralTab(
                 }
                 configuration.settings.targetPlatform = editor.getChosenPlatform()
                 updateMergedArguments()
+
+                // Force code analysis with modified settings
+                runWriteAction { editorContext.project.invalidateProjectRoots() }
             }
         }
     }
