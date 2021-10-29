@@ -4,7 +4,6 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 
@@ -36,17 +35,17 @@ fun demoComments(): DialogPanel {
 
     val longString = (1..8).joinToString { "A very long string" }
 
-    row("row4:") {
-      comment("Long comments use max width 70 by default<br>$longString")
+    row("Row4:") {
+      comment("Comments use MAX_LINE_LENGTH_WORD_WRAP by default<br>$longString")
     }
 
 
-    row("row5:") {
+    row("Row5:") {
       comment("Long comments can deny word wrapping by MAX_LINE_LENGTH_NO_WRAP<br>$longString", maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
     }
 
     row("Row6:") {
-      comment("Long comments use word wrapping if MAX_LINE_LENGTH_WORD_WRAP<br>$longString", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
+      comment("Long comments can use maxLineLength, here it is 100<br>$longString", maxLineLength = 100)
     }
   }
 }

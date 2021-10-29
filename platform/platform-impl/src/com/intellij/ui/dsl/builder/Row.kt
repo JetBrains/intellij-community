@@ -98,8 +98,9 @@ interface Row {
   fun resizableRow(): Row
 
   /**
-   * Adds comment after the row. Visibility and enabled state of the row affects row comment as well.
-   * [comment] can contain html tags except <html>, which is added automatically in this method
+   * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
+   * [comment] can contain html tags except <html>, which is added automatically in this method.
+   * Visibility and enabled state of the row affects row comment as well.
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
    * @see MAX_LINE_LENGTH_NO_WRAP
@@ -179,16 +180,26 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  fun labelHtml(@NlsContexts.Label text: String,
-                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
   /**
-   * Adds comment. [text] can contain html tags except <html>, which is added automatically in this method
+   * Adds text. [text] can contain html tags except <html>, which is added automatically in this method.
+   * It is preferable to use [label] method when [maxLineLength] and [action] are not used because labels are simpler
    *
+   * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
    * @see MAX_LINE_LENGTH_NO_WRAP
    */
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
+  fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
+           action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
+  /**
+   * Adds comment with appropriate color and font size (macOS uses smaller font).
+   * [comment] can contain html tags except <html>, which is added automatically in this method
+   *
+   * @see DEFAULT_COMMENT_WIDTH
+   * @see MAX_LINE_LENGTH_WORD_WRAP
+   * @see MAX_LINE_LENGTH_NO_WRAP
+   */
+  fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**

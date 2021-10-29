@@ -116,7 +116,7 @@ class FeedbackForm(
           icon(AllIcons.General.BalloonInformation)
             .gap(RightGap.SMALL)
             .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
-          labelHtml(ApplicationBundle.message("feedback.form.issue")) {
+          text(ApplicationBundle.message("feedback.form.issue")) {
             SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
           }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
@@ -173,7 +173,7 @@ class FeedbackForm(
           .bindSelected(::shareSystemInformation)
           .gap(RightGap.SMALL)
         @Suppress("DialogTitleCapitalization")
-        labelHtml(ApplicationBundle.message("feedback.form.share.system.information.link")) {
+        link(ApplicationBundle.message("feedback.form.share.system.information.link")) {
           showSystemInformation()
         }
       }

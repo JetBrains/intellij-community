@@ -51,6 +51,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Labels", createLabelsPanel())
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
+    result.addTab("Text MaxLine", createTextMaxLinePanel())
     result.addTab("Groups", JScrollPane(createGroupsPanel()))
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
@@ -427,6 +428,31 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
 
     applyType()
     return result
+  }
+
+  fun createTextMaxLinePanel(): JPanel {
+    val longLine = (1..4).joinToString { "A very long string with a <a>link</a>" }
+    val string = "$longLine<br>$longLine"
+    return panel {
+      row("comment(string):") {
+        comment(string)
+      }
+      row("comment(string, DEFAULT_COMMENT_WIDTH):") {
+        comment(string, maxLineLength = DEFAULT_COMMENT_WIDTH)
+      }
+      row("comment(string, MAX_LINE_LENGTH_NO_WRAP):") {
+        comment(string, maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+      }
+      row("text(string):") {
+        text(string)
+      }
+      row("text(string, DEFAULT_COMMENT_WIDTH):") {
+        text(string, maxLineLength = DEFAULT_COMMENT_WIDTH)
+      }
+      row("text(string, MAX_LINE_LENGTH_NO_WRAP):") {
+        text(string, maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+      }
+    }
   }
 }
 

@@ -3,20 +3,13 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
 import javax.swing.*
-import javax.swing.event.HyperlinkEvent
-import javax.swing.event.HyperlinkListener
 import javax.swing.text.JTextComponent
 
 /**
@@ -27,12 +20,7 @@ internal enum class DslComponentPropertyInternal {
   /**
    * Removes standard bottom gap from label
    */
-  LABEL_NO_BOTTOM_GAP,
-
-  /**
-   * Baseline for component should be obtained from [JComponent.font] property
-   */
-  BASELINE_FROM_FONT,
+  LABEL_NO_BOTTOM_GAP
 }
 
 /**
@@ -64,28 +52,6 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
   val result = DslLabel(DslLabelType.COMMENT)
   result.action = action
   result.setHtmlText(text, maxLineLength)
-  return result
-}
-
-internal fun createHtml(text: String, action: HyperlinkEventAction): JEditorPane {
-  return createHtmlPane(text, action, JBUI.CurrentTheme.Label.foreground())
-}
-
-private fun createHtmlPane(text: String, action: HyperlinkEventAction, foreground: Color? = null): JEditorPane {
-  val hyperlinkAdapter = HyperlinkListener { e ->
-    when (e?.eventType) {
-      HyperlinkEvent.EventType.ACTIVATED -> action.hyperlinkActivated(e)
-      HyperlinkEvent.EventType.ENTERED -> action.hyperlinkEntered(e)
-      HyperlinkEvent.EventType.EXITED -> action.hyperlinkExited(e)
-    }
-  }
-
-  @Suppress("HardCodedStringLiteral")
-  val processedText = text.replace("<a>", "<a href=''>", ignoreCase = true)
-  val font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
-  val result = htmlComponent(processedText, font = font, foreground = foreground, hyperlinkListener = hyperlinkAdapter)
-  // JEditorPane doesn't support baseline, calculate it manually from font
-  result.putClientProperty(DslComponentPropertyInternal.BASELINE_FROM_FONT, true)
   return result
 }
 

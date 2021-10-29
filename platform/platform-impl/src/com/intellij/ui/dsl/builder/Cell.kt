@@ -61,9 +61,10 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell aligned by left edge. The comment occupies available width before next comment (if present) or
+   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
+   * [comment] can contain html tags except <html>, which is added automatically in this method.
+   * The comment occupies available width before next comment (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects comment as well.
-   * [comment] can contain html tags except <html>, which is added automatically in this method
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
    * can be implemented later)
