@@ -17,19 +17,19 @@ class CommitDetailsGetter internal constructor(storage: VcsLogStorage,
                                                logProviders: Map<VirtualFile, VcsLogProvider>,
                                                index: VcsLogIndex,
                                                parentDisposable: Disposable) :
-  AbstractDataGetter<VcsFullCommitDetails>(storage, logProviders, index, parentDisposable) {
+  AbstractDataGetterWithSequentialLoader<VcsFullCommitDetails>(storage, logProviders, index, parentDisposable) {
 
   init {
     LowMemoryWatcher.register({ clear() }, this)
   }
 
-  override fun getFromAdditionalCache(commitId: Int): VcsFullCommitDetails? = null
+  override fun getFromAdditionalCache(commit: Int): VcsFullCommitDetails? = null
 
   @Throws(VcsException::class)
-  override fun readDetails(logProvider: VcsLogProvider,
-                           root: VirtualFile,
-                           hashes: List<String>,
-                           consumer: Consumer<in VcsFullCommitDetails>) {
+  override fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,
+                                             root: VirtualFile,
+                                             hashes: List<String>,
+                                             consumer: Consumer<in VcsFullCommitDetails>) {
     logProvider.readFullDetails(root, hashes, consumer)
   }
 }

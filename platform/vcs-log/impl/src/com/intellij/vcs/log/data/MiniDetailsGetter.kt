@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
@@ -23,17 +23,17 @@ class MiniDetailsGetter internal constructor(project: Project,
                                              private val topCommitsDetailsCache: TopCommitsCache,
                                              index: VcsLogIndex,
                                              parentDisposable: Disposable) :
-  AbstractDataGetter<VcsCommitMetadata>(storage, logProviders, index, parentDisposable) {
+  AbstractDataGetterWithSequentialLoader<VcsCommitMetadata>(storage, logProviders, index, parentDisposable) {
 
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadCommitsData(hashes: Iterable<Int>,
+  fun loadCommitsData(commits: Iterable<Int>,
                       consumer: Consumer<in VcsCommitMetadata>,
                       indicator: ProgressIndicator) {
     val toLoad = IntOpenHashSet()
-    for (id in hashes) {
+    for (id in commits) {
       val details = getFromCache(id)
       if (details == null || details is LoadingDetails) {
         toLoad.add(id)
@@ -44,28 +44,30 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
     if (!toLoad.isEmpty()) {
       indicator.checkCanceled()
-      preLoadCommitData(toLoad, consumer)
+      doLoadCommitsData(toLoad, consumer)
       notifyLoaded()
     }
   }
 
-  override fun getFromAdditionalCache(commitId: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache[commitId]
+  override fun getFromAdditionalCache(commit: Int): VcsCommitMetadata? {
+    return topCommitsDetailsCache[commit]
   }
 
+  @RequiresBackgroundThread
   @Throws(VcsException::class)
-  override fun readDetails(logProvider: VcsLogProvider,
-                           root: VirtualFile,
-                           hashes: List<String>,
-                           consumer: Consumer<in VcsCommitMetadata>) {
+  override fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,
+                                             root: VirtualFile,
+                                             hashes: List<String>,
+                                             consumer: Consumer<in VcsCommitMetadata>) {
     logProvider.readMetadata(root, hashes, consumer)
   }
 
+  @RequiresBackgroundThread
   @Throws(VcsException::class)
-  override fun preLoadCommitData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
+  override fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in VcsCommitMetadata>) {
     val dataGetter = index.dataGetter
     if (dataGetter == null) {
-      super.preLoadCommitData(commits, consumer)
+      super.doLoadCommitsData(commits, consumer)
       return
     }
     val notIndexed = IntOpenHashSet()
@@ -80,7 +82,7 @@ class MiniDetailsGetter internal constructor(project: Project,
       }
     })
     if (!notIndexed.isEmpty()) {
-      super.preLoadCommitData(notIndexed, consumer)
+      super.doLoadCommitsData(notIndexed, consumer)
     }
   }
 }
