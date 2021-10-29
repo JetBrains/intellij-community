@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Contains array of suites which should have the same {@link CoverageEngine}
+ * Contains array of suites which should have the same {@link CoverageEngine}.
  */
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
