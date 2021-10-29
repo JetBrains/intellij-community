@@ -187,9 +187,10 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
             }
             StageEvent.Unsuspended -> {
               if (suspendedDuration != null) {
-                log.assertTrue(suspensionStart != null, "Suspension was not started, but stopped. Events $events")
-                suspendedDuration = suspendedDuration.plus(Duration.between(suspensionStart, event.second))
-                suspensionStart = null
+                if (suspensionStart != null) { //observation may miss the start of suspension, see IDEA-281514
+                  suspendedDuration = suspendedDuration.plus(Duration.between(suspensionStart, event.second))
+                  suspensionStart = null
+                }
               }
               log.assertTrue(start == null, "$stage is not paused, tries to unpause. Events $events")
               if (isSuspended) {
