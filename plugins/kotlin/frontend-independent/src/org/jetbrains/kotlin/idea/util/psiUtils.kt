@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.renderer.render
 
@@ -218,3 +220,69 @@ fun PsiClass.isSyntheticKotlinClass(): Boolean {
     return (metadata?.findAttributeValue(JvmAnnotationNames.KIND_FIELD_NAME) as? PsiLiteral)?.value ==
             KotlinClassHeader.Kind.SYNTHETIC_CLASS.id
 }
+
+fun KtPropertyAccessor.isRedundantSetter(): Boolean {
+    if (!isSetter) return false
+    val expression = bodyExpression ?: return canBeCompletelyDeleted()
+    if (expression is KtBlockExpression) {
+        val statement = expression.statements.singleOrNull() ?: return false
+        val parameter = valueParameters.singleOrNull() ?: return false
+        val binaryExpression = statement as? KtBinaryExpression ?: return false
+        return binaryExpression.operationToken == KtTokens.EQ
+                && binaryExpression.left?.isBackingFieldReferenceTo(property) == true
+                && binaryExpression.right?.mainReference?.resolve() == parameter
+    }
+    return false
+}
+
+fun removeRedundantSetter(setter: KtPropertyAccessor) {
+    if (setter.canBeCompletelyDeleted()) {
+        setter.delete()
+    } else {
+        setter.deleteBody()
+    }
+}
+
+fun KtPropertyAccessor.isRedundantGetter(): Boolean {
+    if (!isGetter) return false
+    val expression = bodyExpression ?: return canBeCompletelyDeleted()
+    if (expression.isBackingFieldReferenceTo(property)) return true
+    if (expression is KtBlockExpression) {
+        val statement = expression.statements.singleOrNull() ?: return false
+        val returnExpression = statement as? KtReturnExpression ?: return false
+        return returnExpression.returnedExpression?.isBackingFieldReferenceTo(property) == true
+    }
+    return false
+}
+
+fun removeRedundantGetter(getter: KtPropertyAccessor) {
+    val property = getter.property
+    val accessorTypeReference = getter.returnTypeReference
+    if (accessorTypeReference != null && property.typeReference == null && property.initializer == null) {
+        property.typeReference = accessorTypeReference
+    }
+    if (getter.canBeCompletelyDeleted()) {
+        getter.delete()
+    } else {
+        getter.deleteBody()
+    }
+}
+
+fun KtExpression.isBackingFieldReferenceTo(property: KtProperty) =
+    this is KtNameReferenceExpression
+            && text == KtTokens.FIELD_KEYWORD.value
+            && property.isAncestor(this)
+
+
+fun KtPropertyAccessor.canBeCompletelyDeleted(): Boolean {
+    if (modifierList == null) return true
+    if (annotationEntries.isNotEmpty()) return false
+    if (hasModifier(KtTokens.EXTERNAL_KEYWORD)) return false
+    return visibilityModifierTypeOrDefault() == property.visibilityModifierTypeOrDefault()
+}
+
+fun KtPropertyAccessor.deleteBody() {
+    val leftParenthesis = leftParenthesis ?: return
+    deleteChildRange(leftParenthesis, lastChild)
+}
+
