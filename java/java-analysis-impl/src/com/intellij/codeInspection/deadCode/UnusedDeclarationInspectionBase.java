@@ -572,18 +572,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       try {
-        codeScanner.needToLog = true;
+        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
+          codeScanner.needToLog = true;
+        }
         entry.accept(codeScanner);
       }
       catch (StackOverflowPreventedException e) {
-        // to prevent duplicates
-        if (Objects.requireNonNull(context.getUserData(PHASE_KEY)) == 1) {
-          String path = codeScanner.composePath();
-          if (path != null) {
-            LOG.warn(e.getMessage());
-            LOG.warn(path);
-          }
-        }
+        LOG.warn(e.getMessage());
       }
       finally {
         codeScanner.clearLogs();
@@ -611,36 +606,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     // todo to be deleted
     private boolean needToLog = false;
     private final Set<RefElement> refElements = new LinkedHashSet<>();
-    private static final int MAX_VISITED_NODES = 200;
+    private static final int MAX_VISITED_NODES = 300;
     private int visitedCounter = 0;
 
     private void logIfNotOverflowed(@NotNull RefElement element) {
       if (!needToLog) return;
-      boolean added = refElements.add(element);
-      String errorMessage;
+      refElements.add(element);
       if (++visitedCounter < MAX_VISITED_NODES) {
-        if (added) return;
-        errorMessage = "Cycle is detected";
+        return;
       }
-      else {
-        // just in case, probably we have too long path
-        errorMessage = "Stack frames limit is exceeded";
-      }
-      // maybe the graph could be deeper, so we take only bounded amount of stack frames just in case
-      throw new StackOverflowPreventedException(errorMessage);
-    }
-
-    private String composePath() {
-      if (visitedCounter < MAX_VISITED_NODES) return null;
-      StringJoiner result = new StringJoiner(" -> ");
-      refElements.forEach(el -> result.add(log(el)));
-      return result.toString();
-    }
-
-    private void removeNode(@NotNull RefElement refElement) {
-      if (!needToLog) return;
-      refElements.remove(refElement);
-      visitedCounter--;
+      throw new StackOverflowPreventedException("Stack frames limit is exceeded");
     }
 
     private void clearLogs() {
@@ -657,6 +632,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override
     public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
+        logIfNotOverflowed(method);
         // Process class's static initializers
         RefClass methodOwnerClass = method.getOwnerClass();
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
@@ -697,6 +673,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override
     public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
       if (myProcessedFunctionalExpressions.add(functionalExpression)) {
+        logIfNotOverflowed(functionalExpression);
         makeContentReachable((RefJavaElementImpl)functionalExpression);
       }
     }
@@ -706,6 +683,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       ((RefClassImpl)refClass).setReachable(true);
 
       if (!alreadyActive) {
+        logIfNotOverflowed(refClass);
         // Process class's static initializers.
         makeClassInitializersReachable(refClass);
       }
@@ -716,6 +694,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override public void visitField(@NotNull RefField field) {
       // Process class's static initializers.
       if (!field.isReachable()) {
+        logIfNotOverflowed(field);
         makeContentReachable((RefJavaElementImpl)field);
         makeClassInitializersReachable(field.getOwnerClass());
       }
@@ -738,10 +717,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
-      logIfNotOverflowed(refElement);
       for (RefElement refCallee : refElement.getOutReferences()) {
         refCallee.accept(this);
-        removeNode(refCallee);
       }
     }
 
