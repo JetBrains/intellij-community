@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.inspections.RemoveRedundantSetterFix
-import org.jetbrains.kotlin.idea.inspections.isRedundantSetter
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.isRedundantSetter
+import org.jetbrains.kotlin.idea.util.removeRedundantSetter
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -50,7 +50,7 @@ open class ChangeVisibilityFix(
 
         val propertyAccessor = pointer?.element as? KtPropertyAccessor
         if (propertyAccessor?.isRedundantSetter() == true) {
-            RemoveRedundantSetterFix.removeRedundantSetter(propertyAccessor)
+            removeRedundantSetter(propertyAccessor)
         }
     }
 
