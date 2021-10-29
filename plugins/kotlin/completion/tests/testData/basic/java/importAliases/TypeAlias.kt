@@ -2,4 +2,4 @@ import kotlin.collections.ArrayList as KotlinArrayList
 
 fun foo(): KotAr<caret>
 
-// EXIST: { lookupString: "KotlinArrayList", itemText: "KotlinArrayList", tailText: "<E> (kotlin.collections.ArrayList)", typeText: "ArrayList<E>" }
+// EXIST: { lookupString: "KotlinArrayList", itemText: "KotlinArrayList", tailText: "<E> (kotlin.collections.ArrayList)", typeText: "ArrayList<E>", icon: "org/jetbrains/kotlin/idea/icons/typeAlias.svg"}

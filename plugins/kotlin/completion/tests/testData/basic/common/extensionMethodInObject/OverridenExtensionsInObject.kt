@@ -14,5 +14,5 @@ fun T.usage() {
     foo<caret>
 }
 
-// EXIST: { lookupString: "fooExtension", itemText: "fooExtension" }
-// EXIST: { lookupString: "fooProperty", itemText: "fooProperty" }
+// EXIST: { lookupString: "fooExtension", itemText: "fooExtension", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooProperty", itemText: "fooProperty", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}

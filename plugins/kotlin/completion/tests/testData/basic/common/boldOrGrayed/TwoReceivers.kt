@@ -17,7 +17,7 @@ fun foo(i1: I1, i2: I2) {
         }
     }
 }
-// EXIST: { lookupString: "inI1", attributes: "bold" }
-// EXIST: { lookupString: "inI2", attributes: "bold" }
-// EXIST: { lookupString: "inBase", attributes: "" }
-// EXIST: { lookupString: "equals", attributes: "" }
+// EXIST: { lookupString: "inI1", attributes: "bold", icon: "nodes/abstractMethod.svg"}
+// EXIST: { lookupString: "inI2", attributes: "bold", icon: "nodes/abstractMethod.svg"}
+// EXIST: { lookupString: "inBase", attributes: "", icon: "nodes/abstractMethod.svg"}
+// EXIST: { lookupString: "equals", attributes: "", icon: "nodes/method.svg"}
