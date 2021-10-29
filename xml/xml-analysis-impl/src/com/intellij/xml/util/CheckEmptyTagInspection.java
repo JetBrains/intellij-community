@@ -39,6 +39,10 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!isOnTheFly) {
+      // should not report INFORMATION in batch mode
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
         if (XmlExtension.shouldIgnoreSelfClosingTag(tag) || !isTagWithEmptyEndNotAllowed(tag)) {
