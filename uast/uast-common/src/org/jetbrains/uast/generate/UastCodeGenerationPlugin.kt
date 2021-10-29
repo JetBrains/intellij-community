@@ -14,7 +14,7 @@ import kotlin.streams.asSequence
 /**
  * Extensions which provides code generation support for generating UAST expressions.
  *
- * @see UastLanguagePlugin
+ * @see org.jetbrains.uast.UastLanguagePlugin
  */
 @ApiStatus.Experimental
 interface UastCodeGenerationPlugin {
