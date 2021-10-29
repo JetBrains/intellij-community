@@ -625,7 +625,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
               if (dynamic) {
                 manager.setTemporaryConfiguration(settings);
               }
-              manager.setSelectedConfiguration(settings);
+              if (manager.shouldSetRunConfigurationFromContext()) manager.setSelectedConfiguration(settings);
               ExecutionUtil.runConfiguration(settings, executor);
             }
           });
