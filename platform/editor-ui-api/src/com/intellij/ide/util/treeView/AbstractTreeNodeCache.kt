@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 class AbstractTreeNodeCache<K, V : AbstractTreeNode<*>>(private val parent: AbstractTreeNode<*>, private val producer: (K) -> V?) {
   private val nodes = mutableMapOf<K, V?>()
 
-  fun getNodes(keys: List<K>): List<V> {
+  fun getNodes(keys: Collection<K>): List<V> {
     nodes.values.forEach { it?.parent = null } // mark all cached nodes as invalid
     val children = keys.mapNotNull { nodes.computeIfAbsent(it, producer) }
     children.forEach { it.parent = parent } // mark all computed nodes as valid
