@@ -44,6 +44,7 @@ class A {
 
   fun testMethodOverrides() {
     doTest("""
+<# block [ 1 usage   1 inheritor  ] #>
 class A {
 <# block [   1 override] #>
   void foo(){}
@@ -56,6 +57,7 @@ class B extends A {
 
   fun testDefaultMethodOverrides() {
     doTest("""
+<# block [ 2 usages   2 implementations  ] #>
 interface A {
 <# block [   2 overrides] #>
   default void foo(){}
@@ -71,6 +73,7 @@ class B2 implements A {
 
   fun testAbstractMethodImplementations() {
     doTest("""
+<# block [ 2 usages   2 implementations  ] #>
 interface A {
 <# block [   2 implementations] #>
   void foo();
@@ -100,6 +103,16 @@ class A {
   void bar(E... e) {}
 }
     """.trimIndent())
+  }
+  fun testClassAtZeroOffset() {
+    doTest("""<# block [ 1 usage  ] #>
+      |class A{}
+      |class B {
+      | void use() {
+      |   new A();
+      | }
+      |}
+    """.trimMargin())
   }
 
   private fun doTest(
