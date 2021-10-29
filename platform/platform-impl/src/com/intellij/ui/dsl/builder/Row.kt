@@ -12,7 +12,6 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
@@ -101,9 +100,12 @@ interface Row {
   /**
    * Adds comment after the row. Visibility and enabled state of the row affects row comment as well.
    * [comment] can contain html tags except <html>, which is added automatically in this method
+   *
+   * @see MAX_LINE_LENGTH_WORD_WRAP
+   * @see MAX_LINE_LENGTH_NO_WRAP
    */
   fun rowComment(@NlsContexts.DetailedDescription comment: String,
-                 maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
+                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
@@ -182,11 +184,12 @@ interface Row {
 
   /**
    * Adds comment. [text] can contain html tags except <html>, which is added automatically in this method
+   *
+   * @see MAX_LINE_LENGTH_WORD_WRAP
+   * @see MAX_LINE_LENGTH_NO_WRAP
    */
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = -1,
-              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JLabel>
-
-  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
+  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
+              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]

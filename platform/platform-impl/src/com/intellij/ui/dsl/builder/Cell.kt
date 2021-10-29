@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
@@ -68,9 +67,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
    * can be implemented later)
+   *
+   * @see MAX_LINE_LENGTH_WORD_WRAP
+   * @see MAX_LINE_LENGTH_NO_WRAP
    */
   fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
+              maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**

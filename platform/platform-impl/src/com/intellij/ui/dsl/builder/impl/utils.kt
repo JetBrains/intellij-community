@@ -9,6 +9,7 @@ import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -60,18 +61,9 @@ internal val JComponent.origin: JComponent
   }
 
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {
-  val result = DslLabel("")
+  val result = DslLabel(DslLabelType.COMMENT)
   result.action = action
-  result.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-  result.font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
   result.setHtmlText(text, maxLineLength)
-  return result
-}
-
-internal fun createCommentNoWrap(@NlsContexts.Label text: String): DslLabel {
-  val result = DslLabel(text)
-  result.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-  result.font = ComponentPanelBuilder.getCommentFont(UIUtil.getLabelFont())
   return result
 }
 

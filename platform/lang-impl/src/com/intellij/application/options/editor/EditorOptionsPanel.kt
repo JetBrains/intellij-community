@@ -160,7 +160,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         }
         row {
           checkBox(enableDnD)
-          commentNoWrap(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment"))
+          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment"))
         }
       }
       group(message("group.soft.wraps")) {
@@ -214,7 +214,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           val copyShortcutText = copyShortcut?.let { " (" + KeymapUtil.getShortcutText(it) + ")" } ?: ""
           checkBox(message("checkbox.enable.richcopy.label", copyShortcutText))
             .bindSelected(richCopySettings::isEnabled, richCopySettings::setEnabled)
-          commentNoWrap(message("checkbox.enable.richcopy.comment"))
+          comment(message("checkbox.enable.richcopy.comment"))
         }
         row(message("combobox.richcopy.color.scheme")) {
           val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +

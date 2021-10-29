@@ -3,11 +3,13 @@ package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 
 @Demo(title = "Comments",
-  description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
+      description = "Comment is a gray (depends on color scheme) text which can be assigned to cell (placed under cell), rows or placed in any cell directly")
 fun demoComments(): DialogPanel {
   return panel {
     row {
@@ -26,17 +28,25 @@ fun demoComments(): DialogPanel {
     }.rowComment("Row2 comment is placed under the row")
 
     row("Row3:") {
-      comment("Free comment")
-    }
-
-    row("Row4:") {
-      commentNoWrap("Free comment that is not wrapped when contains a very long text, which exceeds available space in the window. To check behaviour reduce size of this dialog")
-    }
-
-    row("Row5:") {
-      comment("Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>") {
+      comment(
+        "Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>") {
         Messages.showMessageDialog("Link '${it.description}' is clicked", "Message", null)
       }
+    }
+
+    val longString = (1..8).joinToString { "A very long string" }
+
+    row("row4:") {
+      comment("Long comments use max width 70 by default<br>$longString")
+    }
+
+
+    row("row5:") {
+      comment("Long comments can deny word wrapping by MAX_LINE_LENGTH_NO_WRAP<br>$longString", maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+    }
+
+    row("Row6:") {
+      comment("Long comments use word wrapping if MAX_LINE_LENGTH_WORD_WRAP<br>$longString", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
     }
   }
 }

@@ -258,13 +258,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(createHtml(text, action))
   }
 
-  override fun comment(text: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JLabel> {
+  override fun comment(text: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     val comment = createComment(text, maxLineLength, action)
-    return cell(comment)
-  }
-
-  override fun commentNoWrap(text: String): CellImpl<JLabel> {
-    val comment = createCommentNoWrap(text)
     return cell(comment)
   }
 
