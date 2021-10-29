@@ -15,10 +15,10 @@ import com.intellij.psi.PsiFile;
 public interface LanguageCodeInsightActionHandler extends CodeInsightActionHandler {
 
   /**
-   * Checks whether handler should process {@code file} or it should give a chance to the next handler
+   * Checks whether handler should process {@code file} or it should give a chance to the next handler.
    * @param editor  the editor where action is invoked.
    * @param file    the file open in the editor.
-   * @return {@code true} if handler should process file, {@code false} otherwise
+   * @return {@code true} if handler should process file, {@code false} otherwise.
    */
   boolean isValidFor(Editor editor, PsiFile file);
 }

@@ -11,9 +11,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implements perform part of {@link CodeInsightAction}
+ * Performs the actual work of an {@link CodeInsightAction}.
  * 
- * @see ContextAwareActionHandler to hide an action from popups but allow access by shortcut, main menu or find.
+ * To hide an action from popups but allow access by shortcut, main menu or find use {@link ContextAwareActionHandler#isAvailableForQuickList(Editor, PsiFile, com.intellij.openapi.actionSystem.DataContext)}.
  */
 public interface CodeInsightActionHandler extends FileModifier {
 
