@@ -15,12 +15,20 @@ import javax.swing.*;
 import java.util.List;
 
 /**
- * @author peter
+ * Base class which serves as a factory for custom code style settings and a settings page (configurable). In most cases language
+ * settings and the configurable are defined in {@link LanguageCodeStyleSettingsProvider}. This class can be extended directly to contribute
+ * to already existing settings page. In this case {@link #hasSettingsPage()} may return false not to create an extra node (configurable)
+ * in the settings tree.
  */
 public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettingsFactory, DisplayPrioritySortable {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
 
+  /**
+   * Create an object with custom code style settings.
+   * @param settings The root settings (container).
+   * @return The custom settings object.
+   */
   @Override
   @Nullable
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
@@ -44,6 +52,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *
    * @param settings      The original settings.
    * @param modelSettings The model settings.
+   *
    * @return The created code style configurable.
    */
   @NotNull
@@ -68,6 +77,10 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
     return lang == null ? null : lang.getDisplayName();
   }
 
+  /**
+   * @return True if a separate node must be created in the settings tree, false if created configurable will be used in already
+   * existing settings page.
+   */
   public boolean hasSettingsPage() {
     return true;
   }
