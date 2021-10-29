@@ -20,4 +20,22 @@ object SpecifyExplicitTypeFixFactories {
         val declaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
         listOf(declaration withInput getTypeInfo(declaration))
     }
+
+    val noExplicitReturnTypeInApiMode =
+        diagnosticFixFactory(
+            KtFirDiagnostic.NoExplicitReturnTypeInApiMode::class,
+            HLSpecifyExplicitTypeForCallableDeclarationIntention.applicator
+        ) { diagnostic ->
+            val callableDeclaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
+            listOf(callableDeclaration withInput getTypeInfo(callableDeclaration))
+        }
+
+    val noExplicitReturnTypeInApiModeWarning =
+        diagnosticFixFactory(
+            KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning::class,
+            HLSpecifyExplicitTypeForCallableDeclarationIntention.applicator
+        ) { diagnostic ->
+            val callableDeclaration = diagnostic.psi as? KtCallableDeclaration ?: return@diagnosticFixFactory emptyList()
+            listOf(callableDeclaration withInput getTypeInfo(callableDeclaration))
+        }
 }
