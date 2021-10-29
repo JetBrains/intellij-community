@@ -16,6 +16,21 @@ enum class DslComponentProperty {
   ROW_LABEL
 }
 
+/**
+ * Default comment width
+ */
+const val DEFAULT_COMMENT_WIDTH = 70
+
+/**
+ * Text uses word wrap if there is no enough width
+ */
+const val MAX_LINE_LENGTH_WORD_WRAP = -1
+
+/**
+ * Text is not wrapped and uses only html markup like <br>
+ */
+const val MAX_LINE_LENGTH_NO_WRAP = Int.MAX_VALUE
+
 @ApiStatus.Experimental
 fun interface HyperlinkEventAction {
 
