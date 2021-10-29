@@ -66,13 +66,13 @@ class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpress
         val builder = TemplateBuilderImpl(thrownExpression)
         builder.replaceElement(thrownExpression, exceptionLookupExpression)
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         editor.caretModel.moveToOffset(thrownExpression.node!!.startOffset)
 
         TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate(), object : TemplateEditingAdapter() {
             override fun templateFinished(template: Template, brokenOff: Boolean) {
-                if (!isStable && !isStatement) {
+                if (!isStable && !isStatement && ifStatement.isPhysical) {
                     ifStatement.introduceValueForCondition(ifStatement.then!!, editor)
                 }
             }
