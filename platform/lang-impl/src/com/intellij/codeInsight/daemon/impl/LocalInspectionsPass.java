@@ -52,13 +52,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -206,10 +209,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    long finalPriorityRange = allDivided.isEmpty() ? Divider.toScalarRange(myPriorityRange) : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
+    long finalPriorityRange = allDivided.isEmpty() ? myPriorityRange.toScalarRange() : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
-      finalPriorityRange = Divider.union(finalPriorityRange, dividedElements.priorityRange);
+      finalPriorityRange = TextRange.union(finalPriorityRange, dividedElements.priorityRange);
     }
     List<PsiElement> outside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside, d.parents)));
 
@@ -385,8 +388,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               PsiElement favoriteElement = context.myFavoriteElement;
 
               // accept favoriteElement only if it belongs to the correct inside/outside list
-              if (favoriteElement != null &&
-                  inside == favoriteElement.getTextRange().intersects(Divider.startOffset(finalPriorityRange), Divider.endOffset(finalPriorityRange))) {
+              if (favoriteElement != null && inside == favoriteElement.getTextRange().intersects(finalPriorityRange)) {
                 context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
                 // run first for the element we know resulted in the diagnostics during previous run
                 favoriteElement.accept(context.visitor);
@@ -532,7 +534,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return b.create();
   }
 
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new HashMap<>(); // accessed in EDT only
+  private final Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(); // accessed in EDT only
   private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
   private final List<HighlightInfo> infos = new ArrayList<>(2); // accessed in EDT only
   private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);

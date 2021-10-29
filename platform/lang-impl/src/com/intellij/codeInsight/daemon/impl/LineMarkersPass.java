@@ -77,7 +77,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       final PsiFile root = viewProvider.getPsi(language);
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
       if (!highlightingLevelManager.shouldHighlight(root)) continue;
-      Divider.divideInsideAndOutsideInOneRoot(root, Divider.toScalarRange(myRestrictRange), Divider.toScalarRange(myPriorityBounds),
+      Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange.toScalarRange(), myPriorityBounds.toScalarRange(),
            elements -> {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
