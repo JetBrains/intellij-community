@@ -25,6 +25,14 @@ import com.intellij.refactoring.util.RefactoringUtil
 
 object ExtractMethodHelper {
 
+  fun hasReferencesToScope(scope: List<PsiElement>, elements: List<PsiElement>): Boolean {
+    val localVariables = scope.asSequence().flatMap { element -> PsiTreeUtil.findChildrenOfType(element, PsiVariable::class.java) }.toSet()
+    return elements.asSequence()
+      .flatMap { element -> PsiTreeUtil.findChildrenOfType(element, PsiReferenceExpression::class.java) }
+      .mapNotNull { reference -> reference.resolve() as? PsiVariable }
+      .any { variable -> variable in localVariables }
+  }
+
   @JvmStatic
   fun findEditorSelection(editor: Editor): TextRange? {
     val selectionModel = editor.selectionModel

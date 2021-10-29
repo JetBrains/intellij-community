@@ -97,6 +97,10 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
       return@filterNot true
     }
 
+    if (ExtractMethodHelper.hasReferencesToScope(duplicate.pattern, changedExpressions.map{ change -> change.pattern })){
+      return null
+    }
+
     return duplicate.copy(changedExpressions = changedExpressions)
   }
 
@@ -116,8 +120,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
 
   fun isEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
-      pattern is PsiTypeElement && candidate is PsiTypeElement -> pattern.type.isAssignableFrom(candidate.type)
-      pattern is PsiReferenceExpression && candidate is PsiReferenceExpression -> pattern.resolve() == candidate.resolve() //TODO check same if not same local variable
+      pattern is PsiTypeElement && candidate is PsiTypeElement -> canBeReplaced(pattern.type, candidate.type)
+      pattern is PsiReferenceExpression && candidate is PsiReferenceExpression -> pattern.resolve() == candidate.resolve()
       pattern is PsiLiteralExpression && candidate is PsiLiteralExpression -> pattern.text == candidate.text
       pattern.node?.elementType == candidate.node?.elementType -> true
       else -> false
@@ -126,16 +130,15 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
 
   private fun canBeReplaced(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
-      pattern !is PsiExpression || candidate !is PsiExpression -> false
       pattern.parent is PsiExpressionStatement -> false
-      pattern is PsiReferenceExpression && pattern.resolve() is PsiMethod && candidate is PsiReferenceExpression -> pattern.resolve() == candidate.resolve()
-      else -> pattern.type.isAssignableFrom(candidate.type)
+      pattern is PsiReferenceExpression && pattern.parent is PsiCall -> false
+      pattern is PsiExpression && candidate is PsiExpression -> canBeReplaced(pattern.type, candidate.type)
+      else -> false
     }
   }
 
-  private fun PsiType?.isAssignableFrom(candidate: PsiType?): Boolean {
-    if (this == null || candidate == null) return false
-    return isAssignableFrom(candidate)
+  private fun canBeReplaced(pattern: PsiType?, candidate: PsiType?): Boolean {
+    return pattern != null && pattern != PsiType.VOID && candidate != null && pattern.isAssignableFrom(candidate)
   }
 
   private fun isOvercomplicated(duplicate: Duplicate): Boolean {
