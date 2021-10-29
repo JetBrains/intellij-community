@@ -56,3 +56,10 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     val tree = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JTree ?: return null
     return manager.createBookmark(TreeUtil.getLastUserObject(TreeUtil.getSelectedPathIfOne(tree)))
   }
+
+
+internal val Bookmark.bookmarksManager
+  get() = BookmarksManager.getInstance(provider.project)
+
+internal val Bookmark.firstGroupWithDescription
+  get() = bookmarksManager?.getGroups(this)?.firstOrNull { it.getDescription(this).isNullOrBlank().not() }
