@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +53,7 @@ public interface VcsLog {
    *
    * @param consumer called in EDT after all details are loaded.
    */
-  void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer);
+  void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable yet.
