@@ -47,6 +47,8 @@ CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 # Locate a JRE installation directory command -v will be used to run the IDE.
 # Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
+JRE=""
+
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JRE="$__product_uc___JDK"
