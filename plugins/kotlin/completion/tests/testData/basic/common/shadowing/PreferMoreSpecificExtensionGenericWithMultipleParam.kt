@@ -5,5 +5,5 @@ fun foo() {
     listOf(1).xx<caret>
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "(t: Int) for List<T> in <root>", typeText: "Unit" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "(t: Int) for List<T> in <root>", typeText: "Unit", icon: "nodes/function.svg"}
 // NOTHING_ELSE

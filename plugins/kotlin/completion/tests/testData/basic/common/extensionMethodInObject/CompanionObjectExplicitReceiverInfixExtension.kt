@@ -10,4 +10,4 @@ fun usage(t: T) {
     t foo<caret>
 }
 
-// EXIST: { lookupString: "fooExtension", itemText: "fooExtension" }
+// EXIST: { lookupString: "fooExtension", itemText: "fooExtension", icon: "nodes/function.svg"}
