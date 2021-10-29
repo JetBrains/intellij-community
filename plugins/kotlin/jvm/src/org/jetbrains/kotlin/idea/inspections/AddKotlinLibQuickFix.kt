@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -131,4 +133,6 @@ abstract class AddKotlinLibQuickFix(
         val configurator = findApplicableConfigurator(module)
         configurator.addLibraryDependency(module, element, getLibraryDescriptor(module), libraryJarDescriptor, scope)
     }
+
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
 }
