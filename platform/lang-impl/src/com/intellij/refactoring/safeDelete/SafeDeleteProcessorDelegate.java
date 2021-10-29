@@ -25,13 +25,13 @@ public interface SafeDeleteProcessorDelegate {
   ExtensionPointName<SafeDeleteProcessorDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.safeDeleteProcessor");
 
   /**
-   * @return {@code true} if delegates can process {@code element}
+   * @return {@code true} if delegates can process {@code element}.
    */
   boolean handlesElement(PsiElement element);
 
   /**
    * Find usages of the {@code element} and fill {@code result} with them. 
-   * Is called during {@link BaseRefactoringProcessor#findUsages()} under modal progress in read action
+   * Is called during {@link BaseRefactoringProcessor#findUsages()} under modal progress in read action.
    * 
    * @param element              an element selected for deletion.
    * @param allElementsToDelete  all elements selected for deletion.
@@ -44,10 +44,8 @@ public interface SafeDeleteProcessorDelegate {
   NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<UsageInfo> result);
 
   /**
-   * Called before the refactoring dialog is shown. Returns the list of elements for which the
-   * usages should be searched for the specified element selected by the user for deletion.
-   * May show UI to ask the user if some additional elements should be deleted along with the
-   * specified selected element.
+   * Returns elements that are searched for usages of the element selected for deletion. Called before the refactoring dialog is shown.
+   * May show UI to ask if additional elements should be deleted along with the specified selected element.
    *
    * @param element an element selected for deletion.
    * @param allElementsToDelete all elements selected for deletion.
@@ -57,7 +55,7 @@ public interface SafeDeleteProcessorDelegate {
   Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<PsiElement> allElementsToDelete);
 
   /**
-   * Called after the refactoring dialog is shown. Returns the list of additional elements to be deleted.
+   * Returns the list of additional elements to be deleted. Called after the refactoring dialog is shown.
    * May show UI to ask the user if some additional elements should be deleted along with the
    * specified selected element.
    *
