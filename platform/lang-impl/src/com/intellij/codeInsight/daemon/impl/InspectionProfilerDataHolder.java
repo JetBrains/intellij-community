@@ -113,6 +113,7 @@ final class InspectionProfilerDataHolder {
     String topSmallestLatenciesStat(String mySeverity) {
       List<Pair<String, Long>> result = new ArrayList<>();
       int REPORT_TOP_N = 5;
+      //noinspection unchecked
       Object2LongMap.Entry<String>[] entries = idToLatency.object2LongEntrySet().toArray(new Object2LongMap.Entry[0]);
       Arrays.sort(entries, Comparator.comparingLong(Object2LongMap.Entry::getLongValue));
       for (int i = 0; i < Math.min(REPORT_TOP_N, entries.length); i++) {
@@ -127,6 +128,9 @@ final class InspectionProfilerDataHolder {
     }
   }
 
+  /**
+   * after inspections completed, save their latencies (from corresponding {@link LocalInspectionsPass.InspectionContext#holder}) to use later in {@link #sort(PsiFile, List)}
+   */
   public void saveStats(@NotNull PsiFile file, @NotNull List<? extends LocalInspectionsPass.InspectionContext> contexts, long totalHighlightingNanos) {
     Latencies[] latencies = new Latencies[3]; // ERROR,WARNING,OTHER
     Map<String, PsiElement> favoriteElement = new HashMap<>();
