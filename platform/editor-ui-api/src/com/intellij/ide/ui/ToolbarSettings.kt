@@ -29,5 +29,5 @@ class ExperimentalToolbarSettingsState : BaseState() {
 
   @get:ReportValue
   @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
-  var showNewMainToolbar by property(true)
+  var showNewMainToolbar by property(false)
 }

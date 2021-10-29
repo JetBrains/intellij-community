@@ -85,7 +85,7 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     ActivityTracker.getInstance().inc()
 
     myPanel.removeAll()
-    if (myPanel.isVisible) {
+    if (myPanel.isEnabled && myPanel.isVisible) {
       val actionsSchema = CustomActionsSchema.getInstance()
       for ((actionId, layoutConstrains) in mapOf(
         (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
