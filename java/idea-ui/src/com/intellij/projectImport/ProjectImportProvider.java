@@ -15,6 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * {@link ProjectImportProvider} makes it possible to import a project or a module from existing sources, and customize
+ * the associated wizard.
+ * See {@link com.intellij.ide.actions.ImportModuleAction#createImportWizard}.
+ */
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
