@@ -54,7 +54,6 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JRE="$__product_uc___JDK"
 fi
 
-BITS=""
 if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
   USER_JRE=$(cat "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
@@ -94,7 +93,6 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
-BITS="64"
 VM_OPTIONS_FILE=""
 USER_VM_OPTIONS_FILE=""
 # shellcheck disable=SC2154
@@ -103,19 +101,19 @@ if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; t
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
 else
   # 2. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
-  if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+  if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__64.vmoptions"
   else
     test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
-      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions" ]; then
+      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions"
     fi
   fi
   # ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
   if [ -r "${IDE_HOME}.vmoptions" ]; then
     USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
-    USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
+  elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions" ]; then
+    USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions"
   fi
 fi
 
