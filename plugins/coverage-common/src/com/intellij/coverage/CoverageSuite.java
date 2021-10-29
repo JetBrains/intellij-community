@@ -21,7 +21,7 @@ import java.io.File;
  */
 public interface CoverageSuite extends JDOMExternalizable {
   /**
-   * @return false e.g. if underlying file is deleted
+   * @return false e.g. if underlying file is deleted.
    */
   boolean isValid();
 
@@ -54,17 +54,17 @@ public interface CoverageSuite extends JDOMExternalizable {
   Project getProject();
 
   /**
-   * Caches loaded coverage data on soft reference
+   * Caches loaded coverage data on soft reference.
    */
   void setCoverageData(final ProjectData projectData);
 
   /**
-   * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}
+   * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}.
    */
   void restoreCoverageData();
 
   /**
-   * @return true if engine can provide means to remove coverage data
+   * @return true if engine can provide means to remove coverage data.
    */
   default boolean canRemove() {
     CoverageFileProvider provider = getCoverageDataFileProvider();
@@ -73,7 +73,7 @@ public interface CoverageSuite extends JDOMExternalizable {
   }
 
   /**
-   * Called to cleanup gathered coverage on explicit user's action in settings dialog or e.g. during rerun of the same configuration
+   * Called to cleanup gathered coverage on explicit user's action in settings dialog or e.g. during rerun of the same configuration.
    */
   default void deleteCachedCoverageData() {
     final String fileName = getCoverageDataFileName();
