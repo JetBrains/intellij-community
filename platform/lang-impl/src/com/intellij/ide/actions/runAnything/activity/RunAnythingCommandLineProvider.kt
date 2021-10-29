@@ -20,8 +20,13 @@ abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<St
 
   private fun getHelpCommands() = listOf(helpCommand) + getHelpCommandAliases()
 
-  override fun findMatchingValue(dataContext: DataContext, pattern: String) =
-    if (extractLeadingHelpPrefix(pattern) != null) getCommand(pattern) else null
+  override fun findMatchingValue(dataContext: DataContext, pattern: String): String? {
+    val (helpCommand, _) = extractLeadingHelpPrefix(pattern) ?: return null
+    if (pattern.startsWith(helpCommand)) {
+      return getCommand(pattern)
+    }
+    return null
+  }
 
   private fun extractLeadingHelpPrefix(commandLine: String): Pair<String, String>? {
     for (helpCommand in getHelpCommands()) {
