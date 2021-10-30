@@ -79,11 +79,11 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] : PsiType:String
                                         ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: <ErrorType> ->...})] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : PsiType:Unit
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Unit
-                    ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
-                        UParameter (name = it) [var it: <ErrorType>]
+                    ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                        UParameter (name = it) [var it: int]
                         UBlockExpression [{...}] : PsiType:int
                             UIfExpression [if (it > 5) return] : PsiType:Unit
                                 UBinaryExpression (operator = >) [it > 5] : PsiType:boolean
