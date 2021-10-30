@@ -79,21 +79,21 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] = Undetermined
                                         ULiteralExpression (value = "a") ["a"] = "a"
                                         USimpleNameReferenceExpression (identifier = a) [a] = external a()
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: <ErrorType> ->...})] = external bar({ var it: <ErrorType> ->
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] = external bar({ var it: int ->
 
     if (it > 5) return
     var b: int = 1
     return it + b
 })(Undetermined)
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] = external bar({ var it: <ErrorType> ->
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] = external bar({ var it: int ->
 
     if (it > 5) return
     var b: int = 1
     return it + b
 })(Undetermined)
-                    ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
-                        UParameter (name = it) [var it: <ErrorType>]
+                    ULambdaExpression [{ var it: int ->...}] = Undetermined
+                        UParameter (name = it) [var it: int]
                         UBlockExpression [{...}] = Nothing
                             UIfExpression [if (it > 5) return] = Undetermined
                                 UBinaryExpression (operator = >) [it > 5] = Undetermined
