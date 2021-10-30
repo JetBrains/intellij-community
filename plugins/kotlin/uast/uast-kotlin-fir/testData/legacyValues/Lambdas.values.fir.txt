@@ -2,11 +2,11 @@ UFile (package = ) [import java.util.stream.Stream...]
     UImportStatement (isOnDemand = false) [import java.util.stream.Stream]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] = external filter({ var it: <ErrorType> ->
+            UBlockExpression [{...}] = external filter({ var it: java.lang.String ->
 
     return it.isEmpty()
 })(Undetermined)
-                UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] = external filter({ var it: <ErrorType> ->
+                UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] = external filter({ var it: java.lang.String ->
 
     return it.isEmpty()
 })(Undetermined)
@@ -15,17 +15,17 @@ UFile (package = ) [import java.util.stream.Stream...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] = external empty()()
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] = external empty()()
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: <ErrorType> ->...})] = external filter({ var it: <ErrorType> ->
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: java.lang.String ->...})] = external filter({ var it: java.lang.String ->
 
     return it.isEmpty()
 })(Undetermined)
                         UIdentifier (Identifier (filter)) [UIdentifier (Identifier (filter))]
-                        USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] = external filter({ var it: <ErrorType> ->
+                        USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] = external filter({ var it: java.lang.String ->
 
     return it.isEmpty()
 })(Undetermined)
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
-                            UParameter (name = it) [var it: <ErrorType>]
+                        ULambdaExpression [{ var it: java.lang.String ->...}] = Undetermined
+                            UParameter (name = it) [var it: java.lang.String]
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return it.isEmpty()] = Nothing
                                     UQualifiedReferenceExpression [it.isEmpty()] = external isEmpty()()

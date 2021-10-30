@@ -16,18 +16,18 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [inlineFoo()] : PsiType:Unit
                         UIdentifier (Identifier (inlineFoo)) [UIdentifier (Identifier (inlineFoo))]
                         USimpleNameReferenceExpression (identifier = inlineFoo, resolvesTo = null) [inlineFoo] : PsiType:Unit
-                UQualifiedReferenceExpression [listOf(<init>()).forEach({ var it: <ErrorType> ->...})] : PsiType:Unit
+                UQualifiedReferenceExpression [listOf(<init>()).forEach({ var it: A ->...})] : PsiType:Unit
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(<init>())] : PsiType:List<? extends A>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends A>
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:A
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : PsiType:A
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [forEach({ var it: <ErrorType> ->...})] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [forEach({ var it: A ->...})] : PsiType:Unit
                         UIdentifier (Identifier (forEach)) [UIdentifier (Identifier (forEach))]
                         USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null) [forEach] : PsiType:Unit
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super A, ? extends Unit>
-                            UParameter (name = it) [var it: <ErrorType>]
+                        ULambdaExpression [{ var it: A ->...}] : PsiType:Function1<? super A, ? extends Unit>
+                            UParameter (name = it) [var it: A]
                             UBlockExpression [{...}] : PsiType:Unit
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] : PsiType:Unit
                                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
