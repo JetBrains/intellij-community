@@ -1,13 +1,13 @@
 UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
     UClass (name = AccessArrayOfInlineClassKt) [public final class AccessArrayOfInlineClassKt {...}]
-        UField (name = xs) [@org.jetbrains.annotations.NotNull private static final var xs: Z[] = <init>(2, { var it: <ErrorType> ->...})]
+        UField (name = xs) [@org.jetbrains.annotations.NotNull private static final var xs: Z[] = <init>(2, { var it: int ->...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(2, { var it: <ErrorType> ->...})] : PsiType:Z[]
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(2, { var it: int ->...})] : PsiType:Z[]
                 UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
                 USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Z[]
                 ULiteralExpression (value = 2) [2] : PsiType:int
-                ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Z>
-                    UParameter (name = it) [var it: <ErrorType>]
+                ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends Z>
+                    UParameter (name = it) [var it: int]
                     UBlockExpression [{...}] : PsiType:Z
                         UReturnExpression [return <init>(42)]
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(42)] : PsiType:Z

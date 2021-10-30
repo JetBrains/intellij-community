@@ -42,24 +42,24 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(at)((var at = Undetermined))
                             USimpleNameReferenceExpression (identifier = at) [at] = (var at = Undetermined)
-                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})] = Undetermined
-                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
-                        UQualifiedReferenceExpression [tl.map({ var it: <ErrorType> ->...})] = external map({ var it: <ErrorType> ->
+                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})] = Undetermined
+                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
+                        UQualifiedReferenceExpression [tl.map({ var it: T ->...})] = external map({ var it: T ->
 
     return it.toString()
 })(Undetermined)
                             USimpleNameReferenceExpression (identifier = tl) [tl] = (var tl = external listOf(at)((var at = Undetermined)))
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: <ErrorType> ->...})] = external map({ var it: <ErrorType> ->
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: T ->...})] = external map({ var it: T ->
 
     return it.toString()
 })(Undetermined)
                                 UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
-                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] = external map({ var it: <ErrorType> ->
+                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] = external map({ var it: T ->
 
     return it.toString()
 })(Undetermined)
-                                ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
-                                    UParameter (name = it) [var it: <ErrorType>]
+                                ULambdaExpression [{ var it: T ->...}] = Undetermined
+                                    UParameter (name = it) [var it: T]
                                     UBlockExpression [{...}] = Nothing
                                         UReturnExpression [return it.toString()] = Undetermined
                                             UQualifiedReferenceExpression [it.toString()] = external toString()()
