@@ -95,7 +95,7 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
 
     open val fileExtension = ".kt"
 }
@@ -110,7 +110,7 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
         val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
             ?: error("Test file not found!")
 
-        val extraClasspath = mutableListOf(KotlinArtifacts.instance.jetbrainsAnnotations)
+        val extraClasspath = mutableListOf(KotlinArtifacts.instance.jetbrainsAnnotations, KotlinArtifacts.instance.kotlinStdlibJdk8)
         if (testFile.extension == "kts") {
             extraClasspath += KotlinArtifacts.instance.kotlinScriptRuntime
         }
