@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
@@ -312,8 +313,13 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         return KtPsiFactory(member).createDeclaration<KtFunction>("fun $text foo()").typeParameterList
     }
 
-    private fun KtTypeParameter.textWithoutVariance() =
-        allChildren.joinToString(separator = "") { if (it is KtModifierList) "" else it.text }
+    private fun KtTypeParameter.textWithoutVariance(): String {
+        if (variance == Variance.INVARIANT) return text
+        val copied = this.copy() as KtTypeParameter
+        copied.modifierList?.getModifier(KtTokens.OUT_KEYWORD)?.delete()
+        copied.modifierList?.getModifier(KtTokens.IN_KEYWORD)?.delete()
+        return copied.text
+    }
 
     companion object {
         fun convert(element: KtCallableDeclaration): KtCallableDeclaration =

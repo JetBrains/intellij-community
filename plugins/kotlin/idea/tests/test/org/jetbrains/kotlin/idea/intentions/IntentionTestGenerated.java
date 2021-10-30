@@ -9260,9 +9260,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/declarations/convertMemberToExtension/genericClass.kt");
             }
 
-            @TestMetadata("genericClassWithVariance.kt")
-            public void testGenericClassWithVariance() throws Exception {
-                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithVariance.kt");
+            @TestMetadata("genericClassWithInVariance.kt")
+            public void testGenericClassWithInVariance() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithInVariance.kt");
+            }
+
+            @TestMetadata("genericClassWithOutVariance.kt")
+            public void testGenericClassWithOutVariance() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithOutVariance.kt");
+            }
+
+            @TestMetadata("genericClassWithVarianceAndReified.kt")
+            public void testGenericClassWithVarianceAndReified() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/genericClassWithVarianceAndReified.kt");
             }
 
             @TestMetadata("genericFun.kt")
