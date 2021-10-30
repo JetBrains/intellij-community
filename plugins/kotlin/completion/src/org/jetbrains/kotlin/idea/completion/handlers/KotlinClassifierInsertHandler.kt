@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.canAddRootPrefix
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -49,12 +50,15 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
                 val descriptor = lookupObject.descriptor
                 if (descriptor?.isArtificialImportAliasedDescriptor == true) return
 
+                val qualifiedName = qualifiedName(lookupObject)
+
                 descriptor?.takeIf { DescriptorUtils.isTopLevelDeclaration(it) }?.let {
-                    ImportInsertHelper.getInstance(project).importDescriptor(file, it)
+                    val importDescriptorResult = ImportInsertHelper.getInstance(project).importDescriptor(file, it)
+                    if (importDescriptorResult == ImportDescriptorResult.FAIL) {
+                        document.replaceString(startOffset, context.tailOffset, qualifiedName)
+                    }
                     return
                 }
-
-                val qualifiedName = qualifiedName(lookupObject)
 
                 // first try to resolve short name for faster handling
                 val token = file.findElementAt(startOffset)!!
