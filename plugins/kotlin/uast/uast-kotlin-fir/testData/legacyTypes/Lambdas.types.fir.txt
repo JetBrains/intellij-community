@@ -3,17 +3,17 @@ UFile (package = ) [import java.util.stream.Stream...]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Stream<String>
-                UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
+                UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [Stream.empty()] : PsiType:Stream<String>
                         USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : PsiType:Stream<String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] : PsiType:Stream<String>
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
                         UIdentifier (Identifier (filter)) [UIdentifier (Identifier (filter))]
                         USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] : PsiType:Stream<String>
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super String, ? extends Boolean>
-                            UParameter (name = it) [var it: <ErrorType>]
+                        ULambdaExpression [{ var it: java.lang.String ->...}] : PsiType:Function1<? super String, ? extends Boolean>
+                            UParameter (name = it) [var it: java.lang.String]
                             UBlockExpression [{...}] : PsiType:boolean
                                 UReturnExpression [return it.isEmpty()]
                                     UQualifiedReferenceExpression [it.isEmpty()] : PsiType:boolean

@@ -128,8 +128,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 KotlinUParameter(
                     UastKotlinPsiParameterBase(
                         name = p.name.asString(),
-                        // TODO: implicit parameter type
-                        type = UastErrorType,
+                        type = p.annotatedType.type.asPsiType(ktLambdaExpression) ?: UastErrorType,
                         parent = ktLambdaExpression,
                         ktOrigin = ktLambdaExpression,
                         language = ktLambdaExpression.language,

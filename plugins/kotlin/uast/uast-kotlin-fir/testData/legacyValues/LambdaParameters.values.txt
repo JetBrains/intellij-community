@@ -18,26 +18,26 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                                 USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] = external append("a")("a")
                                 ULiteralExpression (value = "a") ["a"] = "a"
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
-            UBlockExpression [{...}] = external let({ var it: <ErrorType> ->
+            UBlockExpression [{...}] = external let({ var it: int ->
 
     return it
 })(Undetermined)
-                UQualifiedReferenceExpression [10.let({ var it: <ErrorType> ->...})] = external let({ var it: <ErrorType> ->
+                UQualifiedReferenceExpression [10.let({ var it: int ->...})] = external let({ var it: int ->
 
     return it
 })(Undetermined)
                     ULiteralExpression (value = 10) [10] = 10
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: <ErrorType> ->...})] = external let({ var it: <ErrorType> ->
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: int ->...})] = external let({ var it: int ->
 
     return it
 })(Undetermined)
                         UIdentifier (Identifier (let)) [UIdentifier (Identifier (let))]
-                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] = external let({ var it: <ErrorType> ->
+                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] = external let({ var it: int ->
 
     return it
 })(Undetermined)
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
-                            UParameter (name = it) [var it: <ErrorType>]
+                        ULambdaExpression [{ var it: int ->...}] = Undetermined
+                            UParameter (name = it) [var it: int]
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return it] = Nothing
                                     USimpleNameReferenceExpression (identifier = it) [it] = external it()
