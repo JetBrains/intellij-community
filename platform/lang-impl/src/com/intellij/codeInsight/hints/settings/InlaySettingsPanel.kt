@@ -130,13 +130,20 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         currentEditor?.let { updateHints(it, model) }
       }
     }
-    val node = CheckedTreeNode(model)
+    val node = object: CheckedTreeNode(model) {
+      override fun setChecked(checked: Boolean) {
+        super.setChecked(checked)
+        model.isEnabled = checked
+        model.onChangeListener?.settingsChanged()
+      }
+    }
     parent.add(node)
     model.cases.forEach {
       val caseNode = object: CheckedTreeNode(it) {
         override fun setChecked(checked: Boolean) {
           super.setChecked(checked)
-//          it.value = checked
+          it.value = checked
+          model.onChangeListener?.settingsChanged()
         }
       }
       node.add(caseNode)
@@ -313,7 +320,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
       is InlayProviderSettingsModel -> {
-        if ((node.isChecked != isModelEnabled(item, settings)))
+        if (item.isModified() || (node.isChecked != isModelEnabled(item, settings)))
           return true
       }
       is ImmediateConfigurable.Case -> {
