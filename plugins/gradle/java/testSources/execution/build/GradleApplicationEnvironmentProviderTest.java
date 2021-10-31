@@ -2,19 +2,28 @@
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.execution.*;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
@@ -156,6 +165,46 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "File Content: content");
   }
+
+  @Test
+  public void testMainClassInBuildSrcCanBeExecuted() throws Exception {
+    VirtualFile mainFile = createProjectSubFile("buildSrc/src/main/java/test/Main.java",
+                                                "package test;\n" +
+                                                "\n" +
+                                                "public class Main {\n" +
+                                                "  public static void main(String[] args){\n" +
+                                                "    System.out.println(\"this is the test output\");\n" +
+                                                "  }\n" +
+                                                "}");
+
+    createSettingsFile("rootProject.name = 'app'");
+    importProject(
+      createBuildScriptBuilder()
+        .generate()
+    );
+
+    PsiIdentifier mainMethod =
+      ReadAction.compute(
+        () -> PsiTreeUtil.findChildOfType(PsiManager.getInstance(myProject).findFile(mainFile), PsiMethod.class, true).getNameIdentifier());
+
+
+    Module name = ModuleManager.getInstance(myProject).findModuleByName("app.buildSrc.main");
+
+    PsiLocation<PsiIdentifier> location = new PsiLocation<>(myProject, name, mainMethod);
+
+    ConfigurationContext configurationContext = ConfigurationContext.createEmptyContextForLocation(location);
+
+
+    RunnerAndConfigurationSettings existing =
+      ReadAction.compute(() -> configurationContext.getConfiguration());
+
+    if (existing.getConfiguration() instanceof CommonProgramRunConfigurationParameters) {
+      ((CommonProgramRunConfigurationParameters)existing.getConfiguration()).setWorkingDirectory(getProjectPath());
+    }
+
+    assertAppRunOutput(existing, "this is the test output");
+  }
+
 
   private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
