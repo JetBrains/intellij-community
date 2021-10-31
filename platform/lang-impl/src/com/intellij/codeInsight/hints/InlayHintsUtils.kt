@@ -80,6 +80,9 @@ class CollectorWithSettings<T : Any>(
     applyToEditor(file, editor, hintsBuffer)
   }
 
+  /**
+   * Same as [collectTraversingAndApply] but invoked on bg thread
+   */
   fun collectTraversingAndApplyOnEdt(editor: Editor, file: PsiFile, enabled: Boolean) {
     val hintsBuffer = collectTraversing(editor, file, enabled)
     invokeLater { applyToEditor(file, editor, hintsBuffer) }

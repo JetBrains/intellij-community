@@ -40,13 +40,10 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   /**
    * Called, when it is required to update inlay hints for file in preview
    * Invariant: if previewText == null, this method is not invoked
+   *
+   * Note: it is invoked on EDT thread
    */
   abstract fun collectAndApply(editor: Editor, file: PsiFile)
-
-  open fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
-    // bwc implementation
-    collectAndApply(editor, file)
-  }
 
   open fun createFile(project: Project, fileType: FileType, document:Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)

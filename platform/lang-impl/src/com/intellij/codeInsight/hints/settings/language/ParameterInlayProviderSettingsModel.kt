@@ -55,8 +55,6 @@ class ParameterInlayProviderSettingsModel(
 
   override fun collectAndApply(editor: Editor, file: PsiFile) {}
 
-  override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {}
-
   override val description: String?
     get() = null
 

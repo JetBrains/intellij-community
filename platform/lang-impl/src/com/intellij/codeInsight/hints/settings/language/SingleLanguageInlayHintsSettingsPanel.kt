@@ -12,6 +12,8 @@ import com.intellij.ide.CopyProvider
 import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -38,6 +40,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import java.awt.datatransfer.StringSelection
+import java.util.concurrent.Callable
 import javax.swing.*
 import javax.swing.border.LineBorder
 
@@ -239,10 +242,14 @@ class SingleLanguageInlayHintsSettingsPanel(
         val model = myCurrentProvider
         val document = myEditorTextField.document
         val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
-        ReadAction.nonBlocking {
-          val psiFile = model.createFile(myProject, fileType, document)
-          myCurrentProvider.collectAndApplyOnEdt(editor, psiFile)
-        }
+        ReadAction.nonBlocking(Callable {
+          model.createFile(myProject, fileType, document)
+        })
+          .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+            ApplicationManager.getApplication().runWriteAction {
+              myCurrentProvider.collectAndApply(editor, psiFile)
+            }
+          }
           .inSmartMode(myProject)
           .submit(AppExecutorUtil.getAppExecutorService())
       }
