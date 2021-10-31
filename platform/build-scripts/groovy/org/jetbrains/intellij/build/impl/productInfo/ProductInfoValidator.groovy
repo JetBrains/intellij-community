@@ -5,9 +5,11 @@ import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.ArchiveUtils
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -63,8 +65,15 @@ final class ProductInfoValidator {
     validateProductJson(context, string, productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
+  void validateInDirectory(byte[] productJson, String relativePathToProductJson, List<Path> installationDirectories,
+                           List<Pair<Path, String>> installationArchives) {
+    String string = new String(productJson, StandardCharsets.UTF_8)
+    validateProductJson(context, string, null, relativePathToProductJson, installationDirectories, installationArchives)
+  }
+
   private static void validateProductJson(BuildContext context,
-                                          String jsonText, Path productJsonFile,
+                                          String jsonText,
+                                          @Nullable Path productJsonFile,
                                           String relativePathToProductJson,
                                           List<Path> installationDirectories,
                                           List<Pair<Path, String>> installationArchives) {
@@ -73,7 +82,12 @@ final class ProductInfoValidator {
       productJson = JSON.std.beanFrom(ProductInfoData.class, jsonText)
     }
     catch (Exception e) {
-      context.messages.error("Failed to parse product-info.json at $productJsonFile: $e.message", e)
+      if (productJsonFile == null) {
+        context.messages.error("Failed to parse product-info.json: $e.message", e)
+      }
+      else {
+        context.messages.error("Failed to parse product-info.json at $productJsonFile: $e.message", e)
+      }
       return
     }
 

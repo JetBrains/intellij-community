@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -11,44 +11,41 @@ import java.util.function.Supplier
 
 @CompileStatic
 abstract class BuildTaskRunnable<T> {
-  final String stepId
+  final @NotNull String stepId
+  final @NotNull String stepMessage
 
-  protected BuildTaskRunnable(String stepId) {
+  protected BuildTaskRunnable(@NotNull String stepId, @NotNull String stepMessage) {
     this.stepId = stepId
+    this.stepMessage = stepMessage
   }
 
   static <T> BuildTaskRunnable<T> taskWithResult(@NotNull String name, @NotNull Function<BuildContext, T> task) {
-    return new BuildTaskRunnable<T>(name) {
+    return new BuildTaskRunnable<T>(name, name) {
       @Override
-      T execute(BuildContext buildContext) {
-        return task.apply(buildContext)
+      T execute(BuildContext context) {
+        return task.apply(context)
       }
     }
   }
 
   static BuildTaskRunnable<Void> task(@NotNull String name, @NotNull Consumer<BuildContext> task) {
-    return new BuildTaskRunnable<Void>(name) {
+    return new BuildTaskRunnable<Void>(name, name) {
       @Override
-      Void execute(BuildContext buildContext) {
-        task.accept(buildContext)
+      Void execute(BuildContext context) {
+        task.accept(context)
         return null
       }
     }
   }
 
   static BuildTaskRunnable<Void> task(@NotNull String stepId, @NotNull String stepMessage, @NotNull Consumer<BuildContext> task) {
-    return new BuildTaskRunnable<Void>(stepId) {
+    return new BuildTaskRunnable<Void>(stepId, stepMessage) {
       @Override
-      Void execute(BuildContext buildContext) {
-        if (buildContext.options.buildStepsToSkip.contains(stepId)) {
-          buildContext.messages.info("Skipping '$stepMessage'")
-          return null
-        }
-
-        buildContext.messages.block(stepMessage, new Supplier<Void>() {
+      Void execute(BuildContext context) {
+        context.messages.block(stepMessage, new Supplier<Void>() {
           @Override
           Void get() {
-            task.accept(buildContext)
+            task.accept(context)
             return null
           }
         })
@@ -57,5 +54,5 @@ abstract class BuildTaskRunnable<T> {
     }
   }
 
-  abstract T execute(BuildContext buildContext)
+  abstract T execute(BuildContext context)
 }

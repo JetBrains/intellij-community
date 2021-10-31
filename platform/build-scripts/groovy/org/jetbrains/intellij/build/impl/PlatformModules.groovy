@@ -133,8 +133,8 @@ final class PlatformModules {
   }
 
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
-                                             Set<String> allProductDependencies,
-                                             List<JpsLibrary> additionalProjectLevelLibraries,
+                                             boolean hasPlatformCoverage,
+                                             Set<JpsLibrary> additionalProjectLevelLibraries,
                                              BuildContext buildContext) {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
@@ -229,7 +229,7 @@ final class PlatformModules {
 
     addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar", productLayout, layout)
 
-    if (allProductDependencies.contains("intellij.platform.coverage")) {
+    if (hasPlatformCoverage) {
       addModule("intellij.platform.coverage", BaseLayout.PLATFORM_JAR, productLayout, layout)
     }
 
@@ -267,11 +267,11 @@ final class PlatformModules {
         layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
       }
     }
-
-    Set<JpsLibrary> librariesToInclude = layout.computeProjectLibrariesFromIncludedModules(buildContext).keySet()
-    for (JpsLibrary library in librariesToInclude) {
-      String name = library.name
-      layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+    layout.collectProjectLibrariesFromIncludedModules(buildContext) { lib, module ->
+      if (!additionalProjectLevelLibraries.contains(lib)) {
+        String name = lib.name
+        layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+      }
     }
     return layout
   }

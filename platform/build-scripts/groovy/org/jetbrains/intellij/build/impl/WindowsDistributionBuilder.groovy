@@ -24,6 +24,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
+import java.util.concurrent.ForkJoinTask
+import java.util.function.Supplier
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -53,7 +55,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path distBinDir = winDistPath.resolve("bin")
     Files.createDirectories(distBinDir)
 
-    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    buildContext.messages.progress("build distributions for Windows")
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -77,12 +79,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildWinLauncher(winDistPath)
     customizer.copyAdditionalFiles(buildContext, winDistPath.toString())
     FileFilter signFileFilter = createFileFilter("exe", "dll")
-    for (Path nativeRoot : [distBinDir, pty4jNativeDir]) {
+    for (Path nativeRoot : List.of(distBinDir, pty4jNativeDir)) {
       FileUtil.processFilesRecursively(nativeRoot.toFile(), new Processor<File>() {
         @Override
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
-            buildContext.executeStep("Signing $file", BuildOptions.WIN_SIGN_STEP) {
+            buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
               buildContext.signFile(file.absolutePath, BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
@@ -96,7 +98,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(@NotNull Path winDistPath) {
     copyFilesForOsDistribution(winDistPath)
 
-    String zipPath = null, exePath = null
+    ForkJoinTask<Path> zipPathTask = null
+    String exePath = null
     Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (jreDir != null) {
       Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
@@ -118,22 +121,26 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           buildContext.messages.error("Bundled jre is not found, but it's required for .win.zip")
         }
 
-        jreDirectoryPaths = [jreDir]
+        jreDirectoryPaths = List.of(jreDir)
       }
       else {
-        jreDirectoryPaths = []
+        jreDirectoryPaths = List.of()
       }
-      zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
+      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winDistPath, customizer, buildContext).fork()
     }
 
-    buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
-      generateProductJson(productJsonDir, jreDir != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
-      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, '')
-    }
+    buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP, new Runnable() {
+      @Override
+      void run() {
+        Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
+        generateProductJson(productJsonDir, jreDir != null, buildContext)
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
+        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, '')
+      }
+    })
 
-    if (buildContext.options.isInDevelopmentMode || zipPath == null || exePath == null) {
+    Path zipPath = zipPathTask == null ? null : zipPathTask.join()
+    if (buildContext.options.isInDevelopmentMode || zipPathTask == null || exePath == null) {
       return
     }
 
@@ -142,13 +149,13 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       return
     }
 
-    Span.current().addEvent("compare ${PathUtilRt.getFileName(zipPath)} vs. ${PathUtilRt.getFileName(exePath)}")
+    Span.current().addEvent("compare ${zipPath.fileName} vs. ${PathUtilRt.getFileName(exePath)}")
 
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
       BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
-      BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath), tempZip)
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath.toString()), tempZip)
       //noinspection SpellCheckingInspection
       NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
@@ -289,28 +296,35 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     return patchedFile
   }
 
-  private String buildWinZip(List<Path> jreDirectoryPaths, String zipNameSuffix, Path winDistPath) {
-    return buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      Path targetFile = Paths.get(buildContext.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
-      buildContext.messages.progress("Building Windows $targetFile archive")
-      Path productJsonDir = Paths.get(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix")
-      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
+  private static ForkJoinTask<Path> createBuildWinZipTask(List<Path> jreDirectoryPaths,
+                                                          String zipNameSuffix,
+                                                          Path winDistPath,
+                                                          WindowsDistributionCustomizer customizer,
+                                                          BuildContext context) {
+    String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+    Path targetFile = Path.of(context.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
+    return BuildHelper.getInstance(context).createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+                                                         .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
+      @Override
+      Path get() {
+        Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+        generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
-      String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      List<Path> dirs = [buildContext.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
-      BuildHelper.zipWithPrefix(buildContext, targetFile, dirs, zipPrefix)
-      ProductInfoValidator.checkInArchive(buildContext, targetFile, zipPrefix)
-      buildContext.notifyArtifactWasBuilt(targetFile)
-      return targetFile
-    }
+        String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+        List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
+        BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
+        ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
+        context.notifyArtifactWasBuilt(targetFile)
+        return targetFile
+      }
+    })
   }
 
-  private void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded) {
-    String launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
-    String vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+  private static void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {
+    String launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
+    String vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
-    new ProductInfoGenerator(buildContext)
+    new ProductInfoGenerator(context)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 

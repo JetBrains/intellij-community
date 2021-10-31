@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
@@ -30,7 +28,6 @@ abstract class BaseLayout {
   /** JAR name -> name of project library which content should be unpacked */
   final MultiMap<String, String> projectLibrariesToUnpack = MultiMap.createLinked()
   final List<String> modulesWithExcludedModuleLibraries = []
-  final List<Pair<ResourcesGenerator, String>> resourceGenerators = new ArrayList<>()
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
   final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 

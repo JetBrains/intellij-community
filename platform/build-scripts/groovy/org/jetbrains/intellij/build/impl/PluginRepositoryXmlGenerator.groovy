@@ -90,6 +90,9 @@ final class PluginRepositoryXmlGenerator {
     // so, we exclude `"description"` for now
     for (String propertyName in ["id", "name", "vendor"]) {
       if (plugin.getProperty(propertyName) == null) {
+        if (propertyName == "name" && (plugin.id.startsWith("com.intellij.appcode.") || plugin.id == "com.intellij.mobile.AppleGradlePluginGenerator")) {
+          continue
+        }
         throw new RuntimeException("Cannot generate plugin repository file: '$propertyName' " +
                                    "isn't specified in ${new String(pluginXml, StandardCharsets.UTF_8)}")
       }

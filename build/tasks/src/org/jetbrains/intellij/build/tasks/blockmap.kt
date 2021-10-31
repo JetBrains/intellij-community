@@ -6,13 +6,11 @@ import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.compressDir
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.writeNewZip
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
-import java.util.zip.Deflater
 
 private const val algorithm = "SHA-256"
 
@@ -34,8 +32,8 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>
               .setAttribute("outputFile", target.toString())
               .startSpan()
               .use {
-                writeNewFile(target) { channel ->
-                  ZipArchiver(ZipFileWriter(channel, compress)).use { archiver ->
+                writeNewZip(target, compress = compress) { zipCreator ->
+                  ZipArchiver(zipCreator).use { archiver ->
                     archiver.setRootDir(dir, item.key)
                     compressDir(dir, archiver, excludes = null)
                   }
@@ -65,10 +63,8 @@ internal fun buildBlockMap(file: Path, json: JSON) {
 
   val fileParent = file.parent
   val fileName = file.fileName.toString()
-  writeNewFile(fileParent.resolve("$fileName.blockmap.zip")) { channel ->
-    val zipCreator = ZipFileWriter(channel, Deflater(Deflater.DEFAULT_COMPRESSION, true))
-    zipCreator.writeCompressed("blockmap.json", bytes)
-    zipCreator.finish()
+  writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
+    it.compressedData("blockmap.json", bytes)
   }
 
   val hashFile = fileParent.resolve("$fileName.hash.json")

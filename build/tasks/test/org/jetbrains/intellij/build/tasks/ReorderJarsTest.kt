@@ -62,7 +62,7 @@ class ReorderJarsTest {
     Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
 
     val archiveFile = fsRule.fs.getPath("/archive.jar")
-    zip(archiveFile, mapOf(rootDir to ""), addDirEntries = true)
+    zip(archiveFile, mapOf(rootDir to ""), compress = false, addDirEntries = true)
 
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
     ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
