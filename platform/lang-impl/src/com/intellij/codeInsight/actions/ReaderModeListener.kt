@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -40,7 +41,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
 
       EditorFactory.getInstance().allEditors.forEach {
         if (it !is EditorImpl) return
-        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
+        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document).takeIf { it !is LightVirtualFile },
                         fileIsOpenAlready = true)
       }
     }
