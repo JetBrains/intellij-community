@@ -18,12 +18,13 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText(JsonPathFileType.INSTANCE, "$.<caret>")
     assertCompletionVariants(
       "*",
+      "avg()",
       "concat()",
       "keys()",
       "length()",
-      "min()",
       "max()",
-      "avg()",
+      "min()",
+      "size()",
       "stddev()",
       "sum()"
     )
