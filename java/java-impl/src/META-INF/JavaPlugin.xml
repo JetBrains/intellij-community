@@ -1081,7 +1081,7 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightImportedElementsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightOverridingMethodsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExitPointsHandlerFactory"/>
-    <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightSuppressedWarningsFactory"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.daemon.impl.HighlightSuppressedWarningsFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightRecordComponentsRecordFactory"/>
     <workspaceModel.moduleExtensionBridgeFactory

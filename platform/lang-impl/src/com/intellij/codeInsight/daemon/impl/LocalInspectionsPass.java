@@ -70,7 +70,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final Map<String, Set<PsiElement>> mySuppressedElements = new ConcurrentHashMap<>();
   private final boolean myInspectInjectedPsi;
 
-  public LocalInspectionsPass(@NotNull PsiFile file,
+  LocalInspectionsPass(@NotNull PsiFile file,
                               @NotNull Document document,
                               int startOffset,
                               int endOffset,
