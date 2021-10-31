@@ -22,25 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
-  private final int myStartOffset;
-  private final int myEndOffset;
-
-  public LocalInspectionToolSession(@NotNull PsiFile file, final int startOffset, final int endOffset) {
+  LocalInspectionToolSession(@NotNull PsiFile file) {
     myFile = file;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
   }
 
   @NotNull
   public PsiFile getFile() {
     return myFile;
-  }
-
-  public int getStartOffset() {
-    return myStartOffset;
-  }
-
-  public int getEndOffset() {
-    return myEndOffset;
   }
 }

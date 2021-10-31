@@ -96,7 +96,7 @@ final class InspectionProfilerDataHolder {
     final Object2LongMap<String> idToLatency = new Object2LongOpenHashMap<>();
     long minLatency = Long.MAX_VALUE;
     String minId;
-    void save(@NotNull LocalInspectionsPass.InspectionContext context, long stampOf1st) {
+    void save(@NotNull InspectionRunner.InspectionContext context, long stampOf1st) {
       long latency;
       if (stampOf1st != 0) {
         latency = stampOf1st - context.holder.initTimeStamp;
@@ -129,13 +129,13 @@ final class InspectionProfilerDataHolder {
   }
 
   /**
-   * after inspections completed, save their latencies (from corresponding {@link LocalInspectionsPass.InspectionContext#holder}) to use later in {@link #sort(PsiFile, List)}
+   * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder}) to use later in {@link #sort(PsiFile, List)}
    */
-  public void saveStats(@NotNull PsiFile file, @NotNull List<? extends LocalInspectionsPass.InspectionContext> contexts, long totalHighlightingNanos) {
+  public void saveStats(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> contexts, long totalHighlightingNanos) {
     Latencies[] latencies = new Latencies[3]; // ERROR,WARNING,OTHER
     Map<String, PsiElement> favoriteElement = new HashMap<>();
     Arrays.setAll(latencies, __ -> new Latencies());
-    for (LocalInspectionsPass.InspectionContext context : contexts) {
+    for (InspectionRunner.InspectionContext context : contexts) {
       latencies[0].save(context, context.holder.errorStamp);
       latencies[1].save(context, context.holder.warningStamp);
       latencies[2].save(context, context.holder.otherStamp);
@@ -161,7 +161,7 @@ final class InspectionProfilerDataHolder {
   // - first, contexts with inspection tools which produced errors in previous run, ordered by latency to the 1st created error
   // - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
   // - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
-  void sort(@NotNull PsiFile file, @NotNull List<? extends LocalInspectionsPass.InspectionContext> init) {
+  void sort(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
     InspectionFileData data = this.data.get(file);
     if (data == null) {
       // no statistics => do nothing
@@ -185,14 +185,14 @@ final class InspectionProfilerDataHolder {
     return Long.compare(latency1, latency2);
   }
 
-  void retrieveFavoriteElements(@NotNull PsiFile file, @NotNull List<? extends LocalInspectionsPass.InspectionContext> init) {
+  void retrieveFavoriteElements(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
     InspectionFileData data = this.data.get(file);
     if (data == null) {
       // no statistics => do nothing
       return;
     }
     Map<String, PsiElement> favoriteElement = data.favoriteElement;
-    for (LocalInspectionsPass.InspectionContext context : init) {
+    for (InspectionRunner.InspectionContext context : init) {
       PsiElement element = favoriteElement.get(context.tool.getID());
       if (element != null && !element.isValid()) {
         element = null;

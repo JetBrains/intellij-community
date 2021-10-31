@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.intellij.lang.annotations.Language
 
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
@@ -180,17 +181,20 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   void testSuppressedWarningsInInjectionHighlights() {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager())
     testInjector.injectAll(myFixture.getTestRootDisposable())
-    myFixture.configureByText 'Foo.java', '''
+
+    @Language("JAVA")
+    String text = '''
       public class Foo {
         public static void a(boolean b, String c) {
            @SuppressWarnings({"SillyAssignment"})
            String java = "class A {{int i = 0; i = i;}}";
         }
-      }'''.stripIndent()
+      }'''
+    myFixture.configureByText 'Foo.java', text.stripIndent()
     myFixture.enableInspections(new SillyAssignmentInspection())
     myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("illyAssignment"))
     ctrlShiftF7()
-    assertRangeText '"class A {{int i = 0; i = i;}}"'
+    assertRangeText 'i'
   }
 
   void "test statically imported overloads from usage"() {

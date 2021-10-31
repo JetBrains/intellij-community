@@ -28,12 +28,14 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class InspectionEngine {
@@ -80,7 +82,7 @@ public final class InspectionEngine {
   }
 
   /**
-   * @deprecated use {@link #inspectEx(List, PsiFile, TextRange, boolean, boolean, ProgressIndicator, PairProcessor)}
+   * @deprecated use {@link #inspectEx(List, PsiFile, TextRange, TextRange, boolean, boolean, ProgressIndicator, PairProcessor)}
    */
   @Deprecated
   // returns map (toolName -> problem descriptors)
@@ -200,6 +202,17 @@ public final class InspectionEngine {
                                                                               @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     return inspectElements(toolWrappers, file, restrictRange, isOnTheFly, indicator, elements, calcElementDialectIds(elements), foundDescriptorCallback);
   }
+
+  @ApiStatus.Internal
+  public static void withSession(@NotNull PsiFile file,
+                                 @NotNull TextRange restrictRange,
+                                 @NotNull TextRange priorityRange,
+                                 boolean isOnTheFly,
+                                 @NotNull Consumer<? super LocalInspectionToolSession> runnable) {
+    LocalInspectionToolSession session = new LocalInspectionToolSession(file);
+    runnable.accept(session);
+  }
+
   private static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                @NotNull PsiFile file,
                                                                                @NotNull TextRange restrictRange,
@@ -209,34 +222,34 @@ public final class InspectionEngine {
                                                                                @NotNull Set<String> elementDialectIds,
                                                                                // when returned true -> add to the holder, false -> do not add to the holder
                                                                                @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, restrictRange.getStartOffset(), restrictRange.getEndOffset());
-
-    toolWrappers = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    Processor<LocalInspectionToolWrapper> processor = wrapper -> {
-      ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(file.getProject()), file, isOnTheFly){
-        @Override
-        public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
-          if (foundDescriptorCallback.process(wrapper, problemDescriptor)) {
-            super.registerProblem(problemDescriptor);
+    withSession(file, restrictRange, restrictRange, isOnTheFly, session -> {
+      List<LocalInspectionToolWrapper> filtered = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
+      Processor<LocalInspectionToolWrapper> processor = wrapper -> {
+        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(file.getProject()), file, isOnTheFly){
+          @Override
+          public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
+            if (foundDescriptorCallback.process(wrapper, problemDescriptor)) {
+              super.registerProblem(problemDescriptor);
+            }
           }
+        };
+        LocalInspectionTool tool = wrapper.getTool();
+        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
+
+        tool.inspectionFinished(session, holder);
+
+        if (holder.hasResults()) {
+          resultDescriptors.put(wrapper, ContainerUtil.filter(holder.getResults(), descriptor -> {
+            PsiElement element = descriptor.getPsiElement();
+            return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
+          }));
         }
+
+        return true;
       };
-      LocalInspectionTool tool = wrapper.getTool();
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-
-      tool.inspectionFinished(session, holder);
-
-      if (holder.hasResults()) {
-        resultDescriptors.put(wrapper, ContainerUtil.filter(holder.getResults(), descriptor -> {
-          PsiElement element = descriptor.getPsiElement();
-          return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
-        }));
-      }
-
-      return true;
-    };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(toolWrappers, indicator, processor);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filtered, indicator, processor);
+    });
 
     return resultDescriptors;
   }

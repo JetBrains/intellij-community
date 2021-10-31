@@ -2,11 +2,11 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.java.JavaBundle;
@@ -142,10 +142,12 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
           pass.doInspectInBatch(context, toolsCopy);
         }
 
-        for (HighlightInfo info : pass.getInfos()) {
-          PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-          if (element != null) {
-            addOccurrence(element);
+        for (LocalInspectionToolWrapper toolWrapper : toolsCopy) {
+          for (CommonProblemDescriptor descriptor : context.getPresentation(toolWrapper).getProblemDescriptors()) {
+            PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            if (element != null) {
+              addOccurrence(element);
+            }
           }
         }
       });
