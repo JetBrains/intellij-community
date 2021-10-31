@@ -775,6 +775,10 @@ public class JBUI {
         return insets("ToolWindow.HeaderTab.insets", insets(0, 12, 0, 12));
       }
 
+      public static int underlineArc() {
+        return getInt("ToolWindow.HeaderTab.underlineArc", 4);
+      }
+
       /**
        * @deprecated obsolete UI
        */
