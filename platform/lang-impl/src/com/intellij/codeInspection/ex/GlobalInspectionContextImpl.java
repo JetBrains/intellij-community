@@ -9,8 +9,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
@@ -471,7 +469,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   private void inspectFile(@NotNull PsiFile file,
-                           @NotNull TextRange range,
+                           @NotNull TextRange restrictRange,
                            @NotNull InspectionManager inspectionManager,
                            @NotNull Map<String, InspectionToolWrapper<?, ?>> wrappersMap,
                            @NotNull List<? extends GlobalInspectionToolWrapper> globalSimpleTools,
@@ -482,10 +480,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     try {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(getCurrentProfile()));
-      LocalInspectionsPass pass = new LocalInspectionsPass(file, document, range.getStartOffset(),
-                                                           range.getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                           HighlightInfoProcessor.getEmpty(), inspectInjectedPsi);
-      pass.doInspectInBatch(this, localTools);
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+        InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
+                                   (wrapper, descriptor) -> true);
+      for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+        LocalInspectionToolWrapper toolWrapper = entry.getKey();
+        List<ProblemDescriptor> descriptors = entry.getValue();
+        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+        BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+      }
 
       assertUnderDaemonProgress();
 
@@ -1047,10 +1050,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           if (!lTools.isEmpty()) {
             try {
               file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(profile, p.getProfileManager()));
-              LocalInspectionsPass pass = new LocalInspectionsPass(file, file.getViewProvider().getDocument(), range != null ? range.getStartOffset() : 0,
-                                                                   range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                                   HighlightInfoProcessor.getEmpty(), true);
-              ApplicationManager.getApplication().runReadAction(() -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, lTools));
+              TextRange restrictRange = range == null ? file.getTextRange() : range;
+              ApplicationManager.getApplication().runReadAction(() -> {
+                 Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+                   InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
+                                              (wrapper, descriptor) -> true);
+                for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+                  LocalInspectionToolWrapper toolWrapper = entry.getKey();
+                  List<ProblemDescriptor> descriptors = entry.getValue();
+                  InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+                  BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, GlobalInspectionContextImpl.this, toolWrapper.getTool());
+                }
+              });
 
               Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
               for (LocalInspectionToolWrapper tool : lTools) {
