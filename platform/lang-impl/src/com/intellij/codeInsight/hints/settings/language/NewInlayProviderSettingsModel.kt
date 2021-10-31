@@ -43,6 +43,9 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file, isEnabled)
   }
 
+  override val collectAndApplyOnEdtImplemented: Boolean
+    get() = true
+
   override fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
     providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
   }

@@ -43,6 +43,12 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun collectAndApply(editor: Editor, file: PsiFile)
 
+  /**
+   * [collectAndApply] has to be invoked on EDT if [collectAndApplyOnEdtImplemented] returns `false`,
+   * otherwise, [collectAndApplyOnEdt] could be invoked on a background thread
+   */
+  open val collectAndApplyOnEdtImplemented: Boolean = false
+
   open fun collectAndApplyOnEdt(editor: Editor, file: PsiFile) {
     // bwc implementation
     collectAndApply(editor, file)
