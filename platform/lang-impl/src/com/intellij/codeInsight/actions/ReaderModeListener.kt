@@ -35,13 +35,14 @@ class ReaderModeSettingsListener : ReaderModeListener {
 
     fun applyToAllEditors(project: Project) {
       FileEditorManager.getInstance(project).allEditors.forEach {
-        if (it !is TextEditor) return
+        if (it !is TextEditor) return@forEach
         applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true)
       }
 
       EditorFactory.getInstance().allEditors.forEach {
-        if (it !is EditorImpl) return
-        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document).takeIf { it !is LightVirtualFile },
+        if (it !is EditorImpl) return@forEach
+        if (it.getProject() != project) return@forEach
+        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
                         fileIsOpenAlready = true)
       }
     }
