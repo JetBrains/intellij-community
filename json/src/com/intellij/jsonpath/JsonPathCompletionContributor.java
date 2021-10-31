@@ -201,10 +201,13 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
             }
 
             @Override
-            public void visitQuotedSegment(@NotNull JsonPathQuotedSegment o) {
-              super.visitQuotedSegment(o);
+            public void visitExpressionSegment(@NotNull JsonPathExpressionSegment o) {
+              super.visitExpressionSegment(o);
 
-              for (JsonPathStringLiteral stringLiteral : o.getQuotedPathsList().getStringLiteralList()) {
+              JsonPathQuotedPathsList quotedPathsList = o.getQuotedPathsList();
+              if (quotedPathsList == null) return;
+
+              for (JsonPathStringLiteral stringLiteral : quotedPathsList.getStringLiteralList()) {
                 TextRange literalTextRange = stringLiteral.getTextRange().shiftRight(fileRange.getStartOffset());
 
                 StringBuilder decodeBuilder = new StringBuilder();
