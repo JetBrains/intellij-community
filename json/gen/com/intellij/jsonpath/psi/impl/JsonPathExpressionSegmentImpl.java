@@ -11,14 +11,14 @@ import static com.intellij.jsonpath.psi.JsonPathTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathSegmentExpressionImpl extends ASTWrapperPsiElement implements JsonPathSegmentExpression {
+public class JsonPathExpressionSegmentImpl extends ASTWrapperPsiElement implements JsonPathExpressionSegment {
 
-  public JsonPathSegmentExpressionImpl(@NotNull ASTNode node) {
+  public JsonPathExpressionSegmentImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull JsonPathVisitor visitor) {
-    visitor.visitSegmentExpression(this);
+    visitor.visitExpressionSegment(this);
   }
 
   @Override
@@ -43,6 +43,12 @@ public class JsonPathSegmentExpressionImpl extends ASTWrapperPsiElement implemen
   @Nullable
   public JsonPathIndexesList getIndexesList() {
     return findChildByClass(JsonPathIndexesList.class);
+  }
+
+  @Override
+  @Nullable
+  public JsonPathQuotedPathsList getQuotedPathsList() {
+    return findChildByClass(JsonPathQuotedPathsList.class);
   }
 
   @Override
