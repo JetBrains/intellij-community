@@ -57,9 +57,9 @@ class TestingTasksImpl extends TestingTasks {
 
     checkOptions()
 
-    def compilationTasks = CompilationTasks.create(context)
-    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
-    if (projectArtifacts) {
+    CompilationTasks compilationTasks = CompilationTasks.create(context)
+    Set<String> projectArtifacts = options.beforeRunProjectArtifacts == null ? null : Set.of(options.beforeRunProjectArtifacts.split(";"))
+    if (projectArtifacts != null) {
       compilationTasks.buildProjectArtifacts(projectArtifacts)
     }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
@@ -68,7 +68,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany {it.requiredArtifacts})
+      compilationTasks.buildProjectArtifacts((Set<String>)runConfigurations.collectMany(new LinkedHashSet<String>()) {it.requiredArtifacts})
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])

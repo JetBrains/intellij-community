@@ -18,9 +18,9 @@ abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiMap<String, String> moduleJars = MultiMap.createLinkedSet()
   /** artifact name to relative output path */
-  final Map<String, String> includedArtifacts = [:]
+  final Map<String, String> includedArtifacts = new LinkedHashMap<>()
   /** list of additional resources which should be included into the distribution */
-  final List<ModuleResourceData> resourcePaths = []
+  final List<ModuleResourceData> resourcePaths = new ArrayList<>()
   /** module name to entries which should be excluded from its output */
   final MultiMap<String, String> moduleExcludes = MultiMap.createLinked()
   final Set<ProjectLibraryData> includedProjectLibraries = new LinkedHashSet<>()
