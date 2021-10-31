@@ -130,7 +130,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
             // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
             InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), psiFile, psiFile.getTextRange(),
-                                       false,
+                                       psiFile.getTextRange(), false,
                                        true, ProgressIndicatorProvider.getGlobalProgressIndicator(),
                                        (wrapper, descriptor) -> found.add(descriptor));
             descriptors = new ArrayList<>(found);

@@ -192,7 +192,8 @@ public abstract class InspectionManagerBase extends InspectionManager {
       throw new IllegalStateException("Inspections must be run under progress indicator. See ProgressManager.run*() or .execute*()");
     }
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(), false,
+      InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(),
+                                 file.getTextRange(), false,
                                  false, indicator, PairProcessor.alwaysTrue());
     return ContainerUtil.flatten(map.values());
   }

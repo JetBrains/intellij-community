@@ -90,7 +90,7 @@ public final class InspectionEngine {
                                                                         boolean isOnTheFly,
                                                                         @NotNull ProgressIndicator indicator) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      inspectEx(toolWrappers, file, file.getTextRange(), isOnTheFly, false, indicator, PairProcessor.alwaysTrue());
+      inspectEx(toolWrappers, file, file.getTextRange(), file.getTextRange(), isOnTheFly, false, indicator, PairProcessor.alwaysTrue());
     return map.entrySet().stream().map(e->Pair.create(e.getKey().getShortName(), e.getValue())).collect(Collectors.toMap(p->p.getFirst(), p->p.getSecond()));
   }
 
@@ -99,6 +99,7 @@ public final class InspectionEngine {
   public static Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile file,
                                                                                    @NotNull TextRange restrictRange,
+                                                                                   @NotNull TextRange priorityRange,
                                                                                    boolean isOnTheFly,
                                                                                    boolean inspectInjectedPsi,
                                                                                    @NotNull ProgressIndicator indicator,
@@ -107,7 +108,7 @@ public final class InspectionEngine {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, file.getTextRange(), __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
@@ -251,7 +252,8 @@ public final class InspectionEngine {
       try {
         if (toolWrapper instanceof LocalInspectionToolWrapper) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
-            inspectEx(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, file.getTextRange(), false,
+            inspectEx(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, file.getTextRange(), file.getTextRange(),
+                      false,
                       false, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
 
           for (List<ProblemDescriptor> group : problemDescriptors.values()) {

@@ -858,7 +858,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiElement host = InjectedLanguageManager.getInstance(injectedPsi.getProject()).getInjectionHost(injectedPsi);
 
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectEx(wrappers, injectedPsi, injectedPsi.getTextRange(), isOnTheFly, false, indicator, (wrapper, descriptor) -> {
+      InspectionEngine.inspectEx(wrappers, injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), isOnTheFly, false, indicator, (wrapper, descriptor) -> {
         if (host != null && myIgnoreSuppressed && wrapper.getTool().isSuppressedFor(host)) {
           registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
           return false;
