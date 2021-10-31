@@ -4,21 +4,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
-import com.intellij.ui.JBColor
-import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import java.awt.Color
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.math.max
@@ -65,27 +57,16 @@ inline fun paintNotebookCellBackgroundGutter(
   val stripe = appearance.getCellStripeColor(editor, interval)
   val stripeHover = appearance.getCellStripeHoverColor(editor, interval)
   val borderWidth = appearance.getLeftBorderWidth()
-  val isDiff = editor.editorKind == EditorKind.DIFF
-  if (!isDiff){
-    g.color = appearance.getCodeCellBackground(editor.colorsScheme)
-    g.fillRect(r.width - borderWidth, top, borderWidth, height)
-    actionBetweenBackgroundAndStripe()
+  val rectBorderCellX = r.width - borderWidth
+  g.color = appearance.getCodeCellBackground(editor.colorsScheme)
+  if (editor.editorKind == EditorKind.DIFF) {
+    g.fillRect(rectBorderCellX + 3, top, borderWidth - 3, height)
   }
   else {
-    val key = EditorColors.TEARLINE_COLOR
-    val color: Color? = editor.colorsScheme.getColor(key)
-    g.color = color ?: JBColor.black
-
-    val sw: Double = if (JreHiDpiUtil.isJreHiDPIEnabled() || JBUIScale.scale(1.toFloat()) * editor.scale < 2) 1.toDouble() else 2.toDouble()
-    val ctx: ScaleContext = ScaleContext.create(editor.component)
-    val strokeWidth = PaintUtil.alignToInt(sw, ctx,
-      if (PaintUtil.devValue(1.0, ctx) > 2) PaintUtil.RoundingMode.FLOOR else PaintUtil.RoundingMode.ROUND, null)
-
-    val tearLineX = (r.width - 1).toDouble()
-    LinePainter2D.paint(g as Graphics2D, tearLineX, (r.y - 1000).toDouble(), tearLineX, (r.y + r.height + 1000).toDouble(),
-      LinePainter2D.StrokeType.CENTERED, strokeWidth)
-    return
+    g.fillRect(rectBorderCellX, top, borderWidth, height)
   }
+  actionBetweenBackgroundAndStripe()
+  if (editor.editorKind == EditorKind.DIFF) return
   if (stripe != null) {
     appearance.paintCellStripe(g, r, stripe, top, height)
   }
