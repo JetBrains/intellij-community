@@ -28,6 +28,7 @@ import static com.intellij.jsonpath.JsonPathConstants.STANDARD_NAMED_OPERATORS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_EQUALITY_OPERATOR_SET;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public final class JsonPathCompletionContributor extends CompletionContributor {
 
@@ -38,11 +39,17 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
            new JsonKeysCompletionProvider(false));
 
     extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+           or(
+             psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+             psiElement().withElementType(JsonPathTypes.IDENTIFIER)
+           ),
            new JsonKeysCompletionProvider(true));
 
     extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+           or(
+             psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+             psiElement().withElementType(JsonPathTypes.IDENTIFIER)
+           ),
            new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,

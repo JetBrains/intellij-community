@@ -110,6 +110,23 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
     assertCompletionVariants("ok", "demo", "some name")
   }
 
+  @Test
+  fun topLevelCompletion() {
+    myFixture.configureByText(JsonPathFileType.INSTANCE, "<caret>")
+    assertCompletionVariants(
+      "*",
+      "avg()",
+      "concat()",
+      "keys()",
+      "length()",
+      "max()",
+      "min()",
+      "size()",
+      "stddev()",
+      "sum()"
+    )
+  }
+
   private fun injectJsonPathToProperties(jsonFile: JsonFile, names: List<String>) {
     val languageInjectionSupport = TemporaryPlacesRegistry.getInstance(project).languageInjectionSupport
     jsonFile.accept(object : JsonRecursiveElementVisitor() {
