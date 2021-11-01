@@ -381,4 +381,16 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
       manager.setDefaultNotNull(oldDefault);
     }
   }
+
+  public void testCheckerDefaultTypeUseRecursiveGeneric() {
+    myFixture.addClass("package org.checkerframework.checker.nullness.qual;public @interface NonNull {}");
+    myFixture.addClass("package org.checkerframework.framework.qual;" +
+                       "import java.lang.annotation.*;" +
+                       "enum TypeUseLocation {ALL}" +
+                       "public @interface DefaultQualifier {" +
+                       "  Class<? extends Annotation> value();" +
+                       "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
+                       "}");
+    doTest();
+  }
 }
