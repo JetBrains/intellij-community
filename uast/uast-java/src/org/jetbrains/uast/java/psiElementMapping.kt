@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.java
 
 import com.intellij.openapi.util.registry.Registry
@@ -9,7 +9,6 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocToken
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.expressions.UTypeArgumentList
 import org.jetbrains.uast.psi.UElementWithLocation
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.classSetOf
@@ -163,9 +162,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   ),
   UBreakExpression::class.java to classSetOf<PsiElement>(
     PsiBreakStatement::class.java
-  ),
-  UTypeArgumentList::class.java to classSetOf<PsiElement>(
-    PsiReferenceParameterList::class.java
   ),
   UCallExpression::class.java to classSetOf<PsiElement>(
     PsiAnnotation::class.java,
@@ -327,7 +323,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     PsiTypeCastExpression::class.java,
     PsiTypeElement::class.java,
     PsiTypeParameter::class.java,
-    PsiReferenceParameterList::class.java,
     PsiWhileStatement::class.java,
     PsiYieldStatement::class.java,
     PsiRecordComponent::class.java,

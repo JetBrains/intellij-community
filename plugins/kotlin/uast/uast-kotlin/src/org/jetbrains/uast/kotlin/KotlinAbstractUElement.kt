@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightGetter
 import org.jetbrains.kotlin.asJava.toLightSetter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -113,10 +116,6 @@ abstract class KotlinAbstractUElement(private val givenParent: UElement?) : Kotl
 
         if (psi is KtSuperTypeCallEntry) {
             parent = parent?.parent
-        }
-
-        if (parent is KtTypeProjection) {
-            parent = parent.parent
         }
 
         if (parent is KtPropertyDelegate) {

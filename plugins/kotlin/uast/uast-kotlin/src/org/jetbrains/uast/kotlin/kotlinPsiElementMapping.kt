@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.expressions.UTypeArgumentList
 import org.jetbrains.uast.kotlin.psi.*
 import org.jetbrains.uast.psi.UElementWithLocation
 import org.jetbrains.uast.util.ClassSet
@@ -385,7 +384,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtTryExpression::class.java,
         KtTypeAlias::class.java,
         KtTypeParameter::class.java,
-        KtTypeArgumentList::class.java,
         KtTypeReference::class.java,
         KtWhenConditionInRange::class.java,
         KtWhenConditionIsPattern::class.java,
@@ -771,9 +769,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
     ),
     UTypeReferenceExpression::class.java to classSetOf<PsiElement>(
         KtTypeReference::class.java
-    ),
-    UTypeArgumentList::class.java to classSetOf<PsiElement>(
-        KtTypeArgumentList::class.java,
     ),
     UUnaryExpression::class.java to classSetOf<PsiElement>(
         KtAnnotatedExpression::class.java,

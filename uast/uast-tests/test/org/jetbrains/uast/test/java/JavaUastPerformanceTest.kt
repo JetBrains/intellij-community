@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiElement
@@ -32,7 +32,7 @@ class JavaUastPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
 
   @Test
   fun testVeryLongQualifiedReferenceExpression() {
-    val expectedUElementsCount = 5025
+    val expectedUElementsCount = 4019
     val clazz = myFixture.addClass("""
       class MyClass {
           String foo(){
