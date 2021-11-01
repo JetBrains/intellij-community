@@ -42,17 +42,20 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
 
   private var lastSelectedIndex: Int? = null
 
-  private fun obtainCachedBarsModel(): List<Rectangle> {
+  private fun obtainBarsModel(cached: Boolean = false): List<Rectangle> {
     if (!table.isValid) {
       return emptyList()
     }
-    return CachedValuesManager.getCachedValue(table) {
-      CachedValueProvider.Result.create(buildBarsModel(), PsiModificationTracker.MODIFICATION_COUNT)
+    return when {
+      cached -> CachedValuesManager.getCachedValue(table) {
+        CachedValueProvider.Result.create(buildBarsModel(), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+      else -> buildBarsModel()
     }
   }
 
   private val barsModel
-    get() = obtainCachedBarsModel()
+    get() = obtainBarsModel()
 
   override val width
     get() = calculateRowWidth()
