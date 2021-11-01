@@ -33,7 +33,7 @@ private class GHPRProgressTreeModel(
   private val repository: GitRepository,
   private val reviewData: GHPRReviewDataProvider,
   private val viewedStateData: GHPRViewedStateDataProvider
-) : CodeReviewProgressTreeModel(),
+) : CodeReviewProgressTreeModel<Change>(),
     Disposable {
 
   private var unresolvedThreadsCount: Map<String, Int> = emptyMap()
@@ -67,17 +67,19 @@ private class GHPRProgressTreeModel(
 
   override fun dispose() = Unit
 
-  override fun isRead(node: ChangesBrowserNode<*>): Boolean {
-    val change = node.userObject as? Change ?: return true
-    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(change))
+  override fun asLeaf(node: ChangesBrowserNode<*>): Change? {
+    return node.userObject as? Change
+  }
+
+  override fun isRead(leafValue: Change): Boolean {
+    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(leafValue))
 
     val viewedState = filesViewedState[repositoryRelativePath] ?: return true
     return viewedState.isViewed()
   }
 
-  override fun getUnresolvedDiscussionsCount(node: ChangesBrowserNode<*>): Int {
-    val change = node.userObject as? Change ?: return 0
-    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(change))
+  override fun getUnresolvedDiscussionsCount(leafValue: Change): Int {
+    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(leafValue))
 
     return unresolvedThreadsCount[repositoryRelativePath] ?: 0
   }
