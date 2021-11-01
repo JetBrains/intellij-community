@@ -13,6 +13,7 @@ import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -38,19 +39,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
              .inside(psiElement().withElementType(JsonPathTypes.QUOTED_PATHS_LIST)),
            new JsonKeysCompletionProvider(false));
 
-    extend(CompletionType.BASIC,
-           or(
-             psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-             psiElement().withElementType(JsonPathTypes.IDENTIFIER)
-           ),
-           new JsonKeysCompletionProvider(true));
+    ElementPattern<PsiElement> identifierPattern = or(
+      psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+      psiElement().withElementType(JsonPathTypes.IDENTIFIER)
+    );
 
-    extend(CompletionType.BASIC,
-           or(
-             psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-             psiElement().withElementType(JsonPathTypes.IDENTIFIER)
-           ),
-           new FunctionNamesCompletionProvider());
+    extend(CompletionType.BASIC, identifierPattern, new JsonKeysCompletionProvider(true));
+
+    extend(CompletionType.BASIC, identifierPattern, new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,
            psiElement().withParent(JsonPathBinaryConditionalOperator.class),
