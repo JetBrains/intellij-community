@@ -203,9 +203,12 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       }
 
       override fun mouseClicked(event: MouseEvent) {
-        val (row, column) = obtainIndices(event.point)
-        updateSelection(row, column)
-        selectedCallback.invoke(row, column)
+        if (SwingUtilities.isLeftMouseButton(event)) {
+          val (row, column) = obtainIndices(event.point)
+          updateSelection(row, column)
+          parentHint.hide()
+          selectedCallback.invoke(row, column)
+        }
       }
     }
 
