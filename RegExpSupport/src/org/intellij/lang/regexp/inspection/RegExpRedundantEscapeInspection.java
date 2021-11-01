@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantEscapeInspection extends LocalInspectionTool {
+public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
