@@ -13,7 +13,7 @@ import java.nio.file.Paths
 @ApiStatus.Internal
 @State(name = "Trusted.Paths", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
-internal class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State()) {
+class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>(State()) {
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PROJECT_PATHS")
@@ -36,6 +36,7 @@ internal class TrustedPaths : SimplePersistentStateComponent<TrustedPaths.State>
   }
 
   companion object {
+    @JvmStatic
     fun getInstance(): TrustedPaths = ApplicationManager.getApplication().getService(TrustedPaths::class.java)
   }
 }
