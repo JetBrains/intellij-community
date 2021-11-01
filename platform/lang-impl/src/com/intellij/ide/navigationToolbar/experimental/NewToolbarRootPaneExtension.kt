@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -132,6 +133,12 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     myPanel.revalidate()
     myPanel.repaint()
 
-    project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+    try {
+      project.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+    }catch (e: AlreadyDisposedException){
+      //do nothing
+    }catch (e: Throwable){
+      //do nothing
+    }
   }
 }
