@@ -60,22 +60,28 @@ public final class Retries {
     }
   }
 
-  private static Method getMethodFromClass(Class<?> clazz, String methodName) {
+  private static Optional<Method> getMethodFromClass(Class<?> clazz, String methodName) {
     @SuppressWarnings("SSBasedInspection")
     var methods = Arrays.stream(clazz.getDeclaredMethods())
       .filter(method -> methodName.equals(method.getName()))
       .collect(Collectors.toList());
-    assert methods.size() == 1;
-    return methods.get(0);
+    if (methods.size() == 1) {
+      return Optional.of(methods.get(0));
+    }
+    else {
+      return Optional.empty();
+    }
   }
 
   public static void testFinished(Test test, boolean isSuccessful) {
     assert test instanceof TestCase;
-    testFinished(getMethodFromClass(test.getClass(), ((TestCase)test).getName()), isSuccessful);
+    getMethodFromClass(test.getClass(), ((TestCase)test).getName())
+      .ifPresent(it -> testFinished(it, isSuccessful));
   }
 
   public static void testFinished(Description testDescription, boolean isSuccessful) {
-    testFinished(getMethodFromClass(testDescription.getTestClass(), testDescription.getMethodName()), isSuccessful);
+    getMethodFromClass(testDescription.getTestClass(), testDescription.getMethodName())
+      .ifPresent(it -> testFinished(it, isSuccessful));
   }
 
   public static boolean shouldStop() {
@@ -87,7 +93,11 @@ public final class Retries {
     assert NUMBER > 0;
     assert testIdentifier.isTest();
     var testMethod = testIdentifier.getSource().orElse(null);
-    assert testMethod instanceof MethodSource;
-    return SUCCESSFUL_TEST_METHODS.remove(((MethodSource)testMethod).getJavaMethod());
+    if (testMethod instanceof MethodSource) {
+      return SUCCESSFUL_TEST_METHODS.remove(((MethodSource)testMethod).getJavaMethod());
+    }
+    else {
+      return false;
+    }
   }
 }
