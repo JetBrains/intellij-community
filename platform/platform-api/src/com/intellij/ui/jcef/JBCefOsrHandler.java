@@ -7,6 +7,7 @@ import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.RetinaImage;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
@@ -115,9 +116,11 @@ class JBCefOsrHandler implements CefRenderHandler {
       image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
       volatileImage = myComponent.createVolatileImage(width, height);
     }
-    assert volatileImage != null && image != null;
+    assert image != null;
 
-    if (volatileImage.contentsLost()) volatileImage.validate(myComponent.getGraphicsConfiguration());
+    // {volatileImage} can be null if myComponent is not yet displayed, in that case we will use {myImage} in {paint(Graphics)} as
+    // it can be called (asynchronously) when {myComponent} has already been displayed - in order not to skip the {onPaint} request
+    if (volatileImage != null && volatileImage.contentsLost()) volatileImage.validate(myComponent.getGraphicsConfiguration());
 
     BufferedImage bi = (BufferedImage)image.getDelegate();
     assert bi != null;
@@ -137,17 +140,20 @@ class JBCefOsrHandler implements CefRenderHandler {
       }
     }
     Rectangle outerRect = findOuterRect(dirtyRects);
-    Graphics2D viGr = (Graphics2D)volatileImage.getGraphics().create();
-    try {
-      double sx = viGr.getTransform().getScaleX();
-      double sy = viGr.getTransform().getScaleY();
-      viGr.scale(1 / sx, 1 / sy);
-      viGr.drawImage(bi,
-                     outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
-                     outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
-                     null);
-    } finally {
-      viGr.dispose();
+    if (volatileImage != null) {
+      Graphics2D viGr = (Graphics2D)volatileImage.getGraphics().create();
+      try {
+        double sx = viGr.getTransform().getScaleX();
+        double sy = viGr.getTransform().getScaleY();
+        viGr.scale(1 / sx, 1 / sy);
+        viGr.drawImage(bi,
+                       outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
+                       outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
+                       null);
+      }
+      finally {
+        viGr.dispose();
+      }
     }
     myImage = image;
     myVolatileImage = volatileImage;
@@ -172,9 +178,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   public void paint(Graphics2D g) {
     // The dirty rects passed to onPaint are set as the clip on the graphics, so here we draw the whole image.
     myFpsMeter.paintFrameStarted();
-    VolatileImage image = myVolatileImage;
-    if (image != null && !image.contentsLost()) {
-      g.drawImage(image, 0, 0, null);
+    Image volatileImage = myVolatileImage;
+    Image image = myImage;
+    if (volatileImage != null) {
+      g.drawImage(volatileImage, 0, 0, null );
+    }
+    //
+    else if (image != null) {
+      UIUtil.drawImage(g, image, 0, 0, null);
     }
     myFpsMeter.paintFrameFinished(g);
   }
