@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -102,30 +103,38 @@ public final class ExperimentalUI {
 
   private static IconPathPatcher createPathPatcher() {
     HashMap<String, String> paths = new HashMap<>();
-    paths.put("/toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
-    paths.put("/toolwindows/toolWindowBookmarks.svg", "/expui/toolwindow/bookmarks.svg");
-    paths.put("/toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
-    paths.put("/toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
-    paths.put("/icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
-    paths.put("/toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
-    paths.put("/toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
-    paths.put("/icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
-    paths.put("/toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
-    paths.put("/images/toolWindowMaven.svg", "/expui/toolwindow/maven.svg");
-    paths.put("/toolwindows/toolWindowProblems.svg", "/expui/toolwindow/problems.svg");
-    paths.put("/toolwindows/toolWindowProfiler.svg", "/expui/toolwindow/profiler.svg");
-    paths.put("/toolwindows/toolWindowProject.svg", "/expui/toolwindow/project.svg");
-    paths.put("/toolwindows/toolWindowRun.svg", "/expui/toolwindow/run.svg");
-    paths.put("/toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
-    paths.put("/icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
-    paths.put("/toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
-    paths.put("/toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
-    paths.put("/toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
+    paths.put("nodes/class.svg", "/expui/nodes/class.svg");
+    paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
+    paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
+    paths.put("nodes/ppLib.svg", "/expui/nodes/library.svg");
+    paths.put("modules/excludeRoot.svg", "/expui/nodes/excludeRoot.svg");
+    paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
+    paths.put("modules/testRoot.svg", "/expui/nodes/testRoot.svg");
+    paths.put("toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
+    paths.put("toolwindows/toolWindowBookmarks.svg", "/expui/toolwindow/bookmarks.svg");
+    paths.put("toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
+    paths.put("toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
+    paths.put("icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
+    paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
+    paths.put("toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
+    paths.put("icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
+    paths.put("toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
+    paths.put("images/toolWindowMaven.svg", "/expui/toolwindow/maven.svg");
+    paths.put("toolwindows/toolWindowProblems.svg", "/expui/toolwindow/problems.svg");
+    paths.put("toolwindows/toolWindowProfiler.svg", "/expui/toolwindow/profiler.svg");
+    paths.put("toolwindows/toolWindowProject.svg", "/expui/toolwindow/project.svg");
+    paths.put("toolwindows/toolWindowRun.svg", "/expui/toolwindow/run.svg");
+    paths.put("toolwindows/toolWindowServices.svg", "/expui/toolwindow/services.svg");
+    paths.put("toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
+    paths.put("icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
+    paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
+    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
+    paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path,
                                         @Nullable ClassLoader classLoader) {
-        return paths.get(path.replace("_dark.svg", ".svg"));
+        return paths.get(StringUtil.trimStart(path, "/"));
       }
     };
   }
