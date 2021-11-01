@@ -18,11 +18,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.map2Array
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.expressions.UTypeArgumentList
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
-import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
-import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
-import org.jetbrains.uast.java.expressions.JavaUNamedExpression
-import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
+import org.jetbrains.uast.java.expressions.*
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -213,6 +211,7 @@ internal object JavaConverter {
       when (el) {
         is PsiCodeBlock -> el<UBlockExpression>(build(::JavaUCodeBlockExpression))
         is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
+        is PsiReferenceParameterList -> el<UTypeArgumentList>(build(::JavaUTypeArgumentList))
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
         is PsiImportStatementBase -> el<UImportStatement>(build(::JavaUImportStatement))

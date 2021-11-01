@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.expressions.UTypeArgumentList
 import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
@@ -246,7 +247,7 @@ object KotlinConverter {
                     el<UVariable> { convertVariablesDeclaration(element, givenParent).declarations.singleOrNull() }
                         ?: expr<UDeclarationsExpression> { KotlinConverter.convertExpression(element, givenParent, expectedTypes) }
                 }
-
+            is KtTypeArgumentList -> el<UTypeArgumentList>(build(::KotlinUTypeArgumentList))
             is KtExpression -> KotlinConverter.convertExpression(element, givenParent, expectedTypes)
             is KtLambdaArgument -> element.getLambdaExpression()?.let { KotlinConverter.convertExpression(it, givenParent, expectedTypes) }
             is KtLightElementBase -> {
