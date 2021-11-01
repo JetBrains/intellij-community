@@ -39,6 +39,8 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -50,13 +52,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
@@ -309,18 +311,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createCommitsCountModel(): SingleValueModel<Int?> {
-    val model = SingleValueModel<Int?>(null)
-    val loadingListener = object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        val commits = if (commitsLoadingModel.resultAvailable) commitsLoadingModel.result!! else null
-        model.value = commits?.size
-      }
-    }
-    commitsLoadingModel.addStateChangeListener(loadingListener)
-    loadingListener.onLoadingCompleted()
-    return model
-  }
+  private fun createCommitsCountModel(): Flow<Int?> = commitsLoadingModel.getResultFlow().map { it?.size }
 
   private fun createFilesComponent(): JComponent {
     val panel = BorderLayoutPanel().withBackground(UIUtil.getListBackground())
@@ -347,18 +338,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
   }
 
-  private fun createFilesCountModel(): SingleValueModel<Int?> {
-    val model = SingleValueModel<Int?>(null)
-    val loadingListener = object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        val changesProvider = if (changesLoadingModel.resultAvailable) changesLoadingModel.result!! else null
-        model.value = changesProvider?.changes?.size
-      }
-    }
-    changesLoadingModel.addStateChangeListener(loadingListener)
-    loadingListener.onLoadingCompleted()
-    return model
-  }
+  private fun createFilesCountModel(): Flow<Int?> = changesLoadingModel.getResultFlow().map { it?.changes?.size }
 
   private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
     setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)

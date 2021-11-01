@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>
