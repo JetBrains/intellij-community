@@ -1762,7 +1762,7 @@ public final class UIUtil {
     Shape oldClip = g.getClip();
     g.clip(rect);
     g.drawString(str, x, y);
-    g.setClip(oldClip);
+    (g).clip(oldClip);
   }
 
   /**
@@ -1931,7 +1931,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
-    Color actual = color != null ? color : Color.black;
+    Color actual = color != null ? color : JBColor.BLACK;
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
   }
 
@@ -3562,7 +3562,6 @@ public final class UIUtil {
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
     Semaphore lock = new Semaphore(1);
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> lock.up());
     lock.waitFor();
   }
