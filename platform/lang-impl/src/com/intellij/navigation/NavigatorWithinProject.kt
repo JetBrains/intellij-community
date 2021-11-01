@@ -16,6 +16,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -23,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -32,6 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max
+import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Path
@@ -175,13 +178,17 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     val locationInFile = LocationInFile(line?.toInt() ?: 0, column?.toInt() ?: 0)
 
     path = FileUtil.expandUserHome(path)
-    if (!FileUtil.isAbsolute(path)) {
-      path = File(project.basePath, path).absolutePath
-    }
 
     runNavigateTask(pathText) {
-      val virtualFile = findFile(path, parameters[REVISION])
-      if (virtualFile == null) return@runNavigateTask
+      val virtualFile: VirtualFile
+      if (FileUtil.isAbsolute(path))
+        virtualFile = findFile(path, parameters[REVISION]) ?: return@runNavigateTask
+      else
+        virtualFile = (sequenceOf(project.guessProjectDir()?.path, project.basePath) +
+                       ProjectRootManager.getInstance(project).contentRoots.map { it.path })
+                        .filterNotNull()
+                        .mapNotNull { projectPath -> findFile(File(projectPath, path).absolutePath, parameters[REVISION]) }
+                        .firstOrNull() ?: return@runNavigateTask
 
       ApplicationManager.getApplication().invokeLater {
         FileEditorManager.getInstance(project).openFile(virtualFile, true)

@@ -12,11 +12,16 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.junit.ClassRule
 import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class JBNavigateCommandTest: NavigationTestBase() {
+  companion object {
+    @JvmField @ClassRule val appRule = ApplicationRule()
+  }
+
   private lateinit var projectName: String
 
   @Test fun pathWithLineColumn() = runNavigationTest(
