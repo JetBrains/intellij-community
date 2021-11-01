@@ -605,25 +605,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     // todo to be deleted
     private boolean needToLog = false;
-    private final Set<RefElement> refElements = new LinkedHashSet<>();
-    private static final int MAX_VISITED_NODES = 300;
-    private int visitedCounter = 0;
-
-    private void logIfNotOverflowed(@NotNull RefElement element) {
-      if (!needToLog) return;
-      refElements.add(element);
-      if (++visitedCounter < MAX_VISITED_NODES) {
-        return;
-      }
-      throw new StackOverflowPreventedException("Stack frames limit is exceeded");
-    }
+    private final List<List<RefElement>> paths = new ArrayList<>();
+    private int temporaryDepth = 0;
+    private static final int MAX_DEPTH = 200;
 
     private void clearLogs() {
-      visitedCounter = 0;
-      refElements.clear();
+      temporaryDepth = 0;
+      paths.clear();
     }
 
-    private static String log(@NotNull RefElement element) {
+    static String log(@NotNull RefElement element) {
       RefEntity owner = element.getOwner();
       return String.format("%s %s (owner: %s %s)", element.getClass().getSimpleName(), element.getName(),
                            owner.getClass().getSimpleName(), owner.getName());
@@ -632,7 +623,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override
     public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
-        logIfNotOverflowed(method);
         // Process class's static initializers
         RefClass methodOwnerClass = method.getOwnerClass();
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
@@ -673,7 +663,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override
     public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
       if (myProcessedFunctionalExpressions.add(functionalExpression)) {
-        logIfNotOverflowed(functionalExpression);
         makeContentReachable((RefJavaElementImpl)functionalExpression);
       }
     }
@@ -683,7 +672,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       ((RefClassImpl)refClass).setReachable(true);
 
       if (!alreadyActive) {
-        logIfNotOverflowed(refClass);
         // Process class's static initializers.
         makeClassInitializersReachable(refClass);
       }
@@ -694,7 +682,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override public void visitField(@NotNull RefField field) {
       // Process class's static initializers.
       if (!field.isReachable()) {
-        logIfNotOverflowed(field);
         makeContentReachable((RefJavaElementImpl)field);
         makeClassInitializersReachable(field.getOwnerClass());
       }
@@ -717,14 +704,44 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        refCallee.accept(this);
-      }
+      makeReachable(refElement);
     }
 
     private void makeClassInitializersReachable(@Nullable RefClass refClass) {
-      if (refClass != null) {
-        for (RefElement refCallee : refClass.getOutReferences()) {
+      makeReachable(refClass);
+    }
+
+    private void makeReachable(@Nullable RefElement refElement) {
+      if (refElement == null) return;
+      if (needToLog) {
+        if (temporaryDepth == 0) {
+          paths.add(new ArrayList<>());
+        }
+        List<RefElement> lastPath = paths.get(paths.size() - 1);
+        if (lastPath.contains(refElement)) {
+          LOG.warn(String.format("Cycle was detected for the element %s", log(refElement)));
+          return;
+        }
+        else {
+          lastPath.add(refElement);
+        }
+        if (lastPath.size() > MAX_DEPTH) {
+          throw new StackOverflowPreventedException("Stack frames limit is exceeded");
+        }
+
+        int counter = 0;
+        for (RefElement refCallee : refElement.getOutReferences()) {
+          if (++counter > 1 && !(refCallee instanceof RefParameter)) {
+            ArrayList<RefElement> copy = new ArrayList<>(lastPath.subList(0, temporaryDepth + 1));
+            paths.add(copy);
+          }
+          temporaryDepth++;
+          refCallee.accept(this);
+          temporaryDepth--;
+        }
+      }
+      else {
+        for (RefElement refCallee : refElement.getOutReferences()) {
           refCallee.accept(this);
         }
       }
