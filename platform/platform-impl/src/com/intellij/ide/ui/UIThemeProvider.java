@@ -15,9 +15,7 @@ import java.io.InputStream;
 import java.util.function.Function;
 
 /**
- * Extension point for adding UI themes.
- * <br/>
- * {@link #path} and {@link #id} are required to register a theme.
+ * Extension point for adding UI themes
  * <br/>
  * Read more about <a href=https://plugins.jetbrains.com/docs/intellij/themes.html>theme developing</a>
  *
