@@ -481,7 +481,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     try {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(getCurrentProfile()));
       Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-        InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
+        InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, myProgressIndicator,
                                    (wrapper, descriptor) -> true);
       for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
         LocalInspectionToolWrapper toolWrapper = entry.getKey();
