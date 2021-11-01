@@ -24,6 +24,8 @@ abstract class CodeReviewProgressTreeModel<T> {
   private val defaultState: NodeCodeReviewProgressState
     get() = NodeCodeReviewProgressState(true, 0)
 
+  private val stateCache = mutableMapOf<ChangesBrowserNode<*>, NodeCodeReviewProgressState>()
+
   abstract fun asLeaf(node: ChangesBrowserNode<*>): T?
 
   abstract fun isRead(leafValue: T): Boolean
@@ -31,7 +33,12 @@ abstract class CodeReviewProgressTreeModel<T> {
   abstract fun getUnresolvedDiscussionsCount(leafValue: T): Int
 
   internal fun getState(node: ChangesBrowserNode<*>): NodeCodeReviewProgressState {
-    return TreeUtil.treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS)
+    val cachedState = stateCache[node]
+    if (cachedState != null) {
+      return cachedState
+    }
+    // can be rewritten to hand-made bfs not to go down to leafs if state is cached
+    val calculatedState = TreeUtil.treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS)
       .map {
         val changesNode = it as? ChangesBrowserNode<*> ?: return@map null
         val leafValue = asLeaf(changesNode) ?: return@map null
@@ -41,6 +48,8 @@ abstract class CodeReviewProgressTreeModel<T> {
       .fold(defaultState) { acc, state ->
         NodeCodeReviewProgressState(acc.isRead && state.isRead, acc.discussionsCount + state.discussionsCount)
       }
+    stateCache[node] = calculatedState
+    return calculatedState
   }
 
   fun addChangeListener(parent: Disposable, listener: () -> Unit) {
@@ -51,5 +60,8 @@ abstract class CodeReviewProgressTreeModel<T> {
     return NodeCodeReviewProgressState(isRead(leafValue), getUnresolvedDiscussionsCount(leafValue))
   }
 
-  protected fun fireModelChanged() = listeners.forEach { it() }
+  protected fun fireModelChanged() {
+    stateCache.clear()
+    listeners.forEach { it() }
+  }
 }
