@@ -273,7 +273,7 @@ Includes the following features:</p>
                  description="Temporarily disable the action of the import docs from google"/>
 
     <registryKey key="markdown.tables.editing.support.enable"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables Markdown tables editing support"/>
   </extensions>
 
