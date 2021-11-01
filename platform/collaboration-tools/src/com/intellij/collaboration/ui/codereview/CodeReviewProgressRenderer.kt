@@ -12,6 +12,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.TextIcon
 import com.intellij.ui.paint.PaintUtil.RoundingMode
 import com.intellij.util.ui.JBUI.Borders.emptyRight
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.FontSize
 import com.intellij.util.ui.UIUtil.getFontSize
 import icons.CollaborationToolsIcons.*
@@ -58,23 +59,23 @@ class CodeReviewProgressRenderer(
     ChangesTreeCellRenderer.customize(this, selected)
 
     renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-    iconLabel.icon = getIcon(tree, value)
+    iconLabel.icon = getIcon(value)
 
     return this
   }
 
-  private fun getIcon(tree: JTree, node: ChangesBrowserNode<*>): Icon? {
+  private fun getIcon(node: ChangesBrowserNode<*>): Icon? {
     val isRead = readingStateProvider(node)
     val discussionsCount = discussionsCountProvider(node)
 
     if (discussionsCount <= 0) return getReadingStateIcon(isRead)
 
-    return getReadingStateWithDiscussionsIcon(isRead, discussionsCount, foreground = tree.background)
+    return getReadingStateWithDiscussionsIcon(isRead, discussionsCount)
   }
 
   private fun getReadingStateIcon(isRead: Boolean): Icon? = if (!isRead) FileUnread else null
 
-  private fun getReadingStateWithDiscussionsIcon(isRead: Boolean, discussionsCount: Int, foreground: Color?): Icon {
+  private fun getReadingStateWithDiscussionsIcon(isRead: Boolean, discussionsCount: Int): Icon {
     require(discussionsCount > 0)
 
     if (discussionsCount > 9) {
@@ -82,7 +83,9 @@ class CodeReviewProgressRenderer(
     }
 
     val backgroundIcon = if (!isRead) CommentUnread else CommentUnresolved
-    val discussionsCountIcon = createDiscussionsCountIcon(discussionsCount, foreground)
+    // use only two colors to be consistent with unread/read many icons
+    val textIconColor = if (UIUtil.isUnderDarcula()) Color(0x3C3F41) else Color.white
+    val discussionsCountIcon = createDiscussionsCountIcon(discussionsCount, textIconColor)
 
     return combine(backgroundIcon, discussionsCountIcon)
   }
