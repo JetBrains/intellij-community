@@ -92,6 +92,7 @@ private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
         is KtArrayConstantValue -> ErrorValue.create("Unsupported")
         is KtAnnotationConstantValue -> ErrorValue.create("Unsupported")
         is KtEnumEntryConstantValue ->  ErrorValue.create("Unsupported")
+        is KtErrorValue ->  ErrorValue.create(message)
     }
 
 abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContext) : DeclarationDescriptorWithSource {
