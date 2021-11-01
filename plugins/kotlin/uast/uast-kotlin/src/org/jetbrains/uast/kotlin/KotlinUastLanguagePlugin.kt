@@ -189,7 +189,6 @@ internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.
 
 internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
-
 @ApiStatus.Internal
 object KotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
@@ -199,6 +198,8 @@ object KotlinConverter {
         is KtContainerNode -> unwrapElements(element.parent)
         is KtSimpleNameStringTemplateEntry -> unwrapElements(element.parent)
         is KtLightParameterList -> unwrapElements(element.parent)
+        is KtTypeArgumentList -> unwrapElements(element.parent)
+        is KtTypeProjection -> unwrapElements(element.parent)
         is KtTypeElement -> unwrapElements(element.parent)
         is KtSuperTypeList -> unwrapElements(element.parent)
         is KtFinallySection -> unwrapElements(element.parent)
