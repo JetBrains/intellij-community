@@ -77,7 +77,7 @@ fun getDefaultLanguageLevel(
 ) = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 fun String?.toLanguageVersion(): LanguageVersion = when {
-    this == null -> VersionView.RELEASED_VERSION
+    this == null -> LanguageVersion.LATEST_STABLE
     startsWith("1.9") -> LanguageVersion.KOTLIN_1_9
     startsWith("1.8") -> LanguageVersion.KOTLIN_1_8
     startsWith("1.7") -> LanguageVersion.KOTLIN_1_7
@@ -88,13 +88,13 @@ fun String?.toLanguageVersion(): LanguageVersion = when {
     startsWith("1.2") -> LanguageVersion.KOTLIN_1_2
     startsWith("1.1") -> LanguageVersion.KOTLIN_1_1
     startsWith("1.0") -> LanguageVersion.KOTLIN_1_0
-    else -> VersionView.RELEASED_VERSION
+    else -> LanguageVersion.LATEST_STABLE
 }
 
 fun String?.toApiVersion(): ApiVersion = ApiVersion.createByLanguageVersion(toLanguageVersion())
 
 private fun Iterable<String>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<String> =
-    if (shouldAdd) this + VersionView.RELEASED_VERSION.versionString else this
+    if (shouldAdd) this + LanguageVersion.LATEST_STABLE.versionString else this
 
 fun getRuntimeLibraryVersion(module: Module): String? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null
