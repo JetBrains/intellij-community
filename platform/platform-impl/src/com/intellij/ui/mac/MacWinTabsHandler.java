@@ -297,11 +297,11 @@ public class MacWinTabsHandler {
           return;
         }
 
-        DisplayMode displayMode = window.getGraphicsConfiguration().getDevice().getDisplayMode();
+        Rectangle rect = window.getGraphicsConfiguration().getBounds();
 
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, 0, 0, displayMode.getWidth(), displayMode.getHeight(), true);
+            deliverMoveResize.invoke(cPlatformWindow, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);
