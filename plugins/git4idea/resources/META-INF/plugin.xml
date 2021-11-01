@@ -145,7 +145,7 @@
       </action>
       <reference ref="Git.CreateNewBranch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
-      <action id="Git.Reset" class="git4idea.actions.GitResetHead" icon="AllIcons.Actions.Rollback"/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
       <reference id="Patch.MainMenu"/>
