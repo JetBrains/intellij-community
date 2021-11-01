@@ -43,6 +43,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
+import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUEST_FILES
@@ -79,6 +81,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
   private val changesLoadingModel = GHCompletableFutureLoadingModel<GHPRChangesProvider>(disposable)
+  private val viewedStateLoadingModel = GHCompletableFutureLoadingModel<Map<String, GHPullRequestFileViewedState>>(disposable)
 
   init {
     dataProvider.detailsData.loadDetails(disposable) {
@@ -90,6 +93,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.loadChanges(disposable) {
       changesLoadingModel.future = it
     }
+    setupViewedStateModel()
     // pre-fetch to show diff quicker
     dataProvider.changesData.fetchBaseBranch()
     dataProvider.changesData.fetchHeadBranch()
@@ -127,11 +131,21 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     Disposer.register(disposable, it)
   }
 
+  private fun setupViewedStateModel() {
+    fun update() {
+      viewedStateLoadingModel.future = dataProvider.viewedStateData.loadViewedState()
+    }
+
+    dataProvider.viewedStateData.addViewedStateListener(disposable) { update() }
+    update()
+  }
+
   fun create(): JComponent {
     val infoComponent = createInfoComponent()
 
     val filesComponent = createFilesComponent()
     val filesCountModel = createFilesCountModel()
+    val notViewedFilesCountModel = createNotViewedFilesCountModel()
 
     val commitsComponent = createCommitsComponent()
     val commitsCountModel = createCommitsCountModel()
@@ -139,7 +153,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     val tabs = GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent,
               diffBridge,
-              filesComponent, filesCountModel,
+              filesComponent, filesCountModel, notViewedFilesCountModel,
               commitsComponent, commitsCountModel)
       .apply {
         setDataProvider { dataId ->
@@ -339,6 +353,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private fun createFilesCountModel(): Flow<Int?> = changesLoadingModel.getResultFlow().map { it?.changes?.size }
+
+  private fun createNotViewedFilesCountModel(): Flow<Int?> =
+    viewedStateLoadingModel.getResultFlow().map { it?.count { (_, state) -> !state.isViewed() } }
 
   private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
     setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
