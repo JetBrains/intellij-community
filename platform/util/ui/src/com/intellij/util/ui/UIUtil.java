@@ -150,7 +150,7 @@ public final class UIUtil {
               JRootPane pane = ((RootPaneContainer)window).getRootPane();
               if (pane == null || pane.getClientProperty(NO_BORDER_UNDER_WINDOW_TITLE_KEY) != Boolean.TRUE) {
                 graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-                LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1);
+                LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1, LinePainter2D.StrokeType.INSIDE, 0.5);
               }
             }
           }
@@ -190,7 +190,7 @@ public final class UIUtil {
     if (property instanceof Integer) {
       return (int)property;
     }
-    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24;
+    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 29;
   }
 
   private static String getWindowTitle(Window window) {
