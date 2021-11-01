@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Key
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
-import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.*
@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.util.NameProvider
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -150,7 +151,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
                         JvmIdSignatureDescriptor(mangler),
                         IrFactoryImpl,
                         evaluatorFragmentInfo,
-                        JvmNameProvider,
+                        NameProvider.DEFAULT,
                     ),
                     jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
                         // Top-level declarations in the project being debugged is served to the compiler as
