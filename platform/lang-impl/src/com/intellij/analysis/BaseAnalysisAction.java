@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class BaseAnalysisAction extends AnAction {
+public abstract class BaseAnalysisAction extends AnAction implements UpdateInBackground {
   private final Supplier<@DialogTitle String> myTitle;
   private final Supplier<String> myAnalysisNoun;
 
