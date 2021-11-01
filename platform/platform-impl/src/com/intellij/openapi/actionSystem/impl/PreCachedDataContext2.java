@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -51,6 +52,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
+  private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
 
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
@@ -154,6 +156,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
       answer = map.get(dataId);
+      if (answer == ourExplicitNull) break;
       if (answer != null) {
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
@@ -167,7 +170,8 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
         rule = dataManager.getDataRule(dataId);
       }
       answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
-        return dataId2 == dataId ? null : map.get(dataId2);
+        Object o = dataId2 == dataId ? null : map.get(dataId2);
+        return o == ourExplicitNull ? null : o;
       }, dataId, null, rule);
 
       if (answer == null) map.nullsByRules.set(keyIndex);
@@ -178,7 +182,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       myMissedKeysIfFrozen.accept(dataId);
       return null;
     }
-    return answer;
+    return answer == ourExplicitNull ? null : answer;
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
@@ -242,7 +246,9 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
         continue;
       }
       Object data = dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
-      if (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) data = validateEditor((Editor)data, c);
+      if (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR) {
+        data = ObjectUtils.notNull(validateEditor((Editor)data, c), ourExplicitNull);
+      }
       if (data == null) continue;
       cachedData.put(key.getName(), data);
     }
