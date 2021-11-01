@@ -25,10 +25,9 @@ import javax.swing.JLabel
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-class CodeReviewProgressRenderer(
+internal class CodeReviewProgressRenderer(
   private val renderer: ColoredTreeCellRenderer,
-  private val readingStateProvider: (ChangesBrowserNode<*>) -> Boolean,
-  private val discussionsCountProvider: (ChangesBrowserNode<*>) -> Int
+  private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState
 ) : CellRendererPanel(), TreeCellRenderer {
 
   private val iconLabel = JLabel().apply { border = emptyRight(10) }
@@ -65,8 +64,9 @@ class CodeReviewProgressRenderer(
   }
 
   private fun getIcon(node: ChangesBrowserNode<*>): Icon? {
-    val isRead = readingStateProvider(node)
-    val discussionsCount = discussionsCountProvider(node)
+    val state = codeReviewProgressStateProvider(node)
+    val isRead = state.isRead
+    val discussionsCount = state.discussionsCount
 
     if (discussionsCount <= 0) return getReadingStateIcon(isRead)
 
