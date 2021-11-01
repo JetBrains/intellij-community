@@ -44,7 +44,7 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
     return when {
       icon == null -> type.icon
       type == BookmarkType.DEFAULT -> icon
-      else -> IconManager.getInstance().createRowIcon(icon, type.icon)
+      else -> IconManager.getInstance().createRowIcon(type.icon, icon)
     }
   }
 
