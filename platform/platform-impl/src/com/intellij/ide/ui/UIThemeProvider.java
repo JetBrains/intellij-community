@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.function.Function;
 
 /**
- * Extension point for adding ui themes.
+ * Extension point for adding UI themes.
  * <br/>
  * {@link #path} and {@link #id} are required to register a theme.
  * <br/>
@@ -28,7 +28,7 @@ public final class UIThemeProvider implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
 
   /**
-   * Path to *.theme.json file
+   * Path to {@code *.theme.json} file
    */
   @Attribute("path")
   @RequiredElement
