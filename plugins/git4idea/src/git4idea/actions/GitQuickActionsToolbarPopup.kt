@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
 import com.intellij.util.IconUtil
@@ -69,9 +69,11 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
   internal class MyGitRepositoryListener(private val project: Project) : VcsRepositoryMappingListener {
 
     override fun mappingChanged() {
-      invokeLater {
-        if (!project.isDisposed) project.messageBus.syncPublisher(NewToolbarPaneListener.TOPIC).stateChanged()
-      }
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        project.messageBus
+          .syncPublisher(NewToolbarPaneListener.TOPIC)
+          .stateChanged()
+      }, project.disposed)
     }
   }
 
