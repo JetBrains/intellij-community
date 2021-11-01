@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabText
+import com.intellij.collaboration.ui.codereview.CodeReviewTabs.bindTabUi
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor.onUiThread
@@ -34,9 +35,10 @@ internal class GHPRViewTabsFactory(private val project: Project,
              diffController: GHPRDiffController,
              filesComponent: JComponent,
              filesCountModel: Flow<Int?>,
+             notViewedFilesCountModel: Flow<Int?>?,
              commitsComponent: JComponent,
              commitsCountModel: Flow<Int?>): JBTabs {
-    return create(infoComponent, filesComponent, filesCountModel, commitsComponent, commitsCountModel).also {
+    return create(infoComponent, filesComponent, filesCountModel, notViewedFilesCountModel, commitsComponent, commitsCountModel).also {
       val listener = object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
           diffController.activeTree = when (newSelection?.component) {
@@ -54,6 +56,7 @@ internal class GHPRViewTabsFactory(private val project: Project,
   private fun create(infoComponent: JComponent,
                      filesComponent: JComponent,
                      filesCountModel: Flow<Int?>,
+                     notViewedFilesCountModel: Flow<Int?>?,
                      commitsComponent: JComponent,
                      commitsCountModel: Flow<Int?>): JBTabs {
 
@@ -63,8 +66,6 @@ internal class GHPRViewTabsFactory(private val project: Project,
     }
     val filesTabInfo = TabInfo(filesComponent).apply {
       sideComponent = createReturnToListSideComponent()
-    }.also {
-      scope.bindTabText(it, messagePointer("pull.request.files"), filesCountModel)
     }
     val commitsTabInfo = TabInfo(commitsComponent).apply {
       sideComponent = createReturnToListSideComponent()
@@ -72,13 +73,23 @@ internal class GHPRViewTabsFactory(private val project: Project,
       scope.bindTabText(it, messagePointer("pull.request.commits"), commitsCountModel)
     }
 
-    return object : SingleHeightTabs(project, uiDisposable) {
-      override fun adjust(each: TabInfo?) {}
+    val tabs = object : SingleHeightTabs(project, uiDisposable) {
+      override fun adjust(each: TabInfo?) = Unit
     }.apply {
       addTab(infoTabInfo)
       addTab(filesTabInfo)
       addTab(commitsTabInfo)
     }
+
+    // after adding to `JBTabs` as `getTabLabel()` is used in `bindTabUi`
+    if (notViewedFilesCountModel == null) {
+      scope.bindTabText(filesTabInfo, messagePointer("pull.request.files"), filesCountModel)
+    }
+    else {
+      scope.bindTabUi(tabs, filesTabInfo, messagePointer("pull.request.files"), filesCountModel, notViewedFilesCountModel)
+    }
+
+    return tabs
   }
 
   private fun createReturnToListSideComponent(): JComponent {

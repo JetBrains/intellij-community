@@ -170,7 +170,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
     GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent, diffController,
-              createFilesComponent(), filesCountFlow,
+              createFilesComponent(), filesCountFlow, null,
               createCommitsComponent(), commitsCountFlow).apply {
         setDataProvider { dataId ->
           if (DiffRequestChainProducer.DATA_KEY.`is`(dataId)) diffRequestProducer
