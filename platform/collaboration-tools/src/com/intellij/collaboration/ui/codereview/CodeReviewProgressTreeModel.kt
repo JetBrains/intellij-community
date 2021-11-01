@@ -9,10 +9,12 @@ import com.intellij.util.containers.DisposableWrapperList
 
 fun ChangesTree.setupCodeReviewProgressModel(parent: Disposable, model: CodeReviewProgressTreeModel<*>) {
   val nodeRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false)
-  cellRenderer = CodeReviewProgressRenderer(nodeRenderer, model::isRead, model::getUnresolvedDiscussionsCount)
+  cellRenderer = CodeReviewProgressRenderer(nodeRenderer, model::getState)
 
   model.addChangeListener(parent) { repaint() }
 }
+
+internal data class NodeCodeReviewProgressState(val isRead: Boolean, val discussionsCount: Int)
 
 abstract class CodeReviewProgressTreeModel<T> {
   private val listeners = DisposableWrapperList<() -> Unit>()
@@ -23,14 +25,9 @@ abstract class CodeReviewProgressTreeModel<T> {
 
   abstract fun getUnresolvedDiscussionsCount(leafValue: T): Int
 
-  fun isRead(node: ChangesBrowserNode<*>): Boolean {
-    val leafValue = asLeaf(node) ?: return true
-    return isRead(leafValue)
-  }
-
-  fun getUnresolvedDiscussionsCount(node: ChangesBrowserNode<*>): Int {
-    val leafValue = asLeaf(node) ?: return 0
-    return getUnresolvedDiscussionsCount(leafValue)
+  internal fun getState(node: ChangesBrowserNode<*>): NodeCodeReviewProgressState {
+    val leafValue = asLeaf(node) ?: return NodeCodeReviewProgressState(true, 0)
+    return NodeCodeReviewProgressState(isRead(leafValue), getUnresolvedDiscussionsCount(leafValue))
   }
 
   fun addChangeListener(parent: Disposable, listener: () -> Unit) {
