@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
@@ -31,6 +32,17 @@ public class RepositoryLibrarySupport {
     this.project = project;
     this.libraryDescription = libraryDescription;
     this.model = model;
+  }
+
+  /**
+   * @deprecated Use {@link #addSupport(Module, ModifiableRootModel, ModifiableModelsProvider, DependencyScope)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public void addSupport(@NotNull Module module,
+                         @NotNull final ModifiableRootModel rootModel,
+                         @NotNull ModifiableModelsProvider modifiableModelsProvider) {
+    addSupport(module, rootModel, modifiableModelsProvider, null);
   }
 
   public void addSupport(@NotNull Module module,
