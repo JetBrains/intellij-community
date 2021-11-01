@@ -107,14 +107,18 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       registerAction(KeyEvent.VK_RIGHT, "selectRight", ArrowAction { 0 to 1 })
       registerAction(KeyEvent.VK_LEFT, "selectLeft", ArrowAction { 0 to -1 })
       registerAction(KeyEvent.VK_UP, "selectUp", ArrowAction { -1 to 0 })
-      registerAction(KeyEvent.VK_DOWN, "selectDown", ArrowAction { 1 to 0})
+      registerAction(KeyEvent.VK_DOWN, "selectDown", ArrowAction { 1 to 0 })
       registerAction(KeyEvent.VK_ENTER, "confirmSelection", object: AbstractAction() {
         override fun actionPerformed(event: ActionEvent) {
-          parentHint.hide()
-          selectedCallback.invoke(selectedCellRow, selectedCellColumn)
+          indicesSelected(selectedCellRow, selectedCellColumn)
         }
       })
       updateSelection(0, 0)
+    }
+
+    private fun indicesSelected(selectedRow: Int, selectedColumn: Int) {
+      parentHint.hide()
+      selectedCallback.invoke(selectedRow + 1, selectedColumn + 1)
     }
 
     private fun registerAction(key: Int, actionKey: String, action: Action) {
@@ -206,8 +210,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         if (SwingUtilities.isLeftMouseButton(event)) {
           val (row, column) = obtainIndices(event.point)
           updateSelection(row, column)
-          parentHint.hide()
-          selectedCallback.invoke(row, column)
+          indicesSelected(row, column)
         }
       }
     }
