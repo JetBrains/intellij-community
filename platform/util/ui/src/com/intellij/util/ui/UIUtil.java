@@ -1778,7 +1778,7 @@ public final class UIUtil {
     Shape oldClip = g.getClip();
     g.clip(rect);
     g.drawString(str, x, y);
-    g.clip(oldClip);
+    g.setClip(oldClip);
   }
 
   /**
@@ -1947,7 +1947,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
-    Color actual = color != null ? color : JBColor.BLACK;
+    Color actual = color != null ? color : Color.black;
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
   }
 
