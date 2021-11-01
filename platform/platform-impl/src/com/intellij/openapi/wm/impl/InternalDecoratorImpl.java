@@ -25,7 +25,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
-import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
@@ -796,21 +796,9 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     container.setFocusTraversalKeys(id, KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(id));
   }
 
-  private static final HoverListener HOVER_STATE_LISTENER = new HoverListener() {
+  private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
-    public void mouseMoved(@NotNull Component component, int x, int y) { }
-
-    @Override
-    public void mouseEntered(@NotNull Component component, int x, int y) {
-      onHoverChange(component, true);
-    }
-
-    @Override
-    public void mouseExited(@NotNull Component component) {
-      onHoverChange(component, false);
-    }
-
-    private void onHoverChange(@NotNull Component component, boolean hovered) {
+    protected void hoverChanged(@NotNull Component component, boolean hovered) {
       if (component instanceof InternalDecoratorImpl) {
         InternalDecoratorImpl decorator = (InternalDecoratorImpl)component;
         decorator.isWindowHovered = hovered;

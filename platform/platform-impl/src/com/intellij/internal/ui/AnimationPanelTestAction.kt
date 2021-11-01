@@ -19,7 +19,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.layout.*
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
@@ -34,7 +34,6 @@ import java.awt.geom.Point2D
 import java.lang.Math.PI
 import java.text.NumberFormat
 import java.util.function.Consumer
-import java.util.function.DoubleConsumer
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -590,7 +589,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     }.show()
   }
 
-  private class UpdateColorsOnHover(private val component: JComponent) : HoverListener() {
+  private class UpdateColorsOnHover(private val component: JComponent) : HoverStateListener() {
     private val backgroundFunction = DoubleColorFunction(component.background, component.foreground)
     private val foregroundFunction = DoubleColorFunction(component.foreground, component.background)
 
@@ -603,8 +602,6 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       addTo(component)
     }
 
-    override fun mouseEntered(component: Component, x: Int, y: Int) = helper.setVisible(true)
-    override fun mouseMoved(component: Component, x: Int, y: Int) = Unit
-    override fun mouseExited(component: Component) = helper.setVisible(false)
+    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered)
   }
 }
