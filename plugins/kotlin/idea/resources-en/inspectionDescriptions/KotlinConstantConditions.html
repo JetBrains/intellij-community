@@ -9,15 +9,15 @@ fun process(x: Int?) {
   val isNull = x == null
   if (!isNull) {
     if (<span style="background: yellow">x != null</span>) {} // condition is always true
-    require(<span style="background: yellow">x!! < 0 && x > 10</span>) // condition is always false
+    require(<span style="background: yellow">x!! &lt; 0 && x &gt; 10</span>) // condition is always false
   } else {
     println(x<span style="background: yellow">!!</span>) // !! operator will always fail
   }
 }
 fun process(v: Any) {
   when(v) {
-    is CharSequence -> println(v <span style="background: yellow">as</span> Int) // cast will always fail
-    <span style="background: yellow">is String</span> -> println(v) // branch is unreachable
+    is CharSequence -&gt; println(v <span style="background: yellow">as</span> Int) // cast will always fail
+    <span style="background: yellow">is String</span> -&gt; println(v) // branch is unreachable
   }
 }
 </code></pre>
