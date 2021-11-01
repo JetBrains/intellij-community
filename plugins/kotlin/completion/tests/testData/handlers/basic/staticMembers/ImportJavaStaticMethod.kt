@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 import java.io.File.listRoots
 
 fun foo() {
