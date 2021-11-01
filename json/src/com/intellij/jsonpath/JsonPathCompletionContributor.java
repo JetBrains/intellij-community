@@ -133,6 +133,8 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       Supplier<JsonFile> targetFileGetter = file.getUserData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
       if (targetFileGetter != null) {
         JsonFile targetFile = targetFileGetter.get();
+        if (targetFile == null) return; // it could be already removed
+
         targetFile.accept(new JsonRecursiveElementVisitor() {
           @Override
           public void visitProperty(@NotNull JsonProperty o) {
