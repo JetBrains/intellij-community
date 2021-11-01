@@ -205,21 +205,14 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
     val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
-    if (model.collectAndApplyOnEdtImplemented) {
-      ReadAction.nonBlocking {
-        val psiFile = model.createFile(project, fileType, editor.document)
-        model.collectAndApplyOnEdt(editor, psiFile)
-      }
-    } else {
-      ReadAction.nonBlocking(Callable {
-        model.createFile(project, fileType, editor.document)
-      })
-        .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
-          ApplicationManager.getApplication().runWriteAction {
-            model.collectAndApply(editor, psiFile)
-          }
+    ReadAction.nonBlocking(Callable {
+      model.createFile(project, fileType, editor.document)
+    })
+      .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+        ApplicationManager.getApplication().runWriteAction {
+          model.collectAndApply(editor, psiFile)
         }
-    }
+      }
       .inSmartMode(project)
       .submit(AppExecutorUtil.getAppExecutorService())
   }

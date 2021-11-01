@@ -242,25 +242,17 @@ class SingleLanguageInlayHintsSettingsPanel(
         val model = myCurrentProvider
         val document = myEditorTextField.document
         val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
-        if (myCurrentProvider.collectAndApplyOnEdtImplemented) {
-          ReadAction.nonBlocking {
-            val psiFile = model.createFile(myProject, fileType, document)
-            myCurrentProvider.collectAndApplyOnEdt(editor, psiFile)
-          }
-        }
-        else {
-          ReadAction.nonBlocking(Callable {
-            model.createFile(myProject, fileType, document)
-          })
-            .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
-              ApplicationManager.getApplication().runWriteAction {
-                myCurrentProvider.collectAndApply(editor, psiFile)
-              }
+        ReadAction.nonBlocking(Callable {
+          model.createFile(myProject, fileType, document)
+        })
+          .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+            ApplicationManager.getApplication().runWriteAction {
+              myCurrentProvider.collectAndApply(editor, psiFile)
             }
-        }
+          }
           .inSmartMode(myProject)
           .submit(AppExecutorUtil.getAppExecutorService())
-        }
+      }
     }
   }
 
