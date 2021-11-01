@@ -43,14 +43,13 @@ public final class NavigationTestUtils {
         String documentText = editor.getDocument().getText();
         // Get expected references from the tested document
         List<String> expectedReferences = InTextDirectivesUtils.findListWithPrefixes(documentText, "// REF:");
-        for (int i = 0; i < expectedReferences.size(); i++) {
-            String expectedText = expectedReferences.get(i);
+        expectedReferences.replaceAll(expectedText -> {
             expectedText = expectedText.replace("\\n", "\n");
             if (!expectedText.startsWith("<")) {
                 expectedText = PathUtil.toSystemDependentName(expectedText).replace("//", "/");
             }
-            expectedReferences.set(i, expectedText);
-        }
+            return expectedText;
+        });
 
         Collections.sort(expectedReferences);
 

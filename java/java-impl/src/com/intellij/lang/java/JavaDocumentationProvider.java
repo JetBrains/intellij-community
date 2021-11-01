@@ -814,9 +814,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (aClass != null) {
         urls = findUrlForClass(aClass);
         if (urls != null) {
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + field.getName());
-          }
+          urls.replaceAll(url -> url + "#" + field.getName());
         }
       }
     }
@@ -850,9 +848,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return null;
     }
     else {
-      for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)));
-      }
+      urls.replaceAll(FileUtil::toSystemIndependentName);
       return urls;
     }
   }
