@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -192,9 +193,8 @@ final class FindInProjectTask {
     Map<VirtualFile, Set<UsageInfo>> usagesBeingProcessed = new ConcurrentHashMap<>();
     AtomicBoolean reportedFirst = new AtomicBoolean();
 
-    String stringToFind = !myFindModel.isRegularExpressions() ? myFindModel.getStringToFind() :
-                          FindInProjectUtil.buildStringToFindForIndicesFromRegExp(myFindModel.getStringToFind(), myProject);
-    StringSearcher searcher = stringToFind.isEmpty() ? null : new StringSearcher(stringToFind, myFindModel.isCaseSensitive(), true);
+    StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
+                              new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
     //noinspection UnnecessaryLocalVariable

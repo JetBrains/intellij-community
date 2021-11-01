@@ -808,6 +808,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.isStringFound());
   }
 
+  public void testRegExpWithWords() throws Exception {
+    createFile(myModule, "A.txt", "abc(edf)");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("abc\\(edf");
+    findModel.setRegularExpressions(true);
+    List<UsageInfo> usages = findInProject(findModel);
+    assertEquals(1, usages.size());
+  }
+
   public void testRegExpInString2() throws Exception {
     FindModel findModel = FindManagerTestUtils.configureFindModel("\\b");
     String text = "\"abc def\"";
