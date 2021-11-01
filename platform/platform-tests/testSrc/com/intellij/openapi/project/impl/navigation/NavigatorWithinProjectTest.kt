@@ -4,12 +4,18 @@ package com.intellij.openapi.project.impl.navigation
 import com.intellij.navigation.LocationToOffsetConverter
 import com.intellij.navigation.NavigatorWithinProject
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.ComparatorUtil.max
+import org.junit.ClassRule
 import org.junit.Test
 import kotlin.test.assertNull
 
 class NavigatorWithinProjectTest: NavigationTestBase() {
+  companion object {
+    @JvmField @ClassRule val appRule = ApplicationRule()
+  }
+
   @Test fun pathTabInLinePositionCharacterOneBased() = runNavigationTest(
     navigationAction = { navigateByPath("A.java:3:20", locationToOffsetAsCharacterOneBased) }
   ) {

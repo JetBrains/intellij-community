@@ -31,10 +31,6 @@ import org.junit.rules.TestName
 import java.nio.file.Paths
 
 abstract class NavigationTestBase {
-  companion object {
-    @JvmField @ClassRule val appRule = ApplicationRule()
-  }
-
   @JvmField @Rule val tempDir = TemporaryDirectory()
   @JvmField @Rule val testName = TestName()
   @JvmField @Rule val projectTrackingRule = ProjectTrackingRule()
