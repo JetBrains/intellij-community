@@ -258,8 +258,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeElement typeArgument = typeArguments[i];
               Project project = element.getProject();
+              PsiType type = typeArgument.getType();
+              if (type instanceof PsiWildcardType && !((PsiWildcardType)type).isExtends()) continue;
               if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(project).createType(typeParameters[i])) ==
-                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArgument.getType()) != Nullability.NOT_NULL) {
+                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(type) != Nullability.NOT_NULL) {
                 String annotationToAdd = manager.getDefaultNotNull();
                 PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
                 AddTypeAnnotationFix fix = null;
