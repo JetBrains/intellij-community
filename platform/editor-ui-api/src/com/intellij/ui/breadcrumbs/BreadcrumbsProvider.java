@@ -87,7 +87,7 @@ public interface BreadcrumbsProvider {
 
   /**
    * @return {@code false} if breadcrumbs for this provider should be hidden by default,
-   * but you can always to configure their visibility via Settings/Preferences | Editor | General | Breadcrumbs
+   * but it's possible to configure their visibility via Settings/Preferences | Editor | General | Breadcrumbs
    */
   default boolean isShownByDefault() {
     return true;
