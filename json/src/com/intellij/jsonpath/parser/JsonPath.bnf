@@ -37,15 +37,16 @@
 private root ::= functionCall | (head_ segments_*)
 
 private head_ ::= (rootSegment | evalSegment | wildcardSegment | idSegment | expressionSegment)
-private segments_ ::= dotSegment | expressionSegment
+private segments_ ::= wildcardSegment | dotSegment | expressionSegment
 
 rootSegment ::= ROOT_CONTEXT
 evalSegment ::= EVAL_CONTEXT
 
-private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | wildcardSegment | idSegment | expressionSegment))
+private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | wildcardSegment | idSegment | expressionSegment)) {
+  pin=1
+}
 
 wildcardSegment ::= WILDCARD {
-  pin=1
   name="*"
 }
 id ::= IDENTIFIER {
