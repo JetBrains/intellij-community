@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.application
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -114,7 +115,7 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
   }
 
   override fun getComponent(): JComponent = myPanel
-  
+
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
 
@@ -149,6 +150,14 @@ class NewToolbarRootPaneExtension(private val myProject: Project) : IdeRootPaneN
       toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
       myPanel.add(toolBar as JComponent, BorderLayout.CENTER)
     }
-  }
 
+
+    try {
+      myProject.getService(StatusBarWidgetsManager::class.java).updateAllWidgets()
+    }catch (e: AlreadyDisposedException){
+      //do nothing
+    }catch (e: Throwable){
+      //do nothing
+    }
+  }
 }
