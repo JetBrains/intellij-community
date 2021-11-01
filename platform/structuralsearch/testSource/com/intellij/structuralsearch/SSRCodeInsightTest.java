@@ -113,7 +113,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
                                           () -> InspectionEngine.inspectEx(
                                             Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
                                             file.getTextRange(),
-                                            file.getTextRange(), true, false, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).assertTiming();
+                                            file.getTextRange(), true, false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).assertTiming();
   }
 
   private void doTest(final String searchPattern, final String patternName) {

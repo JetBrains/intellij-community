@@ -481,7 +481,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     InspectionProfileWrapper.runWithCustomInspectionWrapper(file, p -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
       try {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-          InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, myProgressIndicator,
+          InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
+                                     myProgressIndicator,
                                      (wrapper, descriptor) -> true);
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
           LocalInspectionToolWrapper toolWrapper = entry.getKey();
@@ -1054,7 +1055,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                 TextRange restrictRange = range == null ? file.getTextRange() : range;
                 ApplicationManager.getApplication().runReadAction(() -> {
                    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-                     InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
+                     InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, true,
+                                                myProgressIndicator,
                                                 (wrapper, descriptor) -> true);
                   for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
                     LocalInspectionToolWrapper toolWrapper = entry.getKey();

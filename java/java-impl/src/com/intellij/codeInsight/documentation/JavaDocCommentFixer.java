@@ -72,12 +72,12 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> referenceProblems =
       InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection())), file,
                                        file.getTextRange(),
-                                       false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
+                                       true, false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
 
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> commonProblems =
       InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(getDocLocalInspection())), file,
                                        file.getTextRange(),
-                                       false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
+                                       true, false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
 
     if (!referenceProblems.isEmpty()) {
       fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);

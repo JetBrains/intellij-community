@@ -3,7 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
-import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -22,12 +21,14 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiLiteralExpression> {
   private static final Logger LOG = Logger.getInstance(HighlightSuppressedWarningsHandler.class);
@@ -100,13 +101,6 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   public void computeUsages(@NotNull List<? extends PsiLiteralExpression> targets) {
     Project project = myTarget.getProject();
     PsiElement parent = myTarget.getParent().getParent();
-    LocalInspectionsPass pass = new LocalInspectionsPass(myFile,
-                                                         myFile.getViewProvider().getDocument(),
-                                                         parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(),
-                                                         myPriorityRange,
-                                                         false,
-                                                         HighlightInfoProcessor.getEmpty(),
-                                                         true);
     InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     for (PsiLiteralExpression target : targets) {
       Object value = target.getValue();
@@ -134,16 +128,15 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       ((RefManagerImpl)context.getRefManager()).runInsideInspectionReadAction(() -> {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator == null) {
-          ProgressManager.getInstance()
-            .executeProcessUnderProgress(() -> pass.doInspectInBatch(context, toolsCopy), new ProgressIndicatorBase());
+          indicator = new DaemonProgressIndicator();
         }
-        else {
-          pass.doInspectInBatch(context, toolsCopy);
-        }
+        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+          InspectionEngine.inspectEx(toolsCopy, myFile, parent.getTextRange(), myPriorityRange, false, true, false,
+                                     indicator, PairProcessor.alwaysTrue());
 
-        for (LocalInspectionToolWrapper toolWrapper : toolsCopy) {
-          for (CommonProblemDescriptor descriptor : context.getPresentation(toolWrapper).getProblemDescriptors()) {
-            PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+        for (List<ProblemDescriptor> descriptors : map.values()) {
+          for (ProblemDescriptor descriptor : descriptors) {
+          PsiElement element = descriptor.getPsiElement();
             if (element != null) {
               addOccurrence(element);
             }

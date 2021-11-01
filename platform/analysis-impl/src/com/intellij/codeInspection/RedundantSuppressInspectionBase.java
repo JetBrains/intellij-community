@@ -131,7 +131,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
             InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), psiFile, psiFile.getTextRange(),
                                        psiFile.getTextRange(), false,
-                                       true, ProgressIndicatorProvider.getGlobalProgressIndicator(),
+                                       true, false, ProgressIndicatorProvider.getGlobalProgressIndicator(),
                                        (wrapper, descriptor) -> found.add(descriptor));
             descriptors = new ArrayList<>(found);
           }
@@ -198,6 +198,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
+  @NotNull
   public LocalInspectionTool createLocalTool(RedundantSuppressionDetector suppressor,
                                              Map<String, Set<PsiElement>> toolToSuppressScopes,
                                              Set<String> activeTools) {

@@ -194,7 +194,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
       InspectionEngine.inspectEx(Collections.singletonList(new LocalInspectionToolWrapper(tool)), file, file.getTextRange(),
                                  file.getTextRange(), false,
-                                 false, indicator, PairProcessor.alwaysTrue());
+                                 false, true, indicator, PairProcessor.alwaysTrue());
     return ContainerUtil.flatten(map.values());
   }
 }

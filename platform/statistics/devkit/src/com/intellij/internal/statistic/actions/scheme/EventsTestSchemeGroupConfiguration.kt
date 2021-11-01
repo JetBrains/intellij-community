@@ -323,7 +323,8 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
       val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
         Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
-        file, file.textRange, file.getTextRange(), true, false, DaemonProgressIndicator(), PairProcessor.alwaysTrue())
+        file, file.textRange, file.getTextRange(), true, false, true, DaemonProgressIndicator(),
+        PairProcessor.alwaysTrue())
 
       return map.values.flatten().map { descriptor -> ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}") }
     }

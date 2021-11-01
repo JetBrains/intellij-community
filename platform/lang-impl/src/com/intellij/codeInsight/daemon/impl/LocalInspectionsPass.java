@@ -13,7 +13,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ProblemDescriptorUtil.ProblemPresentation;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -70,14 +69,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final Map<String, Set<PsiElement>> mySuppressedElements = new ConcurrentHashMap<>();
   private final boolean myInspectInjectedPsi;
 
-  public LocalInspectionsPass(@NotNull PsiFile file,
-                              @NotNull Document document,
-                              int startOffset,
-                              int endOffset,
-                              @NotNull TextRange priorityRange,
-                              boolean ignoreSuppressed,
-                              @NotNull HighlightInfoProcessor highlightInfoProcessor,
-                              boolean inspectInjectedPsi) {
+  LocalInspectionsPass(@NotNull PsiFile file,
+                       @NotNull Document document,
+                       int startOffset,
+                       int endOffset,
+                       @NotNull TextRange priorityRange,
+                       boolean ignoreSuppressed,
+                       @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                       boolean inspectInjectedPsi) {
     super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
     assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myPriorityRange = priorityRange;
@@ -120,46 +119,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<? extends InspectionRunner.InspectionContext> contexts = inspect(getInspectionTools(myProfileWrapper), true, progress);
     ProgressManager.checkCanceled();
 
-    myInfos = createHighlightsFromContexts(contexts
-    );
-  }
-
-  private static final Set<String> ourToolsWithInformationProblems = new HashSet<>();
-  public void doInspectInBatch(@NotNull GlobalInspectionContextImpl globalContext, @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers) {
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    List<? extends InspectionRunner.InspectionContext> contexts = inspect(new ArrayList<>(toolWrappers), false, progress);
-    for (InspectionRunner.InspectionContext context : contexts) {
-      LocalInspectionToolWrapper toolWrapper = context.tool;
-      String shortName = toolWrapper.getShortName();
-      ProblemsHolder holder = context.holder;
-      List<ProblemDescriptor> toReport = new ArrayList<>(holder.getResults().size());
-      for (ProblemDescriptor descriptor : holder.getResults()) {
-        ProblemHighlightType highlightType = descriptor.getHighlightType();
-        if (highlightType == ProblemHighlightType.INFORMATION) {
-          if (ourToolsWithInformationProblems.add(shortName)) {
-            String message = "Tool #" + shortName + " (" + toolWrapper.getTool().getClass()+")"+
-                             " registers 'INFORMATION'-level problem in batch mode on " + getFile() + ". " +
-                             "Warnings of the 'INFORMATION' level are invisible in the editor and should not become visible in batch mode. " +
-                             "Moreover, since 'INFORMATION'-level fixes act more like intention actions, they could e.g. change semantics and " +
-                             "thus should not be suggested for batch transformations";
-            LocalInspectionEP extension = toolWrapper.getExtension();
-            if (extension != null) {
-              LOG.error(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
-            }
-            else {
-              LOG.error(message);
-            }
-          }
-          continue;
-        }
-        else if (highlightType == ProblemHighlightType.POSSIBLE_PROBLEM) {
-          continue;
-        }
-        toReport.add(descriptor);
-      }
-      InspectionToolPresentation toolPresentation = globalContext.getPresentation(toolWrapper);
-      BatchModeDescriptorsUtil.addProblemDescriptors(toReport, toolPresentation, myIgnoreSuppressed, globalContext, toolWrapper.getTool());
-    }
+    myInfos = createHighlightsFromContexts(contexts);
   }
 
   @NotNull
@@ -287,16 +247,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
 
-      LocalInspectionToolWrapper tool = context.tool;
+      LocalInspectionToolWrapper toolWrapper = context.tool;
       for (ProblemDescriptor descriptor : context.holder.getResults()) {
         ProgressManager.checkCanceled();
         PsiElement element = descriptor.getPsiElement();
-        if (element != null) {
-          if (SuppressionUtil.inspectionResultSuppressed(element, tool.getTool())) {
-            continue;
-          }
-          createHighlightsForDescriptor(result, emptyActionRegistered, file, documentRange, tool, descriptor, element);
+        if (element == null) {
+          continue;
         }
+
+        if (SuppressionUtil.inspectionResultSuppressed(element, toolWrapper.getTool())) {
+          continue;
+        }
+        createHighlightsForDescriptor(result, emptyActionRegistered, file, documentRange, toolWrapper, descriptor, element);
       }
     }
     return result;
