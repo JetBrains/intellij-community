@@ -1469,5 +1469,7 @@
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
     </group>
+
+    <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
   </actions>
 </idea-plugin>
