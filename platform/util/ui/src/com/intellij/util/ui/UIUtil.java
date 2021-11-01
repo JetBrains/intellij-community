@@ -91,6 +91,13 @@ public final class UIUtil {
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
+  /**
+   * A key for hiding a line under the window title bar on macOS
+   * It works if and only if transparent title bars are enabled and IDE runs on JetBrains Runtime
+   */
+  @ApiStatus.Internal
+  public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
+
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
@@ -138,6 +145,15 @@ public final class UIUtil {
           Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
           graphics.setColor(getPanelBackground());
           graphics.fill(headerRectangle);
+          if (SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+            if (window instanceof RootPaneContainer) {
+              JRootPane pane = ((RootPaneContainer)window).getRootPane();
+              if (pane == null || pane.getClientProperty(NO_BORDER_UNDER_WINDOW_TITLE_KEY) != Boolean.TRUE) {
+                graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+                LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1);
+              }
+            }
+          }
           Color color = window.isActive()
                         ? JBColor.black
                         : JBColor.gray;
