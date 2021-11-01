@@ -43,7 +43,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   private var lastSelectedIndex: Int? = null
 
   private fun obtainBarsModel(cached: Boolean = false): List<Rectangle> {
-    if (!table.isValid) {
+    if (!table.isValid || editor.isDisposed) {
       return emptyList()
     }
     return when {
@@ -64,6 +64,9 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     get() = barHeight
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
+    if (!table.isValid || editor.isDisposed) {
+      return
+    }
     GraphicsUtil.setupAntialiasing(graphics)
     GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
     paintBars(graphics)
@@ -109,6 +112,9 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   }
 
   private fun calculateRowWidth(): Int {
+    if (!table.isValid || editor.isDisposed) {
+      return 0
+    }
     val header = table.headerRow ?: return 0
     val document = obtainCommittedDocument() ?: return 0
     return fontMetrics.stringWidth(document.getText(header.textRange))
