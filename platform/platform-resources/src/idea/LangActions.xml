@@ -291,19 +291,6 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="EditBookmarksGroup" popup="true">
-      <reference ref="ToggleBookmark"/>
-      <reference ref="DeleteMnemonicFromBookmark"/>
-      <reference ref="ToggleBookmarkWithMnemonic"/>
-      <reference ref="ShowBookmarks"/>
-      <reference ref="ShowTypeBookmarks"/>
-      <reference ref="GotoNextBookmark"/>
-      <reference ref="GotoPreviousBookmark"/>
-      <separator/>
-
-      <add-to-group group-id="GoToMenu" anchor="last"/>
-    </group>
-
     <group id="popup@BookmarkContextMenu">
       <reference ref="AddAnotherBookmark"/>
       <reference ref="EditBookmark"/>
@@ -317,6 +304,15 @@
 
     <group id="popup@ExpandableBookmarkContextMenu" popup="true">
       <reference ref="popup@BookmarkContextMenu"/>
+    </group>
+
+    <group id="EditBookmarksGroup" popup="true">
+      <reference ref="popup@BookmarkContextMenu"/>
+      <reference ref="ShowBookmarks"/>
+      <reference ref="ShowTypeBookmarks"/>
+      <separator/>
+
+      <add-to-group group-id="EditMenu" anchor="after" relative-to-action="Macros"/>
     </group>
 
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
