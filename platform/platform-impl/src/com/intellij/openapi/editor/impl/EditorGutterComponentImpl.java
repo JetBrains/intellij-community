@@ -58,7 +58,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.paint.PaintUtil;
@@ -2557,21 +2557,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private static final HoverListener HOVER_STATE_LISTENER = new HoverListener() {
+  private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
-    public void mouseMoved(@NotNull Component component, int x, int y) { }
-
-    @Override
-    public void mouseEntered(@NotNull Component component, int x, int y) {
-      onHoverChange(component, true);
-    }
-
-    @Override
-    public void mouseExited(@NotNull Component component) {
-      onHoverChange(component, false);
-    }
-
-    private void onHoverChange(@NotNull Component component, boolean hovered) {
+    protected void hoverChanged(@NotNull Component component, boolean hovered) {
       if (component instanceof EditorGutterComponentImpl) {
         EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
         gutter.myMouseInside = hovered;
