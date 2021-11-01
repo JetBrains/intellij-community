@@ -54,13 +54,9 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
-    myOtherLayers = null;
   }
 
-  protected Change(@NotNull Change change) {
-    myBeforeRevision = change.getBeforeRevision();
-    myAfterRevision = change.getAfterRevision();
-    myFileStatus = change.getFileStatus();
+  protected void copyFieldsFrom(@NotNull Change change) {
     myOtherLayers = change.myOtherLayers != null ? new HashMap<>(change.myOtherLayers) : null;
     myIsReplaced = change.isIsReplaced();
   }

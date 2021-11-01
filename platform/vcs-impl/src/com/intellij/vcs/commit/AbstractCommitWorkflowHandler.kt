@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CommitInfo
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -285,7 +286,18 @@ class DynamicCommitInfoImpl(
 ) : DynamicCommitInfo {
   override val executor: CommitExecutor? get() = sessionInfo.executor
 
-  override val committedChanges: List<Change> get() = workflowUi.getIncludedChanges()
+  override val committedChanges: List<Change>
+    get() {
+      val changes = workflowUi.getIncludedChanges()
+      val executor = sessionInfo.executor
+      if (executor != null && !executor.supportsPartialCommit()) {
+        return changes
+      }
+      else {
+        return PartialChangesUtil.wrapPartialChanges(workflow.project, changes)
+      }
+    }
+
   override val affectedVcses: List<AbstractVcs> get() = workflow.vcses.toList()
   override val commitMessage: String get() = workflowUi.commitMessageUi.text
 
