@@ -135,6 +135,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         // The following are not in CLionProperties.groovy for this plugin. Instead they
         // are put under plugin "intellij.clion" or IDE implementation. We put them under
         // this base plugin so that they will still be shipped.
+        withModule("intellij.cidr.psi.base", mainJarName)
         withModule("intellij.cidr.resources", mainJarName)
         withModule("intellij.cidr.common", mainJarName)
         withModule("intellij.cmake.psi", mainJarName)
