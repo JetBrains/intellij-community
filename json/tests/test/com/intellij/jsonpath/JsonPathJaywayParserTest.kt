@@ -150,4 +150,12 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
   fun testDotAfterIndex() {
     doCodeTest("[0].id")
   }
+
+  fun testRepeatedWildcard() {
+    doCodeTest("**")
+  }
+
+  fun testRepeatedWildcardInTheMiddle() {
+    doCodeTest("[1].**.created")
+  }
 }

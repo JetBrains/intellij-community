@@ -147,12 +147,13 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   static boolean dotSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dotSegment")) return false;
     if (!nextTokenIs(b, "", DOT, RECURSIVE_DESCENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = dotSegment_0(b, l + 1);
+    p = r; // pin = 1
     r = r && dotSegment_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // RECURSIVE_DESCENT | DOT
@@ -655,11 +656,12 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // dotSegment | expressionSegment
+  // wildcardSegment | dotSegment | expressionSegment
   static boolean segments_(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "segments_")) return false;
     boolean r;
-    r = dotSegment(b, l + 1);
+    r = wildcardSegment(b, l + 1);
+    if (!r) r = dotSegment(b, l + 1);
     if (!r) r = expressionSegment(b, l + 1);
     return r;
   }
