@@ -4,47 +4,12 @@ package com.intellij.execution.wsl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLDistribution.*
-import com.intellij.openapi.util.NullableLazyValue
-import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import junit.framework.TestCase.assertEquals
-import org.junit.AfterClass
-import org.junit.Assume
-import org.junit.BeforeClass
 import org.junit.Test
 
-class WSLDistributionConsoleFoldingTest : BareTestFixtureTestCase() {
-   private val folding = WslDistributionConsoleFolding()
+class WSLDistributionConsoleFoldingTest : WslTestBase() {
+  private val folding = WslDistributionConsoleFolding()
 
-  private val wsl: WSLDistribution
-    get() {
-      val value = WSL?.value
-      Assume.assumeTrue("No WSL distributions available", value != null)
-      return value!!
-    }
-
-  companion object {
-    private var WSL: NullableLazyValue<WSLDistribution?>? = NullableLazyValue.createValue {
-      val distributions = WslDistributionManager.getInstance().installedDistributions
-      if (distributions.isEmpty()) return@createValue null
-      val distribution = distributions[0]
-      if (distribution is WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.id)) return@createValue null
-      distribution
-    }
-
-    @BeforeClass
-    @JvmStatic
-    fun checkEnvironment() {
-      IoTestUtil.assumeWindows()
-      IoTestUtil.assumeWslPresence()
-    }
-
-    @AfterClass
-    @JvmStatic
-    fun afterClass() {
-      WSL = null
-    }
-  }
 
   @Test
   fun `should fold`() {
