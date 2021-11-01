@@ -478,53 +478,53 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
 
-    try {
-      file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(getCurrentProfile()));
-      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-        InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, myProgressIndicator,
-                                   (wrapper, descriptor) -> true);
-      for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-        LocalInspectionToolWrapper toolWrapper = entry.getKey();
-        List<ProblemDescriptor> descriptors = entry.getValue();
-        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-        BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+    InspectionProfileWrapper.runWithCustomInspectionWrapper(file, p -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
+      try {
+        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+          InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, myProgressIndicator,
+                                     (wrapper, descriptor) -> true);
+        for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+          LocalInspectionToolWrapper toolWrapper = entry.getKey();
+          List<ProblemDescriptor> descriptors = entry.getValue();
+          InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+          BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+        }
+
+        assertUnderDaemonProgress();
+
+        JobLauncher.getInstance()
+          .invokeConcurrentlyUnderProgress(globalSimpleTools, ProgressIndicatorProvider.getGlobalProgressIndicator(), toolWrapper -> {
+            GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
+            ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
+            ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
+            reportWhenInspectionFinished(
+              getEventPublisher(),
+              toolWrapper,
+              GLOBAL_SIMPLE,
+              file,
+              getProject(),
+              () -> {
+                tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+                return holder.getResultCount();
+              });
+            InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
+            BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
+            return true;
+          });
+        VirtualFile virtualFile = file.getVirtualFile();
+        String displayUrl = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
+        incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
       }
-
-      assertUnderDaemonProgress();
-
-      JobLauncher.getInstance()
-        .invokeConcurrentlyUnderProgress(globalSimpleTools, ProgressIndicatorProvider.getGlobalProgressIndicator(), toolWrapper -> {
-          GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-          ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
-          ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
-          reportWhenInspectionFinished(
-            getEventPublisher(),
-            toolWrapper,
-            GLOBAL_SIMPLE,
-            file,
-            getProject(),
-            () -> {
-              tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
-              return holder.getResultCount();
-            });
-          InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
-          BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
-          return true;
-        });
-      VirtualFile virtualFile = file.getVirtualFile();
-      String displayUrl = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
-      incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
-    }
-    catch (ProcessCanceledException | IndexNotReadyException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
-    }
-    finally {
-      file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, null);
-      InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
-    }
+      catch (ProcessCanceledException | IndexNotReadyException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
+      }
+      finally {
+        InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
+      }
+    });
   }
 
   protected boolean includeDoNotShow(InspectionProfile profile) {
@@ -1048,53 +1048,54 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           if (!lTools.isEmpty()) {
-            try {
-              file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(profile, p.getProfileManager()));
-              TextRange restrictRange = range == null ? file.getTextRange() : range;
-              ApplicationManager.getApplication().runReadAction(() -> {
-                 Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-                   InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
-                                              (wrapper, descriptor) -> true);
-                for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-                  LocalInspectionToolWrapper toolWrapper = entry.getKey();
-                  List<ProblemDescriptor> descriptors = entry.getValue();
-                  InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-                  BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, GlobalInspectionContextImpl.this, toolWrapper.getTool());
-                }
-              });
+            InspectionProfileWrapper.runWithCustomInspectionWrapper(file, p -> new InspectionProfileWrapper(profile,
+                                                                                                            ((InspectionProfileImpl)p).getProfileManager()), () -> {
+              try {
+                TextRange restrictRange = range == null ? file.getTextRange() : range;
+                ApplicationManager.getApplication().runReadAction(() -> {
+                   Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+                     InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, myProgressIndicator,
+                                                (wrapper, descriptor) -> true);
+                  for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+                    LocalInspectionToolWrapper toolWrapper = entry.getKey();
+                    List<ProblemDescriptor> descriptors = entry.getValue();
+                    InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+                    BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, GlobalInspectionContextImpl.this, toolWrapper.getTool());
+                  }
+                });
 
-              Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-              for (LocalInspectionToolWrapper tool : lTools) {
-                InspectionToolResultExporter toolPresentation = getPresentation(tool);
-                for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
-                  if (descriptor instanceof ProblemDescriptor) {
-                    localDescriptors.add((ProblemDescriptor)descriptor);
+                Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
+                for (LocalInspectionToolWrapper tool : lTools) {
+                  InspectionToolResultExporter toolPresentation = getPresentation(tool);
+                  for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
+                    if (descriptor instanceof ProblemDescriptor) {
+                      localDescriptors.add((ProblemDescriptor)descriptor);
+                    }
                   }
                 }
-              }
 
-              if (searchScope instanceof LocalSearchScope) {
-                for (Iterator<ProblemDescriptor> iterator = localDescriptors.iterator(); iterator.hasNext(); ) {
-                  ProblemDescriptor descriptor = iterator.next();
-                  TextRange infoRange = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
-                  if (infoRange != null && !((LocalSearchScope)searchScope).containsRange(file, infoRange)) {
-                    iterator.remove();
+                if (searchScope instanceof LocalSearchScope) {
+                  for (Iterator<ProblemDescriptor> iterator = localDescriptors.iterator(); iterator.hasNext(); ) {
+                    ProblemDescriptor descriptor = iterator.next();
+                    TextRange infoRange = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
+                    if (infoRange != null && !((LocalSearchScope)searchScope).containsRange(file, infoRange)) {
+                      iterator.remove();
+                    }
                   }
                 }
-              }
-              if (!localDescriptors.isEmpty()) {
-                for (ProblemDescriptor descriptor : localDescriptors) {
-                  if (shouldApplyFix.test(descriptor)) {
-                    descriptors.add(descriptor);
+                if (!localDescriptors.isEmpty()) {
+                  for (ProblemDescriptor descriptor : localDescriptors) {
+                    if (shouldApplyFix.test(descriptor)) {
+                      descriptors.add(descriptor);
+                    }
                   }
+                  files.add(file);
                 }
-                files.add(file);
               }
-            }
-            finally {
-              file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, null);
-              myPresentationMap.clear();
-            }
+              finally {
+                myPresentationMap.clear();
+              }
+            });
           }
         }
       });

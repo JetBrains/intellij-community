@@ -85,7 +85,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     setId(Pass.LOCAL_INSPECTIONS);
 
     InspectionProfileImpl profileToUse = ProjectInspectionProfileManager.getInstance(myProject).getCurrentProfile();
-    Function<InspectionProfileImpl, InspectionProfileWrapper> custom = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper>
+      custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     myProfileWrapper = custom == null ? new InspectionProfileWrapper(profileToUse) : custom.apply(profileToUse);
     assert myProfileWrapper != null;
     myInspectInjectedPsi = inspectInjectedPsi;

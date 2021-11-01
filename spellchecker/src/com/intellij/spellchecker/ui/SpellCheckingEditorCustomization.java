@@ -92,9 +92,10 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    Function<InspectionProfileImpl, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> strategy = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     if (strategy == null) {
-      file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, strategy = new MyInspectionProfileStrategy());
+      strategy = new MyInspectionProfileStrategy();
+      InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file, strategy);
     }
 
     if (!(strategy instanceof MyInspectionProfileStrategy)) {
@@ -115,7 +116,8 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   public static boolean isSpellCheckingDisabled(@NotNull PsiFile file) {
-    Function<InspectionProfileImpl, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper>
+      strategy = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     return strategy instanceof MyInspectionProfileStrategy && !((MyInspectionProfileStrategy)strategy).myUseSpellCheck;
   }
 
@@ -123,19 +125,19 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
   }
 
-  private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {
+  private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
     private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = ContainerUtil.createWeakMap();
     private boolean myUseSpellCheck;
 
     @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfileImpl inspectionProfile) {
+    public InspectionProfileWrapper apply(@NotNull InspectionProfile inspectionProfile) {
       if (!READY) {
-        return new InspectionProfileWrapper(inspectionProfile);
+        return new InspectionProfileWrapper((InspectionProfileImpl)inspectionProfile);
       }
       MyInspectionProfileWrapper wrapper = myWrappers.get(inspectionProfile);
       if (wrapper == null) {
-        myWrappers.put(inspectionProfile, wrapper = new MyInspectionProfileWrapper(inspectionProfile));
+        myWrappers.put(inspectionProfile, wrapper = new MyInspectionProfileWrapper((InspectionProfileImpl)inspectionProfile));
       }
       wrapper.setUseSpellCheck(myUseSpellCheck);
       return wrapper;
