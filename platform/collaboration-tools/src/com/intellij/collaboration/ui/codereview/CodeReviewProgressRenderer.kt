@@ -78,12 +78,16 @@ class CodeReviewProgressRenderer(
     require(discussionsCount > 0)
 
     val backgroundIcon = if (!isRead) CommentUnread else CommentUnresolved
+    val discussionsCountIcon = createDiscussionsCountIcon(discussionsCount, foreground)
 
+    return combine(backgroundIcon, discussionsCountIcon)
+  }
+
+  private fun createDiscussionsCountIcon(discussionsCount: Int, color: Color?): Icon {
     val text: @NlsSafe String = if (discussionsCount > 9) "9+" else discussionsCount.toString()
-    val textIcon = TextIcon(text, foreground, null, 0)
-    textIcon.setFont(discussionsCountFont.deriveFont(getFontSize(FontSize.MINI)))
-
-    return combine(backgroundIcon, textIcon)
+    return TextIcon(text, color, null, 0).apply {
+      setFont(discussionsCountFont.deriveFont(getFontSize(FontSize.MINI)))
+    }
   }
 
   private fun combine(backgroundIcon: Icon, textIcon: Icon): Icon {
