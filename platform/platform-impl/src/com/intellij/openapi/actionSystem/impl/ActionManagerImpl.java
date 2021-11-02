@@ -1455,6 +1455,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
 
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
+    int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
     if (oldAction != null) {
       if (newAction instanceof OverridingAction) {
         myBaseActions.put((OverridingAction)newAction, oldAction);
@@ -1473,6 +1474,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       unregisterAction(actionId, false);
     }
     registerAction(actionId, newAction, pluginId);
+    if (oldIndex >= 0) {
+      idToIndex.put(actionId, oldIndex);
+    }
     return oldAction;
   }
 
