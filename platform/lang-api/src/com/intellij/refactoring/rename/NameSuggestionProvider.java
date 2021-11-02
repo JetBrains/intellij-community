@@ -17,6 +17,7 @@ public interface NameSuggestionProvider {
   ExtensionPointName<NameSuggestionProvider> EP_NAME = ExtensionPointName.create("com.intellij.nameSuggestionProvider");
 
   /**
+   * Provides possible names used as suggestions when renaming {@code element}.
    * @param element                 the element which would be renamed.
    * @param nameSuggestionContext   the context element.
    * @param result                  set to store all name variants.
