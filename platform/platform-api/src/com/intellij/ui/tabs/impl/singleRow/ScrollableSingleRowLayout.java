@@ -46,7 +46,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       myScrollOffset = 0;
     }
     else {
-      myScrollOffset = Math.max(0, Math.min(myScrollOffset, data.requiredLength - data.toFitLength + getStrategy().getMoreRectAxisSize()));
+      int max = data.requiredLength - data.toFitLength + getStrategy().getMoreRectAxisSize();
+      if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+        max += getStrategy().getEntryPointAxisSize();
+      }
+      myScrollOffset = Math.max(0, Math.min(myScrollOffset, max));
     }
   }
 
@@ -79,7 +83,10 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
           scroll(offset);
         }
         else {
-          final int maxLength = passInfo.toFitLength - getStrategy().getMoreRectAxisSize();
+          int maxLength = passInfo.toFitLength - getStrategy().getMoreRectAxisSize();
+          if (getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
+            maxLength -= getStrategy().getEntryPointAxisSize();
+          }
           if (offset + length > maxLength) {
             // left side should be always visible
             if (length < maxLength) {
