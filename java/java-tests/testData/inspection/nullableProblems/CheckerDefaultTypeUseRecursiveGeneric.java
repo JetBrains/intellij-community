@@ -1,5 +1,6 @@
 
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ final class Experiment {
     }
   }
   public static void main(String[] arguments) {
-    Base<?> Base = new Impl();
+    Base<?> b1 = new Impl();
+    Base<<warning descr="Non-null type argument is expected">@Nullable ?</warning>> b2 = new Impl();
   }
 }
