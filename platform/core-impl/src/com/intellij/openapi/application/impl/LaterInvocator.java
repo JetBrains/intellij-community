@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -15,7 +14,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,9 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class LaterInvocator {
@@ -49,12 +45,7 @@ public final class LaterInvocator {
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
-
-  private static final Executor ourWriteThreadExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Write Thread", 1);
   private static final FlushQueue ourEdtQueue = new FlushQueue(SwingUtilities::invokeLater);
-  private static final FlushQueue ourWtQueue = new FlushQueue(r -> ourWriteThreadExecutor.execute(() -> ApplicationManagerEx
-    .getApplicationEx().runIntendedWriteActionOnCurrentThread(r)));
-
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
     if (!ourModalityStateMulticaster.getListeners().contains(listener)) {
@@ -88,28 +79,25 @@ public final class LaterInvocator {
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return invokeLater(runnable, modalityState, expired);
+    return invokeLater(modalityState, expired, runnable);
   }
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    return invokeLater(runnable, modalityState, Conditions.alwaysFalse());
+    return invokeLater(modalityState, Conditions.alwaysFalse(), runnable);
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable,
-                                    @NotNull ModalityState modalityState,
-                                    @NotNull Condition<?> expired) {
+  static ActionCallback invokeLater(@NotNull ModalityState modalityState, @NotNull Condition<?> expired, @NotNull Runnable runnable) {
     ActionCallback callback = new ActionCallback();
-    invokeLaterWithCallback(runnable, modalityState, expired, callback, true);
+    invokeLaterWithCallback(modalityState, expired, callback, runnable);
     return callback;
   }
 
-  static void invokeLaterWithCallback(@NotNull Runnable runnable,
-                                      @NotNull ModalityState modalityState,
+  static void invokeLaterWithCallback(@NotNull ModalityState modalityState,
                                       @NotNull Condition<?> expired,
                                       @Nullable ActionCallback callback,
-                                      boolean onEdt) {
+                                      @NotNull Runnable runnable) {
     if (expired.value(null)) {
       if (callback != null) {
         callback.setRejected();
@@ -117,7 +105,7 @@ public final class LaterInvocator {
       return;
     }
     FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
-    getRunnableQueue(onEdt).push(runnableInfo);
+    ourEdtQueue.push(runnableInfo);
     requestFlush();
   }
 
@@ -147,7 +135,7 @@ public final class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, true);
+    invokeLaterWithCallback(modalityState, Conditions.alwaysFalse(), null, runnable1);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -331,27 +319,14 @@ public final class LaterInvocator {
     return ApplicationManager.getApplication().isWriteThread();
   }
 
-  @NotNull
-  private static FlushQueue getRunnableQueue(boolean onEdt) {
-    return onEdt ? ourEdtQueue : ourWtQueue;
-  }
-
   static void requestFlush() {
     SUBMITTED_COUNT.incrementAndGet();
     while (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
-      int whichThread = THREAD_TO_FLUSH.getAndUpdate(operand -> operand ^ 1);
-
       long submittedCount = SUBMITTED_COUNT.get();
 
-      FlushQueue firstQueue = getRunnableQueue(whichThread == 0);
-      if (firstQueue.mayHaveItems()) {
-        firstQueue.scheduleFlush();
-        return;
-      }
-
-      FlushQueue secondQueue = getRunnableQueue(whichThread != 0);
-      if (secondQueue.mayHaveItems()) {
-        secondQueue.scheduleFlush();
+      FlushQueue queue = ourEdtQueue;
+      if (queue.mayHaveItems()) {
+        queue.scheduleFlush();
         return;
       }
 
@@ -367,11 +342,12 @@ public final class LaterInvocator {
     }
   }
 
+  static boolean isFlushNow(@NotNull Runnable runnable) {
+    return ourEdtQueue.isFlushNow(runnable);
+  }
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
-
-    ourWtQueue.flushNow();
   }
 
   /**
@@ -386,10 +362,6 @@ public final class LaterInvocator {
       ourEdtQueue.scheduleFlush();
       return true;
     }
-    else if (ourWtQueue.getNextEvent(false) != null) {
-      ourWtQueue.scheduleFlush();
-      return true;
-    }
     return false;
   }
 
@@ -397,29 +369,19 @@ public final class LaterInvocator {
 
   private static final AtomicLong SUBMITTED_COUNT = new AtomicLong(0);
 
-  private static final AtomicInteger THREAD_TO_FLUSH = new AtomicInteger(0);
-
   @TestOnly
   @NotNull
   public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
 
-  @TestOnly
-  @NotNull
-  public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorWtQueue() {
-    return ourWtQueue.getQueue();
-  }
-
   private static void reincludeSkippedItemsAndRequestFlush() {
     ourEdtQueue.reincludeSkippedItems();
-    ourWtQueue.reincludeSkippedItems();
     requestFlush();
   }
 
   public static void purgeExpiredItems() {
     ourEdtQueue.purgeExpiredItems();
-    ourWtQueue.purgeExpiredItems();
     requestFlush();
   }
 

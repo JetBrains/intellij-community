@@ -35,7 +35,7 @@ final class FlushQueue {
   }
 
   public void scheduleFlush() {
-    myRunnableExecutor.accept(new FlushNow());
+    myRunnableExecutor.accept(FLUSH_NOW);
   }
 
   public void flushNow() {
@@ -181,11 +181,9 @@ final class FlushQueue {
     }
   }
 
-  final class FlushNow implements Runnable {
-    @Override
-    public void run() {
-      flushNow();
-    }
+  private final Runnable FLUSH_NOW = this::flushNow;
+  boolean isFlushNow(@NotNull Runnable runnable) {
+    return runnable == FLUSH_NOW;
   }
 
   final static class RunnableInfo {

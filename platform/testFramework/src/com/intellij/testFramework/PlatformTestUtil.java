@@ -435,8 +435,7 @@ public final class PlatformTestUtil {
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
                                    "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue() +
-                                   "\n invocatorWtQueue=" + LaterInvocator.getLaterInvocatorWtQueue()
+                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue()
           );
         }
       }
