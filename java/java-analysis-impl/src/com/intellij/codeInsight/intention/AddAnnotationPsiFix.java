@@ -9,18 +9,25 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -34,11 +41,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
-public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
+public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements OnTheFlyLocalFix {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
   @SafeFieldForPreview
@@ -47,6 +55,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   private final AnnotationPlace myAnnotationPlace;
   private final boolean myExistsTypeUseTarget;
   private final boolean myHasApplicableAnnotations;
+  private final boolean myAvailableInBatchMode;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
@@ -74,6 +83,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     myAnnotationsToRemove = annotationsToRemove;
     myText = calcText(modifierListOwner, myAnnotation);
     myAnnotationPlace = place;
+    myAvailableInBatchMode = place == AnnotationPlace.IN_CODE || place == AnnotationPlace.EXTERNAL && hasExactlyOneAnnotationRoot(modifierListOwner);
 
     PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
       .findClass(myAnnotation, modifierListOwner.getResolveScope());
@@ -82,6 +92,21 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, myExistsTypeUseTarget);
     myHasApplicableAnnotations =
       target != null && ContainerUtil.exists(target.getApplicableAnnotations(), anno -> anno.hasQualifiedName(myAnnotation));
+  }
+
+  private static boolean hasExactlyOneAnnotationRoot(PsiModifierListOwner owner) {
+    final List<OrderEntry> entries = 
+      ProjectRootManager.getInstance(owner.getProject())
+        .getFileIndex()
+        .getOrderEntriesForFile(Objects.requireNonNull(PsiUtilCore.getVirtualFile(owner)));
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrSdkOrderEntry && 
+          ContainerUtil.filter(AnnotationOrderRootType.getFiles(entry), VirtualFile::isInLocalFileSystem).size() == 1) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
@@ -176,6 +201,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     return myAnnotationPlace == AnnotationPlace.IN_CODE;
   }
 
+  @Override
+  public boolean availableInBatchMode() {
+    return myAvailableInBatchMode;
+  }
+  
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
