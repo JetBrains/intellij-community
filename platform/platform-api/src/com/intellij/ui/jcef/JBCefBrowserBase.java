@@ -142,8 +142,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
+  /**
+   * The browser instance is disposed automatically with {@link JBCefClient}
+   * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
+   * Nevertheless, it can be disposed manually as well when necessary.
+   */
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
     myCefClient = ObjectUtils.notNull(builder.myClient, () -> JBCefApp.getInstance().createClient(true));
+    Disposer.register(myCefClient, this);
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
     myEnableOpenDevToolsMenuItem = builder.myEnableOpenDevToolsMenuItem;
@@ -446,6 +452,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
+  /**
+   * The method is thread safe.
+   */
   @Override
   public void dispose() {
     dispose(null);
