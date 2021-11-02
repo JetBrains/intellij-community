@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -95,11 +96,15 @@ class LookupElementFactory(
         // special "[]" item for get-operator
         if (callType == CallType.DOT && descriptor is FunctionDescriptor && descriptor.isOperator && descriptor.name == OperatorNameConventions.GET) {
             val brackets = "[]"
-            val insertHandler = DeclarativeInsertHandler2.Builder()
-                .addOperation(offsetFrom = -1 - brackets.length, offsetTo = -brackets.length, newText = "")
-                .withOffsetToPutCaret(-1)
-                .withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
-                .build()
+
+            val insertHandler = CompositeDeclarativeInsertHandler.withUniversalHandler(
+                "\n",
+                DeclarativeInsertHandler2.Builder()
+                    .addOperation(offsetFrom = -1 - brackets.length, offsetTo = -brackets.length, newText = "")
+                    .withOffsetToPutCaret(-1)
+                    .withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+                    .build(),
+            )
 
             val baseLookupElement = createLookupElement(descriptor, useReceiverTypes)
             val lookupElement = object : LookupElementDecorator<LookupElement>(baseLookupElement) {
