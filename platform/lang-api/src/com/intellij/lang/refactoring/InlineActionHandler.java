@@ -41,7 +41,7 @@ public abstract class InlineActionHandler {
   }
 
   /**
-   * Fast check to see if handler can possibly inline element of {@code l}. 
+   * Fast check to see if handler can possibly inline an element of language {@code l}. 
    */
   public abstract boolean isEnabledForLanguage(Language l);
 
