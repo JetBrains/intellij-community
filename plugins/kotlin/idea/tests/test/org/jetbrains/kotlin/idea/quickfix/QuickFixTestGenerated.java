@@ -351,6 +351,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addAnnotationUseSiteTarget")
+    public static class AddAnnotationUseSiteTarget extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("delegate.kt")
+        public void testDelegate() throws Exception {
+            runTest("testData/quickfix/addAnnotationUseSiteTarget/delegate.kt");
+        }
+
+        @TestMetadata("get.kt")
+        public void testGet() throws Exception {
+            runTest("testData/quickfix/addAnnotationUseSiteTarget/get.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addConstructorParameter")
     public static class AddConstructorParameter extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
