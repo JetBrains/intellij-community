@@ -14,5 +14,5 @@ public interface RemoteCredentialsHandler {
 
   String getPresentableDetails(String interpreterPath);
 
-  void load(@Nullable Element rootElement);
+  void load(@Nullable Element rootElement) throws CredentialsCantBeLoaded;
 }
