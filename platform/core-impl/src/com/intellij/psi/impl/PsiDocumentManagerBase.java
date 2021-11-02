@@ -298,7 +298,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return true;
     }
 
-    checkWeAreOutsideAfterCommitHandler();
+    assertWeAreOutsideAfterCommitHandler();
 
     actionsWhenAllDocumentsAreCommitted.put(key, ClientId.decorateRunnable(action));
     return false;
@@ -580,7 +580,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   // return true when action is run, false when it's queued to run later
   private boolean performWhenAllCommitted(@NotNull ModalityState modality, @NotNull Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkWeAreOutsideAfterCommitHandler();
+    assertWeAreOutsideAfterCommitHandler();
 
     assert !myProject.isDisposed() : "Already disposed: " + myProject;
     if (!hasEventSystemEnabledUncommittedDocuments()) {
@@ -626,7 +626,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       @Override
       public String toString() {
-        return "performLaterWhenAllCommitted()";
+        return "performLaterWhenAllCommitted(" + runnable+ ")";
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
@@ -721,7 +721,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     ApplicationManager.getApplication().assertIsDispatchThread();
     actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
   }
-  private void checkWeAreOutsideAfterCommitHandler() {
+  private void assertWeAreOutsideAfterCommitHandler() {
     if (isInsideCommitHandler()) {
       throw new IncorrectOperationException("You must not call performWhenAllCommitted()/cancelAndRunWhenCommitted() from within after-commit handler");
     }
