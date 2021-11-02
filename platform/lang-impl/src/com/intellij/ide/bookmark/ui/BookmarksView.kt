@@ -75,8 +75,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else -> null
   }
 
-  override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.action.text")
-  override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.action.text")
+  override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.occurence.action.text")
+  override fun getPreviousOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.previous.occurence.action.text")
 
   override fun hasNextOccurence() = nextOccurrence != null
   override fun hasPreviousOccurence() = previousOccurrence != null
