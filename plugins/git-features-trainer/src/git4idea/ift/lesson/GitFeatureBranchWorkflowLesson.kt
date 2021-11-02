@@ -43,7 +43,6 @@ import training.dsl.*
 import java.io.File
 import javax.swing.JButton
 import javax.swing.JDialog
-import javax.swing.JList
 
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
   override val existedFile = "git/simple_cat.yml"
@@ -92,6 +91,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       text(GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main)))
       highlightLatestCommitsFromBranch(branchName, sequenceLength = 2)
       proceedLink()
+      showWarningIfGitWindowClosed()
     }
 
     task {
@@ -118,14 +118,14 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
+      triggerByListItemAndHighlight(clearPreviousHighlights = false) { item ->
+        (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
+      }
       val checkoutStartedFuture = triggerOnCheckout { newBranch -> newBranch == main }
       restoreState(firstShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
         val checkoutWrongBranch = newBranchName != curBranchName && newBranchName != main
         (previous.ui?.isShowing != true && !checkoutStartedFuture.isDone) || checkoutWrongBranch
-      }
-      highlightListItemAndRehighlight(restartDelayMillis = 4 * defaultRestoreDelay) { item ->
-        (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
       test {
         ideFrame {
@@ -146,7 +146,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
-      showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
+      showWarningIfGitWindowClosed()
       test { actions(it) }
     }
 
@@ -195,7 +195,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.branch",
                                                     GitBranchPopupActions.getCurrentBranchTruncatedPresentation(project, repositories))
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
-      highlightListItemAndRehighlight(restartDelayMillis = 4 * defaultRestoreDelay) { item ->
+      triggerByListItemAndHighlight(clearPreviousHighlights = false) { item ->
         item.toString().contains(checkoutAndRebaseText)
       }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
@@ -258,21 +258,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
                                                   DvcsUtil.getShortRepositoryName(repository))
       ui.text?.contains(branchesInRepoText) == true
-    }
-  }
-
-  private fun TaskContext.highlightListItemAndRehighlight(restartDelayMillis: Int,
-                                                          checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
-    var showedList: JList<*>? = null
-    triggerByPartOfComponent l@{ ui: JList<*> ->
-      val ind = (0 until ui.model.size).find { checkList(ui.model.getElementAt(it)) } ?: return@l null
-      showedList = ui
-      ui.getCellBounds(ind, ind)
-    }
-    // it is a hack: restart current task to highlight list item when it will be shown again
-    // rehighlightPreviousUi property can not be used in this case, because I can't highlight this list item in the previous task
-    restoreState(restoreId = taskId, delayMillis = restartDelayMillis) {
-      showedList != null && !showedList!!.isShowing
     }
   }
 

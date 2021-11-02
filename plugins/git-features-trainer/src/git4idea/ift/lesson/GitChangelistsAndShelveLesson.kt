@@ -159,6 +159,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.explanation", strong(shelfText)))
       proceedLink()
+      showWarningIfCommitWindowClosed()
     }
 
     lateinit var letsShelveTaskId: TaskContext.TaskId
@@ -176,7 +177,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
-      showWarningIfCommitWindowClosed()
+      showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }

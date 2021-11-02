@@ -159,7 +159,7 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("CheckinProject"),
@@ -167,7 +167,7 @@ object GitLessonsUtil {
                                   restoreTaskWhenResolved)
   }
 
-  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
                                   GitLessonsBundle.message("git.window.closed.warning",
                                                            action("ActivateVersionControlToolWindow"), strong("Git")),
