@@ -607,7 +607,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private boolean needToLog = false;
     private final List<List<RefElement>> paths = new ArrayList<>();
     private int temporaryDepth = 0;
-    private static final int MAX_DEPTH = 200;
+    private static final int MAX_DEPTH = 400;
 
     private void clearLogs() {
       temporaryDepth = 0;
