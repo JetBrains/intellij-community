@@ -8,6 +8,7 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -16,6 +17,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
@@ -145,7 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
+      return (isEnabledByDefault() || ExperimentalUI.isNewUI()) && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 
     @Override
@@ -155,7 +157,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return false; // Disabled by default per designers request.
+      return !ExperimentalUI.isNewUI() && // Disabled by default in ExperimentalUI per designers request.
+             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
     }
 
     @Override
