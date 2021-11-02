@@ -37,6 +37,62 @@ class ProjectIndexingHistoryImplTest {
   }
 
   @Test
+  fun `test there may be actions after suspension 2`() {
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.suspendStages()
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.stopSuspendingStages()
+    history.indexingFinished()
+    assertTrue(history.times.indexingDuration > Duration.ZERO)
+    assertTrue(history.times.suspendedDuration > Duration.ZERO)
+    assertEquals(history.times.scanFilesDuration, Duration.ZERO)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
+  }
+
+  @Test
+  fun `test there may be actions after suspension 3`() {
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
+    history.suspendStages()
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.stopSuspendingStages()
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.indexingFinished()
+    assertTrue(history.times.indexingDuration > Duration.ZERO)
+    assertTrue(history.times.suspendedDuration > Duration.ZERO)
+    assertEquals(history.times.scanFilesDuration, Duration.ZERO)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
+  }
+
+  @Test
+  fun `test there may be actions after suspension 4`() {
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.stopSuspendingStages()
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.indexingFinished()
+    assertTrue(history.times.indexingDuration > Duration.ZERO)
+    assertTrue(history.times.suspendedDuration > Duration.ZERO)
+    assertEquals(history.times.scanFilesDuration, Duration.ZERO)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
+  }
+
+  @Test
+  fun `test there may be actions after suspension 5`() {
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
+    history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.stopSuspendingStages()
+    history.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing)
+    history.suspendStages()
+    history.stopSuspendingStages()
+    history.indexingFinished()
+    assertTrue(history.times.indexingDuration > Duration.ZERO)
+    assertTrue(history.times.suspendedDuration > Duration.ZERO)
+    assertEquals(history.times.scanFilesDuration, Duration.ZERO)
+    assertEquals(history.times.pushPropertiesDuration, Duration.ZERO)
+  }
+
+  @Test
   fun `test basic workflow`() {
     val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", true)
     val pushEstimations = runStageWithEstimations(history, ProjectIndexingHistoryImpl.Stage.PushProperties)
