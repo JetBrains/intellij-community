@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.RemoteCredentialsHandler;
 import com.intellij.remote.ext.UnknownCredentialsHolder;
@@ -36,10 +37,14 @@ public abstract class CredentialsType<T> {
 
   private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
   private final String myPrefix;
+  private final String mySystemIndependentPrefix;
+  private final String mySystemDependentPrefix;
 
   protected CredentialsType(@Nls(capitalization = Nls.Capitalization.Title) String name, String prefix) {
     myName = name;
     myPrefix = prefix;
+    mySystemDependentPrefix = FileUtil.toSystemDependentName(prefix);
+    mySystemIndependentPrefix = FileUtil.toSystemIndependentName(prefix);
   }
 
   public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
@@ -59,7 +64,7 @@ public abstract class CredentialsType<T> {
   public abstract RemoteCredentialsHandler getHandler(T credentials);
 
   public boolean hasPrefix(String path) {
-    return path.startsWith(myPrefix);
+    return path.startsWith(myPrefix) || path.startsWith(mySystemDependentPrefix) || path.startsWith(mySystemIndependentPrefix);
   }
 
   public abstract T createCredentials();
