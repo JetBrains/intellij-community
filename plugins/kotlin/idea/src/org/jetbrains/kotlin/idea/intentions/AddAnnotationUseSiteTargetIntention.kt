@@ -45,7 +45,15 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
     }
 
     override fun applyTo(element: KtAnnotationEntry, editor: Editor?) {
-        element.addUseSiteTarget(element.applicableUseSiteTargets(), editor)
+        val useSiteTargets = element.applicableUseSiteTargets()
+        if (!element.isPhysical) {
+            // For preview
+            if (useSiteTargets.isNotEmpty()) {
+                element.addUseSiteTarget(useSiteTargets.first(), element.project)
+            }
+            return
+        }
+        element.addUseSiteTarget(useSiteTargets, editor)
     }
 }
 
