@@ -69,7 +69,10 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -85,7 +88,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -844,6 +849,24 @@ public class MavenUtil {
     relPath = classifier == null ? relPath + "." + extension : relPath + "-" + classifier + "." + extension;
 
     return new File(localRepository, relPath);
+  }
+
+  @Nullable
+  public static java.nio.file.Path getArtifactPath(@NotNull java.nio.file.Path localRepository,
+                                                   @NotNull MavenId id,
+                                                   @NotNull String extension,
+                                                   @Nullable String classifier) {
+    if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
+      return null;
+    }
+    String[] artifactPath = id.getGroupId().split("\\.");
+    for (String path : artifactPath) {
+      localRepository = localRepository.resolve(path);
+    }
+    return localRepository
+      .resolve(id.getArtifactId())
+      .resolve(id.getVersion())
+      .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
   }
 
   @Nullable

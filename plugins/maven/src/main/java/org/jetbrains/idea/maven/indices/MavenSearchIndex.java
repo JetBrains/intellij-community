@@ -30,8 +30,6 @@ public interface MavenSearchIndex {
     LOCAL, REMOTE, ONLINE
   }
 
-  void registerId(String repositoryId) throws MavenIndexException;
-
   void close(boolean releaseIndexContext);
 
   @NlsSafe
@@ -46,8 +44,6 @@ public interface MavenSearchIndex {
   String getRepositoryPathOrUrl();
 
   Kind getKind();
-
-  boolean isFor(Kind kind, String pathOrUrl);
 
   long getUpdateTimestamp();
 
