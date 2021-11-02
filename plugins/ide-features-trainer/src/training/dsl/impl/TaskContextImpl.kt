@@ -389,6 +389,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
           lessonExecutor.taskInvokeLater(ModalityState.any()) {
             lessonExecutor.foundComponent = foundComponent
             lessonExecutor.rehighlightComponent = highlightFunction
+            lessonExecutor.rehighlightFoundComponent(foundComponent, highlightFunction)
             step.complete(true)
           }
         }
