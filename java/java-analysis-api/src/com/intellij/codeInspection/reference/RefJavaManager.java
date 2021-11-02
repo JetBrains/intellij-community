@@ -48,7 +48,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
    *
    * @param param the parameter for which the reference graph node is requested.
    * @param index the index of the parameter in its parameter list.
-   * @param refElement
+   * @param refElement the owner of the parameter, i.e. a {@link RefMethod} or {@link RefFunctionalExpression}
    * @return the node for the element, or null if the element is not valid or does not have
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
