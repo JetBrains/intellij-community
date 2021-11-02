@@ -124,7 +124,7 @@ object KeywordCompletion {
 
     private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
         return when {
-            this == SUSPEND_KEYWORD && position.getStrictParentOfType<KtTypeReference>() != null -> null
+            this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
             else -> COMPOUND_KEYWORDS[this]
         }
     }
