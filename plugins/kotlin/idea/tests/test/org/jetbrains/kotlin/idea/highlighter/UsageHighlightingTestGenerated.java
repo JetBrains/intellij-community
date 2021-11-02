@@ -107,19 +107,4 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     public void testLocalVal() throws Exception {
         runTest("testData/usageHighlighter/localVal.kt");
     }
-
-    @TestMetadata("onLabeledReturn.kt")
-    public void testOnLabeledReturn() throws Exception {
-        runTest("testData/usageHighlighter/onLabeledReturn.kt");
-    }
-
-    @TestMetadata("onLabeledReturn2.kt")
-    public void testOnLabeledReturn2() throws Exception {
-        runTest("testData/usageHighlighter/onLabeledReturn2.kt");
-    }
-
-    @TestMetadata("onReturn.kt")
-    public void testOnReturn() throws Exception {
-        runTest("testData/usageHighlighter/onReturn.kt");
-    }
 }

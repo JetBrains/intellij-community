@@ -23,6 +23,16 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("anonymousFunction.kt")
+    public void testAnonymousFunction() throws Exception {
+        runTest("testData/exitPoints/anonymousFunction.kt");
+    }
+
+    @TestMetadata("anonymousFunction2.kt")
+    public void testAnonymousFunction2() throws Exception {
+        runTest("testData/exitPoints/anonymousFunction2.kt");
+    }
+
     @TestMetadata("getter.kt")
     public void testGetter() throws Exception {
         runTest("testData/exitPoints/getter.kt");
@@ -51,6 +61,11 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
     @TestMetadata("inlineLocalReturn2.kt")
     public void testInlineLocalReturn2() throws Exception {
         runTest("testData/exitPoints/inlineLocalReturn2.kt");
+    }
+
+    @TestMetadata("inlineLocalReturn3.kt")
+    public void testInlineLocalReturn3() throws Exception {
+        runTest("testData/exitPoints/inlineLocalReturn3.kt");
     }
 
     @TestMetadata("inlineWithNoInlineParam.kt")
@@ -91,6 +106,11 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
     @TestMetadata("notInline2.kt")
     public void testNotInline2() throws Exception {
         runTest("testData/exitPoints/notInline2.kt");
+    }
+
+    @TestMetadata("notInline3.kt")
+    public void testNotInline3() throws Exception {
+        runTest("testData/exitPoints/notInline3.kt");
     }
 
     @TestMetadata("simple.kt")
