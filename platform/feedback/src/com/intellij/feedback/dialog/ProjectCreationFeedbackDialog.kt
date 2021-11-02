@@ -1,23 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback.dialog
 
+import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
 import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.dialog.ProjectCreationFeedbackSystemInfoData.Companion.createProjectCreationFeedbackSystemInfoData
-import com.intellij.feedback.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
-import com.intellij.ide.BrowserUtil
+import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
-import com.intellij.ide.feedback.ZenDeskRequests
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
@@ -28,34 +23,22 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.layout.*
 import com.intellij.util.BooleanFunction
-import com.intellij.util.readXmlAsModel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
-import java.awt.Dimension
-import java.awt.GridLayout
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 class ProjectCreationFeedbackDialog(
   private val project: Project?,
   createdProjectTypeName: String
 ) : DialogWrapper(project) {
-
-  private val PRIVACY_POLICY_URL: String = "https://www.jetbrains.com/legal/docs/privacy/privacy.html"
-  private val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/legal/docs/privacy/third-parties.html"
-
-  private val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
-
-  private val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"
 
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
 
@@ -120,24 +103,15 @@ class ProjectCreationFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
     ProjectCreationFeedbackCountCollector.logFeedbackAttemptToSend()
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val stream = ProjectCreationFeedbackDialog::class.java.classLoader.getResourceAsStream(PATH_TO_FEEDBACK_FORM_XML)
-                   ?: throw RuntimeException("Resource not found: $PATH_TO_FEEDBACK_FORM_XML")
-      val xmlElement = readXmlAsModel(stream)
-      val form = ZenDeskForm.parse(xmlElement)
-      ZenDeskRequests().submit(
-        form,
-        if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
-        TICKET_TITLE_ZENDESK,
-        createRequestDescription(),
-        mapOf("collected_data" to createCollectedDataJsonString()),
-        { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
-        { ProjectCreationFeedbackCountCollector.logFeedbackSentError() }
-      )
-    }
-    ApplicationManager.getApplication().invokeLater {
-      ThanksForFeedbackNotification().notify(project)
-    }
+    val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
+    submitGeneralFeedback(project,
+                          TICKET_TITLE_ZENDESK,
+                          createRequestDescription(),
+                          createCollectedDataJsonString(),
+                          email,
+                          { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
+                          { ProjectCreationFeedbackCountCollector.logFeedbackSentError() }
+    )
   }
 
   private fun createRequestDescription(): String {
@@ -339,26 +313,8 @@ class ProjectCreationFeedbackDialog(
       }
 
       row {
-        cell(JPanel().apply {
-          layout = GridLayout(3, 1, 0, 0)
-
-          add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
-                                  FeedbackBundle.message("dialog.created.project.consent.1.2"),
-                                  FeedbackBundle.message("dialog.created.project.consent.1.3")) {
-            ProjectCreationFeedbackSystemInfo(project, systemInfoData).show()
-          })
-
-          add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2.1"),
-                                  FeedbackBundle.message("dialog.created.project.consent.2.2"),
-                                  FeedbackBundle.message("dialog.created.project.consent.2.3")) {
-            BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
-          })
-
-          add(createLineOfConsent("",
-                                  FeedbackBundle.message("dialog.created.project.consent.3.2"),
-                                  FeedbackBundle.message("dialog.created.project.consent.3.3")) {
-            BrowserUtil.browse(PRIVACY_POLICY_URL, project)
-          })
+        cell(createFeedbackAgreementComponent(project) {
+          ProjectCreationFeedbackSystemInfo(project, systemInfoData).show()
         })
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
     }.also { dialog ->
@@ -369,25 +325,6 @@ class ProjectCreationFeedbackDialog(
         }
       }
     }
-  }
-
-  private fun createLineOfConsent(prefixTest: String, linkText: String, postfix: String, action: () -> Unit): HyperlinkLabel {
-    val text = HtmlBuilder()
-      .append(prefixTest) //NON-NLS
-      .append(HtmlChunk.tag("hyperlink")
-                .addText(linkText)) //NON-NLS
-      .append(postfix) //NON-NLS
-    val label = HyperlinkLabel().apply {
-      setTextWithHyperlink(text.toString())
-      addHyperlinkListener {
-        action()
-      }
-      foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-      minimumSize = Dimension(preferredSize.width, minimumSize.height)
-    }
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, label)
-
-    return label
   }
 
   override fun createActions(): Array<Action> {
