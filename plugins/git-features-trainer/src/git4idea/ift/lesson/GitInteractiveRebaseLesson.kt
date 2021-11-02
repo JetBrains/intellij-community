@@ -68,6 +68,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
       highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false, usePulsation = true)
       proceedLink()
+      showWarningIfGitWindowClosed()
     }
 
     var commitHashToHighlight: Hash? = null
@@ -94,7 +95,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
-      showWarningIfGitWindowClosed()
+      showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
