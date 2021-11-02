@@ -698,9 +698,7 @@ public final class IdeKeyEventDispatcher {
     ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
       LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
                      "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
-      try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
-        processor.performAction(e, action, actionEvent);
-      }
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> processor.performAction(e, action, actionEvent));
     });
   }
 
