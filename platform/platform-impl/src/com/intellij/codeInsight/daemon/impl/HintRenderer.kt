@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -8,7 +8,10 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.editor.impl.FontInfo
@@ -17,7 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.StartupUiUtil
+import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
@@ -46,7 +49,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       getTextAttributes(editor)
     }
 
-    paintHint(g, editor, r, text, attributes, textAttributes, widthAdjustment)
+    paintHint(g, editor, r, text, attributes, attributes ?: textAttributes, widthAdjustment)
   }
 
   /**
@@ -171,7 +174,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
                          - calcHintTextWidth(text, fontMetrics))
     }
 
-    class MyFontMetrics internal constructor(editor: Editor, familyName: String, size: Int) {
+    class MyFontMetrics internal constructor(editor: Editor, size: Int, @JdkConstants.FontStyle fontType: Int) {
       val metrics: FontMetrics
       val lineHeight: Int
 
@@ -179,16 +182,18 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         get() = metrics.font
 
       init {
-        val font = StartupUiUtil.getFontWithFallback(familyName, Font.PLAIN, size)
+        val editorFont = EditorUtil.getEditorFont()
+        val font = editorFont.deriveFont(fontType, size.toFloat())
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
         // We assume this will be a better approximation to a real line height for a given font
         lineHeight = Math.ceil(font.createGlyphVector(context, "Ap").visualBounds.height).toInt()
       }
 
-      fun isActual(editor: Editor, familyName: String, size: Int): Boolean {
+      fun isActual(editor: Editor, size: Int, fontType: Int): Boolean {
         val font = metrics.font
-        if (familyName != font.family || size != font.size) return false
+        val fontName = EditorColorsManager.getInstance().globalScheme.editorFontName
+        if (fontName != font.family || size != font.size || fontType != font.style) return false
         val currentContext = getCurrentContext(editor)
         return currentContext.equals(metrics.fontRenderContext)
       }
@@ -203,14 +208,15 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     @JvmStatic
     protected fun getFontMetrics(editor: Editor): MyFontMetrics {
-      val familyName = UIManager.getFont("Label.font").family
       val size = Math.max(1, editor.colorsScheme.editorFontSize - 1)
       var metrics = editor.getUserData(HINT_FONT_METRICS)
-      if (metrics != null && !metrics.isActual(editor, familyName, size)) {
+      val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+      val fontType = attributes.fontType
+      if (metrics != null && !metrics.isActual(editor, size, fontType)) {
         metrics = null
       }
       if (metrics == null) {
-        metrics = MyFontMetrics(editor, familyName, size)
+        metrics = MyFontMetrics(editor, size, fontType)
         editor.putUserData(HINT_FONT_METRICS, metrics)
       }
       return metrics
