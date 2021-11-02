@@ -57,6 +57,8 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     return getPanel();
   }
 
+  protected void beforeTreeBuild(@NotNull SessionEvent event) {
+  }
 
   @Override
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
@@ -73,6 +75,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
+        beforeTreeBuild(event);
         buildTreeAndRestoreState(stackFrame);
       }
       else {

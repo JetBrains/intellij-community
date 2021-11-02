@@ -262,6 +262,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     //return null;
   }
 
+  @Override
+  protected void beforeTreeBuild(@NotNull SessionEvent event) {
+    if (event != SessionEvent.SETTINGS_CHANGED) {
+      myRootNode.removeResultNode();
+    }
+  }
+
   private void addExpressionResultNode() {
     XExpression expression = myEvaluateComboBox.getExpression();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
