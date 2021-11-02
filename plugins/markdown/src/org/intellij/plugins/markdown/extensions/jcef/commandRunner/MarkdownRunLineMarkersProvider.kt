@@ -6,10 +6,10 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
@@ -17,21 +17,17 @@ import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
-  private var commandRunnerExtension: CommandRunnerExtension.Provider? = null
-  init {
-    commandRunnerExtension = MarkdownExtensionsUtil.findBrowserExtensionProvider<CommandRunnerExtension.Provider>()
-  }
-
-  private fun commandRunnerExtensionEnabled(): Boolean {
-    return commandRunnerExtension?.isEnabled ?: false
+  private fun commandRunnerExtensionEnabled(project: Project): Boolean {
+    return MarkdownSettings.getInstance(project).isRunnerEnabled
   }
 
   override fun getInfo(element: PsiElement): Info? {
-    if (!commandRunnerExtensionEnabled() || !element.isValid) {
+    if (!commandRunnerExtensionEnabled(element.project) || !element.isValid) {
       return null
     }
     if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {

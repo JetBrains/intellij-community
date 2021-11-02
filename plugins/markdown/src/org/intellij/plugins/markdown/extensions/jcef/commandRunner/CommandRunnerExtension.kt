@@ -35,6 +35,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
@@ -175,7 +176,9 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
-      if (!isEnabled || panel.virtualFile == null || panel.project == null) return null
+      if ( panel.project == null || panel.virtualFile == null
+          || !MarkdownSettings.getInstance(panel.project!!).isRunnerEnabled
+      ) return null
 
       extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel, this) }
       return extensions[panel.virtualFile]

@@ -80,6 +80,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       }
       fullRow {
         checkBox(MarkdownBundle.message("markdown.settings.hide.errors"), settings::hideErrorsInCodeBlocks)
+      }
+      fullRow {
+        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"), settings::isRunnerEnabled)
       }.largeGapAfter()
       fullRow {
         label(MarkdownBundle.message("markdown.settings.preview.extensions.name"))
