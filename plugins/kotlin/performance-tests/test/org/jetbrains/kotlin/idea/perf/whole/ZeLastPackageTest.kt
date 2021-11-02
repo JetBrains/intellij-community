@@ -3,14 +3,12 @@ package org.jetbrains.kotlin.idea.perf.whole
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.perf.util.uploadAggregateResults
-import org.jetbrains.kotlin.test.KotlinRoot
-import java.io.File
 
 /**
  * It has to be the last package test, see `com.intellij.TestCaseLoader#getClasses`
  */
 class ZeLastPackageTest: TestCase() {
     fun test() {
-        uploadAggregateResults(File(KotlinRoot.REPO, "out"))
+        uploadAggregateResults()
     }
 }
