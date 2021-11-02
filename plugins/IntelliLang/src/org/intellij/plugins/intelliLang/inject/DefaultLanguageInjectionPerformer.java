@@ -55,4 +55,16 @@ final class DefaultLanguageInjectionPerformer implements FallbackInjectionPerfor
     }
     return true;
   }
+
+  @Override
+  public void registerSupportIfNone(PsiElement context, Injection injection) {
+    if (LanguageInjectionSupport.INJECTOR_SUPPORT.get(context) != null) return;
+
+    String injectionSupportId = injection.getSupportId();
+    LanguageInjectionSupport support = injectionSupportId != null ? InjectorUtils.findInjectionSupport(injectionSupportId) : null;
+    if (support == null) return;
+    Language language = InjectorUtils.getLanguageByString(injection.getInjectedLanguageId());
+    if (language == null) return;
+    InjectorUtils.registerSupport(support, false, context, language);
+  }
 }
