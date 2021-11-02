@@ -90,7 +90,9 @@ public final class RemoteServersDeploymentManager {
         RemoteServersServiceViewContributor contributor = findContributor(server);
         if (contributor != null) {
           ServiceEventListener.ServiceEvent event = contributor.createDeploymentsChangedEvent(connection);
-          myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(event);
+          if (event != null) {
+            myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(event);
+          }
           updateServerContent(myServerToContent.get(server), connection);
           if (myConnectionsToExpand.remove(connection)) {
             RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
