@@ -5,6 +5,7 @@ import com.intellij.application.options.ModulesComboBox
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JComponent
@@ -44,6 +45,7 @@ class MigrationDialogUi(map: MigrationMap?) {
       descriptionLabel = text(map?.description ?: "", 68)
         .component
     }
+      .layout(RowLayout.INDEPENDENT)
   }
 
   fun preferredFocusedComponent(): JComponent = editLink
