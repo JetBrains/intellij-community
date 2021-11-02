@@ -599,7 +599,7 @@
     {
       "name": "color",
       "type": "ordinal",
-      "range": {"scheme": "category20"},
+      "range": {"scheme": "category10"},
       "domain": {"data": "table", "field": "metricName"}
     },
     {
@@ -615,7 +615,7 @@
       "name": "branchColor",
       "type": "ordinal",
       "domain": {"data": "table", "field": "branch"},
-      "range": "category"
+      "range": {"scheme": "dark2"}
     }
   ],
   "legends": [
