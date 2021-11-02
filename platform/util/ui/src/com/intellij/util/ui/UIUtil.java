@@ -1691,7 +1691,8 @@ public final class UIUtil {
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
-   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
+   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} instead
+   * Must be called from EDT.
    * @see #pump()
    */
   @TestOnly
@@ -3573,7 +3574,11 @@ public final class UIUtil {
     StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
   }
 
-  /** @see UIUtil#dispatchAllInvocationEvents() */
+  /**
+   * Waits for the EDT to dispatch all its invocation events.
+   * Must be called outside EDT.
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} if you want to pump from inside EDT
+   **/
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
