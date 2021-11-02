@@ -223,7 +223,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       if (ignored) return;
     }
 
-    Notification notification = new MyNotification(IdeBundle.message(key, params));
+    Notification notification = new MyNotification(IdeBundle.message(key, params)).setDisplayId(key);
     if (action != null) {
       notification.addAction(action);
     }
