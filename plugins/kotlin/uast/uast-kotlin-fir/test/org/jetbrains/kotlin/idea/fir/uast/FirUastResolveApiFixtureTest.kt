@@ -47,11 +47,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     private fun doCheckRunner(key: String, checkCallback: () -> Unit) {
         try {
             checkCallback()
-            if (isExpectedToFail(key)) {
-                KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
-            }
         } catch (e: AssertionError) {
-            if (!isExpectedToFail(key)) throw e
+            if (isExpectedToFail(key))
+                return
+            else
+                throw e
+        }
+        if (isExpectedToFail(key)) {
+            KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
         }
     }
 
