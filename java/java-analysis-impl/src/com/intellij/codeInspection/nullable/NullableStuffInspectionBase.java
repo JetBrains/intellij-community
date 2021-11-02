@@ -259,17 +259,20 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               PsiTypeElement typeArgument = typeArguments[i];
               Project project = element.getProject();
               PsiType type = typeArgument.getType();
-              if (type instanceof PsiWildcardType && !((PsiWildcardType)type).isExtends()) continue;
               if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(project).createType(typeParameters[i])) ==
-                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(type) != Nullability.NOT_NULL) {
-                String annotationToAdd = manager.getDefaultNotNull();
-                PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
-                AddTypeAnnotationFix fix = null;
-                if (annotationClass != null &&
-                    AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
-                  fix = new AddTypeAnnotationFix(annotationToAdd, manager.getNullables());
+                  Nullability.NOT_NULL) {
+                Nullability typeNullability = DfaPsiUtil.getTypeNullability(type);
+                if (typeNullability != Nullability.NOT_NULL &&
+                    !(typeNullability == Nullability.UNKNOWN && type instanceof PsiWildcardType && !((PsiWildcardType)type).isExtends())) {
+                  String annotationToAdd = manager.getDefaultNotNull();
+                  PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
+                  AddTypeAnnotationFix fix = null;
+                  if (annotationClass != null &&
+                      AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
+                    fix = new AddTypeAnnotationFix(annotationToAdd, manager.getNullables());
+                  }
+                  reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
                 }
-                reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
               }
             }
           }
