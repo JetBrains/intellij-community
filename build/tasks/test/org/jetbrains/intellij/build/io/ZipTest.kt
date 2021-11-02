@@ -143,8 +143,8 @@ class ZipTest {
     Files.createDirectories(file.parent)
     Files.writeString(file, "\n")
 
-    val archiveFile = Path.of("/Volumes/data/f.zip")
-    zip(archiveFile, mapOf(Path.of("/Applications/Idea.app/Contents/lib") to ""), compress = true)
+    val archiveFile = tempDir.newPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""), compress = true)
 
     ImmutableZipFile.load(archiveFile).use { zipFile ->
       for (name in zipFile.entries) {
