@@ -80,6 +80,7 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
+    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar", "bootstrap.jar")
     dependenciesProperties = new DependenciesProperties(this)
     applicationInfo = new ApplicationInfoProperties(project, productProperties, messages).patch(this)
@@ -113,6 +114,7 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = parent.buildNumber
 
+    xBootClassPathJarNames = parent.xBootClassPathJarNames
     bootClassPathJarNames = parent.bootClassPathJarNames
     dependenciesProperties = parent.dependenciesProperties
     applicationInfo = parent.applicationInfo

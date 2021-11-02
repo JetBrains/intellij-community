@@ -232,8 +232,13 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     properties.addAll(platformProperties)
     Files.write(macDistDir.resolve("bin/idea.properties"), properties)
 
+    String bootClassPath = buildContext.xBootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
+    String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
+
     List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP, buildContext.productProperties)
-    List<List<String>> propsAndOpts = buildContext.additionalJvmArguments.split { it.startsWith('-D') }
+    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
+    if (!bootClassPath.isEmpty()) additionalJvmArgs += "-Xbootclasspath/a:$bootClassPath".toString()
+    List<List<String>> propsAndOpts = additionalJvmArgs.split { it.startsWith('-D') }
     List<String> launcherProperties = propsAndOpts[0], launcherVmOptions = propsAndOpts[1]
 
     fileVmOptions.add("-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log".toString())
@@ -242,8 +247,6 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String vmOptionsXml = optionsToXml(launcherVmOptions)
     String vmPropertiesXml = propertiesToXml(launcherProperties, ['idea.executable': buildContext.productProperties.baseFileName])
-
-    String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
     String archString = '<key>LSArchitecturePriority</key>\n    <array>\n'
     macCustomizer.architectures.each {archString += '      <string>' + it + '</string>\n' }

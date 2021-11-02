@@ -168,6 +168,13 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
+  private static String makePathsVar(String variableName, List<String> jarNames) {
+    if (jarNames.isEmpty()) return ""
+    String classPath = "SET \"$variableName=%IDE_HOME%\\lib\\${jarNames[0]}\"\n"
+    if (jarNames.size() == 1) return classPath
+    return classPath + jarNames[1..-1].collect { "SET \"$variableName=%$variableName%;%IDE_HOME%\\lib\\$it\"\n" }.join("")
+  }
+
   @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
@@ -175,11 +182,14 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String scriptName = "${baseName}.bat"
     String vmOptionsFileName = "${baseName}64.exe"
 
-    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\"\n"
-    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it\"" }.join("\n")
+    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
+    String classPath = makePathsVar("CLASS_PATH", buildContext.bootClassPathJarNames)
     if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar\""
+      classPath += "SET \"CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar\"\n"
     }
+
+    List<String> additionalJvmArguments = buildContext.additionalJvmArguments
+    if (!bootClassPath.isEmpty()) additionalJvmArguments += "-Xbootclasspath/a:%BOOT_CLASS_PATH%"
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
@@ -190,8 +200,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
-        filter(token: "class_path", value: classPath)
+        filter(token: "ide_jvm_args", value: additionalJvmArguments.join(' '))
+        filter(token: "class_path", value: bootClassPath + classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
       }
@@ -224,6 +234,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
+      String bootClassPath = buildContext.xBootClassPathJarNames.join(";")
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
       Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
@@ -239,7 +250,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
         IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
         IDS_VM_OPTIONS=${vmOptions.join(' ')}
-        IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim())
+        IDS_CLASSPATH_LIBS=${classPath}
+        IDS_BOOTCLASSPATH_LIBS=${bootClassPath}""".stripIndent().trim())
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"

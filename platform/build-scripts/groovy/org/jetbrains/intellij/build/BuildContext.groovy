@@ -41,6 +41,11 @@ abstract class BuildContext implements CompilationContext {
   String systemSelector
 
   /**
+   * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
+   */
+  List<String> xBootClassPathJarNames
+
+  /**
    * Names of JARs inside IDE_HOME/lib directory which need to be added to bootclasspath to start the IDE
    */
   List<String> bootClassPathJarNames

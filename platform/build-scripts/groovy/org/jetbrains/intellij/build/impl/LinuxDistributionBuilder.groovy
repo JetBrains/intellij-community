@@ -102,6 +102,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
+  private static String makePathsVar(String variableName, List<String> jarNames) {
+    if (jarNames.isEmpty()) return ""
+    String classPath = "$variableName=\"\$IDE_HOME/lib/${jarNames[0]}\"\n"
+    if (jarNames.size() == 1) return classPath
+    return classPath + jarNames[1..-1].collect { "$variableName=\"\$$variableName:\$IDE_HOME/lib/${it}\"\n" }.join("")
+  }
+
   @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
@@ -109,11 +116,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     String scriptName = "${baseName}.sh"
     String vmOptionsFileName = baseName
 
-    String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
-    classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
+    String bootClassPath = makePathsVar("BOOT_CLASS_PATH", buildContext.xBootClassPathJarNames)
+    String classPath = makePathsVar("CLASS_PATH", buildContext.bootClassPathJarNames)
     if (buildContext.productProperties.toolsJarRequired) {
-      classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
+      classPath += "CLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\"\n"
     }
+
+    List<String> additionalJvmArgs = buildContext.additionalJvmArguments
+    if (!bootClassPath.isEmpty()) additionalJvmArgs += "-Xbootclasspath/a:\$BOOT_CLASS_PATH"
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
@@ -129,8 +139,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_code", value: buildContext.applicationInfo.productCode)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
-        filter(token: "class_path", value: classPath)
+        filter(token: "ide_jvm_args", value: additionalJvmArgs.join(' '))
+        filter(token: "class_path", value: bootClassPath + classPath)
         filter(token: "script_name", value: scriptName)
       }
     }

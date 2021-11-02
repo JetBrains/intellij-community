@@ -421,11 +421,26 @@ std::string BuildClassPath()
   return result;
 }
 
+std::string BuildBootClassPath()
+{
+  std::string classpathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
+  return CollectLibJars(classpathLibs);
+}
+
 bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
 {
   std::string classPath = BuildClassPath();
   if (classPath.size() == 0) return false;
   vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+
+  return true;
+}
+
+bool AddBootClassPathOptions(std::vector<std::string>& vmOptionLines)
+{
+  std::string classPath = BuildBootClassPath();
+  if (classPath.size() == 0) return false;
+  vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
 
   return true;
 }
@@ -534,7 +549,7 @@ bool LoadVMOptions() {
   }
 
   AddClassPathOptions(lines);
-
+  AddBootClassPathOptions(lines);
   AddPredefinedVMOptions(lines);
 
   vmOptionCount = (int)lines.size() + 1;
