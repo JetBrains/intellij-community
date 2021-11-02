@@ -541,8 +541,6 @@
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
-
-    <console.folding implementation="org.jetbrains.kotlin.idea.stacktrace.KotlinCoroutineStacktraceFolder"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
