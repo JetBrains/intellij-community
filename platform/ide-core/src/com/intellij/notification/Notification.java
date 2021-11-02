@@ -134,7 +134,7 @@ public class Notification {
   }
 
   public @NotNull Notification setDisplayId(@NotNull String displayId) {
-    this.myDisplayId = displayId;
+    myDisplayId = displayId;
     return this;
   }
 
@@ -263,7 +263,7 @@ public class Notification {
   }
 
   /**
-   * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
+   * @param dropDownText when actions don't fit into the balloon width, they are collapsed and this text is displayed instead
    */
   public @NotNull Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;

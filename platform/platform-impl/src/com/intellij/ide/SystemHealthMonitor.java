@@ -253,7 +253,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
-      private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
+      private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/s is (somewhat outdated) peak SSD write speed
 
       @Override
       public void run() {
