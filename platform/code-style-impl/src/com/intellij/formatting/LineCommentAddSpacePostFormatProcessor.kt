@@ -23,7 +23,7 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return rangeToReformat
-    val languageCodeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language) ?: return rangeToReformat
+    val languageCodeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(language) ?: return rangeToReformat
 
     val commentFinder = SingleLineCommentFinder(rangeToReformat, languageCodeStyleSettingsProvider, commenter)
     source.accept(commentFinder)
