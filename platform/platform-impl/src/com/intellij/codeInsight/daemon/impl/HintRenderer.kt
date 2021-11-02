@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -23,7 +22,8 @@ import com.intellij.util.ui.GraphicsUtil
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
-import javax.swing.UIManager
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
@@ -102,7 +102,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4)
           val metrics = fontMetrics.metrics
           val startX = r.x + 7
-          val startY = r.y + Math.max(ascent, (r.height + metrics.ascent - metrics.descent) / 2) - 1
+          val startY = r.y + max(ascent, (r.height + metrics.ascent - metrics.descent) / 2) - 1
 
           val adjustment = calcWidthAdjustment(text, editor, g.fontMetrics, widthAdjustment)
           if (adjustment == 0) {
@@ -169,7 +169,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     private fun calcWidthAdjustment(text: String?, editor: Editor, fontMetrics: FontMetrics, widthAdjustment: HintWidthAdjustment?): Int {
       if (widthAdjustment == null || editor !is EditorImpl) return 0
       val editorTextWidth = editor.getFontMetrics(Font.PLAIN).stringWidth(widthAdjustment.editorTextToMatch)
-      return Math.max(0, editorTextWidth
+      return max(0, editorTextWidth
                          + calcHintTextWidth(widthAdjustment.hintTextToMatch, fontMetrics)
                          - calcHintTextWidth(text, fontMetrics))
     }
@@ -187,7 +187,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
         // We assume this will be a better approximation to a real line height for a given font
-        lineHeight = Math.ceil(font.createGlyphVector(context, "Ap").visualBounds.height).toInt()
+        lineHeight = ceil(font.createGlyphVector(context, "Ap").visualBounds.height).toInt()
       }
 
       fun isActual(editor: Editor, size: Int, fontType: Int): Boolean {
@@ -208,7 +208,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     @JvmStatic
     protected fun getFontMetrics(editor: Editor): MyFontMetrics {
-      val size = Math.max(1, editor.colorsScheme.editorFontSize - 1)
+      val size = max(1, editor.colorsScheme.editorFontSize - 1)
       var metrics = editor.getUserData(HINT_FONT_METRICS)
       val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       val fontType = attributes.fontType
