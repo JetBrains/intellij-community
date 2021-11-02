@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -202,10 +201,12 @@ class LookupElementFactory(
                 basicFactory.appendContainerAndReceiverInformation(descriptor) { presentation.appendTailText(it, true) }
             }
 
-            override fun handleInsert(context: InsertionContext) {
-                KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments = false, lambdaInfo = lambdaInfo)
-                    .handleInsert(context, this)
-            }
+            override fun getDecoratorInsertHandler() = KotlinFunctionInsertHandler.Normal(
+                callType,
+                inputTypeArguments,
+                inputValueArguments = false,
+                lambdaInfo = lambdaInfo,
+            )
         }
 
         return lookupElement
@@ -260,14 +261,12 @@ class LookupElementFactory(
             basicFactory.appendContainerAndReceiverInformation(descriptor) { presentation.appendTailText(it, true) }
         }
 
-        override fun handleInsert(context: InsertionContext) {
-            KotlinFunctionInsertHandler.Normal(
-                callType,
-                inputTypeArguments = needTypeArguments,
-                inputValueArguments = false,
-                argumentText = argumentText
-            ).handleInsert(context, this)
-        }
+        override fun getDecoratorInsertHandler() = KotlinFunctionInsertHandler.Normal(
+            callType,
+            inputTypeArguments = needTypeArguments,
+            inputValueArguments = false,
+            argumentText = argumentText,
+        )
     }
 
     override fun createLookupElement(
