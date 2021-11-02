@@ -15,7 +15,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -29,7 +28,7 @@ fun surroundWithBracesIfInStringTemplate(context: InsertionContext): Boolean {
     val document = context.document
     if (startOffset > 0 && document.charsSequence[startOffset - 1] == '$') {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.commitDocument(document)
 
         if (context.file.findElementAt(startOffset - 1)?.node?.elementType == KtTokens.SHORT_TEMPLATE_ENTRY_START) {
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
@@ -51,8 +50,7 @@ fun removeRedundantBracesInStringTemplate(context: InsertionContext) {
     val document = context.document
     val tailOffset = context.tailOffset
     if (document.charsSequence[tailOffset] == '}') {
-        val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitAllDocuments()
+        PsiDocumentManager.getInstance(context.project).commitDocument(document)
 
         val token = context.file.findElementAt(tailOffset)
         if (token != null && token.node.elementType == KtTokens.LONG_TEMPLATE_ENTRY_END) {
