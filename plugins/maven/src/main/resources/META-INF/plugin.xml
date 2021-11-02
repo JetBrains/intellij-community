@@ -74,7 +74,7 @@
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>

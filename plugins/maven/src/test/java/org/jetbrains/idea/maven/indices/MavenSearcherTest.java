@@ -15,19 +15,13 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.reposearch.DependencySearchProvider;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static java.util.Collections.emptyList;
 
 
 public class MavenSearcherTest extends MavenIndicesTestCase {
@@ -42,10 +36,6 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     super.setUp();
     myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
-
-    List<DependencySearchProvider> indexProviders =
-      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
-    DependencySearchService.getInstance(myProject).setProviders(indexProviders, emptyList());
   }
 
   @Override

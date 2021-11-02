@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter implements MavenSmartConverter<String> {
   @Override
-  protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+  protected boolean doIsValid(MavenId id, MavenIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())) return false;
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
