@@ -115,12 +115,22 @@ class JBCefOsrHandler implements CefRenderHandler {
     if (size.width != width || size.height != height) {
       image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
       volatileImage = myComponent.createVolatileImage(width, height);
+      dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
     }
     assert image != null;
 
     // {volatileImage} can be null if myComponent is not yet displayed, in that case we will use {myImage} in {paint(Graphics)} as
     // it can be called (asynchronously) when {myComponent} has already been displayed - in order not to skip the {onPaint} request
-    if (volatileImage != null && volatileImage.contentsLost()) volatileImage.validate(myComponent.getGraphicsConfiguration());
+    if (volatileImage != null && volatileImage.contentsLost()) {
+      int result = volatileImage.validate(myComponent.getGraphicsConfiguration());
+      if (result != VolatileImage.IMAGE_OK) {
+        dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
+      }
+      // should not happen as the image is originally made out of {myComponent}
+      if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
+        volatileImage = myComponent.createVolatileImage(width, height);
+      }
+    }
 
     BufferedImage bi = (BufferedImage)image.getDelegate();
     assert bi != null;
