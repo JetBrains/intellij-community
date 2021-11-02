@@ -382,7 +382,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
 
         if (ExperimentalUI.isNewUI()) {
-          var navBar = myRootPane.findByName("NavBar");
+          var navBar = myRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
           if (navBar instanceof StatusBarCentralWidget) {
             statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
           }

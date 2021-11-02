@@ -52,6 +52,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private static final Logger LOG = Logger.getInstance(IdeStatusBarImpl.class);
   public static final DataKey<String> HOVERED_WIDGET_ID = DataKey.create("HOVERED_WIDGET_ID");
   public static final Key<WidgetEffect> WIDGET_EFFECT_KEY = Key.create("TextPanel.widgetEffect");
+  public static final String NAVBAR_WIDGET_KEY = "NavBar";
 
   private static final String WIDGET_ID = "STATUS_BAR_WIDGET_ID";
   private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
@@ -559,6 +560,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     var bg = widgetEffect == WidgetEffect.PRESSED ?
              JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND :
              JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND;
+
+    if (getUI() instanceof StatusBarUI) {
+      point.y += StatusBarUI.BORDER_WIDTH.get();
+      bounds.height -= StatusBarUI.BORDER_WIDTH.get();
+    }
 
     g.setColor(bg);
     g.fillRect(point.x, point.y, bounds.width, bounds.height);

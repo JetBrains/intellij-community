@@ -5,7 +5,6 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -47,7 +46,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
+    return JBFont.label();
   }
 
   public void recomputeSize() {

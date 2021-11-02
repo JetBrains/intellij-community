@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath;
@@ -27,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -56,6 +58,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private final JBBox myNorthPanel = JBBox.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
+  private IdeRootPaneNorthExtension myStatusBarCentralWidget;
 
   private ToolWindowsPane myToolWindowsPane;
   private JBPanel<?> myContentPane;
@@ -344,17 +347,24 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected void installNorthComponents(@NotNull Project project) {
-    if (ExperimentalUI.isNewToolbar()) return;
-
-    myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
-    if (myNorthComponents.isEmpty()) {
-      return;
-    }
-
+    var extensions = IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project);
     UISettings uiSettings = UISettings.getShadowInstance();
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(uiSettings);
+    if (ExperimentalUI.isNewToolbar()) {
+      myStatusBarCentralWidget = ContainerUtil.find(extensions, e -> e instanceof StatusBarCentralWidget);
+      if (myStatusBarCentralWidget != null) {
+        myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
+      }
+    }
+    else {
+      myNorthComponents.addAll(extensions);
+      if (myNorthComponents.isEmpty()) {
+        return;
+      }
+
+      for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+        myNorthPanel.add(northComponent.getComponent());
+        northComponent.uiSettingsChanged(uiSettings);
+      }
     }
   }
 
@@ -375,12 +385,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public @Nullable IdeRootPaneNorthExtension findByName(@NotNull String name) {
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      if (northComponent.getKey().equals(name)) {
-        return northComponent;
-      }
-    }
-    return null;
+    return ExperimentalUI.isNewToolbar() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY.equals(name) ? myStatusBarCentralWidget :
+           ContainerUtil.find(myNorthComponents, c -> c.getKey().equals(name));
   }
 
   @Override
@@ -389,8 +395,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
-    for (IdeRootPaneNorthExtension component : myNorthComponents) {
-      component.uiSettingsChanged(uiSettings);
+    if (ExperimentalUI.isNewToolbar() && myStatusBarCentralWidget != null) {
+      myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
+    }
+    else {
+      for (IdeRootPaneNorthExtension component : myNorthComponents) {
+        component.uiSettingsChanged(uiSettings);
+      }
     }
 
     IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
