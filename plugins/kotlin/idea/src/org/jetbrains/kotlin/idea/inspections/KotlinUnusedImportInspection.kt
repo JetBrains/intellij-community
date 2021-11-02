@@ -206,10 +206,12 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     }
 
     private fun optimizeImportsOnTheFly(file: KtFile, optimizedImports: List<ImportPath>, editor: Editor, project: Project) {
-        PsiDocumentManager.getInstance(file.project).commitAllDocuments()
+        val documentManager = PsiDocumentManager.getInstance(file.project)
+        val doc = documentManager.getDocument(file) ?: editor.document
+        documentManager.commitDocument(doc)
         DocumentUtil.writeInRunUndoTransparentAction {
             KotlinImportOptimizer.replaceImports(file, optimizedImports)
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc)
         }
     }
 
