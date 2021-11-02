@@ -35,8 +35,6 @@ public final class DocumentUtil {
    * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
    *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
    * @param task           task to execute
-   *
-   * @see Document#setInBulkUpdate(boolean)
    */
   public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
     if (executeInBulk == document.isInBulkUpdate()) {
