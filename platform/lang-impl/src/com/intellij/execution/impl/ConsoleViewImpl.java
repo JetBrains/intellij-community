@@ -841,7 +841,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private EditorEx createConsoleEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorEx editor = doCreateConsoleEditor();
-    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()));
+    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()), "Undo must be disabled in console for performance reasons");
+    LOG.assertTrue(!((DocumentImpl)editor.getDocument()).isWriteThreadOnly(), "Console document must support background modifications, see e.g. ConsoleViewUtil.setupConsoleEditor() "+getClass());
     editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
