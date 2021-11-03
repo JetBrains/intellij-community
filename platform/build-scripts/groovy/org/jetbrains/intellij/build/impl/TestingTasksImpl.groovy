@@ -94,7 +94,7 @@ class TestingTasksImpl extends TestingTasks {
         runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties, context)
       }
       else {
-        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties)
+        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
       }
       if (options.testDiscoveryEnabled) {
         publishTestDiscovery(context.messages, getTestDiscoveryTraceFilePath())
@@ -172,21 +172,27 @@ class TestingTasksImpl extends TestingTasks {
   private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions,
                                              String defaultMainModule,
                                              Predicate<File> rootExcludeCondition,
-                                             Map<String, String> additionalSystemProperties) {
+                                             Map<String, String> additionalSystemProperties,
+                                             CompilationContext context) {
     String mainModule = options.mainModule ?: defaultMainModule
     if (rootExcludeCondition != null) {
-      List<JpsModule> excludedModules = context.project.modules.findAll {
-        List<String> contentRoots = it.contentRootsList.urls
-        !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
-      }
       List<String> excludedRoots = new ArrayList<String>()
-      for (JpsModule excludedModule : excludedModules) {
-        excludedRoots.add(context.getModuleOutputDir(excludedModule).toString())
-        excludedRoots.add(context.getModuleTestsOutputPath(excludedModule))
+      for (JpsModule module : context.project.modules) {
+        List<String> contentRoots = module.contentRootsList.getUrls()
+        if (!contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))) {
+          Path dir = context.getModuleOutputDir(module)
+          if (Files.exists(dir)) {
+            excludedRoots.add(dir.toString())
+          }
+          dir = Path.of(context.getModuleTestsOutputPath(module))
+          if (Files.exists(dir)) {
+            excludedRoots.add(dir.toString())
+          }
+        }
       }
       Path excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
-      Files.writeString(excludedRootsFile, String.join("\n", excludedRoots.findAll { Files.exists(Path.of(it)) }))
+      Files.writeString(excludedRootsFile, String.join("\n", excludedRoots))
       additionalSystemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
     }
 
