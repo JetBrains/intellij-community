@@ -4,4 +4,3 @@
 fun test() {
     Nested
 }
-/* IGNORE_FIR */
