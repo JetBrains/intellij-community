@@ -97,7 +97,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
     ReadAction.nonBlocking(() -> context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
       .expireWith(project)
-      .finishOnUiThread(ModalityState.defaultModalityState(), backgroundResult -> {
+      .finishOnUiThread(ModalityState.any(), backgroundResult -> {
         Collection<SearchScope> result = context.result;
         result.addAll(backgroundResult);
         promise.setResult(new ArrayList<>(result));
