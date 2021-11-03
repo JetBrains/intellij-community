@@ -8,7 +8,7 @@ UFile (package = ) [public final class WhenStringLiteralKt {...]
         UField (name = b) [@org.jetbrains.annotations.NotNull private static final var b: int = switch (a)  {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             USwitchExpression [switch (a)  {...] = Phi(1, 2)
-                USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
+                USimpleNameReferenceExpression (identifier = a) [a] = external a()
                 UExpressionList (when) [    "abc" -> {...    ] = Phi(1, 2)
                     USwitchClauseExpressionWithBody ["abc" -> {...] = Undetermined
                         ULiteralExpression (value = "abc") ["abc"] = "abc"
