@@ -1,31 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.screenmenu;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class Menu extends MenuItem {
+  private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static Boolean IS_ENABLED = null;
   private static final List<MenuItem> ourRootItems = new ArrayList<>();
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
-  private Runnable onClose;
+  private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
+  private Component myComponent;
 
   public Menu(String title) {
     setTitle(title);
   }
 
-  public void setOnClose(Runnable onClose) {
-    this.onClose = onClose;
+  public void setOnOpen(Runnable fillMenuProcedure, Component component) {
+    this.actionDelegate = fillMenuProcedure;
+    this.myComponent = component;
+  }
+
+  public void setOnClose(Runnable onClose, Component component) {
+    this.myOnClose = onClose;
+    this.myComponent = component;
   }
 
   public void setTitle(String label) {
@@ -111,16 +123,29 @@ public class Menu extends MenuItem {
   }
 
   public void invokeOpenLater() {
-    if (actionDelegate != null)
-      actionDelegate.run();
+    // Called on AppKit when menu opening
+    if (actionDelegate != null) {
+      if (USE_STUB) {
+        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
+        addItem(new MenuItem(), false/*already on AppKit thread*/);
+        ApplicationManager.getApplication().invokeLater(()->{
+          actionDelegate.run();
+          endFill(true);
+        });
+      } else {
+        invokeWithLWCToolkit(actionDelegate, ()->endFill(false/*already on AppKit thread*/), myComponent);
+      }
+    }
   }
 
   public void invokeMenuClosing() {
+    // Called on AppKit when menu closed
+
     // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
     // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
     // Defer clearing to avoid this problem.
     disposeChildren(1000);
-    if (onClose != null) onClose.run();
+    if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
   }
 
   //
@@ -167,7 +192,6 @@ public class Menu extends MenuItem {
     Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
     try {
       System.load(lib.toFile().getAbsolutePath());
-      Logger.getInstance(Menu.class).info("use new screen menu");
       // create and dispose native object (just for to test)
       Menu test = new Menu("test");
       test.ensureNativePeer();
@@ -175,7 +199,8 @@ public class Menu extends MenuItem {
       IS_ENABLED = true;
       Logger.getInstance(Menu.class).info("use new ScreenMenuBar implementation");
     } catch (Throwable e) {
-      Logger.getInstance(Menu.class).info("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
+      // default screen menu implementation will be used
+      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
     }
 
     return IS_ENABLED;
@@ -201,5 +226,25 @@ public class Menu extends MenuItem {
 
     // 3. refill in AppKit thread
     nativeRefillMainMenu(newItemsPeers, true);
+  }
+
+  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
+    try {
+      Class toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
+      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class);
+      if (invokeMethod != null) {
+        try {
+          invokeMethod.invoke(toolkitClass, r, invoker);
+        } catch (Exception e) {
+          // suppress InvocationTargetException as in openjdk implementation (see com.apple.laf.ScreenMenu.java)
+          Logger.getInstance(Menu.class).debug("invokeWithLWCToolkit.invokeAndWait: " + e);
+        }
+        if (after != null) after.run();
+      } else {
+        Logger.getInstance(Menu.class).warn("can't find sun.lwawt.macosx.LWCToolkit.invokeAndWait, screen menu won't be filled");
+      }
+    } catch (ClassNotFoundException e) {
+      Logger.getInstance(Menu.class).warn("can't find sun.lwawt.macosx.LWCToolkit, screen menu won't be filled");
+    }
   }
 }
