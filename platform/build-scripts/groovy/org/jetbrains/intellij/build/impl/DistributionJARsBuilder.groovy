@@ -217,41 +217,42 @@ final class DistributionJARsBuilder {
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(spanBuilder("build platform lib"), {
+      List<ForkJoinTask<?>> tasks = new ArrayList<>()
+      ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
+      if (task != null) {
+        tasks.add(task)
+      }
+
+      ForkJoinTask.invokeAll(Arrays.asList(
+        StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
+        buildHelper.createTask(spanBuilder("write patched app info")) {
+          Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
+          String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
+          byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
+                                                                     context.applicationInfo?.getAppInfoXml()) as byte[]
+          moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
+          return null
+        },
+        ).findAll { it != null })
+
+      List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
+      if (!isUpdateFromSources) {
+        scramble(context)
+      }
+
+      buildHelper.writeClasspath.invokeWithArguments(context.paths.distAllDir,
+                                                     context.productProperties.productLayout.mainJarName,
+                                                     context.productProperties.isAntRequired ?
+                                                     context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
+      return result
+    })
     List<DistributionFileEntry> entries = ForkJoinTask.invokeAll(Arrays.asList(
-      buildHelper.createTask(spanBuilder("build platform lib"), {
-        List<ForkJoinTask<?>> tasks = new ArrayList<>()
-        ForkJoinTask<?> task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
-        if (task != null) {
-          tasks.add(task)
-        }
-
-        ForkJoinTask.invokeAll(Arrays.asList(
-          StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
-          buildHelper.createTask(spanBuilder("write patched app info")) {
-            Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
-            String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-            byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                       context.applicationInfo?.getAppInfoXml()) as byte[]
-            moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
-            return null
-          },
-          ).findAll { it != null })
-
-        List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
-        if (!isUpdateFromSources) {
-          scramble(context)
-        }
-
-        buildHelper.writeClasspath.invokeWithArguments(context.paths.distAllDir,
-                                                       context.productProperties.productLayout.mainJarName,
-                                                       context.productProperties.isAntRequired ?
-                                                       context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
-        return result
-      }),
-      createBuildBundledPluginTask(pluginLayouts, context),
-      createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, context),
+      buildPlatformTask,
+      createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
+      createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, buildPlatformTask, context),
       createBuildNonBundledPluginsTask(!isUpdateFromSources, context),
-    ).findAll { it != null })
+      ).findAll { it != null })
       .collectMany {
         Object result = it.rawResult
         return (List<DistributionFileEntry>)(result instanceof List<?>
@@ -557,6 +558,7 @@ final class DistributionJARsBuilder {
   }
 
   ForkJoinTask<List<DistributionFileEntry>> createBuildBundledPluginTask(@NotNull Collection<PluginLayout> plugins,
+                                                                         ForkJoinTask<?> buildPlatformTask,
                                                                          @NotNull BuildContext context) {
     Set<String> pluginDirectoriesToSkip = context.options.bundledPluginDirectoriesToSkip
     return BuildHelper.getInstance(context).createTask(
@@ -570,7 +572,8 @@ final class DistributionJARsBuilder {
             satisfiesBundlingRequirements(it, null, context) && !pluginDirectoriesToSkip.contains(it.directoryName)
           }
           Span.current().setAttribute("satisfiableCount", pluginsToBundle.size())
-          return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle, context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context, null)
+          return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle,
+                              context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context, buildPlatformTask, null)
         }
       }
     )
@@ -588,6 +591,7 @@ final class DistributionJARsBuilder {
 
   private ForkJoinTask<List<DistributionFileEntry>> createBuildOsSpecificBundledPluginsTask(@NotNull Set<PluginLayout> pluginLayouts,
                                                                                             boolean isUpdateFromSources,
+                                                                                            @Nullable ForkJoinTask<?> buildPlatformTask,
                                                                                             @NotNull BuildContext context) {
     BuildHelper buildHelper = BuildHelper.getInstance(context)
     buildHelper.createTask(spanBuilder("build os-specific bundled plugins")
@@ -617,7 +621,7 @@ final class DistributionJARsBuilder {
                                           .setAttribute("outDir", outDir.toString()), new Supplier<List<DistributionFileEntry>>() {
             @Override
             List<DistributionFileEntry> get() {
-              return buildPlugins(new ModuleOutputPatcher(), osSpecificPlugins, outDir, context, null)
+              return buildPlugins(new ModuleOutputPatcher(), osSpecificPlugins, outDir, context, buildPlatformTask, null)
             }
           })
         }).collectMany { it.rawResult }
@@ -703,7 +707,7 @@ final class DistributionJARsBuilder {
         List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
         Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
-        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, new BiConsumer<PluginLayout, Path>() {
+        buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildKeymapPluginsTask, new BiConsumer<PluginLayout, Path>() {
           @Override
           void accept(PluginLayout plugin, Path pluginDir) {
             Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
@@ -768,7 +772,7 @@ final class DistributionJARsBuilder {
     context.messages.block(spanBuilder("build help plugin").setAttribute("dir", directory), new Supplier<Void>() {
       @Override
       Void get() {
-        buildPlugins(moduleOutputPatcher, List.of(helpPlugin), pluginsToPublishDir, context, null)
+        buildPlugins(moduleOutputPatcher, List.of(helpPlugin), pluginsToPublishDir, context, null, null)
         BuildHelper.zipWithPrefix(context, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory, true)
         return null
       }
@@ -815,17 +819,17 @@ final class DistributionJARsBuilder {
   // It will be changed once will be safe to build plugins in parallel.
   @NotNull
   List<DistributionFileEntry> buildPlugins(ModuleOutputPatcher moduleOutputPatcher,
-                                                   Collection<PluginLayout> pluginsToInclude,
-                                                   Path targetDirectory,
-                                                   BuildContext context,
-                                                   @Nullable BiConsumer<PluginLayout, Path> pluginBuilt) {
+                                           Collection<PluginLayout> pluginsToInclude,
+                                           Path targetDirectory,
+                                           BuildContext context,
+                                           @Nullable ForkJoinTask<?> buildPlatformTask,
+                                           @Nullable BiConsumer<PluginLayout, Path> pluginBuilt) {
     List<DistributionFileEntry> entries = new ArrayList<>()
 
     ScrambleTool scrambleTool = context.proprietaryBuildTools.scrambleTool
     boolean isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
     List<ForkJoinTask<?>> scrambleTasks = new ArrayList<>()
-    List<ForkJoinTask<?>> independentScrambleTasks = new ArrayList<>()
 
     for (PluginLayout plugin in pluginsToInclude) {
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
@@ -858,12 +862,7 @@ final class DistributionJARsBuilder {
           ForkJoinTask<?> scrambleTask = scrambleTool.scramblePlugin(context, plugin, pluginDir, targetDirectory)
           if (scrambleTask != null) {
             // we can not start executing right now because the plugin can use other plugins in a scramble classpath
-            if (plugin.scrambleClasspathPlugins.isEmpty()) {
-              independentScrambleTasks.add(scrambleTask.fork())
-            }
-            else {
-              scrambleTasks.add(scrambleTask)
-            }
+            scrambleTasks.add(scrambleTask)
           }
         }
       }
@@ -874,9 +873,15 @@ final class DistributionJARsBuilder {
     }
 
     if (!scrambleTasks.isEmpty()) {
+      // scrambling can require classes from platform
+      BuildHelper.getInstance(context).span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
+        @Override
+        void run() {
+          buildPlatformTask?.join()
+        }
+      })
       BuildHelper.invokeAllSettled(scrambleTasks)
     }
-    BuildHelper.joinAllSettled(independentScrambleTasks)
     return entries
   }
 
