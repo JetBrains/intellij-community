@@ -429,7 +429,7 @@ private fun resolveToPsiClass(uElement: () -> UElement?, declarationDescriptor: 
         else -> null
     }?.toPsiType(uElement.invoke(), context, TypeOwnerKind.DECLARATION, boxed = true).let { PsiTypesUtil.getPsiClass(it) }
 
-internal fun DeclarationDescriptor.toSource(): PsiElement? {
+private fun DeclarationDescriptor.toSource(): PsiElement? {
     return try {
         DescriptorToSourceUtils.getEffectiveReferencedDescriptors(this)
             .asSequence()
@@ -544,34 +544,6 @@ private fun KotlinType.containsLocalTypes(): Boolean {
     }
 
     return arguments.any { !it.isStarProjection && it.type.containsLocalTypes() }
-}
-
-private fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess(useResolveForReadWrite = false)?.isWrite == true) {
-        with(getAccessorLightMethods()) {
-            (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
-        }
-    }
-    return when (this) {
-        is KtDeclaration -> {
-            val lightElement = toLightElements().firstOrNull()
-            if (lightElement != null) return lightElement
-
-            if (this is KtPrimaryConstructor) {
-                // annotations don't have constructors (but in Kotlin they do), so resolving to the class here
-                (this.parent as? KtClassOrObject)?.takeIf { it.isAnnotation() }?.toLightClass()?.let { return it }
-            }
-
-            when (val uElement = this.toUElement()) {
-                is UDeclaration -> uElement.javaPsi
-                is UDeclarationsExpression -> uElement.declarations.firstOrNull()?.javaPsi
-                is ULambdaExpression -> (uElement.uastParent as? KotlinLocalFunctionUVariable)?.javaPsi
-                else -> null
-            }
-        }
-        is KtElement -> null
-        else -> this
-    }
 }
 
 private fun getTypeByArgument(
