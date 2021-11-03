@@ -12,11 +12,7 @@ public interface ServiceEventListener {
   Topic<ServiceEventListener> TOPIC =
     Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
 
-  /**
-   * @deprecated has no effect since 2021.2, shall be removed in 2022.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @ApiStatus.Internal
   Object POLLING_RESET_TARGET = ObjectUtils.sentinel("pollingResetTarget");
 
   void handle(@NotNull ServiceEvent event);

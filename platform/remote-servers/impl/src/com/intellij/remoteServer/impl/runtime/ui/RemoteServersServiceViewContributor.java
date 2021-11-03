@@ -86,7 +86,7 @@ public abstract class RemoteServersServiceViewContributor
     return name1.compareTo(name2);
   }
 
-  @Nullable
+  @NotNull
   protected ServiceEventListener.ServiceEvent createDeploymentsChangedEvent(@NotNull ServerConnection<?> connection) {
     return ServiceEventListener.ServiceEvent.createResetEvent(this.getClass());
   }
