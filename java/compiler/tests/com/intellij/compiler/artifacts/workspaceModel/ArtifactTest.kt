@@ -29,7 +29,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.toBuilder
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
 import java.util.concurrent.Callable
@@ -401,10 +400,9 @@ class ArtifactTest : ArtifactsTestCase() {
           it.addArtifactRootElementEntity(emptyList(), MySource)
         }
       }
-      val storage = WorkspaceModel.getInstance(project).entityStorage.base.toBuilder()
       val threads = List(10) {
         Callable {
-          rootEntity.toElement(project, storage)
+          rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
         }
       }
 
