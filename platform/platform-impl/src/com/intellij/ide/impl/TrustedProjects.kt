@@ -201,21 +201,12 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   class State : BaseState() {
     @get:Attribute
     var isTrusted by enum(ThreeState.UNSURE)
-
-    @get:Attribute
-    var hasCheckedIfOldProject by property(false)
   }
 
   var trustedState: ThreeState
     get() = if (isTrustedCheckDisabled()) ThreeState.YES else state.isTrusted
     set(value) {
       state.isTrusted = value
-    }
-
-  var hasCheckedIfOldProject: Boolean
-    get() = state.hasCheckedIfOldProject
-    set(value) {
-      state.hasCheckedIfOldProject = value
     }
 }
 
