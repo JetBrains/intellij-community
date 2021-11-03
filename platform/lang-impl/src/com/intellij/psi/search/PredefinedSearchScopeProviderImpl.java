@@ -144,28 +144,31 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
     ReadAction.nonBlocking(() -> {
+      Collection<SearchScope> backgroundResult = new LinkedHashSet<>();
       if ((psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
-        return;
+        return backgroundResult;
       }
       if (currentFile != null || showEmptyScopes) {
         PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
-        result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
+        backgroundResult.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
       }
 
       if (currentSelection && selectedTextEditor != null && psiFile != null) {
         SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
         if (selectionModel.hasSelection()) {
-          result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
+          backgroundResult.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
         }
       }
 
       if (usageView) {
-        addHierarchyScope(project, result);
-        result.addAll(scopesFromUsageView);
+        addHierarchyScope(project, backgroundResult);
+        backgroundResult.addAll(scopesFromUsageView);
       }
 
-      ContainerUtil.addIfNotNull(result, selectedFilesScope);
-    }).finishOnUiThread(ModalityState.defaultModalityState(), __ -> {
+      ContainerUtil.addIfNotNull(backgroundResult, selectedFilesScope);
+      return backgroundResult;
+    }).finishOnUiThread(ModalityState.defaultModalityState(), backgroundResult -> {
+      result.addAll(backgroundResult);
       promise.setResult(new ArrayList<>(result));
     }).submit(AppExecutorUtil.getAppExecutorService());
     return promise;
