@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.project-model" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
