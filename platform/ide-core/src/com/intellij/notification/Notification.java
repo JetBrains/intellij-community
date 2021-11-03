@@ -82,6 +82,7 @@ public class Notification {
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
+  private String myRemindLaterHandlerId;
 
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
@@ -182,6 +183,14 @@ public class Notification {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+  }
+
+  public @Nullable String getRemindLaterHandlerId() {
+    return myRemindLaterHandlerId;
+  }
+
+  public void setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
+    myRemindLaterHandlerId = remindLaterHandlerId;
   }
 
   public boolean hasTitle() {

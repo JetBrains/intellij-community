@@ -373,6 +373,8 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
         myRemoveCallback.accept(component.notification)
         component.notification.hideBalloon()
       }
+
+      component.setRemoveCallback(myRemoveCallback)
     }
   }
 
@@ -489,6 +491,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
   private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
+  private lateinit var myRemoveCallback: Consumer<Notification?>
 
   init {
     isOpaque = true
@@ -576,12 +579,19 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (notification.isSuggestionType) {
       val group = DefaultActionGroup()
       group.isPopup = true
-      @Suppress("DialogTitleCapitalization")
-      group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          TODO("Not yet implemented")
-        }
-      })
+
+      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
+      if (remindAction != null) {
+        @Suppress("DialogTitleCapitalization")
+        group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            remindAction.run()
+            myRemoveCallback.accept(notification)
+            notification.hideBalloon()
+          }
+        })
+      }
+
       @Suppress("DialogTitleCapitalization")
       group.add(object : AnAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
         override fun actionPerformed(e: AnActionEvent) {
@@ -679,6 +689,10 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
   fun setDoNotAskHandler(handler: (Boolean) -> Unit) {
     myDoNotAskHandler = handler
+  }
+
+  fun setRemoveCallback(callback: Consumer<Notification?>) {
+    myRemoveCallback = callback
   }
 
   fun isHover(): Boolean = myHoverState
