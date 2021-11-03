@@ -527,4 +527,15 @@ public final class ConfigurableExtensionPointUtil {
       return id;
     }
   }
+
+  @ApiStatus.Internal
+  public static void patch(@NotNull String id, @Nullable String parentId, @Nullable String bundle) {
+    ConfigurableGroupEP ep = ConfigurableGroupEP.find(id);
+    if (ep != null) {
+      ep.parentId = parentId;
+      if (bundle != null) {
+        ep.bundle = bundle;
+      }
+    }
+  }
 }
