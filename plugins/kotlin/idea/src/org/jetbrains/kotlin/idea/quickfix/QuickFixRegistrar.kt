@@ -679,5 +679,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(NonPublicCallFromPublicInlineFactory)
         PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(NonPublicCallFromPublicInlineFactory)
+
+        IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
     }
 }
