@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,13 +42,14 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
@@ -141,34 +142,33 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     Collection<SearchScope> scopesFromUsageView = usageView ? getScopesFromUsageView(project, prevSearchFiles) : Collections.emptyList();
 
-    return Promises.runAsync(() -> {
-      DumbService.getInstance(project).runWhenSmart(() -> {
-        ReadAction.run(() -> {
-          if ((psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
-            return;
-          }
-          if (currentFile != null || showEmptyScopes) {
-            PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
-            result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
-          }
+    AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
+    ReadAction.nonBlocking(() -> {
+      if ((psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
+        return;
+      }
+      if (currentFile != null || showEmptyScopes) {
+        PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
+        result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
+      }
 
-          if (currentSelection && selectedTextEditor != null && psiFile != null) {
-            SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
-            if (selectionModel.hasSelection()) {
-              result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
-            }
-          }
+      if (currentSelection && selectedTextEditor != null && psiFile != null) {
+        SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+        if (selectionModel.hasSelection()) {
+          result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
+        }
+      }
 
-          if (usageView) {
-            addHierarchyScope(project, result);
-            result.addAll(scopesFromUsageView);
-          }
+      if (usageView) {
+        addHierarchyScope(project, result);
+        result.addAll(scopesFromUsageView);
+      }
 
-          ContainerUtil.addIfNotNull(result, selectedFilesScope);
-        });
-      });
-      return new ArrayList<>(result);
-    });
+      ContainerUtil.addIfNotNull(result, selectedFilesScope);
+    }).finishOnUiThread(ModalityState.defaultModalityState(), __ -> {
+      promise.setResult(new ArrayList<>(result));
+    }).submit(AppExecutorUtil.getAppExecutorService());
+    return promise;
   }
 
   // in EDT

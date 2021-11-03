@@ -190,13 +190,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       BitUtil.isSet(options, OPT_FROM_SELECTION),
       BitUtil.isSet(options, OPT_USAGE_VIEW),
       BitUtil.isSet(options, OPT_EMPTY_SCOPES)
-    ).thenAsync(predefinedScopes -> Promises.runAsync(() -> {
-      Ref<Boolean> res = new Ref<>();
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        res.set(doProcessScopes(project, dataContext, processor, predefinedScopes));
-      });
-      return res.get();
-    }));
+    ).then(predefinedScopes -> doProcessScopes(project, dataContext, processor, predefinedScopes));
   }
 
   // called in EDT
@@ -252,11 +246,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         descriptors.add(descriptor);
       }
       return true;
-    }).onSuccess(aBoolean -> {
-      SwingUtilities.invokeLater(() -> {
-        updateModel(model, descriptors);
-      });
-    });
+    }).onSuccess(__ -> updateModel(model, descriptors));
   }
 
   // called in EDT
