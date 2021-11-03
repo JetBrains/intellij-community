@@ -229,7 +229,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun shouldSetRunConfigurationFromContext(): Boolean {
-    return Registry.`is`("select.run.configuration.from.context") && !RunToolbarSlotManager.getInstance(project).active
+    return Registry.`is`("select.run.configuration.from.context") && !isRunWidgetActive()
+  }
+
+  override fun isRunWidgetActive(): Boolean {
+    return RunToolbarSlotManager.getInstance(project).active
   }
 
   private fun clearSelectedConfigurationIcon() {
