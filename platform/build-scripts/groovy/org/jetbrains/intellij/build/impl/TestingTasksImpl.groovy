@@ -56,10 +56,10 @@ class TestingTasksImpl extends TestingTasks {
 
     checkOptions()
 
-    CompilationTasks compilationTasks = CompilationTasks.create(context)
-    Set<String> projectArtifacts = options.beforeRunProjectArtifacts == null ? null : Set.of(options.beforeRunProjectArtifacts.split(";"))
-    if (projectArtifacts != null) {
-      compilationTasks.buildProjectArtifacts(projectArtifacts)
+    def compilationTasks = CompilationTasks.create(context)
+    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
+    if (projectArtifacts) {
+      compilationTasks.buildProjectArtifacts(new LinkedHashSet(projectArtifacts))
     }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
       def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
@@ -67,7 +67,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts((Set<String>)runConfigurations.collectMany(new LinkedHashSet<String>()) {it.requiredArtifacts})
+      compilationTasks.buildProjectArtifacts(new LinkedHashSet(runConfigurations.collectMany {it.requiredArtifacts}))
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])
@@ -164,10 +164,10 @@ class TestingTasksImpl extends TestingTasks {
       List<String> excludedRoots = excludedModules.collectMany {
         [context.getModuleOutputDir(it).toString(), context.getModuleTestsOutputPath(it)]
       }
-      java.nio.file.Path excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
-      Files.createDirectories(excludedRootsFile.parent)
-      Files.writeString(excludedRootsFile, String.join("\n", excludedRoots.findAll { Files.exists(java.nio.file.Path.of(it)) }))
-      additionalSystemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
+      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
+      FileUtilRt.createParentDirs(excludedRootsFile)
+      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
+      additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
     runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
