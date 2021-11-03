@@ -208,7 +208,6 @@ final class KotlinPluginBuilder {
 
       String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
       withModule("kotlin.jps-plugin", jpsPluginJar)
-      withProjectLibraryUnpackedIntoJar("kotlinc.compiler-components-for-jps", jpsPluginJar)
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
       withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)

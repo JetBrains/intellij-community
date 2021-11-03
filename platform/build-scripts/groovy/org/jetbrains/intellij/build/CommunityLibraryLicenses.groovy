@@ -747,7 +747,6 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
-    jetbrainsLibrary("kotlinc.compiler-components-for-jps"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler"),
