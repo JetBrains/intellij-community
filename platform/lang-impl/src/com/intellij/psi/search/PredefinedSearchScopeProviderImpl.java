@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -20,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -44,12 +47,19 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 // used by Rider
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
+  private static final Logger LOG = Logger.getInstance(PredefinedSearchScopeProviderImpl.class);
+
   public static @NotNull @Nls String getRecentlyViewedFilesScopeName() {
     return IdeBundle.message("scope.recent.files");
   }
@@ -68,9 +78,27 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                @Nullable DataContext dataContext,
                                                boolean suggestSearchInLibs,
                                                boolean prevSearchFiles,
-                                               boolean currentSelection,
-                                               boolean usageView,
-                                               boolean showEmptyScopes) {
+                                               boolean currentSelection, boolean usageView, boolean showEmptyScopes) {
+
+    try {
+      List<SearchScope> scopes = getPredefinedScopesAsync(project, dataContext, suggestSearchInLibs, prevSearchFiles, currentSelection,
+                                                          usageView, showEmptyScopes).blockingGet(10, TimeUnit.SECONDS);
+      return scopes == null ? Collections.emptyList() : scopes;
+    }
+    catch (TimeoutException | ExecutionException e) {
+      LOG.error(e); // consider using getPredefinedScopesAsync
+      return Collections.emptyList();
+    }
+  }
+
+  @Override
+  public Promise<List<SearchScope>> getPredefinedScopesAsync(@NotNull Project project,
+                                                             @Nullable DataContext dataContext,
+                                                             boolean suggestSearchInLibs,
+                                                             boolean prevSearchFiles,
+                                                             boolean currentSelection,
+                                                             boolean usageView,
+                                                             boolean showEmptyScopes) {
     Collection<SearchScope> result = new LinkedHashSet<>();
     result.add(GlobalSearchScope.everythingScope(project));
     result.add(GlobalSearchScope.projectScope(project));
@@ -108,8 +136,107 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                 : null;
     PsiFile psiFile =
       selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-    PsiFile currentFile = psiFile;
+    PsiFile currentFile = fillFromDataContext(dataContext, result, psiFile);
+    SearchScope selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile);
 
+    Collection<SearchScope> scopesFromUsageView = usageView ? getScopesFromUsageView(project, prevSearchFiles) : Collections.emptyList();
+
+    return Promises.runAsync(() -> {
+      DumbService.getInstance(project).runWhenSmart(() -> {
+        ReadAction.run(() -> {
+          if ((psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
+            return;
+          }
+          if (currentFile != null || showEmptyScopes) {
+            PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
+            result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
+          }
+
+          if (currentSelection && selectedTextEditor != null && psiFile != null) {
+            SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+            if (selectionModel.hasSelection()) {
+              result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
+            }
+          }
+
+          if (usageView) {
+            addHierarchyScope(project, result);
+            result.addAll(scopesFromUsageView);
+          }
+
+          ContainerUtil.addIfNotNull(result, selectedFilesScope);
+        });
+      });
+      return new ArrayList<>(result);
+    });
+  }
+
+  // in EDT
+  private static Collection<SearchScope> getScopesFromUsageView(@NotNull Project project, boolean prevSearchFiles) {
+    LinkedHashSet<SearchScope> scopes = new LinkedHashSet<>();
+    UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
+    if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
+      final Set<Usage> usages = new HashSet<>(selectedUsageView.getUsages());
+      usages.removeAll(selectedUsageView.getExcludedUsages());
+
+      if (prevSearchFiles) {
+        final Set<VirtualFile> files = collectFiles(usages, true);
+        if (!files.isEmpty()) {
+          GlobalSearchScope prev = new GlobalSearchScope(project) {
+            private Set<VirtualFile> myFiles;
+
+            @NotNull
+            @Override
+            public String getDisplayName() {
+              return IdeBundle.message("scope.files.in.previous.search.result");
+            }
+
+            @Override
+            public synchronized boolean contains(@NotNull VirtualFile file) {
+              if (myFiles == null) {
+                myFiles = collectFiles(usages, false);
+              }
+              return myFiles.contains(file);
+            }
+
+            @Override
+            public boolean isSearchInModuleContent(@NotNull Module aModule) {
+              return true;
+            }
+
+            @Override
+            public boolean isSearchInLibraries() {
+              return true;
+            }
+          };
+          scopes.add(prev);
+        }
+      }
+      else {
+        final List<PsiElement> results = new ArrayList<>(usages.size());
+        for (Usage usage : usages) {
+          if (usage instanceof PsiElementUsage) {
+            final PsiElement element = ((PsiElementUsage)usage).getElement();
+            if (element != null && element.isValid() && element.getContainingFile() != null) {
+              results.add(element);
+            }
+          }
+        }
+
+        if (!results.isEmpty()) {
+          scopes.add(
+            new LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")));
+        }
+      }
+    }
+    return scopes;
+  }
+
+  // in EDT
+  private static PsiFile fillFromDataContext(@Nullable DataContext dataContext,
+                                             Collection<SearchScope> result,
+                                             PsiFile psiFile) {
+    PsiFile currentFile = psiFile;
     if (dataContext != null) {
       PsiElement dataContextElement = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (dataContextElement == null) {
@@ -135,80 +262,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         }
       }
     }
-
-    if (currentFile != null || showEmptyScopes) {
-      PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
-      result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
-    }
-
-    if (currentSelection && selectedTextEditor != null && psiFile != null) {
-      SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
-      if (selectionModel.hasSelection()) {
-        result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
-      }
-    }
-
-    if (usageView) {
-      addHierarchyScope(project, result);
-      UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
-      if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-        final Set<Usage> usages = new HashSet<>(selectedUsageView.getUsages());
-        usages.removeAll(selectedUsageView.getExcludedUsages());
-
-        if (prevSearchFiles) {
-          final Set<VirtualFile> files = collectFiles(usages, true);
-          if (!files.isEmpty()) {
-            GlobalSearchScope prev = new GlobalSearchScope(project) {
-              private Set<VirtualFile> myFiles;
-
-              @NotNull
-              @Override
-              public String getDisplayName() {
-                return IdeBundle.message("scope.files.in.previous.search.result");
-              }
-
-              @Override
-              public synchronized boolean contains(@NotNull VirtualFile file) {
-                if (myFiles == null) {
-                  myFiles = collectFiles(usages, false);
-                }
-                return myFiles.contains(file);
-              }
-
-              @Override
-              public boolean isSearchInModuleContent(@NotNull Module aModule) {
-                return true;
-              }
-
-              @Override
-              public boolean isSearchInLibraries() {
-                return true;
-              }
-            };
-            result.add(prev);
-          }
-        }
-        else {
-          final List<PsiElement> results = new ArrayList<>(usages.size());
-          for (Usage usage : usages) {
-            if (usage instanceof PsiElementUsage) {
-              final PsiElement element = ((PsiElementUsage)usage).getElement();
-              if (element != null && element.isValid() && element.getContainingFile() != null) {
-                results.add(element);
-              }
-            }
-          }
-
-          if (!results.isEmpty()) {
-            result.add(new LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")));
-          }
-        }
-      }
-    }
-
-    ContainerUtil.addIfNotNull(result, getSelectedFilesScope(project, dataContext, currentFile));
-
-    return new ArrayList<>(result);
+    return currentFile;
   }
 
   private static void addHierarchyScope(@NotNull Project project, Collection<? super SearchScope> result) {
