@@ -18,7 +18,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
@@ -137,12 +136,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
     Object data = myCachedData.get(dataId);
     return data == NullResult.Initial || data == NullResult.Final ? null : data;
-  }
-
-  static {
-    for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
-      DataKey.create(instance.getKey()); // initialize data keys with rules
-    }
   }
 
   static void clearAllCaches() {
