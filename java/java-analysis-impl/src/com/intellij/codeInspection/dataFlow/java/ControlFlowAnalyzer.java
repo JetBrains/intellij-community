@@ -1125,6 +1125,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (condGotoOffset != null) {
         condGotoOffset.setOffset(assignmentInstr.getIndex());
       }
+
+      addInstruction(new PopInstruction());
     }
 
     if (sourcePattern == innerPattern) {
