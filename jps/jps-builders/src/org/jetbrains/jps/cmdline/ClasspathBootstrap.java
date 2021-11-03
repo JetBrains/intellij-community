@@ -7,6 +7,7 @@ import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
@@ -15,12 +16,14 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
+import gnu.trove.THashSet;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
+import org.apache.log4j.Appender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -35,7 +38,8 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -157,14 +161,13 @@ public final class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
+    // Important! All dependencies must be java 6 compatible (the oldest supported javac to be launched)
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
-
-    // util
-    for (String path : ClassPathUtil.getUtilClassPath()) {
-      cp.add(new File(path));
-    }
+    cp.add(getResourceFile(Appender.class)); // log4j
+    cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
+    cp.add(getResourceFile(THashSet.class)); // Trove
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
