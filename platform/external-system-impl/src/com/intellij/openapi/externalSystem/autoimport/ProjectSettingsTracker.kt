@@ -77,7 +77,7 @@ class ProjectSettingsTracker(
         val settingsFilesStatus = settingsFilesStatus.updateAndGet {
           createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
         }
-        LOG.info("Settings file status: ${settingsFilesStatus}")
+        LOG.info("[refreshChanges] Settings file status: ${settingsFilesStatus}")
         when (settingsFilesStatus.hasChanges()) {
           true -> status.markDirty(operationStamp, EXTERNAL)
           else -> status.markReverted(operationStamp)
@@ -169,6 +169,23 @@ class ProjectSettingsTracker(
             this@ProjectSettingsTracker.status.markSynchronized(operationStamp)
           }
           applyChangesOperation.finishTask()
+        }
+      }
+    }
+
+    override fun onSettingsFilesListChange() {
+      val operationStamp = currentTime()
+      submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
+        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
+          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+          }
+          LOG.info("[onSettingsFilesListChange] Settings file status: ${settingsFilesStatus}")
+          when (settingsFilesStatus.hasChanges()) {
+            true -> status.markModified(operationStamp, EXTERNAL)
+            else -> status.markReverted(operationStamp)
+          }
+          projectTracker.scheduleChangeProcessing()
         }
       }
     }

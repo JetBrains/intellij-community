@@ -15,4 +15,7 @@ interface ExternalSystemProjectRefreshListener {
 
   @JvmDefault
   fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {}
+
+  @JvmDefault
+  fun onSettingsFilesListChange() {}
 }
