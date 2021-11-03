@@ -9,16 +9,17 @@ import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ArrayFqNames
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.*
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun String?.orAnonymous(kind: String = ""): String = this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
@@ -73,6 +74,34 @@ fun KtClassOrObject.toPsiType(): PsiType {
         lightClass.baseClassType
     else
         PsiTypesUtil.getClassType(lightClass)
+}
+
+fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
+    if (this is KtProperty && sourcePsi?.readWriteAccess(useResolveForReadWrite = false)?.isWrite == true) {
+        with(getAccessorLightMethods()) {
+            (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
+        }
+    }
+    return when (this) {
+        is KtDeclaration -> {
+            val lightElement = toLightElements().firstOrNull()
+            if (lightElement != null) return lightElement
+
+            if (this is KtPrimaryConstructor) {
+                // annotations don't have constructors (but in Kotlin they do), so resolving to the class here
+                (this.parent as? KtClassOrObject)?.takeIf { it.isAnnotation() }?.toLightClass()?.let { return it }
+            }
+
+            when (val uElement = this.toUElement()) {
+                is UDeclaration -> uElement.javaPsi
+                is UDeclarationsExpression -> uElement.declarations.firstOrNull()?.javaPsi
+                is ULambdaExpression -> (uElement.uastParent as? KotlinLocalFunctionUVariable)?.javaPsi
+                else -> null
+            }
+        }
+        is KtElement -> null
+        else -> this
+    }
 }
 
 private val KtCallElement.isAnnotationArgument: Boolean
