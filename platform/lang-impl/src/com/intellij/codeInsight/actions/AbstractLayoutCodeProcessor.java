@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.function.Consumer;
 
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(AbstractLayoutCodeProcessor.class);
@@ -282,23 +283,39 @@ public abstract class AbstractLayoutCodeProcessor {
       );
       return;
     }
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText(myProgressText);
+    
+    Consumer<@NotNull ProgressIndicator> runnable = (indicator) -> {
+      indicator.setText(myProgressText);
         try {
           new ProcessingTask(indicator).performFileProcessing(file);
         }
-        catch(IndexNotReadyException e) {
+        catch (IndexNotReadyException e) {
           LOG.warn(e);
           return;
         }
         if (myPostRunnable != null) {
           ApplicationManager.getApplication().invokeLater(myPostRunnable);
         }
-      }
-    });
+    };
+
+    
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, getProgressTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.accept(indicator);
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.accept(indicator);
+        }
+      });
+    }
   }
 
   private void runProcessFiles() {
