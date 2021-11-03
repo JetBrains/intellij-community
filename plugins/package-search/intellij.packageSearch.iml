@@ -9,6 +9,11 @@
         <compilerArguments>
           <option name="languageVersion" value="1.5" />
           <option name="apiVersion" value="1.5" />
+          <option name="pluginClasspaths">
+           <array>
+             <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
+           </array>
+          </option>
         </compilerArguments>
       </configuration>
     </facet>

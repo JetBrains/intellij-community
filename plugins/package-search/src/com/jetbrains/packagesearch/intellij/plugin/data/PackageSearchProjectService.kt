@@ -3,7 +3,9 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.util.ThreeState
+import com.intellij.util.io.exists
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
@@ -30,6 +32,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
@@ -50,6 +53,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.job
+import java.nio.file.Files
+import java.util.concurrent.Executors
 import kotlin.time.Duration
 
 internal class PackageSearchProjectService(val project: Project) : CoroutineScope by project.lifecycleScope {
@@ -67,6 +73,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
+
+    private val cacheDirectory = project.getProjectDataPath("pkgs")
+        .also { if (!it.exists()) Files.createDirectories(it) }
 
     val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
@@ -141,14 +150,15 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .flatMapLatest { modules ->
             project.filesChangedEventFlow.throttle(Duration.seconds(5))
                 .map { changedFilesEvents ->
-                    modules.filter { it.buildFile.hashable in changedFilesEvents.mapNotNull { it.file?.hashable } }
+                    modules.filter { it.buildFile in changedFilesEvents.mapNotNull { it.file } }
                 }
         }
         .filter { it.isNotEmpty() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
             message = "Error while checking Modules changes",
-            fallbackValue = emptyList()
+            fallbackValue = emptyList(),
+            retryChannel = retryFromErrorChannel
         )
         .shareIn(this, SharingStarted.Eagerly)
 
@@ -169,15 +179,21 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
+    private val installedDependenciesExecutor = Executors.newFixedThreadPool(
+        (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(2)
+    ).asCoroutineDispatcher()
+
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
-        .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) { it.fetchProjectDependencies() }
+        .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
+            fetchProjectDependencies(it, cacheDirectory)
+        }
         .modifiedBy(
             merge(projectModulesChangesFlow, operationExecutedChannel.consumeAsFlow())
                 .throttle(Duration.seconds(5))
         ) { installed, changedModules ->
             val (result, time) = installedPackagesDifferenceLoadingFlow.whileLoading {
                 installed.toMutableMap().also { map ->
-                    changedModules.parallelForEach { map[it] = it.installedDependencies() }
+                    changedModules.parallelForEach { map[it] = it.installedDependencies(cacheDirectory) }
                 }
             }
             logTrace("installedPackagesStep1LoadingFlow") {
@@ -188,8 +204,10 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .catchAndLog(
             context = "${this::class.qualifiedName}#dependenciesByModuleStateFlow",
             message = "Error while evaluating installed dependencies",
-            fallbackValue = emptyMap()
+            fallbackValue = emptyMap(),
+            retryChannel = retryFromErrorChannel
         )
+        .flowOn(installedDependenciesExecutor)
         .shareIn(this, SharingStarted.Eagerly)
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
@@ -231,6 +249,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         packageUpgradesStateFlow.filter { it.allUpgrades.allUpdates.isNotEmpty() }
             .onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
             .launchIn(this)
+
+        coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
