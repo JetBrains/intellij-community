@@ -1217,7 +1217,10 @@
     <notificationGroup id="associate.files" displayType="BALLOON"/>
     <notificationGroup id="System shortcuts conflicts" displayType="BALLOON"/>
     <notificationGroup id="Required Plugins" displayType="BALLOON"/>
-    <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"/>
+    <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"
+                       notificationIds="mixed.bag.installation;implicit.plugin.directory.path;implicit.log.directory.path;
+                                        bundled.jre.m1.arch.message;bundled.jre.version.message;code.cache.warn.message;
+                                        vm.options.env.vars;shell.env.loading.failed;low.disk"/>
     <notificationGroup id="Collect Zipped Logs" displayType="BALLOON"/>
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Plugins AutoSwitch" displayType="BALLOON"/>
