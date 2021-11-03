@@ -89,7 +89,6 @@ import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.*;
@@ -246,26 +245,27 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @Override
   public void runSync(boolean requestEditorFocus) {
-    try {
-      if (mySdk == null) {
-        throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
-      }
-      initAndRun(mySdk);
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
-        @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          Sdk sdk = mySdk;
+          if (sdk == null) {
+            throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
+          }
+          initAndRun(sdk);
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           connect(myStatementsToExecute);
           if (requestEditorFocus) {
             myConsoleView.requestFocus();
           }
         }
-      });
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Error running console", e);
-      showErrorsInConsole(e);
-    }
+        catch (ExecutionException e) {
+          LOG.warn("Error running console", e);
+          ApplicationManager.getApplication().invokeLater(() -> showErrorsInConsole(e));
+        }
+      }
+    });
   }
 
 
