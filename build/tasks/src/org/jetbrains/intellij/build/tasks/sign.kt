@@ -143,9 +143,11 @@ fun signMacZip(
       if (notarize) "yes" else "no",
       bundleIdentifier,
     )
+
+    val env = System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let { "ARTIFACTORY_URL=$it " } ?: ""
     @Suppress("SpellCheckingInspection")
     signFile(remoteDir = remoteDir,
-             commandString = "'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
+             commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
              file = file,
              ssh = ssh,
              ftpClient = sftp,
@@ -213,11 +215,6 @@ private fun signFile(remoteDir: String,
   Files.createDirectories(logFile.parent)
   try {
     ssh.startSession().use { session ->
-      System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let {
-        session.setEnvVar("ARTIFACTORY_URL", it)
-      }
-
-      @Suppress("SpellCheckingInspection")
       // not a relative path to file is expected, but only a file name
       val command = session.exec(commandString)
       val inputStreamReadThread = thread(name = "error-stream-reader-of-sign-$fileName") {
@@ -238,7 +235,8 @@ private fun signFile(remoteDir: String,
     }
   }
   catch (e: Exception) {
-    throw RuntimeException("SSH command failed, details are available in ${artifactDir.relativize(logFile)}: ${e.message}", e)
+    val logFileLocation = if (Files.exists(logFile)) artifactDir.relativize(logFile) else "<internal error - log file is not created>"
+    throw RuntimeException("SSH command failed, details are available in $logFileLocation: ${e.message}", e)
   }
   finally {
     if (Files.exists(logFile)) {
