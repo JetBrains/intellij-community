@@ -140,6 +140,8 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
     }
 
     protected fun getAbstractCallableInfo(mainCallable: CallableInfo, originalExpression: KtExpression): CallableInfo? {
+        if (mainCallable.isForCompanion) return null
+
         val receiverTypeInfo: TypeInfo
         val receiverType: KotlinType
 
