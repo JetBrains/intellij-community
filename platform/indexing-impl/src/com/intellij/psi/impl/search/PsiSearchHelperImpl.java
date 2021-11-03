@@ -1262,9 +1262,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return Collections.singletonList(idIndexQuery);
       }
 
+      if (!TrigramIndex.isEnabled()) {
+        return Collections.singletonList(idIndexQuery);
+      }
+
       FileBasedIndex.AllKeysQuery<Integer, Void> trigramIndexQuery =
         new FileBasedIndex.AllKeysQuery<>(TrigramIndex.INDEX_ID, myTrigrams, null);
-
       return Arrays.asList(idIndexQuery, trigramIndexQuery);
     }
 

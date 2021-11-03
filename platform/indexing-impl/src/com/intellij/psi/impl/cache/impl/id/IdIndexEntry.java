@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
+import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,13 +64,24 @@ public final class IdIndexEntry {
   }
 
   static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
-    if (start == end) return 0;
-    char firstChar = line.charAt(start);
-    char lastChar = line.charAt(end - 1);
-    if (!caseSensitive) {
-      firstChar = StringUtil.toLowerCase(firstChar);
-      lastChar = StringUtil.toLowerCase(lastChar);
+    if (TrigramIndex.isEnabled()) {
+      // use more compact hash
+      if (start == end) return 0;
+      char firstChar = line.charAt(start);
+      char lastChar = line.charAt(end - 1);
+      if (!caseSensitive) {
+        firstChar = StringUtil.toLowerCase(firstChar);
+        lastChar = StringUtil.toLowerCase(lastChar);
+      }
+      return (firstChar << 8) + (lastChar << 4) + end - start;
     }
-    return (firstChar << 8) + (lastChar << 4) + end - start;
+    else {
+      // use stronger hash
+      return StringUtil.stringHashCode(line, start, end);
+    }
+  }
+
+  static int getUsedHashAlgorithmVersion() {
+    return TrigramIndex.isEnabled() ? 0 : 1;
   }
 }
