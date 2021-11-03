@@ -2,15 +2,77 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operati
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 
 internal class PackageSearchOperationFactory {
+
+    inline fun <reified T : PackageModel, V : PackageVersion> computeInstallActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel,
+        defaultScope: PackageScope,
+        knownRepositories: KnownRepositories.InTargetModules,
+        targetVersion: NormalizedPackageVersion<V>
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.SearchResult) return emptyList()
+
+        val versionToInstall = targetVersion.originalVersion
+        return createAddPackageOperations(
+            packageModel = packageModel,
+            version = versionToInstall,
+            scope = defaultScope,
+            targetModules = TargetModules.from(moduleModel),
+            repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, versionToInstall)
+        )
+    }
+
+    inline fun <reified T : PackageModel, V : PackageVersion> computeUpgradeActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel,
+        knownRepositories: KnownRepositories.InTargetModules,
+        targetVersion: NormalizedPackageVersion<V>
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                createChangePackageVersionOperations(
+                    packageModel = packageModel,
+                    newVersion = targetVersion.originalVersion,
+                    targetModules = TargetModules.from(moduleModel),
+                    repoToInstall = knownRepositories.repositoryToAddWhenInstallingOrUpgrading(packageModel, targetVersion.originalVersion)
+                )
+            }
+            .toList()
+    }
+
+    inline fun <reified T : PackageModel> computeRemoveActionsFor(
+        packageModel: T,
+        moduleModel: ModuleModel
+    ): List<PackageSearchOperation<*>> {
+        if (packageModel !is PackageModel.Installed) return emptyList()
+
+        return packageModel.usageInfo.asSequence()
+            .filter { it.projectModule == moduleModel.projectModule }
+            .flatMap { usageInfo ->
+                createRemovePackageOperations(
+                    packageModel = packageModel,
+                    version = usageInfo.version,
+                    scope = usageInfo.scope,
+                    targetModules = TargetModules.from(moduleModel)
+                )
+            }
+            .toList()
+    }
 
     fun createChangePackageVersionOperations(
         packageModel: PackageModel.Installed,

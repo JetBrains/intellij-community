@@ -11,12 +11,20 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
+import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinIdeaProjectData
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataOrFail
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
+import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
@@ -26,13 +34,16 @@ import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExten
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataOrFail
-import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import java.io.File
 import java.util.*
+
+val DataNode<out ModuleData>.kotlinIdeaProjectDataOrNull: KotlinIdeaProjectData?
+    get() = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT)?.let { projectDataDataNode: DataNode<ProjectData> ->
+        ExternalSystemApiUtil.find(projectDataDataNode, KotlinIdeaProjectData.KEY)?.data
+    }
+
+val DataNode<out ModuleData>.kotlinIdeaProjectDataOrFail: KotlinIdeaProjectData
+    get() = kotlinIdeaProjectDataOrNull ?: error("Failed to find KotlinIdeaProjectData for $this")
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataOrNull: KotlinGradleProjectData?
     get() = when (this.data) {
@@ -58,21 +69,24 @@ var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
         kotlinGradleProjectDataOrFail.hasKotlinPlugin = value
     }
 
+@Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
 @Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
-var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
+var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet?
     @Suppress("DEPRECATION_ERROR")
-    get() = when (data) {
-        is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)
-            ?.data
-            ?.let { mapOf(it.sourceSetName to it.compilerArguments) }
-            ?: error("Failed to find KotlinGradleSourceSetData for $this")
-        else -> hashMapOf<String, ArgsInfo>().apply {
-            ExternalSystemApiUtil.getChildren(this@compilerArgumentsBySourceSet, GradleSourceSetData.KEY).forEach {
-                putAll(it.compilerArgumentsBySourceSet)
-            }
+    get() = compilerArgumentsBySourceSet()
+    set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+
+@Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION_ERROR")
+fun DataNode<out ModuleData>.compilerArgumentsBySourceSet(): CompilerArgumentsBySourceSet? = when (data) {
+    is GradleSourceSetData -> ExternalSystemApiUtil.find(this, KotlinGradleSourceSetData.KEY)
+        ?.data
+        ?.let { mapOf(it.sourceSetName to it.compilerArguments) }
+    else -> ExternalSystemApiUtil.getChildren(this@compilerArgumentsBySourceSet, GradleSourceSetData.KEY).ifNotEmpty {
+        hashMapOf<String, ArgsInfo>().also { result ->
+            forEach { result.putAll(it.compilerArgumentsBySourceSet().orEmpty()) }
         }
     }
-    set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+}
 
 @Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
@@ -153,7 +167,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
-        return setOf(KotlinGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
+        return setOf(KotlinGradleModelBuilder::class.java, KotlinTarget::class.java, RandomUtils::class.java, Unit::class.java)
     }
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
@@ -219,7 +233,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val kotlinGradleSourceSets = mainModuleNode.findAll(GradleSourceSetData.KEY).map { it.node to it.data }
         kotlinGradleSourceSets.forEach { (node, data) ->
             KotlinGradleSourceSetData(data.id).apply {
-                compilerArguments = kotlinModel.compilerArgumentsBySourceSet.getValue(sourceSetName)
+                cachedArgsInfo = kotlinModel.cachedCompilerArgumentsBySourceSet.getValue(sourceSetName)
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
                 node.createChild(KotlinGradleSourceSetData.KEY, this)
             }
@@ -408,10 +422,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
             KotlinGradleFUSLogger.populateGradleUserDir(gradleModel.gradleUserHome)
 
-            val gradleSourceSets = ideModule.children.filter { it.data is GradleSourceSetData } as Collection<DataNode<GradleSourceSetData>>
+            val gradleSourceSets = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
             for (gradleSourceSetNode in gradleSourceSets) {
                 val propertiesForSourceSet =
-                    gradleModel.kotlinTaskProperties.filter { (k, v) -> gradleSourceSetNode.data.id == "$moduleNamePrefix:$k" }
+                    gradleModel.kotlinTaskProperties.filter { (k, _) -> gradleSourceSetNode.data.id == "$moduleNamePrefix:$k" }
                         .toList().singleOrNull()
                 gradleSourceSetNode.children.forEach { dataNode ->
                     val data = dataNode.data as? ContentRootData

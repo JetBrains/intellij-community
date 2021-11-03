@@ -94,6 +94,10 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="fileTypeRegistrar" interface="com.intellij.ide.highlighter.FileTypeRegistrar"/>
 
+    <extensionPoint name="gitRepositoryInitializer"
+                    interface="com.intellij.openapi.GitRepositoryInitializer"
+                    dynamic="true"/>
+
     <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider" dynamic="true"/>
     <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
@@ -249,6 +253,8 @@
 
     <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
 
+    <extensionPoint name="baseDirectorySuggester" interface="com.intellij.openapi.project.BaseDirectorySuggester" dynamic="true"/>
+
     <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
 
@@ -277,6 +283,7 @@
     <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
+    <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
 
@@ -423,7 +430,7 @@
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
 
-    <extensionPoint name="newProjectWizard" interface="com.intellij.ide.wizard.NewProjectWizard" dynamic="true"/>
+    <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
 
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurablePanelProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurablePanelProvider"
@@ -444,10 +451,14 @@
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
 
     <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
-    <extensionPoint name="commandLineCustomHandler" interface="com.intellij.ide.CommandLineCustomHandler" dynamic="true"/>
 
-    <extensionPoint name="recoveryAction"
-                    interface="com.intellij.ide.actions.cache.RecoveryAction"
-                    dynamic="true"/>
+    <extensionPoint name="protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
+
+    <extensionPoint name="recoveryAction" interface="com.intellij.ide.actions.cache.RecoveryAction" dynamic="true"/>
+
+    <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
+
+    <extensionPoint name="toolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory" dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

@@ -25,6 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,6 +238,7 @@ class StatusPanel extends JPanel {
     myTextPanel.setText(text);
   }
 
+  @Nls
   public String getText() {
     return myTextPanel.getText();
   }

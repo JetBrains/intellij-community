@@ -53,6 +53,10 @@ class ScriptSdksBuilder(
         sdks.putAll(other.sdks)
     }
 
+    fun addAll(other: ScriptSdks) {
+        sdks.putAll(other.sdks)
+    }
+
     // add sdk by home path with checking for removed sdk
     fun addSdk(sdkId: SdkId): Sdk? {
         val canonicalPath = sdkId.homeDirectory ?: return addDefaultSdk()

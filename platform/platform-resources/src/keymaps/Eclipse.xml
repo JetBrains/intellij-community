@@ -337,6 +337,7 @@
     <keyboard-shortcut first-keystroke="control alt T"/>
   </action>
   <action id="Synchronize"/>
+  <action id="ShowTypeBookmarks"/>
   <action id="ToggleBookmark">
     <keyboard-shortcut first-keystroke="shift control F11"/>
   </action>

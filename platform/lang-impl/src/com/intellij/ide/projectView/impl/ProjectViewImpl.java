@@ -781,8 +781,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(SUB_ID_KEY, subId);
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
       Icon icon = subId != null ? newPane.getPresentableSubIdIcon(subId) : newPane.getIcon();
-      content.setIcon(icon);
-      content.setPopupIcon(icon);
+      if (!ExperimentalUI.isNewToolWindowsStripes()) {
+        content.setIcon(icon);
+        content.setPopupIcon(icon);
+      }
       content.setPreferredFocusedComponent(() -> {
         final AbstractProjectViewPane current = getCurrentProjectViewPane();
         return current != null ? current.getComponentToFocus() : null;

@@ -77,22 +77,21 @@ class KotlinTestFinder : JavaTestFinder() {
         val frameworks = TestFrameworks.getInstance()
 
         val cache = PsiShortNamesCache.getInstance(klass.project)
-        cache.processAllClassNames { candidateName ->
-            if (!pattern.matcher(candidateName).matches()) return@processAllClassNames true
-            for (candidateClass in cache.getClassesByName(candidateName, scope)) {
-                if (!(frameworks.isTestClass(candidateClass) || frameworks.isPotentialTestClass(candidateClass))) {
-                    return@processAllClassNames true
-                }
-                if (!candidateClass.isPhysical && candidateClass !is KtLightClassForSourceDeclaration) {
-                    return@processAllClassNames true
-                }
+        names@for (candidateName in cache.allClassNames) {
+            if (pattern.matcher(candidateName).matches()) {
+                for (candidateClass in cache.getClassesByName(candidateName, scope)) {
+                    if (!(frameworks.isTestClass(candidateClass) || frameworks.isPotentialTestClass(candidateClass))) {
+                        continue
+                    }
+                    if (!candidateClass.isPhysical && candidateClass !is KtLightClassForSourceDeclaration) {
+                        continue
+                    }
 
-                if (!processor.process(Pair.create(candidateClass, TestFinderHelper.calcTestNameProximity(klassName, candidateName)))) {
-                    return@processAllClassNames false
+                    if (!processor.process(Pair.create(candidateClass, TestFinderHelper.calcTestNameProximity(klassName, candidateName)))) {
+                        break@names
+                    }
                 }
             }
-
-            return@processAllClassNames true
         }
 
         return TestFinderHelper.getSortedElements(classesWithProximities, true)

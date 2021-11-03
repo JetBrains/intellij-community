@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -162,6 +163,9 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         if (prototype instanceof PsiNamedElement) {
           allRenames.put(prototype, newName);
         }
+      }
+      else if (constructor instanceof LightRecordCanonicalConstructor) {
+        allRenames.put(constructor, newName);
       }
       else if (!(constructor instanceof LightElement)) {
         allRenames.put(constructor, newName);

@@ -11,8 +11,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
@@ -120,15 +118,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         isPollConnection = true;
       }
 
-      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
-      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
-      if (descriptor != null) {
-        ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler instanceof KillableProcessHandler) {
-          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
-        }
-      }
-      return descriptor;
+      return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
       RemoteConnection connection =

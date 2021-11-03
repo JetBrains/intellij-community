@@ -12,9 +12,9 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.Project;
@@ -76,8 +76,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     @NotNull TextAttributes attributes,
     @Nullable String value
   ) {
-    if (doSyntaxHighlighting()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value);
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation(false));
     }
     else {
       buffer.append(value);
@@ -89,16 +89,12 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     @Nullable String value,
     String @NotNull ... properties
   ) {
-    if (doSyntaxHighlighting()) {
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
       HtmlSyntaxInfoUtil.appendStyledSpan(buffer, value, properties);
     }
     else {
       buffer.append(value);
     }
-  }
-
-  private static boolean doSyntaxHighlighting() {
-    return EditorSettingsExternalizable.getInstance().isDocSyntaxHighlightingEnabled();
   }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
@@ -157,7 +153,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         PsiParameter parameter = parameters[i];
         if (i > 0) appendStyledSpan(buffer, GroovyDocHighlightingManager.getInstance().getCommaAttributes(), ", ");
         if (parameter instanceof GrParameter) {
-          GroovyPresentationUtil.appendParameterPresentation((GrParameter)parameter, substitutor, TypePresentation.LINK, buffer, doSyntaxHighlighting());
+          GroovyPresentationUtil.appendParameterPresentation(
+            (GrParameter)parameter, substitutor, TypePresentation.LINK, buffer,
+            DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled());
         }
         else {
           PsiType type = parameter.getType();
@@ -297,7 +295,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       generateTraitType(buffer, ((GrTraitType)type), context, isRendered);
     }
     else if (type != null) {
-      JavaDocInfoGeneratorFactory.create(context.getProject(), null, GroovyDocHighlightingManager.getInstance(), isRendered, doSyntaxHighlighting())
+      JavaDocInfoGeneratorFactory.getBuilder(context.getProject())
+        .setHighlightingManager(GroovyDocHighlightingManager.getInstance())
+        .setIsGenerationForRenderedDoc(isRendered)
+        .create()
         .generateType(buffer, type, context);
     }
     else {
@@ -405,8 +406,19 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return standard;
   }
 
+  private static GroovyDocInfoGenerator getDocInfoGenerator(@NotNull PsiElement element, boolean isGenerationForRenderedDoc) {
+    return new GroovyDocInfoGenerator(
+      element,
+      isGenerationForRenderedDoc,
+      DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(),
+      DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      DocumentationSettings.getInlineCodeHighlightingMode(),
+      DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
+      DocumentationSettings.getHighlightingSaturation(isGenerationForRenderedDoc));
+  }
+
   protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
-    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element, false, doSyntaxHighlighting());
+    JavaDocInfoGenerator generator = getDocInfoGenerator(element, false);
     return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }
 
@@ -489,7 +501,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   private static void appendElementLink(@NonNls StringBuilder sb, PsiElement element, String label) {
-    new GroovyDocInfoGenerator(element, false, doSyntaxHighlighting())
+    getDocInfoGenerator(element, false)
       .appendMaybeUnresolvedLink(sb, element, label, element.getProject(), false);
   }
 
@@ -607,8 +619,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement owner = comment.getOwner();
-    String html = new GroovyDocInfoGenerator(owner == null ? comment : owner, true, doSyntaxHighlighting())
-      .generateRenderedDocInfo();
+    String html = getDocInfoGenerator(owner == null ? comment : owner, true).generateRenderedDocInfo();
     return JavaDocExternalFilter.filterInternalDocInfo(html);
   }
 }

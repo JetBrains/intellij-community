@@ -1,7 +1,7 @@
 val s = ""
 val i = 123
 
-fun f(p1: Any, p2: String, p3: Int, p4: Char) {
+fun f(expr1: Any, expr2: String, expr3: Int, expr4: Char) {
     foo(<caret>abc)
 }
 
@@ -15,9 +15,9 @@ fun foo(p1: Int) {
 fun foo(p1: Char) {
 }
 
-// ABSENT: p1
-// EXIST: p2
-// EXIST: p3
-// EXIST: p4
+// ABSENT: expr1
+// EXIST: expr2
+// EXIST: expr3
+// EXIST: expr4
 // EXIST: s
 // EXIST: i

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -137,9 +137,10 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
       }
       else {
-        val stream = pluginDescriptor.pluginClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
+        val classLoader = pluginDescriptor.classLoader
+        val stream = classLoader.getResourceAsStream(resourceName.removePrefix("/"))
         if (stream == null) {
-          LOG.error("Cannot found scheme $resourceName in ${pluginDescriptor.pluginClassLoader}")
+          LOG.error("Cannot found scheme $resourceName in $classLoader")
           return
         }
         bytes = stream.use { it.readAllBytes()  }

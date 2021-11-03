@@ -99,13 +99,6 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     return stats
   }
 
-  override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
-    if (item.name == "bootstrap" || item.name == "app initialization") {
-      publicStatMetrics.put(item.name, TimeUnit.NANOSECONDS.toMillis(duration).toInt())
-    }
-    super.writeItemTimeInfo(item, duration, offset, writer)
-  }
-
   override fun writeTotalDuration(writer: JsonGenerator, end: Long, timeOffset: Long): Long {
     val totalDurationActual = super.writeTotalDuration(writer, end, timeOffset)
     publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
@@ -117,8 +110,19 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", ownOrTotalDuration, pluginCostMap)
     }
 
-    if (fieldName == "prepareAppInitActivities" && item.name == "splash initialization") {
-      publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt())
+    if (fieldName == "items") {
+      when (val itemName = item.name) {
+        "splash initialization" -> {
+          publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+          publicStatMetrics["splashShown"] = TimeUnit.NANOSECONDS.toMillis(item.end - StartUpMeasurer.getStartTime()).toInt()
+        }
+        "bootstrap", "app initialization" -> {
+          publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
+        }
+        "project frame initialization" -> {
+          publicStatMetrics["projectFrameVisible"] = TimeUnit.NANOSECONDS.toMillis(item.start - StartUpMeasurer.getStartTime()).toInt()
+        }
+      }
     }
   }
 }

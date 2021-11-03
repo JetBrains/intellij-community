@@ -15,13 +15,10 @@ public interface EditorConfigOptionValuePair extends EditorConfigDescribableElem
   @NotNull
   List<EditorConfigOptionValueList> getOptionValueListList();
 
-  @NotNull
-  EditorConfigDescribableElement getFirst();
+  @NotNull EditorConfigDescribableElement getFirst();
 
-  @NotNull
-  EditorConfigDescribableElement getSecond();
+  @NotNull EditorConfigDescribableElement getSecond();
 
-  @Nullable
-  EditorConfigDescriptor getDescriptor(boolean smart);
+  @Nullable EditorConfigDescriptor getDescriptor(boolean smart);
 
 }

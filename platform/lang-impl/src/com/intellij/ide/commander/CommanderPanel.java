@@ -243,7 +243,7 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final AbstractTreeNode node) {
-    return node instanceof ProjectViewNode && ((ProjectViewNode)node).shouldDrillDownOnEmptyElement();
+    return node instanceof ProjectViewNode && ((ProjectViewNode<?>)node).shouldDrillDownOnEmptyElement();
   }
 
   private boolean topElementIsSelected() {

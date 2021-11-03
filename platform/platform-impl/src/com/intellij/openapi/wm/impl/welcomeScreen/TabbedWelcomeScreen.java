@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,22 +35,23 @@ import java.util.Objects;
 import static java.util.Objects.requireNonNullElse;
 
 public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
+  DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+  DefaultTreeModel treeModel = new DefaultTreeModel(root);
+  JTree tree = new Tree(treeModel);
+  private JPanel leftPanel = new NonOpaquePanel();
 
   TabbedWelcomeScreen() {
     setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
     CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel = createCardPanel();
 
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     for (WelcomeTabFactory tabFactory : WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList()) {
       if (tabFactory.isApplicable()) {
         WelcomeScreenTab tab = tabFactory.createWelcomeTab(this);
         addTab(root, tab);
       }
     }
-    DefaultTreeModel treeModel = new DefaultTreeModel(root);
 
-    JTree tree = new Tree(treeModel);
     TreeUtil.installActions(tree);
 
     tree.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
@@ -72,14 +74,13 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     logoComponent.setFocusable(false);
     logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
 
-    JPanel leftPanel = new NonOpaquePanel();
     leftPanel.add(logoComponent, BorderLayout.NORTH);
     leftPanel.add(tree, BorderLayout.CENTER);
 
     JComponent quickAccessPanel = createQuickAccessPanel(this);
     quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
     leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
-    leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
+    leftPanel.setPreferredSize(new Dimension(JBUI.scale(205), leftPanel.getPreferredSize().height));
 
     JComponent centralPanel = mainPanel;
     JComponent mainPanelToolbar = createMainPanelToolbar(this);
@@ -109,16 +110,48 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
   }
 
-  private static void addTab(@NotNull DefaultMutableTreeNode parent, @NotNull WelcomeScreenTab tab) {
-    DefaultMutableTreeNode child = new DefaultMutableTreeNode(tab);
-    parent.add(child);
-    tab.getChildTabs().forEach(it -> addTab(child, it));
-  }
-
   @Override
   public void dispose() {
     super.dispose();
     WelcomeScreenEventCollector.logWelcomeScreenHide();
+  }
+
+  public void setTabListVisible(boolean visible) {
+    leftPanel.setVisible(visible);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void navigateToTabAndSetMainComponent(Component component, int tabIndex) {
+    tree.setSelectionRow(tabIndex);
+    var selectedTab = getSelectedTab();
+    if(selectedTab == null) return;
+    if(selectedTab.myAssociatedComponent.getComponentCount() == 0) return;
+
+    var panel = selectedTab.myAssociatedComponent.getComponent(0);
+    ((JComponent)panel).removeAll();
+    ((JComponent)panel).add(component, BorderLayout.CENTER);
+    revalidate();
+    repaint();
+    leftPanel.setVisible(false);
+  }
+
+  private DefaultWelcomeScreenTab getSelectedTab() {
+    var tab = tree.getLastSelectedPathComponent();
+    if (tab == null) return null;
+    if (tab instanceof DefaultMutableTreeNode) {
+      var panel = ((DefaultMutableTreeNode)tab).getUserObject();
+      if (panel instanceof DefaultWelcomeScreenTab) {
+        return (DefaultWelcomeScreenTab)panel;
+      }
+    }
+    return null;
+  }
+
+  private static void addTab(@NotNull DefaultMutableTreeNode parent, @NotNull WelcomeScreenTab tab) {
+    DefaultMutableTreeNode child = new DefaultMutableTreeNode(tab);
+    parent.add(child);
+    tab.getChildTabs().forEach(it -> addTab(child, it));
   }
 
   private static JComponent createQuickAccessPanel(@NotNull Disposable parentDisposable) {
@@ -142,6 +175,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     return new CardLayoutPanel<>() {
       @Override
       protected WelcomeScreenTab prepare(WelcomeScreenTab key) {
+        key.updateComponent();
         return key;
       }
 
@@ -177,9 +211,9 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
     protected final JComponent myKeyComponent;
-    private JComponent myAssociatedComponent;
     private final JBLabel myLabel;
     private final WelcomeScreenEventCollector.TabType myType;
+    private JComponent myAssociatedComponent;
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
       this(tabName, null, WelcomeScreenEventCollector.TabType.TabNavOther);

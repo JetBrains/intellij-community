@@ -306,6 +306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
+  private boolean myForcePushHappened;
 
   private CaretImpl myPrimaryCaret;
 
@@ -321,7 +322,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
 
-  private boolean myDocumentChangeInProgress;
+  boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
 
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
@@ -515,7 +516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
         SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
-      MacGestureSupportInstaller.installOnComponent(getComponent());
+      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
@@ -1069,6 +1070,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
     myScrollPane.setRowHeaderView(myGutterComponent);
+
+    myScrollingModel.initListeners();
 
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
@@ -2582,7 +2585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            else if (mySettings.isBlockCursor()) {
+            else if (mySettings.isBlockCursor() && Registry.is("editor.block.caret.selection.vim-like")) {
               // adjust selection range, so that it covers caret location
               if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
                 oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
@@ -3858,6 +3861,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
+      myForcePushHappened = false;
       clearDnDContext();
 
       myMousePressedEvent = e;
@@ -4030,6 +4034,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final int oldStart = mySelectionModel.getSelectionStart();
       final int oldEnd = mySelectionModel.getSelectionEnd();
 
+      LogicalPosition oldBlockStart = null;
+
+      if (isColumnMode()) {
+        @NotNull List<CaretState> caretsAndSelections = getCaretModel().getCaretsAndSelections();
+
+        CaretState originalCaret = caretsAndSelections.get(0);
+        oldBlockStart = Objects.equals(originalCaret.getCaretPosition(), originalCaret.getSelectionEnd())
+                                                ? originalCaret.getSelectionStart()
+                                                : originalCaret.getSelectionEnd();
+      }
+
       boolean toggleCaret = e.getSource() != myGutterComponent && isToggleCaretEvent(e);
       boolean lastPressCreatedCaret = myLastPressCreatedCaret;
       if (e.getClickCount() == 1) {
@@ -4115,18 +4130,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (moveCaret) {
         if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown()) {
-          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-            if (caretOffset < mySavedSelectionStart) {
-              mySelectionModel.setSelection(mySavedSelectionEnd, caretOffset);
-            }
-            else {
-              mySelectionModel.setSelection(mySavedSelectionStart, caretOffset);
-            }
+          if (oldBlockStart != null) {
+            mySelectionModel.setBlockSelection(oldBlockStart, getCaretModel().getLogicalPosition());
           }
           else {
-            int startToUse = oldSelectionStart;
-            if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
-              startToUse = Math.min(oldStart, oldEnd);
+            int startToUse;
+            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+              if (caretOffset < mySavedSelectionStart) {
+                startToUse = mySavedSelectionEnd;
+              }
+              else {
+                startToUse = mySavedSelectionStart;
+              }
+            }
+            else {
+              startToUse = oldSelectionStart;
+              if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
+                startToUse = Math.min(oldStart, oldEnd);
+              }
             }
             mySelectionModel.setSelection(startToUse, caretOffset);
           }
@@ -4361,8 +4382,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         EVENT_LOG.debug(e.toString());
       }
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) {
-        // on Mac we receive events even if drag-n-drop is in progress
-        return;
+        return; // on Mac we receive events even if drag-n-drop is in progress
+      }
+      if (myForcePushHappened) {
+        return; // avoid selection creation on accidental mouse move/drag after force push
       }
       validateMousePointer(e, null);
       EditorMouseEvent event = createEditorMouseEvent(e);

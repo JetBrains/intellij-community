@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.OffsetKey
-import com.intellij.codeInsight.completion.OffsetMap
-import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
@@ -79,13 +76,9 @@ val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
 fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
 
-fun LookupElement.withReceiverCast(): LookupElement {
-    return object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            super.handleInsert(context)
-            CastReceiverInsertHandler.postHandleInsert(context, delegate)
-        }
-    }
+fun LookupElement.withReceiverCast(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(this) { context, element ->
+    element.handleInsert(context)
+    CastReceiverInsertHandler.postHandleInsert(context, element)
 }
 
 val KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY = Key<Unit>("KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY")
@@ -310,11 +303,7 @@ private fun createKeywordElementWithSpace(
 ): LookupElement {
     val element = createKeywordElement(keyword, tail, lookupObject)
     return if (addSpaceAfter) {
-        object : LookupElementDecorator<LookupElement>(element) {
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler.SPACE.handleInsert(context, delegate)
-            }
-        }
+        element.withInsertHandler(WithTailInsertHandler.SPACE.asPostInsertHandler)
     } else {
         element
     }
@@ -392,11 +381,7 @@ private open class BaseTypeLookupElement(type: KotlinType, baseLookupElement: Lo
     override fun equals(other: Any?) = other is BaseTypeLookupElement && fullText == other.fullText
     override fun hashCode() = fullText.hashCode()
 
-    override fun renderElement(presentation: LookupElementPresentation) {
-        delegate.renderElement(presentation)
-    }
-
-    override fun handleInsert(context: InsertionContext) {
+    override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, _ ->
         context.document.replaceString(context.startOffset, context.tailOffset, fullText)
         context.tailOffset = context.startOffset + fullText.length
         shortenReferences(context, context.startOffset, context.tailOffset)

@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import org.apache.commons.lang3.StringUtils
 
 internal sealed class PackageModel(
@@ -11,33 +12,30 @@ internal sealed class PackageModel(
     val remoteInfo: ApiStandardPackage?
 ) : Comparable<PackageModel> {
 
+    val remoteVersions = remoteInfo?.versions?.asSequence()
+        ?.map { PackageVersion.from(it) }
+        ?.filterIsInstance<PackageVersion.Named>()
+        ?.map { NormalizedPackageVersion.parseFrom(it) }
+        ?.toList()
+        ?: emptyList()
+
     val identifier = PackageIdentifier("$groupId:$artifactId")
 
     val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
-    private val latestAvailableVersion by lazy { getAvailableVersions(onlyStable = false).firstOrNull() }
+    fun getAvailableVersions(onlyStable: Boolean): List<NormalizedPackageVersion<*>> {
+        val allVersions = declaredVersions.union(remoteVersions)
 
-    private val latestAvailableStableVersion by lazy { getAvailableVersions(onlyStable = true).firstOrNull() }
-
-    fun getLatestAvailableVersion(onlyStable: Boolean): PackageVersion? =
-        if (onlyStable) latestAvailableStableVersion else latestAvailableVersion
-
-    fun getAvailableVersions(onlyStable: Boolean): List<PackageVersion> {
-        val remoteVersions = remoteInfo?.versions
-            ?.map { PackageVersion.from(it) }
-            ?.filter { it != PackageVersion.Missing }
-
-        val allVersions = additionalAvailableVersions()
-            .union(remoteVersions ?: emptyList())
-
-        return allVersions.filter { if (onlyStable) it.isStable else true }
+        return allVersions.asSequence()
+            .filter { if (onlyStable) it.isStable else true }
             .distinctBy { it.versionName }
             .sortedDescending()
+            .toList()
     }
 
-    protected abstract fun additionalAvailableVersions(): List<PackageVersion>
+    protected abstract val declaredVersions: List<NormalizedPackageVersion<*>>
 
     override fun compareTo(other: PackageModel): Int = sortKey.compareTo(other.sortKey)
 
@@ -54,7 +52,15 @@ internal sealed class PackageModel(
             require(usageInfo.isNotEmpty()) { "An installed package must always have at least one usage" }
         }
 
-        override fun additionalAvailableVersions(): List<PackageVersion> = usageInfo.map { it.version }
+        val latestInstalledVersion = usageInfo.asSequence()
+            .map { it.version }
+            .map { NormalizedPackageVersion.parseFrom(it) }
+            .maxOrNull()
+            ?: error("An installed package must always have at least one usage")
+
+        override val declaredVersions: List<NormalizedPackageVersion<*>> =
+            usageInfo.map { it.version }
+                .map { NormalizedPackageVersion.parseFrom(it) }
 
         fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
             findUsagesIn(moduleModels.map { it.projectModule })
@@ -64,23 +70,8 @@ internal sealed class PackageModel(
             return usageInfo.filter { usageInfo -> projectModules.any { it == usageInfo.projectModule } }
         }
 
-        fun canBeUpgraded(onlyStable: Boolean): Boolean {
-            val latestVersion = getLatestAvailableVersion(onlyStable) ?: return false
-            return usageInfo.any { it.version !is PackageVersion.Missing && it.version < latestVersion }
-        }
-
-        fun canBeUpgraded(currentVersion: PackageVersion, onlyStable: Boolean): Boolean {
-            val latestVersion = getLatestAvailableVersion(onlyStable) ?: return false
-            return currentVersion < latestVersion
-        }
-
-        fun canBeDowngraded(currentVersion: PackageVersion, onlyStable: Boolean): Boolean {
-            val latestVersion = getLatestAvailableVersion(onlyStable) ?: return false
-            return currentVersion > latestVersion
-        }
-
-        fun getLatestInstalledVersion(): PackageVersion = usageInfo.maxByOrNull { it.version }?.version
-            ?: throw IllegalStateException("An installed package must always have at least one usage")
+        fun copyWithUsages(usages: List<DependencyUsageInfo>) =
+            Installed(groupId, artifactId, remoteInfo, usages)
 
         override val searchableInfo =
             buildString {
@@ -120,7 +111,7 @@ internal sealed class PackageModel(
         remoteInfo: ApiStandardPackage
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
-        override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
+        override val declaredVersions: List<NormalizedPackageVersion<*>> = emptyList()
 
         override val searchableInfo =
             buildString {

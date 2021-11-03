@@ -190,14 +190,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public File getLocalRepository() {
-    WSLDistribution wslDistribution = MavenWslUtil.tryGetWslDistribution(myProject);
-    if (wslDistribution == null) {
-      return getGeneralSettings().getEffectiveLocalRepository();
-    }
-    return MavenWslUtil.resolveLocalRepository(wslDistribution,
-                                               null,
-                                               null,
-                                               null);
+    return getGeneralSettings().getEffectiveLocalRepository();
   }
 
   @ApiStatus.Internal
@@ -389,7 +382,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
 
     myImportingQueue.makeUserAware(myProject);
-    myImportingQueue.makeDumbAware(myProject);
     myImportingQueue.makeModalAware(myProject);
   }
 
@@ -848,6 +840,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
+    MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
       if (projects == null) {

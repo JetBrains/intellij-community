@@ -4,9 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
-import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
 
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
@@ -17,7 +16,10 @@ internal class SearchEverywhereMlSearchState(
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
-  private val model: SearchEverywhereActionsRankingModel = SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
+  private val model: SearchEverywhereRankingModel by lazy {
+    val provider = SearchEverywhereMLRankingModelProvider.getForTab(tabId)
+    SearchEverywhereRankingModel(provider)
+  }
 
   @Synchronized
   fun getElementFeatures(elementId: Int,
@@ -44,7 +46,7 @@ internal class SearchEverywhereMlSearchState(
 
   @Synchronized
   fun getMLWeight(elementId: Int,
-                  element: GotoActionModel.MatchedValue,
+                  element: Any,
                   contributor: SearchEverywhereContributor<*>,
                   context: SearchEverywhereMLContextInfo,
                   priority: Int): Double {

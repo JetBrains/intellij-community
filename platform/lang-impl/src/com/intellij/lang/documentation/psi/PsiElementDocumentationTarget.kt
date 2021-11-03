@@ -27,6 +27,13 @@ internal class PsiElementDocumentationTarget private constructor(
   constructor(
     project: Project,
     targetElement: PsiElement,
+  ) : this(
+    project, targetElement, sourceElement = null, anchor = null
+  )
+
+  constructor(
+    project: Project,
+    targetElement: PsiElement,
     sourceElement: PsiElement?,
     anchor: String?,
   ) : this(

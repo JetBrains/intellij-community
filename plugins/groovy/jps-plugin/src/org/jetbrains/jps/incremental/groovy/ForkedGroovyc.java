@@ -6,13 +6,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
 import org.jetbrains.jps.incremental.Utils;
@@ -48,8 +46,7 @@ final class ForkedGroovyc implements GroovycFlavor {
     throws Exception {
     List<String> classpath = new ArrayList<>();
     if (myOptimizeClassLoading) {
-      classpath.addAll(GroovyBuilder.getGroovyRtRoots());
-      classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
+      classpath.addAll(GroovyBuilder.getGroovyRtRoots(true));
     }
     else {
       classpath.addAll(compilationClassPath);

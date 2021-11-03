@@ -1,132 +1,91 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-import java.awt.*;
 
-public class EditMigrationDialog extends DialogWrapper{
+public class EditMigrationDialog extends DialogWrapper {
+  private EditMigrationDialogUi myUi;
   private JBTable myTable;
-  private JTextField myNameField;
-  private JTextArea myDescriptionTextArea;
   private final Project myProject;
   private final MigrationMap myMigrationMap;
+  private final MigrationMapSet myMigrationMapSet;
+  private final String myEditedMapName;
 
-  public EditMigrationDialog(Project project, MigrationMap migrationMap) {
+  /**
+   * This dialog makes it possible to choose a name, description, and edit a table of {@link MigrationMapEntry}.
+   *
+   * @param migrationMap The map to edit. The name and description are
+   * @param editedMapName Name of the existing map to be overridden. Blank if editing a new map.
+   */
+  public EditMigrationDialog(Project project, MigrationMap migrationMap, MigrationMapSet migrationMapSet, String editedMapName) {
     super(project, true);
     myProject = project;
     myMigrationMap = migrationMap;
+    myMigrationMapSet = migrationMapSet;
+    myEditedMapName = editedMapName;
     setHorizontalStretch(1.2f);
-    setTitle(JavaRefactoringBundle.message("edit.migration.map.title"));
+    if (editedMapName.isEmpty()) {
+      setTitle(JavaRefactoringBundle.message("edit.migration.map.title.new"));
+    } else {
+      setTitle(JavaRefactoringBundle.message("edit.migration.map.title.existing"));
+    }
+    setOKButtonText(JavaRefactoringBundle.message("edit.migration.map.ok.button"));
     init();
-    validateOKButton();
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
-  }
-
-  private void validateOKButton() {
-    boolean isEnabled = true;
-    if (myNameField.getText().trim().length() == 0) {
-      isEnabled = false;
-    } else if (myMigrationMap.getEntryCount() == 0) {
-      isEnabled = false;
-    }
-    setOKActionEnabled(isEnabled);
+    return myUi.getNameField();
   }
 
   public @Nls String getName() {
-    @NlsSafe String text = myNameField.getText();
+    @NlsSafe String text = myUi.getNameField().getText();
     return text;
   }
 
   public @Nls String getDescription() {
-    @NlsSafe String text = myDescriptionTextArea.getText();
+    @NlsSafe String text = myUi.getDescriptionTextArea().getText();
     return text;
   }
 
   @Override
-  protected JComponent createNorthPanel() {
-    myNameField = new JTextField(myMigrationMap.getName());
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        validateOKButton();
-      }
-    });
-
-    myDescriptionTextArea = new JTextArea(myMigrationMap.getDescription(), 3, 40) {
-      @Override
-      public Dimension getMinimumSize() {
-        return super.getPreferredSize();
-      }
-    };
-    myDescriptionTextArea.setLineWrap(true);
-    myDescriptionTextArea.setWrapStyleWord(true);
-    myDescriptionTextArea.setFont(myNameField.getFont());
-    myDescriptionTextArea.setBackground(myNameField.getBackground());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
-    scrollPane.setBorder(myNameField.getBorder());
-
-    return FormBuilder.createFormBuilder()
-      .addLabeledComponent(new JLabel(JavaRefactoringBundle.message("migration.map.name.prompt")), myNameField)
-      .addLabeledComponent(new JLabel(JavaRefactoringBundle.message("migration.map.description.label")), scrollPane)
-      .addVerticalGap(UIUtil.LARGE_VGAP).getPanel();
-  }
-
-  @Override
   protected JComponent createCenterPanel() {
-    return ToolbarDecorator.createDecorator(createTable())
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          addRow();
-          validateOKButton();
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeRow();
-          validateOKButton();
-        }
-      }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          edit();
-        }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveUp();
-        }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveDown();
-        }
-      }).createPanel();
+    myUi = new EditMigrationDialogUi(myMigrationMapSet,
+                                     ToolbarDecorator.createDecorator(createTable())
+                                       .setAddAction(button -> addRow())
+                                       .setRemoveAction(button -> removeSelectedRow())
+                                       .setEditAction(button -> edit())
+                                       .setMoveUpAction(button -> moveUp())
+                                       .setMoveDownAction(button -> moveDown())
+                                       .createPanel(),
+                                     this);
+
+    final JTextField nameField = myUi.getNameField();
+    nameField.setText(myMigrationMap.getName());
+    myUi.getDescriptionTextArea().setText(myMigrationMap.getDescription());
+
+    return myUi.getPanel();
   }
 
   private void edit() {
     EditMigrationEntryDialog dialog = new EditMigrationEntryDialog(myProject);
     int selected = myTable.getSelectedRow();
-    if (selected < 0)
+    if (selected < 0) {
       return;
+    }
     MigrationMapEntry entry = myMigrationMap.getEntryAt(selected);
     dialog.setEntry(entry);
     if (!dialog.showAndGet()) {
@@ -145,31 +104,41 @@ public class EditMigrationDialog extends DialogWrapper{
       return;
     }
     dialog.updateEntry(entry);
+    addEntry(entry);
+  }
+
+  private void addEntry(MigrationMapEntry entry) {
     myMigrationMap.addEntry(entry);
     AbstractTableModel model = (AbstractTableModel)myTable.getModel();
     model.fireTableRowsInserted(myMigrationMap.getEntryCount() - 1, myMigrationMap.getEntryCount() - 1);
     myTable.setRowSelectionInterval(myMigrationMap.getEntryCount() - 1, myMigrationMap.getEntryCount() - 1);
   }
 
-  private void removeRow() {
+  private void removeSelectedRow() {
     int selected = myTable.getSelectedRow();
-    if (selected < 0)
+    if (selected < 0) {
       return;
+    }
+    removeRow(selected);
+  }
+
+  private void removeRow(int selected) {
     myMigrationMap.removeEntryAt(selected);
     AbstractTableModel model = (AbstractTableModel)myTable.getModel();
     model.fireTableRowsDeleted(selected, selected);
-    if (selected >= myMigrationMap.getEntryCount()){
+    if (selected >= myMigrationMap.getEntryCount()) {
       selected--;
     }
-    if (selected >= 0){
+    if (selected >= 0) {
       myTable.setRowSelectionInterval(selected, selected);
     }
   }
 
   private void moveUp() {
     int selected = myTable.getSelectedRow();
-    if (selected < 1)
+    if (selected < 1) {
       return;
+    }
     MigrationMapEntry entry = myMigrationMap.getEntryAt(selected);
     MigrationMapEntry previousEntry = myMigrationMap.getEntryAt(selected - 1);
     myMigrationMap.setEntryAt(previousEntry, selected);
@@ -181,8 +150,9 @@ public class EditMigrationDialog extends DialogWrapper{
 
   private void moveDown() {
     int selected = myTable.getSelectedRow();
-    if (selected >= myMigrationMap.getEntryCount() - 1)
+    if (selected >= myMigrationMap.getEntryCount() - 1) {
       return;
+    }
     MigrationMapEntry entry = myMigrationMap.getEntryAt(selected);
     MigrationMapEntry nextEntry = myMigrationMap.getEntryAt(selected + 1);
     myMigrationMap.setEntryAt(nextEntry, selected);
@@ -213,23 +183,23 @@ public class EditMigrationDialog extends DialogWrapper{
       @Override
       public Object getValueAt(int row, int col) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(row);
-        if (col == 0){
-          if (entry.getType() == MigrationMapEntry.PACKAGE && entry.isRecursive()){
+        if (col == 0) {
+          if (entry.getType() == MigrationMapEntry.PACKAGE && entry.isRecursive()) {
             return JavaRefactoringBundle.message("migration.package.with.subpackages");
           }
-          else if (entry.getType() == MigrationMapEntry.PACKAGE && !entry.isRecursive()){
+          else if (entry.getType() == MigrationMapEntry.PACKAGE && !entry.isRecursive()) {
             return JavaRefactoringBundle.message("migration.package");
           }
-          else{
+          else {
             return JavaRefactoringBundle.message("migration.class");
           }
         }
 
         String suffix = (entry.getType() == MigrationMapEntry.PACKAGE ? ".*" : "");
-        if (col == 1){
+        if (col == 1) {
           return entry.getOldName() + suffix;
         }
-        else{
+        else {
           return entry.getNewName() + suffix;
         }
       }
@@ -240,7 +210,7 @@ public class EditMigrationDialog extends DialogWrapper{
       }
 
       @Override
-      public Class getColumnClass(int c) {
+      public Class<String> getColumnClass(int c) {
         return String.class;
       }
 
@@ -261,5 +231,37 @@ public class EditMigrationDialog extends DialogWrapper{
     myTable.setVisibleRowCount(10);
 
     return myTable;
+  }
+
+  public void copyMap(@Nullable String mapName) {
+    if (mapName == null) return;
+    final MigrationMap copiedMap = myMigrationMapSet.findMigrationMap(mapName);
+    if (copiedMap == null) return;
+
+    myUi.getNameField().setText(copiedMap.getName());
+    myUi.getDescriptionTextArea().setText(copiedMap.getDescription());
+    while (myTable.getRowCount() > 0) removeRow(0);
+    for (int i = 0; i < copiedMap.getEntryCount(); i++) {
+      addEntry(copiedMap.getEntryAt(i));
+    }
+  }
+
+  public ValidationInfo validateName(@Nullable String text) {
+    if (text.isBlank()) {
+      return new ValidationInfo(JavaRefactoringBundle.message("migration.edit.empty.name"));
+    }
+
+    if (myMigrationMapSet.findMigrationMap(text) != null && (myEditedMapName.isEmpty() || !text.equals(myEditedMapName))) {
+      // new map with existing name || edited map with another existing name
+      return new ValidationInfo(JavaRefactoringBundle.message("migration.edit.existing.name"));
+    }
+    return null;
+  }
+
+  public ValidationInfo validateTable() {
+    if (myMigrationMap.getEntryCount() == 0) {
+      return new ValidationInfo(JavaRefactoringBundle.message("migration.edit.empty.table"));
+    }
+    return null;
   }
 }

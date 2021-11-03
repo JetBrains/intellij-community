@@ -186,7 +186,7 @@ public class KotlinLineBreakpointType extends JavaLineBreakpointType implements 
             if (ordinal != null) {
                 Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
                 if (javaBreakpoint instanceof LineBreakpoint) {
-                    SourcePosition position = ((LineBreakpoint) javaBreakpoint).getSourcePosition();
+                    SourcePosition position = ((LineBreakpoint<?>) javaBreakpoint).getSourcePosition();
                     if (position != null) {
                         KtFunction lambda = getLambdaByOrdinal(position, ordinal);
                         if (lambda != null) {

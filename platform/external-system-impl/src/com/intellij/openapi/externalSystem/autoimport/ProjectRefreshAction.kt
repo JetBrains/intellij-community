@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.text.NaturalComparator
 import javax.swing.Icon
 
 class ProjectRefreshAction : DumbAwareAction() {
@@ -22,7 +21,7 @@ class ProjectRefreshAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     val systemIds = notificationAware.getSystemIds()
     if (systemIds.isNotEmpty()) {
       e.presentation.text = getNotificationText(systemIds)
@@ -62,7 +61,7 @@ class ProjectRefreshAction : DumbAwareAction() {
 
   companion object {
     fun refreshProject(project: Project) {
-      val projectNotificationAware = ProjectNotificationAware.getInstance(project)
+      val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
       val systemIds = projectNotificationAware.getSystemIds()
       if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
         val projectTracker = ExternalSystemProjectTracker.getInstance(project)

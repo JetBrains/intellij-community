@@ -17,6 +17,9 @@ public final class IssueLinkHtmlRenderer {
   private IssueLinkHtmlRenderer() {
   }
 
+  /**
+   * WARNING: hard codes current LaF into the text foreground.
+   */
   @Nls
   @NotNull
   public static String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {

@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
-import com.intellij.execution.Executor
-import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
@@ -32,10 +31,9 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         e.runToolbarData()?.let {
           it.environment?.let { environment ->
             e.presentation.putClientProperty(PROP_ACTIVE_ENVIRONMENT, environment)
-            it.configuration?.let {
-              val shortenNameIfNeeded = Executor.shortenNameIfNeeded(it.name)
-              e.presentation.setText(shortenNameIfNeeded, false)
-              e.presentation.icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(it, true)
+            environment.contentToReuse?.let { contentDescriptor ->
+              e.presentation.setText(contentDescriptor.displayName, false)
+              e.presentation.icon = contentDescriptor.icon
             } ?: run {
               e.presentation.text = ""
               e.presentation.icon = null
@@ -64,7 +62,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
     super.update(e)
     updatePresentation(e)
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
@@ -76,17 +74,9 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
       override fun showPopup() {
         presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
-          ToolWindowManager.getInstance(environment.project).getToolWindow(
-            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.let {
-            val contentManager = it.contentManager
-            contentManager.contents.firstOrNull { it.executionId == environment.executionId }?.let { content ->
-              contentManager.setSelectedContent(content)
-            }
-            it.show()
-          }
+          environment.showToolWindowTab()
         }
       }
-
 
       override fun doRightClick() {
         RunToolbarRunConfigurationsAction.doRightClick(dataContext)

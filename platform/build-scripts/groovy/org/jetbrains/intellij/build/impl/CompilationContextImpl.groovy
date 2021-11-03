@@ -65,12 +65,12 @@ final class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '11', null, "JDK_11_x64"))
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options, gradleJdk)
     projectHome = toCanonicalPath(projectHome)
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
-    def model = loadProject(projectHome, kotlinBinaries, messages)
+    def model = loadProject(projectHome, messages)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, messages, oldToNewModuleName,
@@ -170,12 +170,9 @@ final class CompilationContextImpl implements CompilationContext {
     return copy
   }
 
-  private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
+  private static JpsModel loadProject(String projectHome, BuildMessages messages) {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    if (kotlinBinaries.isCompilerRequired()) {
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
-    }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)

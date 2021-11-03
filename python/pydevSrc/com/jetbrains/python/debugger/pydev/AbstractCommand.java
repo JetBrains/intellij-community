@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger.pydev;
 import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public abstract class AbstractCommand<T> {
@@ -197,7 +198,12 @@ public abstract class AbstractCommand<T> {
           }
           throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
         }
-        callback.ok(processor.processResponse(frame));
+        T exception_occurred = processor.parseException(frame);
+        if (exception_occurred != null && exception_occurred.equals("True")) {
+          callback.error(new PyDebuggerException("Exception occurred"));
+        } else {
+          callback.ok(processor.processResponse(frame));
+        }
       }
       catch (PyDebuggerException e) {
         callback.error(e);
@@ -238,6 +244,11 @@ public abstract class AbstractCommand<T> {
     }
 
     protected abstract T parseResponse(ProtocolFrame response) throws PyDebuggerException;
+
+    @Nullable
+    protected T parseException(ProtocolFrame frame) throws PyDebuggerException {
+      return null;
+    }
   }
 
   public static boolean isCallSignatureTrace(int command) {

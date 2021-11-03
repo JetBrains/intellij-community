@@ -101,30 +101,6 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  public void makeDumbAware(final Project project) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (DumbService.isDumb(project)) {
-        mySuspendCounter.incrementAndGet();
-      }
-      MessageBusConnection connection = project.getMessageBus().connect(this);
-      connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void enteredDumbMode() {
-          suspend();
-        }
-
-        @Override
-        public void exitDumbMode() {
-          resume();
-        }
-      });
-
-      if (DumbService.getInstance(project).isDumb()) {
-        suspend();
-      }
-    });
-  }
-
   public void makeModalAware(Project project) {
     MavenUtil.invokeLater(project, () -> {
       final ModalityStateListener listener = new ModalityStateListener() {

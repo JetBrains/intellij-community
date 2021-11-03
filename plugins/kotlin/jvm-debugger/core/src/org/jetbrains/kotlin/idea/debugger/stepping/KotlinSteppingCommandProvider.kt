@@ -48,11 +48,33 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         stepSize: Int
     ): DebugProcessImpl.ResumeCommand? {
         if (suspendContext == null || suspendContext.isResumed) return null
-        val sourcePosition = suspendContext.debugProcess.debuggerContext.sourcePosition ?: return null
+        val sourcePosition = suspendContext.getSourcePosition() ?: return null
         if (sourcePosition.file !is KtFile) return null
         return getStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
+    override fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl?,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?,
+        stepSize: Int
+    ): DebugProcessImpl.ResumeCommand? {
+        if (suspendContext == null || suspendContext.isResumed) return null
+        val sourcePosition = suspendContext.getSourcePosition() ?: return null
+        if (sourcePosition.file !is KtFile) return null
+        return getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    @TestOnly
+    fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?
+    ): DebugProcessImpl.ResumeCommand? {
+        return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    @TestOnly
     fun getStepOverCommand(
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
@@ -73,20 +95,14 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return getStepOutCommand(suspendContext, sourcePosition)
     }
 
-    override fun getStepIntoCommand(
-        suspendContext: SuspendContextImpl?,
-        ignoreFilters: Boolean,
-        smartStepFilter: MethodFilter?,
-        stepSize: Int
-    ): DebugProcessImpl.ResumeCommand? {
-        return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
-    }
-
     private fun getStepOutCommand(suspendContext: SuspendContextImpl, sourcePosition: SourcePosition): DebugProcessImpl.ResumeCommand? {
         if (sourcePosition.line < 0) return null
         return DebuggerSteppingHelper.createStepOutCommand(suspendContext, true)
     }
 }
+
+private fun SuspendContextImpl.getSourcePosition(): SourcePosition? =
+    debugProcess.debuggerContext.sourcePosition
 
 private operator fun PsiElement?.contains(element: PsiElement): Boolean {
     return this?.textRange?.contains(element.textRange) ?: false

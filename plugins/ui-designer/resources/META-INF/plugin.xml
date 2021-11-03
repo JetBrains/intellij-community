@@ -3,6 +3,7 @@
   <id>com.intellij.uiDesigner</id>
   <category>Swing</category>
   <vendor>JetBrains</vendor>
+  <description>Allows to design Swing UI graphically, supports code generation/instrumentation, preview, widgets library and UI-related code inspections</description>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.properties</depends>
@@ -222,7 +223,7 @@
 
     <group id="GuiDesigner.PaletteComponentPopupMenu">
       <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction">
-        <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddToFavorites"/>
+        <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="popup@ExpandableBookmarkContextMenu"/>
       </action>
       <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction">
         <keyboard-shortcut first-keystroke="F2" keymap="$default"/>

@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.ChangeListener
-import com.intellij.codeInsight.hints.ImmediateConfigurable
-import com.intellij.codeInsight.hints.NoSettings
-import com.intellij.codeInsight.hints.SettingsKey
+import com.intellij.codeInsight.hints.*
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -16,6 +13,8 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<NoSettings>() {
 
     override val key: SettingsKey<NoSettings> = SettingsKey("kotlin.ranges.hints")
     override val name: String = KotlinBundle.message("hints.settings.ranges")
+    override val group: InlayGroup
+        get() = InlayGroup.VALUES_GROUP
 
     override fun createSettings(): NoSettings = NoSettings()
 

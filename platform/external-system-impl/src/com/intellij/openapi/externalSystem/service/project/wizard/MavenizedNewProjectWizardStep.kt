@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
-import com.intellij.ide.wizard.AbstractNewProjectWizardChildStep
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -21,9 +21,10 @@ import java.util.Comparator.comparing
 import java.util.function.Function
 import javax.swing.JList
 
-abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: ParentStep)
-  : AbstractNewProjectWizardChildStep<ParentStep>(parent)
-  where ParentStep : NewProjectWizardBaseData, ParentStep : NewProjectWizardStep {
+abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentStep: ParentStep) :
+  AbstractNewProjectWizardStep(parentStep)
+  where ParentStep : NewProjectWizardStep,
+        ParentStep : NewProjectWizardBaseData {
 
   abstract fun createView(data: Data): DataView<Data>
 
@@ -56,6 +57,32 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: Par
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
   }
 
+  protected open fun setupAdvancedSettingsUI(panel: Panel) {
+    with(panel) {
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
+        textField()
+          .bindText(groupIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateGroupId() }
+          .validationOnInput { validateGroupId() }
+      }.bottomGap(BottomGap.SMALL)
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
+        textField()
+          .bindText(artifactIdProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateArtifactId() }
+          .validationOnInput { validateArtifactId() }
+      }.bottomGap(BottomGap.SMALL)
+      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
+        textField()
+          .bindText(versionProperty)
+          .columns(COLUMNS_MEDIUM)
+          .validationOnApply { validateVersion() }
+          .validationOnInput { validateVersion() }
+      }.bottomGap(BottomGap.SMALL)
+    }
+  }
+
   override fun setupUI(builder: Panel) {
     with(builder) {
       if (parents.isNotEmpty()) {
@@ -69,28 +96,8 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(parent: Par
             .columns(COLUMNS_MEDIUM)
         }.topGap(TopGap.SMALL)
       }
-      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.coordinates.title")) {
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
-          textField()
-            .bindText(groupIdProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateGroupId() }
-            .validationOnInput { validateGroupId() }
-        }.bottomGap(BottomGap.SMALL)
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
-          textField()
-            .bindText(artifactIdProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateArtifactId() }
-            .validationOnInput { validateArtifactId() }
-        }.bottomGap(BottomGap.SMALL)
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-          textField()
-            .bindText(versionProperty)
-            .columns(COLUMNS_MEDIUM)
-            .validationOnApply { validateVersion() }
-            .validationOnInput { validateVersion() }
-        }.bottomGap(BottomGap.SMALL)
+      collapsibleGroup(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.advanced.settings.title"), topGroupGap = true) {
+        setupAdvancedSettingsUI(this)
       }
     }
   }

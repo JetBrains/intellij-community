@@ -352,7 +352,7 @@ public final class ArtifactUtil {
         @Override
         public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
           if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
-            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement<?>)element).findFile();
             if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
               final String relativePath;
               if (root.equals(file) && element instanceof FileCopyPackagingElement) {

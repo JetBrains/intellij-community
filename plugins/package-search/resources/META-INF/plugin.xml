@@ -31,6 +31,11 @@ Supports Maven and Gradle projects.
                         area="IDEA_PROJECT"
                         dynamic="true"/>
 
+        <extensionPoint qualifiedName="com.intellij.packagesearch.coroutineModuleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
     </extensionPoints>
 
     <content>
@@ -61,7 +66,10 @@ Supports Maven and Gradle projects.
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService"/>
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>

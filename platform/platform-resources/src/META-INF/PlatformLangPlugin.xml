@@ -38,6 +38,8 @@
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
+  <xi:include href="/META-INF/FeedbackExtensions.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
@@ -75,6 +77,7 @@
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
     <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
+    <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.ModuleBookmarkProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>

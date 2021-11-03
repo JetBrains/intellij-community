@@ -1722,6 +1722,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("commentInFirstCallLambda.kt")
+            public void testCommentInFirstCallLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentInFirstCallLambda.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda.kt")
+            public void testCommentOutsideLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda2.kt")
+            public void testCommentOutsideLambda2() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda2.kt");
+            }
+
+            @TestMetadata("commentOutsideLambda3.kt")
+            public void testCommentOutsideLambda3() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda3.kt");
+            }
+
             @TestMetadata("filterAny.kt")
             public void testFilterAny() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterAny.kt");
@@ -2052,19 +2072,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLast.kt");
             }
 
-            @TestMetadata("saveComment.kt")
-            public void testSaveComment() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment.kt");
-            }
-
-            @TestMetadata("saveComment2.kt")
-            public void testSaveComment2() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment2.kt");
-            }
-
-            @TestMetadata("saveComment3.kt")
-            public void testSaveComment3() throws Exception {
-                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/saveComment3.kt");
+            @TestMetadata("onMapImplementationClass.kt")
+            public void testOnMapImplementationClass() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/onMapImplementationClass.kt");
             }
 
             @TestMetadata("sortedByDescendingFirst.kt")
@@ -5420,14 +5430,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideNullableNothingFunction.kt");
         }
 
-        @TestMetadata("overrideNullableNothingProperty.kt")
-        public void testOverrideNullableNothingProperty() throws Exception {
-            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideNullableNothingProperty.kt");
+        @TestMetadata("overrideNullableNothingVal.kt")
+        public void testOverrideNullableNothingVal() throws Exception {
+            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideNullableNothingVal.kt");
         }
 
-        @TestMetadata("overrideProperty.kt")
-        public void testOverrideProperty() throws Exception {
-            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideProperty.kt");
+        @TestMetadata("overrideNullableNothingVar.kt")
+        public void testOverrideNullableNothingVar() throws Exception {
+            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideNullableNothingVar.kt");
+        }
+
+        @TestMetadata("overrideVal.kt")
+        public void testOverrideVal() throws Exception {
+            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideVal.kt");
+        }
+
+        @TestMetadata("overrideVar.kt")
+        public void testOverrideVar() throws Exception {
+            runTest("testData/inspectionsLocal/implicitNullableNothingType/overrideVar.kt");
         }
 
         @TestMetadata("top.kt")
@@ -8686,6 +8706,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("getterWithBody.kt")
             public void testGetterWithBody() throws Exception {
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/property/getterWithBody.kt");
+            }
+
+            @TestMetadata("hasTransientAnnotation.kt")
+            public void testHasTransientAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/redundantNullableReturnType/property/hasTransientAnnotation.kt");
             }
 
             @TestMetadata("initializer.kt")
@@ -12173,6 +12198,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("nonMap.kt")
         public void testNonMap() throws Exception {
             runTest("testData/inspectionsLocal/replacePutWithAssignment/nonMap.kt");
+        }
+
+        @TestMetadata("notMutableMapPut.kt")
+        public void testNotMutableMapPut() throws Exception {
+            runTest("testData/inspectionsLocal/replacePutWithAssignment/notMutableMapPut.kt");
+        }
+
+        @TestMetadata("notMutableMapPut2.kt")
+        public void testNotMutableMapPut2() throws Exception {
+            runTest("testData/inspectionsLocal/replacePutWithAssignment/notMutableMapPut2.kt");
         }
 
         @TestMetadata("putAsExpression.kt")

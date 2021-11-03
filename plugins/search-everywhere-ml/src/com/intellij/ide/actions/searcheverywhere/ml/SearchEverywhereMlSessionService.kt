@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
@@ -29,16 +28,23 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     val settings = service<SearchEverywhereMlSettings>()
 
     if (settings.isSortingByMlEnabledByDefault(tab)) {
-      // For tabs with ML-sorting enabled by default, the experiment will disable ML-sorting if it's enabled
-      return settings.isSortingByMlEnabled(tab) && !experiment.shouldPerformExperiment(tab)
-    } else {
-      return settings.isSortingByMlEnabled(tab) || experiment.shouldPerformExperiment(tab)
+      return settings.isSortingByMlEnabled(tab)
+             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
+    }
+    else {
+      return settings.isSortingByMlEnabled(tab)
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
     }
   }
 
-  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
+  internal fun shouldUseExperimentalModel(tabId: String): Boolean {
+    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false
+    return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+  }
+
+  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val session = getCurrentSession() ?: return -1.0
-    return session.getMLWeight(contributor, element)
+    return session.getMLWeight(contributor, element, matchingDegree)
   }
 
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
@@ -76,6 +82,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
       getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
+    }
+  }
+
+  override fun notifySearchResultsUpdated() {
+    if (experiment.isAllowed) {
+      getCurrentSession()?.notifySearchResultsUpdated()
     }
   }
 

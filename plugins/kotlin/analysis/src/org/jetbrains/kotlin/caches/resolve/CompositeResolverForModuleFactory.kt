@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.frontend.java.di.initializeJavaSpecificComponents
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
+import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolverImpl
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.checkers.ExperimentalMarkerDeclarationAnnotationChecker
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
+import org.jetbrains.kotlin.resolve.jvm.extensions.PackageFragmentProviderExtension
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
@@ -107,6 +109,7 @@ class CompositeResolverForModuleFactory(
             yieldAll(getJsProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
             yieldAll(getJvmProvidersIfAny(container))
             yieldAll(getNativeProvidersIfAny(moduleInfo, container))
+            yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
         }.toList()
 
         return ResolverForModule(CompositePackageFragmentProvider(packageFragmentProviders), container)
@@ -153,6 +156,22 @@ class CompositeResolverForModuleFactory(
             )
         )
     }
+
+    private fun <M : ModuleInfo> getExtensionsProvidersIfAny(
+        moduleInfo: M,
+        moduleContext: ModuleContext,
+        trace: BindingTrace,
+    ): Collection<PackageFragmentProvider> = PackageFragmentProviderExtension.getInstances(moduleContext.project)
+        .mapNotNull {
+            it.getPackageFragmentProvider(
+                moduleContext.project,
+                moduleContext.module,
+                moduleContext.storageManager,
+                trace,
+                moduleInfo,
+                LookupTracker.DO_NOTHING,
+            )
+        }
 
     private fun getJsProvidersIfAny(
         moduleInfo: ModuleInfo,

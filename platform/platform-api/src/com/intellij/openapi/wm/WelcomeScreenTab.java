@@ -31,4 +31,7 @@ public interface WelcomeScreenTab {
   default List<WelcomeScreenTab> getChildTabs() {
     return new ArrayList<>();
   }
+
+  default void updateComponent() {}
+
 }

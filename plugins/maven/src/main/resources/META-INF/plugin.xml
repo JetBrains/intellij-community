@@ -62,6 +62,7 @@
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
+    <externalSystemDependencyAnalyzer implementation="org.jetbrains.idea.maven.project.MavenDependencyAnalyzerExtension"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
@@ -72,6 +73,7 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
@@ -306,7 +308,7 @@
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
-    <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemStep$Factory"/>
+    <newProjectWizard.java.buildSystem implementation="org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
@@ -720,6 +722,10 @@
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
 
+    <action id="Maven.AnalyzeDependencies" class="org.jetbrains.idea.maven.project.actions.AnalyzeDependenciesAction">
+      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
+      <add-to-group group-id="Maven.NavigatorActionsToolbar" anchor="after" relative-to-action="Maven.ToggleSkipTests"/>
+    </action>
   </actions>
 
   <projectListeners>

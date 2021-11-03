@@ -5,10 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import java.util.*
 
@@ -59,10 +56,10 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     indexLog.add(IndexLogRecord.Add(id, data))
     LOG.trace {
       try {
-        "Adding to external index: $id -> $data. Data hash: ${data.hashCode()}"
+        "Adding to external index: ${id.asString()} -> $data. Data hash: ${data.hashCode()}"
       }
       catch (e: Throwable) {
-        "Adding to external index. $id, cannot get data info. ${e.message}"
+        "Adding to external index. ${id.asString()}, cannot get data info. ${e.message}"
       }
     }
   }

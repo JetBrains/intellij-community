@@ -108,7 +108,7 @@ object MavenJvmConfigBuildIssue {
 
   fun getRunnerIssue(title: String, errorMessage: String, project: Project, runConfiguration: MavenRunConfiguration): BuildIssue {
     val mavenProject = MavenProjectsManager.getInstance(project)
-      .rootProjects.filter { runConfiguration.settings.workingDirectory.contains(it.directory) }.firstOrNull()
+      .rootProjects.filter { runConfiguration.runnerParameters.workingDirPath.contains(it.directory) }.firstOrNull()
     val jvmConfig: VirtualFile? = mavenProject?.file?.path
       ?.let { MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(it) }
       ?.let { MavenExternalParameters.getJvmConfig(it) }

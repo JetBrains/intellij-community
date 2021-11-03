@@ -40,18 +40,6 @@ public final class GutterIconTooltipHelper {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
-    return composeText(elements, start, pattern, "");
-  }
-
-  /**
-   * @deprecated use {@link GutterTooltipHelper}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  static String composeText(@NotNull Iterable<? extends PsiElement> elements,
-                            @NotNull String start,
-                            @NotNull String pattern,
-                            @NotNull String postfix) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
@@ -80,7 +68,6 @@ public final class GutterIconTooltipHelper {
       sep = "<br>";
       result.append(name);
     }
-    result.append(postfix);
     result.append("</body></html>");
     return result.toString();
   }

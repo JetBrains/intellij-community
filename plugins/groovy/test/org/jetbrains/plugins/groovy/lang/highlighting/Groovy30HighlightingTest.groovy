@@ -182,4 +182,36 @@ class Bar extends Foo {
 class Bar extends Foo {}
 '''
   }
+
+  void 'test switch expression'() {
+    highlightingTest """
+def x = <error>switch</error> (10) {
+}"""
+  }
+
+  void 'test switch with multiple expressions'() {
+    highlightingTest """
+switch (10) {
+  case <error>20, 30</error>:
+    break
+}"""
+  }
+
+  void 'test enhanced range'() {
+    highlightingTest """
+<error>1<..<2</error>
+"""
+  }
+
+  void 'test literal without leading zero'() {
+    highlightingTest """
+<error>.5555d</error>
+"""
+  }
+
+  void 'test record definition'() {
+    highlightingTest """
+<error>record</error> X() {}
+"""
+  }
 }

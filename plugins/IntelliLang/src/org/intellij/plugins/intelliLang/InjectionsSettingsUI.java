@@ -705,8 +705,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
 
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
       }
     };
     descriptor.setDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));

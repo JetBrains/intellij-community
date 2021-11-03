@@ -5,6 +5,7 @@ import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.ide.bookmark.ui.BookmarksView
+import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -19,6 +20,9 @@ import javax.swing.JTree
 
 internal val AnActionEvent.bookmarksManager
   get() = project?.let { BookmarksManager.getInstance(it) }
+
+internal val AnActionEvent.bookmarksViewState
+  get() = project?.let { BookmarksViewState.getInstance(it) }
 
 internal val AnActionEvent.bookmarksViewFromToolWindow
   get() = dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.bookmarksView
@@ -52,3 +56,10 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     val tree = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JTree ?: return null
     return manager.createBookmark(TreeUtil.getLastUserObject(TreeUtil.getSelectedPathIfOne(tree)))
   }
+
+
+internal val Bookmark.bookmarksManager
+  get() = BookmarksManager.getInstance(provider.project)
+
+internal val Bookmark.firstGroupWithDescription
+  get() = bookmarksManager?.getGroups(this)?.firstOrNull { it.getDescription(this).isNullOrBlank().not() }

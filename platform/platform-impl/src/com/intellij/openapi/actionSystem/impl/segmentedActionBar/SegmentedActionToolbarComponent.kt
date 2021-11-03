@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -17,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.border.Border
-
 
 open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
@@ -69,9 +65,6 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   }
 
-  override fun isInsideNavBar(): Boolean {
-    return true
-  }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     if (!isActive) {
@@ -150,12 +143,13 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun paintActiveBorder(g: Graphics) {
-    if(isActive || paintBorderForSingleItem) {
+    if((isActive || paintBorderForSingleItem) && visibleActions != null) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 
   override fun paintBorder(g: Graphics) {
+    super.paintBorder(g)
     paintActiveBorder(g)
   }
 
@@ -181,7 +175,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   protected open fun logNeeded() = false
 
   protected fun forceUpdate() {
-    if(logNeeded()) LOG.info("MAIN SLOT forceUpdate allActions: $visibleActions")
+    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
     visibleActions?.let {
       update(true, it)
 
@@ -195,9 +189,16 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     update(forced, newVisibleActions)
   }
 
+  private var lastIds: List<String> = emptyList()
+
   private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
-    if(logNeeded()) LOG.info("MAIN SLOT filtered actions: $filtered")
+
+    val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
+    val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
+
+    if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    lastIds = filteredIds
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
   }

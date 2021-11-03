@@ -27,7 +27,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Defines a handler for moving a class to a different package/class/etc.
+ * In addition to moving a class the handler can also register handlers that are executed before moving and after moving the class.
+ *
  * @author Maxim.Medvedev
+ * @see MoveClassesOrPackagesProcessor
  */
 public interface MoveClassHandler {
   ExtensionPointName<MoveClassHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.moveClassHandler");
@@ -43,8 +47,8 @@ public interface MoveClassHandler {
   PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException;
 
   /**
-   *
-   * @param clazz psiClass
+   * Returns the fully qualified name of the passed class that is the handler can deduce
+   * @param clazz an instance of {@link PsiClass} to get the name for
    * @return null, if this instance of FileNameForPsiProvider cannot provide name for clazz
    */
   @Contract(pure = true)

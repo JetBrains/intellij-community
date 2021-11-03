@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.*
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import java.util.*
 
@@ -114,7 +115,10 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
     }
 
     private fun getTaskNames(task: ExternalSystemRunTask): List<String> {
-        return listOf("clean" + task.taskName.capitalizeAsciiOnly(), task.taskName)
+        // ExternalSystemRunTask.externalSystemProjectId is a fully qualified task name prefix. For the root project it's ":", for nested
+        // ones it's ":<project>:<sub-project>[:<etc>]"
+        val taskNamePrefix = task.externalSystemProjectId.takeIf { it == ":" } ?: (task.externalSystemProjectId + ":")
+        return listOf("${taskNamePrefix}clean${task.taskName.capitalizeAsciiOnly()}", "${taskNamePrefix}${task.taskName}")
     }
 }
 

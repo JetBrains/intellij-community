@@ -191,26 +191,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     this(false, parentDisposable);
   }
 
-  /**
-   * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ThreeComponentsSplitter() {
-    this(false, false, null, true);
-  }
-
   public ThreeComponentsSplitter(boolean vertical, @NotNull Disposable parentDisposable) {
     this(vertical, false, parentDisposable);
-  }
-
-  /**
-   * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ThreeComponentsSplitter(boolean vertical) {
-    this(vertical, false, null, true);
   }
 
   public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers, @NotNull Disposable parentDisposable) {

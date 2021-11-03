@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,13 +18,6 @@ public class VirtualFileEvent extends EventObject {
 
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
-
-  /** @deprecated Use {@link #VirtualFileEvent(Object, VirtualFile, VirtualFile, long, long)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
-    this(requestor, file, parent, 0, 0);
-  }
 
   public VirtualFileEvent(@Nullable Object requestor,
                           @NotNull VirtualFile file,

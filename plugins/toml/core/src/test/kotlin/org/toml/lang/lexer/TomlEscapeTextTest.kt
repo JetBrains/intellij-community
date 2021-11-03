@@ -46,10 +46,20 @@ class TomlEscapeTextTest(
             arrayOf(BASIC_STRING, "\\U0020FFFF", "\\U0020FFFF"),
             arrayOf(BASIC_STRING, "foo\\\n    bar", "foo\\\n    bar"),
             arrayOf(BASIC_STRING, "foo\\\r\n    bar", "foo\\\r\n    bar"),
+            arrayOf(BASIC_STRING, "\nfoo\\\n    bar", "\nfoo\\\n    bar"),
+            arrayOf(BASIC_STRING, "\nfoo\\\r\n    bar", "\nfoo\\\r\n    bar"),
+            arrayOf(BASIC_STRING, "\n\nfoo\\\n    bar", "\n\nfoo\\\n    bar"),
+            arrayOf(BASIC_STRING, "\n\nfoo\\\r\n    bar", "\n\nfoo\\\r\n    bar"),
 
             arrayOf(MULTILINE_BASIC_STRING, "foo\\\n    bar", "foobar"),
             arrayOf(MULTILINE_BASIC_STRING, "foo\\\r\n    bar", "foobar"),
             arrayOf(MULTILINE_BASIC_STRING, "foo\\r\\nbar", "foo\r\nbar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\nfoo\\\n    bar", "foobar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\nfoo\\\r\n    bar", "foobar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\nfoo\\r\\nbar", "foo\r\nbar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\n\nfoo\\\n    bar", "\nfoobar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\n\nfoo\\\r\n    bar", "\nfoobar"),
+            arrayOf(MULTILINE_BASIC_STRING, "\n\nfoo\\r\\nbar", "\nfoo\r\nbar"),
 
             arrayOf(LITERAL_STRING, "aaa", "aaa"),
             arrayOf(LITERAL_STRING, "a\\na", "a\\na"),
@@ -69,10 +79,20 @@ class TomlEscapeTextTest(
             arrayOf(LITERAL_STRING, "\\U0020FFFF", "\\U0020FFFF"),
             arrayOf(LITERAL_STRING, "foo\\\n    bar", "foo\\\n    bar"),
             arrayOf(LITERAL_STRING, "foo\\\r\n    bar", "foo\\\r\n    bar"),
+            arrayOf(LITERAL_STRING, "\nfoo\\\n    bar", "\nfoo\\\n    bar"),
+            arrayOf(LITERAL_STRING, "\nfoo\\\r\n    bar", "\nfoo\\\r\n    bar"),
+            arrayOf(LITERAL_STRING, "\n\nfoo\\\n    bar", "\n\nfoo\\\n    bar"),
+            arrayOf(LITERAL_STRING, "\n\nfoo\\\r\n    bar", "\n\nfoo\\\r\n    bar"),
 
             arrayOf(MULTILINE_LITERAL_STRING, "foo\\\n    bar", "foo\\\n    bar"),
             arrayOf(MULTILINE_LITERAL_STRING, "foo\\\r\n    bar", "foo\\\r\n    bar"),
-            arrayOf(MULTILINE_LITERAL_STRING, "foo\\r\\nbar", "foo\\r\\nbar")
+            arrayOf(MULTILINE_LITERAL_STRING, "foo\\r\\nbar", "foo\\r\\nbar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\nfoo\\\n    bar", "foo\\\n    bar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\nfoo\\\r\n    bar", "foo\\\r\n    bar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\nfoo\\r\\nbar", "foo\\r\\nbar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\n\nfoo\\\n    bar", "\nfoo\\\n    bar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\n\nfoo\\\r\n    bar", "\nfoo\\\r\n    bar"),
+            arrayOf(MULTILINE_LITERAL_STRING, "\n\nfoo\\r\\nbar", "\nfoo\\r\\nbar")
         )
     }
 }

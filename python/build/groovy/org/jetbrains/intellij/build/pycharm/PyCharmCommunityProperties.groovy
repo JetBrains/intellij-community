@@ -36,6 +36,8 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.ide.impl", mainJarName)
+        withModule("intellij.jupyter.viewOnly")
+        withModule("intellij.jupyter.core")
       }
     ]
     productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]

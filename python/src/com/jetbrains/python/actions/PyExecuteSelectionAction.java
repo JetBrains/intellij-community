@@ -16,7 +16,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,22 +71,6 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
       editor.getCaretModel().moveToOffset(newOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-  }
-
-  /**
-   * Finds existing or creates a new console and then executes provided code there.
-   *
-   * @param e
-   * @param selectionText null means that there is no code to execute, only open a console
-   * @deprecated Use unified `PyExecuteInConsole.executeCodeInConsole` instead with appropriate parameters
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @Nullable final String selectionText) {
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    Project project = e.getProject();
-    if (project == null) return;
-    PyExecuteInConsole.executeCodeInConsole(project, selectionText, editor, true, true, selectionText == null, null);
   }
 
   private static String getLineUnderCaret(Editor editor) {

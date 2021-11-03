@@ -12,8 +12,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.WaitTimedOutError
+import org.assertj.swing.exception.ComponentLookupException
+import org.assertj.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.ActionsRecorder
@@ -282,7 +282,11 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
       }
 
-      TaskTestContext(runtimeContext).action()
+      try {
+        TaskTestContext(runtimeContext).action()
+      } catch (e: Throwable) {
+        thisLogger().error("Test execution error", e)
+      }
     })
   }
 

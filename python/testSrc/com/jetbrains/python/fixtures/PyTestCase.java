@@ -125,30 +125,13 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    initApplication();
     super.setUp();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
-    if (SwingUtilities.isEventDispatchThread()) {
-      myFixture.setUp();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        try {
-          myFixture.setUp();
-        }
-        catch (final Exception e) {
-          throw new RuntimeException("Error running setup", e);
-        }
-      });
-    }
-  }
-
-  private static void initApplication() {
-    TestApplicationManager.getInstance();
+    myFixture.setUp();
   }
 
   /**
@@ -330,7 +313,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
     try {
       runnable.run();
-    } finally {
+    }
+    finally {
       sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
@@ -453,7 +437,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static String getHelpersPath() {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
-
 
 
   /**

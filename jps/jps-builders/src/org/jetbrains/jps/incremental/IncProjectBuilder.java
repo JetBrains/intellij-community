@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -167,7 +168,9 @@ public final class IncProjectBuilder {
 
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
+    Tracer.Span rebuildRequiredSpan = Tracer.start("IncProjectBuilder.checkRebuildRequired");
     checkRebuildRequired(scope);
+    rebuildRequiredSpan.complete();
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
@@ -190,7 +193,9 @@ public final class IncProjectBuilder {
       if (forceCleanCaches || context.isProjectRebuild()) {
         sourcesState.clearSourcesState();
       }
+      Tracer.Span buildSpan = Tracer.start("IncProjectBuilder.runBuild");
       runBuild(context, forceCleanCaches);
+      buildSpan.complete();
       myProjectDescriptor.dataManager.saveVersion();
       myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
       sourcesState.reportSourcesState();
@@ -238,6 +243,7 @@ public final class IncProjectBuilder {
       }
     }
     finally {
+      Tracer.Span finishingCompilationSpan = Tracer.start("finishing compilation");
       memWatcher.stop();
       flushContext(context);
       // wait for async tasks
@@ -250,6 +256,7 @@ public final class IncProjectBuilder {
           waitForTask(status, task);
         }
       }
+      finishingCompilationSpan.complete();
     }
   }
 
@@ -419,13 +426,16 @@ public final class IncProjectBuilder {
         }
       }
     });
-
+    Tracer.Span allTargetBuilderBuildStartedSpan = Tracer.start("All TargetBuilder.buildStarted");
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
     }
+    allTargetBuilderBuildStartedSpan.complete();
+    Tracer.Span allModuleLevelBuildersBuildStartedSpan = Tracer.start("All ModuleLevelBuilder.buildStarted");
     for (ModuleLevelBuilder builder : myBuilderRegistry.getModuleLevelBuilders()) {
       builder.buildStarted(context);
     }
+    allModuleLevelBuildersBuildStartedSpan.complete();
 
     BuildProgress buildProgress = null;
     try {
@@ -434,20 +444,28 @@ public final class IncProjectBuilder {
                                         chunk -> isAffected(context.getScope(), chunk));
 
       // clean roots for targets for which rebuild is forced
+      Tracer.Span cleanOutputSourcesSpan = Tracer.start("Clean output sources");
       cleanOutputRoots(context, context.isProjectRebuild() || forceCleanCaches);
+      cleanOutputSourcesSpan.complete();
 
+      Tracer.Span beforeTasksSpan = Tracer.start("'before' tasks");
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.running.before.tasks")));
       runTasks(context, myBuilderRegistry.getBeforeTasks());
       TimingLog.LOG.debug("'before' tasks finished");
+      beforeTasksSpan.complete();
 
+      Tracer.Span checkingSourcesSpan = Tracer.start("Building targets");
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.checking.sources")));
       buildChunks(context, buildProgress);
       TimingLog.LOG.debug("Building targets finished");
+      checkingSourcesSpan.complete();
 
+      Tracer.Span afterTasksSpan = Tracer.start("'after' span");
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.running.after.tasks")));
       runTasks(context, myBuilderRegistry.getAfterTasks());
       TimingLog.LOG.debug("'after' tasks finished");
       sendElapsedTimeMessages(context);
+      afterTasksSpan.complete();
     }
     finally {
       if (buildProgress != null) {
@@ -846,6 +864,7 @@ public final class IncProjectBuilder {
         compileInParallel = false;
       }
 
+      Tracer.Span buildSpan = Tracer.start(compileInParallel ? "Parallel build" : "Non-parallel build");
       if (compileInParallel) {
         new BuildParallelizer(context, buildProgress).buildInParallel();
       }
@@ -863,6 +882,7 @@ public final class IncProjectBuilder {
           }
         }
       }
+      buildSpan.complete();
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -871,6 +891,7 @@ public final class IncProjectBuilder {
 
   private static final class BuildChunkTask {
     private final BuildTargetChunk myChunk;
+    private final AtomicInteger myNotBuildDependenciesCount = new AtomicInteger(0);
     private final Set<BuildChunkTask> myNotBuiltDependencies = new HashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
@@ -890,11 +911,12 @@ public final class IncProjectBuilder {
     }
 
     public boolean isReady() {
-      return myNotBuiltDependencies.isEmpty();
+      return myNotBuildDependenciesCount.get() == 0;
     }
 
     public void addDependency(BuildChunkTask dependency) {
       if (myNotBuiltDependencies.add(dependency)) {
+        myNotBuildDependenciesCount.incrementAndGet();
         dependency.myTasksDependsOnThis.add(this);
       }
     }
@@ -902,10 +924,9 @@ public final class IncProjectBuilder {
     public List<BuildChunkTask> markAsFinishedAndGetNextReadyTasks() {
       List<BuildChunkTask> nextTasks = new SmartList<>();
       for (BuildChunkTask task : myTasksDependsOnThis) {
-        final boolean removed = task.myNotBuiltDependencies.remove(this);
-        LOG.assertTrue(removed, task.getChunk().toString() + " didn't have " + getChunk().toString());
+        int dependenciesCount = task.myNotBuildDependenciesCount.decrementAndGet();
 
-        if (task.isReady()) {
+        if (dependenciesCount == 0) {
           nextTasks.add(task);
         }
       }
@@ -923,12 +944,12 @@ public final class IncProjectBuilder {
     private final CompileContext myContext;
     private final BuildProgress myBuildProgress;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
-    private final Object myQueueLock = new Object();
     private final CountDownLatch myTasksCountDown;
     private final List<BuildChunkTask> myTasks;
     private final Runnable myFlushCommand;
 
     private BuildParallelizer(CompileContext context, BuildProgress buildProgress) {
+      Tracer.Span span = Tracer.start("BuildParallelizer constructor");
       myContext = context;
       myBuildProgress = buildProgress;
       final ProjectDescriptor pd = myContext.getProjectDescriptor();
@@ -961,8 +982,12 @@ public final class IncProjectBuilder {
         }
       }
 
+      Tracer.Span collectTaskDependantsSpan = Tracer.start("IncProjectBuilder.collectTaskDependants");
       Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> taskToDependants = collectTaskToDependants(context, targetIndex, targetToTask);
+      collectTaskDependantsSpan.complete();
 
+
+      Tracer.Span prioritisationSpan = Tracer.start("IncProjectBuilder.prioritisation");
       // bitset stores indexes of transitively dependant tasks
       HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
       for (BuildChunkTask task : Lists.reverse(myTasks)) {
@@ -977,8 +1002,10 @@ public final class IncProjectBuilder {
         chunkToTransitive.put(task, transitiveDependants);
         task.myDepsScore = transitiveDependants.cardinality();
       }
+      prioritisationSpan.complete();
 
       myTasksCountDown = new CountDownLatch(myTasks.size());
+      span.complete();
     }
 
     @NotNull
@@ -1068,8 +1095,10 @@ public final class IncProjectBuilder {
               }
             }
             finally {
+              Tracer.Span flush = Tracer.start("flushing");
               myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
               myFlushCommand.run();
+              flush.complete();
             }
           }
           catch (Throwable e) {
@@ -1080,9 +1109,7 @@ public final class IncProjectBuilder {
             LOG.debug("Finished compilation of " + task.getChunk().toString());
             myTasksCountDown.countDown();
             List<BuildChunkTask> nextTasks;
-            synchronized (myQueueLock) {
-              nextTasks = task.markAsFinishedAndGetNextReadyTasks();
-            }
+            nextTasks = task.markAsFinishedAndGetNextReadyTasks();
             if (!nextTasks.isEmpty()) {
               queueTasks(nextTasks);
             }
@@ -1094,7 +1121,10 @@ public final class IncProjectBuilder {
 
   private void buildChunkIfAffected(CompileContext context, CompileScope scope, BuildTargetChunk chunk,
                                     BuildProgress buildProgress) throws ProjectBuildException {
-    if (isAffected(scope, chunk)) {
+    Tracer.Span isAffectedSpan = Tracer.start("isAffected");
+    boolean affected = isAffected(scope, chunk);
+    isAffectedSpan.complete();
+    if (affected) {
       buildTargetsChunk(context, chunk, buildProgress);
     }
   }
@@ -1259,6 +1289,7 @@ public final class IncProjectBuilder {
   }
 
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
+    Tracer.DelayedSpan buildSpan = Tracer.start(() ->"Building " + chunk.getPresentableName());
     final BuildFSState fsState = myProjectDescriptor.fsState;
     boolean doneSomething;
     try {
@@ -1275,7 +1306,9 @@ public final class IncProjectBuilder {
 
       fsState.beforeChunkBuildStart(context, chunk);
 
+      Tracer.DelayedSpan runBuildersSpan = Tracer.start(() -> "runBuilders " + chunk.getPresentableName());
       doneSomething |= runBuildersForChunk(context, chunk, buildProgress);
+      runBuildersSpan.complete();
 
       fsState.clearContextRoundData(context);
       fsState.clearContextChunk(context);
@@ -1332,6 +1365,7 @@ public final class IncProjectBuilder {
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
         sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
+        buildSpan.complete();
       }
     }
   }

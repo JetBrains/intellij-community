@@ -2,7 +2,6 @@
 package com.intellij.slicer
 
 import com.intellij.lang.LangBundle
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
@@ -11,6 +10,6 @@ class SliceForwardAdditionalUi {
   val panel = panel {
     row {
       myShowDerefs = checkBox(LangBundle.message("checkbox.show.method.calls.and.field.accesses.on.variable.being.analysed")).component
-    }.topGap(TopGap.MEDIUM)
+    }
   }
 }

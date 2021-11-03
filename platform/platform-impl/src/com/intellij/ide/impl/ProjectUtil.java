@@ -138,6 +138,10 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
 
+    if (!TrustedProjects.confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
+      return null;
+    }
+
     for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
       if (!provider.isStrongProjectInfoHolder()) {
         continue;

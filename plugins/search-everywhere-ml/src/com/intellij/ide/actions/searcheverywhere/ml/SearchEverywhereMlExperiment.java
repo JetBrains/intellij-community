@@ -8,17 +8,31 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class SearchEverywhereMlExperiment {
   private static final int NUMBER_OF_GROUPS = 4;
 
-  private final int myExperimentGroup;
   private final boolean myIsExperimentalMode;
+  private final Map<SearchEverywhereTabWithMl, Experiment> myTabExperiments;
 
   public SearchEverywhereMlExperiment() {
     myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
-    myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS : -1;
+    myTabExperiments = createExperiments();
+  }
+
+  private static HashMap<SearchEverywhereTabWithMl, Experiment> createExperiments() {
+    return new HashMap<>(3) {{
+      put(SearchEverywhereTabWithMl.ACTION,
+          new Experiment()
+            .addExperiment(ExperimentType.NO_ML, 1)
+            .addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 2));
+
+      put(SearchEverywhereTabWithMl.FILES,
+          new Experiment().addExperiment(ExperimentType.USE_EXPERIMENTAL_MODEL, 3));
+    }};
   }
 
   public boolean isAllowed() {
@@ -26,11 +40,17 @@ public class SearchEverywhereMlExperiment {
     return settings.isSortingByMlEnabledInAnyTab() || !isDisableLoggingAndExperiments();
   }
 
-  public boolean shouldPerformExperiment(@NotNull SearchEverywhereTabWithMl tab) {
-    if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return false;
+  @NotNull
+  public ExperimentType getExperimentForTab(@NotNull SearchEverywhereTabWithMl tab) {
+    if (isDisableLoggingAndExperiments() || isDisableExperiments(tab)) return ExperimentType.NO_EXPERIMENT;
 
-    final int tabExperimentGroup = getExperimentGroupForTab(tab);
-    return myExperimentGroup == tabExperimentGroup;
+    final Experiment tabExperiment = myTabExperiments.get(tab);
+    if (tabExperiment == null) {
+      return ExperimentType.NO_EXPERIMENT;
+    }
+    else {
+      return tabExperiment.getExperimentByGroup(getExperimentGroup());
+    }
   }
 
   private boolean isDisableLoggingAndExperiments() {
@@ -42,15 +62,35 @@ public class SearchEverywhereMlExperiment {
     return Registry.is(key);
   }
 
-  private static int getExperimentGroupForTab(@NotNull SearchEverywhereTabWithMl tab) {
-    if (tab == SearchEverywhereTabWithMl.ACTION) {
-      return 1;
+  public int getExperimentGroup() {
+    if (!myIsExperimentalMode) {
+      return -1;
     }
-
-    return -1;
+    else {
+      int experimentGroup = EventLogConfiguration.getInstance().getBucket() % NUMBER_OF_GROUPS;
+      int registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group");
+      return registryExperimentGroup >= 0 ? registryExperimentGroup : experimentGroup;
+    }
   }
 
-  public int getExperimentGroup() {
-    return myExperimentGroup;
+  enum ExperimentType {
+    NO_EXPERIMENT,
+    NO_ML,
+    USE_EXPERIMENTAL_MODEL
+  }
+
+  private static class Experiment {
+    private final Map<Integer, ExperimentType> myExperiments = new HashMap<>(3);
+
+    @NotNull
+    Experiment addExperiment(@NotNull ExperimentType type, int group) {
+      myExperiments.put(group, type);
+      return this;
+    }
+
+    @NotNull
+    public ExperimentType getExperimentByGroup(int group) {
+      return myExperiments.getOrDefault(group, ExperimentType.NO_EXPERIMENT);
+    }
   }
 }

@@ -2,13 +2,16 @@
 package com.jetbrains.python.sdk.configuration
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -36,7 +39,13 @@ object PyProjectVirtualEnvConfiguration {
     val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
-        val packageManager = PyPackageManager.getInstance(installedSdk)
+        val sdk = if (installedSdk is Disposable && Disposer.isDisposed(installedSdk)) {
+          ProjectJdkTable.getInstance().findJdk(installedSdk.name)!!
+        }
+        else {
+          installedSdk
+        }
+        val packageManager = PyPackageManager.getInstance(sdk)
         return packageManager.createVirtualEnv(venvRoot, inheritSitePackages)
       }
     }

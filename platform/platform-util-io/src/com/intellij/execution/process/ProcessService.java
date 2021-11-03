@@ -14,7 +14,7 @@ public interface ProcessService {
   Process startPtyProcess(String @NotNull [] command,
                           @Nullable String directory,
                           @NotNull Map<String, String> env,
-                          @NotNull PtyCommandLineOptions options,
+                          @NotNull LocalPtyOptions options,
                           @Nullable Application app,
                           boolean redirectErrorStream,
                           boolean windowsAnsiColorEnabled,
@@ -37,6 +37,8 @@ public interface ProcessService {
 
   @Nullable
   Integer winPtyChildProcessId(@NotNull Process process);
+
+  boolean hasControllingTerminal(@NotNull Process process);
 
   static @NotNull ProcessService getInstance() {
     return ApplicationManager.getApplication().getService(ProcessService.class);

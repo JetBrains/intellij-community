@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.SimpleEventListener
@@ -10,6 +10,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -39,6 +41,8 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
     init {
       reviewProcessModel.addAndInvokeChangesListener(reviewProcessListener)
     }
+
+    override fun getShortcut(): ShortcutSet = getActiveKeymapShortcuts("Github.PullRequest.Diff.Comment.Create")
 
     override fun getClickAction(): DumbAwareAction? {
       if (inlay != null) return FocusInlayAction()

@@ -95,6 +95,10 @@ final class PersistentFSRecordAccessor {
     LOG.info("Sanity check took " + t + " ms");
   }
 
+  boolean isDeleted(int id) throws IOException {
+    return BitUtil.isSet(myFSConnection.getRecords().doGetFlags(id), FREE_RECORD_FLAG) || myNewFreeRecords.contains(id);
+  }
+
   private void checkRecordSanity(int id,
                                  int recordCount,
                                  @NotNull IntList usedAttributeRecordIds,

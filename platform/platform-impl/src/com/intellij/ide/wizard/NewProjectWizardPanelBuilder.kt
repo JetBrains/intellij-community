@@ -13,8 +13,8 @@ internal class NewProjectWizardPanelBuilder(private val context: WizardContext) 
   private val panels = ArrayList<DialogPanel>()
   private val straightPanels get() = panels.filter { it.isShowing }
 
-  val preferredFocusedComponent: JComponent?
-    get() = straightPanels.firstNotNullOfOrNull { it.preferredFocusedComponent }
+  fun getPreferredFocusedComponent(): JComponent? =
+    straightPanels.firstNotNullOfOrNull { it.preferredFocusedComponent }
 
   fun panel(init: Panel.() -> Unit) =
     com.intellij.ui.dsl.builder.panel(init)

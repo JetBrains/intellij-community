@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.search.usagesSearch
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -60,6 +59,16 @@ class ExpressionsOfTypeProcessor(
     companion object {
         @get:TestOnly
         var mode = if (isUnitTestMode()) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
+
+        @TestOnly
+        fun prodMode() {
+            mode = Mode.PLAIN_WHEN_NEEDED
+        }
+
+        @TestOnly
+        fun resetMode() {
+            mode = if (isUnitTestMode()) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
+        }
 
         @get:TestOnly
         var testLog: MutableCollection<String>? = null
@@ -191,16 +200,20 @@ class ExpressionsOfTypeProcessor(
     private fun addClassToProcess(classToSearch: PsiClass) {
         data class ProcessClassUsagesTask(val classToSearch: PsiClass) : Task {
             override fun perform() {
+                val debugInfo: StringBuilder? = if (isUnitTestMode()) StringBuilder() else null
                 testLog { "Searched references to ${logPresentation(classToSearch)}" }
+                debugInfo?.apply { append("Searched references to ").append(logPresentation(classToSearch)) }
                 val scope = GlobalSearchScope.allScope(project)
                     .excludeFileTypes(XmlFileType.INSTANCE) // ignore usages in XML - they don't affect us
                 searchReferences(classToSearch, scope) { reference ->
                     val element = reference.element
-                    val wasProcessed = when (element.language) {
-                        KotlinLanguage.INSTANCE -> processClassUsageInKotlin(element)
+                    val language = element.language
+                    debugInfo?.apply { append(", found reference element [$language]: $element") }
+                    val wasProcessed = when (language) {
+                        KotlinLanguage.INSTANCE -> processClassUsageInKotlin(element, debugInfo)
                         JavaLanguage.INSTANCE -> processClassUsageInJava(element)
                         else -> {
-                            when (element.language.displayName) {
+                            when (language.displayName) {
                                 "Groovy" -> {
                                     processClassUsageInLanguageWithPsiClass(element)
                                     true
@@ -222,7 +235,7 @@ class ExpressionsOfTypeProcessor(
                         return@searchReferences false
                     }
 
-                    error(getFallbackDiagnosticsMessage(reference))
+                    error(getFallbackDiagnosticsMessage(reference, debugInfo))
                 }
 
                 // we must use plain search inside our class (and inheritors) because implicit 'this' can happen anywhere
@@ -232,12 +245,12 @@ class ExpressionsOfTypeProcessor(
         addTask(ProcessClassUsagesTask(classToSearch))
     }
 
-    private fun getFallbackDiagnosticsMessage(reference: PsiReference): String {
+    private fun getFallbackDiagnosticsMessage(reference: PsiReference, debugInfo: StringBuilder? = null): String {
         val element = reference.element
         val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
         val lineAndCol = PsiDiagnosticUtils.offsetToLineAndColumn(document, element.startOffset)
-        return "Unsupported reference: '${element.text}' in ${element.containingFile
-            .name} line ${lineAndCol.line} column ${lineAndCol.column}"
+        return "Unsupported reference: '${element.text}' in ${element.containingFile.virtualFile} [${element.language}] " +
+                "line ${lineAndCol.line} column ${lineAndCol.column}${debugInfo?.let {" .$it"} ?: ""}"
     }
 
     private enum class ReferenceProcessor(val handler: (ExpressionsOfTypeProcessor, PsiReference) -> Boolean) {
@@ -471,43 +484,46 @@ class ExpressionsOfTypeProcessor(
         addTask(ProcessSamInterfaceTask(psiClass))
     }
 
-    private fun processClassUsageInKotlin(element: PsiElement): Boolean {
+    private fun processClassUsageInKotlin(element: PsiElement, debugInfo: StringBuilder?): Boolean {
         //TODO: type aliases
 
         when (element) {
             is KtReferenceExpression -> {
-                when (val parent = element.parent) {
+                val elementParent = element.parent
+                debugInfo?.apply { append(", elementParent: $elementParent") }
+                when (elementParent) {
                     is KtUserType -> { // usage in type
-                        return processClassUsageInUserType(parent)
+                        return processClassUsageInUserType(elementParent)
                     }
 
                     is KtCallExpression -> {
-                        if (element == parent.calleeExpression) {  // constructor or invoke operator invocation
+                        debugInfo?.apply { append(", KtCallExpression condition: ${element == elementParent.calleeExpression}") }
+                        if (element == elementParent.calleeExpression) {  // constructor or invoke operator invocation
                             processSuspiciousExpression(element)
                             return true
                         }
                     }
 
                     is KtContainerNode -> {
-                        if (parent.node.elementType == KtNodeTypes.LABEL_QUALIFIER) {
+                        if (elementParent.node.elementType == KtNodeTypes.LABEL_QUALIFIER) {
                             return true // this@ClassName - it will be handled anyway because members and extensions are processed with plain search
                         }
                     }
 
                     is KtQualifiedExpression -> {
                         // <class name>.memberName or some.<class name>.memberName
-                        if (element == parent.receiverExpression || parent.parent is KtQualifiedExpression) {
+                        if (element == elementParent.receiverExpression || elementParent.parent is KtQualifiedExpression) {
                             return true // companion object member or static member access - ignore it
                         }
                     }
 
                     is KtCallableReferenceExpression -> {
                         when (element) {
-                            parent.receiverExpression -> { // usage in receiver of callable reference (before "::") - ignore it
+                            elementParent.receiverExpression -> { // usage in receiver of callable reference (before "::") - ignore it
                                 return true
                             }
 
-                            parent.callableReference -> { // usage after "::" in callable reference - should be reference to constructor of our class
+                            elementParent.callableReference -> { // usage after "::" in callable reference - should be reference to constructor of our class
                                 processSuspiciousExpression(element)
                                 return true
                             }
@@ -515,7 +531,7 @@ class ExpressionsOfTypeProcessor(
                     }
 
                     is KtClassLiteralExpression -> {
-                        if (element == parent.receiverExpression) { // <class name>::class
+                        if (element == elementParent.receiverExpression) { // <class name>::class
                             processSuspiciousExpression(element)
                             return true
                         }
@@ -539,6 +555,8 @@ class ExpressionsOfTypeProcessor(
     private fun processClassUsageInUserType(userType: KtUserType): Boolean {
         val typeRef = userType.parents.lastOrNull { it is KtTypeReference }
         when (val typeRefParent = typeRef?.parent) {
+            // TODO: type alias
+            //is KtTypeAlias -> {}
             is KtCallableDeclaration -> {
                 when (typeRef) {
                     typeRefParent.typeReference -> { // usage in type of callable declaration
@@ -613,6 +631,13 @@ class ExpressionsOfTypeProcessor(
             is KtBinaryExpressionWithTypeRHS -> { // <expr> as <class name>
                 processSuspiciousExpression(typeRefParent)
                 return true
+            }
+
+            is KtTypeParameter -> { // <expr> as `<reified T : ClassName>`
+                typeRefParent.extendsBound?.let {
+                    addCallableDeclarationOfOurType(it)
+                    return true
+                }
             }
         }
 
@@ -859,7 +884,7 @@ class ExpressionsOfTypeProcessor(
                     prevElements.add(element)
                 }
             } else {
-                assert(restricted == GlobalSearchScope.EMPTY_SCOPE)
+                assert(SearchScope.isEmptyScope(restricted))
             }
 
         }

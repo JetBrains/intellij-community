@@ -107,7 +107,7 @@ public class BreakpointManager {
     if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties && !((JavaMethodBreakpointProperties)properties).EMULATED) {
       XDebuggerManagerImpl.getNotificationGroup()
         .createNotification(JavaDebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
-        .notify(((XBreakpointBase)breakpoint).getProject());
+        .notify(((XBreakpointBase<?, ?, ?>)breakpoint).getProject());
       return true;
     }
     return false;
@@ -141,7 +141,7 @@ public class BreakpointManager {
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
       if (xBreakpoint instanceof XLineBreakpointImpl) {
-        RangeHighlighter highlighter = ((XLineBreakpointImpl)xBreakpoint).getHighlighter();
+        RangeHighlighter highlighter = ((XLineBreakpointImpl<?>)xBreakpoint).getHighlighter();
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
@@ -267,7 +267,7 @@ public class BreakpointManager {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
       .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
-                         ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex)));
+                         ((XLineBreakpointType<?>)type).createBreakpointProperties(file, lineIndex)));
   }
 
   /**
@@ -276,7 +276,7 @@ public class BreakpointManager {
   @Nullable
   public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, @Nullable final Key<T> category) {
     for (final Breakpoint breakpoint : getBreakpoints()) {
-      if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
+      if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter<?>)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
           // noinspection unchecked
           return (T)breakpoint;
@@ -495,7 +495,7 @@ public class BreakpointManager {
     }
     Breakpoint breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
     if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
-      Project project = ((XBreakpointBase)xBreakpoint).getProject();
+      Project project = ((XBreakpointBase<?, ?, ?>)xBreakpoint).getProject();
       breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
       xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
     }

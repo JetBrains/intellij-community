@@ -1,16 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeIndexingInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.ModuleIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
@@ -18,27 +19,31 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class EntityIndexingServiceImpl implements EntityIndexingService {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
+  private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
 
   @Override
   public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeIndexingInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
+    if (changes.isEmpty()) {
+      runFullReindex(project, "Project roots have changed");
+    }
     if (Registry.is("indexing.full.rescan.on.workspace.model.changes")) {
-      new UnindexedFilesUpdater(project, "Reindex requested by project root model changes (full rescanning forced by registry key)").queue(project);
+      runFullReindex(project, "Reindex requested by project root model changes (full rescanning forced by registry key)");
       return;
     }
     for (RootsChangeIndexingInfo change : changes) {
       if (change == RootsChangeIndexingInfo.TOTAL_REINDEX) {
-        new UnindexedFilesUpdater(project, "Reindex requested by project root model changes").queue(project);
+        runFullReindex(project, "Reindex requested by project root model changes");
         return;
       }
     }
@@ -51,8 +56,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
-        DumbService.getInstance(project)
-          .queueTask(new UnindexedFilesUpdater(project, "Reindex on unexpected change in EntityIndexingServiceImpl"));
+        runFullReindex(project, "Reindex on unexpected change in EntityIndexingServiceImpl");
         return;
       }
     }
@@ -60,20 +64,39 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     if (!builders.isEmpty()) {
       List<IndexableFilesIterator> mergedIterators =
         IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
-      StringBuilder sb = new StringBuilder("Accumulated iterators:");
 
-      for (IndexableFilesIterator iterator : mergedIterators) {
-        sb.append('\n');
-        if (iterator instanceof ModuleIndexableFilesIteratorImpl) {
-          sb.append(((ModuleIndexableFilesIteratorImpl)iterator).getDebugDescription());
-        }
-        else {
-          sb.append(iterator);
-        }
+      List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
+      LOG.debug("Accumulated iterators: " + debugNames);
+      int maxNamesToLog = 10;
+      String reasonMessage = "changes in: " + debugNames
+        .stream()
+        .limit(maxNamesToLog)
+        .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
+      if (debugNames.size() > maxNamesToLog) {
+        reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
       }
-      LOG.debug(sb.toString());
-      DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, mergedIterators, "Reindex on accumulated partial changes"));
+      logRootChanges(project, false);
+      new UnindexedFilesUpdater(project, mergedIterators, reasonMessage).queue(project);
+    }
+  }
+
+  private static void runFullReindex(@NotNull Project project, @NotNull @NonNls String reason) {
+    logRootChanges(project, true);
+    new UnindexedFilesUpdater(project, reason).queue(project);
+  }
+
+
+  private static void logRootChanges(@NotNull Project project, boolean isFullReindex) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (LOG.isDebugEnabled()) {
+        String message = isFullReindex ?
+                         "Project roots of " + project.getName() + " have changed" :
+                         "Project roots of " + project.getName() + " will be partially reindexed";
+        LOG.debug(message, new Throwable());
+      }
+    }
+    else {
+      ROOT_CHANGES_LOGGER.info(project, isFullReindex);
     }
   }
 

@@ -147,7 +147,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     adjustEditorsVisibility();
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
-    if (!Registry.is("ide.text.editor.with.preview.show.floating.toolbar") || !myToolbarWrapper.isLeftToolbarEmpty()) {
+    if (!isShowFloatingToolbar()) {
       myComponent = panel;
       return myComponent;
     }
@@ -161,6 +161,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
     registerToolbarListeners(panel, toolbar);
     return myComponent;
+  }
+
+  protected boolean isShowFloatingToolbar() {
+    return Registry.is("ide.text.editor.with.preview.show.floating.toolbar") && myToolbarWrapper.isLeftToolbarEmpty();
   }
 
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {

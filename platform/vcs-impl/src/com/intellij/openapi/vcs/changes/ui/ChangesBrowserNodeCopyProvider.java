@@ -41,7 +41,7 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
     CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ChangesBrowserNode) {
-        return ((ChangesBrowserNode)node).getTextPresentation();
+        return ((ChangesBrowserNode<?>)node).getTextPresentation();
       }
       else {
         return node.toString();

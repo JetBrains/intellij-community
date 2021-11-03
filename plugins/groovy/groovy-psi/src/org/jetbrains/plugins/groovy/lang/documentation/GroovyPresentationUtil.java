@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -93,7 +94,7 @@ public final class GroovyPresentationUtil {
           }
 
           StringBuilder builder1 = new StringBuilder();
-          builder1.append(((GrReferenceElement)parent).getReferenceName());
+          builder1.append(((GrReferenceElement<?>)parent).getReferenceName());
           PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
           if (argTypes != null) {
             builder1.append("(");
@@ -139,7 +140,7 @@ public final class GroovyPresentationUtil {
     @Nullable String value
   ) {
     if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value);
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(false));
     }
     else {
       buffer.append(value);

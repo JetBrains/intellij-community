@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -25,10 +24,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -66,23 +62,7 @@ public class RunBuildAction extends MavenAction {
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());
 
-    boolean needDownloadWrapper = needDownloadWrapper(project, mavenProject.getDirectory());
-    if (needDownloadWrapper) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MavenDistributionsCache.getInstance(project).checkOrInstallMavenWrapper(mavenProject.getDirectory());
-        MavenRunConfigurationType.runConfiguration(project, params, null);
-      });
-    } else {
-      MavenRunConfigurationType.runConfiguration(project, params, null);
-    }
+    MavenRunConfigurationType.runConfiguration(project, params, null);
     return true;
-  }
-
-  private static boolean needDownloadWrapper(@NotNull Project project, @NotNull String workinDir) {
-    if (MavenUtil.isWrapper(MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings())) {
-      MavenDistributionsCache instance = MavenDistributionsCache.getInstance(project);
-      return instance.getWrapper(workinDir) == null;
-    }
-    return false;
   }
 }

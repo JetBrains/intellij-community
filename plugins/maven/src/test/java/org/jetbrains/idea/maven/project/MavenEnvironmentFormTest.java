@@ -26,7 +26,7 @@ public class MavenEnvironmentFormTest extends UsefulTestCase {
                                        Collections.singleton(MavenServerManager.BUNDLED_MAVEN_3)));
     assertThat(panel,
                t -> assertDoesntContain(t.getHistory(),
-                                        MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().getAbsolutePath()));
+                                        MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toAbsolutePath().toString()));
   }
 
   @Test

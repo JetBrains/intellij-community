@@ -29,13 +29,14 @@ public class PyAbstractClassInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
 
-    private Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    private Visitor(@NotNull ProblemsHolder holder,
+                    @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

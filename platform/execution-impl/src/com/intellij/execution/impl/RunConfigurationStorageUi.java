@@ -470,7 +470,8 @@ public class RunConfigurationStorageUi {
         }
 
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          if (file == null) return false;
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&

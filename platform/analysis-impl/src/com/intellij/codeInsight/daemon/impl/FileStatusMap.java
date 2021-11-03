@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -13,11 +13,9 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +31,7 @@ public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
-  private final Map<Document,FileStatus> myDocumentToStatusMap = ContainerUtil.createWeakMap(); // all dirty if absent
+  private final Map<Document,FileStatus> myDocumentToStatusMap = CollectionFactory.createWeakMap(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   FileStatusMap(@NotNull Project project) {
@@ -47,7 +45,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   @Nullable("null means the file is clean")
-  // used in scala
   public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
 
@@ -221,9 +218,9 @@ public final class FileStatusMap implements Disposable {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
 
-    synchronized(myDocumentToStatusMap){
+    synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
+      if (status == null) {
         return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {
@@ -267,7 +264,7 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  boolean allDirtyScopesAreNull(@NotNull Document document) {
+  public boolean allDirtyScopesAreNull(@NotNull Document document) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
 
@@ -355,13 +352,15 @@ public final class FileStatusMap implements Disposable {
     };
 
   // logging
-  private static final ConcurrentMap<Thread, Integer> threads = ContainerUtil.createConcurrentWeakMap();
+  private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
+
   private static int getThreadNum() {
-    return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
+    return threads.computeIfAbsent(Thread.currentThread(), thread -> threads.size());
   }
+
   public static void log(@NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
-      StringJoiner joiner = new StringJoiner(", ", StringUtil.repeatSymbol(' ', getThreadNum() * 4) + "[", "]\n");
+      StringJoiner joiner = new StringJoiner(", ", " ".repeat(getThreadNum() * 4) + "[", "]\n");
       for (Object o : info) {
         joiner.add(String.valueOf(o));
       }

@@ -68,7 +68,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
-    public boolean ENABLE_DOC_SYNTAX_HIGHLIGHTING = true;
+    public boolean SHOW_INTENTION_PREVIEW = false;
 
     public boolean SMART_HOME = true;
 
@@ -343,14 +343,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (oldValue != value) {
       myPropertyChangeSupport.firePropertyChange(PROP_DOC_COMMENT_RENDERING, oldValue, value);
     }
-  }
-
-  public boolean isDocSyntaxHighlightingEnabled() {
-    return myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING;
-  }
-
-  public void setDocSyntaxHighlightingEnabled(boolean value) {
-    myOptions.ENABLE_DOC_SYNTAX_HIGHLIGHTING = value;
   }
 
   public boolean isBlockCursor() {
@@ -694,6 +686,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setBidiTextDirection(BidiTextDirection direction) {
     myOptions.BIDI_TEXT_DIRECTION = direction;
+  }
+
+  public boolean isShowIntentionPreview() {
+    return myOptions.SHOW_INTENTION_PREVIEW;
+  }
+
+  public void setShowIntentionPreview(boolean show) {
+    myOptions.SHOW_INTENTION_PREVIEW = show;
   }
 
   /**

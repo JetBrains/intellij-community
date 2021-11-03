@@ -5,9 +5,13 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.module.GeneralModuleType;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 public class GeneralModuleTypeForIdea extends GeneralModuleType {
@@ -24,8 +28,21 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
                                                             Disposable parentDisposable) {
         ProjectSettingsStep step = new ProjectSettingsStep(context);
         step.getExpertPlaceholder().removeAll();
+        JTextPane textPane = new JTextPane();
+        textPane.setText(getDescription());
+        step.getExpertPlaceholder().setMinimumSize(new Dimension(0, 100));
+        step.getExpertPlaceholder().add(ScrollPaneFactory.createScrollPane(textPane));
         return step;
       }
+
+      @Override
+      public boolean isAvailable() {
+        return !isNewWizard();
+      }
     };
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 }

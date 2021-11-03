@@ -543,7 +543,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
     importProject();
 
-    assertEquals("7", getMavenProject().getReleaseLevel());
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevel.parse(getMavenProject().getReleaseLevel()));
     assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
     assertEquals(LanguageLevel.JDK_1_7,
                  LanguageLevel.parse(CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project"))));

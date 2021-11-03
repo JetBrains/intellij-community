@@ -2,12 +2,9 @@
 package com.intellij.ui.tabs.layout.singleRowLayout;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
 import com.intellij.ui.tabs.layout.TabsLayoutBase;
@@ -20,7 +17,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SingleRowLayout extends TabsLayoutBase implements MorePopupAware {
+public abstract class SingleRowLayout extends TabsLayoutBase {
 
   public SingleRowPassInfo myLastSingRowLayout;
 
@@ -264,33 +261,6 @@ public abstract class SingleRowLayout extends TabsLayoutBase implements MorePopu
     TabLabel label = myCallback.getTabLabel(eachInfo);
     return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
                                       - (myCallback.isEditorTabs() ? myCallback.getBorderThickness() : 0);
-  }
-
-  @Override
-  public boolean canShowMorePopup() {
-    return myLastSingRowLayout != null && myLastSingRowLayout.moreRect != null;
-  }
-
-  @Override
-  public void showMorePopup() {
-    if (myLastSingRowLayout == null || myLastSingRowLayout.moreRect == null) {
-      return;
-    }
-
-    JBPopupMenu morePopupMenu = new JBPopupMenu();
-    for (final TabInfo each : myCallback.getVisibleTabsInfos()) {
-      if (!isTabOutOfView(each)) continue;
-      final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
-      item.setForeground(each.getDefaultForeground());
-      item.setBackground(each.getTabColor());
-      morePopupMenu.add(item);
-      item.addActionListener(__ -> myCallback.selectTab(each, true));
-    }
-
-    final Rectangle rect = myLastSingRowLayout.moreRect;
-    if (rect != null) {
-      morePopupMenu.show(myCallback.getComponent(), rect.x, rect.y + rect.height);
-    }
   }
 
   public boolean isTabOutOfView(TabInfo tabInfo) {

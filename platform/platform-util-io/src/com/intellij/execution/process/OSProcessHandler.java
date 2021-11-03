@@ -38,7 +38,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   private final boolean myHasErrorStream;
   private final ModalityState myModality;
-  private boolean myHasPty;
+  private Boolean myHasPty;
   private boolean myDestroyRecursively = true;
   private final Set<File> myFilesToDelete;
 
@@ -47,7 +47,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
 
-    setHasPty(ProcessService.getInstance().isLocalPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     myModality = getDefaultModality();
@@ -85,7 +84,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset);
-    setHasPty(ProcessService.getInstance().isLocalPtyProcess(getProcess()));
     myFilesToDelete = filesToDelete;
     myHasErrorStream = true;
     myModality = getDefaultModality();
@@ -261,15 +259,15 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   public boolean hasPty() {
+    if (myHasPty == null) {
+      myHasPty = LoadingState.COMPONENTS_LOADED.isOccurred() && ProcessService.getInstance().isLocalPtyProcess(getProcess());
+    }
     return myHasPty;
   }
 
   /**
    * <p>In case of PTY this process handler will use blocking read because {@link InputStream#available()} doesn't work for Pty4j, and there
    * is no reason to "disconnect" leaving PTY alive. See {@link BaseDataReader.SleepingPolicy} for more info.</p>
-   *
-   * <p>The value should be set before {@link #startNotify()} invocation.
-   * It is set by default in case of using GeneralCommandLine based constructor.</p>
    *
    * @param hasPty {@code true} if process is PTY-based.
    */
@@ -283,7 +281,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   @Override
   protected @NotNull BaseOutputReader.Options readerOptions() {
-    return myHasPty ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
+    return hasPty() ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
   }
 
   /**

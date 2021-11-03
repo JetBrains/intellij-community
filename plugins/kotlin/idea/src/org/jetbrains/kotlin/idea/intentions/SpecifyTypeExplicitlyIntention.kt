@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.template.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
@@ -67,7 +68,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
     override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {
         val type = getTypeForDeclaration(element)
         if (type.isError) {
-            if (editor != null) {
+            if (editor != null && editor !is ImaginaryEditor) {
                 HintManager.getInstance().showErrorHint(editor, KotlinBundle.message("cannot.infer.type.for.this.declaration"))
             }
             return
@@ -192,10 +193,12 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
             }
         }
 
-        fun addTypeAnnotation(editor: Editor?, declaration: KtCallableDeclaration, exprType: KotlinType) = if (editor != null) {
-            addTypeAnnotationWithTemplate(editor, declaration, exprType)
-        } else {
-            declaration.setType(exprType)
+        fun addTypeAnnotation(editor: Editor?, declaration: KtCallableDeclaration, exprType: KotlinType) {
+            if (editor != null && declaration.isPhysical) {
+                addTypeAnnotationWithTemplate(editor, declaration, exprType)
+            } else {
+                declaration.setType(exprType)
+            }
         }
 
         @JvmOverloads

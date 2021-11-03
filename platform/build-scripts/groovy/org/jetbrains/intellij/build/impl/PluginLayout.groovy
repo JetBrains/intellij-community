@@ -24,7 +24,7 @@ final class PluginLayout extends BaseLayout {
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   final List<String> pathsToScramble = new ArrayList<>()
-  Collection<String> scrambleClasspathPlugins = []
+  Collection<Pair<String /*plugin name*/, String /*relative path*/>> scrambleClasspathPlugins = []
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
   /**
    * See {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#zkmScriptStub}
@@ -33,7 +33,7 @@ final class PluginLayout extends BaseLayout {
   Boolean pluginCompatibilityExactVersion = false
   Boolean retainProductDescriptorForBundledPlugin = false
 
-  private PluginLayout(String mainModule) {
+  private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
   }
 
@@ -169,7 +169,7 @@ final class PluginLayout extends BaseLayout {
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     void withResourceFromModule(String moduleName, String resourcePath, String relativeOutputPath) {
-      layout.resourcePaths << new ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false)
+      layout.resourcePaths.add(new ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false))
     }
 
     /**
@@ -177,7 +177,7 @@ final class PluginLayout extends BaseLayout {
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     void withResourceArchive(String resourcePath, String relativeOutputFile) {
-      layout.resourcePaths << new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true)
+      layout.resourcePaths.add(new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true))
     }
 
     /**
@@ -266,9 +266,10 @@ final class PluginLayout extends BaseLayout {
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *
      * @param pluginName - a name of dependent plugin, whose jars should be added to scramble classpath
+     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
-    void scrambleClasspathPlugin(String pluginName) {
-      layout.scrambleClasspathPlugins.add(pluginName)
+    void scrambleClasspathPlugin(String pluginName, String relativePath = "lib") {
+      layout.scrambleClasspathPlugins.add(new Pair(pluginName, relativePath))
     }
 
     /**

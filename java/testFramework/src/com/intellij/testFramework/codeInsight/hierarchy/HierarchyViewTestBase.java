@@ -46,7 +46,7 @@ public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
   protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
                                  String @NotNull ... fileNames) throws IOException {
     configure(fileNames);
-    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
+    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/verification.xml";
     HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
   }
 

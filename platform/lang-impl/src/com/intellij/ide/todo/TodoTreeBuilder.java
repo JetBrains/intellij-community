@@ -499,8 +499,8 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
     }
     else {
-      Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : null;
-      return new TodoNodeVisitor(() -> obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : obj,
+      Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)obj).getValue() : null;
+      return new TodoNodeVisitor(() -> obj instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)obj).getValue() : obj,
                                  o instanceof PsiElement ? PsiUtilCore.getVirtualFile((PsiElement)o) : null);
     }
     return null;

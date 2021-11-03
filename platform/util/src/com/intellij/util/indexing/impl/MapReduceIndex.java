@@ -146,7 +146,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       doClear();
     }
     catch (StorageException | IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     finally {
       myLock.writeLock().unlock();

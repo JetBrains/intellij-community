@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -86,7 +85,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     }
 
     AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
-    int stamp = Objects.hash(PersistentFS.getInstance().getModificationCount(file),
+    int stamp = Objects.hash(file.getModificationCount(),
                              ((GistManagerImpl)GistManager.getInstance()).getReindexCount(),
                              invalidationCount != null ? invalidationCount.get() : 0);
 
@@ -118,7 +117,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
         myExternalizer.save(out, result);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
   }

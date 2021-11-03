@@ -1,6 +1,7 @@
 import sys
+from collections.abc import Mapping, Set
 from datetime import datetime
-from typing import Any, List, Mapping, Optional, Set, Tuple, Union, overload
+from typing import Any, Tuple, overload
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -10,14 +11,14 @@ else:
 @overload
 def search_dates(
     text: str,
-    languages: Optional[Union[List[str], Tuple[str], Set[str]]],
-    settings: Optional[Mapping[Any, Any]],
+    languages: list[str] | Tuple[str, ...] | Set[str] | None,
+    settings: Mapping[Any, Any] | None,
     add_detected_language: Literal[True],
-) -> List[Tuple[str, datetime, str]]: ...
+) -> list[tuple[str, datetime, str]]: ...
 @overload
 def search_dates(
     text: str,
-    languages: Optional[Union[List[str], Tuple[str], Set[str]]] = ...,
-    settings: Optional[Mapping[Any, Any]] = ...,
+    languages: list[str] | Tuple[str, ...] | Set[str] | None = ...,
+    settings: Mapping[Any, Any] | None = ...,
     add_detected_language: Literal[False] = ...,
-) -> List[Tuple[str, datetime]]: ...
+) -> list[tuple[str, datetime]]: ...

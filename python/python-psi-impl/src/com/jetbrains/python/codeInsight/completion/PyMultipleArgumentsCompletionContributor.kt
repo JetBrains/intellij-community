@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
@@ -20,7 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameter
 
-class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
+class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inArgumentList(), MyCompletionProvider)
   }

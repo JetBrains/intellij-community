@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +24,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 public class ProjectTypeListWithSearch<T> extends JPanel {
-  public ProjectTypeListWithSearch(@NotNull JBList<T> list,
-                                   @NotNull JScrollPane scrollPane,
-                                   @NotNull Function<? super T, String> namer,
-                                   @NotNull Runnable showEmptyStatus) {
+  public ProjectTypeListWithSearch(@NotNull WizardContext context, @NotNull JBList<T> list, @NotNull JScrollPane scrollPane,
+                                   @NotNull Function<? super T, String> namer, @NotNull Runnable showEmptyStatus) {
     super(new BorderLayout());
 
     SearchTextField searchTextField = new SearchTextField(false);
@@ -61,6 +60,7 @@ public class ProjectTypeListWithSearch<T> extends JPanel {
         if (model.getSize() == 0) {
           showEmptyStatus.run();
         }
+        NewProjectWizardCollector.logSearchChanged(context, searchTextField.getText().length(), model.getSize());
       }
     });
 

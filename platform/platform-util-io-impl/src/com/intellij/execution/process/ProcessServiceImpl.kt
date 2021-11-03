@@ -16,7 +16,7 @@ class ProcessServiceImpl: ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
                                env: MutableMap<String, String>,
-                               options: PtyCommandLineOptions,
+                               options: LocalPtyOptions,
                                app: Application?,
                                redirectErrorStream: Boolean,
                                windowsAnsiColorEnabled: Boolean,
@@ -28,6 +28,7 @@ class ProcessServiceImpl: ProcessService {
       .setInitialRows(if (options.initialRows > 0) options.initialRows else null)
       .setConsole(options.consoleMode)
       .setCygwin(options.useCygwinLaunch && SystemInfo.isWindows)
+      .setUseWinConPty(options.useWinConPty)
       .setLogFile(if (app != null && app.isEAP) File(PathManager.getLogPath(), "pty.log") else null)
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
@@ -66,7 +67,7 @@ class ProcessServiceImpl: ProcessService {
   }
 
   override fun killWinProcessRecursively(process: Process) {
-    createWinProcess(process).killRecursively();
+    createWinProcess(process).killRecursively()
   }
 
   override fun isLocalPtyProcess(process: Process): Boolean {
@@ -75,22 +76,21 @@ class ProcessServiceImpl: ProcessService {
 
   override fun winPtyChildProcessId(process: Process): Int? {
     return if (process is WinPtyProcess) {
-      return process.childProcessId
+      return process.pid().toInt()
     } else {
       null
     }
   }
 
+  override fun hasControllingTerminal(process: Process): Boolean = process is PtyProcess && !process.isConsoleMode
+
   private fun createWinProcess(process: Process): WinProcess {
-    return if (process is WinPtyProcess) {
-      WinProcess(process.pid)
-    }
-    else WinProcess(process)
+    return WinProcess(process.pid().toInt())
   }
 
   private fun createWinProcess(pid: Int) = WinProcess(pid)
 
   override fun killWinProcess(pid: Int) {
-    createWinProcess(pid).kill();
+    createWinProcess(pid).kill()
   }
 }

@@ -1,0 +1,8 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "Usage.java",
+        "Usage.kt",
+        "UsageFromFun.kt"
+    ]
+}

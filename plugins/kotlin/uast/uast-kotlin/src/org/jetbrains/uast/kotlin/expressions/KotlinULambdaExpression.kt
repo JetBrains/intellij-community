@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
+import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
@@ -39,11 +39,13 @@ class KotlinULambdaExpression(
 
         val implicitReturn: KotlinUImplicitReturnExpression? by lz {
             val lastExpression = sourcePsi.statements.lastOrNull() ?: return@lz null
-            if (!lastExpression.isUsedAsResultOfLambda(lastExpression.analyze())) return@lz null
-
-            KotlinUImplicitReturnExpression(this).apply {
-                returnExpression = KotlinConverter.convertOrEmpty(lastExpression, this)
+            val context = lastExpression.analyze()
+            if (context[USED_AS_RESULT_OF_LAMBDA, lastExpression] == true) {
+                return@lz KotlinUImplicitReturnExpression(this).apply {
+                    returnExpression = KotlinConverter.convertOrEmpty(lastExpression, this)
+                }
             }
+            return@lz null
         }
 
     }

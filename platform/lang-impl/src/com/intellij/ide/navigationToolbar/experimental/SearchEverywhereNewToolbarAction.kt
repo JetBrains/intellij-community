@@ -93,7 +93,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         seManager = SearchEverywhereManager.getInstance(e.project)
         if (!firstOpened) {
           super.actionPerformed(AnActionEvent(
-            e.inputEvent, e.dataContext, ActionPlaces.RUN_TOOLBAR, templatePresentation,
+            e.inputEvent, e.dataContext, ActionPlaces.MAIN_TOOLBAR, templatePresentation,
             ActionManager.getInstance(), 0))
           firstOpened = true
         }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages
 
+import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -332,14 +333,14 @@ private class AlertDialog(project: Project?,
         val firstButton = myButtons[0]
 
         val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
-        val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
 
         val iconSize = myIconComponent.preferredSize
         val helpSize = helpButton.preferredSize
         val buttonSize = firstButton.preferredSize
 
         helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
-                             buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
+                             target.height - target.insets.bottom - (buttonSize.height + helpSize.height) / 2,
+                             helpSize.width, helpSize.height)
       }
     }
   }
@@ -355,7 +356,8 @@ private class AlertDialog(project: Project?,
     dialogPanel.add(textPanel)
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
-      val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
+      val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
+      val titleComponent = createTextComponent(JTextPane(), title)
       titleComponent.font = JBFont.h4()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
@@ -378,8 +380,7 @@ private class AlertDialog(project: Project?,
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
-      val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15,
-                                                                                                    if (lines < 4) 4 else lines)
+      val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
         scrollPane.viewport.isOpaque = false
@@ -425,8 +426,13 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
     }
 
-    if (SystemInfoRt.isMac)
-      Touchbar.setButtonActions(myButtonsPanel, null, myButtons, myButtons.find { b -> b.action.getValue(DEFAULT_ACTION) != null });
+    if (SystemInfoRt.isMac) {
+      val buttonMap = buttonMap
+      buttonMap.clear()
+      myButtons.forEach { buttonMap[it.action] = it }
+
+      Touchbar.setButtonActions(myButtonsPanel, null, myButtons, myButtons.find { b -> b.action.getValue(DEFAULT_ACTION) != null })
+    }
 
     mySouthPanel.add(myButtonsPanel)
 

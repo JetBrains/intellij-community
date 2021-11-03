@@ -28,7 +28,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Vladislav.Soroka
+ * This extension point allows overriding default Gradle task execution.
+ * <br>
+ * When IDEA needs to execute some Gradle tasks, implementing extension can intercept execution logic
+ * and perform these tasks in its own manner
  */
 public interface GradleTaskManagerExtension {
 
@@ -50,6 +53,19 @@ public interface GradleTaskManagerExtension {
     return false;
   }
 
+  /**
+   * Try executing tasks.
+   *
+   * @param id id of operation in IDEA terms
+   * @param taskNames names of tasks
+   * @param projectPath path to project, where tasks are executed
+   * @param settings gradle execution settings
+   * @param jvmParametersSetup jvm parameters string
+   * @param listener should be called to notify IDEA on tasks' progress and status
+   * @return false if tasks were not executed and IDEA should proceed with default logic, true - if tasks are executed and no
+   * more actions are required
+   * @throws ExternalSystemException
+   */
   default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
                                @NotNull final List<String> taskNames,
                                @NotNull String projectPath,

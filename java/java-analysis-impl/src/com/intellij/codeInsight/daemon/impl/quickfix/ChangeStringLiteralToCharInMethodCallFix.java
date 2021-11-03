@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +38,7 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction {
+public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction, HighPriorityAction {
   private final PsiLiteralExpression myLiteral;
   private final PsiCall myCall;
 

@@ -16,20 +16,13 @@ class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBook
 
   override fun update(presentation: PresentationData) {
     val line = value.line + 1
-    val description = bookmarkDescription
-
     presentation.setIcon(wrapIcon(null))
-    presentation.tooltip = description
-    if (parent !is FileNode) {
-      presentation.addText(value.file.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-      presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-    else if (!description.isNullOrBlank()) {
+    if (parent is FileNode) {
       presentation.addText("$line: ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      presentation.addText(description, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      bookmarkDescription?.let { presentation.addText(it, SimpleTextAttributes.REGULAR_ATTRIBUTES) }
     }
     else {
-      presentation.addText(line.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      addTextTo(presentation, value.file, line)
     }
   }
 }

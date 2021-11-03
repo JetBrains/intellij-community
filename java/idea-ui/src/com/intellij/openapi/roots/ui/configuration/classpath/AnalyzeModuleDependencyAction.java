@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
@@ -177,7 +177,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final OrderEntry entry = myPanel.getSelectedEntry();
-    e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
-                                 || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+    e.getPresentation().setEnabledAndVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
+                                             || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
   }
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.scaleIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
@@ -25,6 +24,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   ActionButton(SquareAnActionButton(project, button), createPresentation(button), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {
+    setLook(SquareStripeButtonLook())
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         showPopup(component, x, y)
@@ -65,7 +65,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
       }
 
     private fun Presentation.scaleIcon() {
-      if (icon is ScalableIcon) icon = (icon as ScalableIcon).scale(1.4f)
+      if (icon is ScalableIcon && icon.iconWidth == 13) icon = (icon as ScalableIcon).scale(20 / 13f)
     }
 
     private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindow) = DefaultActionGroup()

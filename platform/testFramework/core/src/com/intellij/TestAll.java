@@ -195,13 +195,15 @@ public class TestAll implements Test {
   }
 
   @Override
-  public void run(final TestResult testResult) {
+  public void run(TestResult testResult) {
     loadTestRecorder();
 
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
     }
+
+    testResult = RetriesImpl.maybeEnable(testResult);
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
@@ -327,7 +329,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -361,7 +363,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
               return;
             }
 
@@ -403,20 +405,21 @@ public class TestAll implements Test {
 
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
+      JUnit4TestAdapterCache cache;
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         try {
-          ourUnit4TestAdapterCache= (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5Runner")
+          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5Runner")
                 .getMethod("createJUnit4TestAdapterCache")
                 .invoke(null);
         }
         catch (Throwable e) {
-          ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+          cache = JUnit4TestAdapterCache.getDefault();
         }
       }
       else {
         try {
           //noinspection SpellCheckingInspection
-          ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
+          cache = (JUnit4TestAdapterCache)
             Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
               .getMethod("getInstance")
               .invoke(null);
@@ -424,9 +427,10 @@ public class TestAll implements Test {
         catch (Exception e) {
           System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
                              " and ignored tests won't be properly reported: " + e);
-          ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+          cache = JUnit4TestAdapterCache.getDefault();
         }
       }
+      ourUnit4TestAdapterCache = RetriesImpl.maybeEnable(cache);
     }
     return ourUnit4TestAdapterCache;
   }

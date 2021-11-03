@@ -12,6 +12,8 @@ import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.PresentableChange;
@@ -189,6 +192,24 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @Nullable
   public Wrapper getCurrentChange() {
     return myCurrentChange;
+  }
+
+  @Override
+  protected @Nullable AnAction createGoToChangeAction() {
+    return new MyGoToChangePopupAction();
+  }
+
+  private class MyGoToChangePopupAction extends PresentableGoToChangePopupAction.Default<Wrapper> {
+    @Override
+    protected @NotNull ListSelection<? extends Wrapper> getChanges() {
+      List<Wrapper> allChanges = getAllChanges().collect(Collectors.toList());
+      return ListSelection.create(allChanges, getCurrentChange());
+    }
+
+    @Override
+    protected void onSelected(@NotNull Wrapper change) {
+      selectChange(change);
+    }
   }
 
   @Override

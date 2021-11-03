@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodEl
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionE
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPermitsClauseElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrRecordDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTraitElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType;
@@ -66,11 +68,11 @@ public interface GroovyElementTypes {
   GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
   GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY = new GrBlockLambdaBodyElementType("BLOCK_LAMBDA_BODY");
+  GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY_SWITCH_AWARE = ParserUtils.getSwitchAwareLambdaBlockElementType("BLOCK_LAMBDA_BODY_SWITCH_AWARE");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("BLOCK_STATEMENT");
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("BREAK_STATEMENT");
   GroovyElementType BUILT_IN_TYPE_EXPRESSION = new GroovyElementType("BUILT_IN_TYPE_EXPRESSION");
-  GroovyElementType CASE_LABEL = new GroovyElementType("CASE_LABEL");
   GroovyElementType CASE_SECTION = new GroovyElementType("CASE_SECTION");
   GroovyElementType CAST_EXPRESSION = new GroovyElementType("CAST_EXPRESSION");
   GroovyElementType CATCH_CLAUSE = new GroovyElementType("CATCH_CLAUSE");
@@ -79,6 +81,7 @@ public interface GroovyElementTypes {
   GrClassDefinitionElementType CLASS_TYPE_DEFINITION = new GrClassDefinitionElementType("CLASS_TYPE_DEFINITION");
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("CLASS_TYPE_ELEMENT");
   GrClosureElementType CLOSURE = new GrClosureElementType("CLOSURE");
+  GrClosureElementType CLOSURE_SWITCH_AWARE = ParserUtils.getSwitchAwareClosureBlockElementType("CLOSURE_SWITCH_AWARE");
   GroovyElementType CODE_REFERENCE = new GroovyElementType("CODE_REFERENCE");
   GrConstructorElementType CONSTRUCTOR = new GrConstructorElementType("CONSTRUCTOR");
   GrConstructorBlockElementType CONSTRUCTOR_BLOCK = new GrConstructorBlockElementType("CONSTRUCTOR_BLOCK");
@@ -126,6 +129,7 @@ public interface GroovyElementTypes {
   GroovyElementType NAMED_ARGUMENT = new GroovyElementType("NAMED_ARGUMENT");
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("NEW_EXPRESSION");
   GrBlockElementType OPEN_BLOCK = new GrBlockElementType("OPEN_BLOCK");
+  GrBlockElementType OPEN_BLOCK_SWITCH_AWARE = ParserUtils.getSwitchAwareBlockElementType("OPEN_BLOCK_SWITCH_AWARE");
   GrPackageDefinitionElementType PACKAGE_DEFINITION = new GrPackageDefinitionElementType("PACKAGE_DEFINITION");
   GrParameterElementType PARAMETER = new GrParameterElementType("PARAMETER");
   GrParameterListElementType PARAMETER_LIST = new GrParameterListElementType("PARAMETER_LIST");
@@ -135,6 +139,7 @@ public interface GroovyElementTypes {
   GroovyElementType PRIMITIVE_TYPE_ELEMENT = new GroovyElementType("PRIMITIVE_TYPE_ELEMENT");
   GroovyElementType PROPERTY_EXPRESSION = new GroovyElementType("PROPERTY_EXPRESSION");
   GroovyElementType RANGE_EXPRESSION = new GroovyElementType("RANGE_EXPRESSION");
+  GrRecordDefinitionElementType RECORD_TYPE_DEFINITION = new GrRecordDefinitionElementType("RECORD_TYPE_DEFINITION");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("REFERENCE_EXPRESSION");
   GroovyElementType REGEX = new GroovyElementType("REGEX");
   GroovyElementType REGEX_FIND_EXPRESSION = new GroovyElementType("REGEX_FIND_EXPRESSION");
@@ -148,6 +153,7 @@ public interface GroovyElementTypes {
   GroovyElementType SPREAD_LIST_ARGUMENT = new GroovyElementType("SPREAD_LIST_ARGUMENT");
   GroovyElementType STRING_CONTENT = new GroovyElementType("STRING_CONTENT");
   GroovyElementType STRING_INJECTION = new GroovyElementType("STRING_INJECTION");
+  GroovyElementType SWITCH_EXPRESSION = new GroovyElementType("SWITCH_EXPRESSION");
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("SWITCH_STATEMENT");
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("SYNCHRONIZED_STATEMENT");
   GroovyElementType TERNARY_EXPRESSION = new GroovyElementType("TERNARY_EXPRESSION");
@@ -170,6 +176,7 @@ public interface GroovyElementTypes {
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("WHILE_STATEMENT");
   GroovyElementType WILDCARD_TYPE_ELEMENT = new GroovyElementType("WILDCARD_TYPE_ELEMENT");
   GroovyElementType XOR_EXPRESSION = new GroovyElementType("XOR_EXPRESSION");
+  GroovyElementType YIELD_STATEMENT = new GroovyElementType("YIELD_STATEMENT");
 
   IElementType DOLLAR_SLASHY_BEGIN = new GroovyElementType("$/ regex begin");
   IElementType DOLLAR_SLASHY_CONTENT = new GroovyElementType("$/ regex content");
@@ -218,6 +225,7 @@ public interface GroovyElementTypes {
   IElementType KW_PRIVATE = new GroovyElementType("private");
   IElementType KW_PROTECTED = new GroovyElementType("protected");
   IElementType KW_PUBLIC = new GroovyElementType("public");
+  IElementType KW_RECORD = new GroovyElementType("record");
   IElementType KW_RETURN = new GroovyElementType("return");
   IElementType KW_SEALED = new GroovyElementType("sealed");
   IElementType KW_SHORT = new GroovyElementType("short");
@@ -237,6 +245,7 @@ public interface GroovyElementTypes {
   IElementType KW_VOID = new GroovyElementType("void");
   IElementType KW_VOLATILE = new GroovyElementType("volatile");
   IElementType KW_WHILE = new GroovyElementType("while");
+  IElementType KW_YIELD = new GroovyElementType("yield");
   IElementType ML_COMMENT = new GroovyElementType("block comment");
   IElementType NL = new GroovyElementType("new line");
   IElementType NUM_BIG_DECIMAL = new GroovyElementType("BigDecimal");
@@ -301,7 +310,9 @@ public interface GroovyElementTypes {
   IElementType T_POW_ASSIGN = new GroovyElementType("**=");
   IElementType T_Q = new GroovyElementType("?");
   IElementType T_RANGE = new GroovyElementType("..");
-  IElementType T_RANGE_EX = new GroovyElementType("..<");
+  IElementType T_RANGE_BOTH_OPEN = new GroovyElementType("<..<");
+  IElementType T_RANGE_LEFT_OPEN = new GroovyElementType("<..");
+  IElementType T_RANGE_RIGHT_OPEN = new GroovyElementType("..<");
   IElementType T_RBRACE = new GroovyElementType("}");
   IElementType T_RBRACK = new GroovyElementType("]");
   IElementType T_REGEX_FIND = new GroovyElementType("=~");

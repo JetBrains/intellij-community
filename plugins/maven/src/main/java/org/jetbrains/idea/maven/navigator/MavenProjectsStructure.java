@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.wizard.UIWizardUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -875,19 +876,27 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @NlsContexts.DetailedDescription
     private String makeDescription() {
       StringBuilder desc = new StringBuilder();
-      desc.append("<html>" + "<table>" + "<tr>" + "<td nowrap>" + "<table>" + "<tr>" + "<td nowrap>")
-        .append(message("detailed.description.project")).append("</td>").append("<td nowrap>")
-        .append(myMavenProject.getMavenId()).append("</td>" + "</tr>" + "<tr>" + "<td nowrap>")
-        .append(message("detailed.description.location")).append(":</td>").append("<td nowrap>").append(myMavenProject.getPath())
-        .append("</td>" +
-                "</tr>" +
-                "</table>" +
-                "</td>" +
-                "</tr>");
+
+      desc.append("<html>")
+        .append("<table>");
+
+      desc.append("<tr>")
+        .append("<td nowrap>").append("<table>")
+        .append("<tr>")
+        .append("<td nowrap>").append(message("detailed.description.project")).append("</td>")
+        .append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>")
+        .append("</tr>")
+        .append("<tr>")
+        .append("<td nowrap>").append(message("detailed.description.location")).append("</td>")
+        .append("<td nowrap>").append(UIWizardUtil.getPresentablePath(myMavenProject.getPath())).append("</td>")
+        .append("</tr>")
+        .append("</table>").append("</td>")
+        .append("</tr>");
 
       appendProblems(desc);
 
-      desc.append("</table></html>");
+      desc.append("</table>")
+        .append("</html>");
 
       return desc.toString(); //NON-NLS
     }
@@ -1381,7 +1390,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateDependency() {
-      setErrorLevel(myArtifact.isResolved() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      setErrorLevel(MavenArtifactUtilKt.resolved(myArtifact) ? ErrorLevel.NONE : ErrorLevel.ERROR);
     }
 
     @Override

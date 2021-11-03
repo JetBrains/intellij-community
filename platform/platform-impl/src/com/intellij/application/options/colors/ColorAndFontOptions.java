@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,13 +66,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
-
-  /**
-   * @deprecated Use {@link #getScopesGroup()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String SCOPES_GROUP = "By Scope";
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;

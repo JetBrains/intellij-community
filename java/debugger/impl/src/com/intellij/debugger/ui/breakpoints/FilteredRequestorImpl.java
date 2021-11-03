@@ -100,7 +100,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     breakpoint.setCountFilter(COUNT_FILTER);
 
     breakpoint.setCondition(myCondition);
-    ((XBreakpointBase)breakpoint.myXBreakpoint).setConditionEnabled(CONDITION_ENABLED);
+    ((XBreakpointBase<?, ?, ?>)breakpoint.myXBreakpoint).setConditionEnabled(CONDITION_ENABLED);
     if (myCondition != null && !myCondition.isEmpty()) {
       XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XLightBreakpointPropertiesPanel.CONDITION_HISTORY_ID, TextWithImportsImpl.toXExpression(myCondition));
     }

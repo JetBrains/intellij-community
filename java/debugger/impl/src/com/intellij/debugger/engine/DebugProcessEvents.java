@@ -376,6 +376,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                    });
       }
 
+      // Workaround for IDEA-280752 for 212 (a call to getExtensionList will sort and cache the extensions)
+      PositionManagerFactory.EP_NAME.getExtensionList();
+
       // fill position managers and watch for dynamic changes
       PositionManagerFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         final Map<PositionManagerFactory, PositionManager> mapping = new HashMap<>();
@@ -614,7 +617,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
           final boolean[] considerRequestHit = new boolean[]{true};
           DebuggerInvocationUtil.invokeAndWait(getProject(), () -> {
-            final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
+            final String displayName = requestor instanceof Breakpoint ? ((Breakpoint<?>)requestor).getDisplayName() : requestor.getClass().getSimpleName();
             final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
             considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
           }, ModalityState.NON_MODAL);

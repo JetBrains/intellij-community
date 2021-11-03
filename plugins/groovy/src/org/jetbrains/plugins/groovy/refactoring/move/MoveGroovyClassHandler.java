@@ -243,7 +243,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final PsiElement element = ref.getElement();
       if (!(element instanceof GrReferenceElement)) continue;
 
-      final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
+      final GroovyResolveResult resolveResult = ((GrReferenceElement<?>)element).advancedResolve();
       final PsiElement context = resolveResult.getCurrentFileResolveContext();
 
       if ((context instanceof GrImportStatement) && ((GrImportStatement)context).isAliasedImport()) {

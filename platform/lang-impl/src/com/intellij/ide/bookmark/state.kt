@@ -22,7 +22,7 @@ class GroupState {
 
 class BookmarkState {
   var provider: String? = null
-  var description: String = ""
+  var description: String? = null
   var type: BookmarkType = BookmarkType.DEFAULT
 
   @get:XMap

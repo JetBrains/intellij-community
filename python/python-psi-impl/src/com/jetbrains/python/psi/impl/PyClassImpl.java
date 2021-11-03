@@ -493,7 +493,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement)element).getElementType())) {
+        if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement<?>)element).getElementType())) {
           result.add(childrenClass.cast(element));
         }
         return true;

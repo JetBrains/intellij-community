@@ -4,6 +4,7 @@ package git4idea.index.ui
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -11,9 +12,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -64,21 +64,16 @@ class GitStageDiffPreview(project: Project,
   override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
 
   override fun createGoToChangeAction(): AnAction {
-    return MyGoToChangePopupProvider().createGoToChangeAction()
+    return MyGoToChangePopupAction()
   }
 
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getChanges(): List<PresentableChange> {
-      return tree.statusNodesListSelection(false).list.map(::GitFileStatusNodeWrapper)
+  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<Wrapper>() {
+    override fun getChanges(): ListSelection<Wrapper> {
+      return tree.statusNodesListSelection(false)
+        .map(::GitFileStatusNodeWrapper)
     }
 
-    override fun select(change: PresentableChange) {
-      (change as? Wrapper)?.run(::selectChange)
-    }
-
-    override fun getSelectedChange(): PresentableChange? {
-      return currentChange
-    }
+    override fun onSelected(change: Wrapper) = selectChange(change)
   }
 
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =

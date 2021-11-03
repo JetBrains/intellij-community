@@ -36,6 +36,6 @@ public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {
-    return new RedundantEscapeInspection();
+    return new RegExpRedundantEscapeInspection();
   }
 }

@@ -62,7 +62,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected static final int IGNORED_SORT_WEIGHT = 11;
 
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
-    path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
+    path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getTextPresentation();
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;

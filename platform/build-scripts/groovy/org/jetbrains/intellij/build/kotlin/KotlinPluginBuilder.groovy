@@ -16,6 +16,8 @@ import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 @CompileStatic
 class KotlinPluginBuilder {
@@ -253,17 +255,24 @@ class KotlinPluginBuilder {
 
       withCustomVersion(new PluginLayout.VersionEvaluator() {
         @Override
-        String evaluate(Path pluginXml, String ideBuildVersion, BuildContext context) {
-          def index = ideBuildVersion.indexOf(".")
-          assert index > 0
-          def major = ideBuildVersion.substring(0, index)
-          def minor = ideBuildVersion.substring(index + 1)
-          def kotlinVersion = context.project.libraryCollection.libraries
-            .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
-            ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
-            ?.properties?.data?.version
-          assert kotlinVersion != null
-          return "${major}-${kotlinVersion}-${kind}${minor}"
+        String evaluate(Path pluginXml, String buildNumber, BuildContext context) {
+          Matcher ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|SNAPSHOT.*)\$").matcher(buildNumber)
+          if (ijBuildNumber.matches()) {
+            String major = ijBuildNumber.group(1)
+            String minor = ijBuildNumber.group(2)
+            String kotlinVersion = context.project.libraryCollection.libraries
+              .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+              ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
+              ?.properties?.data?.version
+            if (kotlinVersion == null) {
+              throw new IllegalStateException("Can't determine Kotlin compiler version")
+            }
+            return "${major}-${kotlinVersion}-${kind}${minor}"
+          } else {
+            // Build number isn't recognized as IJ build number then it means build
+            // number must be plain Kotlin plugin version which we can use directly
+            return buildNumber
+          }
         }
       })
 
@@ -282,7 +291,6 @@ class KotlinPluginBuilder {
 
           switch (kind) {
             case KotlinPluginKind.IJ:
-            case KotlinPluginKind.MI:
               text = replace(
                 text,
                 "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
@@ -298,11 +306,14 @@ class KotlinPluginBuilder {
               break
             case KotlinPluginKind.AC_KMM:
               text = replace(text, "<id>([^<]+)</id>", "<id>com.intellij.appcode.kmm</id>")
-              text = replace(text, "<idea-version[^/>]+/>", "")
               text = replace(text, "<name>([^<]+)</name>", "")
               text = replace(text, "(?s)<description>.*</description>", "")
               text = replace(text, "(?s)<change-notes>.*</change-notes>", "")
-              text = replace(text, "</idea-plugin>", "<xi:include href=\"/META-INF/plugin.production.xml\" />\n</idea-plugin>")
+              text = replace(text, "</idea-plugin>", """\
+                                                      <xi:include href="/META-INF/plugin.production.xml" />
+                                                      <!-- Marketplace gets confused by identifiers from included xmls -->
+                                                      <id>com.intellij.appcode.kmm</id>
+                                                    </idea-plugin>""".stripIndent())
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")

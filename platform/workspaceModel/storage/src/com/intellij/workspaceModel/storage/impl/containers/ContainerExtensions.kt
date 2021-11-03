@@ -13,6 +13,10 @@ internal fun <A, B> BidirectionalMultiMap<A, B>.putAll(another: BidirectionalMul
   another.keys.forEach { key -> another.getValues(key).forEach { value -> this.put(key, value) } }
 }
 
+internal fun <B> BidirectionalLongMultiMap<B>.putAll(another: BidirectionalLongMultiMap<B>) {
+  another.keys.forEach { key -> another.getValues(key).forEach { value -> this.put(key, value) } }
+}
+
 internal fun <T> getDiff(beforeSetCopy: MutableSet<T>, after: Collection<T>): Pair<MutableSet<T>, ArrayList<T>> {
   val added = ArrayList<T>()
   after.forEach {

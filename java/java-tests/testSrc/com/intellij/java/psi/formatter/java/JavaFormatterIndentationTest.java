@@ -731,4 +731,27 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "        .build();"
     );
   }
+
+  public void testIdea274755() {
+    getSettings().getIndentOptions().USE_RELATIVE_INDENTS = true;
+    doMethodTest(
+      "public class Test {\n" +
+      "void test() {\n" +
+      "    final var command = CreateUpload.builder()\n" +
+      ".identityId(userId)\n" +
+      "      .iotId(iotId)\n" +
+      ".build();\n" +
+      "   }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    void test() {\n" +
+      "        final var command = CreateUpload.builder()\n" +
+      "                                    .identityId(userId)\n" +
+      "                                    .iotId(iotId)\n" +
+      "                                    .build();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

@@ -37,6 +37,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldCallNonQualified() { doParserTest("yield();"); }
   public void testYieldCallNonQualifiedWithLambda() { doParserTest("yield(() -> {});"); }
   public void testYieldLambda() { doParserTest("yield () -> {};"); }
+  public void testYieldAssignment() { doParserTest("yield = 10;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
@@ -205,6 +206,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete3() { doParserTest("while(cond"); }
   public void testWhileIncomplete4() { doParserTest("while(cond)"); }
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
+
+  public void testExprStmtStarts() { doParserTest("col < allCells[0]"); }
 
   public void testConstructorRef() { doParserTest("Foo::new"); }
   public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }

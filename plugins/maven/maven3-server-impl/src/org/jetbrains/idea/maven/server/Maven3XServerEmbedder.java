@@ -120,7 +120,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private final Properties mySystemProperties;
 
-  private volatile MavenServerProgressIndicator myCurrentIndicator;
+  private volatile MavenServerProgressIndicatorWrapper myCurrentIndicator;
 
   private MavenWorkspaceMap myWorkspaceMap;
 
@@ -600,12 +600,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap,
-                        boolean failOnUnresolvedDependency,
-                        @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties, MavenToken token) throws RemoteException {
+  public @NotNull MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                                    boolean failOnUnresolvedDependency,
+                                                                                    boolean alwaysUpdateSnapshots,
+                                                                                    @Nullable Properties userProperties, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -626,9 +624,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
-      setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
+
+      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
+      myConsoleWrapper.setWrappee(myCurrentIndicator);
+
+      try {
+        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
 
       myUserProperties = userProperties;
+      return myCurrentIndicator;
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -678,11 +686,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
       return modelInterpolator;
     }
-  }
-
-  private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
-    myConsoleWrapper.setWrappee(console);
-    myCurrentIndicator = indicator;
   }
 
   @NotNull
@@ -811,6 +814,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (session instanceof DefaultRepositorySystemSession) {
       Map<MavenId, Model> cacheMavenModelMap = new HashMap<MavenId, Model>((int)(buildingResults.size() * 1.5));
       for (ProjectBuildingResult result : buildingResults) {
+        if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
         Model model = result.getProject().getModel();
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
@@ -1563,7 +1567,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void reset(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      setConsoleAndIndicator(null, null);
+      if(myCurrentIndicator!=null) {
+        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
+      }
+      myCurrentIndicator = null;
+      myConsoleWrapper.setWrappee(null);
 
       final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {

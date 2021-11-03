@@ -22,7 +22,7 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration

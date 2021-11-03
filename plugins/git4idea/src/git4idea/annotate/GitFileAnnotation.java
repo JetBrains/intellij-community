@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
@@ -35,13 +36,14 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GitFileAnnotation extends FileAnnotation {
+public final class GitFileAnnotation extends FileAnnotation {
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   @NotNull private final FilePath myFilePath;
@@ -75,7 +77,7 @@ public class GitFileAnnotation extends FileAnnotation {
     new GitAnnotationAspect(LineAnnotationAspect.AUTHOR, VcsBundle.message("line.annotation.aspect.author"), true) {
       @Override
       protected String doGetValue(LineInfo lineInfo) {
-        return lineInfo.getAuthor();
+        return VcsUserUtil.toExactString(lineInfo.getAuthorUser());
       }
     };
   private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
@@ -185,7 +187,7 @@ public class GitFileAnnotation extends FileAnnotation {
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
     atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
-    atb.appendLine(VcsBundle.message("commit.description.tooltip.author", lineInfo.getAuthor()));
+    atb.appendLine(VcsBundle.message("commit.description.tooltip.author", VcsUserUtil.toExactString(lineInfo.getAuthorUser())));
     atb.appendLine(VcsBundle.message("commit.description.tooltip.date", DateFormatUtil.formatDateTime(getDate(lineInfo))));
 
     if (!myFilePath.equals(lineInfo.getFilePath())) {
@@ -205,7 +207,7 @@ public class GitFileAnnotation extends FileAnnotation {
   public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
     if (myRevisions != null && myRevisionMap != null &&
         myRevisionMap.containsKey(revisionNumber)) {
-      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.getInt(revisionNumber));
       return fileRevision.getCommitMessage();
     }
     return myCommitMessageMap.get(revisionNumber);
@@ -259,7 +261,8 @@ public class GitFileAnnotation extends FileAnnotation {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
 
-        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
+                                                                 () -> getRevisionsChangesProvider().getChangesIn(lineNum));
       }
     }
   }
@@ -327,12 +330,17 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getAuthor() {
+    public @Nls String getAuthor() {
       return myAuthor.getName();
     }
 
     @NotNull
-    public String getSubject() {
+    public VcsUser getAuthorUser() {
+      return myAuthor;
+    }
+
+    @NotNull
+    public @Nls String getSubject() {
       return mySubject;
     }
   }
@@ -387,8 +395,13 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getAuthor() {
+    public @Nls String getAuthor() {
       return myCommitInfo.getAuthor();
+    }
+
+    @NotNull
+    public VcsUser getAuthorUser() {
+      return myCommitInfo.getAuthorUser();
     }
 
     @NlsSafe
@@ -448,7 +461,7 @@ public class GitFileAnnotation extends FileAnnotation {
         GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
         if (myRevisions != null && myRevisionMap != null &&
             myRevisionMap.containsKey(revisionNumber)) {
-          int index = myRevisionMap.get(revisionNumber);
+          int index = myRevisionMap.getInt(revisionNumber);
           if (index + 1 < myRevisions.size()) {
             return myRevisions.get(index + 1);
           }

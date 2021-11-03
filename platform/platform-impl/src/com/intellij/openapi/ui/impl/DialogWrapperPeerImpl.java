@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -40,6 +41,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
@@ -431,7 +433,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    try {
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET)) {
       myDialog.show();
     }
     finally {

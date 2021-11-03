@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils
-import org.intellij.plugins.markdown.google.authorization.GoogleAuthorizationManager
+import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.importGoogleDoc
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.chooseAccount
 
 class GoogleDocsImportPasteProvider : PasteProvider {
 
@@ -20,13 +21,13 @@ class GoogleDocsImportPasteProvider : PasteProvider {
       val project = CommonDataKeys.PROJECT.getData(dataContext)!!
       val suggestedPath = CommonDataKeys.VIRTUAL_FILE.getData(dataContext)?.path ?: project.basePath!!
 
-      val credential = GoogleAuthorizationManager(project).getCredentials() ?: return
-      GoogleDocsImportTask(project, credential, docsId, suggestedPath).queue()
+      val credentials = chooseAccount(project) ?: return
+      importGoogleDoc(project, credentials, docsId, suggestedPath)
     }
   }
 
   override fun isPastePossible(dataContext: DataContext): Boolean = true
 
   override fun isPasteEnabled(dataContext: DataContext): Boolean =
-    Registry.`is`("markdown.google.docs.import.paste.link.enable") && LangDataKeys.IDE_VIEW.getData (dataContext) != null
+    Registry.`is`("markdown.google.docs.import.paste.link.enable") && LangDataKeys.IDE_VIEW.getData(dataContext) != null
 }

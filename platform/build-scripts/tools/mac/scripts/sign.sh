@@ -35,7 +35,7 @@ for f in \
   "Contents/plugins" "Contents/lib"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
-      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -perm +111 \) \
+      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -name "*.node" -o -perm +111 \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;

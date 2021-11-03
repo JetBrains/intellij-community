@@ -44,8 +44,8 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
   @Override
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {
     if (element instanceof GrReferenceElement) {
-      if (((GrReferenceElement)element).getQualifier() == null) {
-        final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
+      if (((GrReferenceElement<?>)element).getQualifier() == null) {
+        final GroovyResolveResult resolveResult = ((GrReferenceElement<?>)element).advancedResolve();
         final PsiElement refElement = resolveResult.getElement();
         if (refElement != null) {
 

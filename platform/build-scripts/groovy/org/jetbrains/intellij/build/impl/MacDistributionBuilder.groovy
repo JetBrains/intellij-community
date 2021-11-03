@@ -204,19 +204,15 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     Files.write(macDistPath.resolve("bin/idea.properties"), properties)
 
     List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP, buildContext.productProperties)
-    List<String> launcherVmOptions = buildContext.additionalJvmArguments
-    //todo[r.sh] support arbitrary JVM options in the launcher
-    List<String> nonProperties = launcherVmOptions.findAll { !it.startsWith('-D') }
-    if (!nonProperties.isEmpty()) {
-      fileVmOptions.addAll(nonProperties)
-      launcherVmOptions.removeAll(nonProperties)
-    }
+    List<List<String>> propsAndOpts = buildContext.additionalJvmArguments.split { it.startsWith('-D') }
+    List<String> launcherProperties = propsAndOpts[0], launcherVmOptions = propsAndOpts[1]
 
     fileVmOptions.add("-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log")
     fileVmOptions.add("-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof")
     Files.writeString(macDistPath.resolve("bin/${executable}.vmoptions"), String.join('\n', fileVmOptions) + '\n', StandardCharsets.US_ASCII)
 
-    String coreProperties = propertiesToXml(launcherVmOptions, ['idea.executable': buildContext.productProperties.baseFileName])
+    String vmOptionsXml = optionsToXml(launcherVmOptions)
+    String vmPropertiesXml = propertiesToXml(launcherProperties, ['idea.executable': buildContext.productProperties.baseFileName])
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -257,7 +253,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@min_year@@", value: "2000")
       replacefilter(token: "@@max_year@@", value: "$todayYear")
       replacefilter(token: "@@version@@", value: version)
-      replacefilter(token: "@@idea_properties@@", value: coreProperties)
+      replacefilter(token: "@@vm_options@@", value: vmOptionsXml)
+      replacefilter(token: "@@vm_properties@@", value: vmPropertiesXml)
       replacefilter(token: "@@class_path@@", value: classPath)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@architectures@@", value: archString)
@@ -346,6 +343,13 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     new ProductInfoGenerator(buildContext).generateProductJson(productJsonDir.resolve("Resources"), "../bin", null,
                                                                "../MacOS/${executable}", javaExecutablePath,
                                                                "../bin/${executable}.vmoptions", OsFamily.MACOS)
+  }
+
+  @CompileStatic
+  private static String optionsToXml(List<String> options) {
+    StringBuilder buff = new StringBuilder()
+    options.each { buff.append('        <string>').append(it).append('</string>\n') }
+    return buff.toString().trim()
   }
 
   @CompileStatic

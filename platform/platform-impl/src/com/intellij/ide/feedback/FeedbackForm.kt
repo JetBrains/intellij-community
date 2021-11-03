@@ -116,7 +116,7 @@ class FeedbackForm(
           icon(AllIcons.General.BalloonInformation)
             .gap(RightGap.SMALL)
             .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
-          labelHtml(ApplicationBundle.message("feedback.form.issue")) {
+          text(ApplicationBundle.message("feedback.form.issue")) {
             SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
           }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
@@ -138,8 +138,6 @@ class FeedbackForm(
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            font = JBFont.regular()
-            emptyText.setFont(JBFont.regular())
             putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
               BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
             addKeyListener(object : KeyAdapter() {
@@ -175,12 +173,12 @@ class FeedbackForm(
           .bindSelected(::shareSystemInformation)
           .gap(RightGap.SMALL)
         @Suppress("DialogTitleCapitalization")
-        labelHtml(ApplicationBundle.message("feedback.form.share.system.information.link")) {
+        link(ApplicationBundle.message("feedback.form.share.system.information.link")) {
           showSystemInformation()
         }
       }
       row {
-        commentHtml(ApplicationBundle.message("feedback.form.consent"))
+        comment(ApplicationBundle.message("feedback.form.consent"))
       }
     }
   }

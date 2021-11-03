@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
+import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -42,7 +43,12 @@ interface PyExecuteConsoleCustomizer {
   /**
    * Notify about new name set for custom run descriptor
    */
-  fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {}
+  fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {
+    val console: ExecutionConsole = descriptor.executionConsole
+    if (console is PythonConsoleView) {
+      console.setCommandQueueTitle(newName)
+    }
+  }
 
   /**
    * Return run descriptor name

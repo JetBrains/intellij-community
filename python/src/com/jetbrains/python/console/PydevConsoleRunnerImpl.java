@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -75,6 +76,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -219,7 +221,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
     // Show Variables
     actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-
+    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+      // Show Queue
+      actions.add(new ShowCommandQueueAction(myConsoleView));
+    }
     // Console History
     actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
     toolbarActions.addAll(actions);
@@ -665,15 +670,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine, @NotNull Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-        assert data != null;
         myProcessHandler = manager.createConsoleProcessHandler(
           process, myConsoleView, myPydevConsoleCommunication,
           commandLine, StandardCharsets.UTF_8,
-          PythonRemoteInterpreterManager.appendBasicMappings(myProject, null, data),
+          PythonRemoteInterpreterManager.appendBasicMappings(myProject, null, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData),
           myRemoteConsoleProcessData.getSocketProvider()
         );
       }
@@ -746,6 +750,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                         new JBEmptyBorder(emptyBorderSize)));
     // Right toolbar panel
     actionsPanel.add(outputActionsComponent, BorderLayout.CENTER);
+    // Add Toolbar for PythonConsoleView
+    myConsoleView.setToolbar(outputActionsToolbar);
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(actionsPanel, BorderLayout.WEST);
@@ -1024,6 +1030,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
         else {
           myConsoleListeners.clear();
+        }
+        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+          myConsoleView.restoreQueueWindow(true);
         }
       }
     }.queue();

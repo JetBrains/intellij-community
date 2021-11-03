@@ -7,6 +7,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
 jobs:
   file-consistency:
     name: Check file consistency
@@ -14,8 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install toml
+      - run: pip install $(grep tomli== requirements-tests-py3.txt)
       - run: ./tests/check_consistent.py
+
+  new-syntax:
+    name: Ensure new syntax usage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: ./tests/check_new_syntax.py
 
   flake8:
     name: Lint with flake8
@@ -61,12 +72,13 @@ jobs:
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
+        python-version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install $(grep mypy== requirements-tests-py3.txt)
-      - run: ./tests/mypy_test.py --platform=${{ matrix.platform }}
+      - run: pip install $(grep tomli== requirements-tests-py3.txt) $(grep mypy== requirements-tests-py3.txt)
+      - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
   pyright:
     name: Run pyright against the stubs
@@ -77,7 +89,7 @@ jobs:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     env:
-      PYRIGHT_VERSION: 1.1.160 # Must match pyright_test.py.
+      PYRIGHT_VERSION: 1.1.175 # Must match pyright_test.py.
     steps:
       - uses: actions/checkout@v2
       - uses: jakebailey/pyright-action@v1
@@ -100,7 +112,8 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10.0-rc.1"]
+        # Python 3.9.7 is required due to changes to ForwardRef.
+        python-version: ["3.6", "3.7", "3.8", "3.9.7", "3.10"]
       fail-fast: false
 
     steps:
@@ -109,8 +122,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: python -m pip install -U pip
       - name: Install dependencies
-        run: pip install $(grep mypy== requirements-tests-py3.txt)
+        run: pip install $(grep tomli== requirements-tests-py3.txt) $(grep mypy== requirements-tests-py3.txt)
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py --ignore-unused-allowlist
 
@@ -127,6 +142,6 @@ jobs:
         with:
           python-version: 3.9
       - name: Install dependencies
-        run: pip install toml
+        run: pip install $(grep tomli== requirements-tests-py3.txt)
       - name: Run stubtest
         run: python tests/stubtest_third_party.py --num-shards 4 --shard-index ${{ matrix.shard-index }}

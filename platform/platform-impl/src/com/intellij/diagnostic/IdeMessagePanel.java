@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -21,8 +22,8 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 public final class IdeMessagePanel extends NonOpaquePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
+  private static final boolean NORMAL_MODE = !Boolean.getBoolean("fatal.error.icon.disable.blinking");
+
   private final IdeErrorsIcon myIcon;
   private final IdeFrame myFrame;
   private final MessagePool myMessagePool;
@@ -43,12 +46,11 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   private Balloon myBalloon;
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
-  private boolean myNotificationPopupAlreadyShown;
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
 
-    myIcon = new IdeErrorsIcon(frame != null);
+    myIcon = new IdeErrorsIcon(frame != null && NORMAL_MODE);
     myIcon.setVerticalAlignment(SwingConstants.CENTER);
     add(myIcon, BorderLayout.CENTER);
     new ClickListener() {
@@ -101,11 +103,9 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
       @Override
       public void run() {
         if (!isOtherModalWindowActive()) {
-          try {
+          try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
             // always show IDE errors to the host
-            ClientId.withClientId(ClientId.getLocalId(), () -> {
-              doOpenErrorsDialog(message);
-            });
+            doOpenErrorsDialog(message);
           }
           finally {
             myOpeningInProgress = false;
@@ -171,16 +171,14 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     updateIcon(state);
 
     if (state == MessagePool.State.NoErrors) {
-      myNotificationPopupAlreadyShown = false;
       if (myBalloon != null) {
         Disposer.dispose(myBalloon);
       }
     }
-    else if (state == MessagePool.State.UnreadErrors && !myNotificationPopupAlreadyShown && isActive(myFrame)) {
+    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame) && NORMAL_MODE) {
       Project project = myFrame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
-        myNotificationPopupAlreadyShown = true;
       }
     }
   }
@@ -192,8 +190,10 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
+  @RequiresEdt
   private void showErrorNotification(@NotNull Project project) {
-    if (Boolean.getBoolean("fatal.error.icon.disable.blinking")) return;
+    if (myBalloon != null) return;
+
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
@@ -216,7 +216,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
     layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
 
-    assert myBalloon == null;
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(myBalloon, () -> myBalloon = null);
     layout.add(myBalloon);

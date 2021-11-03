@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -72,8 +71,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return getDelegate().getFileModifierForPreview(target);
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return getDelegate().invokeForPreview(project, editor, file);
   }
 
   @Nullable
@@ -148,6 +147,6 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
         return ((Comparable)action1).compareTo(action2);
       }
     }
-    return 0;
+    return getText().compareTo(other.getText());
   }
 }

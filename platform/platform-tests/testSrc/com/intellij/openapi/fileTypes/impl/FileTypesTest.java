@@ -90,7 +90,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRegisteredFileTypes();
     myFileTypeManager.reDetectAsync(true);
     Assume.assumeTrue(
-      "Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage" +
+      "This test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage" +
       " which is created on each HelmYamlFileType registration which happens a lot in these tests",
       PlatformTestUtil.isUnderCommunityClassPath());
     myConflicts = new ArrayList<>();
@@ -347,13 +347,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     });
   }
 
-  private static <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
+  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
     Disposable disposable = Disposer.newDisposable();
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, disposable);
+    FileTypeManagerImpl fileTypeManager = myFileTypeManager;
+    fileTypeManager.toLog = true;
     try {
       runnable.run();
     }
     finally {
+      fileTypeManager.toLog = false;
       Disposer.dispose(disposable);
     }
   }

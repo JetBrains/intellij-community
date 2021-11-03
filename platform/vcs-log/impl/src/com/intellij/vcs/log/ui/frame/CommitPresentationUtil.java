@@ -131,8 +131,7 @@ public final class CommitPresentationUtil {
     Font font = getCommitMessageFont();
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
 
-    int separator = fullMessage.indexOf("\n\n");
-    String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
+    String subject = getSubject(fullMessage);
     String description = fullMessage.substring(subject.length());
     if (subject.contains("\n")) {
       // subject has new lines => that is not a subject
@@ -167,6 +166,13 @@ public final class CommitPresentationUtil {
            formatText(project, subject, font, Font.BOLD, convertor) +
            "</b>" +
            formatText(project, description, font, font.getStyle(), convertor);
+  }
+
+  @NotNull
+  @NlsSafe
+  public static String getSubject(@NotNull @NlsSafe String fullMessage) {
+    int separator = fullMessage.indexOf("\n\n");
+    return separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
   }
 
   public static boolean isSubjectMarginEnabled(@NotNull Project project) {

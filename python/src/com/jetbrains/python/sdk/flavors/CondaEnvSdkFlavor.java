@@ -86,7 +86,7 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PythonIcons.Python.Anaconda;
   }
 

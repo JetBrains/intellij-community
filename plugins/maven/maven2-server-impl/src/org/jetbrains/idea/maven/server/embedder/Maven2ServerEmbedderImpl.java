@@ -614,13 +614,14 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return rethrowException(throwable);
   }
 
+
+  @NotNull
   @Override
-  public void customize(@Nullable MavenWorkspaceMap workspaceMap,
-                        boolean failOnUnresolvedDependency,
-                        @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties, MavenToken token) {
+  public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                           boolean failOnUnresolvedDependency,
+                                                                           boolean alwaysUpdateSnapshots,
+                                                                           @Nullable Properties userProperties,
+                                                                           MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
@@ -630,7 +631,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
       myImpl.setUserProperties(userProperties);
 
-      setConsoleAndIndicator(console, indicator);
+      return null;
     }
     catch (Exception e) {
       throw rethrowException(e);

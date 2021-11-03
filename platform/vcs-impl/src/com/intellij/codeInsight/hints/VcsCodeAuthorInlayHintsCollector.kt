@@ -30,7 +30,8 @@ import javax.swing.JComponent
 internal class VcsCodeAuthorInlayHintsCollector(
   editor: Editor,
   private val authorAspect: LineAnnotationAspect,
-  private val filter: (PsiElement) -> Boolean
+  private val filter: (PsiElement) -> Boolean,
+  private val getClickHandler: (PsiElement) -> (() -> Unit)
 ) : FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
@@ -39,16 +40,10 @@ internal class VcsCodeAuthorInlayHintsCollector(
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
     val info = getCodeAuthorInfo(element.project, range, editor)
-    val presentation = buildPresentation(info, editor).addContextMenu(element.project).shiftTo(range.startOffset, editor)
+    val presentation = buildPresentation(element, info, editor).addContextMenu(element.project)
 
-    sink.addBlockElement(range.startOffset, false, true, BlockInlayPriority.CODE_VISION, presentation)
+    sink.addCodeVisionElement(editor, range.startOffset, BlockInlayPriority.CODE_AUTHOR, presentation)
     return true
-  }
-
-  private fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
-    val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
-
-    return TextRange.create(start.startOffset, element.endOffset)
   }
 
   private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor): VcsCodeAuthorInfo {
@@ -70,12 +65,16 @@ internal class VcsCodeAuthorInlayHintsCollector(
     )
   }
 
-  private fun buildPresentation(info: VcsCodeAuthorInfo, editor: Editor): InlayPresentation =
+  private fun buildPresentation(element: PsiElement, info: VcsCodeAuthorInfo, editor: Editor): InlayPresentation =
     factory.run {
       val text = smallTextWithoutBackground(info.getText())
       val withIcon = if (info.mainAuthor != null) text.withUserIcon() else text
+      val clickHandler = getClickHandler(element)
 
-      referenceOnHover(withIcon) { event, _ -> invokeAnnotateAction(event, editor.component) }
+      referenceOnHover(withIcon) { event, _ ->
+        clickHandler()
+        invokeAnnotateAction(event, editor.component)
+      }
     }
 
   private fun invokeAnnotateAction(event: MouseEvent, contextComponent: JComponent) {
@@ -91,11 +90,12 @@ internal class VcsCodeAuthorInlayHintsCollector(
       getDefaultInlayHintsProviderPopupActions(VcsCodeAuthorInlayHintsProvider.KEY, messagePointer("title.code.author.inlay.hints"))
     }
 
-  private fun InlayPresentation.shiftTo(offset: Int, editor: Editor): InlayPresentation {
-    val document = editor.document
-    val column = offset - document.getLineStartOffset(document.getLineNumber(offset))
+  companion object {
+    internal fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
+      val start = psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
 
-    return factory.seq(factory.textSpacePlaceholder(column, true), this)
+      return TextRange.create(start.startOffset, element.endOffset)
+    }
   }
 }
 

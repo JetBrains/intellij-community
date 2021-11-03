@@ -5,6 +5,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runSuspendingAction
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
@@ -81,6 +82,25 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
     inRead.waitTimeout()
     job.cancelAndWaitTimeout()
+  }
+
+  fun `test suspending action inside read action is cancellable`(): Unit = runBlocking {
+    val inRead = Semaphore(1)
+    val cancelled = Semaphore(1)
+    val job = launch(Dispatchers.Default) {
+      cra {
+        runSuspendingAction {
+          inRead.up()
+          cancelled.waitTimeout()
+          ensureActive() // should throw
+          fail()
+        }
+      }
+    }
+    inRead.waitTimeout()
+    job.cancel()
+    cancelled.up()
+    job.waitTimeout()
   }
 
   fun `test read action with unsatisfiable constraint is cancellable`(): Unit = runBlocking {

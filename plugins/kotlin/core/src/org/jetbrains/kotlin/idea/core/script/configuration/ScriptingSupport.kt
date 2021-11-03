@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 
 /**
  * Extension point for overriding default Kotlin scripting support.
@@ -24,6 +25,10 @@ import org.jetbrains.kotlin.psi.KtFile
  *
  * [isConfigurationLoadingInProgress] is used to pause analyzing.
  *
+ * [getConfigurationImmediately] is used to get scripting configuration for a supported file
+ * (for which [isApplicable] returns true) immediately. It may be useful for intensively created files
+ * if it is expensive to run full update for each file creation and/or update
+ *
  * Long read: [idea/idea-gradle/src/org/jetbrains/kotlin/idea/scripting/gradle/README.md].
  *
  * @sample GradleBuildRootsManager
@@ -33,6 +38,7 @@ interface ScriptingSupport {
     fun isConfigurationLoadingInProgress(file: KtFile): Boolean
     fun collectConfigurations(builder: ScriptClassRootsBuilder)
     fun afterUpdate()
+    fun getConfigurationImmediately(file: VirtualFile): ScriptCompilationConfigurationWrapper? = null
 
     companion object {
         val EPN: ProjectExtensionPointName<ScriptingSupport> =

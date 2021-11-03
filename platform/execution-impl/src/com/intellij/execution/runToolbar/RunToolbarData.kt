@@ -6,15 +6,17 @@ import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
+import com.intellij.execution.impl.SingleConfigurationConfigurable
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -41,6 +43,12 @@ interface RunToolbarData {
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
   val waitingForProcess: MutableSet<String>
+}
+
+internal fun RunContentDescriptor.environment(): ExecutionEnvironment? {
+  return this.attachedContent?.component?.let {
+    ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(it))
+  }
 }
 
 internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
@@ -72,12 +80,17 @@ internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
+  this.dataContext.setConfiguration(value)
+}
+
+internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
   val runToolbarData = runToolbarData()
   runToolbarData?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
-  return runToolbarData()?.configuration
+  val runToolbarData = runToolbarData()
+  return runToolbarData?.environment?.runnerAndConfigurationSettings ?: runToolbarData?.configuration
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {
@@ -91,6 +104,10 @@ internal fun AnActionEvent.arrowIcon(): Icon? {
       AllIcons.Toolbar.Expand
     }
   }
+}
+
+fun ExecutionEnvironment.getDisplayName(): String? {
+  return this.contentToReuse?.displayName
 }
 
 fun AnActionEvent.environment(): ExecutionEnvironment? {
@@ -122,7 +139,7 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
       it.executorId == executorGroup.id
     }
   } ?: run {
-    RunToolbarProcess.getProcesses().firstOrNull{
+    RunToolbarProcess.getProcesses().firstOrNull {
       it.executorId == this.executor.id
     }
   }
@@ -130,20 +147,48 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
 
 internal fun DataContext.editConfiguration() {
   getData(CommonDataKeys.PROJECT)?.let {
-    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, getConfiguration(this))).show()
+    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this)).show()
   }
 }
 
-private fun createRunConfigurationConfigurable(project: Project, settings: RunnerAndConfigurationSettings?): RunConfigurable {
+internal fun ExecutionEnvironment.showToolWindowTab() {
+  ToolWindowManager.getInstance(this.project).getToolWindow(this.contentToReuse?.contentToolWindowId ?: this.executor.id)?.let {
+    val contentManager = it.contentManager
+    contentManager.contents.firstOrNull { it.executionId == this.executionId }?.let { content ->
+      contentManager.setSelectedContent(content)
+    }
+    it.show()
+  }
+}
+
+private fun createRunConfigurationConfigurable(project: Project, dataContext: DataContext): RunConfigurable {
+  val settings: RunnerAndConfigurationSettings? = getConfiguration(dataContext)
+
+  fun updateActiveConfigurationFromSelected(configurable: Configurable?) {
+    configurable?.let {
+      if (it is SingleConfigurationConfigurable<*>) {
+        dataContext.setConfiguration(it.settings)
+      }
+    }
+  }
+
   return when {
     project.isDefault -> object : RunConfigurable(project) {
       override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
         return settings
       }
+
+      override fun updateActiveConfigurationFromSelected() {
+        updateActiveConfigurationFromSelected(getSelectedConfigurable())
+      }
     }
     else -> object : ProjectRunConfigurationConfigurable(project) {
       override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
         return settings
+      }
+
+      override fun updateActiveConfigurationFromSelected() {
+       updateActiveConfigurationFromSelected(getSelectedConfigurable())
       }
     }
   }

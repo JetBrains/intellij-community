@@ -149,7 +149,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     List<Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>> promises = new SmartList<>();
     for (XLineBreakpointType type : types) {
       promises.add(type.computeVariantsAsync(project, position).then(o -> {
-        if (((List)o).isEmpty() && types.size() > 1) { // multiple types
+        if (((List<?>)o).isEmpty() && types.size() > 1) { // multiple types
           return Collections.singletonList(type.new XLineBreakpointAllVariant(position) {
             @NotNull
             @Override

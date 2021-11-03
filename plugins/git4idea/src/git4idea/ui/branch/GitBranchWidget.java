@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,15 +8,16 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
@@ -146,7 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !Registry.is("vcs.new.widget") && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
+      return (isEnabledByDefault() || ExperimentalUI.isNewUI()) && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 
     @Override
@@ -156,7 +157,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return !Registry.is("ide.new.navbar", false);
+      return !ExperimentalUI.isNewUI() && // Disabled by default in ExperimentalUI per designers request.
+             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isEnabled());
     }
 
     @Override

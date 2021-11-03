@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
@@ -8,17 +9,12 @@ import org.w3c.dom.Node
 
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
-import java.nio.charset.StandardCharsets
-import java.nio.file.FileSystems
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermissions
 
 @CompileStatic
-class BuildDependenciesUtil {
+final class BuildDependenciesUtil {
   static boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 
   static DocumentBuilder createDocumentBuilder() {
@@ -157,14 +153,6 @@ class BuildDependenciesUtil {
     int index = 0
     while (s.charAt(index) == charToTrim) index++
     return s.substring(index)
-  }
-
-  static void copyStream(InputStream source, OutputStream target) throws IOException {
-    byte[] buf = new byte[65536]
-    int length
-    while ((length = source.read(buf)) > 0) {
-      target.write(buf, 0, length)
-    }
   }
 
   static void cleanDirectory(Path directory) {

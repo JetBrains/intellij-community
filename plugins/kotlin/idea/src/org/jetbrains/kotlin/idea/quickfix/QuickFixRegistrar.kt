@@ -557,7 +557,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ILLEGAL_INLINE_PARAMETER_MODIFIER.registerFactory(AddInlineToFunctionFix)
 
-        INAPPLICABLE_JVM_FIELD.registerFactory(ReplaceJvmFieldWithConstFix)
+        INAPPLICABLE_JVM_FIELD.registerFactory(ReplaceJvmFieldWithConstFix, RemoveAnnotationFix.JvmField)
 
         CONFLICTING_OVERLOADS.registerFactory(ChangeSuspendInHierarchyFix)
 
@@ -664,7 +664,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         INLINE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(InlineClassConstructorNotValParameterFactory)
 
-//        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
+        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
 
         SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
 
@@ -674,5 +674,10 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
 
         ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFix)
+
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(AddEmptyArgumentListFix)
+
+        NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(NonPublicCallFromPublicInlineFactory)
+        PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR.registerFactory(NonPublicCallFromPublicInlineFactory)
     }
 }

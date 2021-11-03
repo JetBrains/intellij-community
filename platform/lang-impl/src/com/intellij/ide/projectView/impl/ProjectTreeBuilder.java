@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +117,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     return PsiUtilCore.findFileSystemItem(myProject, vFile);
   }
 
-  private class MyProblemListener implements ProblemListener {
+  private final class MyProblemListener implements ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
     private final Collection<VirtualFile> myFilesToRefresh = new HashSet<>();
 
@@ -140,7 +139,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
             if (!myProject.isOpen()) return;
             Set<VirtualFile> filesToRefresh;
             synchronized (myFilesToRefresh) {
-              filesToRefresh = new THashSet<>(myFilesToRefresh);
+              filesToRefresh = new HashSet<>(myFilesToRefresh);
             }
             final DefaultMutableTreeNode rootNode = getRootNode();
             if (rootNode != null) {

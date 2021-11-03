@@ -3,10 +3,10 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -18,14 +18,14 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.event.HyperlinkEvent
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
   val parent: RowImpl,
-  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  val viewComponent: JComponent = component,
+  visualPaddings: Gaps?) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
@@ -41,6 +41,8 @@ internal class CellImpl<T : JComponent>(
 
   var customGaps: Gaps? = null
     private set
+
+  val visualPaddings: Gaps = visualPaddings ?: getViewComponentVisualPaddings()
 
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
@@ -119,13 +121,8 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
-    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
-    return this
-  }
-
-  override fun commentHtml(comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T> {
-    this.comment = if (comment == null) null else createHtmlComment(comment, action)
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
+    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action)
     return this
   }
 
@@ -224,5 +221,10 @@ internal class CellImpl<T : JComponent>(
     viewComponent.isEnabled = isEnabled
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun getViewComponentVisualPaddings(): Gaps {
+    val insets = viewComponent.origin.insets
+    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
   }
 }

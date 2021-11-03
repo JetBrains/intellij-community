@@ -10,10 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.endOffset
+import org.toml.TomlBundle
 import org.toml.lang.psi.*
 
 class TomlExpandInlineTableIntention : TomlElementBaseIntentionAction<TomlExpandInlineTableIntention.Context>() {
-    override fun getText(): String = "Expand into separate table"
+    override fun getText(): String = TomlBundle.message("intention.toml.name.expand.into.separate.table")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {

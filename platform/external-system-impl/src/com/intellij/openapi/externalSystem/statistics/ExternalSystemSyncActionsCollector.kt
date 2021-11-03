@@ -5,17 +5,16 @@ import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.DurationMs
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
+import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,7 +33,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 3)
+    private val GROUP = EventLogGroup("build.gradle.import", 4)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -70,22 +69,28 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
+
     @JvmStatic
-    fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long) =
-      phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs))
+    fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
+      phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
+        EventPair(Int("error_count"), errorCount))
 
     @JvmStatic
     fun logError(project: Project?, activityId: Long, throwable: Throwable) {
       val description = ThrowableDescription(throwable)
+      val framesHash = if (throwable is ExternalSystemException) {
+        throwable.originalReason.hashCode()
+      } else {
+        description.getLastFrames(50).hashCode()
+      }
       val data = ArrayList<EventPair<*>>()
       data.add(activityIdField.with(activityId))
+      data.add(severityField.with("fatal"))
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
       data.add(EventFields.PluginInfo.with(if (pluginId == null) platformPlugin else getPluginInfoById(pluginId)))
       data.add(errorField.with(description.className))
       if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
-        val frames = description.getLastFrames(50)
-        val framesHash = frames.hashCode()
         data.add(errorHashField.with(framesHash))
       }
       else {

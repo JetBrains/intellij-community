@@ -10,34 +10,28 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.ui.*
+import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -46,6 +40,7 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
@@ -53,7 +48,6 @@ import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
-import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -95,143 +89,7 @@ internal class GitVcsPanel(private val project: Project) :
   BoundCompositeConfigurable<UnnamedConfigurable>(message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
-  private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
-
-  @Volatile
-  private var versionCheckRequested = false
-
-  private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
-
-  private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
-      override fun patchExecutable(executable: String): String? {
-        return GitExecutableDetector.patchExecutablePath(executable)
-      }
-
-      override fun testExecutable(executable: String) {
-        testGitExecutable(executable)
-      }
-    })
-  }
-
-  private fun testGitExecutable(pathToGit: String) {
-    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
-    val errorNotifier = InlineErrorNotifierFromSettings(
-      GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
-      modalityState, disposable!!
-    )
-
-    object : Task.Modal(project, message("git.executable.version.progress.title"), true) {
-      private lateinit var gitVersion: GitVersion
-
-      override fun run(indicator: ProgressIndicator) {
-        val executableManager = GitExecutableManager.getInstance()
-        val executable = executableManager.getExecutable(pathToGit)
-        executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(executable)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        val problemHandler = findGitExecutableProblemHandler(project)
-        problemHandler.showError(error, errorNotifier)
-      }
-
-      override fun onSuccess() {
-        if (gitVersion.isSupported) {
-          errorNotifier.showMessage(message("git.executable.version.is", gitVersion.presentation))
-        }
-        else {
-          showUnsupportedVersionError(project, gitVersion, errorNotifier)
-        }
-      }
-    }.queue()
-  }
-
-  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
-                                                      private val modalityState: ModalityState,
-                                                      disposable: Disposable) :
-    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
-    @CalledInAny
-    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
-      if (fixOption is ErrorNotifier.FixOption.Configure) {
-        super.showError(text, description, null)
-      }
-      else {
-        super.showError(text, description, fixOption)
-      }
-    }
-
-    override fun resetGitExecutable() {
-      super.resetGitExecutable()
-      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
-      invokeAndWaitIfNeeded(modalityState) {
-        resetPathSelector()
-      }
-    }
-  }
-
-  private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
-
-  private fun RowBuilder.gitExecutableRow() = row {
-    pathSelector.mainPanel(growX)
-      .onReset {
-        resetPathSelector()
-      }
-      .onIsModified {
-        val projectSettingsPathToGit = projectSettings.pathToGit
-        val currentPath = getCurrentExecutablePath()
-        if (pathSelector.isOverridden) {
-          currentPath != projectSettingsPathToGit
-        }
-        else {
-          currentPath != applicationSettings.savedPathToGit || projectSettingsPathToGit != null
-        }
-      }
-      .onApply {
-        val executablePathOverridden = pathSelector.isOverridden
-        val currentPath = getCurrentExecutablePath()
-        if (executablePathOverridden) {
-          projectSettings.pathToGit = currentPath
-        }
-        else {
-          applicationSettings.setPathToGit(currentPath)
-          projectSettings.pathToGit = null
-        }
-
-        validateExecutableOnceAfterClose()
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-      }
-  }
-
-  private fun resetPathSelector() {
-    val projectSettingsPathToGit = projectSettings.pathToGit
-    val detectedExecutable = try {
-      GitExecutableManager.getInstance().getDetectedExecutable(project)
-    }
-    catch (e: ProcessCanceledException) {
-      GitExecutableDetector.getDefaultExecutable()
-    }
-    pathSelector.reset(applicationSettings.savedPathToGit,
-                       projectSettingsPathToGit != null,
-                       projectSettingsPathToGit,
-                       detectedExecutable)
-  }
-
-  /**
-   * Special method to check executable after it has been changed through settings
-   */
-  private fun validateExecutableOnceAfterClose() {
-    if (versionCheckRequested) return
-    versionCheckRequested = true
-
-    runInEdt(ModalityState.NON_MODAL) {
-      versionCheckRequested = false
-
-      runBackgroundableTask(message("git.executable.version.progress.title"), project, true) {
-        GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
-      }
-    }
-  }
+  private val projectSettings get() = GitVcsSettings.getInstance(project)
 
   private fun RowBuilder.branchUpdateInfoRow() {
     row {
@@ -285,7 +143,7 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   override fun createPanel(): DialogPanel = panel {
-    gitExecutableRow()
+    createGitExecutableSelectorRow(project, disposable!!)
     titledRow(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
@@ -360,6 +218,7 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   private fun RowBuilder.updateProjectInfoFilter() {
+    val currentUpdateInfoFilterProperties = MyLogProperties(project.service())
     row {
       cell {
         val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()

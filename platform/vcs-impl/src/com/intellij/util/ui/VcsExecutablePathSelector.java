@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.Objects;
 
@@ -26,10 +28,11 @@ public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
   private final TextFieldWithBrowseButton myPathSelector;
   private final JBCheckBox myProjectPathCheckbox;
+  private final JButton myTestButton;
   private final BorderLayoutPanel myErrorComponent = new BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0);
 
   @Nullable private String mySavedPath;
-  @NotNull private String myAutoDetectedPath = "";
+  @Nullable private String myAutoDetectedPath = null;
 
   public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
@@ -40,11 +43,17 @@ public class VcsExecutablePathSelector {
                                            null,
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                            new MyTextComponentAccessor(handler));
+    myPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        updateTestButtonAvailability();
+      }
+    });
     panel.addToCenter(myPathSelector);
 
-    JButton testButton = new JButton(VcsBundle.message("executable.test"));
-    testButton.addActionListener(e -> handler.testExecutable(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
-    panel.addToRight(testButton);
+    myTestButton = new JButton(VcsBundle.message("executable.test"));
+    myTestButton.addActionListener(e -> testExecutable(handler));
+    panel.addToRight(myTestButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.message("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
@@ -97,15 +106,24 @@ public class VcsExecutablePathSelector {
     return myProjectPathCheckbox.isSelected();
   }
 
-  public void reset(@Nullable String globalPath,
-                    boolean pathOverriddenForProject,
-                    @Nullable @NlsSafe String projectPath,
-                    @NotNull @NlsSafe String autoDetectedPath) {
-    myAutoDetectedPath = autoDetectedPath;
-    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + autoDetectedPath);
+  /**
+   * Pass 'null' if path detection is in progress.
+   */
+  public void setAutoDetectedPath(@Nullable @NlsSafe String autoDetectedPath) {
+    StatusText emptyText = ((JBTextField)myPathSelector.getTextField()).getEmptyText();
+    emptyText.setText(autoDetectedPath != null ? VcsBundle.message("settings.auto.detected") + autoDetectedPath :
+                      VcsBundle.message("settings.auto.detected.progress"));
 
-    myProjectPathCheckbox.setSelected(pathOverriddenForProject);
-    if (pathOverriddenForProject) {
+    myAutoDetectedPath = autoDetectedPath;
+    updateTestButtonAvailability();
+  }
+
+  /**
+   * @param overridden if projectPath takes precedence over the globalPath
+   */
+  public void reset(@Nullable @NlsSafe String globalPath, boolean overridden, @Nullable @NlsSafe String projectPath) {
+    myProjectPathCheckbox.setSelected(overridden);
+    if (overridden) {
       mySavedPath = globalPath;
       myPathSelector.setText(projectPath);
     }
@@ -128,6 +146,20 @@ public class VcsExecutablePathSelector {
   @NotNull
   public JPanel getMainPanel() {
     return myMainPanel;
+  }
+
+  @Nullable
+  private String getExecutablePath() {
+    return ObjectUtils.chooseNotNull(getCurrentPath(), myAutoDetectedPath);
+  }
+
+  private void updateTestButtonAvailability() {
+    myTestButton.setEnabled(getExecutablePath() != null);
+  }
+
+  private void testExecutable(@NotNull ExecutableHandler handler) {
+    String executable = getExecutablePath();
+    if (executable != null) handler.testExecutable(executable);
   }
 
   private static class MyTextComponentAccessor implements TextComponentAccessor<JTextField> {

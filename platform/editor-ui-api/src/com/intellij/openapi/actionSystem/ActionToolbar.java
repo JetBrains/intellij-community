@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +74,7 @@ public interface ActionToolbar {
   /**
    * @return component which represents the tool bar on UI
    */
-  @NotNull
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
   /**
    * @return current layout policy
@@ -126,10 +127,13 @@ public interface ActionToolbar {
 
   boolean hasVisibleActions();
 
+  @ApiStatus.Internal
+  @Nullable JComponent getTargetComponent();
+
   /**
    * Will be used for data-context retrieval.
    */
-  void setTargetComponent(JComponent component);
+  void setTargetComponent(@Nullable JComponent component);
 
   void setReservePlaceAutoPopupIcon(boolean reserve);
 
@@ -139,18 +143,19 @@ public interface ActionToolbar {
 
   void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon);
 
-  @NotNull
-  List<AnAction> getActions();
+  @NotNull List<AnAction> getActions();
 
   void setMiniMode(boolean minimalMode);
 
-  @NotNull
-  DataContext getToolbarDataContext();
+  @NotNull DataContext getToolbarDataContext();
 
   /**
    * Enables showing titles of separators as labels in the toolbar (off by default).
    */
   default void setShowSeparatorTitles(boolean showSeparatorTitles) {
+  }
+
+  default void addListener(@NotNull ActionToolbarListener listener, @NotNull Disposable parentDisposable) {
   }
 
 

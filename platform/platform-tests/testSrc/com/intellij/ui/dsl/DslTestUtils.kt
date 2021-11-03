@@ -35,3 +35,6 @@ fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuil
   return this
 }
 
+fun generateLongString(): String {
+  return (0..9).map { "Long string $it" }.joinToString()
+}

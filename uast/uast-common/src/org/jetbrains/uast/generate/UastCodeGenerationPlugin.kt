@@ -14,7 +14,7 @@ import kotlin.streams.asSequence
 /**
  * Extensions which provides code generation support for generating UAST expressions.
  *
- * @see UastLanguagePlugin
+ * @see org.jetbrains.uast.UastLanguagePlugin
  */
 @ApiStatus.Experimental
 interface UastCodeGenerationPlugin {
@@ -88,7 +88,9 @@ interface UastElementFactory {
   fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression?
 
   /**
-   * For providing additional information pass it via [context] only, otherwise it can be lost
+   * For providing additional information pass it via [context] only, otherwise it can be lost.
+   * It is not guaranteed, that [receiver] will be part of returned [UCallExpression].
+   * If its necessary, use [getQualifiedParentOrThis].
    */
   fun createCallExpression(receiver: UExpression?,
                            methodName: String,
@@ -126,7 +128,7 @@ inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
 @ApiStatus.Experimental
 inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {
   logger<UastCodeGenerationPlugin>().assertTrue(it.isValid,
-                                                "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
+    "psi $it of class ${it.javaClass} should be valid, containing file = ${it.containingFile}")
 }?.toUElementOfType<T>()
 
 val UElement.generationPlugin: UastCodeGenerationPlugin?

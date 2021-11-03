@@ -5,8 +5,8 @@ fun firstFun() {
     a.hello<caret>
 }
 
-// EXIST: { lookupString: "helloProp1", attributes: "bold" }
-// EXIST: { lookupString: "helloProp2", attributes: "bold" }
+// EXIST: { lookupString: "helloProp1", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
+// EXIST: { lookupString: "helloProp2", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}
 // ABSENT: helloProp3
 // ABSENT: helloProp4
 // NOTHING_ELSE

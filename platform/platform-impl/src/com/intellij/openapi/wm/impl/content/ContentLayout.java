@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -43,6 +44,7 @@ abstract class ContentLayout {
     String title = myUi.window.getStripeTitle();
 
     String suffix = getTitleSuffix();
+    if (ExperimentalUI.isNewToolWindowsStripes()) suffix = null;
     if (suffix != null) title += suffix;
 
     label.setText(title);

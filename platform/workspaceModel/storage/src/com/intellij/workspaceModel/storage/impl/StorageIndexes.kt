@@ -109,13 +109,13 @@ internal open class StorageIndexes(
     var expectedSize = 0
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
-      if (family.entities.firstOrNull { it != null }?.persistentId(storage) == null) return@forEachIndexed
+      if (family.entities.firstOrNull { it != null }?.persistentId() == null) return@forEachIndexed
       var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedPersistentId = persistentIdIndex.getEntryById(mutableId)
-        assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
+        assert(expectedPersistentId == data.persistentId()) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId()}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
         expectedSize++
       }
     }
@@ -151,7 +151,7 @@ internal class MutableStorageIndexes(
   override val externalMappings: MutableMap<String, MutableExternalEntityMappingImpl<*>>
 ) : StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, externalMappings) {
 
-  fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, builder: WorkspaceEntityStorageBuilderImpl) {
+  fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>) {
     val pid = entityData.createEntityId()
 
     // Update soft links index
@@ -162,7 +162,7 @@ internal class MutableStorageIndexes(
     val entitySource = entityData.entitySource
     entitySourceIndex.index(pid, entitySource)
 
-    entityData.persistentId(builder)?.let { persistentId ->
+    entityData.persistentId()?.let { persistentId ->
       persistentIdIndex.index(pid, persistentId)
     }
 
@@ -255,15 +255,18 @@ internal class MutableStorageIndexes(
   }
 
   private fun updateComposedIds(builder: WorkspaceEntityStorageBuilderImpl,
-                                beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
+                                beforePersistentId: PersistentEntityId<*>,
+                                newPersistentId: PersistentEntityId<*>) {
     val idsWithSoftRef = HashSet(this.softLinks.getIdsByEntry(beforePersistentId))
     for (entityId in idsWithSoftRef) {
-      val entity = builder.entitiesByType.getEntityDataForModification(entityId)
-      val editingBeforePersistentId = entity.persistentId(builder)
+      val originalEntityData = builder.getOriginalEntityData(entityId) as WorkspaceEntityData<WorkspaceEntity>
+      val originalParentsData = builder.getOriginalParents(entityId.asChild())
+      val entity = builder.entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<WorkspaceEntity>
+      val editingBeforePersistentId = entity.persistentId()
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      builder.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptySet(), emptyMap())
+      builder.changeLog.addReplaceEvent(entityId, entity, originalEntityData, originalParentsData, emptyList(), emptySet(), emptyMap())
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updatePersistentIdIndexes(builder, entity.createEntity(builder), editingBeforePersistentId, entity)
     }

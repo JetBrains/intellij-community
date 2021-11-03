@@ -36,6 +36,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -516,11 +517,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
+  @TestOnly
+  boolean toLog;
   boolean toLog() {
-    return LOG.isDebugEnabled();
+    return toLog;
   }
-
-  void log(String message) {
+  void log(@NonNls String message) {
     LOG.debug(message + " - " + Thread.currentThread());
   }
 
@@ -1389,7 +1391,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
-    FileType type;
+    UserFileType<?> type;
     if (element == null) {
       type = UserBinaryFileType.INSTANCE;
     }
@@ -1401,7 +1403,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue("icon");
-    setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
+    setFileTypeAttributes(type, fileTypeName, fileTypeDescr, iconPath);
     registerFileTypeWithoutNotification(type, pluginDescriptor, parseExtensions(context, extensionsStr), isDefault);
 
     if (isDefault) {

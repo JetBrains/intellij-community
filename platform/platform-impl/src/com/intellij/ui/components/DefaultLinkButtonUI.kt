@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
@@ -102,7 +102,7 @@ class DefaultLinkButtonUI : BasicButtonUI() {
       val hovered = isHovered(button)
       val view = htmlView(button)
       if (view == null) {
-        g.color = button.foreground
+        g.color = getTextColor(button)
         val index = if (isEnabled(button) && isAltPressed()) button.displayedMnemonicIndex else -1
         UIUtilities.drawStringUnderlineCharAt(button, g, layout.text, index, layout.textBounds.x, layout.baseline)
         if (hovered) g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)
@@ -182,15 +182,19 @@ private fun isFocused(button: AbstractButton) = button.isFocusPainted && button.
 
 // provide dynamic foreground color
 
-private fun getColor(button: AbstractButton) = when {
+private fun getTextColor(button: AbstractButton) = when {
   !isEnabled(button) -> Link.Foreground.DISABLED
+  else -> button.foreground ?: getLinkColor(button)
+}
+
+private fun getLinkColor(button: AbstractButton) = when {
   isPressed(button) -> Link.Foreground.PRESSED
   isHovered(button) -> Link.Foreground.HOVERED
   isVisited(button) -> Link.Foreground.VISITED
   else -> Link.Foreground.ENABLED
 }
 
-private class DynamicColor(button: AbstractButton) : UIResource, JBColor({ getColor(button) })
+private class DynamicColor(button: AbstractButton) : UIResource, JBColor({ getLinkColor(button) })
 
 // support underlined <html>
 
@@ -200,7 +204,7 @@ private fun createUnderlinedView(button: AbstractButton, text: String): View {
   val styles = StyleSheet()
   styles.addStyleSheet(sharedUnderlineStyles)
   styles.addStyleSheet(sharedEditorKit.styleSheet)
-  styles.addRule(UIUtilities.displayPropertiesToCSS(button.font, button.foreground))
+  styles.addRule(UIUtilities.displayPropertiesToCSS(button.font, getTextColor(button)))
 
   val document = HTMLDocument(styles)
   document.asynchronousLoadPriority = Int.MAX_VALUE // load everything in one chunk
@@ -218,7 +222,7 @@ private fun readSafely(text: String, read: (StringReader) -> Unit) {
   try {
     read(reader)
   }
-  catch (error: Throwable) {
+  catch (_: Throwable) {
   }
   finally {
     reader.close()
@@ -243,7 +247,7 @@ private val sharedEditorKit by lazy {
     override fun getViewFactory() = lazyViewFactory
 
     private val lazyViewFactory by lazy {
-      object : HTMLEditorKit.HTMLFactory() {
+      object : HTMLFactory() {
         override fun create(elem: Element): View {
           val view = super.create(elem)
           if (view is ImageView) {

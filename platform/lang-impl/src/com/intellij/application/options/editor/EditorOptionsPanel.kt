@@ -40,8 +40,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.buttonGroup
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 
@@ -140,140 +148,123 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
   override fun createPanel(): DialogPanel {
     lateinit var chkEnableWheelFontSizeChange: JCheckBox
     return panel {
-      titledRow(message("group.advanced.mouse.usages")) {
+      group(message("group.advanced.mouse.usages")) {
         row {
-          checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
+          chkEnableWheelFontSizeChange = checkBox(enableWheelFontChange).component
+        }
+        buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }, indent = true) {
           row {
-            cell(isFullWidth = true) {
-              buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
-                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
-                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
-              }
-            }
-          }
+            radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false)
+            radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true)
+          }.enabledIf(chkEnableWheelFontSizeChange.selected)
         }
         row {
-          cell(isFullWidth = true) {
-            checkBox(enableDnD)
-            commentNoWrap(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment")).withLargeLeftGap()
-          }
+          checkBox(enableDnD)
+          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment"))
         }
       }
-      titledRow(message("group.soft.wraps")) {
+      group(message("group.soft.wraps")) {
         row {
           val useSoftWraps = checkBox(cdUseSoftWrapsAtEditor)
-          textField({ editorSettings.softWrapFileMasks }, { editorSettings.softWrapFileMasks = it })
-            .growPolicy(GrowPolicy.MEDIUM_TEXT)
+          textField()
+            .bindText({ editorSettings.softWrapFileMasks }, { editorSettings.softWrapFileMasks = it })
+            .columns(COLUMNS_LARGE)
             .applyToComponent { emptyText.text = message("soft.wraps.file.masks.empty.text") }
-            .comment(message("soft.wraps.file.masks.hint"), forComponent = true)
-            .enableIf(useSoftWraps.selected)
+            .comment(message("soft.wraps.file.masks.hint"))
+            .enabledIf(useSoftWraps.selected)
         }
+        lateinit var useSoftWrapsIndent: Cell<JBCheckBox>
         row {
-          val useSoftWrapsIndent = checkBox(cdUseCustomSoftWrapIndent)
-          row {
-            cell(isFullWidth = true) {
-              label(message("label.use.custom.soft.wraps.indent"))
-                .enableIf(useSoftWrapsIndent.selected)
-              intTextField(editorSettings::getCustomSoftWrapIndent, editorSettings::setCustomSoftWrapIndent, columns = 2)
-                .enableIf(useSoftWrapsIndent.selected)
-              label(message("label.use.custom.soft.wraps.indent.symbols.suffix"))
-            }
-          }
+          useSoftWrapsIndent = checkBox(cdUseCustomSoftWrapIndent)
+        }
+        indent {
+          row(message("label.use.custom.soft.wraps.indent")) {
+            intTextField()
+              .bindIntText(editorSettings::getCustomSoftWrapIndent, editorSettings::setCustomSoftWrapIndent)
+              .columns(2)
+              .gap(RightGap.SMALL)
+            label(message("label.use.custom.soft.wraps.indent.symbols.suffix"))
+          }.enabledIf(useSoftWrapsIndent.selected)
         }
         row { checkBox(cdShowSoftWrapsOnlyOnCaretLine) }
       }
-      titledRow(message("group.virtual.space")) {
+      group(message("group.virtual.space")) {
         row {
-          cell(isFullWidth = true) {
-            label(message("checkbox.allow.placement.of.caret.label"))
-            checkBox(virtualSpace).withLargeLeftGap()
-            checkBox(caretInsideTabs).withLargeLeftGap()
-          }
+          label(message("checkbox.allow.placement.of.caret.label"))
+          checkBox(virtualSpace)
+          checkBox(caretInsideTabs)
         }
         row { checkBox(virtualPageAtBottom) }
       }
-      titledRow(message("group.caret.movement")) {
-        row(message("label.word.move.caret.actions.behavior")) {
-          caretStopComboBox(CaretOptionMode.WORD, WordBoundary.values())
-        }
-        row(message("label.word.move.caret.actions.behavior.at.line.break")) {
-          caretStopComboBox(CaretOptionMode.LINE, LineBoundary.values())
-        }
+      group(message("group.caret.movement")) {
+        caretStopRow(message("label.word.move.caret.actions.behavior"), CaretOptionMode.WORD, WordBoundary.values())
+        caretStopRow(message("label.word.move.caret.actions.behavior.at.line.break"), CaretOptionMode.LINE, LineBoundary.values())
       }
-      titledRow(message("editor.options.scrolling")) {
+      group(message("editor.options.scrolling")) {
         row { checkBox(cdSmoothScrolling) }
-        row {
-          buttonGroup(editorSettings::isRefrainFromScrolling,
-                      editorSettings::setRefrainFromScrolling) {
-            checkBoxGroup(message("editor.options.prefer.scrolling.editor.label")) {
-              row { radioButton(message("editor.options.prefer.scrolling.editor.canvas.to.keep.caret.line.centered"), value = false) }
-              row { radioButton(message("editor.options.prefer.moving.caret.line.to.minimize.editor.scrolling"), value = true) }
-            }
-          }
+        buttonGroup(editorSettings::isRefrainFromScrolling,
+          editorSettings::setRefrainFromScrolling, message("editor.options.prefer.scrolling.editor.label")) {
+          row { radioButton(message("editor.options.prefer.scrolling.editor.canvas.to.keep.caret.line.centered"), value = false) }
+          row { radioButton(message("editor.options.prefer.moving.caret.line.to.minimize.editor.scrolling"), value = true) }
         }
       }
-      titledRow(message("group.richcopy")) {
+      group(message("group.richcopy")) {
         row {
           val copyShortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_COPY)
           val copyShortcutText = copyShortcut?.let { " (" + KeymapUtil.getShortcutText(it) + ")" } ?: ""
-          cell(isFullWidth = true) {
-            checkBox(CheckboxDescriptor(message("checkbox.enable.richcopy.label", copyShortcutText),
-                                        PropertyBinding(richCopySettings::isEnabled, richCopySettings::setEnabled)))
-            commentNoWrap(message("checkbox.enable.richcopy.comment")).withLargeLeftGap()
-          }
+          checkBox(message("checkbox.enable.richcopy.label", copyShortcutText))
+            .bindSelected(richCopySettings::isEnabled, richCopySettings::setEnabled)
+          comment(message("checkbox.enable.richcopy.comment"))
         }
-        row {
-          cell(isFullWidth = true) {
-            label(message("combobox.richcopy.color.scheme"))
-            val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
-                          EditorColorsManager.getInstance().allSchemes.map { Scheme.getBaseName(it.name) }
-            comboBox<String>(
-              DefaultComboBoxModel(schemes.toTypedArray()), richCopySettings::getSchemeName, richCopySettings::setSchemeName,
-              renderer = SimpleListCellRenderer.create("") {
-                when (it) {
-                  RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER ->
-                    message("combobox.richcopy.color.scheme.active")
-                  EditorColorsScheme.DEFAULT_SCHEME_NAME -> EditorColorsScheme.DEFAULT_SCHEME_ALIAS
-                  else -> it
-                }
+        row(message("combobox.richcopy.color.scheme")) {
+          val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
+                        EditorColorsManager.getInstance().allSchemes.map { Scheme.getBaseName(it.name) }
+          comboBox<String>(
+            DefaultComboBoxModel(schemes.toTypedArray()),
+            renderer = SimpleListCellRenderer.create("") {
+              when (it) {
+                RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER ->
+                  message("combobox.richcopy.color.scheme.active")
+                EditorColorsScheme.DEFAULT_SCHEME_NAME -> EditorColorsScheme.DEFAULT_SCHEME_ALIAS
+                else -> it
               }
-            )
-          }
+            }
+          ).bindItem(richCopySettings::getSchemeName, richCopySettings::setSchemeName)
         }
       }
-      titledRow(message("editor.options.save.files.group")) {
+      group(message("editor.options.save.files.group")) {
+        lateinit var stripEnabledBox: Cell<JBCheckBox>
         row {
-          lateinit var stripEnabledBox: CellBuilder<JCheckBox>
-          cell(isFullWidth = true) {
-            stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
-            val model = DefaultComboBoxModel(
-              arrayOf(
-                EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,
-                EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
-              )
+          stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
+          val model = DefaultComboBoxModel(
+            arrayOf(
+              EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,
+              EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
             )
-            comboBox(
-              model, stripTrailingSpacesProxy::getScope, {scope->stripTrailingSpacesProxy.setScope(scope, stripEnabledBox.selected.invoke())},
-              renderer = SimpleListCellRenderer.create("") {
-                when (it) {
-                  EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED -> message("combobox.strip.modified.lines")
-                  EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE -> message("combobox.strip.all")
-                  else -> it
-                }
+          )
+          comboBox(
+            model,
+            renderer = SimpleListCellRenderer.create("") {
+              when (it) {
+                EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED -> message("combobox.strip.modified.lines")
+                EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE -> message("combobox.strip.all")
+                else -> it
               }
-            ).enableIf(stripEnabledBox.selected)
-          }
+            }
+          ).bindItem(stripTrailingSpacesProxy::getScope, {scope->stripTrailingSpacesProxy.setScope(scope, stripEnabledBox.selected.invoke())})
+            .enabledIf(stripEnabledBox.selected)
+        }
+        indent {
           row {
             checkBox(cdKeepTrailingSpacesOnCaretLine)
-              .enableIf(stripEnabledBox.selected)
-            largeGapAfter()
-          }
+              .enabledIf(stripEnabledBox.selected)
+          }.bottomGap(BottomGap.SMALL)
         }
         row { checkBox(cdRemoveTrailingBlankLines) }
         row { checkBox(cdEnsureBlankLineBeforeCheckBox) }
       }
       for (configurable in configurables) {
-        appendDslConfigurableRow(configurable)
+        appendDslConfigurable(configurable)
       }
     }
   }
@@ -303,113 +294,107 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
 
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow(message("group.brace.highlighting")) {
+      group(message("group.brace.highlighting")) {
         row { checkBox(highlightBraces) }
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
       if (!AccessibilityUtils.isScreenReaderDetected()) {
-        titledRow(message("group.quick.documentation")) {
+        group(message("group.quick.documentation")) {
           row { checkBox(cdShowQuickDocOnMouseMove) }
         }
       }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
-        titledRow(message("group.refactorings")) {
-          row {
-            buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
-                        editorSettings::setVariableInplaceRenameEnabled) {
-              checkBoxGroup(message("radiogroup.rename.local.variables")) {
-                row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
-                row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()
-              }
-            }
+        group(message("group.refactorings")) {
+          buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
+            editorSettings::setVariableInplaceRenameEnabled, message("radiogroup.rename.local.variables")) {
+            row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
+            row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.bottomGap(BottomGap.SMALL)
           }
           row { checkBox(preselectCheckBox) }
           row { checkBox(showInlineDialogForCheckBox) }
         }
       }
-      titledRow(message("group.error.highlighting")) {
-        row {
-          cell(isFullWidth = true) {
-            label(message("editbox.error.stripe.mark.min.height"))
-            intTextField(codeAnalyzerSettings::getErrorStripeMarkMinHeight, codeAnalyzerSettings::setErrorStripeMarkMinHeight, columns = 4)
-            label(message("editbox.error.stripe.mark.min.height.pixels.suffix"))
-          }
-        }
-        row {
-          cell(isFullWidth = true) {
-            label(message("editbox.autoreparse.delay"))
-            intTextField(codeAnalyzerSettings::getAutoReparseDelay, codeAnalyzerSettings::setAutoReparseDelay, columns = 4)
-            label(message("editbox.autoreparse.delay.ms.suffix"))
-          }
-        }
-        row {
-          cell(isFullWidth = true) {
-            label(message("combobox.next.error.action.goes.to.label"))
-            comboBox(
-              DefaultComboBoxModel(arrayOf(true, false)),
-              codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst,
-              { codeAnalyzerSettings.isNextErrorActionGoesToErrorsFirst = it ?: true },
-              renderer = SimpleListCellRenderer.create("") {
-                when (it) {
-                  true -> message("combobox.next.error.action.goes.to.errors")
-                  false -> message("combobox.next.error.action.goes.to.all.problems")
-                  else -> it.toString()
-                }
+      group(message("group.error.highlighting")) {
+        row(message("editbox.error.stripe.mark.min.height")) {
+          intTextField()
+            .bindIntText(codeAnalyzerSettings::getErrorStripeMarkMinHeight, codeAnalyzerSettings::setErrorStripeMarkMinHeight)
+            .columns(4)
+            .gap(RightGap.SMALL)
+          label(message("editbox.error.stripe.mark.min.height.pixels.suffix"))
+        }.layout(RowLayout.INDEPENDENT)
+        row(message("editbox.autoreparse.delay")) {
+          intTextField()
+            .bindIntText(codeAnalyzerSettings::getAutoReparseDelay, codeAnalyzerSettings::setAutoReparseDelay)
+            .columns(4)
+            .gap(RightGap.SMALL)
+          label(message("editbox.autoreparse.delay.ms.suffix"))
+        }.layout(RowLayout.INDEPENDENT)
+        row(message("combobox.next.error.action.goes.to.label")) {
+          comboBox(
+            DefaultComboBoxModel(arrayOf(true, false)),
+            renderer = SimpleListCellRenderer.create("") {
+              when (it) {
+                true -> message("combobox.next.error.action.goes.to.errors")
+                false -> message("combobox.next.error.action.goes.to.all.problems")
+                else -> it.toString()
               }
-            )
-          }
-        }
+            }
+          ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst,
+            { codeAnalyzerSettings.isNextErrorActionGoesToErrorsFirst = it ?: true })
+        }.layout(RowLayout.INDEPENDENT)
 
         for (configurable in configurables) {
-          appendDslConfigurableRow(configurable)
+          appendDslConfigurable(configurable)
         }
       }
-      titledRow(message("group.editor.tooltips")) {
-        row {
-          cell(isFullWidth = true) {
-            label(message("editor.options.tooltip.delay"))
-            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = TOOLTIPS_DELAY_RANGE.asRange(),
-                         columns = 4)
-            label(message("editor.options.ms"))
-          }
+      group(message("group.editor.tooltips")) {
+        row(message("editor.options.tooltip.delay")) {
+          intTextField(range = TOOLTIPS_DELAY_RANGE.asRange())
+            .bindIntText(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay)
+            .columns(4)
+            .gap(RightGap.SMALL)
+          label(message("editor.options.ms"))
         }
       }
     }
   }
 }
 
-private fun <E : EditorCaretStopPolicyItem> Cell.caretStopComboBox(mode: CaretOptionMode, values: Array<E>): CellBuilder<ComboBox<E?>> {
-  val model: DefaultComboBoxModel<E?> = SeparatorAwareComboBoxModel()
-  var lastWasOsDefault = false
-  for (item in values) {
-    val isOsDefault = item.osDefault !== OsDefault.NONE
-    if (lastWasOsDefault && !isOsDefault) model.addElement(null)
-    lastWasOsDefault = isOsDefault
-    val insertionIndex = if (item.osDefault.isIdeDefault) 0 else model.size
-    model.insertElementAt(item, insertionIndex)
-  }
+private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: String, mode: CaretOptionMode, values: Array<E>) {
+  row(label) {
+    val model: DefaultComboBoxModel<E?> = SeparatorAwareComboBoxModel()
+    var lastWasOsDefault = false
+    for (item in values) {
+      val isOsDefault = item.osDefault !== OsDefault.NONE
+      if (lastWasOsDefault && !isOsDefault) model.addElement(null)
+      lastWasOsDefault = isOsDefault
+      val insertionIndex = if (item.osDefault.isIdeDefault) 0 else model.size
+      model.insertElementAt(item, insertionIndex)
+    }
 
-  return component(ComboBox(model))
-    .applyToComponent { renderer = SeparatorAwareListItemRenderer() }
-    .sizeGroup("caretStopComboBox")
-    .withBinding(
-      {
-        val item = it.selectedItem as? EditorCaretStopPolicyItem
-        item?.caretStopBoundary ?: mode.get(CaretStopOptionsTransposed.DEFAULT)
-      },
-      { it, value -> it.selectedItem = mode.find(value) },
-      PropertyBinding(
+    cell(ComboBox(model))
+      .applyToComponent { renderer = SeparatorAwareListItemRenderer() }
+      .horizontalAlign(HorizontalAlign.FILL)
+      .bind(
         {
-          val value = fromCaretStopOptions(editorSettings.caretStopOptions)
-          mode.get(value)
+          val item = it.selectedItem as? EditorCaretStopPolicyItem
+          item?.caretStopBoundary ?: mode.get(CaretStopOptionsTransposed.DEFAULT)
         },
-        {
-          val value = fromCaretStopOptions(editorSettings.caretStopOptions)
-          editorSettings.caretStopOptions = mode.update(value, it).toCaretStopOptions()
-        }
+        { it, value -> it.selectedItem = mode.find(value) },
+        PropertyBinding(
+          {
+            val value = fromCaretStopOptions(editorSettings.caretStopOptions)
+            mode.get(value)
+          },
+          {
+            val value = fromCaretStopOptions(editorSettings.caretStopOptions)
+            editorSettings.caretStopOptions = mode.update(value, it).toCaretStopOptions()
+          }
+        )
       )
-    )
+    cell()
+  }.layout(RowLayout.PARENT_GRID)
 }
 
 private class StripTrailingSpacesProxy {

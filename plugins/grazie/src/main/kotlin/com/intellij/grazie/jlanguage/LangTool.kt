@@ -7,6 +7,7 @@ import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
+import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.grazie.utils.text
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.progress.ProgressIndicator
@@ -20,6 +21,7 @@ import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
 import org.languagetool.rules.IncorrectExample
+import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.net.Authenticator
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -34,6 +36,8 @@ object LangTool : GrazieStateLifecycle {
     JLanguageTool.setClassBrokerBroker { qualifiedName ->
       GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
     }
+
+    Hunspell.setHunspellDictionaryFactory(::LuceneHunspellDictionary)
   }
 
   internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."

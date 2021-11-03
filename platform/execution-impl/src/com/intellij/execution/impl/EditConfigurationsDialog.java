@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -32,6 +32,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     super(project, runConfigurable, "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
 
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
+    ((RunConfigurable)getConfigurable()).initTreeSelectionListener(getDisposable());
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
     if (factory != null) {

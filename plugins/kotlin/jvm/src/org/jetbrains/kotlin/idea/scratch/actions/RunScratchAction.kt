@@ -9,9 +9,12 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.task.ProjectTaskManager
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.SequentialScratchExecutor
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.idea.scratch.LOG as log
 
 class RunScratchAction : ScratchAction(
@@ -33,6 +36,7 @@ class RunScratchAction : ScratchAction(
 
     companion object {
         fun doAction(scratchFile: ScratchFile, isAutoRun: Boolean) {
+            val project = scratchFile.project
             val isRepl = scratchFile.options.isRepl
             val executor = (if (isRepl) scratchFile.replScratchExecutor else scratchFile.compilingScratchExecutor) ?: return
 
@@ -53,11 +57,13 @@ class RunScratchAction : ScratchAction(
             val isMakeBeforeRun = scratchFile.options.isMakeBeforeRun
             log.printDebugMessage("Run Action: isMakeBeforeRun = $isMakeBeforeRun")
 
+            ScriptConfigurationManager.getInstance(project).cast<CompositeScriptConfigurationManager>()
+                .updateScriptDependenciesIfNeeded(scratchFile.file)
+
             val module = scratchFile.module
             log.printDebugMessage("Run Action: module = ${module?.name}")
 
             if (!isAutoRun && module != null && isMakeBeforeRun) {
-                val project = scratchFile.project
                 ProjectTaskManager.getInstance(project).build(module).onSuccess { executionResult ->
                     if (executionResult.isAborted || executionResult.hasErrors()) {
                         executor.errorOccurs(KotlinJvmBundle.message("there.were.compilation.errors.in.module.0", module.name))

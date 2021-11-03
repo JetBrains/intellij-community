@@ -45,7 +45,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {
             val fixes = listOf(RenameUselessCallFix(newName)) + listOfNotNull(safeExpression?.let {
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression), safeExpression.containingKtFile)
+                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
             })
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
@@ -71,7 +71,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
                 safeExpression.operationTokenNode.psi,
                 KotlinBundle.message("this.call.is.useless.with"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression), safeExpression.containingKtFile)
+                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
             )
         }
     }

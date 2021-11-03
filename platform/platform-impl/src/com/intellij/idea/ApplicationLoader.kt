@@ -33,6 +33,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.lang.ZipFilePool
@@ -268,17 +269,13 @@ private fun addActivateAndWindowsCliListeners() {
   StartupUtil.addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-
     val result = handleExternalCommand(args, currentDirectory)
     result.future
   }
 
   StartupUtil.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
-    if (args.isEmpty()) {
-      return@BiFunction 0
-    }
-
+    if (args.isEmpty()) return@BiFunction 0
     val result = handleExternalCommand(args.toList(), currentDirectory)
     CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
   }
@@ -292,7 +289,13 @@ private fun addActivateAndWindowsCliListeners() {
 }
 
 private fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-  val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
+    CommandLineProcessor.processProtocolCommand(args[0])
+    CommandLineProcessorResult(null, CommandLineProcessor.OK_FUTURE)
+  }
+  else {
+    CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+  }
   ApplicationManager.getApplication().invokeLater {
     if (result.hasError) {
       result.showErrorIfFailed()

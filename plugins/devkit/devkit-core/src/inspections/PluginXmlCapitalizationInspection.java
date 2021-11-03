@@ -242,7 +242,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
         }
         else {
           assert domElement instanceof GenericDomValue : domElement;
-          ((GenericDomValue)domElement).setStringValue(NlsCapitalizationUtil.fixValue(value, capitalization));
+          ((GenericDomValue<?>)domElement).setStringValue(NlsCapitalizationUtil.fixValue(value, capitalization));
         }
       }
     };

@@ -53,6 +53,7 @@ public class EditorModel {
   private final List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
   private final AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
   private boolean isBrokenMode = false;
+  private boolean isDisposed = false;
 
   private final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
   private boolean isLocalScrollBarStabilized = false;
@@ -273,6 +274,10 @@ public class EditorModel {
 
   @RequiresEdt
   private void update() {
+    if (isDisposed) {
+      return;
+    }
+
     if (isBrokenMode) {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
       return;
@@ -956,6 +961,7 @@ public class EditorModel {
   }
 
   void dispose() {
+    isDisposed = true;
     if (editor != null) {
       EditorFactory.getInstance().releaseEditor(editor);
     }

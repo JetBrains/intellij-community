@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
@@ -30,6 +32,15 @@ public final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
     return myHtmlFactory;
   }
 
+  /**
+   * Swing HTML Editor Kit processes values in percents of 'font-size' css property really weirdly
+   * and even in not a cross-platform way.
+   * So we have to do some hacks to align fonts.
+   */
+  private static int getMonospaceFontSizeCorrection() {
+    return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 96 : 100;
+  }
+
   private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
     editorKit.setFontResolver(EditorCssFontResolver.getGlobalInstance());
 
@@ -38,7 +49,8 @@ public final class DocumentationHtmlEditorKit extends JBHtmlEditorKit {
     String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     String borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor());
     String sectionColor = ColorUtil.toHtmlColor(SECTION_COLOR);
-    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\";}";
+    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER +
+                             "\";font-size:" + getMonospaceFontSizeCorrection() + "%;}";
 
     StyleSheet styleSheet = editorKit.getStyleSheet();
     styleSheet.addRule("tt" + editorFontStyle);

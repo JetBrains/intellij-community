@@ -69,7 +69,7 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     }
 
     @Override
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myFile;
     }
     @Override

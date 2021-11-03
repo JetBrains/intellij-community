@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
@@ -9,19 +9,16 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.*
+import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -46,7 +43,9 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
+import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
 import java.io.IOException
@@ -84,6 +83,10 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return CompletableFuture.completedFuture(null)
     }
 
+    if (!checkTrustedState(projectStoreBaseDir)) {
+      return CompletableFuture.completedFuture(null)
+    }
+
     val activity = StartUpMeasurer.startActivity("project opening preparation")
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
@@ -105,6 +108,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         }
       }
     }
+
     return doOpenAsync(options, projectStoreBaseDir, activity)
   }
 
@@ -126,6 +130,10 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
       val project = result.project
       if (!addToOpened(project)) {
+        return@run null
+      }
+
+      if (!checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
         return@run null
       }
 
@@ -165,6 +173,62 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         }
         project
       })
+  }
+
+  /**
+   * Checks if the project path is trusted, and shows the Trust Project dialog if needed.
+   *
+   * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
+   */
+  private fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+    val trustedPaths = TrustedPaths.getInstance()
+    val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
+
+    if (trustedState != ThreeState.UNSURE) {
+      // the trusted state of this project path is already known => proceed with opening
+      return true
+    }
+
+    if (isProjectImplicitlyTrusted(projectStoreBaseDir)) {
+      return true
+    }
+
+    // check if the project trusted state could be known from the previous IDE version
+    val metaInfo = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)
+    val projectId = metaInfo?.projectWorkspaceId
+    val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace").resolve("$projectId.xml")
+    if (projectId != null && productWorkspaceFile.exists()) {
+      // this project is in recent projects => it was opened on this computer before
+      // => most probably we already asked about its trusted state before
+      // the only exception is: the project stayed in the UNKNOWN state in the previous version because it didn't utilize any dangerous features
+      // in this case we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
+      return true
+    }
+
+    return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+  }
+
+  /**
+   * Checks if the project was trusted using the previous API.
+   * Migrates the setting to the new API, shows the Trust Project dialog if needed.
+   *
+   * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
+   */
+  private fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
+    val trustedPaths = TrustedPaths.getInstance()
+    val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
+    if (trustedState != ThreeState.UNSURE) {
+      return true
+    }
+
+    val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
+    if (previousTrustedState != ThreeState.UNSURE) {
+      // we were asking about this project in the previous IDE version => migrate
+      trustedPaths.setProjectPathTrusted(projectStoreBaseDir, previousTrustedState.toBoolean())
+      return true
+    }
+
+    return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
   }
 
   override fun openProject(project: Project): Boolean {

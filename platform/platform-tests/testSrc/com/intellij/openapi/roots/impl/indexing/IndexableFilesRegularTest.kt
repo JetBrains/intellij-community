@@ -9,14 +9,18 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @RunsInEdt
 class IndexableFilesRegularTest : IndexableFilesBaseTest() {
@@ -280,5 +284,48 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
 
     val fileFromIndex = UsefulTestCase.assertOneElement(filesFromIndex)
     assertEquals(file, fileFromIndex)
+  }
+
+  @Test
+  fun `partial indexing does not reset indexed files cache`() {
+    lateinit var contentRootDirSpec: DirectorySpec
+    lateinit var contentFile: FileSpec
+    lateinit var sourceFile: FileSpec
+
+    val projectIndexableFiles = (FileBasedIndex.getInstance() as FileBasedIndexImpl).projectIndexableFiles(project)
+    assertNotNull(projectIndexableFiles)
+
+    val module = projectModelRule.createJavaModule("moduleName") {
+      contentRootDirSpec = dir("contentRoot") {
+        //files should be created before content root addition to be indexed at that moment
+        contentFile = file("ContentFile.java", "class ContentFile {}")
+        sourceFile = file("SourceFile.java", "class SourceFile {}")
+      }
+    }
+    ModuleRootModificationUtil.addContentRoot(module, contentRootDirSpec.file.path)
+
+    assertFilesInIndexableFilesFilter(contentFile, sourceFile)
+
+    lateinit var contentFile2: FileSpec
+    lateinit var sourceFile2: FileSpec
+
+    val secondContentRoot = tempDirectory.newVirtualDirectory("secondContentRoot")
+    buildDirectoryContent(secondContentRoot) {
+      contentFile2 = file("ContentFile2.java", "class ContentFile2 {}")
+      sourceFile2 = file("SourceFile2.java", "class SourceFile2 {}")
+    }
+    ModuleRootModificationUtil.addContentRoot(module, secondContentRoot.path)
+
+    assertFilesInIndexableFilesFilter(contentFile, sourceFile, contentFile2, sourceFile2)
+  }
+
+  private fun assertFilesInIndexableFilesFilter(vararg fileSpecs: FileSpec) {
+    val projectIndexableFiles = (FileBasedIndex.getInstance() as FileBasedIndexImpl).projectIndexableFiles(project)
+    assertNotNull(projectIndexableFiles)
+    for (fileSpec in fileSpecs) {
+      assert(projectIndexableFiles.containsFileId((fileSpec.file as VirtualFileWithId).id)) {
+        "File ${fileSpec.file} is not in filter"
+      }
+    }
   }
 }

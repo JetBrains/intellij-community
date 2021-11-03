@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
   </component>
 </module>

@@ -1,4 +1,3 @@
-markdown.blockprocessors.BlockProcessor.detab
 markdown.extensions.abbr.ABBR_REF_RE
 markdown.extensions.attr_list.AttrListTreeprocessor.run
 markdown.extensions.codehilite.CodeHilite.__init__

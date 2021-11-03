@@ -32,12 +32,12 @@ public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS = "idea.maven.embedder.ext.cli.args";
   String MAVEN_EXT_CLASS_PATH = "maven.ext.class.path";
 
-  void customize(@Nullable MavenWorkspaceMap workspaceMap,
-                 boolean failOnUnresolvedDependency,
-                 @NotNull MavenServerConsole console,
-                 @NotNull MavenServerProgressIndicator indicator,
-                 boolean alwaysUpdateSnapshots,
-                 @Nullable Properties userProperties, MavenToken token) throws RemoteException;
+
+  @Nullable
+  MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
+                                                                    boolean failOnUnresolvedDependency,
+                                                                    boolean alwaysUpdateSnapshots,
+                                                                    @Nullable Properties userProperties, MavenToken token) throws RemoteException;
 
   void customizeComponents(MavenToken token) throws RemoteException;
 

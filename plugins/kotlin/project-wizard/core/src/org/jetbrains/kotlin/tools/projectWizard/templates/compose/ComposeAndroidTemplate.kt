@@ -36,11 +36,11 @@ class ComposeAndroidTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
 
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
-        module.configurator.moduleType == ModuleType.android && projectKind == ProjectKind.COMPOSE
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.android
+                && projectKind == ProjectKind.COMPOSE
+                && module.kind == ModuleKind.singlePlatformAndroid
 
-    override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singlePlatformAndroid
 
     override fun Writer.getIrsToAddToBuildFile(
         module: ModuleIR
@@ -127,11 +127,10 @@ class ComposeCommonAndroidTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
 
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
-        module.configurator.moduleType == ModuleType.common && projectKind == ProjectKind.COMPOSE
-
-    override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singlePlatformAndroid
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.common
+                && projectKind == ProjectKind.COMPOSE
+                && module.kind == ModuleKind.singlePlatformAndroid
 
     override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
         val androidIR = irs.firstNotNullOfOrNull { ir-> ir.takeIf { ir is AndroidConfigIR } }

@@ -17,7 +17,6 @@ import com.intellij.util.text.nullize
 import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
@@ -87,7 +86,7 @@ internal class PackageSearchRestService : RestService() {
             ProjectUtil.focusProjectWindow(project, true)
 
             PackageSearchToolWindowFactory.activateToolWindow(project) {
-                project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(query ?: pkg.replace(':', ' '))
+//                project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(query ?: pkg.replace(':', ' '))
 //                rootModel.setSelectedPackage(pkg) // TODO preselect proper package
 
                 notify(project, pkg)

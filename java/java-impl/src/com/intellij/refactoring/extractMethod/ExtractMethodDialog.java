@@ -286,7 +286,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       returnTypePanel.add(label, BorderLayout.NORTH);
       returnTypePanel.add(component, BorderLayout.SOUTH);
       DialogUtil.registerMnemonic(label, component);
-      ((JComboBox)component).addActionListener(e -> {
+      ((JComboBox<?>)component).addActionListener(e -> {
         final PsiType selectedType = mySelector.getSelectedType();
         if (myGenerateAnnotations != null) {
           final boolean enabled = PsiUtil.resolveClassInType(selectedType) != null;
@@ -310,7 +310,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (selectedType != null) {
       final String presentableText = selectedType.getPresentableText();
       final int presentableTextWidth = component.getFontMetrics(component.getFont()).stringWidth(presentableText);
-      ((ComboBox)component).setMinimumAndPreferredWidth(presentableTextWidth);
+      ((ComboBox<?>)component).setMinimumAndPreferredWidth(presentableTextWidth);
     }
   }
 

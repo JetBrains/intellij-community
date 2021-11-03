@@ -13,6 +13,7 @@ import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import static com.intellij.jsonpath.JsonPathConstants.STANDARD_NAMED_OPERATORS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_EQUALITY_OPERATOR_SET;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public final class JsonPathCompletionContributor extends CompletionContributor {
 
@@ -37,13 +39,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
              .inside(psiElement().withElementType(JsonPathTypes.QUOTED_PATHS_LIST)),
            new JsonKeysCompletionProvider(false));
 
-    extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-           new JsonKeysCompletionProvider(true));
+    ElementPattern<PsiElement> identifierPattern = or(
+      psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+      psiElement().withElementType(JsonPathTypes.IDENTIFIER)
+    );
 
-    extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-           new FunctionNamesCompletionProvider());
+    extend(CompletionType.BASIC, identifierPattern, new JsonKeysCompletionProvider(true));
+
+    extend(CompletionType.BASIC, identifierPattern, new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,
            psiElement().withParent(JsonPathBinaryConditionalOperator.class),
@@ -133,6 +136,8 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       Supplier<JsonFile> targetFileGetter = file.getUserData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
       if (targetFileGetter != null) {
         JsonFile targetFile = targetFileGetter.get();
+        if (targetFile == null) return; // it could be already removed
+
         targetFile.accept(new JsonRecursiveElementVisitor() {
           @Override
           public void visitProperty(@NotNull JsonProperty o) {
@@ -201,10 +206,13 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
             }
 
             @Override
-            public void visitQuotedSegment(@NotNull JsonPathQuotedSegment o) {
-              super.visitQuotedSegment(o);
+            public void visitExpressionSegment(@NotNull JsonPathExpressionSegment o) {
+              super.visitExpressionSegment(o);
 
-              for (JsonPathStringLiteral stringLiteral : o.getQuotedPathsList().getStringLiteralList()) {
+              JsonPathQuotedPathsList quotedPathsList = o.getQuotedPathsList();
+              if (quotedPathsList == null) return;
+
+              for (JsonPathStringLiteral stringLiteral : quotedPathsList.getStringLiteralList()) {
                 TextRange literalTextRange = stringLiteral.getTextRange().shiftRight(fileRange.getStartOffset());
 
                 StringBuilder decodeBuilder = new StringBuilder();

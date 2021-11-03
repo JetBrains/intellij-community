@@ -17,7 +17,7 @@ interface KotlinTestFrameworkProvider {
         val EP_NAME: ExtensionPointName<KotlinTestFrameworkProvider> =
             ExtensionPointName.create("org.jetbrains.kotlin.idea.testFrameworkProvider")
 
-        inline fun findSingleJavaTestClassInFile(file: KtFile, predicate: (PsiClass) -> Boolean): KtLightClass? {
+        private inline fun findSingleJavaTestClassInFile(file: KtFile, predicate: (PsiClass) -> Boolean): KtLightClass? {
             var found: KtLightClass? = null
 
             for (declaration in file.declarations) {
@@ -47,7 +47,7 @@ interface KotlinTestFrameworkProvider {
     fun isTestJavaMethod(testMethod: PsiMethod): Boolean
 
     fun getJavaTestEntity(element: PsiElement, checkMethod: Boolean): JavaTestEntity? {
-        val testFunction = if (checkMethod) element.getParentOfType<KtNamedFunction>(false) else null
+        val testFunction = if (checkMethod) element.getParentOfType<KtNamedFunction>(strict = false) else null
         val owner = PsiTreeUtil.getParentOfType(testFunction ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
 
         var testClass = (owner as? KtClass)?.toLightClass()

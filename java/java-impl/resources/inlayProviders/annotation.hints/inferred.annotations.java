@@ -1,0 +1,1 @@
+public length (@NotNull double x)

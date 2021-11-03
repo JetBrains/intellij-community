@@ -104,13 +104,11 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (element instanceof PsiErrorElement) {
-      if (myHighlightErrorElements) {
-        visitErrorElement((PsiErrorElement)element);
-      }
-    }
-    else if (myRunAnnotators) {
+    if (myRunAnnotators) {
       runAnnotators(element);
+    }
+    if (element instanceof PsiErrorElement && myHighlightErrorElements) {
+      visitErrorElement((PsiErrorElement)element);
     }
   }
 

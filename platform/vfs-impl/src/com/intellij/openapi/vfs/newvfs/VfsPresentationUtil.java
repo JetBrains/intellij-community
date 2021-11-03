@@ -29,6 +29,11 @@ public final class VfsPresentationUtil {
     return SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(project, file));
   }
 
+  @Nullable
+  public static @NlsContexts.TabTitle String getCustomPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
+    return SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getCustomEditorTabTitle(project, file));
+  }
+
   @NotNull
   public static String getUniquePresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
     return EditorTabPresentationUtil.getUniqueEditorTabTitle(project, file);

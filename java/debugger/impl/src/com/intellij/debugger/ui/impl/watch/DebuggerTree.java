@@ -344,7 +344,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
     }
 
     @Override
-    public void threadAction() {
+    public void threadAction(@NotNull SuspendContextImpl suspendContext) {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)myNode.getDescriptor());
       ThreadReferenceProxyImpl threadProxy = threadDescriptor.getThreadReference();
       if (!threadProxy.isCollected() && getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(threadProxy)) {

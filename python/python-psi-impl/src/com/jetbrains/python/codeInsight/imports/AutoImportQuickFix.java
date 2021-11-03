@@ -15,7 +15,6 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,17 +83,6 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     myImports.add(new ImportCandidateHolder(importable, file, null, path));
   }
 
-  /**
-   * @deprecated Use {@link #addImport(PsiNamedElement, PsiFileSystemItem, QualifiedName)} accepting a named element.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
-    if (importable instanceof PsiNamedElement) {
-      addImport((PsiNamedElement)importable, file, path);
-    }
-  }
-
   public void addImport(@NotNull PsiNamedElement importable,
                         @NotNull PsiFileSystemItem file,
                         @Nullable QualifiedName path,
@@ -108,20 +96,6 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
                         @Nullable QualifiedName path,
                         @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
-  }
-
-  /**
-   * @deprecated Use {@link #addImport(PsiNamedElement, PsiFileSystemItem, QualifiedName, String)} accepting a named element.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public void addImport(@NotNull PsiElement importable,
-                        @NotNull PsiFileSystemItem file,
-                        @Nullable QualifiedName path,
-                        @Nullable String asName) {
-    if (importable instanceof PsiNamedElement) {
-      addImport((PsiNamedElement)importable, file, path, asName);
-    }
   }
 
   @Override

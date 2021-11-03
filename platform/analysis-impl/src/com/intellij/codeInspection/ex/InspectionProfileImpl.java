@@ -889,7 +889,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                     @NotNull InspectionProfileImpl profile,
                                     @NotNull String shortName,
                                     @NotNull Project project) {
-    profile.setToolEnabled(shortName, newState, project, false);
+    setToolEnabled(newState, profile, shortName, false, project);
+  }
+
+  public static void setToolEnabled(boolean newState,
+                                    @NotNull InspectionProfileImpl profile,
+                                    @NotNull String shortName,
+                                    boolean fireEvents,
+                                    @NotNull Project project) {
+    profile.setToolEnabled(shortName, newState, project, fireEvents);
     for (ScopeToolState scopeToolState : profile.getTools(shortName, project).getTools()) {
       scopeToolState.setEnabled(newState);
     }

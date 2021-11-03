@@ -10,7 +10,7 @@ internal object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "5.4"
+    const val version = "5.5"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 
@@ -27,7 +27,7 @@ internal object GraziePlugin {
     get() = descriptor.isBundled
 
   val classLoader: ClassLoader
-    get() = descriptor.pluginClassLoader
+    get() = descriptor.classLoader
 
   val libFolder: Path
     get() = descriptor.pluginPath.resolve("lib")

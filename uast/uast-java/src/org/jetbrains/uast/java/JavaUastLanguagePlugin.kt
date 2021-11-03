@@ -4,6 +4,8 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
+import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef
 import com.intellij.psi.impl.source.tree.JavaDocElementType
@@ -108,8 +110,9 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
     is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
-                                                        null,
-                                                        requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
+        null,
+        requiredTypes.nonEmptyOr(DEFAULT_EXPRESSION_TYPES_LIST)) as Sequence<T>
+    is PsiRecordComponent -> convertRecordConstructorParameterAlternatives(element, null, requiredTypes) as Sequence<T>
     else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
   }
 
@@ -130,12 +133,15 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
         is PsiClass -> el<UClass> {
           JavaUClass.create(element, givenParent)
         }
+        is PsiRecordHeader -> el<UMethod> { JavaUMethod.create(element, givenParent) }
         is PsiMethod -> el<UMethod> {
           JavaUMethod.create(element, this@JavaUastLanguagePlugin, givenParent)
         }
         is PsiClassInitializer -> el<UClassInitializer>(build(::JavaUClassInitializer))
         is PsiEnumConstant -> el<UEnumConstant>(build(::JavaUEnumConstant))
         is PsiLocalVariable -> el<ULocalVariable>(build(::JavaULocalVariable))
+        is PsiRecordComponent, is LightRecordConstructorParameter, is LightRecordField ->
+          convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
         is PsiParameter -> el<UParameter>(build(::JavaUParameter))
         is PsiField -> el<UField>(build(::JavaUField))
         is PsiVariable -> el<UVariable>(build(::JavaUVariable))
@@ -182,6 +188,7 @@ internal object JavaConverter {
     is PsiPackageStatement -> unwrapElements(element.parent)
     is PsiImportList -> unwrapElements(element.parent)
     is PsiReferenceList -> unwrapElements(element.parent)
+    is PsiReferenceParameterList -> unwrapElements(element.parent)
     is PsiBlockStatement -> unwrapElements(element.parent)
     is PsiDocTag -> unwrapElements(element.parent)
     is PsiDocTagValue -> unwrapElements(element.parent)

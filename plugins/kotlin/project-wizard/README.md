@@ -55,10 +55,15 @@ Kotlin plugin descriptor (`community/plugins/kotlin/plugin/resources/META-INF/co
 <!-- Project Wizard -->
 <extensions defaultExtensionNs="com.intellij">
   <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>
-  <newProjectWizard implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
+  <newProjectWizard.language implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
   <moduleBuilder builderClass="org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder"/>
 </extensions>
 ```
+
+Actually there are two wizard-related hierarchies reflecting the fact that IDEA is about to introduce its redesigned wizard. <br>
+`KotlinNewProjectWizard` is about that same `new.project.wizard`.<br>
+`NewProjectWizardModuleBuilder` represents Kotlin dedicated wizard supporting project- and module/code-templates.
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Project Templates

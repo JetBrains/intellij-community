@@ -74,7 +74,7 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
       element = (PsiElement)value;
     }
     else if (value instanceof SmartPsiElementPointer) {
-      element = ((SmartPsiElementPointer)value).getElement();
+      element = ((SmartPsiElementPointer<?>)value).getElement();
     }
 
     String informationString = null;

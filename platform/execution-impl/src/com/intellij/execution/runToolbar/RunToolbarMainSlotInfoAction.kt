@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
@@ -24,6 +25,7 @@ import javax.swing.UIManager
 
 class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration {
   companion object {
+    private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
   }
 
@@ -56,11 +58,12 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
       } ?: false
     } ?: false
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
         e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+    traceLog(LOG, e)
   }
 
 

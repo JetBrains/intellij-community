@@ -36,18 +36,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -298,25 +293,31 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   protected static void reportPackageInstallationFailure(@NotNull final String frameworkName,
                                                          @Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
 
-    final ErrorDescription errorDescription = getErrorDescription(sdkAndException);
+    final PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription =
+      getErrorDescription(sdkAndException, frameworkName);
     final Application app = ApplicationManager.getApplication();
-    app.invokeLater(() -> PackagesNotificationPanel.showError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
-                                                              errorDescription));
+    app.invokeLater(() -> {
+      PyPackagesNotificationPanel.showPackageInstallationError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
+                                  errorDescription);
+    });
   }
 
   @NotNull
-  private static ErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
-    ErrorDescription errorDescription = null;
+  private static PyPackageManagementService.PyPackageInstallationErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException,
+                                                                                                      @NotNull String packageName) {
+    PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription = null;
     if (sdkAndException != null) {
       final ExecutionException exception = sdkAndException.second;
-      errorDescription = PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first);
+      errorDescription =
+        PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first, packageName);
       if (errorDescription == null) {
-        errorDescription = ErrorDescription.fromMessage(exception.getMessage());
+        errorDescription = PyPackageManagementService.PyPackageInstallationErrorDescription.createFromMessage(exception.getMessage());
       }
     }
 
     if (errorDescription == null) {
-      errorDescription = ErrorDescription.fromMessage(PyBundle.message("python.new.project.error.solution.another.sdk"));
+      errorDescription = PyPackageManagementService.PyPackageInstallationErrorDescription.createFromMessage(
+        PyBundle.message("python.new.project.error.solution.another.sdk"));
     }
     return errorDescription;
   }
@@ -336,12 +337,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
    */
-  protected static void installFrameworkIfNeeded(@NotNull final Project project,
-                                                 @NotNull final String frameworkName,
-                                                 @NotNull final String requirement,
-                                                 @Nullable final Sdk sdk,
-                                                 final boolean forceInstallFramework,
-                                                 @Nullable final Runnable callback) {
+  public static void installFrameworkIfNeeded(@NotNull final Project project,
+                                              @NotNull final String frameworkName,
+                                              @NotNull final String requirement,
+                                              @Nullable final Sdk sdk,
+                                              final boolean forceInstallFramework,
+                                              @Nullable final Runnable callback) {
 
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);

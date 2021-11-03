@@ -1265,6 +1265,36 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/extensionMethodInObject/CorrectTypeImplicitReceiver.kt");
             }
 
+            @TestMetadata("InheritedExtensionConcreteType.kt")
+            public void testInheritedExtensionConcreteType() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/InheritedExtensionConcreteType.kt");
+            }
+
+            @TestMetadata("InheritedExtensionDeepInheritance.kt")
+            public void testInheritedExtensionDeepInheritance() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/InheritedExtensionDeepInheritance.kt");
+            }
+
+            @TestMetadata("InheritedExtensionGenericType.kt")
+            public void testInheritedExtensionGenericType() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/InheritedExtensionGenericType.kt");
+            }
+
+            @TestMetadata("InheritedExtensionGenericTypeConstraint.kt")
+            public void testInheritedExtensionGenericTypeConstraint() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/InheritedExtensionGenericTypeConstraint.kt");
+            }
+
+            @TestMetadata("KTIJ17933.kt")
+            public void testKTIJ17933() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/KTIJ17933.kt");
+            }
+
+            @TestMetadata("KTIJ19149.kt")
+            public void testKTIJ19149() throws Exception {
+                runTest("testData/basic/common/extensionMethodInObject/KTIJ19149.kt");
+            }
+
             @TestMetadata("MultipleImplicitReceivers.kt")
             public void testMultipleImplicitReceivers() throws Exception {
                 runTest("testData/basic/common/extensionMethodInObject/MultipleImplicitReceivers.kt");

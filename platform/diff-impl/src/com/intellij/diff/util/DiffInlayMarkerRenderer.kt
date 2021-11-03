@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx.Position
 import java.awt.Graphics
@@ -24,20 +25,46 @@ class DiffInlayMarkerRenderer(
       val gutter = editor.gutterComponentEx
 
       val inlayHeight = inlay.heightInPixels
-      val inlayPosition = editor.visualPositionToXY(inlay.visualPosition)
-
-      val y = if (isLastLine) {
-        inlayPosition.y + editor.lineHeight
-      }
-      else {
-        inlayPosition.y - inlayHeight
-      }
 
       val preservedBackground = g.background
       g.color = getAlignedChangeColor(type, editor)
-      g.fillRect(0, y, gutter.width, inlayHeight)
+      g.fillRect(0, getVisualLineAreaStartY(inlay), gutter.width, inlayHeight)
       g.color = preservedBackground
     }
+  }
+
+  private fun getVisualLineAreaStartY(inlay: Inlay<*>): Int {
+    val editor = inlay.editor
+    val visualLineY = editor.visualLineToY(inlay.visualPosition.line)
+    val inlayHeight = inlay.heightInPixels
+    val (beforeHeight, afterHeight) = getBeforeAndAfterInlaysHeight(inlay)
+
+    return when {
+      isLastLine -> visualLineY - (afterHeight - beforeHeight) + editor.lineHeight
+      afterHeight == beforeHeight -> visualLineY - afterHeight - inlayHeight
+      else -> visualLineY - (afterHeight + inlayHeight)
+    }
+  }
+
+  private fun getBeforeAndAfterInlaysHeight(inlayThreshold: Inlay<*>): Pair<Int, Int> {
+    val before = mutableListOf<Inlay<*>>()
+    val after = mutableListOf<Inlay<*>>()
+    var isBefore = true
+
+    for (inlay in inlayThreshold.editor.inlayModel.getBlockElementsForVisualLine(inlayThreshold.visualPosition.line, !isLastLine)) {
+      if (inlay == inlayThreshold) {
+        isBefore = false
+        continue
+      }
+      if (isBefore) {
+        before += inlay
+      }
+      else {
+        after += inlay
+      }
+    }
+
+    return EditorUtil.getTotalInlaysHeight(before) to EditorUtil.getTotalInlaysHeight(after)
   }
 
   override fun getPosition(): Position = Position.CUSTOM

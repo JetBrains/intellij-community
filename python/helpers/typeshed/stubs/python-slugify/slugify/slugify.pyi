@@ -15,5 +15,5 @@ def slugify(
     stopwords: Iterable[str] = ...,
     regex_pattern: str | None = ...,
     lowercase: bool = ...,
-    replacements: Iterable[str] = ...,
+    replacements: Iterable[Iterable[str]] = ...,
 ) -> str: ...

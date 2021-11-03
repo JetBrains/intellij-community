@@ -40,6 +40,10 @@ public final class SpeedSearchUtil {
   private SpeedSearchUtil() {
   }
 
+  public static @NotNull String getDefaultHardSeparators() {
+    return "\u001F";
+  }
+
   public static void applySpeedSearchHighlighting(@NotNull JComponent speedSearchEnabledComponent,
                                                   @NotNull SimpleColoredComponent coloredComponent,
                                                   boolean mainTextOnly,

@@ -6,10 +6,12 @@ package com.intellij.openapi.application
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.rw.ReadAction
 import com.intellij.openapi.progress.Progress
+import com.intellij.openapi.progress.withJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -98,7 +100,7 @@ suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, acti
  */
 suspend fun <T> smartAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
   return suspendCancellableCoroutine { continuation ->
-    DumbService.getInstance(project).runWhenSmart(SmartRunnable(action, continuation))
+    DumbService.getInstance(project).runWhenSmart(SmartRunnable({ ctx -> withJob(ctx.job) { action(ctx) } }, continuation))
   }
 }
 
@@ -124,6 +126,12 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
   }
 }
 
+fun ModalityState.asContextElement(): CoroutineContext.Element = ModalityStateElement(this)
+
+private class ModalityStateElement(val modalityState: ModalityState) : AbstractCoroutineContextElement(ModalityStateElementKey)
+
+private object ModalityStateElementKey : CoroutineContext.Key<ModalityStateElement>
+
 /**
  * Please don't use unless you know what you are doing.
  * The code in this context can only perform pure UI operations,
@@ -138,6 +146,7 @@ val Dispatchers.EDT: CoroutineDispatcher
 private object EdtCoroutineDispatcher : CoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
+    val state = context[ModalityStateElementKey]?.modalityState ?: ModalityState.any()
+    ApplicationManager.getApplication().invokeLater(block, state)
   }
 }

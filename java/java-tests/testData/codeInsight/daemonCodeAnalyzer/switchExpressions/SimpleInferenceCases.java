@@ -110,6 +110,10 @@ class MyTest {
       case 0 -> 42;
       default -> <error descr="Expression type should not be 'void'">System.out.println(42)</error>;
     };
+    
+    <error descr="Cannot infer type: variable initializer is 'null'">var</error> rv1 = switch (0) {
+      default -> null;
+    };
   }
 
   static void test(boolean b, int i) {

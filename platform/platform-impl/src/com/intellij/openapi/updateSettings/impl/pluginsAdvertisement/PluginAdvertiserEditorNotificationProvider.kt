@@ -35,8 +35,10 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
     if (suggestionData == null) {
       ProcessIOExecutorService.INSTANCE.execute {
-        MarketplaceRequests.Instance.loadJetBrainsPluginsIds()
-        MarketplaceRequests.Instance.loadExtensionsForIdes()
+        val marketplaceRequests = MarketplaceRequests.getInstance()
+        marketplaceRequests.loadJetBrainsPluginsIds()
+        marketplaceRequests.loadExtensionsForIdes()
+
         var shouldUpdateNotifications = extensionsStateService.updateCache(file.name)
         val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file.name)
         if (fullExtension != null) {
@@ -162,13 +164,11 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
     fun getSuggestionData(project: Project, activeProductCode: String, fileName: String, fileType: FileType): AdvertiserSuggestion? {
       val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
       val pluginAdvertiserExtensionsState = extensionsStateService.createExtensionDataProvider(project)
-      val extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(fileName, fileType)
-      val jbPluginsIds = MarketplaceRequests.Instance.jetBrainsPluginsIds
-      val ideExtensions = MarketplaceRequests.Instance.extensionsForIdes
+      val extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(fileName, fileType) ?: return null
 
-      if (extensionsData == null || jbPluginsIds == null || ideExtensions == null) {
-        return null
-      }
+      val marketplaceRequests = MarketplaceRequests.getInstance()
+      val jbPluginsIds = marketplaceRequests.jetBrainsPluginsIds ?: return null
+      val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
 
       val extensionOrFileName = extensionsData.extensionOrFileName
       val dataSet = extensionsData.plugins

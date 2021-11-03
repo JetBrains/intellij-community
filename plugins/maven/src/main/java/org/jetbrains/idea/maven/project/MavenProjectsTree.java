@@ -231,7 +231,7 @@ public final class MavenProjectsTree {
   public List<VirtualFile> getExistingManagedFiles() {
     List<VirtualFile> result = new ArrayList<>();
     for (String path : getManagedFilesPaths()) {
-      VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
       if (f != null && f.exists()) result.add(f);
     }
     return result;

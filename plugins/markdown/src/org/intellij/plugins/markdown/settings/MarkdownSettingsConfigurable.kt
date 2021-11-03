@@ -26,8 +26,8 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
@@ -80,6 +80,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       }
       fullRow {
         checkBox(MarkdownBundle.message("markdown.settings.hide.errors"), settings::hideErrorsInCodeBlocks)
+      }
+      fullRow {
+        checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"), settings::isRunnerEnabled)
       }.largeGapAfter()
       fullRow {
         label(MarkdownBundle.message("markdown.settings.preview.extensions.name"))
@@ -182,7 +185,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   private fun RowBuilder.extensionsListRow(): Row {
     return fullRow {
       row {
-        val extensions = MarkdownExtension.all.filterIsInstance<MarkdownConfigurableExtension>()
+        val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
         for (extension in extensions) {
           createExtensionEntry(extension)
         }
@@ -192,12 +195,13 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
 
   private fun RowBuilder.createExtensionEntry(extension: MarkdownConfigurableExtension): Row {
     return fullRow {
+      val extensionsSettings = MarkdownExtensionsSettings.getInstance()
       val extensionCheckBox = checkBox(
         text = extension.displayName,
-        getter = { settings.extensionsEnabledState[extension.id] ?: false },
-        setter = { settings.extensionsEnabledState[extension.id] = it}
+        getter = { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
+        setter = { extensionsSettings.extensionsEnabledState[extension.id] = it}
       )
-      extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == true)
+      extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
       component(ContextHelpLabel.create(extension.description))
       if ((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == false) {
         component(ActionLink(MarkdownBundle.message("markdown.settings.extension.install.label"))).apply {

@@ -34,7 +34,7 @@ private fun isCodeAuthorEnabledForApplication(): Boolean =
 private fun isCodeAuthorEnabledInSettings(): Boolean =
   InlayHintsProviderExtension.findProviders()
     .filter { it.provider.key == KEY }
-    .any { InlayHintsSettings.instance().hintsShouldBeShown(KEY, it.language) }
+    .any { InlayHintsSettings.instance().hintsShouldBeShown(it.provider.key, it.language) }
 
 private fun isCodeAuthorEnabledInSettings(language: Language): Boolean {
   val hasProviderForLanguage = InlayHintsProviderExtension.allForLanguage(language).any { it.key == KEY }
@@ -59,6 +59,9 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
 }
 
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
+  override val group: InlayGroup
+    get() = InlayGroup.CODE_AUTHOR_GROUP
+
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
 
@@ -66,10 +69,27 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
     val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
 
-    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted)
+    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+  }
+
+  override fun getPlaceholdersCollectorFor(
+    file: PsiFile,
+    editor: Editor,
+    settings: NoSettings,
+    sink: InlayHintsSink
+  ): InlayHintsCollector? {
+    if (!isCodeAuthorEnabledForApplication()) return null
+    if (!AnnotationsPreloader.isEnabled()) return null
+
+    val virtualFile = file.virtualFile ?: return null
+    if (!AnnotationsPreloader.canPreload(file.project, virtualFile)) return null
+
+    return VcsCodeAuthorPlaceholdersCollector(editor, this::isAccepted)
   }
 
   protected abstract fun isAccepted(element: PsiElement): Boolean
+
+  protected open fun getClickHandler(element: PsiElement): () -> Unit = {}
 
   override fun createSettings(): NoSettings = NoSettings()
   override val isVisibleInSettings: Boolean get() = isCodeAuthorEnabledForApplication()

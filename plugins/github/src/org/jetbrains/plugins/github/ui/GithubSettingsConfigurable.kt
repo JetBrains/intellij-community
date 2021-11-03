@@ -35,12 +35,14 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, GithubIcons.DefaultAvatar).also {
-          DataManager.registerDataProvider(it.component) { key ->
-            if (GHAccountsHost.KEY.`is`(key)) accountsModel
-            else null
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true,
+                      GithubIcons.DefaultAvatar)
+          .also {
+            DataManager.registerDataProvider(it.component) { key ->
+              if (GHAccountsHost.KEY.`is`(key)) accountsModel
+              else null
+            }
           }
-        }
       }
       row {
         checkBox(GithubBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)

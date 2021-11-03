@@ -49,14 +49,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
     }
 
-    fun testLibraryNonDefault_libExistInDefault() {
-        val module = module
-
-        // Move fake runtime jar to default library path to pretend library is already configured
-        FileUtil.copy(
-            File(project.basePath + "/lib/" + KotlinArtifactNames.KOTLIN_STDLIB),
-            File(jvmConfigurator.getDefaultPathToJarFile(project) + "/" + KotlinArtifactNames.KOTLIN_STDLIB)
-        )
+    fun testSimple() {
         assertNotConfigured(module, jvmConfigurator)
         jvmConfigurator.configure(myProject, emptyList())
         assertProperlyConfigured(module, jvmConfigurator)
@@ -94,15 +87,6 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         }
         application.saveAll()
         checkKotlincPresence(false)
-    }
-
-    fun testProject106InconsistentVersionInConfig() {
-        val settings = KotlinFacetSettingsProvider.getInstance(myProject)?.getInitializedSettings(module)
-            ?: error("Facet settings are not found")
-
-        Assert.assertEquals(false, settings.useProjectSettings)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.languageLevel!!)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.apiLevel!!)
     }
 
     fun testProject107InconsistentVersionInConfig() {

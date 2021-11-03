@@ -2,6 +2,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -31,6 +36,32 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * registered in the batch mode (e.g. {@link ProblemsHolder#isOnTheFly()} is checked at the fix creation site).
    */
   default boolean availableInBatchMode() {
+    return true;
+  }
+
+  /**
+   * Try to apply this fix for non-physical file to display the preview. This method is called outside write action,
+   * even if {@link #startInWriteAction()} returns true. It's not allowed to modify
+   * any physical PSI or spawn any actions in other threads within this method. This method may behave differently than
+   * {@link #applyFix(Project, CommonProblemDescriptor)} method. In particular, changes in other files or user interactions
+   * like renaming the created variable should not be performed by this method.
+   * <p>
+   * Default implementation calls {@link #getFileModifierForPreview(PsiFile)} and {@link #applyFix(Project, CommonProblemDescriptor)}
+   * on the result. This might fail if the original quick-fix is not prepared for preview. In this case,
+   * overriding {@code getFileModifierForPreview} or {@code applyFixForPreview} is desired.
+   *
+   * @param project current project
+   * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
+   * @return true if the fix was successfully applied to the copy; false otherwise
+   */
+  default boolean applyFixForPreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    if (!startInWriteAction()) return false;
+    PsiElement element = previewDescriptor.getStartElement();
+    if (element == null) return false;
+    PsiFile file = element.getContainingFile();
+    LocalQuickFix fix = ObjectUtils.tryCast(getFileModifierForPreview(file), LocalQuickFix.class);
+    if (fix == null || fix.getElementToMakeWritable(file) != file) return false;
+    fix.applyFix(project, previewDescriptor);
     return true;
   }
 }

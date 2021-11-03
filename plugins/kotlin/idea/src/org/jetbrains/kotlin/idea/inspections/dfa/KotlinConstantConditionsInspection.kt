@@ -322,11 +322,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val templateRight = template.right
         if (templateLeft == null || templateRight == null) return false
         if (templateRight === expression) {
-            return areEquivalent(left, templateLeft) && areEquivalent(right.negate(), templateRight)
+            return areEquivalent(left, templateLeft) && areEquivalent(right.negate(false), templateRight)
         }
         if (!areEquivalent(right, templateRight)) return false
         if (templateLeft === expression) {
-            return areEquivalent(left.negate(), templateLeft)
+            return areEquivalent(left.negate(false), templateLeft)
         }
         if (templateLeft !is KtBinaryExpression || templateLeft.operationToken !== KtTokens.ANDAND) return false
         return isOppositeCondition(left, templateLeft, expression)
@@ -457,7 +457,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return false
     }
 
-    private fun isCompilationWarning(anchor: KtExpression): Boolean
+    private fun isCompilationWarning(anchor: KtElement): Boolean
     {
         val context = anchor.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(anchor).any
@@ -483,9 +483,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
-        val context = condition.analyze(BodyResolveMode.FULL)
-        if (context.diagnostics.forElement(condition).any { it.factory == Errors.USELESS_IS_CHECK }) return true
-        return false
+        return isCompilationWarning(condition)
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {

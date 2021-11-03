@@ -100,8 +100,6 @@ fun WorkspaceEntityStorageBuilder.addOoChildWithNullableParentEntity(OoParentEnt
 //region ------------------- Parent Entity with PersistentId --------------------------------
 
 data class OoParentEntityId(val name: String) : PersistentEntityId<OoParentWithPidEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 }
@@ -234,8 +232,6 @@ fun WorkspaceEntityStorageBuilder.addOoParentWithoutPidEntity(parentProperty: St
 // ---------------- Child entity with PersistentId for Nullable ref----------------------
 
 data class OoChildEntityId(val name: String) : PersistentEntityId<OoChildWithPidEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
   override val presentableName: String
     get() = name
 }

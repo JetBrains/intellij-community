@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle
 
+import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.openapi.application.PathManager
@@ -34,6 +35,8 @@ private val gradleLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath()
 private val GRADLE_OUTPUT_LOG = Logger.getInstance("GradleOutput")
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
+private const val DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY = "android.gradle.project.startup.activity.disabled"
+private const val DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES = "android.sdk.local.properties.update.disabled"
 
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
@@ -42,8 +45,10 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
+    Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
+    Registry.get(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES).setValue(true)
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    progressManager.addNotificationListener(LoggingNotificationListener())
+    progressManager.addNotificationListener(LoggingNotificationListener(context.logger))
     Unit
   }
 
@@ -167,11 +172,11 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
                                                                     this.type == ExternalSystemTaskType.RESOLVE_PROJECT
   }
 
-  class LoggingNotificationListener : ExternalSystemTaskNotificationListenerAdapter() {
+  class LoggingNotificationListener(val logger: CommandLineInspectionProgressReporter) : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
-      GRADLE_OUTPUT_LOG.debug(gradleText)
+      logger.reportMessage(1, gradleText)
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {

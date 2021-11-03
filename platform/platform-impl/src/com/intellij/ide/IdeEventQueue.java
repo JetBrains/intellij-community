@@ -430,29 +430,35 @@ public final class IdeEventQueue extends EventQueue {
       Runnable runnable = extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
-        ProgressManager progressManager = null;
+        ProgressManager progressManager;
         Application app = ApplicationManager.getApplication();
         if (app != null && !app.isDisposed()) {
+          ProgressManager p = null;
           try {
-            progressManager = ProgressManager.getInstance();
+            p = ProgressManager.getInstance();
           }
           catch (RuntimeException ex) {
             LOG.warn("app services aren't yet initialized", ex);
           }
+          progressManager = p;
+        }
+        else {
+          progressManager = null;
         }
 
-        try (AccessToken ignored = startActivity(finalE1)) {
-          if (progressManager != null) {
-            progressManager.computePrioritized(() -> {
+        try {
+          performActivity(finalE1, () -> {
+            if (progressManager != null) {
+              progressManager.computePrioritized(() -> {
+                _dispatchEvent(myCurrentEvent);
+                return null;
+              });
+            }
+            else {
               _dispatchEvent(myCurrentEvent);
-              return null;
-            });
-          }
-          else {
-            _dispatchEvent(myCurrentEvent);
-          }
-        }
-        catch (Throwable t) {
+            }
+          });
+        } catch (Throwable t) {
           processException(t);
         }
         finally {
@@ -603,16 +609,20 @@ public final class IdeEventQueue extends EventQueue {
     return event;
   }
 
-  static @Nullable AccessToken startActivity(@NotNull AWTEvent e) {
-    if (ourTransactionGuard == null && appIsLoaded()) {
+  static void performActivity(@NotNull AWTEvent e, @NotNull Runnable runnable) {
+    TransactionGuardImpl transactionGuard = ourTransactionGuard;
+    if (transactionGuard == null && appIsLoaded()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+        ourTransactionGuard = transactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
       }
     }
-    return ourTransactionGuard == null
-           ? null
-           : ourTransactionGuard.startActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent);
+    if (transactionGuard == null) {
+      runnable.run();
+    }
+    else {
+      transactionGuard.performActivity(isInputEvent(e) || e instanceof ItemEvent || e instanceof FocusEvent, runnable);
+    }
   }
 
   private void processException(@NotNull Throwable t) {
@@ -1322,12 +1332,14 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.Companion.getPropagateAcrossThreads()) {
+    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId()) {
       // only do wrapping trickery with non-local events to preserve correct behaviour - local events will get dispatched under local ID anyways
       ClientId clientId = ClientId.getCurrent();
-      super.postEvent(new InvocationEvent(event.getSource(), () -> ClientId.withClientId(clientId, () -> {
-        dispatchEvent(event);
-      })));
+      super.postEvent(new InvocationEvent(event.getSource(), () -> {
+        try (AccessToken ignored = ClientId.withClientId(clientId)) {
+          dispatchEvent(event);
+        }
+      }));
       return true;
     }
 

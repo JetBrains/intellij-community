@@ -4,9 +4,10 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 internal fun createEntityId(arrayId: Int, clazz: Int): EntityId {
-  return EntityId(arrayId, clazz)
+  return createPackedEntityId(arrayId, clazz)
 }
 
+/*
 internal data class EntityId(val arrayId: Int, val clazz: Int) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
@@ -14,13 +15,13 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
 
   override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
 }
+*/
 
 // Implementation of EntityId that is packed to a single long
-/*
 
 private fun createPackedEntityId(arrayId: Int, clazz: Int) = arrayId.toLong() shl 32 or (clazz.toLong() and 0xffffffffL)
 
-typealias EntityId = Long
+internal typealias EntityId = Long
 
 val EntityId.arrayId: Int
   get() = (this shr 32).toInt()
@@ -34,4 +35,3 @@ fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz): EntityI
   return createEntityId(arrayId, clazz)
 }
 
-*/

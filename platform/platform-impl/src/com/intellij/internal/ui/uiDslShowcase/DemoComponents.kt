@@ -41,8 +41,8 @@ fun demoComponents(): DialogPanel {
       actionButton(action)
     }
 
-    row("gearButton:") {
-      gearButton(object : DumbAwareAction("Action one") {
+    row("actionsButton:") {
+      actionsButton(object : DumbAwareAction("Action one") {
         override fun actionPerformed(e: AnActionEvent) {
         }
       },
@@ -57,12 +57,12 @@ fun demoComponents(): DialogPanel {
       segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
     }
 
-    row {
-      label("label")
+    row("label:") {
+      label("Some label")
     }
 
-    row("labelHtml:") {
-      labelHtml("labelHtml can contain links, for example try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+    row("text:") {
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
     }
 
     row("link:") {
@@ -71,6 +71,10 @@ fun demoComponents(): DialogPanel {
 
     row("browserLink:") {
       browserLink("jetbrains.com", "https://www.jetbrains.com")
+    }
+
+    row("dropDownLink:") {
+      dropDownLink("Item 1", listOf("Item 1", "Item 2", "Item 3"))
     }
 
     row("icon:") {
@@ -91,6 +95,14 @@ fun demoComponents(): DialogPanel {
 
     row("intTextField(0..100):") {
       intTextField(0..100)
+    }
+
+    row("spinner(0..100):") {
+      spinner(0..100)
+    }
+
+    row("spinner(0.0..100.0, 0.01):") {
+      spinner(0.0..100.0, 0.01)
     }
 
     row {

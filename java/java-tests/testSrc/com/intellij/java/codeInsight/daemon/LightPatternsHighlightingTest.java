@@ -18,7 +18,7 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_17;
   }
 
   public void testInstanceOfBasics() {
@@ -47,6 +47,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     doTest();
   }
   public void testInstanceOfSubtype() {
+    doTest();
+  }
+  public void testInstanceOfPatternMatching() {
     doTest();
   }
 

@@ -3,10 +3,13 @@ package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -35,20 +38,22 @@ public final class HtmlSyntaxInfoUtil {
     return appendStyledSpan(new StringBuilder(), value, properties).toString();
   }
 
-  public static @NotNull String getStyledSpan(@NotNull TextAttributesKey attributesKey, @Nullable String value) {
-    return appendStyledSpan(new StringBuilder(), attributesKey, value).toString();
+  public static @NotNull String getStyledSpan(@NotNull TextAttributesKey attributesKey, @Nullable String value, float saturationFactor) {
+    return appendStyledSpan(new StringBuilder(), attributesKey, value, saturationFactor).toString();
   }
 
-  public static @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value) {
-    return appendStyledSpan(new StringBuilder(), attributes, value).toString();
+  public static @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value, float saturationFactor) {
+    return appendStyledSpan(new StringBuilder(), attributes, value, saturationFactor).toString();
   }
 
   public static @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     @NotNull Project project,
     @NotNull Language language,
-    @Nullable String codeSnippet
+    @Nullable String codeSnippet,
+    float saturationFactor
   ) {
-    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(new StringBuilder(), project, language, codeSnippet).toString();
+    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(new StringBuilder(), project, language, codeSnippet, saturationFactor)
+      .toString();
   }
 
   public static @NotNull StringBuilder appendStyledSpan(
@@ -65,21 +70,24 @@ public final class HtmlSyntaxInfoUtil {
   public static @NotNull StringBuilder appendStyledSpan(
     @NotNull StringBuilder buffer,
     @NotNull TextAttributesKey attributesKey,
-    @Nullable String value
+    @Nullable String value,
+    float saturationFactor
   ) {
     appendStyledSpan(
       buffer,
       Objects.requireNonNull(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey)),
-      value);
+      value,
+      saturationFactor);
     return buffer;
   }
 
   public static @NotNull StringBuilder appendStyledSpan(
     @NotNull StringBuilder buffer,
     @NotNull TextAttributes attributes,
-    @Nullable String value
+    @Nullable String value,
+    float saturationFactor
   ) {
-    createHtmlSpanBlockStyledAsTextAttributes(attributes)
+    createHtmlSpanBlockStyledAsTextAttributes(attributes, saturationFactor)
       .addRaw(StringUtil.notNullize(value)) //NON-NLS
       .appendTo(buffer);
     return buffer;
@@ -89,9 +97,10 @@ public final class HtmlSyntaxInfoUtil {
     @NotNull StringBuilder buffer,
     @NotNull Project project,
     @NotNull Language language,
-    @Nullable String codeSnippet
+    @Nullable String codeSnippet,
+    float saturationFactor
   ) {
-    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, true);
+    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, true, saturationFactor);
   }
 
   public static @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
@@ -99,14 +108,16 @@ public final class HtmlSyntaxInfoUtil {
     @NotNull Project project,
     @NotNull Language language,
     @Nullable String codeSnippet,
-    boolean doTrimIndent
+    boolean doTrimIndent,
+    float saturationFactor
   ) {
     codeSnippet = StringUtil.notNullize(codeSnippet);
     String trimmed = doTrimIndent ? StringsKt.trimIndent(codeSnippet) : codeSnippet;
     String zeroIndentCode = trimmed.replace("\t", "    ");
-    PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, codeSnippet);
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     if (!zeroIndentCode.isEmpty()) {
+      PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, codeSnippet);
+      EditorColorsScheme scheme =
+        new ColorsSchemeWithChangedSaturation(EditorColorsManager.getInstance().getGlobalScheme(), saturationFactor);
       buffer.append(getHtmlContent(fakePsiFile, zeroIndentCode, null, scheme, 0, zeroIndentCode.length()));
     }
     return buffer;
@@ -159,11 +170,19 @@ public final class HtmlSyntaxInfoUtil {
     return null;
   }
 
-  private static @NotNull HtmlChunk.Element createHtmlSpanBlockStyledAsTextAttributes(@NotNull TextAttributes attributes) {
+  private static @NotNull HtmlChunk.Element createHtmlSpanBlockStyledAsTextAttributes(
+    @NotNull TextAttributes attributes,
+    float saturationFactor
+  ) {
     StringBuilder style = new StringBuilder();
 
     Color foregroundColor = attributes.getForegroundColor();
     Color backgroundColor = attributes.getBackgroundColor();
+    Color effectTypeColor = attributes.getEffectColor();
+
+    if (foregroundColor != null) foregroundColor = tuneSaturationEspeciallyGrey(foregroundColor, 1, saturationFactor);
+    if (backgroundColor != null) backgroundColor = tuneSaturationEspeciallyGrey(backgroundColor, 1, saturationFactor);
+    if (effectTypeColor != null) effectTypeColor = tuneSaturationEspeciallyGrey(effectTypeColor, 1, saturationFactor);
 
     if (foregroundColor != null) appendProperty(style, "color", ColorUtil.toHtmlColor(foregroundColor));
     if (backgroundColor != null) appendProperty(style, "background-color", ColorUtil.toHtmlColor(backgroundColor));
@@ -211,21 +230,20 @@ public final class HtmlSyntaxInfoUtil {
       }
     }
 
-    Color effectColor = attributes.getEffectColor();
-    if (attributes.hasEffects() && effectType != null && effectColor != null) {
+    if (attributes.hasEffects() && effectType != null && effectTypeColor != null) {
       switch (effectType) {
         case LINE_UNDERSCORE:
         case WAVE_UNDERSCORE:
         case BOLD_LINE_UNDERSCORE:
         case BOLD_DOTTED_LINE:
         case STRIKEOUT:
-          appendProperty(style, "text-decoration-color", ColorUtil.toHtmlColor(effectColor));
+          appendProperty(style, "text-decoration-color", ColorUtil.toHtmlColor(effectTypeColor));
           break;
         case BOXED:
         case ROUNDED_BOX:
         case SEARCH_MATCH:
         case SLIGHTLY_WIDER_BOX:
-          appendProperty(style, "border-color", ColorUtil.toHtmlColor(effectColor));
+          appendProperty(style, "border-color", ColorUtil.toHtmlColor(effectTypeColor));
           break;
       }
     }
@@ -239,9 +257,73 @@ public final class HtmlSyntaxInfoUtil {
     builder.append(value);
     builder.append(";");
   }
+  
+  private static @NotNull Color tuneSaturationEspeciallyGrey(@NotNull Color color, int howMuch, float saturationFactor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return color;
+    }
+    return ColorUtil.tuneSaturationEspeciallyGrey(color, howMuch, saturationFactor);
+  }
 
 
-  private final static class SimpleHtmlSyntaxInfoReader extends HtmlSyntaxInfoReader {
+  private static final class ColorsSchemeWithChangedSaturation extends DelegateColorScheme {
+
+    private final float mySaturationFactor;
+
+    private ColorsSchemeWithChangedSaturation(@NotNull EditorColorsScheme delegate, float saturationFactor) {
+      super((EditorColorsScheme)delegate.clone());
+      mySaturationFactor = saturationFactor;
+    }
+
+    @Override
+    public @NotNull Color getDefaultBackground() {
+      return tuneColor(super.getDefaultBackground());
+    }
+
+    @Override
+    public @NotNull Color getDefaultForeground() {
+      return tuneColor(super.getDefaultForeground());
+    }
+
+    @Override
+    public @Nullable Color getColor(ColorKey key) {
+      Color color = super.getColor(key);
+      return color != null ? tuneColor(color) : null;
+    }
+
+    @Override
+    public void setColor(ColorKey key, @Nullable Color color) {
+      super.setColor(key, color != null ? tuneColor(color) : null);
+    }
+
+    @Override
+    public TextAttributes getAttributes(TextAttributesKey key) {
+      return tuneAttributes(super.getAttributes(key));
+    }
+
+    @Override
+    public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
+      super.setAttributes(key, tuneAttributes(attributes));
+    }
+
+    private Color tuneColor(Color color) {
+      return tuneSaturationEspeciallyGrey(color, 1, mySaturationFactor);
+    }
+
+    private TextAttributes tuneAttributes(TextAttributes attributes) {
+      if (attributes != null) {
+        attributes = attributes.clone();
+        Color foregroundColor = attributes.getForegroundColor();
+        Color backgroundColor = attributes.getBackgroundColor();
+        if (foregroundColor != null) attributes.setForegroundColor(tuneColor(foregroundColor));
+        if (backgroundColor != null) attributes.setBackgroundColor(tuneColor(backgroundColor));
+      }
+      return attributes;
+    }
+  }
+
+
+  private static final class SimpleHtmlSyntaxInfoReader extends HtmlSyntaxInfoReader {
 
     private SimpleHtmlSyntaxInfoReader(SyntaxInfo info) {
       super(info, 2);

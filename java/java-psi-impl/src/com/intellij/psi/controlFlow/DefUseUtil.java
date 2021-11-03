@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Utility to find current variable value/where this value is read
+ */
 public final class DefUseUtil {
   private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
@@ -252,11 +255,36 @@ public final class DefUseUtil {
     return unusedDefs;
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+     if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
+      final PsiElement defContainer = LambdaUtil.getContainingClassOrLambda(def);
+      PsiElement refContainer = LambdaUtil.getContainingClassOrLambda(ref);
+      while (defContainer != refContainer && refContainer != null) {
+        ref = refContainer;
+        refContainer = LambdaUtil.getContainingClassOrLambda(refContainer.getParent());
+      }
+    }
+
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         final PsiManager psiManager = def.getManager();
@@ -286,16 +314,14 @@ public final class DefUseUtil {
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (PsiUtil.isAccessedForWriting(ref)) {
-                    if (ref.resolve() == def) {
-                      res.add(ref);
-                    }
+                  if (PsiUtil.isAccessedForWriting(ref) && psiManager.areElementsEquivalent(ref.resolve(), def)) {
+                    res.add(ref);
                   }
                 }
 
                 @Override
                 public void visitVariable(PsiVariable var) {
-                  if (psiManager.areElementsEquivalent(var, def) && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if ((var instanceof PsiParameter || var.hasInitializer()) && psiManager.areElementsEquivalent(var, def)) {
                     res.add(var);
                   }
                 }
@@ -318,6 +344,9 @@ public final class DefUseUtil {
     return getRefs(body, def, ref, false);
   }
 
+  /**
+   * Returns variable {@code def} references which read assigned value {@code ref}
+   */
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {

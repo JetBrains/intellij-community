@@ -102,13 +102,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public void addNestedManager(@NotNull ContentManagerImpl manager) {
     myNestedManagers.add(manager);
-    Disposer.register(this, manager);
     Disposer.register(manager, new Disposable() {
       @Override
       public void dispose() {
-        myNestedManagers.remove(manager);
+        removeNestedManager(manager);
       }
     });
+  }
+
+  public void removeNestedManager(@NotNull ContentManagerImpl manager) {
+    myNestedManagers.remove(manager);
   }
 
   @Override
@@ -176,7 +179,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myContents.contains(content)) {
       myContents.remove(content);
-      myContents.add(index == -1 ? myContents.size() : index, content);
+      myContents.add(index < 0 ? myContents.size() : index, content);
       return;
     }
 
@@ -193,7 +196,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
 
     ((ContentImpl)content).setManager(this);
-    final int insertIndex = index == -1 ? myContents.size() : index;
+    final int insertIndex = index < 0 ? myContents.size() : index;
     myContents.add(insertIndex, content);
     content.addPropertyChangeListener(this);
     fireContentAdded(content, insertIndex);
@@ -208,13 +211,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     Disposer.register(this, content);
   }
-
-  //protected ContentManagerImpl getManager(@NotNull Content content) {
-  //  for (ContentManagerImpl nestedManager : myNestedManagers) {
-  //    if (nestedManager.getIndexOfContent(content) != -1) return nestedManager;
-  //  }
-  //  return this;
-  //}
 
   @ApiStatus.Experimental
   public @Nullable ContentManagerImpl getActiveNestedManager() {

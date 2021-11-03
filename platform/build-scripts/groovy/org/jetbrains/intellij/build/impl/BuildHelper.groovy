@@ -40,6 +40,7 @@ final class BuildHelper {
   final MethodHandle setAppInfo
 
   private final MethodHandle copyDirHandle
+  final MethodHandle download
 
   private BuildHelper(ClassLoader helperClassLoader) {
     this.helperClassLoader = helperClassLoader
@@ -96,6 +97,8 @@ final class BuildHelper {
 
     setAppInfo = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.AsmKt"), "injectAppInfo",
                                    MethodType.methodType(voidClass, path, path, string))
+    download = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.HttpKt"), "download",
+                                   MethodType.methodType(byte[].class as Class<?>, string))
   }
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {

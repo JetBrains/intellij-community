@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.VcsMappingListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public final class GitUserRegistry implements Disposable, VcsListener {
+public final class GitUserRegistry implements Disposable, VcsMappingListener {
   private static final Logger LOG = Logger.getInstance(GitUserRegistry.class);
 
   private final @NotNull Project myProject;

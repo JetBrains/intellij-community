@@ -2,7 +2,6 @@
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.bookmark.*
-import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.dnd.*
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.tree.TreeUtil
@@ -16,7 +15,7 @@ internal class DragAndDropHandler(val view: BookmarksView) : DnDTargetChecker, D
   fun createBean(info: DnDActionInfo): DnDDragStartBean? {
     val nodes = view.selectedNodes ?: return null
     if (info.isMove) {
-      val bookmarks = nodes.mapNotNull { (it as? BookmarkNode)?.bookmarkOccurrence }
+      val bookmarks = nodes.mapNotNull { it.bookmarkOccurrence }
       if (bookmarks.size == nodes.size) return DnDDragStartBean(AttachedBookmarks(bookmarks))
       if (bookmarks.isNotEmpty()) return null
       val groups = nodes.mapNotNull { it.value as? BookmarkGroup }
@@ -51,7 +50,7 @@ internal class DragAndDropHandler(val view: BookmarksView) : DnDTargetChecker, D
           !manager.canDragInto(group, attached.occurrences) -> false
           else -> setHighlighting(event, bounds)
         }
-        val occurrence = (node as? BookmarkNode)?.bookmarkOccurrence ?: return false
+        val occurrence = node.bookmarkOccurrence ?: return false
         return when {
           !updateOnly -> manager.drag(above, occurrence, attached.occurrences)
           !manager.canDrag(above, occurrence, attached.occurrences) -> false

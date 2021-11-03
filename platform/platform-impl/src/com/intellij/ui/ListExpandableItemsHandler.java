@@ -65,10 +65,10 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
         updateSelection(list);
 
         if (evt.getOldValue() != null) {
-          ((ListModel)evt.getOldValue()).removeListDataListener(modelListener);
+          ((ListModel<?>)evt.getOldValue()).removeListDataListener(modelListener);
         }
         if (evt.getNewValue() != null) {
-          ((ListModel)evt.getNewValue()).addListDataListener(modelListener);
+          ((ListModel<?>)evt.getNewValue()).addListDataListener(modelListener);
         }
       }
     });

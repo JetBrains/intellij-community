@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.smart
 
 import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -42,7 +41,6 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.util.constructors
 import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 class TypeInstantiationItems(
     val resolutionFacade: ResolutionFacade,
@@ -285,9 +283,7 @@ class TypeInstantiationItems(
                 presentation.appendTailText(" (" + DescriptorUtils.getFqName(classifier.containingDeclaration) + ")", true)
             }
 
-            override fun handleInsert(context: InsertionContext) {
-                insertHandler.handleInsert(context, delegate)
-            }
+            override fun getDelegateInsertHandler() = insertHandler
 
             override fun equals(other: Any?): Boolean {
                 if (other === this) return true
@@ -324,9 +320,9 @@ class TypeInstantiationItems(
                     else -> return
                 }
                 scope.collectSyntheticStaticMembersAndConstructors(
-                        resolutionFacade,
-                        DescriptorKindFilter.FUNCTIONS
-                    ) { classifier.name == it }
+                    resolutionFacade,
+                    DescriptorKindFilter.FUNCTIONS
+                ) { classifier.name == it }
                     .filterIsInstance<SamConstructorDescriptor>()
                     .singleOrNull() ?: return
             }

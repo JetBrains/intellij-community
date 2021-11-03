@@ -28,7 +28,7 @@ class KotlinTemplatesFactory : ProjectTemplatesFactory() {
     override fun getParentGroup(group: String?): String = KOTLIN_PARENT_GROUP_NAME
     override fun getGroupWeight(group: String?): Int = 1
 
-    override fun createTemplates(group: String?, context: WizardContext?): Array<out ProjectTemplate> {
+    override fun createTemplates(group: String?, context: WizardContext): Array<out ProjectTemplate> {
         val result = mutableListOf<ProjectTemplate>()
         if (isNewModuleAction()) {
             result.add(
@@ -38,7 +38,8 @@ class KotlinTemplatesFactory : ProjectTemplatesFactory() {
                         "JVM | IDEA",
                         KotlinJvmBundle.message("presentable.name.jvm.idea"),
                         KotlinJvmBundle.message("kotlin.project.with.a.jvm.target.based.on.the.intellij.idea.build.system"),
-                        KotlinIcons.SMALL_LOGO
+                        KotlinIcons.SMALL_LOGO,
+                        context
                     )
                 )
             )
@@ -49,7 +50,8 @@ class KotlinTemplatesFactory : ProjectTemplatesFactory() {
                         "JS | IDEA",
                         KotlinJvmBundle.message("presentable.name.js.idea"),
                         KotlinJvmBundle.message("kotlin.project.with.a.javascript.target.based.on.the.intellij.idea.build.system"),
-                        KotlinIcons.JS
+                        KotlinIcons.JS,
+                        context
                     )
                 )
             )

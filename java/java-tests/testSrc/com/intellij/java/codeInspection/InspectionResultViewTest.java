@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -55,7 +55,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
                                                      "    -some.module\n" +
                                                      "     'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Redundant 'requires' statement in module-info\n" +
+                                                     "   -Redundant 'requires' directive in module-info\n" +
                                                      "    -some.module\n" +
                                                      "     Redundant directive 'requires M2'\n");
 
@@ -73,7 +73,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
                                                      "     -some.module\n" +
                                                      "      'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Redundant 'requires' statement in module-info\n" +
+                                                     "   -Redundant 'requires' directive in module-info\n" +
                                                      "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      Redundant directive 'requires M2'\n");

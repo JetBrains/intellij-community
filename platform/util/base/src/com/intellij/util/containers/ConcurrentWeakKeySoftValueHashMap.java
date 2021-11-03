@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * Concurrent map with weak keys and soft values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)} instead
+ * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap()} instead
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
@@ -156,8 +156,8 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public void clear() {
-    processQueues();
     myMap.clear();
+    processQueues();
   }
 
   /////////////////////////////
@@ -234,7 +234,6 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V remove(Object key) {
-    processQueues();
     HardKey<K,V> hardKey = createHardKey(key);
     try {
       ValueReference<K, V> valueReference = myMap.remove(hardKey);
@@ -242,6 +241,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
     finally {
       hardKey.clear();
+      processQueues();
     }
   }
 
@@ -254,11 +254,10 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V put(K key, V value) {
-    processQueues();
-
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K,V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> prevValReference = myMap.put(keyReference, valueReference);
+    processQueues();
     return prevValReference == null ? null : prevValReference.get();
   }
 
@@ -308,8 +307,6 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean remove(@NotNull Object key, @NotNull Object value) {
-    processQueues();
-
     HardKey<K, V> hardKey = createHardKey(key);
     try {
       ValueReference<K, V> valueReference = myMap.get(hardKey);
@@ -318,6 +315,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
     finally {
       hardKey.clear();
+      processQueues();
     }
   }
 
@@ -325,37 +323,49 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
     KeyReference<K, V> keyRef = createKeyReference(key, value);
     ValueReference<K, V> newRef = keyRef.getValueReference();
+    V prev;
     while (true) {
-      processQueues();
       ValueReference<K, V> oldRef = myMap.putIfAbsent(keyRef, newRef);
-      if (oldRef == null) return null;
+      if (oldRef == null) {
+        prev = null;
+        break;
+      }
       final V oldVal = oldRef.get();
       if (oldVal == null) {
-        if (myMap.replace(keyRef, oldRef, newRef)) return null;
+        if (myMap.replace(keyRef, oldRef, newRef)) {
+          prev = null;
+          break;
+        }
       }
       else {
-        return oldVal;
+        prev = oldVal;
+        break;
       }
+      processQueues();
     }
+    processQueues();
+    return prev;
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    processQueues();
     KeyReference<K, V> oldKeyReference = createKeyReference(key, oldValue);
     ValueReference<K, V> oldValueReference = oldKeyReference.getValueReference();
     KeyReference<K, V> newKeyReference = createKeyReference(key, newValue);
     ValueReference<K, V> newValueReference = newKeyReference.getValueReference();
 
-    return myMap.replace(oldKeyReference, oldValueReference, newValueReference);
+    boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
+    processQueues();
+    return replaced;
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    processQueues();
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K, V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
-    return result == null ? null : result.get();
+    V prev = result == null ? null : result.get();
+    processQueues();
+    return prev;
   }
 }

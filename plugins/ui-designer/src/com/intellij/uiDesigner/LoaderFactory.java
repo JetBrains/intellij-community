@@ -123,7 +123,7 @@ public final class LoaderFactory implements Disposable {
       Object key = it.next();
       Object value = uiDefaults.get(key);
       if (value instanceof Class) {
-        ClassLoader loader = ((Class)value).getClassLoader();
+        ClassLoader loader = ((Class<?>)value).getClassLoader();
         if (loader instanceof DesignTimeClassLoader) {
           it.remove();
         }

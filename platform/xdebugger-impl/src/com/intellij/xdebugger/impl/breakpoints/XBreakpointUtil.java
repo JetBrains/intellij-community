@@ -87,7 +87,7 @@ public final class XBreakpointUtil {
         if (position != null) {
           if (position.getFile().equals(FileDocumentManager.getInstance().getFile(editorDocument)) &&
               editorDocument.getLineNumber(offset) == position.getLine()) {
-            return Pair.create(((XBreakpointBase)breakpoint).createGutterIconRenderer(), breakpoint);
+            return Pair.create(((XBreakpointBase<?, ?, ?>)breakpoint).createGutterIconRenderer(), breakpoint);
           }
         }
       }

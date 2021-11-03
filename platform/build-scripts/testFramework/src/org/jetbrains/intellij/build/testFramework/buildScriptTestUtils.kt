@@ -25,7 +25,9 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
 
-fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTools: ProprietaryBuildTools,
+fun runTestBuild(homePath: String,
+                 productProperties: ProductProperties,
+                 buildTools: ProprietaryBuildTools,
                  communityHomePath: String = "$homePath/community",
                  verifier: (outDir: Path) -> Unit = {},
                  buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {

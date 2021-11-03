@@ -20,6 +20,6 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionJdk14Test : Serializab
               private const val serialVersionUID: Long = 7429157667498829299L
           }
       }
-    """.trimIndent(), "Add 'serialVersionUID' field")
+    """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
   }
 }

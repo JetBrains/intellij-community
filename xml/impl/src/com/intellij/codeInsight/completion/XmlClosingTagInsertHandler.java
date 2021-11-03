@@ -21,7 +21,7 @@ public final class XmlClosingTagInsertHandler implements InsertHandler<LookupEle
     Document document = editor.getDocument();
     Project project = context.getProject();
     if (item instanceof LookupElementDecorator) {
-      ((LookupElementDecorator)item).getDelegate().handleInsert(context);
+      ((LookupElementDecorator<?>)item).getDelegate().handleInsert(context);
     }
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int lineOffset = document.getLineStartOffset(document.getLineNumber(editor.getCaretModel().getOffset()));

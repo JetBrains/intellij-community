@@ -1,0 +1,15 @@
+query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 100, $cursor: String) {
+    repository(owner: $repoOwner, name: $repoName) {
+        pullRequest(number: $number) {
+            files(first: $pageSize, after: $cursor) {
+                pageInfo {
+                    ...pageInfo
+                }
+                nodes {
+                    path
+                    viewerViewedState
+                }
+            }
+        }
+    }
+}

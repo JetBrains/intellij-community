@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
@@ -9,7 +9,10 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -30,12 +33,17 @@ fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
 }
 
 private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
-  val constructors = clazz.constructors
+  val constructors = if (clazz is GrRecordDefinition) {
+    clazz.constructors.filter { !(it is GrMethod && it.isCompactConstructor()) }
+  }
+  else {
+    clazz.constructors.asList()
+  }
   if (constructors.isEmpty() && !clazz.isInterface) {
     return listOf(getDefaultConstructor(clazz))
   }
   else {
-    return listOf(*constructors)
+    return constructors
   }
 }
 

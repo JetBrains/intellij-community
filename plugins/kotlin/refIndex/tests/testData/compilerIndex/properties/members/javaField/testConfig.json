@@ -1,13 +1,14 @@
 {
+    "mainFile": "Main.java",
     "usages": [
-        "Main.java",
-        "JavaWrite.java",
         "JavaRead.java",
-        "KotlinWrite.kt",
-        "KotlinRead.kt",
-        "KotlinBySuper.kt",
+        "JavaWrite.java",
         "Kotlin.kt",
+        "KotlinBySuper.kt",
         "KotlinClassRead.kt",
-        "KotlinClassWrite.kt"
+        "KotlinClassWrite.kt",
+        "KotlinRead.kt",
+        "KotlinWrite.kt",
+        "Main.java"
     ]
 }

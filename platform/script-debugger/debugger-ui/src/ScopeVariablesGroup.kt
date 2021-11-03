@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
@@ -25,32 +26,34 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    val promise = processScopeVariables(scope, node, context, callFrame == null)
-    if (callFrame == null) {
-      return
-    }
-
-    promise
-      .onSuccess(node) {
-        context.memberFilter
-          .thenAsyncAccept(node) {
-            if (it.hasNameMappings()) {
-              it.sourceNameToRaw(RECEIVER_NAME)?.let {
-                return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
-                  .onSuccess(node) {
-                    VariableImpl(RECEIVER_NAME, it.value, null)
-                    node.addChildren(XValueChildrenList.singleton(VariableView(
-                      VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
-                  }
-              }
-            }
-
-            context.viewSupport.computeReceiverVariable(context, callFrame, node)
-          }
-          .onError(node) {
-            context.viewSupport.computeReceiverVariable(context, callFrame, node)
-          }
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val promise = processScopeVariables(scope, node, context, callFrame == null)
+      if (callFrame == null) {
+        return@executeOnPooledThread
       }
+
+      promise
+        .onSuccess(node) {
+          context.memberFilter
+            .thenAsyncAccept(node) {
+              if (it.hasNameMappings()) {
+                it.sourceNameToRaw(RECEIVER_NAME)?.let {
+                  return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
+                    .onSuccess(node) {
+                      VariableImpl(RECEIVER_NAME, it.value, null)
+                      node.addChildren(XValueChildrenList.singleton(VariableView(
+                        VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
+                    }
+                }
+              }
+
+              context.viewSupport.computeReceiverVariable(context, callFrame, node)
+            }
+            .onError(node) {
+              context.viewSupport.computeReceiverVariable(context, callFrame, node)
+            }
+        }
+    }
   }
 }
 

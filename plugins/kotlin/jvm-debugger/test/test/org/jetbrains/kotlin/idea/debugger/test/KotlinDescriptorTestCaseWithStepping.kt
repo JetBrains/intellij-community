@@ -118,7 +118,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun SuspendContextImpl.doStepInto(ignoreFilters: Boolean, smartStepFilter: MethodFilter?) {
         val stepIntoCommand =
-            runReadAction { commandProvider.getStepIntoCommand(this, ignoreFilters, smartStepFilter, StepRequest.STEP_LINE) }
+            runReadAction { commandProvider.getStepIntoCommand(this, ignoreFilters, smartStepFilter) }
                 ?: dp.createStepIntoCommand(this, ignoreFilters, smartStepFilter)
 
         dp.managerThread.schedule(stepIntoCommand)
@@ -200,8 +200,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val stepTargets = KotlinSmartStepIntoHandler().findSmartStepTargets(position)
         stepTargets.mapNotNull { stepTarget ->
             when (stepTarget) {
-                is KotlinLambdaSmartStepTarget -> KotlinLambdaMethodFilter(stepTarget)
-                is KotlinMethodSmartStepTarget -> KotlinOrdinaryMethodFilter(stepTarget)
+                is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
                 is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
                 else -> null
             }

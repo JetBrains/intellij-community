@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author peter
+ * This extension point allows console to fold some lines if necessary.
+ * For example, the console from the "Run Application..." action {@link com.intellij.execution.impl.ConsoleViewImpl.CommandLineFolding}
+ * folds command line arguments because they tend to be too long to fit in one line
  */
 public abstract class ConsoleFolding {
   public static final ExtensionPointName<ConsoleFolding> EP_NAME = ExtensionPointName.create("com.intellij.console.folding");

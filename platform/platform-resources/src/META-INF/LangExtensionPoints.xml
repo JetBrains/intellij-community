@@ -577,6 +577,10 @@
       <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="intentionsOrderProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.impl.IntentionsOrderProvider"/>
+    </extensionPoint>
+
     <extensionPoint name="projectViewNestingRulesProvider" interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider" dynamic="true"/>
 
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy" dynamic="true"/>
@@ -605,8 +609,10 @@
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
+    <extensionPoint name="lang.documentationLinkResolver" dynamic="true"
                     interface="com.intellij.lang.documentation.DocumentationLinkResolver"/>
+    <extensionPoint name="lang.symbolDocumentation" dynamic="true"
+                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
   </extensionPoints>
 </idea-plugin>
 

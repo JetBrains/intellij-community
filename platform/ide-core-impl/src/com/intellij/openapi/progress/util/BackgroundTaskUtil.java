@@ -236,10 +236,17 @@ public final class BackgroundTaskUtil {
 
   @CalledInAny
   public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<? extends T> task) {
+    return runUnderDisposeAwareIndicator(parent, task, ProgressManager.getInstance().getProgressIndicator());
+  }
+
+  @CalledInAny
+  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent,
+                                                    @NotNull Supplier<? extends T> task,
+                                                    @Nullable ProgressIndicator parentIndicator) {
     Ref<T> ref = new Ref<>();
     runUnderDisposeAwareIndicator(parent, () -> {
       ref.set(task.get());
-    });
+    }, parentIndicator);
     return ref.get();
   }
 

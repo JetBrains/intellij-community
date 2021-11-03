@@ -329,7 +329,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") +
         ".display.name";
       xml.setAttribute("key", key);
-      xml.setAttribute("bundle", getBundleQName(project, propertiesFile));
+
+      XmlTag rootTag = ((XmlFile)xml.getContainingFile()).getRootTag();
+      XmlTag resourceBundle = rootTag != null ? rootTag.findFirstSubTag("resource-bundle") : null;
+      String bundleQName = getBundleQName(project, propertiesFile);
+      if (resourceBundle == null || !bundleQName.equals(resourceBundle.getValue().getTrimmedText())) {
+        xml.setAttribute("bundle", bundleQName);
+      }
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                     Collections.singletonList(propertiesFile),

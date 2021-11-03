@@ -109,7 +109,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    long range,
                                                    @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, Divider.startOffset(range), Divider.endOffset(range), existing -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRange.startOffset(range), TextRange.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
           for (HighlightInfo created : infos) {

@@ -1,24 +1,23 @@
 {
+    "mainFile": "JK.java",
     "usages": [
-        "JK.java",
-        "JJK.java",
         "JJJK.java",
-        "jk_.java",
-        "jk_.kt",
-        "jjk_.java",
-        "jjk_.kt",
+        "JJK.java",
+        "JK.java",
+        "JKJK.java",
         "jjjk_.java",
         "jjjk_.kt",
-        "jkjk_.kt",
-        "kjk_.kt",
-        "kjjk_.kt",
-        "kkjk_.kt"
-    ],
-    "shouldBeUsage": [
-        "JKJK.java",
+        "jjk_.java",
+        "jjk_.kt",
+        "jk_.java",
+        "jk_.kt",
         "jkjk_.java",
-        "kjk_.java",
+        "jkjk_.kt",
         "kjjk_.java",
-        "kkjk_.java"
+        "kjjk_.kt",
+        "kjk_.java",
+        "kjk_.kt",
+        "kkjk_.java",
+        "kkjk_.kt"
     ]
 }

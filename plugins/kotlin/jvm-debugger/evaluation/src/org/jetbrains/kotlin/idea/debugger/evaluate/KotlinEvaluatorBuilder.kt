@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.engine.jdi.StackFrameProxy
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import com.sun.jdi.Value
 import org.jetbrains.eval4j.*
-import org.jetbrains.eval4j.Value as Eval4JValue
 import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
@@ -33,30 +33,31 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.core.util.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.core.util.mergeAttachments
-import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriorityWithPCE
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Companion.compileCodeFragmentCacheAware
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.ClassLoadingResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.AnalyzingUtils
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.jvm.AsmTypes
-import org.jetbrains.org.objectweb.asm.*
-import org.jetbrains.org.objectweb.asm.tree.ClassNode
-import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.ClassLoadingResult
 import org.jetbrains.kotlin.idea.debugger.safeLocation
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.debugger.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.AnalyzingUtils
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
+import org.jetbrains.eval4j.Value as Eval4JValue
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
 
@@ -197,7 +198,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
         } else {
             status.usedEvaluator(EvaluationStatus.EvaluatorType.Eval4j)
-            evaluateWithEval4J(context, compiledData, classLoaderRef, status)
+            evaluateWithEval4J(context, compiledData, null, status)
         }
 
         return result.toJdiValue(context, status)
@@ -249,36 +250,47 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     )
 
     private fun analyze(codeFragment: KtCodeFragment, status: EvaluationStatus, debugProcess: DebugProcessImpl): ErrorCheckingResult {
-        return runInReadActionWithWriteActionPriorityWithPCE {
+        val result = ReadAction.nonBlocking<Result<ErrorCheckingResult>> {
             try {
-                AnalyzingUtils.checkForSyntacticErrors(codeFragment)
-            } catch (e: IllegalArgumentException) {
-                status.error(EvaluationError.ErrorElementOccurred)
-                evaluationException(e.message ?: e.toString())
+                Result.success(doAnalyze(codeFragment, status, debugProcess))
+            } catch (ex: ProcessCanceledException) {
+                throw ex // Restart the action
+            } catch (ex: Exception) {
+                Result.failure(ex)
             }
+        }.executeSynchronously()
+        return result.getOrThrow()
+    }
 
-            val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-
-            DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
-
-            val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(codeFragment)
-
-            if (analysisResult.isError()) {
-                status.error(EvaluationError.FrontendException)
-                evaluationException(analysisResult.error)
-            }
-
-            val bindingContext = analysisResult.bindingContext
-            reportErrorDiagnosticIfAny(status, bindingContext)
-            ErrorCheckingResult(
-                bindingContext,
-                analysisResult.moduleDescriptor,
-                Collections.singletonList(codeFragment),
-                bindingContext.diagnostics.firstOrNull {
-                    it.isIllegalSuspendFunCallInCodeFragment()
-                }
-            )
+    private fun doAnalyze(codeFragment: KtCodeFragment, status: EvaluationStatus, debugProcess: DebugProcessImpl): ErrorCheckingResult {
+        try {
+            AnalyzingUtils.checkForSyntacticErrors(codeFragment)
+        } catch (e: IllegalArgumentException) {
+            status.error(EvaluationError.ErrorElementOccurred)
+            evaluationException(e.message ?: e.toString())
         }
+
+        val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
+
+        DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
+
+        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(codeFragment)
+
+        if (analysisResult.isError()) {
+            status.error(EvaluationError.FrontendException)
+            evaluationException(analysisResult.error)
+        }
+
+        val bindingContext = analysisResult.bindingContext
+        reportErrorDiagnosticIfAny(status, bindingContext)
+        return ErrorCheckingResult(
+            bindingContext,
+            analysisResult.moduleDescriptor,
+            Collections.singletonList(codeFragment),
+            bindingContext.diagnostics.firstOrNull {
+                it.isIllegalSuspendFunCallInCodeFragment()
+            }
+        )
     }
 
     private fun reportErrorDiagnosticIfAny(status: EvaluationStatus, bindingContext: BindingContext) =
@@ -453,12 +465,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             val jdiValue = when (this) {
                 is ValueReturned -> result
                 is ExceptionThrown -> {
-                    when {
-                        this.kind == ExceptionThrown.ExceptionKind.FROM_EVALUATED_CODE -> {
+                    when (this.kind) {
+                        ExceptionThrown.ExceptionKind.FROM_EVALUATED_CODE -> {
                             status.error(EvaluationError.ExceptionFromEvaluatedCode)
                             evaluationException(InvocationException(this.exception.value as ObjectReference))
                         }
-                        this.kind == ExceptionThrown.ExceptionKind.BROKEN_CODE ->
+                        ExceptionThrown.ExceptionKind.BROKEN_CODE ->
                             throw exception.value as Throwable
                         else -> {
                             status.error(EvaluationError.Eval4JUnknownException)
@@ -509,8 +521,9 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
             Attachment("context.info", runReadAction { codeFragment.context?.text ?: "null" })
         )
 
+        val decapitalizedMessage = message.replaceFirstChar { it.lowercase(Locale.getDefault()) }
         LOG.error(
-            "Cannot evaluate a code fragment of type " + codeFragment::class.java + ": " + message.decapitalize(),
+            "Cannot evaluate a code fragment of type ${codeFragment::class.java}: $decapitalizedMessage",
             throwable,
             mergeAttachments(*attachments)
         )

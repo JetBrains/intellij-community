@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.function.BiPredicate;
@@ -80,15 +79,17 @@ public abstract class ProjectTaskManager {
 
   public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
 
-  public abstract ProjectTask createModulesBuildTask(Module module,
-                                                     boolean isIncrementalBuild,
-                                                     boolean includeDependentModules,
-                                                     boolean includeRuntimeDependencies);
+  public ProjectTask createModulesBuildTask(Module module, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    return createModulesBuildTask(new Module[]{module}, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
+  }
 
-  public abstract ProjectTask createModulesBuildTask(Module[] modules,
-                                                     boolean isIncrementalBuild,
-                                                     boolean includeDependentModules,
-                                                     boolean includeRuntimeDependencies);
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    return createModulesBuildTask(modules, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, true);
+  }
+
+  public abstract ProjectTask createModulesBuildTask(
+    Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests
+  );
 
   public abstract ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts);
 }

@@ -9,6 +9,7 @@ enum class AdvancedSettingType { Int, Bool, String, Enum }
 
 abstract class AdvancedSettings  {
   protected abstract fun getSetting(id: String): Any
+  protected abstract fun getDefault(id: String): Any
   abstract fun setSetting(id: String, value: Any, expectType: AdvancedSettingType)
 
   companion object {
@@ -30,6 +31,19 @@ abstract class AdvancedSettings  {
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun <T: Enum<T>> getEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getSetting(id))
+
+    @JvmStatic
+    fun getDefaultBoolean(id: String): Boolean = getInstance().getDefault(id) as Boolean
+
+    @JvmStatic
+    fun getDefaultInt(id: String): Int = getInstance().getDefault(id) as Int
+
+    @JvmStatic
+    fun getDefaultString(id: String): String = getInstance().getDefault(id) as String
+
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun <T: Enum<T>> getDefaultEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getDefault(id))
 
     @JvmStatic
     fun setBoolean(id: String, value: Boolean) {

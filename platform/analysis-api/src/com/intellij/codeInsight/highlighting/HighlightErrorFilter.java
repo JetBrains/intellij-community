@@ -7,7 +7,8 @@ import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author spleaner
+ * This extension point allows highlighting to suppress error message for particular {@link PsiErrorElement} in the file.
+ * To ignore some error element completely, override {@link #shouldHighlightErrorElement(PsiErrorElement)} in your plugin and return {@code false}
  */
 public abstract class HighlightErrorFilter {
   public static final ProjectExtensionPointName<HighlightErrorFilter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.highlightErrorFilter");

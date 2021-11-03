@@ -6,7 +6,9 @@ import com.intellij.configurationStore.SerializableScheme
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
@@ -84,9 +86,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
       return field
     }
-
-  @Suppress("DEPRECATION")
-  private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<Keymap.Listener>()
 
   private val keymapManager by lazy { KeymapManagerEx.getInstanceEx()!! }
 
@@ -403,6 +402,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
 
+  fun hasShortcutDefined(actionId: String): Boolean =
+    actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
+
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element) {
     if (KEY_MAP != keymapElement.name) {
@@ -619,19 +621,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   protected open fun convertShortcut(shortcut: Shortcut): Shortcut = shortcut
 
-  override fun addShortcutChangeListener(@Suppress("DEPRECATION") listener: Keymap.Listener) {
-    listeners.add(listener)
-  }
-
-  override fun removeShortcutChangeListener(@Suppress("DEPRECATION") listener: Keymap.Listener) {
-    listeners.remove(listener)
-  }
-
   private fun fireShortcutChanged(actionId: String) {
     (KeymapManager.getInstance() as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
-    for (listener in listeners) {
-      listener.onShortcutChanged(actionId)
-    }
   }
 
   override fun toString(): String = presentableName

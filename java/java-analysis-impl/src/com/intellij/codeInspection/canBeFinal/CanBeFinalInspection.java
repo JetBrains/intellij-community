@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.canBeFinal;
 
@@ -147,7 +147,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
           }
 
           @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous()) {
+            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
               globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
                 ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                 problemsProcessor.ignoreElement(refClass);
@@ -157,6 +157,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
           }
 
           @Override public void visitField(@NotNull final RefField refField) {
+            if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
             globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
               @Override
               public boolean process(PsiReference psiReference) {

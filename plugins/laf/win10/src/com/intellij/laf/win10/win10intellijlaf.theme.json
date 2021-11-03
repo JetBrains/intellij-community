@@ -176,7 +176,7 @@
       "maxGutterIconWidth": 18
     },
 
-    "MnemonicIcon": {
+    "BookmarkMnemonicIcon": {
       "background": "#FEF7EC",
       "borderColor": "#F4AF3D",
       "foreground": "#000000"
@@ -393,6 +393,13 @@
       "selectionBorderColor": "#1a7dc4",
       "textBackground": "#ffffff",
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
+    },
+
+    "ToolbarComboWidget": {
+      "background": "#f2f2f2",
+      "hoverBackground": "#dfdfdf",
+      "borderInsets": "3,5,3,5",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
     "control": "#f2f2f2",

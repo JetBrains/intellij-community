@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
@@ -88,7 +89,7 @@ final class ClassfileAnalyzer {
       private final TypeRepr.ClassType myType;
       private final ElemType myTarget;
 
-      private final TIntHashSet myUsedArguments = new TIntHashSet();
+      private final IntOpenHashSet myUsedArguments = new IntOpenHashSet();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target) {
         super(ASM_API_VERSION);
@@ -116,32 +117,34 @@ final class ClassfileAnalyzer {
         else {
           final String name = Type.getType(value.getClass()).getInternalName();
           // only primitive, String, Class, Enum, another Annotation or array of any of these are allowed
-          if (name.equals("java/lang/Integer")) {
-            descriptor.append("I;");
-          }
-          else if (name.equals("java/lang/Short")) {
-            descriptor.append("S;");
-          }
-          else if (name.equals("java/lang/Long")) {
-            descriptor.append("J;");
-          }
-          else if (name.equals("java/lang/Byte")) {
-            descriptor.append("B;");
-          }
-          else if (name.equals("java/lang/Char")) {
-            descriptor.append("C;");
-          }
-          else if (name.equals("java/lang/Boolean")) {
-            descriptor.append("Z;");
-          }
-          else if (name.equals("java/lang/Float")) {
-            descriptor.append("F;");
-          }
-          else if (name.equals("java/lang/Double")) {
-            descriptor.append("D;");
-          }
-          else {
-            descriptor.append("L").append(name).append(";");
+          switch (name) {
+            case "java/lang/Integer":
+              descriptor.append("I;");
+              break;
+            case "java/lang/Short":
+              descriptor.append("S;");
+              break;
+            case "java/lang/Long":
+              descriptor.append("J;");
+              break;
+            case "java/lang/Byte":
+              descriptor.append("B;");
+              break;
+            case "java/lang/Char":
+              descriptor.append("C;");
+              break;
+            case "java/lang/Boolean":
+              descriptor.append("Z;");
+              break;
+            case "java/lang/Float":
+              descriptor.append("F;");
+              break;
+            case "java/lang/Double":
+              descriptor.append("D;");
+              break;
+            default:
+              descriptor.append("L").append(name).append(";");
+              break;
           }
         }
         return descriptor.toString();
@@ -211,13 +214,12 @@ final class ClassfileAnalyzer {
 
       @Override
       public void visitEnd() {
-        final TIntHashSet s = myAnnotationArguments.get(myType);
-
+        IntSet s = myAnnotationArguments.get(myType);
         if (s == null) {
           myAnnotationArguments.put(myType, myUsedArguments);
         }
         else {
-          s.retainAll(myUsedArguments.toArray());
+          s.retainAll(myUsedArguments);
         }
       }
     }
@@ -327,7 +329,7 @@ final class ClassfileAnalyzer {
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 
-    private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new HashMap<>();
+    private final Map<TypeRepr.ClassType, IntSet> myAnnotationArguments = new HashMap<>();
     private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<>();
     private final Set<TypeRepr.ClassType> myAnnotations = new HashSet<>();
 
@@ -391,10 +393,9 @@ final class ClassfileAnalyzer {
     @Override
     public void visitEnd() {
       for (Map.Entry<TypeRepr.ClassType, Set<ElemType>> entry : myAnnotationTargets.entrySet()) {
-        final TypeRepr.ClassType type = entry.getKey();
-        final Set<ElemType> targets = entry.getValue();
-        final TIntHashSet usedArguments = myAnnotationArguments.get(type);
-
+        TypeRepr.ClassType type = entry.getKey();
+        Set<ElemType> targets = entry.getValue();
+        IntSet usedArguments = myAnnotationArguments.get(type);
         myUsages.add(UsageRepr.createAnnotationUsage(myContext, type, usedArguments, targets));
       }
     }

@@ -5,9 +5,11 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LearningDslBase
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.util.regex.Pattern
 
 abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name")) {
@@ -26,7 +28,7 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
     task {
       text(LessonsBundle.message("postfix.completion.intro") + " " + getTypeTaskText())
       triggerByListItemAndHighlight {
-        it.toString().contains(completionItem)
+        it.isToStringContains(completionItem)
       }
       proposeRestore {
         checkExpectedStateOfEditor(sample) { completionSuffix.startsWith(it) }
@@ -47,4 +49,11 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
       }
     }
   }
+
+  override val suitableTips = listOf("PostfixCompletion")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("postfix.completion.help.link"),
+         LessonUtil.getHelpLink("auto-completing-code.html#postfix_completion")),
+  )
 }

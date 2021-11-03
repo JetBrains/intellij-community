@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.IconManager;
 import com.intellij.util.PlatformIcons;
 import icons.KotlinFirFrontendIndependentIcons;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public interface KotlinIcons {
-    private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-        return IconManager.getInstance().loadRasterizedIcon(path, KotlinIcons.class.getClassLoader(), cacheKey, flags);
-    }
     /** 16x16 */ @NotNull Icon SMALL_LOGO = KotlinFirFrontendIndependentIcons.Kotlin;
     /** 13x13 */ @NotNull Icon SMALL_LOGO_13 = KotlinFirFrontendIndependentIcons.Kotlin13;
     /** 16x16 */ @NotNull Icon ABSTRACT_EXTENSION_FUNCTION = KotlinFirFrontendIndependentIcons.Abstract_extension_function;

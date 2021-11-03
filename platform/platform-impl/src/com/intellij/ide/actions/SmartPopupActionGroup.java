@@ -25,7 +25,7 @@ public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAwa
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    int size = ActionGroupUtil.getActiveActions(this, e).take(3).size();
+    int size = ActionGroupUtil.getVisibleActions(this, e).take(3).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
     myCachedIsPopup = size > 2;
   }

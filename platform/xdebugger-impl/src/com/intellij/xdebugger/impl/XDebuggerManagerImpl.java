@@ -45,7 +45,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -54,7 +53,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -413,24 +411,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private static final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
-    final Icon hoverIcon = new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.5f);
-        AllIcons.Debugger.Db_set_breakpoint.paintIcon(c, g, x, y);
-        config.restore();
-      }
-
-      @Override
-      public int getIconWidth() {
-        return AllIcons.Debugger.Db_set_breakpoint.getIconWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return AllIcons.Debugger.Db_set_breakpoint.getIconHeight();
-      }
-    };
+    final Icon hoverIcon = AllIcons.Debugger.Db_set_breakpoint;
 
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
@@ -447,10 +428,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       }
 
-    private void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+    private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
       boolean requireRepaint = false;
       if (gutter.getClientProperty("line.number.hover.icon") != icon) {
-        gutter.putClientProperty("line.number.hover.icon", hoverIcon);
+        gutter.putClientProperty("line.number.hover.icon", icon);
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {

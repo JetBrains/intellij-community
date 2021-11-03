@@ -136,7 +136,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> listStep = getListStep();
     boolean selected = false;
     if (listStep instanceof MultiSelectionListPopupStep<?>) {
-      int[] indices = ((MultiSelectionListPopupStep)listStep).getDefaultOptionIndices();
+      int[] indices = ((MultiSelectionListPopupStep<?>)listStep).getDefaultOptionIndices();
       if (indices.length > 0) {
         ScrollingUtil.ensureIndexIsVisible(myList, indices[0], 0);
         myList.setSelectedIndices(indices);
@@ -252,7 +252,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
     if (step instanceof ListPopupStepEx) {
-      ((ListPopupStepEx)step).setEmptyText(myList.getEmptyText());
+      ((ListPopupStepEx<?>)step).setEmptyText(myList.getEmptyText());
     }
 
     myList.setSelectionModel(new MyListSelectionModel());

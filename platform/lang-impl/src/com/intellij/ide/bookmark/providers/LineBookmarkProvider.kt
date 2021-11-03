@@ -52,24 +52,23 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return StringUtil.naturalCompare(file1.presentableName, file2.presentableName)
   }
 
-  override fun createBookmark(map: Map<String, String>): Bookmark? {
-    val url = map["url"] ?: return null
-    val file = VirtualFileManager.getInstance().findFileByUrl(url) ?: return null
-    return createBookmark(file, StringUtil.parseInt(map["line"], -1))
-  }
+  override fun createBookmark(map: Map<String, String>) = createBookmark(map["url"], StringUtil.parseInt(map["line"], -1))
 
   override fun createBookmark(context: Any?): FileBookmark? = when (context) {
     is AbstractTreeNode<*> -> createBookmark(context.value)
     is NodeDescriptor<*> -> createBookmark(context.element)
+    // below // migrate old bookmarks and favorites
+    is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
     is DirectoryUrl -> createBookmark(context.url)
     is PsiFileUrl -> createBookmark(context.url)
+    // above // migrate old bookmarks and favorites
     is PsiElement -> createBookmark(context)
     is VirtualFile -> createBookmark(context, -1)
     else -> null
   }
 
   fun createBookmark(file: VirtualFile, line: Int = -1): FileBookmark? = when {
-    file is LightVirtualFile -> null
+    !file.isValid || file is LightVirtualFile -> null
     line >= 0 -> LineBookmarkImpl(this, file, line)
     else -> FileBookmarkImpl(this, file)
   }
@@ -80,9 +79,9 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)
   }
 
-  private fun createBookmark(url: String) = VirtualFileManager.getInstance().findFileByUrl(url)?.let {
-    if (it.isValid) createBookmark(it) else null
-  }
+  private fun createBookmark(url: String?, line: Int = -1) = url
+    ?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
+    ?.let { createBookmark(it, line) }
 
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }

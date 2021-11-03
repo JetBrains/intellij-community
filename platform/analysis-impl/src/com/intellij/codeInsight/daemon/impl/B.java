@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationBuilder;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -36,6 +33,7 @@ class B implements AnnotationBuilder {
   private final @Nls String message;
   @NotNull
   private final PsiElement myCurrentElement;
+  private final @NotNull Object myCurrentAnnotator;
   @NotNull
   private final HighlightSeverity severity;
   private TextRange range;
@@ -52,11 +50,16 @@ class B implements AnnotationBuilder {
   private boolean created;
   private final Throwable myDebugCreationPlace;
 
-  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, @Nls String message, @NotNull PsiElement currentElement) {
+  B(@NotNull AnnotationHolderImpl holder,
+    @NotNull HighlightSeverity severity,
+    @Nls String message,
+    @NotNull PsiElement currentElement,
+    @NotNull Object currentAnnotator) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
     myCurrentElement = currentElement;
+    myCurrentAnnotator = currentAnnotator;
     holder.annotationBuilderCreated(this);
 
     Application app = ApplicationManager.getApplication();
@@ -330,6 +333,7 @@ class B implements AnnotationBuilder {
     return "Builder{" +
            "message='" + message + '\'' +
            ", myCurrentElement=" + myCurrentElement +
+           ", myCurrentAnnotator=" + myCurrentAnnotator +
            ", severity=" + severity +
            ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
            omitIfEmpty(afterEndOfLine, "afterEndOfLine") +

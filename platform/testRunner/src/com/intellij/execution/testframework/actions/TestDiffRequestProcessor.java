@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class TestDiffRequestProcessor {
   @NotNull
   public static DiffRequestChain createRequestChain(@Nullable Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
@@ -75,6 +77,19 @@ public class TestDiffRequestProcessor {
                                     : ExecutionBundle.message("diff.content.actual.title");
 
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DiffHyperlinkRequestProducer producer = (DiffHyperlinkRequestProducer)o;
+      return Objects.equals(myHyperlink, producer.myHyperlink);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myHyperlink);
     }
   }
 

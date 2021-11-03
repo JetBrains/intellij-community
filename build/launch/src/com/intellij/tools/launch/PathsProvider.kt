@@ -6,12 +6,12 @@ import com.intellij.util.SystemProperties
 
 interface PathsProvider {
   val productId: String
-  val ultimateRootFolder: File
+  val sourcesRootFolder: File
   val communityRootFolder: File
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory ?: ultimateRootFolder.resolve("out").resolve("tmp")
+    get() = TeamCityHelper.tempDirectory ?: sourcesRootFolder.resolve("out").resolve("tmp")
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)

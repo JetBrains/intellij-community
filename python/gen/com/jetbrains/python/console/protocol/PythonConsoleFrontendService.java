@@ -12,7 +12,7 @@ public class PythonConsoleFrontendService {
 
   public interface Iface {
 
-    public void notifyFinished(boolean needsMoreInput) throws org.apache.thrift.TException;
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) throws org.apache.thrift.TException;
 
     public java.lang.String requestInput(java.lang.String path) throws KeyboardInterruptException, org.apache.thrift.TException;
 
@@ -36,7 +36,7 @@ public class PythonConsoleFrontendService {
 
   public interface AsyncIface {
 
-    public void notifyFinished(boolean needsMoreInput, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException;
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException;
 
     public void requestInput(java.lang.String path, org.apache.thrift.async.AsyncMethodCallback<java.lang.String> resultHandler) throws org.apache.thrift.TException;
 
@@ -72,16 +72,17 @@ public class PythonConsoleFrontendService {
       super(iprot, oprot);
     }
 
-    public void notifyFinished(boolean needsMoreInput) throws org.apache.thrift.TException
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) throws org.apache.thrift.TException
     {
-      send_notifyFinished(needsMoreInput);
+      send_notifyFinished(needsMoreInput, exceptionOccurred);
       recv_notifyFinished();
     }
 
-    public void send_notifyFinished(boolean needsMoreInput) throws org.apache.thrift.TException
+    public void send_notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) throws org.apache.thrift.TException
     {
       notifyFinished_args args = new notifyFinished_args();
       args.setNeedsMoreInput(needsMoreInput);
+      args.setExceptionOccurred(exceptionOccurred);
       sendBase("notifyFinished", args);
     }
 
@@ -241,24 +242,27 @@ public class PythonConsoleFrontendService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void notifyFinished(boolean needsMoreInput, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      notifyFinished_call method_call = new notifyFinished_call(needsMoreInput, resultHandler, this, ___protocolFactory, ___transport);
+      notifyFinished_call method_call = new notifyFinished_call(needsMoreInput, exceptionOccurred, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class notifyFinished_call extends org.apache.thrift.async.TAsyncMethodCall<Void> {
       private boolean needsMoreInput;
-      public notifyFinished_call(boolean needsMoreInput, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private boolean exceptionOccurred;
+      public notifyFinished_call(boolean needsMoreInput, boolean exceptionOccurred, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.needsMoreInput = needsMoreInput;
+        this.exceptionOccurred = exceptionOccurred;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("notifyFinished", org.apache.thrift.protocol.TMessageType.CALL, 0));
         notifyFinished_args args = new notifyFinished_args();
         args.setNeedsMoreInput(needsMoreInput);
+        args.setExceptionOccurred(exceptionOccurred);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -514,7 +518,7 @@ public class PythonConsoleFrontendService {
 
       public notifyFinished_result getResult(I iface, notifyFinished_args args) throws org.apache.thrift.TException {
         notifyFinished_result result = new notifyFinished_result();
-        iface.notifyFinished(args.needsMoreInput);
+        iface.notifyFinished(args.needsMoreInput, args.exceptionOccurred);
         return result;
       }
     }
@@ -753,7 +757,7 @@ public class PythonConsoleFrontendService {
       }
 
       public void start(I iface, notifyFinished_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws org.apache.thrift.TException {
-        iface.notifyFinished(args.needsMoreInput,resultHandler);
+        iface.notifyFinished(args.needsMoreInput, args.exceptionOccurred,resultHandler);
       }
     }
 
@@ -1130,15 +1134,18 @@ public class PythonConsoleFrontendService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("notifyFinished_args");
 
     private static final org.apache.thrift.protocol.TField NEEDS_MORE_INPUT_FIELD_DESC = new org.apache.thrift.protocol.TField("needsMoreInput", org.apache.thrift.protocol.TType.BOOL, (short)1);
+    private static final org.apache.thrift.protocol.TField EXCEPTION_OCCURRED_FIELD_DESC = new org.apache.thrift.protocol.TField("exceptionOccurred", org.apache.thrift.protocol.TType.BOOL, (short)2);
 
     private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new notifyFinished_argsStandardSchemeFactory();
     private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new notifyFinished_argsTupleSchemeFactory();
 
     public boolean needsMoreInput; // required
+    public boolean exceptionOccurred; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      NEEDS_MORE_INPUT((short)1, "needsMoreInput");
+      NEEDS_MORE_INPUT((short)1, "needsMoreInput"),
+      EXCEPTION_OCCURRED((short)2, "exceptionOccurred");
 
       private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -1156,6 +1163,8 @@ public class PythonConsoleFrontendService {
         switch(fieldId) {
           case 1: // NEEDS_MORE_INPUT
             return NEEDS_MORE_INPUT;
+          case 2: // EXCEPTION_OCCURRED
+            return EXCEPTION_OCCURRED;
           default:
             return null;
         }
@@ -1198,11 +1207,14 @@ public class PythonConsoleFrontendService {
 
     // isset id assignments
     private static final int __NEEDSMOREINPUT_ISSET_ID = 0;
+    private static final int __EXCEPTIONOCCURRED_ISSET_ID = 1;
     private byte __isset_bitfield = 0;
     public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.NEEDS_MORE_INPUT, new org.apache.thrift.meta_data.FieldMetaData("needsMoreInput", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EXCEPTION_OCCURRED, new org.apache.thrift.meta_data.FieldMetaData("exceptionOccurred", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(notifyFinished_args.class, metaDataMap);
@@ -1212,11 +1224,14 @@ public class PythonConsoleFrontendService {
     }
 
     public notifyFinished_args(
-      boolean needsMoreInput)
+      boolean needsMoreInput,
+      boolean exceptionOccurred)
     {
       this();
       this.needsMoreInput = needsMoreInput;
       setNeedsMoreInputIsSet(true);
+      this.exceptionOccurred = exceptionOccurred;
+      setExceptionOccurredIsSet(true);
     }
 
     /**
@@ -1225,6 +1240,7 @@ public class PythonConsoleFrontendService {
     public notifyFinished_args(notifyFinished_args other) {
       __isset_bitfield = other.__isset_bitfield;
       this.needsMoreInput = other.needsMoreInput;
+      this.exceptionOccurred = other.exceptionOccurred;
     }
 
     public notifyFinished_args deepCopy() {
@@ -1235,6 +1251,8 @@ public class PythonConsoleFrontendService {
     public void clear() {
       setNeedsMoreInputIsSet(false);
       this.needsMoreInput = false;
+      setExceptionOccurredIsSet(false);
+      this.exceptionOccurred = false;
     }
 
     public boolean isNeedsMoreInput() {
@@ -1260,6 +1278,29 @@ public class PythonConsoleFrontendService {
       __isset_bitfield = org.apache.thrift.EncodingUtils.setBit(__isset_bitfield, __NEEDSMOREINPUT_ISSET_ID, value);
     }
 
+    public boolean isExceptionOccurred() {
+      return this.exceptionOccurred;
+    }
+
+    public notifyFinished_args setExceptionOccurred(boolean exceptionOccurred) {
+      this.exceptionOccurred = exceptionOccurred;
+      setExceptionOccurredIsSet(true);
+      return this;
+    }
+
+    public void unsetExceptionOccurred() {
+      __isset_bitfield = org.apache.thrift.EncodingUtils.clearBit(__isset_bitfield, __EXCEPTIONOCCURRED_ISSET_ID);
+    }
+
+    /** Returns true if field exceptionOccurred is set (has been assigned a value) and false otherwise */
+    public boolean isSetExceptionOccurred() {
+      return org.apache.thrift.EncodingUtils.testBit(__isset_bitfield, __EXCEPTIONOCCURRED_ISSET_ID);
+    }
+
+    public void setExceptionOccurredIsSet(boolean value) {
+      __isset_bitfield = org.apache.thrift.EncodingUtils.setBit(__isset_bitfield, __EXCEPTIONOCCURRED_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
       switch (field) {
       case NEEDS_MORE_INPUT:
@@ -1267,6 +1308,14 @@ public class PythonConsoleFrontendService {
           unsetNeedsMoreInput();
         } else {
           setNeedsMoreInput((java.lang.Boolean)value);
+        }
+        break;
+
+      case EXCEPTION_OCCURRED:
+        if (value == null) {
+          unsetExceptionOccurred();
+        } else {
+          setExceptionOccurred((java.lang.Boolean)value);
         }
         break;
 
@@ -1278,6 +1327,9 @@ public class PythonConsoleFrontendService {
       switch (field) {
       case NEEDS_MORE_INPUT:
         return isNeedsMoreInput();
+
+      case EXCEPTION_OCCURRED:
+        return isExceptionOccurred();
 
       }
       throw new java.lang.IllegalStateException();
@@ -1292,6 +1344,8 @@ public class PythonConsoleFrontendService {
       switch (field) {
       case NEEDS_MORE_INPUT:
         return isSetNeedsMoreInput();
+      case EXCEPTION_OCCURRED:
+        return isSetExceptionOccurred();
       }
       throw new java.lang.IllegalStateException();
     }
@@ -1320,6 +1374,15 @@ public class PythonConsoleFrontendService {
           return false;
       }
 
+      boolean this_present_exceptionOccurred = true;
+      boolean that_present_exceptionOccurred = true;
+      if (this_present_exceptionOccurred || that_present_exceptionOccurred) {
+        if (!(this_present_exceptionOccurred && that_present_exceptionOccurred))
+          return false;
+        if (this.exceptionOccurred != that.exceptionOccurred)
+          return false;
+      }
+
       return true;
     }
 
@@ -1328,6 +1391,8 @@ public class PythonConsoleFrontendService {
       int hashCode = 1;
 
       hashCode = hashCode * 8191 + ((needsMoreInput) ? 131071 : 524287);
+
+      hashCode = hashCode * 8191 + ((exceptionOccurred) ? 131071 : 524287);
 
       return hashCode;
     }
@@ -1346,6 +1411,16 @@ public class PythonConsoleFrontendService {
       }
       if (isSetNeedsMoreInput()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.needsMoreInput, other.needsMoreInput);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = java.lang.Boolean.valueOf(isSetExceptionOccurred()).compareTo(other.isSetExceptionOccurred());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetExceptionOccurred()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.exceptionOccurred, other.exceptionOccurred);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1373,6 +1448,10 @@ public class PythonConsoleFrontendService {
 
       sb.append("needsMoreInput:");
       sb.append(this.needsMoreInput);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("exceptionOccurred:");
+      sb.append(this.exceptionOccurred);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -1427,6 +1506,14 @@ public class PythonConsoleFrontendService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 2: // EXCEPTION_OCCURRED
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.exceptionOccurred = iprot.readBool();
+                struct.setExceptionOccurredIsSet(true);
+              } else {
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1444,6 +1531,9 @@ public class PythonConsoleFrontendService {
         oprot.writeStructBegin(STRUCT_DESC);
         oprot.writeFieldBegin(NEEDS_MORE_INPUT_FIELD_DESC);
         oprot.writeBool(struct.needsMoreInput);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(EXCEPTION_OCCURRED_FIELD_DESC);
+        oprot.writeBool(struct.exceptionOccurred);
         oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
@@ -1466,19 +1556,29 @@ public class PythonConsoleFrontendService {
         if (struct.isSetNeedsMoreInput()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetExceptionOccurred()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetNeedsMoreInput()) {
           oprot.writeBool(struct.needsMoreInput);
+        }
+        if (struct.isSetExceptionOccurred()) {
+          oprot.writeBool(struct.exceptionOccurred);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, notifyFinished_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
-        java.util.BitSet incoming = iprot.readBitSet(1);
+        java.util.BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.needsMoreInput = iprot.readBool();
           struct.setNeedsMoreInputIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.exceptionOccurred = iprot.readBool();
+          struct.setExceptionOccurredIsSet(true);
         }
       }
     }

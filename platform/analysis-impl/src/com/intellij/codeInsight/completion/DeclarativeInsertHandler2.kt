@@ -132,9 +132,11 @@ open class DeclarativeInsertHandler2 protected constructor(
    */
   class LazyBuilder(holdReadLock: Boolean, private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
     private val delegate = if (holdReadLock) {
-      lazy { runReadAction {
-        Builder().also(block::produce).build()
-      }}
+      lazy {
+        runReadAction {
+          Builder().also(block::produce).build()
+        }
+      }
     }
     else {
       lazy {
@@ -212,3 +214,12 @@ class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String
            editor.document.getText(TextRange.create(startOffset, startOffset + valueLength)) == stringToInsert
   }
 }
+
+@ApiStatus.Experimental
+object EmptyDeclarativeInsertHandler : DeclarativeInsertHandler2(
+  textOperations = emptyList(),
+  offsetToPutCaret = 0,
+  addCompletionChar = null,
+  postInsertHandler = null,
+  popupOptions = PopupOptions.DoNotShow,
+)

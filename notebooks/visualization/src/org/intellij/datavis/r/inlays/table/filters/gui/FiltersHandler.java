@@ -75,7 +75,7 @@ public class FiltersHandler extends AbstractFiltersHandler {
   public void setFilterOnUpdates(boolean enable) {
     filterOnUpdates = enable;
     if (getSorter() != null) {
-      ((DefaultRowSorter)getSorter()).setSortsOnUpdates(enable);
+      ((DefaultRowSorter<?, ?>)getSorter()).setSortsOnUpdates(enable);
     }
   }
 

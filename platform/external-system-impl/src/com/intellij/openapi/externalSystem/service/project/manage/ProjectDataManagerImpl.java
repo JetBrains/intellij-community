@@ -103,6 +103,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     long activityId = trace.getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
     boolean importSucceeded = false;
+    int errorsCount = 0;
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -144,6 +145,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       importSucceeded = true;
     }
     catch (Throwable t) {
+      errorsCount += 1;
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFailed(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
       ExternalSystemSyncActionsCollector.logError(null, activityId, t);
@@ -159,7 +161,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     finally {
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
-      ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs);
+      ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
     }
     runFinalTasks(project, synchronous, onSuccessImportTasks);

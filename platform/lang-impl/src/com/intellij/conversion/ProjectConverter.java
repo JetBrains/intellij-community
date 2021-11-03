@@ -9,8 +9,13 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Override some of 'create*Converter' methods to perform conversion. If none of these methods suits the needs,
- * override {@link #isConversionNeeded()}, {@link #getAdditionalAffectedFiles()} and one of '*processingFinished' methods
+ * Override some of 'create*Converter' methods and return instance of this class from {@link ConverterProvider#createConverter} to perform
+ * conversion. If none of these methods suits the needs, override {@link #isConversionNeeded()},
+ * {@link #getAdditionalAffectedFiles()} and one of '*processingFinished' methods.
+ * <p>Conversion is performed in 4 phases. Firstly, it's determined whether conversion {@link ConversionProcessor#isConversionNeeded is needed}.
+ * Then {@link ConversionProcessor#preProcess pre-processing} is invoked for each affected converter, after that {@link ConversionProcessor#process} processing}
+ * is invoked for all these converters, and finally {@link ConversionProcessor#postProcess} post-processing} is performed.
+ * </p>
  */
 public abstract class ProjectConverter {
   @Nullable

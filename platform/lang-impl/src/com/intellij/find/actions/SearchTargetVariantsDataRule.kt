@@ -7,6 +7,7 @@ import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
 import com.intellij.util.SmartList
@@ -17,39 +18,46 @@ import com.intellij.util.SmartList
 class SearchTargetVariantsDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): Any? {
-    val allTargets = SmartList<TargetVariant>()
-
-    FindUsagesAction.SEARCH_TARGETS.getData(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
-
-    val usageTargets: Array<out UsageTarget>? = UsageView.USAGE_TARGETS_KEY.getData(dataProvider)
-    if (usageTargets == null) {
-      val editor = CommonDataKeys.EDITOR.getData(dataProvider)
-      if (editor != null) {
-        val offset = editor.caretModel.offset
-        try {
-          val reference = TargetElementUtil.findReference(editor, offset)
-          if (reference != null) {
-            TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
-          }
-        }
-        catch (ignore: IndexNotReadyException) {
-        }
-      }
+    if (!Registry.`is`("ide.find.usages.data.rule")) {
+      return null
     }
-    else if (usageTargets.isNotEmpty()) {
-      val target: UsageTarget = usageTargets[0]
-      if (target is PsiElement2UsageTargetAdapter) {
-        target.element?.let {
-          allTargets += PsiTargetVariant(it)
-        }
-      }
-      else {
-        allTargets += CustomTargetVariant(target)
-      }
-    }
-
-    return allTargets.takeUnless {
+    return targetVariants(dataProvider).takeUnless {
       it.isEmpty()
     }
   }
+}
+
+internal fun targetVariants(dataProvider: DataProvider): List<TargetVariant> {
+  val allTargets = SmartList<TargetVariant>()
+
+  FindUsagesAction.SEARCH_TARGETS.getData(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
+
+  val usageTargets: Array<out UsageTarget>? = UsageView.USAGE_TARGETS_KEY.getData(dataProvider)
+  if (usageTargets == null) {
+    val editor = CommonDataKeys.EDITOR.getData(dataProvider)
+    if (editor != null) {
+      val offset = editor.caretModel.offset
+      try {
+        val reference = TargetElementUtil.findReference(editor, offset)
+        if (reference != null) {
+          TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
+        }
+      }
+      catch (ignore: IndexNotReadyException) {
+      }
+    }
+  }
+  else if (usageTargets.isNotEmpty()) {
+    val target: UsageTarget = usageTargets[0]
+    if (target is PsiElement2UsageTargetAdapter) {
+      target.element?.let {
+        allTargets += PsiTargetVariant(it)
+      }
+    }
+    else {
+      allTargets += CustomTargetVariant(target)
+    }
+  }
+
+  return allTargets
 }

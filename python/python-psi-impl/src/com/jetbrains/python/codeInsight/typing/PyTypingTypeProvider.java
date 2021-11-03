@@ -463,7 +463,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       final PyType collection = getCollection(target, context);
       if (collection instanceof PyInstantiableType) {
-        return Ref.create(((PyInstantiableType)collection).toClass());
+        return Ref.create(((PyInstantiableType<?>)collection).toClass());
       }
 
       final PyType typedDictType = getTypedDictTypeForTarget(target, context);
@@ -756,24 +756,24 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getTypeFromBitwiseOrOperator(@NotNull PyBinaryExpression expression, @NotNull Context context) {
     if (expression.getOperator() != PyTokenTypes.OR) return null;
+
     PyExpression left = expression.getLeftExpression();
     PyExpression right = expression.getRightExpression();
-    if (left != null && right != null) {
-      Ref<PyType> leftType = getType(left, context);
-      Ref<PyType> rightType = getType(right, context);
-      PyType union = null;
-      if (leftType != null && rightType != null) {
-        union = PyUnionType.union(leftType.get(), rightType.get());
-      }
-      else if (leftType != null) {
-        union = leftType.get();
-      }
-      else if (rightType != null) {
-        union = rightType.get();
-      }
-      return union != null ? Ref.create(union) : null;
+    if (left == null || right == null) return null;
+
+    Ref<PyType> leftType = getType(left, context);
+    Ref<PyType> rightType = getType(right, context);
+    if (leftType == null && rightType == null) return null;
+
+    PyType union;
+    if (leftType != null && rightType != null) {
+      union = PyUnionType.union(leftType.get(), rightType.get());
     }
-    return null;
+    else {
+      union = PyUnionType.createWeakType(Objects.requireNonNullElse(leftType, rightType).get());
+    }
+
+    return union != null ? Ref.create(union) : null;
   }
 
   public static boolean isBitwiseOrUnionAvailable(@NotNull TypeEvalContext context) {
@@ -786,7 +786,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
     PsiFile file = element.getContainingFile();
     if (file instanceof PyFile && ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS)) {
-      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, ScopeOwner.class) != null;
+      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, PyStatement.class) != null;
     }
 
     return false;
@@ -1729,16 +1729,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static boolean isInsideTypeHint(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
-    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, ScopeOwner.class) != null) {
+    if (PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, false, PyStatement.class) != null) {
       return true;
     }
 
-    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, ScopeOwner.class);
+    final PsiComment comment = PsiTreeUtil.getParentOfType(realContext, PsiComment.class, false, PyStatement.class);
     if (comment != null && getTypeCommentValue(comment.getText()) != null) {
       return true;
     }
 
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(realContext, PyAssignmentStatement.class);
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(realContext, PyAssignmentStatement.class, false, PyStatement.class);
     if (assignment != null &&
         PsiTreeUtil.isAncestor(assignment.getAssignedValue(), realContext, false) &&
         isExplicitTypeAlias(assignment, context)) {

@@ -161,7 +161,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
       if (browseListeners[i] instanceof MethodBrowser) {
-        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton)field).getChildComponent();
+        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton<?>)field).getChildComponent();
         ((MethodBrowser)browseListeners[i]).installCompletion(childComponent);
         document = childComponent.getDocument();
       }

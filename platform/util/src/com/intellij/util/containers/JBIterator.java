@@ -154,7 +154,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
         if (op.impl == null) {
           // rollback all prepended takeWhile conditions if nextImpl() votes SKIP
           for (Op op2 = myFirstOp; op2.impl instanceof CountDown; op2 = op2.nextOp) {
-            ((CountDown)op2.impl).cur ++;
+            ((CountDown<?>)op2.impl).cur ++;
           }
         }
         op = null;
@@ -376,7 +376,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     void advance(Object o) {
       if (advanced || !(o instanceof JBIterator)) return;
-      ((JBIterator)o).advance();
+      ((JBIterator<?>)o).advance();
       advanced = true;
     }
   }

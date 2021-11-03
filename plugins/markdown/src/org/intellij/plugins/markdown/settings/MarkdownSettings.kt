@@ -28,10 +28,6 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
     get() = state.isEnhancedEditingEnabled
     set(value) { state.isEnhancedEditingEnabled = value }
 
-  var extensionsEnabledState
-    get() = state.enabledExtensions
-    set(value) { state.enabledExtensions = value }
-
   var splitLayout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }
@@ -47,6 +43,10 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
   var isAutoScrollEnabled
     get() = state.isAutoScrollEnabled
     set(value) { state.isAutoScrollEnabled = value }
+
+  var isRunnerEnabled
+    get() = state.isRunnerEnabled
+    set(value) { state.isRunnerEnabled = value }
 
   var useCustomStylesheetPath
     get() = state.useCustomStylesheetPath
@@ -80,10 +80,6 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
-  }
-
-  fun isExtensionEnabled(extensionsId: String): Boolean {
-    return state.enabledExtensions[extensionsId] == true
   }
 
   @Synchronized

@@ -12,7 +12,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -399,7 +399,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
                          "public class ImplTest extends ApiTest {}");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .addImplementationDependency(it.project(":impl"))
         .project(":impl", p -> {
           p

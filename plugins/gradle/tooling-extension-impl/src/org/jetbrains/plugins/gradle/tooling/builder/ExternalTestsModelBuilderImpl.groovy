@@ -25,6 +25,10 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   @Override
   Object buildAll(String modelName, Project project) {
     def defaultTestsModel = new DefaultExternalTestsModel()
+    // Projects using android plugins are not supported by this model builder.
+    if (project.plugins.hasPlugin("com.android.base")) {
+      return defaultTestsModel
+    }
     if (javaPluginIsApplied(project)) {
       defaultTestsModel.sourceTestMappings = getMapping(project)
     }

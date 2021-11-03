@@ -37,7 +37,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
 
     override fun slotRemoved(index: Int) {
-      if(index >= 0 && index < components.size) {
+      if (index >= 0 && index < components.size) {
         removeSingleComponent(components[index])
       }
       else {
@@ -137,20 +137,23 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun rebuild() {
     build()
-    if(manager.slotsCount() > 0 && added) {
-      pack()
-    }
+    pack()
   }
 
   private fun build() {
     val count = manager.slotsCount()
     slotPane.removeAll()
     components.clear()
-    repeat(count) { addNewSlot()}
+    repeat(count) { addNewSlot() }
   }
 
   private fun addSingleSlot() {
     addNewSlot()
+    pack()
+  }
+
+  private fun removeSingleComponent(component: SlotComponent) {
+    removeComponent(component)
     pack()
   }
 
@@ -183,11 +186,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     }
   }
 
-  private fun removeSingleComponent(component: SlotComponent) {
-    removeComponent(component)
-    pack()
-  }
-
   private fun removeComponent(component: SlotComponent) {
     slotPane.remove(component.view)
     components.remove(component)
@@ -201,7 +199,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private fun createComponent(): SlotComponent {
     val group = DefaultActionGroup()
-    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.RUN_TOOLBAR, group)
+    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.MAIN_TOOLBAR, group)
 
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize

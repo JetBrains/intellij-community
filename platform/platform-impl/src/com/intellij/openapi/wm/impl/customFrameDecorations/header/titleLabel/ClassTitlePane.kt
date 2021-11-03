@@ -18,7 +18,7 @@ internal class ClassTitlePane : ClippingTitle() {
 
   fun updatePath(c: Component) {
     longText = project?.let {
-      if(Disposer.isDisposed(it)) {
+      if(it.isDisposed()) {
         classPath = ""
         return@let ""
       }

@@ -2,7 +2,6 @@
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
@@ -11,6 +10,6 @@ class UpdateCopyrightAdditionalUi {
   val panel = panel {
     row {
       updateExistingCopyrightsCb = checkBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights")).component
-    }.topGap(TopGap.MEDIUM)
+    }
   }
 }

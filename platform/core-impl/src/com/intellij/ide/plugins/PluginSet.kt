@@ -34,6 +34,10 @@ class PluginSet internal constructor(
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = ArrayList(enabledModuleMap.values)
 
+  fun isPluginInstalled(id: PluginId) = findInstalledPlugin(id) != null
+
+  fun findInstalledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = allPlugins.find { it.pluginId == id }
+
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 
   fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)

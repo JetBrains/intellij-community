@@ -49,14 +49,16 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
           return;
         }
 
-        final LocalQuickFix fix = new MyLocalQuickFix();
-
-        holder.registerProblem(tag,
-                               XmlAnalysisBundle.message("html.inspections.check.empty.script.message"),
-                               tag.getContainingFile().getContext() != null ?
-                               ProblemHighlightType.INFORMATION:
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               fix);
+        ProblemHighlightType type = tag.getContainingFile().getContext() != null ?
+                                    ProblemHighlightType.INFORMATION :
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        // should not report INFORMATION in batch mode
+        if (isOnTheFly || type != ProblemHighlightType.INFORMATION) {
+          holder.registerProblem(tag,
+                                 XmlAnalysisBundle.message("html.inspections.check.empty.script.message"),
+                                 type,
+                                 new MyLocalQuickFix());
+        }
       }
     };
   }

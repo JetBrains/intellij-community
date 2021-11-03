@@ -56,7 +56,7 @@ public class CopyConfigurationAction extends AnAction {
       ((ConfigurationFactoryEx)factory).onConfigurationCopied(configuration);
     }
     if (configuration instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)configuration).onConfigurationCopied();
+      ((RunConfigurationBase<?>)configuration).onConfigurationCopied();
     }
 
     if (RunDialog.editConfiguration(project, copiedSettings,

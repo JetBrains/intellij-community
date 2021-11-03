@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,7 +39,8 @@ public final class UIUtils {
             private final List<String> extensions = Arrays.asList(_extensions);
 
             @Override
-            public boolean isFileSelectable(VirtualFile virtualFile) {
+            public boolean isFileSelectable(@Nullable VirtualFile virtualFile) {
+              if (virtualFile == null) return false;
               return extensions.contains(virtualFile.getExtension());
             }
 

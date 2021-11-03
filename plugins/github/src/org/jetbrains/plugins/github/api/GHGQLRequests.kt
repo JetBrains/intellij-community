@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
@@ -178,35 +178,61 @@ object GHGQLRequests {
     private class PRSearch(search: SearchConnection<GHPullRequestShort>)
       : GHGQLSearchQueryResponse<GHPullRequestShort>(search)
 
-    fun reviewThreads(repository: GHRepositoryCoordinates, number: Long,
-                      pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestReviewThread>> {
-      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
-                                      mapOf("repoOwner" to repository.repositoryPath.owner,
-                                            "repoName" to repository.repositoryPath.repository,
-                                            "number" to number,
-                                            "pageSize" to pagination?.pageSize,
-                                            "cursor" to pagination?.afterCursor),
-                                      ThreadsConnection::class.java,
-                                      "repository", "pullRequest", "reviewThreads")
-    }
+    fun reviewThreads(
+      repository: GHRepositoryCoordinates,
+      number: Long,
+      pagination: GHGQLRequestPagination? = null
+    ): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestReviewThread>> =
+      GQLQuery.TraversedParsed(
+        repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
+        parameters(repository, number, pagination),
+        ThreadsConnection::class.java, "repository", "pullRequest", "reviewThreads"
+      )
 
     private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread>)
       : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
 
-    fun commits(repository: GHRepositoryCoordinates, number: Long,
-                pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestCommit>> {
-      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestCommits,
-                                      mapOf("repoOwner" to repository.repositoryPath.owner,
-                                            "repoName" to repository.repositoryPath.repository,
-                                            "number" to number,
-                                            "pageSize" to pagination?.pageSize,
-                                            "cursor" to pagination?.afterCursor),
-                                      CommitsConnection::class.java,
-                                      "repository", "pullRequest", "commits")
-    }
+    fun commits(
+      repository: GHRepositoryCoordinates,
+      number: Long,
+      pagination: GHGQLRequestPagination? = null
+    ): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestCommit>> =
+      GQLQuery.TraversedParsed(
+        repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestCommits,
+        parameters(repository, number, pagination),
+        CommitsConnection::class.java, "repository", "pullRequest", "commits"
+      )
 
     private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit>)
       : GHConnection<GHPullRequestCommit>(pageInfo, nodes)
+
+    fun files(
+      repository: GHRepositoryCoordinates,
+      number: Long,
+      pagination: GHGQLRequestPagination
+    ): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestChangedFile>> =
+      GQLQuery.TraversedParsed(
+        repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestFiles,
+        parameters(repository, number, pagination),
+        FilesConnection::class.java, "repository", "pullRequest", "files"
+      )
+
+    private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile>) :
+      GHConnection<GHPullRequestChangedFile>(pageInfo, nodes)
+
+    fun markFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
+      GQLQuery.TraversedParsed(
+        server.toGraphQLUrl(), GHGQLQueries.markFileAsViewed,
+        mapOf("pullRequestId" to pullRequestId, "path" to path),
+        Unit::class.java
+      )
+
+    fun unmarkFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
+      GQLQuery.TraversedParsed(
+        server.toGraphQLUrl(), GHGQLQueries.unmarkFileAsViewed,
+        mapOf("pullRequestId" to pullRequestId, "path" to path),
+        Unit::class.java
+      )
 
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,
@@ -340,3 +366,16 @@ object GHGQLRequests {
     }
   }
 }
+
+private fun parameters(
+  repository: GHRepositoryCoordinates,
+  pullRequestNumber: Long,
+  pagination: GHGQLRequestPagination?
+): Map<String, Any?> =
+  mapOf(
+    "repoOwner" to repository.repositoryPath.owner,
+    "repoName" to repository.repositoryPath.repository,
+    "number" to pullRequestNumber,
+    "pageSize" to pagination?.pageSize,
+    "cursor" to pagination?.afterCursor
+  )

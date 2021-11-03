@@ -27,6 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -67,15 +69,20 @@ public final class Utils extends DataContextUtils {
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
-      return new PreCachedDataContext(component);
+      return newPreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {
-      PreCachedDataContext wrapped = new PreCachedDataContext(component);
+      DataContext wrapped = newPreCachedDataContext(component);
       LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
       LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
       return wrapped;
     }
     return dataContext;
+  }
+
+  private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
+    if (Registry.is("actionSystem.update.actions.async.data-context2")) return new PreCachedDataContext2(component);
+    return new PreCachedDataContext(component);
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
@@ -85,7 +92,9 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).frozenCopy(missedKeys) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
+           dataContext;
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
@@ -94,8 +103,16 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
+    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).getRawDataIfCached(dataId) :
+           dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
+  }
+
+  static void clearAllCachesAndUpdates() {
+    ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
+    ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext2.clearAllCaches();
+    PreCachedDataContext.clearAllCaches();
   }
 
   @ApiStatus.Internal
@@ -297,6 +314,8 @@ public final class Utils extends DataContextUtils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
+    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    if (nativePeer != null) nativePeer.beginFill();
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -317,16 +336,19 @@ public final class Utils extends DataContextUtils {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
+          if (nativePeer != null) nativePeer.add(null);
         }
       }
       else if (action instanceof ActionGroup &&
                !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
+        Menu submenuPeer = nativePeer != null ? (Menu)nativePeer.add(new Menu(presentation.getText(enableMnemonics))) : null;
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons, submenuPeer);
         component.add(menu);
         children.add(menu);
       }
       else {
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
+        MenuItem menuItemPeer = nativePeer != null ? nativePeer.add(new MenuItem()) : null;
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons, menuItemPeer);
         component.add(each);
         children.add(each);
       }
@@ -448,6 +470,11 @@ public final class Utils extends DataContextUtils {
                                                               @NotNull PresentationFactory factory,
                                                               @Nullable Consumer<? super AnActionEvent> eventTracker,
                                                               @NotNull Function<? super UpdateSession, ? extends T> function) {
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
+      LOG.error("Actions cannot be updated when write-action is running or pending");
+      return null;
+    }
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -488,7 +515,6 @@ public final class Utils extends DataContextUtils {
             }
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
-          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
           ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {

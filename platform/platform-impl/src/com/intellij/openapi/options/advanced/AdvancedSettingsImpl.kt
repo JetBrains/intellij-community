@@ -281,6 +281,10 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     return state.get(id) ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
   }
 
+  override fun getDefault(id: String): Any {
+    return getOption(id).defaultValueObject
+  }
+
   private fun getOption(id: String): AdvancedSettingBean {
     return getOptionOrNull(id) ?: throw IllegalArgumentException("Can't find advanced setting $id")
   }

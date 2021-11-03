@@ -4,7 +4,6 @@ package com.intellij.coverage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.util.classFinder.ClassFinder;
 import com.intellij.rt.coverage.util.classFinder.ClassPathEntry;
@@ -13,6 +12,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -21,7 +21,7 @@ final class IdeaClassFinder extends ClassFinder {
   private final CoverageSuitesBundle myCurrentSuite;
 
   IdeaClassFinder(Project project, CoverageSuitesBundle currentSuite) {
-    super(obtainPatternsFromSuite(currentSuite), new ArrayList());
+    super(obtainPatternsFromSuite(currentSuite), new ArrayList<>());
     myProject = project;
     myCurrentSuite = currentSuite;
   }
@@ -41,22 +41,15 @@ final class IdeaClassFinder extends ClassFinder {
   }
 
   @Override
-  protected Collection getClassPathEntries() {
-    final Collection entries = super.getClassPathEntries();
+  protected Collection<ClassPathEntry> getClassPathEntries() {
+    final Collection<ClassPathEntry> entries = new HashSet<>();
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    final CoverageDataManager coverageManager = CoverageDataManager.getInstance(myProject);
     for (Module module : modules) {
-      final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-      if (extension != null) {
-        final VirtualFile outputFile = extension.getCompilerOutputPath();
-        if (outputFile != null) {
-          entries.add(new ClassPathEntry(outputFile.getPath(), UrlClassLoader.build().files(Collections.singletonList(outputFile.toNioPath())).get()));
-        }
-        if (myCurrentSuite.isTrackTestFolders()) {
-          final VirtualFile testOutput = extension.getCompilerOutputPathForTests();
-          if (testOutput != null) {
-            entries.add(new ClassPathEntry(testOutput.getPath(), UrlClassLoader.build().files(Collections.singletonList(testOutput.toNioPath())).get()));
-          }
-        }
+      final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(coverageManager, module, myCurrentSuite.isTrackTestFolders());
+      if (roots == null) continue;
+      for (VirtualFile root : roots) {
+        entries.add(new ClassPathEntry(root.getPath(), UrlClassLoader.build().files(Collections.singletonList(root.toNioPath())).get()));
       }
     }
     return entries;

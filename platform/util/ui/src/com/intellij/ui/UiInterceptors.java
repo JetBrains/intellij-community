@@ -46,7 +46,9 @@ public final class UiInterceptors {
       return true;
     }
 
-    PersistentUiInterceptor<?> persistentUiInterceptor = ContainerUtil.find(ourPersistentInterceptors, s -> s.isApplicable(uiComponent));
+    PersistentUiInterceptor<?> persistentUiInterceptor = ContainerUtil.find(ourPersistentInterceptors, s -> {
+      return s.isApplicable(uiComponent, relativePoint);
+    });
     if (persistentUiInterceptor != null) {
       persistentUiInterceptor.intercept(uiComponent, relativePoint);
       return true;
@@ -110,9 +112,13 @@ public final class UiInterceptors {
     }
 
     public final boolean isApplicable(@NotNull Object component) {
+      return isApplicable(component, null);
+    }
+
+    public final boolean isApplicable(@NotNull Object component, @Nullable RelativePoint relativePoint) {
       if (!myClass.isInstance(component)) return false;
       //noinspection unchecked
-      return shouldIntercept((T)component);
+      return shouldIntercept((T)component, relativePoint);
     }
 
     public final void intercept(@NotNull Object component, @Nullable RelativePoint relativePoint) {
@@ -128,5 +134,9 @@ public final class UiInterceptors {
     protected abstract void doIntercept(@NotNull T component, @Nullable RelativePoint owner);
 
     public abstract boolean shouldIntercept(@NotNull T component);
+
+    public boolean shouldIntercept(@NotNull T component, @Nullable RelativePoint relativePoint) {
+      return shouldIntercept(component);
+    }
   }
 }

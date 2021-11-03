@@ -134,8 +134,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    IntentionAction newAction = ObjectUtils.tryCast(myAction.getFileModifierForPreview(target), IntentionAction.class);
-    return newAction == null ? null : newAction == myAction ? this : new IntentionWrapper(newAction);
+  public boolean invokeForPreview(@NotNull Project project, Editor editor, PsiFile file) {
+    return myAction.invokeForPreview(project, editor, file);
   }
 }

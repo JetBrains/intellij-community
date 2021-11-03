@@ -115,7 +115,7 @@ public final class ClassPath {
     ResourceFile create(Path file) throws IOException;
   }
 
-  public synchronized void reset(@NotNull List<? extends Path> paths) {
+  public synchronized void reset(@NotNull List<Path> paths) {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
@@ -144,7 +144,7 @@ public final class ClassPath {
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   @ApiStatus.Internal
-  synchronized void addFiles(@NotNull List<? extends Path> files) {
+  synchronized void addFiles(@NotNull List<Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
     }
@@ -152,7 +152,7 @@ public final class ClassPath {
   }
 
   // think twice before use
-  public synchronized void appendFiles(@NotNull List<? extends Path> newList) {
+  public synchronized void appendFiles(@NotNull List<Path> newList) {
     Set<Path> existing = new HashSet<>(files);
     for (int i = newList.size() - 1; i >= 0; i--) {
       Path file = newList.get(i);

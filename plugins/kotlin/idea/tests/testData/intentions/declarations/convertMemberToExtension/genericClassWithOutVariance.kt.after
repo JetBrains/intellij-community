@@ -1,0 +1,6 @@
+// WITH_RUNTIME
+class Foo<out R> {
+    val list = listOf<R>()
+}
+
+fun <R> Foo<R>.bar() = list.first() to list.last()

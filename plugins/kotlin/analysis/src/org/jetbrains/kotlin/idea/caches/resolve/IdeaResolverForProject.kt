@@ -2,7 +2,8 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
@@ -11,8 +12,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.caches.resolve.*
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.context.withModule
-import org.jetbrains.kotlin.descriptors.ModuleCapability
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
@@ -57,7 +57,13 @@ class IdeaResolverForProject(
         val PLATFORM_ANALYSIS_SETTINGS = ModuleCapability<PlatformAnalysisSettings>("PlatformAnalysisSettings")
     }
 
-    private val resolutionAnchorProvider = ServiceManager.getService(projectContext.project, ResolutionAnchorProvider::class.java)
+    private val resolutionAnchorProvider = projectContext.project.service<ResolutionAnchorProvider>()
+
+    private val invalidModuleNotifier: InvalidModuleNotifier = object: InvalidModuleNotifier {
+        override fun notifyModuleInvalidated(moduleDescriptor: ModuleDescriptor) {
+            throw ProcessCanceledException(InvalidModuleException("Accessing invalid module descriptor $moduleDescriptor"))
+        }
+    }
 
     private val constantSdkDependencyIfAny: SdkInfo? =
         if (settings is PlatformAnalysisSettingsImpl) settings.sdk?.let { SdkInfo(projectContext.project, it) } else null
@@ -68,7 +74,8 @@ class IdeaResolverForProject(
     override fun getAdditionalCapabilities(): Map<ModuleCapability<*>, Any?> {
         return super.getAdditionalCapabilities() +
                 (PLATFORM_ANALYSIS_SETTINGS to settings) +
-                (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider)
+                (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider) +
+                (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier)
     }
 
     override fun sdkDependency(module: IdeaModuleInfo): SdkInfo? {

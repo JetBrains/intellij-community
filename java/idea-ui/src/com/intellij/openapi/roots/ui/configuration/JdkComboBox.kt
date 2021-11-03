@@ -151,14 +151,13 @@ fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?, 
         }
         else {
           JavaStartersBundle.message("message.java.version.not.supported.by.sdk.for.technology",
+            technologyName,
             selectedVersion.description,
             sdk.name,
-            technologyName)
+            wizardVersion.description)
         }
 
-        val currentSdkMessage = JavaStartersBundle.message("message.java.version.current.download", wizardVersion.description)
-        Messages.showErrorDialog("$message $currentSdkMessage",
-          JavaStartersBundle.message("message.title.error"))
+        Messages.showErrorDialog(message, JavaStartersBundle.message("message.title.error"))
 
         return false
       }

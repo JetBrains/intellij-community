@@ -1,6 +1,13 @@
 <html>
 <body>
-Reports <code>toString()</code> calls on numeric objects. Such calls are usually incorrect in an internationalized environment.
+Reports <code>toString()</code> calls on objects of a class extending <code>Number</code>.
+Such calls are usually incorrect in an internationalized environment and some locale specific formatting should be used instead.
+<p><b>Example:</b></p>
+<pre><code>
+  void print(Double d) {
+    System.out.println(d.toString());
+  }
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

@@ -1,6 +1,8 @@
 import org.gradle.internal.os.OperatingSystem
+
 import java.util.concurrent.TimeUnit
 
+apply from: 'retries.gradle'
 final def IJ_DIR = project.file("../../..").canonicalFile
 final def REPOSITORY = "https://repo.labs.intellij.net/clion"
 final def SETUP_ALL_PLATFORMS = Boolean.getBoolean("intellij.cidr.setup.all.platforms")
@@ -44,7 +46,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "1e5c6ed011d85d7547e00afb083a96a5a46719aa",
+    version: "00edc2ddb44c320c61363fdf8452eafbc44e5561",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
@@ -61,7 +63,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "810660",
+    version: "78c68ee",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
@@ -101,13 +103,14 @@ task setupCidr
         outputs.file(packageArchive)
 
         doLast {
-          download {
-            src downloadUrl
-            dest packageArchive
-            tempAndMove true
-            connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
-            readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
-            retries 10
+          project.ext.retry {
+            download {
+              src downloadUrl
+              dest packageArchive
+              tempAndMove true
+              connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+              readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+            }
           }
         }
       }

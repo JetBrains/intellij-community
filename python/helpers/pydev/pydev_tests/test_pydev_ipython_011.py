@@ -47,7 +47,7 @@ class TestBase(unittest.TestCase):
         pass
 
     def add_exec(self, code, expected_more=False):
-        more = self.front_end.add_exec(code)
+        more, exception_occurred = self.front_end.add_exec(code)
         eq_(expected_more, more)
 
     def redirect_stdout(self):

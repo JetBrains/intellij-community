@@ -3,17 +3,13 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.event.HyperlinkEvent
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
@@ -26,10 +22,21 @@ enum class LabelPosition {
 @ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
+  /**
+   * @see [Constraints.horizontalAlign]
+   */
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
+  /**
+   * @see [Constraints.verticalAlign]
+   */
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
+  /**
+   * Marks column with the cell as a resizable one. Size and placement of component in columns are managed by [horizontalAlign]
+   *
+   * @see [Grid.resizableColumns]
+   */
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>
@@ -48,23 +55,26 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun visibleIf(predicate: ComponentPredicate): Cell<T>
 
+  /**
+   * Changes [component] font to bold
+   */
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell aligned by left edge. The comment occupies available width before next comment (if present) or
+   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS uses smaller font).
+   * [comment] can contain html tags except <html>, which is added automatically in this method.
+   * The comment occupies available width before next comment (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects comment as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] comment after second columns is placed in second column (there are technical problems,
    * can be implemented later)
+   *
+   * @see MAX_LINE_LENGTH_WORD_WRAP
+   * @see MAX_LINE_LENGTH_NO_WRAP
    */
   fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Cell<T>
-
-  /**
-   * Adds html comment under the cell.
-   * See doc for comment method
-   */
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?, action: (HyperlinkEvent) -> Unit): Cell<T>
+              maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
+              action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method

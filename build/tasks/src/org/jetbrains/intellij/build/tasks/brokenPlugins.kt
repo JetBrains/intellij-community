@@ -1,25 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.io.debug
+import org.jetbrains.intellij.build.io.download
 import org.jetbrains.intellij.build.io.info
 import org.jetbrains.intellij.build.io.warn
 import java.io.BufferedOutputStream
-import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.lang.System.Logger
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.zip.GZIPInputStream
 
 private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.com/files/brokenPlugins.json"
 
@@ -58,39 +52,9 @@ fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelop
 
 private fun downloadFileFromMarketplace(logger: Logger): List<MarketplaceBrokenPlugin> {
   val jsonFormat = Json { ignoreUnknownKeys = true }
-  var attemptNumber = 0
-  while (true) {
-    logger.info("Load broken plugin list from $MARKETPLACE_BROKEN_PLUGINS_URL")
-    val httpClient = HttpClient.newBuilder()
-      .followRedirects(HttpClient.Redirect.ALWAYS)
-      .build()
-
-    val request = HttpRequest.newBuilder(URI(MARKETPLACE_BROKEN_PLUGINS_URL))
-      .header("Accept", "application/json")
-      .header("Accept-Encoding", "gzip")
-      .build()
-
-    val response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
-    val encoding = response.headers().firstValue("Content-Encoding").orElse("")
-    val byteOut = ByteArrayOutputStream()
-    (if (encoding == "gzip") GZIPInputStream(response.body()) else response.body()).use {
-      it.transferTo(byteOut)
-    }
-    val content = byteOut.toByteArray().toString(Charsets.UTF_8)
-    val responseCode = response.statusCode()
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-      return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
-    }
-
-    val error = RuntimeException("$responseCode: $content")
-    // server error - retry
-    if (attemptNumber > 3 || responseCode >= HttpURLConnection.HTTP_INTERNAL_ERROR) {
-      throw error
-    }
-    else {
-      attemptNumber++
-    }
-  }
+  logger.info("Load broken plugin list from $MARKETPLACE_BROKEN_PLUGINS_URL")
+  val content = download(MARKETPLACE_BROKEN_PLUGINS_URL).toString(Charsets.UTF_8)
+  return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
 }
 
 private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, targetFile: Path) {

@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModuleFilePathMacro extends Macro {
+public final class ModuleFilePathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

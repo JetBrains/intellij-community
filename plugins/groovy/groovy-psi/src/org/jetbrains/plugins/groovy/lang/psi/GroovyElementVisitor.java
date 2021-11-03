@@ -19,7 +19,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadAr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
@@ -110,6 +113,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     visitStatement(returnStatement);
+  }
+
+  public void visitYieldStatement(@NotNull GrYieldStatement yieldStatement) {
+    visitStatement(yieldStatement);
   }
 
   public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
@@ -276,6 +283,10 @@ public abstract class GroovyElementVisitor {
     visitTypeDefinition(classDefinition);
   }
 
+  public void visitRecordDefinition(@NotNull GrRecordDefinition recordDefinition) {
+    visitTypeDefinition(recordDefinition);
+  }
+
   public void visitEnumDefinition(@NotNull GrEnumTypeDefinition enumDefinition) {
     visitTypeDefinition(enumDefinition);
   }
@@ -408,10 +419,6 @@ public abstract class GroovyElementVisitor {
     visitElement(caseSection);
   }
 
-  public void visitCaseLabel(@NotNull GrCaseLabel caseLabel) {
-    visitElement(caseLabel);
-  }
-
   public void visitForInClause(@NotNull GrForInClause forInClause) {
     visitForClause(forInClause);
   }
@@ -442,6 +449,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitDocComment(@NotNull GrDocComment comment) {
     visitElement(comment);
+  }
+
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitExpression(switchExpression);
   }
 
   public void visitDocTag(@NotNull GrDocTag docTag) {

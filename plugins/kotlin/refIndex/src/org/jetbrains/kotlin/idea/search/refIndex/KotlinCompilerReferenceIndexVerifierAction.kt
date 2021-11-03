@@ -17,12 +17,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.search.codeUsageScope
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -43,8 +44,8 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
         val pointToElement = element.createSmartPointer()
         ReadAction.nonBlocking<CompilerReferenceData?> {
             val psiElement = pointToElement.element ?: return@nonBlocking null
-            val codeUsageScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(psiElement)
-            val useScope = PsiSearchHelper.getInstance(project).getUseScope(psiElement)
+            val codeUsageScope = psiElement.codeUsageScope()
+            val useScope = psiElement.useScope()
 
             CompilerReferenceData(
                 elementText = "${psiElement::class.simpleName}:${psiElement.safeAs<PsiNamedElement>()?.name}",
@@ -88,7 +89,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             }
             .coalesceBy(this)
             .inSmartMode(project)
-            .expireWhen { pointToElement.element == null || Disposer.isDisposed(project) }
+            .expireWhen { pointToElement.element == null || project.isDisposed() }
             .submit(AppExecutorUtil.getAppExecutorService())
     }
 

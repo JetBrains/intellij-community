@@ -229,7 +229,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     JPanel visibilityPanel = createVisibilityPanel();
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
-      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
+      ((ComboBoxVisibilityPanel<?>)myVisibilityPanel).registerUpDownActionsFor(myNameField);
       visibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
       panel.add(visibilityPanel, gbc);
       gbc.gridx++;
@@ -244,7 +244,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = createReturnTypeTextField(document);
-      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myReturnTypeField);
+      ((ComboBoxVisibilityPanel<?>)myVisibilityPanel).registerUpDownActionsFor(myReturnTypeField);
       typeLabel.setLabelFor(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {

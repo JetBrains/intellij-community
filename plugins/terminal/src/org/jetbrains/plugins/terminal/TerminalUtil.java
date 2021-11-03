@@ -18,6 +18,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.WinPtyProcess;
+import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +83,20 @@ public final class TerminalUtil {
           return consoleProcessCount > 3;
         }
         return consoleProcessCount > 2;
+      }
+      catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    if (process instanceof WinConPtyProcess) {
+      WinConPtyProcess conPtyProcess = (WinConPtyProcess)process;
+      try {
+        String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(ContainerUtil.getFirstItem(conPtyProcess.getCommand())));
+        int consoleProcessCount = conPtyProcess.getConsoleProcessCount();
+        if (executable.endsWith("/Git/bin/bash.exe")) {
+          return consoleProcessCount > 2;
+        }
+        return consoleProcessCount > 1;
       }
       catch (IOException e) {
         throw new IllegalStateException(e);

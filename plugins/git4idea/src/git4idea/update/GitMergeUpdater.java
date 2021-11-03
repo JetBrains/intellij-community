@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,9 +103,11 @@ public class GitMergeUpdater extends GitUpdater {
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
-        dialog.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
-        dialog.show();
+        LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+        panel.setChanges(changes, null);
+        panel.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
+
+        ChangeListViewerDialog.showDialog(myProject, null, panel);
       });
       return GitUpdateResult.ERROR;
     }

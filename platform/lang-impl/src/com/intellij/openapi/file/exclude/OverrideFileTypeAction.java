@@ -2,10 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
@@ -28,14 +25,12 @@ class OverrideFileTypeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
-    boolean canBeOverridden = files.length != 0;
-    if (canBeOverridden) {
-      e.getPresentation().setDescription(ActionsBundle.message("action.OverrideFileTypeAction.verbose.description", files[0].getName(), files.length-1));
-    }
-    else {
-      e.getPresentation().setDescription(ActionsBundle.message("action.OverrideFileTypeAction.description"));
-    }
-    e.getPresentation().setEnabledAndVisible(canBeOverridden);
+    boolean enabled = files.length != 0;
+    Presentation presentation = e.getPresentation();
+    presentation.setDescription(enabled
+                                ? ActionsBundle.message("action.OverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
+                                : ActionsBundle.message("action.OverrideFileTypeAction.description"));
+    presentation.setEnabledAndVisible(enabled);
   }
 
   @Override
@@ -80,7 +75,7 @@ class OverrideFileTypeAction extends AnAction {
     return Arrays.stream(files)
       .filter(file -> file != null && !file.isDirectory())
       .filter(additionalPredicate)
-      .toArray(VirtualFile[]::new);
+      .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
 
   private static class ChangeToThisFileTypeAction extends AnAction {

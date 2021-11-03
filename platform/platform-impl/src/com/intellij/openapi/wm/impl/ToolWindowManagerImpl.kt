@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.BundleBase
@@ -17,9 +17,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWi
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.Application
@@ -269,6 +267,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
               manager.resetHoldState()
             }
           }
+
+          if (Registry.`is`("ide.experimental.ui")) {
+            if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
+              val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
+              val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
+              toolWindowManager.activateToolWindow(toolWindowId, null, true)
+            }
+
+            if (event.place == ActionPlaces.TOOLWINDOW_POPUP) {
+              val toolWindowManager = getInstance(event.project!!) as ToolWindowManagerImpl
+              val toolWindowId = toolWindowManager.lastActiveToolWindowId ?: return
+              val activeEntry = toolWindowManager.idToEntry[toolWindowId] ?: return
+              activeEntry.toolWindow.decorator.headerToolbar.component.isVisible = true
+            }
+          }
         }
       })
 
@@ -289,9 +302,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
           entry.toolWindow.decoratorComponent?.repaint()
-          if (Registry.`is`("ide.experimental.ui")) {
-            entry.toolWindow.decorator.headerToolbar.component.isVisible = entry.toolWindow.isActive
-          }
+          entry.toolWindow.decorator.updateActiveAndHoverState()
         }
       }
     })
@@ -407,7 +418,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     tasks: List<RegisterToolWindowTask>,
     app: Application,
   ) = Runnable {
-    frame!!.rootPane!!.updateToolbar()
+    val rootPane = frame!!.rootPane!!
+    rootPane.updateToolbar()
+    rootPane.updateNorthComponents()
 
     runPendingLayoutTask()
 
@@ -2273,7 +2286,13 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
 
 fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
   try {
-    return IconLoader.findIcon(bean.icon ?: return null, factory.javaClass, pluginDescriptor.pluginClassLoader, null, true)
+    return IconLoader.findIcon(
+      bean.icon ?: return null,
+      factory.javaClass,
+      pluginDescriptor.classLoader,
+      null,
+      true,
+    )
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -2282,7 +2301,7 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
 }
 
 fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
-  val classLoader = pluginDescriptor.pluginClassLoader
+  val classLoader = pluginDescriptor.classLoader
   val bundleName = when (pluginDescriptor.pluginId) {
     PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
     else -> pluginDescriptor.resourceBundleBaseName ?: return null

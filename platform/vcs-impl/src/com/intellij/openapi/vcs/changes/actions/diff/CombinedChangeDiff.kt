@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.*
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
 internal class CombinedChangeDiffVirtualFile(requestProducer: CombinedChangeDiffRequestProducer) :
   CombinedDiffVirtualFile<CombinedChangeDiffRequestProducer>(requestProducer) {
@@ -53,21 +53,21 @@ internal class CombinedChangeDiffRequestProcessor(project: Project?,
                                                   private val requestProducer: CombinedChangeDiffRequestProducer) :
   CombinedDiffRequestProcessor(project, requestProducer) {
 
-  override fun createGoToChangeAction(): AnAction = MyGoToChangePopupProvider().createGoToChangeAction()
+  override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
 
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    private val presentableChanges: List<PresentableChange> = requestProducer.producers
-
-    override fun getChanges(): List<PresentableChange> = presentableChanges
-
-    override fun select(change: PresentableChange) {
-      viewer?.selectDiffBlock(change.filePath, change.fileStatus, ScrollPolicy.DIFF_BLOCK)
+  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestProducer>() {
+    override fun getChanges(): ListSelection<out ChangeDiffRequestProducer> {
+      val changes = requestProducer.producers
+      val selected = viewer?.getCurrentBlockContent()
+      val selectedIndex = when {
+        selected != null -> changes.indexOfFirst { it.fileStatus == selected.fileStatus && it.filePath == selected.path }
+        else -> -1
+      }
+      return ListSelection.createAt(changes, selectedIndex)
     }
 
-    override fun getSelectedChange(): PresentableChange? {
-      val selected = viewer?.getCurrentBlockContent() ?: return null
-
-      return presentableChanges.find { it.fileStatus == selected.fileStatus && it.filePath == selected.path }
+    override fun onSelected(change: ChangeDiffRequestProducer) {
+      viewer?.selectDiffBlock(change.filePath, change.fileStatus, ScrollPolicy.DIFF_BLOCK)
     }
   }
 }

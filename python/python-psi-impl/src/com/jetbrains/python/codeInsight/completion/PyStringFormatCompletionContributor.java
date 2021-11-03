@@ -5,6 +5,7 @@ package com.jetbrains.python.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-public class PyStringFormatCompletionContributor extends CompletionContributor {
+public class PyStringFormatCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String DICT_NAME = "dict";
 
   private static final PatternCondition<PyReferenceExpression> FORMAT_CALL_PATTERN_CONDITION =

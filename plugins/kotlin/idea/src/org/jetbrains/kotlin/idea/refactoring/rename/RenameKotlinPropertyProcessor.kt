@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.search.codeUsageScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -48,6 +49,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
@@ -57,6 +59,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
@@ -424,7 +427,12 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         searchScope: SearchScope,
         searchInCommentsAndStrings: Boolean
     ): Collection<PsiReference> {
-        val references = super.findReferences(element, searchScope, searchInCommentsAndStrings)
+        val referenceSearchScope = if (element is KtParameter && element.isPrivate()) {
+            element.ownerFunction.safeAs<KtPrimaryConstructor>()?.codeUsageScope()?.union(searchScope) ?: searchScope
+        } else {
+            searchScope
+        }
+        val references = super.findReferences(element, referenceSearchScope, searchInCommentsAndStrings)
         return processFoundReferences(element, references)
     }
 

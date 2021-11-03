@@ -15,11 +15,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
@@ -66,48 +68,73 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       }
     }
 
+    PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
+    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+    boolean isNewExpression =
+      parent instanceof PsiNewExpression &&
+      !(refParent instanceof PsiTypeElement) &&
+      (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false));
+
+    if (isNewExpression) {
+      registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
+    }
+    else {
+      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
+    }
+
     registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
-      registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
     if (HighlightingFeature.RECORDS.isAvailable(ref)) {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+      if (isNewExpression) {
+        registrar.register(new CreateRecordFromNewFix((PsiNewExpression)parent));
+      }
+      else {
+        registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+      }
     }
 
-    PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
-    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
-    if (parent instanceof PsiNewExpression &&
-        !(refParent instanceof PsiTypeElement) &&
-        (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
-      registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
+    if (isNewExpression) {
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-      if (HighlightingFeature.RECORDS.isAvailable(ref)) {
-        registrar.register(new CreateRecordFromNewFix((PsiNewExpression)parent));
-        if (((PsiNewExpression)parent).getQualifier() == null) {
-          registrar.register(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
-        }
+      if (HighlightingFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+        registrar.register(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
       }
     }
     else {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
 
     SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
+
+    if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
+      registrar.register(new CreateTypeParameterFromUsageFix(ref));
+    }
   }
 
   @NotNull
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    final Collection<IntentionAction> result = new ArrayList<>(CreateFieldFromUsage.generateActions(refExpr));
-    if (!refExpr.isQualified()) {
-      final VariableKind kind = getKind(refExpr);
+    final Collection<IntentionAction> result = new ArrayList<>();
+    boolean isQualified = refExpr.isQualified();
+    final VariableKind kind = getKind(refExpr);
+
+    if (!isQualified) {
       IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
       result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
+    }
+
+    List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
+    if (kind == VariableKind.FIELD) {
+      createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+    }
+    result.addAll(createFieldFixes);
+
+    if (!isQualified) {
       IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
       result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
     }
+
     return result;
   }
 

@@ -14,7 +14,7 @@ import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -50,11 +50,25 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
     @Transient
+    @Deprecated("Use lazyDefaultCompilerArguments instead!", ReplaceWith("lazyDefaultCompilerArguments"), DeprecationLevel.ERROR)
     var defaultCompilerArguments: CommonCompilerArguments? = null
 
     @Transient
+    var lazyDefaultCompilerArguments: Lazy<CommonCompilerArguments>? = null
+
+    @Transient
+    @Deprecated("Use lazyCompilerArguments instead!", ReplaceWith("lazyCompilerArguments"), DeprecationLevel.ERROR)
     var compilerArguments: CommonCompilerArguments? = null
+
+    @Transient
+    var lazyCompilerArguments: Lazy<CommonCompilerArguments>? = null
+
+    @Transient
+    @Deprecated("Use lazyDependencyClasspath instead!", ReplaceWith("lazyDependencyClasspath"), DeprecationLevel.ERROR)
     var dependencyClasspath: List<String> = emptyList()
+
+    @Transient
+    var lazyDependencyClasspath: Lazy<List<String>> = lazy { emptyList() }
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
     var dependsOn: List<String> = emptyList()

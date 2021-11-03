@@ -100,6 +100,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   private fun getMavenWrapper(manager: MavenProjectsManager,
                               project: Project): File? {
     return if (manager.rootProjects.size == 1)
-      MavenDistributionsCache.getInstance(project).getWrapper(manager.rootProjects.first().directory)?.mavenHome else null
+      MavenDistributionsCache.getInstance(project).getWrapper(manager.rootProjects.first().directory)?.mavenHome?.toFile() else null
   }
 }

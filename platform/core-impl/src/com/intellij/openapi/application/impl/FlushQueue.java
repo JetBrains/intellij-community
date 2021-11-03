@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,10 +78,7 @@ final class FlushQueue {
 
   // Extracted to have a capture point
   private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
-    if (ClientId.Companion.getPropagateAcrossThreads()) {
-      ClientId.withClientId(info.clientId, info.runnable);
-    }
-    else {
+    try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
       info.runnable.run();
     }
   }

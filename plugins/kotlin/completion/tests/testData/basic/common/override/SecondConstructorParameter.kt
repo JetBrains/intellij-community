@@ -5,7 +5,7 @@ interface Foo {
 
 class A(override val bar: Int, overrid<caret>): Foo
 
-// EXIST: { lookupString: "override", itemText: "override" }
+// EXIST: { lookupString: "override", itemText: "override"}
 // EXIST: { itemText: "override val foo: Int", tailText: null, typeText: "Foo", attributes: "bold" }
 // EXIST_JAVA_ONLY: { itemText: "override: Override", tailText: " (java.lang)" }
 // NOTHING_ELSE

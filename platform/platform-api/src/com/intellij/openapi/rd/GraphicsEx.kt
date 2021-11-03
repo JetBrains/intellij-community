@@ -3,14 +3,16 @@ package com.intellij.openapi.rd
 
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 
 fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
     this.color = color
     RectanglePainter2D.FILL.paint(this, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
+}
+
+fun Graphics2D.fill2DRoundRect(rect: Rectangle, arcRadius: Double, color: Color) {
+    this.color = color
+    RectanglePainter2D.FILL.paint(this, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(), arcRadius, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
 }
 
 fun Graphics2D.paint2DLine(from: Point, to: Point,

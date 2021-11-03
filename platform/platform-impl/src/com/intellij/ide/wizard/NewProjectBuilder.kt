@@ -1,8 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-class NewProjectBuilder : AbstractNewProjectWizardBuilder(NewProjectWizardBaseStep.Factory(NewProjectWizardLanguageStep.Factory())) {
-  override fun getModuleType() = NewProjectType.INSTANCE
-  override fun getGroupName() = DEFAULT_GROUP
-  override fun getPresentableName() = NewProjectType.INSTANCE.name
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ui.UIBundle
+import com.intellij.util.ui.EmptyIcon
+import javax.swing.Icon
+
+class NewProjectBuilder : AbstractNewProjectWizardBuilder() {
+  override fun getPresentableName() = UIBundle.message("label.project.wizard.project.generator.name")
+  override fun getDescription() = UIBundle.message("label.project.wizard.project.generator.description")
+  override fun getNodeIcon(): Icon = EmptyIcon.ICON_0
+
+  override fun createStep(context: WizardContext) =
+    NewProjectWizardBaseStep(context)
+      .chain(::GitNewProjectWizardStep, ::NewProjectWizardLanguageStep)
 }

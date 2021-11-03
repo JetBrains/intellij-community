@@ -27,6 +27,10 @@ import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
+
+  override val group: InlayGroup
+    get() = InlayGroup.ANNOTATIONS_GROUP
+
   override fun getCollectorFor(file: PsiFile,
                                editor: Editor,
                                settings: Settings,
@@ -158,6 +162,11 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     get() = JavaBundle.message("settings.inlay.java.annotations")
   override val key: SettingsKey<Settings>
     get() = ourKey
+
+  override fun getProperty(key: String): String {
+    return JavaBundle.message(key)
+  }
+
   override val previewText: String? = null
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
@@ -210,7 +219,7 @@ class InsertAnnotationAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val intention = MakeInferredAnnotationExplicit()
-    if (intention.isAvailable(project, file, element)) {
+    if (intention.isAvailable(file, element)) {
       intention.makeAnnotationsExplicit(project, file, element)
     }
   }

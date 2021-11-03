@@ -3,16 +3,18 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
+import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 5)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 7)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",
@@ -25,87 +27,41 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
     EventFields.Language
   )
 
-  private val MODEL_ID_EVENT_FIELD = EventFields.String("model", allowedValues = listOf(
-    "parameter.hints.old",
-    "js.chain.hints",
-    "js.type.hints",
-    "MethodChainsInlayProvider",
-    "java.implicit.types",
-    "annotation.hints",
-    "vcs.code.author",
-    "JavaLens",
-    "RelatedProblems",
-    "microservices.url.path.inlay.hints",
-    "groovy.parameters.hints",
-    "groovy.variable.type.hints",
-    "groovy.implicit.null.argument.hint",
-    "docker.inlay.hints",
-    "kotlin.references.types.hints",
-    "kotlin.lambdas.hints",
-    "kotlin.call.chains.hints",
-    "kotlin.ranges.hints",
-    "composer.package.version.hints",
-    "ts.chain.hints",
-    "ts.type.hints",
-    "ts.enum.hints",
-    "sql.join.cardinality.hints",
-    "CodeVision",
-    "return.values.hints",
-    "draft.inlay.hints",
-    "docker.inlay.hints",
-    "oc.type.hints",
-    "tms.local.md.hints"
-  ))
 
-  private val OPTION_ID_EVENT_FIELD = EventFields.String("option_id", allowedValues = listOf(
-    "angular.show.names.for.all.args",
-    "angular.show.names.for.pipes",
-    "go.struct.unnamed.struct.fields",
-    "go.return.parameters",
-    "java.method.name.contains.parameter.name",
-    "java.multiple.params.same.type",
-    "java.build.like.method",
-    "java.simple.sequentially.numbered",
-    "java.enums",
-    "java.new.expr",
-    "java.clear.expression.type",
-    "js.only.show.names.for.all.args",
-    "js.only.show.names.for.tagged",
-    "js.only.show.names.for.pipes",
-    "php.show.names.for.all.args",
-    "php.pass.by.reference",
-    "ruby.non.literals",
-    "ruby.method.name.contains.parameter.name",
-    "ruby.show.param.grouping",
-    "sql.show.column.names.in.insert.values",
-    "sql.show.column.names.in.select",
-    "sql.show.column.names.for.asterisk",
-    "sql.show.column.names.for.set.operations",
-    "js.param.hints.show.names.for.all.args",
-    "js.param.hints.show.names.for.tagged",
-    "vuejs.show.names.for.all.args",
-    "vuejs.show.names.for.filters",
-    "variables.and.fields",
-    "parameters.in.parens",
-    "non.paren.single.param",
-    "function.returns",
-    "inferred.annotations",
-    "external.annotations",
-    "usages",
-    "inheritors",
-    "inferred.parameter.types",
-    "type.parameter.list",
-    "hints.type.property",
-    "hints.type.variable",
-    "hints.type.function.return",
-    "hints.type.function.parameter",
-    "hints.lambda.return",
-    "hints.lambda.receivers.parameters",
-    "inner.join",
-    "left.join",
-    "right.join",
-    "full.join"
-  ))
+  private val MODEL_ID_EVENT_FIELD = object : StringEventField("model") {
+    override val validationRule: List<String>
+      get() {
+        val models = arrayListOf(ParameterInlayProviderSettingsModel.ID)
+        models.add("oc.type.hints")
+        models.add("tms.local.md.hints")
+        InlayHintsProviderExtension.findProviders().mapTo(models) { it.provider.key.id }
+        return models
+      }
+  }
+
+
+  private val OPTION_ID_EVENT_FIELD = object : StringEventField("option_id") {
+    override val validationRule: List<String>
+      get() {
+        val options = ArrayList<String>()
+        val languagesWithSupport = PARAMETER_NAME_HINTS_EP.extensions().map { it.language }
+        for (languageId in languagesWithSupport) {
+          val language = Language.findLanguageByID(languageId)
+          if (language != null) {
+            val providers = InlayParameterHintsExtension.allForLanguage(language)
+            for (provider in providers) {
+              provider.supportedOptions.mapTo(options) { it.id }
+            }
+          }
+        }
+        InlayHintsProviderExtension.findProviders().flatMapTo(options) {
+          @Suppress("UNCHECKED_CAST") val provider = it.provider as InlayHintsProvider<Any>
+          val configurable = provider.createConfigurable(provider.createSettings())
+          configurable.cases.map { case -> case.id }
+        }
+        return options
+      }
+  }
 
   private val OPTION_VALUE_EVENT_FIELD = EventFields.Boolean("option_value")
   private val MODEL_ENABLED_EVENT_FIELD = EventFields.Boolean("enabled")

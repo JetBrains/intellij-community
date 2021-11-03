@@ -83,7 +83,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     TreeElementWrapper last = (TreeElementWrapper)elements[elements.length - 1];
     Collection<AbstractTreeNode<?>> children = last.getChildren();
     assertEquals(1, children.size());
-    assertEquals(3, ((AbstractTreeNode<?>)((List)children).get(0)).getChildren().size());
+    assertEquals(3, ((AbstractTreeNode<?>)((List<?>)children).get(0)).getChildren().size());
   }
 
   private Object[] getElements() {

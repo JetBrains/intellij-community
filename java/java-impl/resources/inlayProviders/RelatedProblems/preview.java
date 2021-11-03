@@ -1,0 +1,3 @@
+class Button {
+  void actionPerformed() {}
+}

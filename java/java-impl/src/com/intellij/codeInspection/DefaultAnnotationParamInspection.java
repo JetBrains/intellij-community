@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -16,15 +16,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  /**
+   * Allows skipping DefaultAnnotationParamInspection for specific annotations parameters
+   */
   public interface IgnoreAnnotationParamSupport {
     ExtensionPointName<IgnoreAnnotationParamSupport> EP_NAME =
       ExtensionPointName.create("com.intellij.lang.jvm.ignoreAnnotationParamSupport");
 
     /**
-     * Allows to skip DefaultAnnotationParamInspection for specific annotations parameters
      * @param annotationFQN full qualified name of the annotation
      * @param annotationParameterName name of the annotation param
-     * @return true to skip inspection
+     * @return true to skip inspection for {@code annotationParameterName} and annotation {@code annotationFQN}
      */
     default boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {
       return false;

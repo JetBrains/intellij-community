@@ -91,6 +91,13 @@ public final class UIUtil {
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
+  /**
+   * A key for hiding a line under the window title bar on macOS
+   * It works if and only if transparent title bars are enabled and IDE runs on JetBrains Runtime
+   */
+  @ApiStatus.Internal
+  public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
+
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
@@ -138,6 +145,15 @@ public final class UIUtil {
           Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
           graphics.setColor(getPanelBackground());
           graphics.fill(headerRectangle);
+          if (SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+            if (window instanceof RootPaneContainer) {
+              JRootPane pane = ((RootPaneContainer)window).getRootPane();
+              if (pane == null || pane.getClientProperty(NO_BORDER_UNDER_WINDOW_TITLE_KEY) != Boolean.TRUE) {
+                graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+                LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1, LinePainter2D.StrokeType.INSIDE, 0.5);
+              }
+            }
+          }
           Color color = window.isActive()
                         ? JBColor.black
                         : JBColor.gray;
@@ -174,7 +190,7 @@ public final class UIUtil {
     if (property instanceof Integer) {
       return (int)property;
     }
-    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24;
+    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 29;
   }
 
   private static String getWindowTitle(Window window) {
@@ -904,6 +920,10 @@ public final class UIUtil {
 
   public static @NotNull Color getLabelDisabledForeground() {
     return JBColor.namedColor("Label.disabledForeground", JBColor.GRAY);
+  }
+
+  public static @NotNull Color getLabelInfoForeground() {
+    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   }
 
   public static @NotNull Color getContextHelpForeground() {
@@ -1671,7 +1691,8 @@ public final class UIUtil {
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
-   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
+   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} instead
+   * Must be called from EDT.
    * @see #pump()
    */
   @TestOnly
@@ -2585,16 +2606,37 @@ public final class UIUtil {
     return false;
   }
 
+  public static void runWhenVisibilityChanged(@NotNull Component component, Runnable runnable) {
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        runnable.run();
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        runnable.run();
+      }
+    });
+  }
+
   public static @Nullable JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
   public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels) {
+    return mergeComponentsWithAnchor(panels, false);
+  }
+
+  public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels, boolean visibleOnly) {
     JComponent maxWidthAnchor = null;
     int maxWidth = 0;
     for (PanelWithAnchor panel : panels) {
-      JComponent anchor = panel != null ? panel.getAnchor() : null;
+      if (visibleOnly && (panel instanceof JComponent) && !((JComponent)panel).isVisible())
+        continue;
+      JComponent anchor = panel != null ? panel.getOwnAnchor() : null;
       if (anchor != null) {
+        panel.setAnchor(null); // to get own preferred size
         int anchorWidth = anchor.getPreferredSize().width;
         if (maxWidth < anchorWidth) {
           maxWidth = anchorWidth;
@@ -2605,6 +2647,10 @@ public final class UIUtil {
     for (PanelWithAnchor panel : panels) {
       if (panel != null) {
         panel.setAnchor(maxWidthAnchor);
+        if (panel instanceof JComponent) {
+          ((JComponent)panel).revalidate();
+          ((JComponent)panel).repaint();
+        }
       }
     }
     return maxWidthAnchor;
@@ -2622,6 +2668,12 @@ public final class UIUtil {
       if (c instanceof JComponent) {
         ((JComponent)c).setOpaque(opaque);
       }
+    });
+  }
+
+  public static void setEnabledRecursively(@NotNull Component component, boolean enabled) {
+    forEachComponentInHierarchy(component, c -> {
+      c.setEnabled(enabled);
     });
   }
 
@@ -3522,7 +3574,11 @@ public final class UIUtil {
     StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
   }
 
-  /** @see UIUtil#dispatchAllInvocationEvents() */
+  /**
+   * Waits for the EDT to dispatch all its invocation events.
+   * Must be called outside EDT.
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} if you want to pump from inside EDT
+   **/
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();

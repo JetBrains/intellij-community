@@ -31,6 +31,7 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
+          module("intellij.platform.tracing.rt")
         }
 
         jar("jps-launcher.jar") {
@@ -65,6 +66,7 @@ final class CommunityStandaloneJpsBuilder {
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps.jar") { module("intellij.groovy.jps") }
         jar("groovy-rt.jar") { module("intellij.groovy.rt") }
+        jar("groovy-rt-class-loader.jar") { module("intellij.groovy.rt.classLoader") }
         jar("groovy-constants-rt.jar") { module("intellij.groovy.constants.rt") }
         jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 

@@ -30,6 +30,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 import java.io.File
+import kotlin.test.assertFailsWith
 
 @RunWith(value = Parameterized::class)
 @Suppress("ACCIDENTAL_OVERRIDE")
@@ -63,15 +64,6 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("6.0.1+")
     fun testError() {
-        var context: ProjectResolverContext? = null
-        val contributor =
-            ProjectModelContributor { _, _, resolverContext -> context = resolverContext }
-        ExtensionTestUtil.maskExtensions(
-            ProjectModelContributor.EP_NAME,
-            listOf(contributor) + ProjectModelContributor.EP_NAME.extensionList,
-            testRootDisposable
-        )
-
         val events = mutableListOf<BuildEvent>()
         val syncViewManager = object : SyncViewManager(myProject) {
             override fun onEvent(buildId: Any, event: BuildEvent) {
@@ -82,19 +74,13 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
 
         configureByFiles()
 
-        val result = try {
-            importProject()
-        } catch (e: AssertionFailedError) {
-            e
-        }
+        assertFailsWith<AssertionFailedError> { importProject() }
 
-        assert(result is AssertionFailedError) { "Exception should be thrown" }
-        assertNotNull(context)
-        assert(context?.cancellationTokenSource?.token()?.isCancellationRequested == true)
+        val expectedErrorMessage = "Unresolved reference: unresolved"
         val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
-        val buildScriptErrors = errors.filter { it.group == build_script_errors_group }
+        val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
         assertTrue(
-            "$build_script_errors_group error has not been reported among other errors: $errors",
+            "$expectedErrorMessage error has not been reported among other errors: $errors",
             buildScriptErrors.isNotEmpty()
         )
     }

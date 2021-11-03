@@ -9,6 +9,13 @@
 
     <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
 
+    <group id="RunToolbarSlotContextMenuGroup" popup="false">
+      <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
+      <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
+      <action id="RunToolbarRemoveSlotAction" class="com.intellij.execution.runToolbar.RunToolbarRemoveSlotAction"/>
+      <action id="RunToolbarShowToolWindowTab" class="com.intellij.execution.runToolbar.RunToolbarShowToolWindowTab"/>
+    </group>
+
     <group id="RunToolbarActionsGroup" popup="false">
       <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarProcessStartedAction"/>
       <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarRunConfigurationsAction"/>
@@ -16,7 +23,9 @@
       <group id="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessActionGroup"/>
       <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>
-      <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
+      <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup">
+        <reference id="RunToolbarSlotContextMenuGroup"/>
+      </group>
     </group>
 
     <group id="RunToolbarMainActionsGroup" popup="false">
@@ -29,13 +38,9 @@
       <group id="RunToolbarProcessMainActionGroup"/>
       <reference id="RunToolbarStopAction"/>
       <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
-      <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
-    </group>
-
-    <group id="RunToolbarSlotContextMenuGroup" popup="true">
-      <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
-      <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
-      <action id="RunToolbarRemoveSlotAction" class="com.intellij.execution.runToolbar.RunToolbarRemoveSlotAction"/>
+      <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup">
+        <reference id="RunToolbarSlotContextMenuGroup"/>
+      </group>
     </group>
 
   </actions>
@@ -45,6 +50,8 @@
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
+    <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
+                    serviceImplementation="com.intellij.ide.ui.experimental.toolbar.BaseRunWidgetAvailabilityManager"/>
   </extensions>
   <project-components>
     <component>

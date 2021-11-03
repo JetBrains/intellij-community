@@ -11,6 +11,7 @@ public class StripedIDGenerator {
   private static final int CHUNK_SIZE = 1000;
   private final AtomicLong nextChunkStart = new AtomicLong();
   // must not be static since we might want to have several instances of this class
+  @SuppressWarnings("ThreadLocalNotStaticFinal")
   private final ThreadLocal<NextPair> localCounter = new ThreadLocal<>();
   private static final class NextPair {
     long nextId;
