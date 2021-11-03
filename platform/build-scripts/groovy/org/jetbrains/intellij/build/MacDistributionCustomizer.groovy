@@ -88,12 +88,8 @@ abstract class MacDistributionCustomizer {
    * Relative paths to files in macOS distribution which should be signed
    */
   List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
-    List<String> binaries = []
-    def binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
-    if (binary != null) {
-      binaries += binary.relativeTargetPath
-    }
-    return binaries
+    RepairUtilityBuilder.Binary binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
+    return binary == null ? Collections.<String>emptyList() : List.of(binary.relativeTargetPath)
   }
 
   /**
@@ -121,7 +117,9 @@ abstract class MacDistributionCustomizer {
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
+    return Collections.emptyMap()
+  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

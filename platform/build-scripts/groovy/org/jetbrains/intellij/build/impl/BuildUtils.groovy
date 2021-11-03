@@ -83,6 +83,13 @@ final class BuildUtils {
     Files.writeString(file, text)
   }
 
+  static String replaceAll(String text, String marker, String ...replacements) {
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    return text
+  }
+
   static void copyAndPatchFile(@NotNull Path sourcePath,
                                @NotNull Path targetPath,
                                Map<String, String> replacements,

@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.tasks
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -11,6 +13,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 
+@Suppress("unused")
 fun crossPlatformZip(winDistDir: Path,
                      linuxDistDir: Path,
                      macDistDir: Path,
@@ -36,12 +39,10 @@ fun crossPlatformZip(winDistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
+            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier") && fileName.endsWith(".exe")) {
               addPlainFile(file, "bin/win/$fileName", out)
             }
-            //else if (fileName != "idea.properties") {
-            //  addPlainFile(file, "bin/$fileName", out)
-            //}
           }
         }
       }
@@ -57,6 +58,7 @@ fun crossPlatformZip(winDistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
+            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier")) {
               addPlainFile(file, "bin/linux/$fileName", out, unixMode = 509)
             }
@@ -71,6 +73,7 @@ fun crossPlatformZip(winDistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
+            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("restarter") || fileName.startsWith("printenv")) {
               addPlainFile(file, "bin/$fileName", out, unixMode = 509)
             }
@@ -104,13 +107,23 @@ private fun addEntry(name: String, data: ByteArray, out: ZipArchiveOutputStream)
   out.closeArchiveEntry()
 }
 
-internal fun addDirToZip(startDir: Path, out: ZipArchiveOutputStream, prefix: String, setUnixMode: Boolean = true) {
+typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: Path) -> Unit
+
+private val fsUnixMode: EntryCustomizer = { entry, file, _ ->
+  entry.unixMode = Files.readAttributes(file, "unix:mode").get("mode") as Int
+}
+
+internal fun ZipArchiveOutputStream.dir(startDir: Path,
+                                        prefix: String,
+                                        fileFilter: ((relativeFile: Path) -> Boolean)? = null,
+                                        entryCustomizer: EntryCustomizer = fsUnixMode) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
   while (true) {
     val dir = dirCandidates.pollFirst() ?: break
     tempList.clear()
+
     val dirStream = try {
       Files.newDirectoryStream(dir)
     }
@@ -130,20 +143,25 @@ internal fun addDirToZip(startDir: Path, out: ZipArchiveOutputStream, prefix: St
       }
       else if (attributes.isSymbolicLink) {
         val entry = ZipArchiveEntry(prefix + startDir.relativize(file))
-        out.putArchiveEntry(entry)
-        out.write((prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray())
-        out.closeArchiveEntry()
+        putArchiveEntry(entry)
+        write((prefix + startDir.relativize(Files.readSymbolicLink(file))).toByteArray())
+        closeArchiveEntry()
       }
       else {
         assert(attributes.isRegularFile)
-        val entry = ZipArchiveEntry(prefix + startDir.relativize(file))
-        entry.size = attributes.size()
-        out.putArchiveEntry(entry)
-        if (setUnixMode) {
-          entry.unixMode = Files.readAttributes(file, "unix:mode").get("mode") as Int
+
+        val relativeFile = startDir.relativize(file)
+
+        if (fileFilter != null && !fileFilter(relativeFile)) {
+          continue
         }
-        Files.copy(file, out)
-        out.closeArchiveEntry()
+
+        val entry = ZipArchiveEntry(prefix + relativeFile)
+        entry.size = attributes.size()
+        putArchiveEntry(entry)
+        entryCustomizer(entry, file, relativeFile)
+        Files.copy(file, this)
+        closeArchiveEntry()
       }
     }
   }

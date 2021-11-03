@@ -62,7 +62,9 @@ final class BuildHelper {
   final MethodHandle buildKeymapPlugins
 
   final MethodHandle signMac
+  final MethodHandle signMacZip
   final MethodHandle prepareMacZip
+  final MethodHandle buildMacZip
 
   final MethodHandle crossPlatformArchive
 
@@ -152,11 +154,26 @@ final class BuildHelper {
 
     signMac = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
                                 "signMac",
-                                MethodType.methodType(list,
+                                MethodType.methodType(aVoid,
                                                       string, string, string,
                                                       string,
                                                       string, path, list,
                                                       path, Consumer.class))
+    signMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
+                                   "signMacZip",
+                                   MethodType.methodType(aVoid,
+                                                         string, string, string,
+                                                         string, string,
+                                                         bool, string,
+                                                         path, path,
+                                                         path, path, Consumer.class))
+
+    buildMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MacKt"),
+                                    "buildMacZip",
+                                    MethodType.methodType(aVoid,
+                                                          path, string,
+                                                          byte[].class,
+                                                          path, path, list))
 
     prepareMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
                                 "prepareMacZip",

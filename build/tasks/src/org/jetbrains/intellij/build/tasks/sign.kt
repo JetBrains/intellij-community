@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
 
@@ -46,7 +46,7 @@ fun main() {
     signScript = Path.of("/Volumes/data/Documents/idea/community/platform/build-scripts/tools/mac/scripts/signbin.sh"),
     files = listOf(Path.of("/Applications/Idea.app/Contents/bin/fsnotifier2")),
     artifactDir = Path.of("/tmp/signed-files"),
-    artifactBuilt = {}
+    artifactBuilt = {},
   )
 }
 
@@ -66,12 +66,8 @@ fun prepareMacZip(macZip: Path,
           // exclude existing product-info.json as a custom one will be added
           val productJsonZipPath = "$zipRoot/Resources/product-info.json"
           zipFile.copyRawEntries(zipOutStream, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
-          for (entry in zipFile.entriesInPhysicalOrder) {
-            zipOutStream.addRawArchiveEntry(entry, zipFile.getRawInputStream(entry))
-          }
-
           if (macAdditionalDir != null) {
-            addDirToZip(macAdditionalDir, zipOutStream, prefix = "$zipRoot/")
+            zipOutStream.dir(macAdditionalDir, prefix = "$zipRoot/")
           }
 
           zipOutStream.putArchiveEntry(ZipArchiveEntry(productJsonZipPath))
@@ -83,7 +79,83 @@ fun prepareMacZip(macZip: Path,
   }
 }
 
-// a log file is saved as an artifact and not as a log file to `logs` to make it possible to inspect it before a build finish
+// 0644 octal -> 420 decimal
+private const val regularFileMode = 420
+// 0777 octal -> 511 decimal
+private const val executableFileMode = 511
+
+@Suppress("unused")
+fun signMacZip(
+  host: String,
+  user: String,
+  password: String,
+  codesignString: String,
+  fullBuildNumber: String,
+  notarize: Boolean,
+  bundleIdentifier: String,
+  file: Path,
+  jreArchiveFile: Path?,
+  communityHome: Path,
+  artifactDir: Path,
+  artifactBuilt: Consumer<Path>
+) {
+  initLog
+
+  executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
+    tracer.spanBuilder("upload file")
+      .setAttribute("file", file.toString())
+      .setAttribute("remoteDir", remoteDir)
+      .setAttribute("host", host)
+      .startSpan().use {
+        sftp.put(NioFileSource(file, filePermission = regularFileMode), "$remoteDir/${file.fileName}")
+      }
+
+    if (jreArchiveFile != null) {
+      tracer.spanBuilder("upload JRE archive")
+        .setAttribute("file", jreArchiveFile.toString())
+        .setAttribute("remoteDir", remoteDir)
+        .setAttribute("host", host)
+        .startSpan().use {
+          sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
+        }
+    }
+
+    val scriptDir = communityHome.resolve("platform/build-scripts/tools/mac/scripts")
+    tracer.spanBuilder("upload scripts")
+      .setAttribute("scriptDir", scriptDir.toString())
+      .setAttribute("remoteDir", remoteDir)
+      .setAttribute("host", host)
+      .startSpan().use {
+        sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "entitlements.xml")
+        @Suppress("SpellCheckingInspection")
+        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh")) {
+          sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
+        }
+      }
+
+    val args = listOf(
+      file.fileName.toString(),
+      fullBuildNumber,
+      user,
+      password,
+      codesignString,
+      jreArchiveFile?.fileName?.toString() ?: "no-jdk",
+      if (notarize) "yes" else "no",
+      bundleIdentifier,
+    )
+    @Suppress("SpellCheckingInspection")
+    signFile(remoteDir = remoteDir,
+             commandString = "'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
+             file = file,
+             ssh = ssh,
+             ftpClient = sftp,
+             artifactDir = artifactDir,
+             artifactBuilt = artifactBuilt,
+             failedToSign = null)
+
+  }
+}
+
 fun signMac(
   host: String,
   user: String,
@@ -94,75 +166,30 @@ fun signMac(
   files: List<Path>,
   artifactDir: Path,
   artifactBuilt: Consumer<Path>
-): List<Path> {
-  System.setProperty("log4j.defaultInitOverride", "true")
-  val root: org.apache.log4j.Logger = org.apache.log4j.Logger.getRootLogger()
-  if (!root.allAppenders.hasMoreElements()) {
-    root.level = Level.INFO
-    root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
-  }
+) {
+  initLog
 
-  val currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
-  val remoteDir = "$remoteDirPrefix-$currentDateTimeString-${random.nextLong().toString(Character.MAX_RADIX)}"
-
-  val defaultConfig = DefaultConfig()
-  defaultConfig.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
-
-  val ssh = SSHClient(defaultConfig)
-  ssh.addHostKeyVerifier(PromiscuousVerifier())
-  ssh.connect(host)
   val failedToSign = mutableListOf<Path>()
-  try {
-    ssh.authPassword(user, password)
-    try {
-      ssh.newSFTPClient().use { ftpClient ->
-        ftpClient.mkdir(remoteDir)
-        // 0777 octal -> 511 decimal
-        val remoteSignScript = "$remoteDir/${signScript.fileName}"
-        ftpClient.put(NioFileSource(signScript, 511), remoteSignScript)
+  executeTask(host, user, password, remoteDirPrefix) { ssh, sftp, remoteDir ->
+    val remoteSignScript = "$remoteDir/${signScript.fileName}"
+    sftp.put(NioFileSource(signScript, executableFileMode), remoteSignScript)
 
-        for (file in files) {
-          tracer.spanBuilder("sign").setAttribute("file", file.toString()).startSpan().useWithScope {
-            signFile(remoteDir = remoteDir,
-                     file = file,
-                     ssh = ssh,
-                     ftpClient = ftpClient,
-                     remoteSignScript = remoteSignScript,
-                     user = user,
-                     password = password,
-                     codesignString = codesignString,
-                     artifactDir = artifactDir,
-                     failedToSign = failedToSign,
-                     artifactBuilt = artifactBuilt)
-          }
-        }
+    for (file in files) {
+      tracer.spanBuilder("sign").setAttribute("file", file.toString()).startSpan().useWithScope {
+        signFile(remoteDir = remoteDir,
+                 commandString = "'$remoteSignScript' '${file.fileName}' '$user' '$password' '$codesignString'",
+                 file = file,
+                 ssh = ssh,
+                 ftpClient = sftp,
+                 artifactDir = artifactDir,
+                 artifactBuilt = artifactBuilt,
+                 failedToSign = failedToSign)
       }
     }
-    finally {
-      // as odd as it is, session can only be used once
-      // https://stackoverflow.com/a/23467751
-      removeDir(ssh, remoteDir)
-    }
-  }
-  finally {
-    ssh.disconnect()
   }
 
-  return failedToSign
-}
-
-private fun removeDir(ssh: SSHClient, remoteDir: String) {
-  tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).startSpan().use {
-    ssh.startSession().use { session ->
-      val command = session.exec("rm -rf '$remoteDir'")
-      command.join(30, TimeUnit.SECONDS)
-      // must be called before checking exit code
-      command.close()
-      if (command.exitStatus != 0) {
-        throw RuntimeException("cannot remove remote directory (exitStatus=${command.exitStatus}, " +
-                               "exitErrorMessage=${command.exitErrorMessage})")
-      }
-    }
+  if (!failedToSign.isEmpty()) {
+    throw RuntimeException("Failed to sign files: ${failedToSign.joinToString { it.toString() }}")
   }
 }
 
@@ -170,13 +197,10 @@ private fun signFile(remoteDir: String,
                      file: Path,
                      ssh: SSHClient,
                      ftpClient: SFTPClient,
-                     remoteSignScript: String,
-                     user: String,
-                     password: String,
-                     codesignString: String,
+                     commandString: String,
                      artifactDir: Path,
-                     failedToSign: MutableList<Path>,
-                     artifactBuilt: Consumer<Path>) {
+                     artifactBuilt: Consumer<Path>,
+                     failedToSign: MutableList<Path>?) {
   val fileName = file.fileName.toString()
   val remoteFile = "$remoteDir/$fileName"
   ftpClient.put(NioFileSource(file), remoteFile)
@@ -186,13 +210,16 @@ private fun signFile(remoteDir: String,
   val logFileName = "sign-$fileName.log"
   var commandFailed: String? = null
   val logFile = artifactDir.resolve("macos-sign-logs").resolve(logFileName)
+  Files.createDirectories(logFile.parent)
   try {
-    Files.createDirectories(logFile.parent)
-
     ssh.startSession().use { session ->
+      System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let {
+        session.setEnvVar("ARTIFACTORY_URL", it)
+      }
+
       @Suppress("SpellCheckingInspection")
       // not a relative path to file is expected, but only a file name
-      val command = session.exec("'$remoteSignScript' '$fileName' '$user' '$password' '$codesignString'")
+      val command = session.exec(commandString)
       val inputStreamReadThread = thread(name = "error-stream-reader-of-sign-$fileName") {
         command.inputStream.transferTo(System.out)
       }
@@ -242,8 +269,13 @@ private fun signFile(remoteDir: String,
           ))
           attempt++
           if (attempt > 3) {
-            failedToSign.add(file)
             Files.deleteIfExists(tempFile)
+            if (failedToSign == null) {
+              throw RuntimeException("Failed to sign file: $file")
+            }
+            else {
+              failedToSign.add(file)
+            }
             return
           }
           else {
@@ -262,4 +294,62 @@ private fun signFile(remoteDir: String,
       }
       Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
     }
+}
+
+private val initLog by lazy {
+  System.setProperty("log4j.defaultInitOverride", "true")
+  val root: org.apache.log4j.Logger = org.apache.log4j.Logger.getRootLogger()
+  if (!root.allAppenders.hasMoreElements()) {
+    root.level = Level.INFO
+    root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+  }
+}
+
+private fun generateRemoteDirName(remoteDirPrefix: String): String {
+  val currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
+  return "$remoteDirPrefix-$currentDateTimeString-${random.nextLong().toString(Character.MAX_RADIX)}"
+}
+
+private inline fun executeTask(host: String,
+                               user: String,
+                               password: String,
+                               remoteDirPrefix: String,
+                               task: (ssh: SSHClient, sftp: SFTPClient, remoteDir: String) -> Unit) {
+  val config = DefaultConfig()
+  config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
+
+  val ssh = SSHClient(config)
+  ssh.use {
+    ssh.addHostKeyVerifier(PromiscuousVerifier())
+    ssh.connect(host)
+    ssh.authPassword(user, password)
+
+    ssh.newSFTPClient().use { sftp ->
+      val remoteDir = generateRemoteDirName(remoteDirPrefix)
+      sftp.mkdir(remoteDir)
+      try {
+        task(ssh, sftp, remoteDir)
+      }
+      finally {
+        // as odd as it is, session can only be used once
+        // https://stackoverflow.com/a/23467751
+        removeDir(ssh, remoteDir)
+      }
+    }
+  }
+}
+
+private fun removeDir(ssh: SSHClient, remoteDir: String) {
+  tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).startSpan().use {
+    ssh.startSession().use { session ->
+      val command = session.exec("rm -rf '$remoteDir'")
+      command.join(30, TimeUnit.SECONDS)
+      // must be called before checking exit code
+      command.close()
+      if (command.exitStatus != 0) {
+        throw RuntimeException("cannot remove remote directory (exitStatus=${command.exitStatus}, " +
+                               "exitErrorMessage=${command.exitErrorMessage})")
+      }
+    }
+  }
 }

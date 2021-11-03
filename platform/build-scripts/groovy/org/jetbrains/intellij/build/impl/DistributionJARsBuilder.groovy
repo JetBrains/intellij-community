@@ -626,7 +626,7 @@ final class DistributionJARsBuilder {
   }
 
   static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
-    return Path.of(buildContext.paths.buildOutputRoot, "dist.${osFamily.distSuffix}")
+    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}")
   }
 
   /**

@@ -189,7 +189,10 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     List<String> additionalJvmArguments = buildContext.additionalJvmArguments
-    if (!bootClassPath.isEmpty()) additionalJvmArguments += "-Xbootclasspath/a:%BOOT_CLASS_PATH%"
+    if (!bootClassPath.isEmpty()) {
+      additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
+      additionalJvmArguments.add("-Xbootclasspath/a:%BOOT_CLASS_PATH%")
+    }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")

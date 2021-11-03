@@ -2,16 +2,15 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.util.PathUtilRt
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.nio.file.Files
@@ -29,9 +28,11 @@ final class MacDmgBuilder {
   private final MacHostProperties macHostProperties
   private final String remoteDir
   private final MacDistributionCustomizer customizer
-  private static final def ENV_FOR_MAC_BUILDER = ["ARTIFACTORY_URL"]
 
-  private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
+  private MacDmgBuilder(BuildContext buildContext,
+                        MacDistributionCustomizer customizer,
+                        String remoteDir,
+                        MacHostProperties macHostProperties) {
     this.customizer = customizer
     this.buildContext = buildContext
     artifactDir = Path.of(buildContext.paths.artifacts)
@@ -39,35 +40,7 @@ final class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext context,
-                              MacDistributionCustomizer customizer,
-                              MacHostProperties macHostProperties,
-                              @NotNull Path macDistPath,
-                              @NotNull JvmArchitecture arch) {
-    String remoteDirPrefix = "intellij-builds/${context.fullBuildNumber}"
-    List<Path> failedToSign = (List<Path>)BuildHelper.getInstance(context).signMac.invokeWithArguments(
-      macHostProperties.host,
-      macHostProperties.userName,
-      macHostProperties.password,
-      macHostProperties.codesignString,
-      remoteDirPrefix,
-      context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/signbin.sh"),
-      customizer.getBinariesToSign(context, arch).collect { macDistPath.resolve(it) },
-      Path.of(context.paths.artifacts),
-      new Consumer<Path>() {
-        @Override
-        void accept(Path file) {
-          context.notifyArtifactWasBuilt(file)
-        }
-      }
-    )
-
-    if (!failedToSign.empty) {
-      context.messages.error("Failed to sign files: ${failedToSign.collect  { macDistPath.relativize(it).toString() }}")
-    }
-  }
-
-  static void signAndBuildDmg(BuildContext buildContext,
+  static void signAndBuildDmg(BuildContext context,
                               MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties,
                               @Nullable Path macZip,
@@ -75,8 +48,8 @@ final class MacDmgBuilder {
                               @Nullable Path jreArchivePath,
                               String suffix,
                               boolean notarize) {
-    MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignAndBuildDmg(macZip, macAdditionalDirPath, jreArchivePath, suffix, notarize, buildContext)
+    createInstance(context, customizer, macHostProperties)
+      .doSignAndBuildDmg(macZip, macAdditionalDirPath, jreArchivePath, suffix, notarize, macHostProperties, context)
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -93,16 +66,17 @@ final class MacDmgBuilder {
                                  @Nullable Path jreArchive,
                                  String suffix,
                                  boolean notarize,
-                                 BuildContext buildContext) {
+                                 MacHostProperties macHostProperties,
+                                 BuildContext context) {
     String javaExePath = null
     if (jreArchive != null) {
       String rootDir = BundledJreManager.jbrRootDir(jreArchive) ?: "jdk"
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 
-    byte[] productJson = MacDistributionBuilder.generateProductJson(buildContext, javaExePath)
+    byte[] productJson = MacDistributionBuilder.generateProductJson(context, javaExePath)
 
-    String zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
+    String zipRoot = MacDistributionBuilder.getZipRoot(context, customizer)
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
     installationArchives.add(new Pair<>(macZip, zipRoot))
@@ -112,48 +86,58 @@ final class MacDmgBuilder {
     if (jreArchive != null) {
       installationArchives.add(new Pair<>(jreArchive, ""))
     }
-    new ProductInfoValidator(buildContext).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
+    new ProductInfoValidator(context).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
 
-    def targetName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
-    Path sitFile = artifactDir.resolve("${targetName}.sit")
-    BuildHelper.getInstance(buildContext).prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, macAdditionalDir, zipRoot)
+    String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
+    Path sitFile = artifactDir.resolve(targetName + ".sit")
 
-    boolean signMacArtifacts = !buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
+    BuildHelper buildHelper = BuildHelper.getInstance(context)
+    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, macAdditionalDir, zipRoot)
+
+    boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if (signMacArtifacts || !isMac()) {
-      ftpAction("mkdir") {}
-      try {
-        signMacZip(sitFile, jreArchive, notarize)
-
-        if (customizer.publishArchive) {
-          buildContext.notifyArtifactBuilt(sitFile)
-        }
-        buildContext.executeStep(TracerManager.spanBuilder("build .dmg artifact for macOS")
-                                   .setAttribute("name", targetName), BuildOptions.MAC_DMG_STEP, new Runnable() {
-          @Override
-          void run() {
-            buildDmg(targetName, buildContext)
+      context.messages.block(TracerManager.spanBuilder("sign").setAttribute("file", sitFile.toString())) {
+        buildHelper.signMacZip.invokeWithArguments(
+          macHostProperties.host, macHostProperties.userName, macHostProperties.password,
+          macHostProperties.codesignString, context.fullBuildNumber,
+          notarize, customizer.bundleIdentifier,
+          sitFile, jreArchive,
+          context.paths.communityHomeDir,
+          Path.of(context.paths.artifacts),
+          new Consumer<Path>() {
+            @Override
+            void accept(Path file) {
+              context.notifyArtifactWasBuilt(file)
+            }
           }
-        })
+        )
       }
-      finally {
-        deleteRemoteDir()
+      if (customizer.publishArchive) {
+        context.notifyArtifactBuilt(sitFile)
       }
+      context.executeStep(TracerManager.spanBuilder("build .dmg artifact for macOS")
+                            .setAttribute("name", targetName), BuildOptions.MAC_DMG_STEP, new Runnable() {
+        @Override
+        void run() {
+          buildDmg(targetName, context)
+        }
+      })
     }
     else {
       if (jreArchive != null || signMacArtifacts) {
-        BuildHelper.getInstance(buildContext).span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
+        buildHelper.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
                                                      .setAttribute("jreArchive", jreArchive.toString())
                                                      .setAttribute("sitFile", sitFile.toString()), new Runnable() {
           @Override
           void run() {
-            bundleJBRAndSignSitLocally(sitFile, jreArchive, buildContext)
+            bundleJBRAndSignSitLocally(sitFile, jreArchive, context)
           }
         })
       }
       if (customizer.publishArchive) {
-        buildContext.notifyArtifactBuilt(sitFile)
+        context.notifyArtifactBuilt(sitFile)
       }
-      buildContext.executeStep("build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP, new Runnable() {
+      context.executeStep("build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP, new Runnable() {
         @Override
         void run() {
           buildDmgLocally(sitFile, targetName)
@@ -231,7 +215,6 @@ final class MacDmgBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   private void buildDmg(String targetFileName, BuildContext context) {
-    Span.current().addEvent("build ${targetFileName}.dmg")
     Path tempDir = context.paths.tempDir.resolve("files-for-dmg-$targetFileName")
     Files.createDirectories(tempDir)
 
@@ -263,86 +246,6 @@ final class MacDmgBuilder {
     context.notifyArtifactBuilt(dmgFile)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void deleteRemoteDir() {
-    try {
-      AntBuilder ant = buildContext.ant
-      ftpAction("delete") {
-        ant.fileset() {
-          include(name: "**")
-        }
-      }
-      ftpAction("rmdir", true, null, 0, PathUtilRt.getParentPath(remoteDir)) {
-        ant.fileset() {
-          include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
-        }
-      }
-    }
-    catch (BuildException e) {
-      Span.current().addEvent("cannot delete remote directory", Attributes.of(AttributeKey.stringKey("error"), e.message))
-    }
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void signMacZip(Path targetFile, Path jreArchivePath, boolean notarize) {
-    buildContext.messages.block(TracerManager.spanBuilder("sign").setAttribute("file", targetFile.toString())) {
-      Span uploadSpan = TracerManager.spanBuilder("upload")
-        .setAttribute("targetFile", targetFile.toString())
-        .setAttribute("host", macHostProperties.host)
-        .startSpan()
-      try {
-        AntBuilder ant = buildContext.ant
-        ftpAction("put") {
-          ant.fileset(file: targetFile.toString())
-          if (jreArchivePath != null) {
-            ant.fileset(file: jreArchivePath.toString())
-          }
-        }
-        ftpAction("put", false, "777") {
-          ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-            include(name: "entitlements.xml")
-            include(name: "sign.sh")
-            include(name: "notarize.sh")
-            include(name: "signapp.sh")
-          }
-        }
-      }
-      finally {
-        uploadSpan.end()
-      }
-
-      buildContext.messages.progress("Signing ${targetFile.fileName} on ${macHostProperties.host}")
-      List<String> args = List.of(targetFile.fileName.toString(),
-                                  buildContext.fullBuildNumber,
-                                  macHostProperties.userName,
-                                  macHostProperties.password,
-                                  "\"${macHostProperties.codesignString}\"".toString(),
-                                  jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"',
-                                  notarize ? "yes" : "no",
-                                  customizer.bundleIdentifier,
-                                  )
-      String env = ""
-      ENV_FOR_MAC_BUILDER.each {
-        String value = System.getenv(it)
-        if (value != null && !value.isEmpty()) {
-          env += "$it=$value "
-        }
-      }
-
-      sshExec(buildContext, "$env$remoteDir/signapp.sh ${String.join(" ", args)}", "signapp-${targetFile.fileName}.log")
-
-      buildContext.messages.progress("Downloading signed ${targetFile.fileName} from ${macHostProperties.host}")
-      Files.deleteIfExists(targetFile)
-      ftpAction("get", true, null, 3) {
-        buildContext.ant.fileset(dir: artifactDir.toString()) {
-          include(name: "**/${targetFile.fileName}")
-        }
-      }
-      if (!Files.exists(targetFile)) {
-        buildContext.messages.error("Failed to sign ${targetFile.fileName}")
-      }
-    }
-  }
 
   @CompileStatic(TypeCheckingMode.SKIP)
   private void sshExec(BuildContext context, String command, String logFileName) {

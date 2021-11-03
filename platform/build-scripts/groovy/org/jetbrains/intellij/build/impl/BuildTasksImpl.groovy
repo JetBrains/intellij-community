@@ -248,15 +248,10 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("copy files shared among all distributions", new Supplier<Void>() {
       @Override
       Void get() {
-        BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
-        buildHelper.copyDirWithFileFilter(buildContext.paths.communityHomeDir.resolve("bin"),
-                                          buildContext.paths.distAllDir.resolve("bin")) {
-          !it.endsWith("idea.properties") && !it.endsWith("log.xml")
-        }
-
         copyLogXml(buildContext)
 
         Path licenseOutDir = buildContext.paths.distAllDir.resolve("license")
+        BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
         buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
         for (String additionalDirWithLicenses in buildContext.productProperties.additionalDirectoriesWithLicenses) {
           buildHelper.copyDir(Path.of(additionalDirWithLicenses), licenseOutDir)
