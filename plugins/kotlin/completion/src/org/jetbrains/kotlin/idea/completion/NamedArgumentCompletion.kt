@@ -118,10 +118,20 @@ object NamedArgumentCompletion {
 /**
  * Checks whether argument in the [resolvedCall] can be used without its name (as positional argument).
  */
-fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
+fun KtValueArgument.canBeUsedWithoutNameInCall(
+    resolvedCall: ResolvedCall<out CallableDescriptor>,
+    noOtherNamedArguments: Boolean = false
+): Boolean {
     val valueArguments = resolvedCall.call.valueArguments
+    val parameter = resolvedCall.getParameterForArgument(this)
+    val isVararg = parameter?.isVararg == true
 
-    if (getArgumentExpression() is KtCollectionLiteralExpression && resolvedCall.getParameterForArgument(this)?.isVararg == true) {
+    if (noOtherNamedArguments) {
+        if (isVararg && parameter != resolvedCall.resultingDescriptor.valueParameters.lastOrNull()) return false
+        return isVararg || isNamed() || placedOnItsOwnPositionInCall(resolvedCall)
+    }
+
+    if (getArgumentExpression() is KtCollectionLiteralExpression && isVararg) {
         val argumentIndex = valueArguments.indexOf(this)
         if (argumentIndex == -1) return false
         val nextArgument = valueArguments.getOrNull(argumentIndex + 1)

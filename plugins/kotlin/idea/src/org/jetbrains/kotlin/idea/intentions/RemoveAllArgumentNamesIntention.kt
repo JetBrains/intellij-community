@@ -5,10 +5,10 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.completion.canBeUsedWithoutNameInCall
 import org.jetbrains.kotlin.idea.completion.placedOnItsOwnPositionInCall
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
@@ -22,17 +22,8 @@ class RemoveAllArgumentNamesIntention: SelfTargetingIntention<KtCallElement>(
     override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean {
         val arguments = element.valueArgumentList?.arguments ?: return false
         if (arguments.count { it.isNamed() } < 2) return false
-
-        val collectionLiteral = arguments.firstOrNull { it.getArgumentExpression() is KtCollectionLiteralExpression }
-        if (collectionLiteral != null && collectionLiteral != arguments.last()) return false
-
         val resolvedCall = element.resolveToCall() ?: return false
-
-        val parameters = resolvedCall.resultingDescriptor.valueParameters
-        val varargParameter = parameters.firstOrNull { it.isVararg }
-        if (varargParameter != null && varargParameter != parameters.lastOrNull()) return false
-
-        return arguments.all { it.isNamed() || it.placedOnItsOwnPositionInCall(resolvedCall) || it.isVararg(resolvedCall) }
+        return arguments.all { it.canBeUsedWithoutNameInCall(resolvedCall, noOtherNamedArguments = true) }
     }
 
     override fun applyTo(element: KtCallElement, editor: Editor?) {
