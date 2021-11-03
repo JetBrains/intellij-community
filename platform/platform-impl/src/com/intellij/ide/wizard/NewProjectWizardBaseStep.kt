@@ -6,7 +6,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -27,7 +26,6 @@ import com.intellij.ui.layout.*
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
 
 
 class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
@@ -37,7 +35,7 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
   override val propertyGraph = PropertyGraph("New project wizard")
 
   override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { suggestLocationByName() }
+  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
 
   override var name by nameProperty
   override var path by pathProperty
@@ -46,12 +44,10 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
 
   private fun suggestName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(context.projectFileDirectory), "untitled", "") {
+    return FileUtil.createSequentFileName(File(path), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
-
-  private fun suggestLocationByName() = FileUtil.join(context.projectFileDirectory, name)
 
   private fun findAllModules(): List<Module> {
     val project = context.project ?: return emptyList()
@@ -87,8 +83,6 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
         context.setProjectFileDirectory(projectPath, false)
       }
     }
-
-    pathProperty.dependsOn(nameProperty, ::suggestLocationByName)
   }
 
   private fun getBuilderId(): String? {
