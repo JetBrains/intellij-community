@@ -78,9 +78,8 @@ class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<
         } else ""
         return KtPsiFactory(element).createExpressionByPattern(
             "$0[$1] = $label$2",
-            element.receiverExpression,
-            firstArg,
-            secondArg
+            element.receiverExpression, firstArg, secondArg,
+            reformat = false
         ) as? KtBinaryExpression
     }
 
