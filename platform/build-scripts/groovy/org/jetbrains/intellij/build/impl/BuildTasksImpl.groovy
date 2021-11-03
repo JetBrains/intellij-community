@@ -461,6 +461,14 @@ idea.fatal.error.notification=disabled
 
       Path propertiesFile = patchIdeaPropertiesFile()
       List<BuildTaskRunnable<Path>> tasks = [
+        createDistributionForOsTask(OsFamily.MACOS, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.macDistributionCustomizer?.with {
+              new MacDistributionBuilder(customContext, it, propertiesFile)
+            }
+          }
+        }),
         createDistributionForOsTask(OsFamily.WINDOWS, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
@@ -474,14 +482,6 @@ idea.fatal.error.notification=disabled
           OsSpecificDistributionBuilder apply(BuildContext customContext) {
             return customContext.linuxDistributionCustomizer?.with {
               new LinuxDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.MACOS, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.macDistributionCustomizer?.with {
-              new MacDistributionBuilder(customContext, it, propertiesFile)
             }
           }
         })
