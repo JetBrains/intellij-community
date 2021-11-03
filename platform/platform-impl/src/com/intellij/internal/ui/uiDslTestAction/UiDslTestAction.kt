@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.ui
+package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -15,16 +15,14 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JScrollPane
+import javax.swing.*
 import javax.swing.border.Border
 
-
+@ApiStatus.Internal
 class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -56,6 +54,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Segmented Button", createSegmentedButton())
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
+    result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
     result.addTab("Resizable Rows", createResizableRows())
 
     return result

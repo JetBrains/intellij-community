@@ -1134,7 +1134,7 @@
           <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction" />
           <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
           <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
-          <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.UiDslTestAction"/>
+          <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
           <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
         </group>

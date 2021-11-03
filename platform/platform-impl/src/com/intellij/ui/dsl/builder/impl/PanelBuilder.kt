@@ -218,6 +218,16 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           dialogPanelConfig.spacing = prevSpacingConfiguration
         }
       }
+      is PlaceholderImpl -> {
+        val gaps = Gaps(left = leftGap, right = rightGap)
+        val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                                              gaps = gaps)
+        cell.init(panel, constraints)
+        if (cell.resizableColumn) {
+          builder.resizableColumns += constraints.x
+        }
+        builder.skip(width)
+      }
       null -> {
         builder.skip(1)
       }
