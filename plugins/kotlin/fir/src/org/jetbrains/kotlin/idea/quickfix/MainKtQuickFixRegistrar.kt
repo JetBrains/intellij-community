@@ -152,6 +152,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
         registerApplicator(AddWhenRemainingBranchFixFactories.noElseInWhen)
         registerPsiQuickFixes(KtFirDiagnostic.CommaInWhenConditionWithoutArgument::class, CommaInWhenConditionWithoutArgumentFix)
+        registerPsiQuickFixes(KtFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
     }
 
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
