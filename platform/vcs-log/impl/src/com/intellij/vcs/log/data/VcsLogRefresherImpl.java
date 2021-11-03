@@ -240,7 +240,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       try {
         if (permanentGraph != null) {
           int commitCount = myRecentCommitCount;
-          for (int attempt = 0; attempt <= 1; attempt++) {
+          int maxFetches = Integer.getInteger("max.vcs.partial.commit.history.fetches", 2);
+          for (int attempt = 0; attempt < maxFetches; attempt++) {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
@@ -253,9 +254,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
               return DataPack.build(joinedFullLog, allNewRefs, myProviders, myStorage, true);
             }
           }
-          // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
-          LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
-                   permanentGraph.getAllCommits().size() + " commits)");
+          // couldn't join => need to reload everything;
+          // if `max.vcs.partial.commit.history.fetches` * 5 (default=5000) commits is still not enough, it's worth reporting:
+          if (maxFetches > 0) {
+            LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
+                     permanentGraph.getAllCommits().size() + " commits)");
+          }
         }
 
         return loadFullLog();
