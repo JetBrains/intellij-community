@@ -1594,6 +1594,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor.0.java");
             }
 
+            @TestMetadata("OverriddenMethodSyntheticAccessor2.0.java")
+            public void testOverriddenMethodSyntheticAccessor2() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor2.0.java");
+            }
+
             @TestMetadata("OverridenArrayType.0.java")
             public void testOverridenArrayType() throws Exception {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverridenArrayType.0.java");
