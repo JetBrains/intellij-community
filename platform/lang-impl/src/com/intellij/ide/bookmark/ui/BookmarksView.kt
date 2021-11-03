@@ -69,12 +69,10 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   override fun dispose() = preview.close()
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable>())
-      else -> null
-    }
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
+    CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Navigatable>())
+    else -> null
   }
 
   override fun getNextOccurenceActionName() = BookmarkBundle.message("bookmark.go.to.next.action.text")
