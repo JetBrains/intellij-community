@@ -9,4 +9,3 @@
 fun test() {
     <caret>Nested
 }
-/* IGNORE_FIR */
