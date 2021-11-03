@@ -70,7 +70,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="getDataRule"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP"
+                    beanClass="com.intellij.ide.impl.DataManagerImpl$GetDataRuleBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>
