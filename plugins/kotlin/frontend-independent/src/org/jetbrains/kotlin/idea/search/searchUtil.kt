@@ -175,8 +175,12 @@ private val PsiMethod.canBeGetter: Boolean
 private val PsiMethod.canBeSetter: Boolean
     get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
 
+private val PsiMethod.probablyCanHaveSyntheticAssessors: Boolean
+    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
+
 private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
 private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
+
 private val PsiMethod.isFinalProperty: Boolean
     get() {
         val property = unwrapped as? KtProperty ?: return false
@@ -187,7 +191,7 @@ private val PsiMethod.isFinalProperty: Boolean
 
 val PsiMethod.syntheticAssessors: Collection<Name>
     get() {
-        if (!canHaveSyntheticAssessors) return emptyList()
+        if (!probablyCanHaveSyntheticAssessors) return emptyList()
 
         return when {
             canBeGetter -> listOfNotNull(getterName)
@@ -196,9 +200,12 @@ val PsiMethod.syntheticAssessors: Collection<Name>
         }
     }
 
-val PsiMethod.canHaveSyntheticAssessors: Boolean
-    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
+val PsiMethod.canHaveSyntheticAssessors: Boolean get() = probablyCanHaveSyntheticAssessors && (canBeGetter || canBeSetter)
 
-val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticAssessors && canBeGetter) getterName else null
+val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAssessors && canBeGetter
 
-val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticAssessors && canBeSetter) setterNames else null
+val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAssessors && canBeSetter
+
+val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
+
+val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticSetter) setterNames else null
