@@ -192,7 +192,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     val columnIndex = determineColumnIndex(translated) ?: return
     invokeLater {
       executeCommand {
-        table.selectColumn(editor, columnIndex, withHeader = true, withSeparator = false)
+        table.selectColumn(editor, columnIndex, withHeader = true, withSeparator = true, withBorders = true)
       }
     }
   }
