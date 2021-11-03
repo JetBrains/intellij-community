@@ -104,10 +104,10 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.8/gson-2.8.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/de/pdark/decentxml/1.4/decentxml-1.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1.0.2/blockmap-1.0.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.5.10-release-949/kotlin-stdlib-jdk8-1.5.10-release-949.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.5.10-release-949/kotlin-stdlib-1.5.10-release-949.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.5.10-release-949/kotlin-stdlib-common-1.5.10-release-949.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.5.10-release-949/kotlin-stdlib-jdk7-1.5.10-release-949.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.5.10-release-955/kotlin-stdlib-jdk8-1.5.10-release-955.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.5.10-release-955/kotlin-stdlib-1.5.10-release-955.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.5.10-release-955/kotlin-stdlib-common-1.5.10-release-955.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.5.10-release-955/kotlin-stdlib-jdk7-1.5.10-release-955.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/tukaani/xz/1.9/xz-1.9.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/test-framework-core/213.5343/test-framework-core-213.5343.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/boot/213.5343/boot-213.5343.jar!/" />
