@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library">
       <library name="find-action-model" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.0.3" />
@@ -29,6 +30,25 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module-library">
+      <library name="find-action-model-experimental" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.1/find-action-model-0.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-file-model" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.0.2" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.0.2/find-file-model-0.0.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

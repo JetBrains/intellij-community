@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -28,6 +28,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -62,16 +63,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       return EmptyRunnable.INSTANCE;
     }
 
-    final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, session);
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new SimplePyUnresolvedReferencesInspection());
-    file.accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement node) {
-        super.visitElement(node);
-        node.accept(visitor);
-      }
-    });
+    PyUnresolvedReferencesVisitor visitor = prepare(file);
     return () -> {
       LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
@@ -80,6 +72,24 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
       LOG.debug("----------------- OPTIMIZE IMPORTS FINISHED -----------------");
     };
+  }
+
+  private PyUnresolvedReferencesVisitor prepare(@NotNull PsiFile file) {
+    final PsiFile contextFile = FileContextUtil.getContextFile(file);
+    final PsiFile rfile = ObjectUtils.chooseNotNull(contextFile, file);
+
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), rfile);
+
+    SimplePyUnresolvedReferencesInspection inspection = new SimplePyUnresolvedReferencesInspection();
+    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, inspection, context);
+    file.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement node) {
+        super.visitElement(node);
+        node.accept(visitor);
+      }
+    });
+    return visitor;
   }
 
   private static boolean isInsideTestResourceRoot(@NotNull PsiFile file) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
@@ -140,7 +140,6 @@ final class ApplicationInfoProperties {
 
   @NotNull
   ApplicationInfoProperties patch(BuildContext buildContext) {
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN)
     ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -149,9 +148,9 @@ final class ApplicationInfoProperties {
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String> of(
-      "BUILD_NUMBER", buildContext.fullBuildNumber,
-      "BUILD_DATE", date,
+    def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String>of(
+      "BUILD_NUMBER", productCode + "-" + buildContext.buildNumber,
+      "BUILD_DATE", ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN),
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
@@ -160,7 +159,7 @@ final class ApplicationInfoProperties {
 
   //copy of ApplicationInfoImpl.shortenCompanyName
   private static String shortenCompanyName(String name) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.")
+    return Strings.trimEnd(Strings.trimEnd(name, " s.r.o."), " Inc.")
   }
 
   private static @NotNull String findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
@@ -72,9 +72,10 @@ fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )
 
-fun ProjectIndexingHistory.IndexingTimes.toJson() =
+fun IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
+    wasFullIndexing = wasFullIndexing,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingTime = JsonDuration(contentLoadingDuration.toNanos()),
@@ -89,8 +90,9 @@ fun ProjectIndexingHistory.IndexingTimes.toJson() =
 
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
-fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory {
-  times.contentLoadingDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
+fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
+  (times as ProjectIndexingHistoryImpl.IndexingTimesImpl).contentLoadingDuration =
+    Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
   return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
@@ -102,7 +104,7 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory {
   )
 }
 
-private fun ProjectIndexingHistory.getFileCount() = JsonProjectIndexingFileCount(
+private fun ProjectIndexingHistoryImpl.getFileCount() = JsonProjectIndexingFileCount(
   numberOfFileProviders = scanningStatistics.size,
   numberOfScannedFiles = scanningStatistics.sumBy { it.numberOfScannedFiles },
   numberOfFilesIndexedByInfrastructureExtensionsDuringScan = scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions },
@@ -111,7 +113,7 @@ private fun ProjectIndexingHistory.getFileCount() = JsonProjectIndexingFileCount
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )
 
-private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProjectIndexingHistory.JsonStatsPerFileType> {
+private fun ProjectIndexingHistoryImpl.aggregateStatsPerFileType(): List<JsonProjectIndexingHistory.JsonStatsPerFileType> {
   val totalProcessingTime = totalStatsPerFileType.values.sumOf { it.totalProcessingTimeInAllThreads }
   val fileTypeToProcessingTimePart = totalStatsPerFileType.mapValues {
     calculatePercentages(it.value.totalProcessingTimeInAllThreads, totalProcessingTime)
@@ -148,7 +150,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
   }
 }
 
-private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
+private fun ProjectIndexingHistoryImpl.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
   val totalIndexingTime = totalStatsPerIndexer.values.sumOf { it.totalIndexingTimeInAllThreads }
   val indexIdToIndexingTimePart = totalStatsPerIndexer.mapValues {
     calculatePercentages(it.value.totalIndexingTimeInAllThreads, totalIndexingTime)

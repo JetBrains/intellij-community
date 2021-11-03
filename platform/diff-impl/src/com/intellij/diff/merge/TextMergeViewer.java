@@ -430,7 +430,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myLoadingPanel.startLoading();
       myAcceptResolveAction.setEnabled(false);
 
-      BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.<Runnable>runUnderDisposeAwareIndicator(this, () -> {
+      BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
         try {
           return doPerformRediff(indicator);
         }

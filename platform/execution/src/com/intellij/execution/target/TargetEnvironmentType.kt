@@ -68,7 +68,7 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
     @JvmStatic
     @ApiStatus.Experimental
     fun getTargetTypesForRunConfigurations(): List<TargetEnvironmentType<*>> =
-      EXTENSION_NAME.extensionList.filter { it.javaClass.isAnnotationPresent(HideFromRunOn::class.java) }
+      EXTENSION_NAME.extensionList.filter { !it.javaClass.isAnnotationPresent(HideFromRunOn::class.java) }
 
     @JvmStatic
     fun <Type, Config, State> duplicateTargetConfiguration(type: Type, template: Config): Config

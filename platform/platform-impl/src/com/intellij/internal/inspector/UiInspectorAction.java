@@ -1571,7 +1571,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       "getCellRenderer", "getCellEditor",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
       "getPreferredScrollableViewportSize",
-      "getText", "isEditable", "getIcon",
+      "getText", "toString", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
       "getTooltipText", "getToolTipText", "cursor",

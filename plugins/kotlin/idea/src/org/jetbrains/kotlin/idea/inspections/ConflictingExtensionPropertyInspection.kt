@@ -162,10 +162,10 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
         isOnTheFly: Boolean
     ): Array<IntentionWrapper> {
         return if (isSameAsSynthetic(property, conflictingExtension)) {
-            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property), property.containingFile)
+            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property))
             // don't add the second fix when on the fly to allow code cleanup
             val fix2 = if (isOnTheFly)
-                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property), property.containingFile), LowPriorityAction {}
+                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property)), LowPriorityAction {}
             else
                 null
             listOfNotNull(fix1, fix2).toTypedArray()

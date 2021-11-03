@@ -1,24 +1,24 @@
 package com.jetbrains.packagesearch.intellij.plugin.maven
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-private class MavenModuleTransformer : ModuleTransformer {
+internal class MavenModuleTransformer : CoroutineModuleTransformer {
 
-    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
-        nativeModules.mapNotNull { nativeModule ->
-            runCatching {
-                MavenProjectsManager.getInstance(project).findProject(nativeModule)
-            }.getOrNull()?.let {
-                createMavenProjectModule(project, nativeModule, it)
-            }
-        }
+    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
+        nativeModules.parallelMap { nativeModule ->
+            runCatching { readAction { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
+                .getOrNull()?.let { createMavenProjectModule(project, nativeModule, it) }
+        }.filterNotNull()
 
     private fun createMavenProjectModule(
         project: Project,
@@ -38,6 +38,7 @@ private class MavenModuleTransformer : ModuleTransformer {
                     MavenNavigationUtil.createNavigatableForDependency(project, buildFile, it)
                 }
             },
+            availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
         )
     }
 }

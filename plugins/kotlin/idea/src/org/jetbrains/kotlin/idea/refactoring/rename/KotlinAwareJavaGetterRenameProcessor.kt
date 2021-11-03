@@ -11,9 +11,8 @@ import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReferenceDescriptorImpl
+import org.jetbrains.kotlin.idea.search.syntheticGetter
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
@@ -27,8 +26,7 @@ class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     ): Collection<PsiReference> {
         val getterReferences = super.findReferences(element, searchScope, searchInCommentsAndStrings)
         val getter = element as? PsiMethod ?: return getterReferences
-        val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(Name.identifier(getter.name))
-            ?: return getterReferences
+        val propertyName = getter.syntheticGetter ?: return getterReferences
         val setterName = JvmAbi.setterName(propertyName.asString())
         val containingClass = getter.containingClass ?: return getterReferences
         val setterReferences = containingClass

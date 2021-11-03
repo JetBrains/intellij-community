@@ -16,11 +16,7 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
   }
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine, softKillOnWin());
-  }
-
-  public PythonProcessHandler(@NotNull GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
-    super(commandLine, softKillOnWin);
+    super(commandLine);
   }
 
   public PythonProcessHandler(Process process, @NotNull String commandLine, @NotNull Charset charset) {

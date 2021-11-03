@@ -17,7 +17,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.30"
+  id "com.jetbrains.python.envs" version "0.0.31"
 }
 
 
@@ -30,8 +30,6 @@ envs {
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
-  python "python27", "2.7.18"
-
   if (!(Os.isFamily(Os.FAMILY_MAC) && Os.isVersion("10.16"))) {
     // https://github.com/pyenv/pyenv/issues/1737#issuecomment-794592631
     python "python36", "3.6.8"
@@ -40,4 +38,5 @@ envs {
   python "python37", "3.7.9"
   python "python38", "3.8.10"
   python "python39", "3.9.5"
+  python "python310", "3.10.0"
 }

@@ -100,9 +100,9 @@ public class ProjectTaskResult {
                                                                                @NotNull Predicate<? super ProjectTaskState> predicate) {
     return myTasksState.entrySet().stream()
       .filter(entry -> entry.getKey() instanceof ProjectModelBuildTask<?>)
-      .filter(entry -> buildableClass.isInstance(((ProjectModelBuildTask)entry.getKey()).getBuildableElement()))
+      .filter(entry -> buildableClass.isInstance(((ProjectModelBuildTask<?>)entry.getKey()).getBuildableElement()))
       .filter(entry -> predicate.test(entry.getValue()))
-      .map(entry -> buildableClass.cast(((ProjectModelBuildTask)entry.getKey()).getBuildableElement()))
+      .map(entry -> buildableClass.cast(((ProjectModelBuildTask<?>)entry.getKey()).getBuildableElement()))
       .collect(Collectors.toList());
   }
 }

@@ -50,5 +50,7 @@
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle" dynamic="true"/>
 
     <extensionPoint name="fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>
+
+    <extensionPoint name="formatOnSaveOptions.defaultsProvider" interface="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

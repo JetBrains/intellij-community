@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -18,16 +17,13 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
@@ -43,10 +39,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.showUnderneath
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Deferred
 import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
@@ -64,9 +58,8 @@ import javax.swing.text.html.parser.ParserDelegator
 private val minPopupMenuWidth = 175.scaled()
 
 internal class PackageDetailsHeaderPanel(
-    private val operationFactory: PackageSearchOperationFactory,
     private val operationExecutor: OperationExecutor
-) : JPanel(), Displayable<PackageDetailsHeaderPanel.ViewModel> {
+) : JPanel() {
 
     private val repoWarningBanner = InfoBannerPanel().apply {
         isVisible = false
@@ -86,7 +79,7 @@ internal class PackageDetailsHeaderPanel(
         addActionListener { onPrimaryActionClicked() }
     }
 
-    private var primaryOperations: List<PackageSearchOperation<*>> = emptyList()
+    private var primaryOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     private val removeMenuAction = MenuAction().apply {
         add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
@@ -109,7 +102,7 @@ internal class PackageDetailsHeaderPanel(
         ActionButton(removeMenuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
     }
 
-    private var removeOperations: List<PackageSearchOperation<*>> = emptyList()
+    private var removeOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     private val copyMenuItem = PackageSearchUI.menuItem(
         title = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.menu.copy"),
@@ -151,18 +144,17 @@ internal class PackageDetailsHeaderPanel(
     }
 
     internal data class ViewModel(
-        val selectedPackageModel: UiPackageModel<*>,
+        val uiPackageModel: UiPackageModel<*>,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        val allKnownRepositories: KnownRepositories.All,
         val targetModules: TargetModules,
         val onlyStable: Boolean
     )
 
-    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
-        val packageModel = viewModel.selectedPackageModel.packageModel
+    fun display(viewModel: ViewModel) {
+        val packageModel = viewModel.uiPackageModel.packageModel
 
         val name = packageModel.remoteInfo?.name
-        val rawIdentifier = packageModel.identifier.rawValue
+        val rawIdentifier = viewModel.uiPackageModel.identifier.rawValue
         if (name != null && name != rawIdentifier) {
             @Suppress("HardCodedStringLiteral") // The name comes from the API
             nameLabel.setBody(
@@ -179,16 +171,10 @@ internal class PackageDetailsHeaderPanel(
             identifierLabel.isVisible = false
         }
 
-        val selectedVersion = viewModel.selectedPackageModel.selectedVersion
-        val selectedScope = viewModel.selectedPackageModel.selectedScope
-        val repoToInstall = viewModel.knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-            packageModel,
-            selectedVersion,
-            viewModel.allKnownRepositories
-        )
-
+        val packageOperations = viewModel.uiPackageModel.packageOperations
+        val repoToInstall = packageOperations.repoToAddWhenInstalling
         updateRepoWarningBanner(repoToInstall)
-        updateOperations(packageModel, selectedVersion, selectedScope, viewModel.targetModules, viewModel.onlyStable, repoToInstall)
+        updateActions(packageOperations)
 
         overflowButton.componentPopupMenu?.isVisible = false
     }
@@ -205,106 +191,38 @@ internal class PackageDetailsHeaderPanel(
         }
     }
 
-    private fun updateOperations(
-        packageModel: PackageModel,
-        selectedVersion: PackageVersion,
-        selectedScope: PackageScope,
-        targetModules: TargetModules,
-        onlyStable: Boolean,
-        repoToInstall: RepositoryModel?
-    ) {
-        when (packageModel) {
-            is PackageModel.Installed -> {
-                setupActionsForInstalledPackage(packageModel, selectedVersion, selectedScope, targetModules, onlyStable, repoToInstall)
-            }
-            is PackageModel.SearchResult -> {
-                primaryActionButton.isVisible = true
-                primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.add.text")
-                primaryOperations = operationFactory.createAddPackageOperations(
-                    packageModel = packageModel,
-                    version = selectedVersion,
-                    scope = selectedScope,
-                    targetModules = targetModules,
-                    repoToInstall = repoToInstall
-                )
-
-                overflowButton.isVisible = false
-                removeOperations = emptyList()
-            }
-        }
-    }
-
-    private fun setupActionsForInstalledPackage(
-        packageModel: PackageModel.Installed,
-        selectedVersion: PackageVersion,
-        selectedScope: PackageScope,
-        targetModules: TargetModules,
-        onlyStable: Boolean,
-        repoToInstall: RepositoryModel?
-    ) {
+    private fun updateActions(packageOperations: PackageOperations) {
         overflowButton.isVisible = true
 
-        when {
-            selectedVersion == PackageVersion.Missing || packageModel.canBeUpgraded(selectedVersion, onlyStable) -> {
-                showUpgradePrimaryAction(packageModel, selectedVersion, selectedScope, targetModules, repoToInstall)
+        if (packageOperations.primaryOperationType != null) {
+            primaryOperations = packageOperations.primaryOperations
+            primaryActionButton.isVisible = true
+
+            when (packageOperations.primaryOperationType) {
+                PackageOperationType.INSTALL -> {
+                    primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.add.text")
+                }
+                PackageOperationType.UPGRADE -> {
+                    primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.upgrade.text")
+                }
+                PackageOperationType.SET -> {
+                    primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
+                }
             }
-            packageModel.canBeDowngraded(selectedVersion, onlyStable) -> {
-                primaryOperations = operationFactory.createChangePackageOperations(
-                    packageModel = packageModel,
-                    newVersion = selectedVersion,
-                    newScope = selectedScope,
-                    targetModules = targetModules,
-                    repoToInstall = repoToInstall
-                )
-                primaryActionButton.isVisible = true
-                primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.downgrade.text")
-            }
-            else -> {
-                primaryOperations = emptyList()
-                primaryActionButton.isVisible = false
-            }
+        } else {
+            primaryOperations = null
+            primaryActionButton.isVisible = false
         }
 
-        removeOperations = operationFactory.createRemovePackageOperations(
-            packageModel = packageModel,
-            version = selectedVersion,
-            scope = selectedScope,
-            targetModules = targetModules
-        )
-    }
-
-    private fun showUpgradePrimaryAction(
-        packageModel: PackageModel.Installed,
-        selectedVersion: PackageVersion,
-        selectedScope: PackageScope,
-        targetModules: TargetModules,
-        repoToInstall: RepositoryModel?
-    ) {
-        primaryOperations = operationFactory.createChangePackageOperations(
-            packageModel = packageModel,
-            newVersion = selectedVersion,
-            newScope = selectedScope,
-            targetModules = targetModules,
-            repoToInstall = repoToInstall
-        )
-        primaryActionButton.isVisible = true
-        primaryActionButton.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.upgrade.text")
+        removeOperations = packageOperations.removeOperations
     }
 
     private fun onPrimaryActionClicked() {
-        if (primaryOperations.isEmpty()) {
-            logger<PackageDetailsHeaderPanel>().error("No primary action operations to perform, status mismatch")
-            return
-        }
-        operationExecutor.executeOperations(primaryOperations)
+        primaryOperations?.let { operationExecutor.executeOperations(it) }
     }
 
     private fun onRemoveClicked() {
-        if (removeOperations.isEmpty()) {
-            logger<PackageDetailsHeaderPanel>().error("No remove operations to perform, status mismatch")
-            return
-        }
-        operationExecutor.executeOperations(removeOperations)
+        removeOperations?.let { operationExecutor.executeOperations(it) }
     }
 
     private fun onCopyClicked() {

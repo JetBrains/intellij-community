@@ -54,6 +54,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
+    git("config core.autocrlf true")
     last.update()
   }
 

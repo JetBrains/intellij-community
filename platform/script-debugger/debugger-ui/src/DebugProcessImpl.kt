@@ -84,6 +84,8 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   final override val activeOrMainVm: Vm?
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
+  val childConnections: MutableList<VmConnection<*>> = mutableListOf()
+
   init {
     if (session is XDebugSessionImpl && executionResult is DefaultExecutionResult) {
       session.addRestartActions(*executionResult.restartActions)
@@ -249,9 +251,10 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
         mainVm?.childVMs?.remove(vm)
+        childConnections.remove(childConnection)
       }
     }
-
+    childConnections.add(childConnection)
     mainVm?.debugListener?.childVmAdded(vm)
   }
 }

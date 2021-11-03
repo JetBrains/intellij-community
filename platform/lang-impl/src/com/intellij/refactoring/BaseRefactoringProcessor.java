@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -60,6 +60,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -197,6 +198,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
+        UsageViewStatisticsCollector.logSearchStarted(myProject);
         refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
@@ -502,8 +504,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       myTransaction = listenerManager.startTransaction();
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
+        RefactoringEventData data = ReadAction.compute(() -> getBeforeData());
+        PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         for (final RefactoringHelper helper : RefactoringHelper.EP_NAME.getExtensionList()) {
-          Object operation = ReadAction.compute(() -> helper.prepareOperation(writableUsageInfos));
+          Object operation = ReadAction.compute(() -> primaryElement != null ? helper.prepareOperation(writableUsageInfos, primaryElement) 
+                                                                             : helper.prepareOperation(writableUsageInfos));
           preparedData.put(helper, operation);
         }
       };

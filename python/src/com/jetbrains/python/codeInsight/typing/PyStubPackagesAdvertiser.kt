@@ -68,7 +68,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
   private class Visitor(private val ignoredPackages: MutableList<String>,
                         holder: ProblemsHolder,
-                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)

@@ -59,7 +59,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
    */
   private static final String REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY = "idea.logger.report.every.nth.exception";
   final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, 10);
-  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 5);
+  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
 
   static void setMutedExceptionFrequency(String frequency) {
     System.setProperty(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, frequency);

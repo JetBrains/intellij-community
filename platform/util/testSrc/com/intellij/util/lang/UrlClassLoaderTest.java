@@ -59,6 +59,7 @@ public class UrlClassLoaderTest {
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
+      assertNull(customCl.findResource(absolutePathToFile));  // there's no logger on the classpath, `UrlClassLoader#logError` prints to stderr
       assertNull(standardCl.findResource(absolutePathToFile));
     }
   }

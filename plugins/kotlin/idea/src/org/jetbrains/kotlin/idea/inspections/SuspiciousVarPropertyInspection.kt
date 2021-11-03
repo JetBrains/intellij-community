@@ -29,10 +29,7 @@ class SuspiciousVarPropertyInspection : AbstractKotlinInspection() {
                 property.valOrVarKeyword,
                 KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(
-                    ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true),
-                    property.containingFile
-                )
+                IntentionWrapper(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true))
             )
         })
 

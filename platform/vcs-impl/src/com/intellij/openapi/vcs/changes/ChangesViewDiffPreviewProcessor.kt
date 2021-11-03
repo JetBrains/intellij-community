@@ -4,14 +4,15 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -21,7 +22,6 @@ import com.intellij.vcs.commit.EditedCommitNode
 import one.util.streamex.StreamEx
 import java.util.*
 import java.util.stream.Stream
-import kotlin.streams.toList
 
 private fun wrap(project: Project, changesNodes: Stream<ChangesBrowserNode<*>>, unversioned: Stream<FilePath>): Stream<Wrapper> =
   Stream.concat(
@@ -90,24 +90,6 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
         // This will fail in case if selection comes from "Go to Change" popup.
         refresh(false)
       }
-  }
-
-  override fun createGoToChangeAction(): AnAction {
-    return MyGoToChangePopupProvider().createGoToChangeAction()
-  }
-
-  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getChanges(): List<PresentableChange> {
-      return allChanges.toList()
-    }
-
-    override fun select(change: PresentableChange) {
-      (change as? Wrapper)?.run(::selectChange)
-    }
-
-    override fun getSelectedChange(): PresentableChange? {
-      return currentChange
-    }
   }
 
   fun setAllowExcludeFromCommit(value: Boolean) {

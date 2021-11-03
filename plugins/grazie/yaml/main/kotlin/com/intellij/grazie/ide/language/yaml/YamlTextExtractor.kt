@@ -5,21 +5,23 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLTokenTypes.*
+import org.jetbrains.yaml.psi.YAMLScalar
 
 class YamlTextExtractor : TextExtractor() {
   private val commentBuilder = TextContentBuilder.FromPsi.removingIndents(" \t#")
 
   override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextContent.TextDomain>): TextContent? {
-    when (root.node.elementType) {
-      COMMENT -> {
+    when (root) {
+      is PsiComment -> {
         val siblings = getNotSoDistantSimilarSiblings(root, TokenSet.create(WHITESPACE, INDENT, EOL)) { it.elementType == COMMENT }
-        return TextContent.joinWithWhitespace(siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
+        return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextContent.TextDomain.COMMENTS) })
       }
-      TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT ->
+      is YAMLScalar ->
         return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextContent.TextDomain.LITERALS)
       else -> return null
     }

@@ -41,9 +41,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 /**
- * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md">Plugin Model V2 documentation</a>
+ * See <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md">Plugin Model</a> documentation.
+ *
+ * @implNote Prefer to use only JDK classes. Any post start-up functionality should be placed in {@link PluginManager} class.
  */
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
@@ -152,7 +153,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
-    return DisabledPluginsState.isDisabled(pluginId);
+    return PluginEnabler.HEADLESS.isDisabled(pluginId);
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -175,8 +176,7 @@ public final class PluginManagerCore {
         }
       }
     }
-    catch (NoSuchFileException ignore) {
-    }
+    catch (NoSuchFileException ignore) { }
     catch (IOException e) {
       getLogger().error("Failed to read " + updatedBrokenPluginFile, e);
     }
@@ -242,11 +242,11 @@ public final class PluginManagerCore {
   }
 
   public static boolean disablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.setEnabledState(Collections.singleton(id), false);
+    return PluginEnabler.HEADLESS.disableById(Collections.singleton(id));
   }
 
   public static boolean enablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.setEnabledState(Collections.singleton(id), true);
+    return PluginEnabler.HEADLESS.enableById(Collections.singleton(id));
   }
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
@@ -292,9 +292,9 @@ public final class PluginManagerCore {
       return null;
     }
 
-    IdeaPluginDescriptor result = null;
+    IdeaPluginDescriptorImpl result = null;
     for (IdeaPluginDescriptorImpl o : pluginSet.enabledPlugins) {
-      ClassLoader classLoader = o.getPluginClassLoader();
+      ClassLoader classLoader = o.getClassLoader();
       if (!hasLoadedClass(className, classLoader)) {
         continue;
       }
@@ -324,7 +324,7 @@ public final class PluginManagerCore {
       }
 
       if (root == null) {
-        root = PathManager.getResourceRoot(result.getPluginClassLoader(), className.replace('.', '/') + ".class");
+        root = PathManager.getResourceRoot(result.getClassLoader(), className.replace('.', '/') + ".class");
         if (root == null) {
           return null;
         }
@@ -340,13 +340,12 @@ public final class PluginManagerCore {
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     String vendor = plugin.getVendor();
-    if (vendor == null &&
-        !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
-        plugin instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
-        ApplicationInfoEx.getInstanceEx().isVendorJetBrains()) {
-      return true;
-    }
-    return isDevelopedByJetBrains(vendor) || isDevelopedByJetBrains(vendor);
+    return isDevelopedByJetBrains(vendor) ||
+           (vendor == null &&  // a core plugin
+            !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
+            plugin instanceof IdeaPluginDescriptorImpl &&
+            !((IdeaPluginDescriptorImpl)plugin).isUseIdeaClassLoader &&
+            ApplicationInfoEx.getInstanceEx().isVendorJetBrains());
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
@@ -938,12 +937,7 @@ public final class PluginManagerCore {
       return result;
     }
 
-    for (IdeaPluginDescriptorImpl plugin : pluginSet.allPlugins) {
-      if (id.equals(plugin.getPluginId())) {
-        return plugin;
-      }
-    }
-    return null;
+    return pluginSet.findInstalledPlugin(id);
   }
 
   @ApiStatus.Internal
@@ -962,16 +956,8 @@ public final class PluginManagerCore {
       return false;
     }
 
-    if (pluginSet.isPluginEnabled(id)) {
-      return true;
-    }
-
-    for (IdeaPluginDescriptor plugin : pluginSet.allPlugins) {
-      if (id.equals(plugin.getPluginId())) {
-        return true;
-      }
-    }
-    return false;
+    return pluginSet.isPluginEnabled(id) ||
+           pluginSet.isPluginInstalled(id);
   }
 
   @ApiStatus.Internal

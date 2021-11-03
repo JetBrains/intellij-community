@@ -12,11 +12,12 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.TestFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     List<Bookmark> bookmarksBefore = getManager().getBookmarks();
@@ -91,7 +92,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     Document document = getEditor().getDocument();
@@ -109,7 +110,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int j = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     addBookmark(3);
@@ -135,7 +136,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int j = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
     addBookmark(3);
@@ -152,7 +153,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     for (Bookmark bookmark : bookmarksAfter) {
       checkBookmarkNavigation(bookmark);
     }
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
     getEditor().getCaretModel().setCaretsAndSelections(
       Collections.singletonList(
         new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
@@ -167,7 +168,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text, TestFileType.TEXT);
+    init(text, PlainTextFileType.INSTANCE);
     addBookmark(2);
     assertEquals(1, getManager().getBookmarks().size());
 
@@ -219,6 +220,24 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
   private void addBookmark(VirtualFile file, int line) {
     getManager().add(LineBookmarkProvider.find(getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
+  }
+
+  public void testBookmarkCreationMustNotLoadDocumentUnnecessarily() throws IOException {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC,
+                                                                            (document, psiFile, project) -> fail("Document " + document + " was loaded unexpectedly"));
+
+    @NonNls String text =
+      "public class Test {\n" +
+      "}";
+
+    setVFile(WriteAction.compute(() -> {
+      VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
+      VfsUtil.saveText(file, text);
+      return file;
+    }));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    addBookmark(getVFile(), 1);
   }
 
   private BookmarksManager getManager() {

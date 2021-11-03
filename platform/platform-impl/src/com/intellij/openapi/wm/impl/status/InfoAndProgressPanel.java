@@ -24,11 +24,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.awt.RelativePoint;
@@ -41,8 +43,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -52,6 +53,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiFunction;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   public static final Object FAKE_BALLOON = new Object();
@@ -59,7 +61,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private final ProcessPopup myPopup;
   private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
-  private final StatusPanel myInfoPanel = new StatusPanel();
+  private BiFunction<@Nls String, @NonNls String, @Nls String> myTextSetter = (text, __) -> text;
+
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final InlineProgressPanel myInlinePanel = new InlineProgressPanel();
   private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = NotNullLazyValue.lazy(() -> {
@@ -79,7 +82,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     });
 
     icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    icon.setBorder(WidgetBorder.INSTANCE);
+    icon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
     icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
     return icon;
   });
@@ -124,7 +127,20 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
     myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
-    myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
+
+    if (!ExperimentalUI.isNewUI()) {
+      var statusPanel = new StatusPanel();
+      myRefreshAndInfoPanel.add(statusPanel, BorderLayout.CENTER);
+      myTextSetter = (text, requestor) -> {
+        if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
+          return statusPanel.getText();
+        }
+
+        boolean logMode = statusPanel.updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
+        myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
+        return text;
+      };
+    }
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
@@ -181,6 +197,21 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
+  }
+
+  @ApiStatus.Experimental
+  public void setCentralComponent(@Nullable JComponent component) {
+    if (ExperimentalUI.isNewUI()) {
+      BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
+      Component c = layout.getLayoutComponent(BorderLayout.CENTER);
+      if (c != null) {
+        myRefreshAndInfoPanel.remove(c);
+      }
+
+      if (component != null) {
+        myRefreshAndInfoPanel.add(component, BorderLayout.CENTER);
+      }
+    }
   }
 
   @Override
@@ -340,14 +371,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  public @NotNull Pair<@NlsContexts.StatusBarText String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
-    if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
-      return new Pair<>(myInfoPanel.getText(), myCurrentRequestor);
-    }
-
-    boolean logMode = myInfoPanel.updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
-    myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
-    return new Pair<>(text, requestor);
+  @Nullable
+  @NlsContexts.StatusBarText
+  public String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
+    return myTextSetter.apply(text, requestor);
   }
 
   void setRefreshVisible(boolean visible) {

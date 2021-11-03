@@ -208,6 +208,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
                   if (distribution is LocalDistributionInfo) {
                     distribution.uiPath = text
                     component.popup?.list?.repaint()
+                    component.selectedItemChanged()
                   }
                 }
               }

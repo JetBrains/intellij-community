@@ -22,7 +22,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 class DiffUsagesCollector : ApplicationUsagesCollector() {
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.diff", 5)
+    private val GROUP = EventLogGroup("vcs.diff", 6)
     val places = listOf(DiffPlaces.DEFAULT,
       DiffPlaces.CHANGES_VIEW,
       DiffPlaces.VCS_LOG_VIEW,
@@ -33,6 +33,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
 
     private val DIFF_PLACE = EventFields.String("diff_place", places)
     private val SYNC_SCROLL = GROUP.registerVarargEvent("sync.scroll", DIFF_PLACE, EventFields.Enabled)
+    private val ALIGNED_CHANGES = GROUP.registerVarargEvent("aligned.changes", DIFF_PLACE, EventFields.Enabled)
     private val IGNORE_POLICY_VALUE = EventFields.Enum("value", IgnorePolicy::class.java)
     private val IGNORE_POLICY = GROUP.registerVarargEvent("ignore.policy", DIFF_PLACE, IGNORE_POLICY_VALUE)
     private val HIGHLIGHT_POLICY_VALUE = EventFields.Enum("value", HighlightPolicy::class.java)
@@ -63,7 +64,6 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val set = HashSet<MetricEvent>()
 
-
     for (place in places) {
       val data: MutableList<EventPair<*>> = mutableListOf(DIFF_PLACE.with(place))
 
@@ -74,6 +74,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
       val defaultTextSettings = TextDiffSettings.getDefaultSettings(place)
 
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableSyncScroll }, SYNC_SCROLL, data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableAligningChangesMode }, ALIGNED_CHANGES, data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.ignorePolicy }, IGNORE_POLICY, IGNORE_POLICY_VALUE, data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightPolicy }, HIGHLIGHT_POLICY, HIGHLIGHT_POLICY_VALUE, data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightingLevel }, SHOW_WARNINGS_POLICY, HIGHLIGHTING_LEVEL_VALUE,

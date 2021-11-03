@@ -172,6 +172,23 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final String localName = local.getName();
 
+    final List<PsiElement> innerClassesWithUsages = new ArrayList<>();
+    final List<PsiElement> innerClassUsages = new ArrayList<>();
+    final PsiElement containingClass = LambdaUtil.getContainingClassOrLambda(local);
+    for (PsiElement element : allRefs) {
+      PsiElement innerClass = element;
+      while (innerClass != null) {
+        final PsiElement parentPsiClass = LambdaUtil.getContainingClassOrLambda(innerClass.getParent());
+        if (parentPsiClass == containingClass) {
+          if (innerClass != element) {
+            innerClassesWithUsages.add(innerClass);
+            innerClassUsages.add(element);
+          }
+          break;
+        }
+        innerClass = parentPsiClass;
+      }
+    }
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
     if (containerBlock == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage(
@@ -179,16 +196,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       return null;
     }
-    
-    final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<>());
-    final PsiElement containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class, PsiLambdaExpression.class);
-    
+
     final PsiExpression defToInline;
     try {
-      PsiElement refToInline = getRefToInline(local, allRefs, innerClassUsages, containingClass);
-      defToInline = getDefToInline(local,
-                                   refToInline != null ? refToInline : refExpr, 
-                                   containerBlock, true);
+      defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock, true);
       if (defToInline == null) {
         final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
@@ -347,33 +358,6 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
       }
     };
-  }
-
-  @Nullable
-  static PsiElement getRefToInline(@NotNull PsiLocalVariable local,
-                                   @NotNull Collection<PsiElement> allRefs,
-                                   List<PsiElement> innerClassUsages,
-                                   PsiElement containingClass) {
-    final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<>());
-    for (PsiElement element : allRefs) {
-      PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
-      while (innerClass != containingClass && innerClass != null) {
-        final PsiElement parentPsiClass = PsiTreeUtil.getParentOfType(innerClass.getParent(), PsiClass.class, PsiLambdaExpression.class);
-        if (parentPsiClass == containingClass) {
-          if (innerClass instanceof PsiLambdaExpression) {
-            if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
-              innerClassesWithUsages.add(element);
-              innerClass = parentPsiClass;
-              continue;
-            }
-          }
-          innerClassesWithUsages.add(innerClass);
-          innerClassUsages.add(element);
-        }
-        innerClass = parentPsiClass;
-      }
-    }
-    return innerClassesWithUsages.isEmpty() ? null : innerClassesWithUsages.get(0);
   }
 
   @NotNull

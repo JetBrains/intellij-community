@@ -35,7 +35,14 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
                                       @NotNull Project project,
                                       @NotNull PackageAnnotator.Annotator annotator) {
-    super(suite, project);
+    this(suite, project, annotator, 0);
+  }
+
+  public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
+                                      @NotNull Project project,
+                                      @NotNull PackageAnnotator.Annotator annotator,
+                                      int totalRoots) {
+    super(suite, project, totalRoots);
     myAnnotator = annotator;
     myProjectData = mySuite.getCoverageData();
 

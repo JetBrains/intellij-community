@@ -447,7 +447,7 @@ public class PyPIPackageUtil {
     }
 
     private static boolean isNotBrokenRelease(Object o) {
-      return !(o instanceof List) || !((List)o).isEmpty();
+      return !(o instanceof List) || !((List<?>)o).isEmpty();
     }
   }
 }

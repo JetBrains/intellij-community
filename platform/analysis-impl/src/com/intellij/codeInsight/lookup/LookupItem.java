@@ -219,7 +219,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     if(!(o instanceof LookupItem)){
       throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
     }
-    return getLookupString().compareTo(((LookupItem)o).getLookupString());
+    return getLookupString().compareTo(((LookupItem<?>)o).getLookupString());
   }
 
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -126,7 +127,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   public static MockWolfTheProblemSolver prepareWolf(@NotNull Project project, @NotNull Disposable parentDisposable) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
-    WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project);
+    WolfTheProblemSolverImpl theRealSolver = (WolfTheProblemSolverImpl)WolfTheProblemSolverImpl.createInstance(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
     Disposer.register(parentDisposable, theRealSolver);
     return wolfTheProblemSolver;

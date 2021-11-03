@@ -23,7 +23,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -71,7 +70,10 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -110,7 +112,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
@@ -193,26 +194,6 @@ public final class ExternalSystemUtil {
   @Nullable
   public static ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     return ToolWindowManager.getInstance(project).getToolWindow(externalSystemId.getReadableName());
-  }
-
-  /**
-   * Asks to refresh all external projects of the target external system linked to the given ide project.
-   * <p/>
-   * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'.
-   *
-   * @param project          target ide project
-   * @param externalSystemId target external system which projects should be refreshed
-   * @param force            flag which defines if external project refresh should be performed if it's config is up-to-date
-   * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
-    refreshProjects(
-      new ImportSpecBuilder(project, externalSystemId)
-        .forceWhenUptodate(force)
-        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-    );
   }
 
   /**
@@ -350,10 +331,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    boolean isFirstLoad = ThreeState.UNSURE.equals(TrustedProjects.getTrustedState(project));
-    boolean isTrustedProject = confirmLoadingUntrustedProject(project, isFirstLoad, externalSystemId);
-
-    if (!isPreviewMode && !isTrustedProject) {
+    if (!isPreviewMode && !isTrusted(project, externalSystemId)) {
       LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
       return;
     }
@@ -637,6 +615,11 @@ public final class ExternalSystemUtil {
         title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
         new Task.Modal(project, title, true) {
           @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
           }
@@ -646,6 +629,11 @@ public final class ExternalSystemUtil {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title) {
           @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
           }
@@ -654,6 +642,11 @@ public final class ExternalSystemUtil {
       case START_IN_FOREGROUND_ASYNC:
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+          @Override
+          public @NotNull Object getId() {
+            return resolveProjectTask.getId();
+          }
+
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             refreshProjectStructureTask.execute(indicator);
@@ -698,29 +691,6 @@ public final class ExternalSystemUtil {
              IdeBundle.message("untrusted.project.dialog.trust.button"),
              IdeBundle.message("untrusted.project.dialog.distrust.button")
            );
-  }
-
-  public static @NotNull OpenUntrustedProjectChoice confirmOpeningUntrustedProject(
-    @NotNull VirtualFile virtualFile,
-    ProjectSystemId... systemIds
-  ) {
-    return confirmOpeningUntrustedProject(virtualFile, Arrays.asList(systemIds));
-  }
-
-  public static @NotNull OpenUntrustedProjectChoice confirmOpeningUntrustedProject(
-    @NotNull VirtualFile virtualFile,
-    @NotNull Collection<ProjectSystemId> systemIds
-  ) {
-    if (executesTrustedCodeOnly(systemIds)) {
-      return OpenUntrustedProjectChoice.IMPORT;
-    }
-    return TrustedProjects.confirmOpeningUntrustedProject(
-      virtualFile,
-      new HashSet<>(systemIds)
-        .stream()
-        .map(it -> it.getReadableName())
-        .sorted(NaturalComparator.INSTANCE)
-        .collect(Collectors.toList()));
   }
 
   public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
@@ -839,7 +809,7 @@ public final class ExternalSystemUtil {
     }
     else if (progressEvent instanceof ExternalSystemFinishEvent) {
       final EventResult eventResult;
-      final OperationResult operationResult = ((ExternalSystemFinishEvent)progressEvent).getOperationResult();
+      final OperationResult operationResult = ((ExternalSystemFinishEvent<?>)progressEvent).getOperationResult();
       if (operationResult instanceof FailureResult) {
         List<com.intellij.build.events.Failure> failures = new SmartList<>();
         for (Failure failure : ((FailureResult)operationResult).getFailures()) {

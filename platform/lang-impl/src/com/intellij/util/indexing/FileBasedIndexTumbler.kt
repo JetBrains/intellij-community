@@ -43,7 +43,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             for (project in ProjectUtil.getOpenProjects()) {
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
-              dumbService.queueTask(object : DumbModeTask(dumbModeSemaphore) {
+              object : DumbModeTask(dumbModeSemaphore) {
                 override fun performInDumbMode(indicator: ProgressIndicator) {
                   indicator.text = IndexingBundle.message("indexes.reloading")
                   dumbModeSemaphore.waitFor()
@@ -52,7 +52,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                 override fun toString(): String {
                   return "Plugin loading/unloading"
                 }
-              })
+              }.queue(project)
             }
           }
         }
@@ -101,7 +101,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
-            DumbService.getInstance(project).queueTask(UnindexedFilesUpdater(project, reason))
+            UnindexedFilesUpdater(project, reason).queue(project)
           }
           LOG.info("Index rescanning has been started after plugin load/unload")
         }

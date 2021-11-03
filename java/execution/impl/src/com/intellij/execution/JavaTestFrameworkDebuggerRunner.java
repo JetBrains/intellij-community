@@ -42,7 +42,7 @@ public abstract class JavaTestFrameworkDebuggerRunner extends GenericDebuggerRun
   protected RunContentDescriptor createContentDescriptor(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
     final RunContentDescriptor res = super.createContentDescriptor(state, environment);
-    final ServerSocket socket = ((JavaTestFrameworkRunnableState)state).getForkSocket();
+    final ServerSocket socket = ((JavaTestFrameworkRunnableState<?>)state).getForkSocket();
     if (socket != null) {
       Thread thread = new Thread(getThreadName() + " debugger runner") {
         @Override

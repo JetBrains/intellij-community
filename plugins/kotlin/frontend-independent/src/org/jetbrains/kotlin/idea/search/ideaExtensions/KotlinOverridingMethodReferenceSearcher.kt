@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.search.MethodTextOccurrenceProcessor
 import com.intellij.psi.impl.search.MethodUsagesSearcher
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.util.MethodSignatureUtil
@@ -16,10 +17,9 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.syntheticAssessors
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -28,26 +28,22 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
     override fun processQuery(p: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
         val method = p.method
-        val isConstructor = p.project.runReadActionInSmartMode { method.isConstructor }
-        if (isConstructor) {
+        val canOverride = p.project.runReadActionInSmartMode { !method.hasModifier(JvmModifier.STATIC) && !method.isConstructor }
+        if (!canOverride) {
             return
         }
 
         val searchScope = p.project.runReadActionInSmartMode {
-            p.effectiveSearchScope
-                .intersectWith(method.useScope)
-                .restrictToKotlinSources()
+            p.effectiveSearchScope.restrictToKotlinSources()
         }
 
-        if (searchScope === GlobalSearchScope.EMPTY_SCOPE) return
+        if (SearchScope.isEmptyScope(searchScope)) return
 
         super.processQuery(MethodReferencesSearch.SearchParameters(method, searchScope, p.isStrictSignatureSearch, p.optimizer), consumer)
 
         p.project.runReadActionInSmartMode {
             val containingClass = method.containingClass ?: return@runReadActionInSmartMode
-
-            val nameCandidates = getPropertyNamesCandidatesByAccessorName(Name.identifier(method.name))
-            for (name in nameCandidates) {
+            for (name in method.syntheticAssessors) {
                 p.optimizer.searchWord(
                     name.asString(),
                     searchScope,

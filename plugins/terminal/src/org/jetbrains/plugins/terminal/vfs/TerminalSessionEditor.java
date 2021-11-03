@@ -94,7 +94,7 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   }
 
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 

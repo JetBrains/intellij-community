@@ -13,13 +13,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
-import training.dsl.LessonContext
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskRuntimeContext
-import training.dsl.checkToolWindowState
-import training.dsl.closeAllFindTabs
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
 abstract class DeclarationAndUsagesLesson
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
@@ -76,7 +74,7 @@ abstract class DeclarationAndUsagesLesson
         text(LessonsBundle.message("declaration.and.usages.find.usages", action(it)))
 
         triggerByUiComponentAndHighlight { ui: BaseLabel ->
-          ui.javaClass.simpleName == "ContentTabLabel" && (ui.text?.contains(entityName) ?: false)
+          ui.javaClass.simpleName == "ContentTabLabel" && ui.text.isToStringContains(entityName)
         }
         restoreIfModifiedOrMoved()
         test {
@@ -92,7 +90,7 @@ abstract class DeclarationAndUsagesLesson
           }
         }
         triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
-          ui.text?.contains(pinTabText) ?: false
+          ui.text.isToStringContains(pinTabText)
         }
         restoreByUi()
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))
@@ -145,4 +143,11 @@ abstract class DeclarationAndUsagesLesson
   private data class MyInfo(val target: PsiElement, val position: MyPosition)
 
   private data class MyPosition(val file: PsiFile, val offset: Int)
+
+  override val suitableTips = listOf("GoToDeclaration", "ShowUsages")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("declaration.and.usages.help.link"),
+         LessonUtil.getHelpLink("navigating-through-the-source-code.html#go_to_declaration")),
+  )
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+
+/**
+ * Allows checking accessibility of the class and provide fixes.
+ */
 public interface JavaModuleSystemEx extends JavaModuleSystem {
   final class ErrorWithFixes {
     public final @NotNull @Nls String message;

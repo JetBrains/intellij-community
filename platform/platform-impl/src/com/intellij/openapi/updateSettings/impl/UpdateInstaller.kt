@@ -2,12 +2,10 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,8 +24,6 @@ import java.nio.file.Path
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.UIManager
-
-internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
 
 internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
@@ -94,42 +90,35 @@ internal object UpdateInstaller {
         }
         indicator.checkCanceled()
       }
-      catch (e: ProcessCanceledException) { throw e }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Exception) {
-        Logger.getInstance(UpdateChecker::class.java).info(e)
+        LOG.info(e)
       }
     }
     return readyToInstall
   }
 
   @JvmStatic
-  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>, requiresRestart: (PluginDownloader) -> Boolean): PluginUpdateResult {
-    val pluginsInstalled = mutableListOf<IdeaPluginDescriptor>()
-    var restartRequired = false
-
-    for (downloader in downloaders) {
-      try {
-        if (requiresRestart(downloader)) {
-          downloader.install()
-          restartRequired = true
-        }
-        pluginsInstalled += downloader.descriptor
-      }
-      catch (e: Exception) {
-        Logger.getInstance(UpdateChecker::class.java).info(e)
-      }
-    }
-
-    return PluginUpdateResult(pluginsInstalled, restartRequired)
-  }
-
-  @JvmStatic
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
-    val result = ProgressManager.getInstance().computeInNonCancelableSection<PluginUpdateResult, RuntimeException> {
-      installDownloadedPluginUpdates(downloadedPluginUpdates) { true }
+    if (downloadedPluginUpdates.isEmpty()) {
+      return false
     }
-    return result.pluginsInstalled.isNotEmpty()
+
+    ProgressManager.getInstance().executeNonCancelableSection {
+      for (downloader in downloadedPluginUpdates) {
+        try {
+          downloader.install()
+        }
+        catch (e: Exception) {
+          LOG.info(e)
+        }
+      }
+    }
+
+    return true
   }
 
   @JvmStatic

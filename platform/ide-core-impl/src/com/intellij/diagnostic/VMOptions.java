@@ -5,9 +5,13 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SmartList;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
@@ -25,21 +28,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
-
-  private static final NotNullLazyValue<Charset> JNU_CHARSET = NotNullLazyValue.createValue(() -> {
-    try {
-      return Charset.forName(System.getProperty("sun.jnu.encoding"));
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      return Charset.defaultCharset();
-    }
-  });
+  private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
 
   public enum MemoryKind {
     HEAP("Xmx", "", "change.memory.max.heap"),
@@ -85,10 +81,11 @@ public final class VMOptions {
    * Returns a value of the given option, or {@code null} when unable to find.
    *
    * @param effective when {@code true}, the method returns a value for the current JVM (from {@link ManagementFactory#getRuntimeMXBean()}),
-   *                  otherwise it reads a user's .vmoptions {@link #getWriteFile file}.
+   *                  otherwise it reads a user's .vmoptions {@link #getUserOptionsFile() file}.
    */
   public static @Nullable String readOption(@NotNull String prefix, boolean effective) {
     List<String> lines = options(effective);
+    // the list is iterated in the reverse order, because the last value wins
     for (int i = lines.size() - 1; i >= 0; i--) {
       String line = lines.get(i).trim();
       if (line.startsWith(prefix)) {
@@ -99,7 +96,7 @@ public final class VMOptions {
   }
 
   /**
-   * Returns a (possibly empty) list of values of the given option.
+   * Returns a (possibly empty) list of the given option's values.
    *
    * @see #readOption(String, boolean)
    */
@@ -119,21 +116,41 @@ public final class VMOptions {
       return ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
     else {
-      Path file = getWriteFile();
-      if (file != null && Files.exists(file)) {
+      List<String> platformOptions = List.of(), userOptions = List.of();
+
+      Path platformFile = getPlatformOptionsFile();
+      if (Files.exists(platformFile)) {
         try {
-          return Files.readAllLines(file, getFileCharset());
+          platformOptions = Files.readAllLines(platformFile, getFileCharset());
         }
         catch (IOException e) {
           LOG.warn(e);
         }
       }
+
+      Path userFile = getUserOptionsFile();
+      if (userFile != null && Files.exists(userFile)) {
+        ourUserFileLock.readLock().lock();
+        try {
+          userOptions = Files.readAllLines(userFile, getFileCharset());
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+        finally {
+          ourUserFileLock.readLock().unlock();
+        }
+      }
+
+      List<String> result = new ArrayList<>(platformOptions.size() + userOptions.size());
+      result.addAll(platformOptions);
+      result.addAll(userOptions);
+      return result;
     }
-    return List.of();
   }
 
   /**
-   * Parses a Java VM memory option (such as "-Xmx") string value and returns its numeric value, in bytes.
+   * Parses VM memory option (such as "-Xmx") string value and returns its numeric value (in bytes).
    * See <a href="https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java">'java' command manual</a>
    * for the syntax.
    *
@@ -168,7 +185,7 @@ public final class VMOptions {
   }
 
   /**
-   * <p>Sets or deletes a VM option in a user's .vmoptions {@link #getWriteFile file}.</p>
+   * <p>Sets or deletes a VM option in a user's .vmoptions {@link #getUserOptionsFile() file}.</p>
    *
    * <p>When {@code newValue} is {@code null}, all options that start with a given prefix are removed from the file.
    * When {@code newValue} is not {@code null} and an option is present in the file, it's value is replaced, otherwise
@@ -182,9 +199,9 @@ public final class VMOptions {
    * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
    */
   public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> _options) throws IOException {
-    Path file = getWriteFile();
+    Path file = getUserOptionsFile();
     if (file == null) {
-      throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ")");
+      throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');
     }
 
     List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<>();
@@ -222,18 +239,102 @@ public final class VMOptions {
 
     if (modified) {
       NioFiles.createDirectories(file.getParent());
-      Files.write(file, lines, getFileCharset());
+      ourUserFileLock.writeLock().lock();
+      try {
+        Files.write(file, lines, getFileCharset());
+      }
+      finally {
+        ourUserFileLock.writeLock().unlock();
+      }
     }
   }
 
+  /**
+   * Returns {@code true} when user's VM options may be created (or already exists) -
+   * i.e. when the IDE knows a place where a launcher will look for that file.
+   */
   public static boolean canWriteOptions() {
-    return getWriteFile() != null;
+    return getUserOptionsFile() != null;
   }
 
-  @Nullable
-  public static String read() {
+  @ApiStatus.Internal
+  public static @NotNull Path getPlatformOptionsFile() {
+    return Path.of(PathManager.getBinPath(), getFileName());
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Path getUserOptionsFile() {
+    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    if (vmOptionsFile == null) {
+      // launchers should specify a path to a VM options file used to configure a JVM
+      return null;
+    }
+
+    Path candidate = Path.of(vmOptionsFile).toAbsolutePath();
+    if (!PathManager.isUnderHomeDirectory(candidate)) {
+      // a file is located outside the IDE installation - meaning it is safe to overwrite
+      return candidate;
+    }
+
+    String location = PathManager.getCustomOptionsDirectory();
+    if (location == null) {
+      return null;
+    }
+
+    return Path.of(location, getFileName());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String getFileName() {
+    String fileName = ApplicationNamesInfo.getInstance().getScriptName();
+    if (!SystemInfo.isMac && CpuArch.isIntel64()) fileName += "64";
+    if (SystemInfo.isWindows) fileName += ".exe";
+    fileName += ".vmoptions";
+    return fileName;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Charset getFileCharset() {
+    return CharsetToolkit.getPlatformCharset();
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void writeOption(@NotNull MemoryKind option, int value) {
     try {
-      Path newFile = getWriteFile();
+      setOption(option.option, value + "m");
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  /** @deprecated ignores write errors; please use {@link #setProperty} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    try {
+      setOption("-D" + option + separator, value);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  /**
+   * @deprecated since 2021.3, the result may be incomplete: launchers collect VM options from two files, but this method returns
+   * only one of them (see IDEA-240526 for more details). In addition, clients have to deal with platform-specific line separators and charsets,
+   * and manipulating the whole content of the file cannot guarantee thread-safety.
+   * Please use {@link #readOption}/{@link #setOption} methods instead.
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static @Nullable String read() {
+    try {
+      Path newFile = getUserOptionsFile();
       if (newFile != null && Files.exists(newFile)) {
         return Files.readString(newFile, getFileCharset());
       }
@@ -250,68 +351,18 @@ public final class VMOptions {
     return null;
   }
 
+  /** @deprecated please see {@link #read()} for details */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @Nullable Path getWriteFile() {
-    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
-    if (vmOptionsFile == null) {
-      // launchers should specify a path to a VM options file used to configure a JVM
-      return null;
-    }
-
-    vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
-    if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
-      // a file is located outside the IDE installation - meaning it is safe to overwrite
-      return Path.of(vmOptionsFile);
-    }
-
-    String location = PathManager.getCustomOptionsDirectory();
-    if (location == null) {
-      return null;
-    }
-
-    return Path.of(location, getCustomVMOptionsFileName());
+    return getUserOptionsFile();
   }
 
-  @NotNull
-  public static String getCustomVMOptionsFileName() {
-    String fileName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (!SystemInfo.isMac && CpuArch.isIntel64()) fileName += "64";
-    if (SystemInfo.isWindows) fileName += ".exe";
-    fileName += ".vmoptions";
-    return fileName;
-  }
-
-  /**
-   * In general, clients should abstain from direct reading or modification of a user's .vmoptions {@link #getWriteFile file},
-   * but when unavoidable, this charset must be used for reading and writing the file.
-   */
-  public static @NotNull Charset getFileCharset() {
-    return JNU_CHARSET.getValue();
-  }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
+  /** @deprecated the name is no longer accurate; please use {@link #getFileName()} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void writeOption(@NotNull MemoryKind option, int value) {
-    try {
-      setOption(option.option, value + "m");
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
-
-  /** @deprecated ignores write errors; please use {@link #setProperty} instead */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
-    try {
-      setOption("-D" + option + separator, value);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static @NotNull String getCustomVMOptionsFileName() {
+    return getFileName();
   }
   //</editor-fold>
 }

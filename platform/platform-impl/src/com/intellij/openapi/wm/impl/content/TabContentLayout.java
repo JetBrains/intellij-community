@@ -17,6 +17,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -24,9 +25,11 @@ import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -35,6 +38,7 @@ import java.util.*;
 class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
+  JLabel myDropOverPlaceholder;
   LayoutData myLastLayout;
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
@@ -67,6 +71,18 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         return myUi.window.isActive();
       }
     };
+    myDropOverPlaceholder = new JLabel() {
+      @Override
+      public void paint(Graphics g) {
+        g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
+        RectanglePainter.FILL.paint((Graphics2D)g, 0, 0, getWidth(), getHeight(), null);
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(myUi.myDropOverWidth, 1);
+      }
+    };
     MouseDragHelper.setComponentDraggable(myIdLabel, true);
 
 
@@ -80,6 +96,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     myTabs.clear();
     myContent2Tabs.clear();
     myIdLabel = null;
+    myDropOverPlaceholder = null;
   }
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
@@ -146,12 +163,16 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
 
     if (data.fullLayout) {
-      for (ContentTabLabel eachTab : myTabs) {
+      for (JLabel eachTab : myTabs) {
         final Dimension eachSize = eachTab.getPreferredSize();
         data.requiredWidth += eachSize.width;
         data.toLayout.add(eachTab);
       }
 
+      if (myUi.myDropOverIndex != -1) {
+        data.requiredWidth += myUi.myDropOverWidth;
+        data.toLayout.add(myUi.myDropOverIndex - 1, myDropOverPlaceholder);
+      }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;
 
@@ -160,11 +181,13 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         if (data.requiredWidth <= data.toFitWidth) break;
         if (data.toLayout.size() <= 1) break;
 
-        if (data.toLayout.get(0) != selectedTab) {
-          dropTab(data, data.toLayout.remove(0));
+        JLabel firstLabel = data.toLayout.get(0);
+        JLabel lastLabel = data.toLayout.get(data.toLayout.size() - 1);
+        if (firstLabel != selectedTab && firstLabel != myDropOverPlaceholder) {
+          dropTab(data, firstLabel);
         }
-        else if (data.toLayout.get(data.toLayout.size() - 1) != selectedTab) {
-          dropTab(data, data.toLayout.remove(data.toLayout.size() - 1));
+        else if (lastLabel != selectedTab && lastLabel != myDropOverPlaceholder) {
+          dropTab(data, lastLabel);
         }
         else {
           break;
@@ -174,7 +197,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       boolean reachedBounds = false;
       data.moreRect = null;
       TabsDrawMode toDrawTabs = isToDrawTabs();
-      for (ContentTabLabel each : data.toLayout) {
+      for (JLabel each : data.toLayout) {
         if (toDrawTabs == TabsDrawMode.HIDE) {
           each.setBounds(0, 0, 0, 0);
           continue;
@@ -198,7 +221,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         }
       }
 
-      for (ContentTabLabel each : data.toDrop) {
+      for (JLabel each : data.toDrop) {
         each.setBounds(0, 0, 0, 0);
       }
     }
@@ -246,9 +269,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     return myContent2Tabs.get(content);
   }
 
-  static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
+  static void dropTab(LayoutData data, JLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);
+    data.toLayout.remove(toDropLabel);
   }
 
   @NotNull
@@ -259,7 +283,11 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
     else if (size == 1) {
       ContentTabLabel tabLabel = myTabs.get(0);
-      if (!StringUtil.isEmptyOrSpaces(tabLabel.getContent().getToolwindowTitle())) return TabsDrawMode.PAINT_ALL;
+      Content content = tabLabel.getContent();
+      if (!StringUtil.isEmptyOrSpaces(content.getToolwindowTitle())) {
+        if (Boolean.TRUE.equals(content.getUserData(Content.SIMPLIFIED_TAB_RENDERING_KEY))) return TabsDrawMode.PAINT_SIMPLIFIED;
+        return TabsDrawMode.PAINT_ALL;
+      }
       if (tabLabel.hasActiveIcons()) return TabsDrawMode.PAINT_SIMPLIFIED;
       return TabsDrawMode.HIDE;
     }
@@ -274,8 +302,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     Dimension layoutSize;
     boolean fullLayout = true;
 
-    ArrayList<ContentTabLabel> toLayout = new ArrayList<>();
-    Collection<ContentTabLabel> toDrop = new HashSet<>();
+    ArrayList<JLabel> toLayout = new ArrayList<>();
+    Collection<JLabel> toDrop = new HashSet<>();
 
     Rectangle moreRect;
 
@@ -337,6 +365,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     for (ContentTabLabel each : myTabs) {
       myUi.getTabComponent().add(each);
       ToolWindowContentUi.initMouseListeners(each, myUi, false);
+    }
+    if (myUi.myDropOverIndex >= 0 && !myTabs.isEmpty()) {
+      myUi.getTabComponent().add(myDropOverPlaceholder, myUi.myDropOverIndex);
     }
   }
 

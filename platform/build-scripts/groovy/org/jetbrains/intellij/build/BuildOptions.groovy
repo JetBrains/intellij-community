@@ -51,15 +51,15 @@ class BuildOptions {
    */
   Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")).findAll {!it.isBlank() })
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
-  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
+  public static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
-  static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
-  static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
+  public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
-  static final String GENERATE_JAR_ORDER_STEP = "jar_order"
+  public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
   static final String SOURCES_ARCHIVE_STEP = "sources_archive"
-  static final String SCRAMBLING_STEP = "scramble"
-  static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  public static final String SCRAMBLING_STEP = "scramble"
+  public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
   static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
@@ -86,6 +86,8 @@ class BuildOptions {
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
+  public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
+  public static final String SETUP_BUNDLED_MAVE = "setup_bundled_maven"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -95,7 +97,7 @@ class BuildOptions {
   /**
    * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
    */
-  static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+  public static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
 
   /**
    * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -245,12 +247,12 @@ class BuildOptions {
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
   /**
-   * Max attempts of dependencies resolution on fault. Default is 1 (no retries).
+   * Max attempts of dependencies resolution on fault. "1" means no retries.
    *
    * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
    */
   public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
-  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "1").toInteger()
+  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInteger()
 
   /**
    * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000

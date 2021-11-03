@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -16,6 +17,7 @@ import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
@@ -25,32 +27,31 @@ import com.intellij.ui.layout.*
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.nio.file.Paths
 
-class NewProjectWizardBaseStep(
-  override val context: WizardContext,
-  factory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>?
-) : NewProjectWizardStep, NewProjectWizardBaseData {
 
-  private val childStep by lazy { factory?.createStep(this) }
+class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
+
+  override val data = UserDataHolderBase()
 
   override val propertyGraph = PropertyGraph("New project wizard")
 
   override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
-  override val gitProperty = propertyGraph.graphProperty { false }
+  override val pathProperty = propertyGraph.graphProperty { suggestLocationByName() }
 
   override var name by nameProperty
   override var path by pathProperty
-  override var git by gitProperty
 
   override val projectPath: Path get() = Path.of(path, name)
 
   private fun suggestName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(path), "untitled", "") {
+    return FileUtil.createSequentFileName(File(context.projectFileDirectory), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
+
+  private fun suggestLocationByName() = FileUtil.join(context.projectFileDirectory, name)
 
   private fun findAllModules(): List<Module> {
     val project = context.project ?: return emptyList()
@@ -80,20 +81,14 @@ class NewProjectWizardBaseStep(
           .validationOnApply { validateLocation() }
           .validationOnInput { validateLocation() }
       }.bottomGap(BottomGap.SMALL)
-      if (context.isCreatingNewProject) {
-        row("") {
-          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-            .bindSelected(gitProperty)
-        }.bottomGap(BottomGap.SMALL)
-      }
-
-      childStep?.setupUI(this)
 
       onApply {
         context.projectName = name
         context.setProjectFileDirectory(projectPath, false)
       }
     }
+
+    pathProperty.dependsOn(nameProperty, ::suggestLocationByName)
   }
 
   private fun getBuilderId(): String? {
@@ -149,13 +144,9 @@ class NewProjectWizardBaseStep(
     return null
   }
 
-  override fun setupProject(project: Project) {
-    childStep?.setupProject(project)
-  }
+  override fun setupProject(project: Project) {}
 
-  class Factory(
-    private val childFactory: NewProjectWizardChildStep.Factory<NewProjectWizardBaseStep>? = null
-  ) : NewProjectWizardStep.Factory {
-    override fun createStep(context: WizardContext) = NewProjectWizardBaseStep(context, childFactory)
+  init {
+    data.putUserData(NewProjectWizardBaseData.KEY, this)
   }
 }

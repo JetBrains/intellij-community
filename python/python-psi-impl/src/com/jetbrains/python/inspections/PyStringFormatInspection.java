@@ -42,7 +42,7 @@ public class PyStringFormatInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -662,8 +662,8 @@ public class PyStringFormatInspection extends PyInspection {
       return -1;
     }
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

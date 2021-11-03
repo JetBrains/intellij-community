@@ -1,2 +1,2 @@
-version = "0.3"
+version = "0.3.*"
 python2 = true

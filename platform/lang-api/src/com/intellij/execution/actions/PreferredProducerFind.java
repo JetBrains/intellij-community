@@ -158,7 +158,7 @@ final class PreferredProducerFind {
           RunConfiguration configuration = configurationFromContext.getConfiguration();
           if (configuration instanceof LocatableConfigurationBase && ((LocatableConfiguration)configuration).isGeneratedName()) {
             configuration.setName(configuration.getName() + " " + locationDisplayName);
-            ((LocatableConfigurationBase)configuration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase<?>)configuration).setNameChangedByUser(true);
           }
         }
 

@@ -24,9 +24,8 @@ final class TypeIconEP implements PluginAware {
   @RequiredElement
   public String icon;
 
-  @Transient final NullableLazyValue<Icon> lazyIcon = NullableLazyValue.createValue(() -> {
-    return IconLoader.findIcon(icon, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader());
-  });
+  @Transient final NullableLazyValue<Icon> lazyIcon = NullableLazyValue.createValue(() -> IconLoader.findIcon(icon,
+                             pluginDescriptor != null ? pluginDescriptor.getClassLoader() : getClass().getClassLoader()));
 
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {

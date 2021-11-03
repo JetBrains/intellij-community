@@ -210,12 +210,14 @@ public final class DaemonListeners implements Disposable {
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         myActiveEditors.remove(event.getEditor());
         // mem leak after closing last editor otherwise
-        UIUtil.invokeLaterIfNeeded(() -> {
-          IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
-          if (intentionUI != null) {
-            intentionUI.invalidate();
-          }
-        });
+        if (myActiveEditors.isEmpty()) {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
+            if (intentionUI != null) {
+              intentionUI.invalidate();
+            }
+          });
+        }
       }
     }, this);
 

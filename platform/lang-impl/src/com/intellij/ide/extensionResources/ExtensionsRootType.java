@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.*;
@@ -183,7 +183,7 @@ public final class ExtensionsRootType extends RootType {
       return Collections.emptyList();
     }
 
-    ClassLoader pluginClassLoader = plugin.getPluginClassLoader();
+    ClassLoader pluginClassLoader = plugin.getClassLoader();
     Enumeration<URL> resources = pluginClassLoader.getResources(EXTENSIONS_PATH + '/' + path);
     if (resources == null) {
       return Collections.emptyList();
@@ -202,7 +202,7 @@ public final class ExtensionsRootType extends RootType {
       if (descriptor == null) {
         continue;
       }
-      ClassLoader loader = descriptor.getPluginClassLoader();
+      ClassLoader loader = descriptor.getClassLoader();
       if (loader != pluginClassLoader) {
         Enumeration<URL> pluginResources = loader.getResources(EXTENSIONS_PATH + '/' + path);
         while (pluginResources.hasMoreElements()) {

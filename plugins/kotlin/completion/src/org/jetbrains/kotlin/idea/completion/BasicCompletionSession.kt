@@ -355,9 +355,18 @@ class BasicCompletionSession(
                     }
 
                     if (shouldCompleteExtensionsFromObjects) {
+                        val receiverKotlinTypes = receiverTypes.map { it.type }
+
                         staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
-                            indicesHelper(false),
-                            receiverTypes.map { it.type },
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
+                            callTypeAndReceiver,
+                            collector
+                        )
+
+                        staticMembersCompletion.completeExplicitAndInheritedMemberExtensionsFromIndices(
+                            indicesHelper(mayIncludeInaccessible = false),
+                            receiverKotlinTypes,
                             callTypeAndReceiver,
                             collector
                         )
@@ -733,6 +742,7 @@ class BasicCompletionSession(
             else -> false
         }
 
+        @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
         override fun addWeighers(sorter: CompletionSorter): CompletionSorter = if (shouldCompleteParameterNameAndType())
             sorter.weighBefore("prefix", VariableOrParameterNameWithTypeCompletion.Weigher)
         else

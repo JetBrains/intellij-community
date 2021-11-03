@@ -69,10 +69,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -88,9 +85,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -268,8 +263,9 @@ public class MavenUtil {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
-  public static File getBaseDir(@NotNull VirtualFile file) {
-    return VfsUtilCore.virtualToIoFile(getVFileBaseDir(file));
+  public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
+    VirtualFile virtualBaseDir = getVFileBaseDir(file);
+    return virtualBaseDir.toNioPath();
   }
 
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
@@ -851,7 +847,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static File getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  public static java.nio.file.Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -859,13 +855,12 @@ public class MavenUtil {
     return getParentFile(id, projectsManager.getLocalRepository());
   }
 
-  @NotNull
-  private static File getParentFile(@NotNull MavenId id, File localRepository) {
+  private static java.nio.file.Path getParentFile(@NotNull MavenId id, File localRepository) {
     assert id.getGroupId() != null;
     String[] pathParts = id.getGroupId().split("\\.");
     java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
     path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
-    return path.toFile();
+    return path;
   }
 
   @Nullable
@@ -1039,7 +1034,7 @@ public class MavenUtil {
 
       for (Pair<Pattern, String> path : SUPER_POM_PATHS) {
         if (path.first.matcher(library.getName()).matches()) {
-          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(library);
+          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library.toPath());
           if (libraryVirtualFile == null) continue;
 
           VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
@@ -1093,7 +1088,7 @@ public class MavenUtil {
     for (MavenProjectReaderResult result : results) {
       if (result.mavenModel.getDependencies() != null) {
         for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!artifact.isResolved()) {
+          if (!MavenArtifactUtilKt.resolved(artifact)) {
             unresolvedArtifacts.add(artifact);
           }
         }
@@ -1105,7 +1100,7 @@ public class MavenUtil {
     }
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    List<File> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().getParentFile());
+    List<java.nio.file.Path> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().toPath().getParent());
     CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
     for (MavenArtifact artifact : unresolvedArtifacts) {
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
@@ -1375,8 +1370,9 @@ public class MavenUtil {
   }
 
   public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
-    invokeLater(project, () -> {
-      FileContentUtilCore.reparseFiles(getConfigFiles(projects));
+    VirtualFile[] configFiles = getConfigFiles(projects);
+    ApplicationManager.getApplication().invokeLater(()-> {
+      FileContentUtilCore.reparseFiles(configFiles);
     });
   }
 
@@ -1403,7 +1399,7 @@ public class MavenUtil {
   }
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
-    if (!FileUtil.isAbsolute(path)) {
+    if (!Paths.get(path).isAbsolute()) {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }

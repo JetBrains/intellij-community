@@ -37,33 +37,17 @@ import kotlin.test.assertTrue
 
 class JBNavigateCommandTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
+    @JvmField @ClassRule val appRule = ApplicationRule()
   }
 
-  @JvmField
-  @Rule
-  val tempDir = TemporaryDirectory()
+  @JvmField @Rule val tempDir = TemporaryDirectory()
+  @JvmField @Rule val testName = TestName()
+  @JvmField @Rule val projectTrackingRule = ProjectTrackingRule()
+  @JvmField @Rule internal val busConnection = RecentProjectManagerListenerRule()
 
-  @JvmField
-  @Rule
-  val testName = TestName()
+  fun getTestDataPath(): String = "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
 
-  @JvmField
-  @Rule
-  val projectTrackingRule = ProjectTrackingRule()
-
-  @Rule
-  @JvmField
-  internal val busConnection = RecentProjectManagerListenerRule()
-
-  fun getTestDataPath(): String {
-    return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
-  }
-
-  @Test
-  fun pathWithLineColumn() = runBlocking {
+  @Test fun pathWithLineColumn() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         configure(project)
@@ -76,8 +60,7 @@ class JBNavigateCommandTest {
     }
   }
 
-  @Test
-  fun pathWithLine() = runBlocking {
+  @Test fun pathWithLine() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         configure(project)
@@ -89,8 +72,7 @@ class JBNavigateCommandTest {
     }
   }
 
-  @Test
-  fun path1() = runBlocking {
+  @Test fun path1() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       runInEdtAndWait {
         configure(project)
@@ -100,12 +82,11 @@ class JBNavigateCommandTest {
     }
   }
 
-  @Test
-  fun compareOrigins() {
+  @Test fun compareOrigins() {
     val equalOrigins = listOf(
-      "https://github.com/JetBrains/intellij.git" ,
-      "https://github.com/JetBrains/intellij" ,
-      "http://github.com/JetBrains/intellij" ,
+      "https://github.com/JetBrains/intellij.git",
+      "https://github.com/JetBrains/intellij",
+      "http://github.com/JetBrains/intellij",
       "ssh://git@github.com:JetBrains/intellij.git",
       "ssh://user@github.com:JetBrains/intellij.git",
       "git@github.com:JetBrains/intellij.git",
@@ -119,10 +100,10 @@ class JBNavigateCommandTest {
     }
 
     val nonEqualOrigins = listOf(
-      "https://github.bom/JetBrains/intellij.git" ,
-      "https://github.com/JetBrains/intellij.git.git" ,
-      "http://github.com/JetBraind/intellij" ,
-      "http://github.com:8080/JetBrains/intellij" ,
+      "https://github.bom/JetBrains/intellij.git",
+      "https://github.com/JetBrains/intellij.git.git",
+      "http://github.com/JetBraind/intellij",
+      "http://github.com:8080/JetBrains/intellij",
       "http://github.com",
       "ssh://git@github.com:JetBrains",
       "ssh://user@github.bom:JetBrains/intellij.git",
@@ -135,8 +116,7 @@ class JBNavigateCommandTest {
     }
   }
 
-  @Test
-  fun pathOpenProject(): Unit = runBlocking {
+  @Test fun pathOpenProject(): Unit = runBlocking {
     var projectName: String? = null
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
@@ -174,27 +154,20 @@ class JBNavigateCommandTest {
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
-    JBProtocolCommand.execute("jetbrains://idea/navigate/reference?${query}")
+    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> "${acc}&${e.key}=${e.value}" }
+    JBProtocolCommand.execute("idea/navigate/reference?${query}")
     UIUtil.dispatchAllInvocationEvents()
   }
-}
 
-private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
-  return FileEditorManager.getInstance(project).allEditors.map {
-    (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
-  }.first()
-}
+  private fun getCurrentLogicalPosition(project: Project): LogicalPosition =
+    FileEditorManager.getInstance(project).allEditors.map {
+      (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
+    }.first()
 
-private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
-
-private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
-  return FileEditorManager.getInstance(project).allEditors.map {
-    val textEditor = it as TextEditor
-    val offset = textEditor.editor.caretModel.offset
-    val file = it.file
-    val psiFile = PsiManager.getInstance(project).findFile(file!!)
-
-    PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
-  }
+  private fun getCurrentElement(project: Project): NavigatablePsiElement =
+    FileEditorManager.getInstance(project).allEditors.map {
+      val offset = (it as TextEditor).editor.caretModel.offset
+      val psiFile = PsiManager.getInstance(project).findFile(it.file!!)!!
+      PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, NavigatablePsiElement::class.java, false)!!
+    }.first()
 }

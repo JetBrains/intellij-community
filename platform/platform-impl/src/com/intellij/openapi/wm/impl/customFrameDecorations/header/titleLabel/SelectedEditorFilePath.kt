@@ -13,14 +13,10 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
@@ -42,7 +38,6 @@ import kotlin.math.min
 
 internal open class SelectedEditorFilePath {
   var onBoundsChanged: (() -> Unit)? = null
-  private val classKey = "ide.borderless.tab.caption.in.title"
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
 
@@ -53,18 +48,15 @@ internal open class SelectedEditorFilePath {
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
   private val UPDATER_TIMEOUT = 70
 
-  private val registryListener = object : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      updatePaths()
-    }
-  }
+  protected open val captionInTitle: Boolean
+    get() = true
 
   protected fun updateProjectPath() {
     updateTitlePaths()
     updateProject()
   }
 
-  private fun updatePaths() {
+  protected fun updatePaths() {
     updateTitlePaths()
     update()
   }
@@ -115,7 +107,7 @@ internal open class SelectedEditorFilePath {
 
   private fun updateTitlePaths() {
     projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
-    classTitle.active = Registry.get(classKey).asBoolean() || classPathNeeded
+    classTitle.active = captionInTitle || classPathNeeded
 
     classTitle.fullPath = instance.fullPathsInWindowHeader || classPathNeeded
     updatePath()
@@ -154,6 +146,10 @@ internal open class SelectedEditorFilePath {
       updatePaths()
     }
 
+  protected open fun addAdditionalListeners(disp: Disposable) {
+
+  }
+
   protected open fun installListeners() {
     val project = project ?: return
 
@@ -173,7 +169,6 @@ internal open class SelectedEditorFilePath {
     busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       updateProjectPath()
     })
-    Registry.get(classKey).addListener(registryListener, disp)
 
     simplePaths = getProviders().map { titleInfoProvider ->
       val partTitle = DefaultPartTitle(titleInfoProvider.borderlessPrefix, titleInfoProvider.borderlessSuffix)
@@ -210,6 +205,8 @@ internal open class SelectedEditorFilePath {
         updatePathLater()
       }
     })
+
+    addAdditionalListeners(disp)
 
     updateProject()
     updatePath()

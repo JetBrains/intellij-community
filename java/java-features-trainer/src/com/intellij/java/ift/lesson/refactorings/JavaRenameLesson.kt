@@ -134,4 +134,11 @@ class JavaRenameLesson
     if (!Character.isJavaIdentifierStart(newName[0]) || newName.any { !Character.isJavaIdentifierPart(it) }) return null
     return newName.toString()
   }
+
+  override val suitableTips = listOf("Rename")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }

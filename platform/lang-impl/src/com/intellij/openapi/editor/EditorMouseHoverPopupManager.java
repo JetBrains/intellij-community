@@ -510,14 +510,23 @@ public class EditorMouseHoverPopupManager implements Disposable {
     @Nullable
     protected EditorHoverInfo calcInfo(@NotNull Editor editor) {
       var highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
-      var documentationHoverInfo = Registry.is("documentation.v2")
-                                   ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
-                                     ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
-                                     : null
-                                   : documentationPsiHoverInfo(editor);
+      var documentationHoverInfo = documentationHoverInfo(editor);
       return highlightHoverInfo == null && documentationHoverInfo == null
              ? null
              : new EditorHoverInfo(highlightHoverInfo, documentationHoverInfo);
+    }
+
+    private @Nullable DocumentationHoverInfo documentationHoverInfo(@NotNull Editor editor) {
+      try {
+        return Registry.is("documentation.v2")
+               ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
+                 ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
+                 : null
+               : documentationPsiHoverInfo(editor);
+      }
+      catch (IndexNotReadyException ignored) {
+        return null;
+      }
     }
 
     private @Nullable DocumentationPsiHoverInfo documentationPsiHoverInfo(@NotNull Editor editor) {
@@ -575,7 +584,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
           int offset = injectedEditor instanceof EditorWindow
             ? ((EditorWindow) injectedEditor).getDocument().hostToInjected(targetOffset)
             : targetOffset;
-          return documentationManager.findTargetElement(injectedEditor, offset, containingFile, element);
+          return documentationManager.findTargetElementAtOffset(injectedEditor, offset, containingFile, element);
         }
         return null;
       }).executeSynchronously();

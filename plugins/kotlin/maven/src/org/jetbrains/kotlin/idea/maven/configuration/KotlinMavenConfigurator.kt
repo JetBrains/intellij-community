@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
@@ -239,7 +240,8 @@ protected constructor(
         module: Module,
         element: PsiElement,
         library: ExternalLibraryDescriptor,
-        libraryJarDescriptors: List<LibraryJarDescriptor>
+        libraryJarDescriptor: LibraryJarDescriptor,
+        scope: DependencyScope
     ) {
         val scope = OrderEntryFix.suggestScopeByLocation(module, element)
         JavaProjectModelModificationService.getInstance(module.project).addDependency(module, library, scope)

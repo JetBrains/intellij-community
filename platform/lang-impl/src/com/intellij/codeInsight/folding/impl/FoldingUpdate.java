@@ -44,6 +44,8 @@ public final class FoldingUpdate {
 
   private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
 
+  public static final Key<Boolean> INJECTED_CODE_FOLDING_ENABLED = Key.create("injected code folding is enabled");
+
   private FoldingUpdate() {
   }
 
@@ -130,6 +132,10 @@ public final class FoldingUpdate {
   @Nullable
   public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull final PsiFile file, final boolean applyDefaultState) {
     if (file instanceof PsiCompiledElement) return null;
+    final Boolean codeFoldingEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED);
+    if (codeFoldingEnabled != null && !codeFoldingEnabled) {
+      return null;
+    }
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = file.getProject();

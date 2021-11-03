@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -205,8 +206,17 @@ fun learningToolWindow(project: Project): ToolWindow? {
   return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
 }
 
-fun Any.toNullableString(): String? {
-  return excludeNullCheck(toString())
+fun Any?.toNullableString(): String? {
+  return if (this == null) null else excludeNullCheck(toString())
+}
+
+fun Any?.isToStringContains(string: String): Boolean {
+  return this.toNullableString()?.contains(string) ?: false
+}
+
+fun getActionById(actionId: String): AnAction {
+  return ActionManager.getInstance().getAction(actionId)
+         ?: error("No action with id $actionId in ${ApplicationNamesInfo.getInstance().fullProductNameWithEdition}")
 }
 
 private fun excludeNullCheck(value: String?): String? {
@@ -225,3 +235,16 @@ internal val learningPanelWasOpenedInCurrentVersion: Boolean
     val savedBuild = BuildNumber.fromString(savedValue) ?: return false
     return savedBuild >= ApplicationInfo.getInstance().build
   }
+
+internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
+  val zeroBuild = BuildNumber("", 0, 0)
+  val maxSeenVersion = newLessons.filter { it.passed }.maxOfOrNull { lesson ->
+    lesson.properties.availableSince?.let { BuildNumber.fromString(it) }
+    ?: zeroBuild
+  }
+  val unseenLessons = if (maxSeenVersion == null) newLessons
+  else newLessons.filter { lesson ->
+    (lesson.properties.availableSince?.let { BuildNumber.fromString(it) } ?: zeroBuild) > maxSeenVersion
+  }
+  return unseenLessons
+}

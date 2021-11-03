@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
@@ -62,7 +62,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private fun createProjectReloadListener(projectData: ProjectData) =
     object : ExternalSystemProjectRefreshListener {
-      val id = "ProjectTracker: ${projectData.projectAware.projectId.readableName}"
+      val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
       override fun beforeProjectRefresh() {
         projectReloadOperation.startTask(id)
@@ -143,7 +143,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     ExternalSystemUtil.confirmLoadingUntrustedProject(project, isFirstLoad, systemIds)
 
     for (projectData in projectsToReload) {
-      LOG.debug("${projectData.projectAware.projectId.readableName}: Project reload")
+      LOG.debug("${projectData.projectAware.projectId.debugName}: Project reload")
       val hasUndefinedModifications = !projectData.status.isUpToDate()
       val settingsContext = projectData.settingsTracker.getSettingsContext()
       val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
@@ -155,7 +155,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     LOG.debug("Notification status update")
 
     val isDisabledAutoReload = isDisabledAutoReload()
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     for ((projectId, data) in projectDataMap) {
       when (isDisabledAutoReload || data.isUpToDate()) {
         true -> notificationAware.notificationExpire(projectId)
@@ -182,13 +182,13 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
-    val projectIdName = projectId.readableName
+    val projectIdName = projectId.debugName
     val activationProperty = AtomicBooleanProperty(false)
     val projectStatus = ProjectStatus(debugName = projectIdName)
     val parentDisposable = Disposer.newDisposable(projectIdName)
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
     projectDataMap[projectId] = projectData
 
@@ -290,7 +290,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   init {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     projectReloadOperation.beforeOperation { LOG.debug("Project reload started") }
     projectReloadOperation.beforeOperation { notificationAware.notificationExpire() }
     projectReloadOperation.afterOperation { scheduleChangeProcessing() }

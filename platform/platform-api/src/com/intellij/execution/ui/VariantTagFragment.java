@@ -21,7 +21,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.Objects;
 import java.util.function.*;
 
 public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButton> {
@@ -36,10 +35,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   public void setToggleListener(Consumer<? super V> toggleListener) {
     myToggleListener = toggleListener;
-  }
-
-  public void setDefaultVariant(V defaultVariant) {
-    myDefaultVariant = defaultVariant;
   }
 
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
@@ -59,7 +54,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   private V mySelectedVariant;
-  private V myDefaultVariant;
   private final Supplier<? extends V[]> myVariantsProvider;
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
@@ -79,7 +73,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantsProvider = variantsProvider;
     myGetter = getter;
     mySetter = setter;
-    myDefaultVariant = getVariants()[0];
   }
 
   public V getSelectedVariant() {
@@ -88,9 +81,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
-    setSelected(!Objects.equals(myDefaultVariant, variant));
-    String name = variant == null ? getName() : getName() + ": " + getVariantName(variant);
-    component().updateButton(name, null, true);
+    setSelected(!variant.equals(getVariants()[0]));
+    component().updateButton(getName() + ": " + getVariantName(variant), null);
   }
 
   protected V[] getVariants() {
@@ -101,7 +93,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void toggle(boolean selected, AnActionEvent e) {
     super.toggle(selected, e);
     if (!selected) {
-      setSelectedVariant(myDefaultVariant);
+      setSelectedVariant(getVariants()[0]);
     }
   }
 
@@ -179,7 +171,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
-      myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
+      myDropDown.setAutoHideOnDisable(false);
       add(myDropDown, JLayeredPane.POPUP_LAYER);
       myButton.addKeyListener(new KeyAdapter() {
         @Override
@@ -234,11 +226,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     }
 
     @Override
-    protected void updateButton(String text, Icon icon, boolean isEnabled) {
+    protected void updateButton(String text, Icon icon) {
       String[] split = text.split(": ");
       myButton.setText(split[0] + ": ");
       myDropDown.setText(split.length > 1 ? split[1] : null);
-      myButton.setEnabled(isEnabled);
       layoutButtons();
     }
   }

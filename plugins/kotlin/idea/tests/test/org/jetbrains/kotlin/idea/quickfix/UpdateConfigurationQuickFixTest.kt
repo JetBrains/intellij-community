@@ -4,21 +4,25 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel
+import com.intellij.ide.IdeEventQueue
+import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.impl.ZipHandler
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments.Companion.DEFAULT
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -27,7 +31,9 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
+import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -85,7 +91,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.languageVersion)
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
-        assertEquals(bundledRuntimeVersion(), getRuntimeLibraryVersion(myFixture.module))
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
+        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
     fun testIncreaseLangLevelFacet_10() {
@@ -101,7 +109,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         myFixture.launchAction(myFixture.findSingleIntention("Set module language version to 1.1"))
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
-        assertEquals(bundledRuntimeVersion(), getRuntimeLibraryVersion(myFixture.module))
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
+        val expectedVersionPrefix = kotlinCompilerVersionShort()
+        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
     }
 
     fun testAddKotlinReflect() {
@@ -115,11 +125,18 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
             """
         )
         myFixture.launchAction(myFixture.findSingleIntention("Add 'kotlin-reflect.jar' to the classpath"))
-        val kotlinRuntime = KotlinJavaModuleConfigurator.instance.getKotlinLibrary(module)!!
-        val classes = kotlinRuntime.getFiles(OrderRootType.CLASSES).map { it.name }
-        assertContainsElements(classes, "kotlin-reflect.jar")
-        val sources = kotlinRuntime.getFiles(OrderRootType.SOURCES)
-        assertContainsElements(sources.map { it.name }, "kotlin-reflect-sources.jar")
+        var i = 0
+        while (JarRepositoryManager.hasRunningTasks()) {
+            Thread.sleep(100)
+            if (i++ > 100) {
+                error("Timeout error")
+            }
+        }
+        IdeEventQueue.getInstance().flushQueue()
+        val kotlinRuntime = module.findLibrary { LibraryJarDescriptor.REFLECT_JAR.findExistingJar(it) != null }
+        assertNotNull(kotlinRuntime)
+        val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
+        assertContainsElements(sources.map { it.name }, "kotlin-reflect-${kotlinCompilerVersionShort()}-sources.jar")
     }
 
     private fun configureRuntime(path: String) {
@@ -134,6 +151,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val tempVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile) ?: error("Can't find file: $tempFile")
 
         ConfigLibraryUtil.addLibrary(module, "KotlinJavaRuntime") {
+            (this as LibraryEx.ModifiableModelEx).kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+            this.properties = LibraryJarDescriptor.RUNTIME_JDK8_JAR.repositoryLibraryProperties
+
             val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(tempVFile) ?: error("Root not found for $tempVFile")
             addRoot(jarRoot, OrderRootType.CLASSES)
         }
@@ -160,7 +180,13 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                     FacetUtil.deleteFacet(it)
                 }
             },
-            ThrowableRunnable { ConfigLibraryUtil.removeLibrary(module, "KotlinJavaRuntime") },
+            ThrowableRunnable {
+                OrderEnumerator.orderEntries(module).forEachLibrary {
+                    ConfigLibraryUtil.removeLibrary(module, it.name!!)
+                }
+            },
+            ThrowableRunnable { ZipHandler.clearFileAccessorCache() },
+            ThrowableRunnable { JarFileSystemImpl.cleanupForNextTest() },
             ThrowableRunnable { super.tearDown() }
         )
     }

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -14,7 +13,6 @@ import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
@@ -30,7 +28,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,15 +36,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
@@ -58,7 +56,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -620,6 +621,18 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new ReplacePrimitiveWithBoxedTypeAction(element, typeName, boxedTypeName);
   }
 
+  @Nullable
+  @Override
+  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiType operandType, @NotNull PsiTypeElement checkTypeElement) {
+    PsiPrimitiveType primitiveType = ObjectUtils.tryCast(checkTypeElement.getType(), PsiPrimitiveType.class);
+    if (primitiveType == null) return null;
+    PsiClassType boxedType = primitiveType.getBoxedType(checkTypeElement);
+    if (boxedType == null || !TypeConversionUtil.areTypesConvertible(operandType, boxedType)) return null;
+    if (primitiveType.getBoxedTypeName() == null) return null;
+    return createReplacePrimitiveWithBoxedTypeAction(checkTypeElement, primitiveType.getPresentableText(),
+                                                     primitiveType.getBoxedTypeName());
+  }
+
   @NotNull
   @Override
   public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
@@ -689,19 +702,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo, boolean excludingHierarchy) {
-    Project myProject = parameter.getProject();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    BatchSuppressableTool unusedParametersInspection = profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
-    HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
-    List<IntentionAction> options =
-      new ArrayList<>(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
-    if (unusedParametersInspection != null) {
-      SuppressQuickFix[] batchSuppressActions = unusedParametersInspection.getBatchSuppressActions(parameter);
-      Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
-    }
-    HighlightInfo info = (HighlightInfo)highlightInfo;
+  public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy) {
     IntentionAction intentionAction;
     if (excludingHierarchy) {
       intentionAction = new AbstractIntentionAction() {
@@ -725,11 +726,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       };
     }
     else {
-      //need suppress from Unused Parameters but settings from Unused Symbol
       intentionAction = new SafeDeleteFix(parameter);
     }
-    info.registerFix(intentionAction, options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey), null, null);
-    QuickFixAction.registerQuickFixAction(info, createRenameToIgnoredFix(parameter, true), myUnusedSymbolKey);
+    return intentionAction;
   }
 
   @NotNull
@@ -1111,5 +1110,23 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation,
                                                                @NotNull PsiAnnotation.TargetType target) {
     return new AddAnnotationTargetFix(annotation, target);
+  }
+
+  @Override
+  @Nullable
+  public IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair) {
+    final PsiReference reference = pair.getReference();
+    if (reference == null) return null;
+    final PsiMethod resolved = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
+    if (resolved == null) return null;
+    final PsiType returnType = resolved.getReturnType();
+    if (!(returnType instanceof PsiArrayType)) return null;
+    return new MergeDuplicateAttributesFix(pair);
+  }
+
+  @Override
+  public @NotNull IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement) {
+    return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -108,12 +107,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
           final PsiLocalVariable localVariable = (PsiLocalVariable)element;
-          final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<>());
-          final PsiElement containingClass = PsiTreeUtil.getParentOfType(localVariable, PsiClass.class, PsiLambdaExpression.class);
-          PsiElement refToInline = InlineLocalHandler.getRefToInline(localVariable, 
-                                                                     Collections.singletonList(expression), 
-                                                                     innerClassUsages, containingClass);
-          final PsiElement[] elements = DefUseUtil.getDefs(myCallingBlock, localVariable, ObjectUtils.notNull(refToInline, expression));
+          final PsiElement[] elements = DefUseUtil.getDefs(myCallingBlock, localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
             if (elements[0] instanceof PsiLocalVariable) {

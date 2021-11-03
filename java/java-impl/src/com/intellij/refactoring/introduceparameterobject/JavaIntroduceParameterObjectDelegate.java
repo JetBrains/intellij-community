@@ -324,7 +324,7 @@ public class JavaIntroduceParameterObjectDelegate
         if (info instanceof IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper) {
           final UsageInfo usageInfo = ((IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper)info).getInfo();
           if (usageInfo instanceof OverriderMethodUsageInfo) {
-            final PsiElement overridingMethod = ((OverriderMethodUsageInfo)usageInfo).getOverridingMethod();
+            final PsiElement overridingMethod = ((OverriderMethodUsageInfo<?>)usageInfo).getOverridingMethod();
 
             if (!moveDestination.isTargetAccessible(overridingMethod.getProject(), overridingMethod.getContainingFile().getVirtualFile())) {
               conflicts.putValue(overridingMethod,

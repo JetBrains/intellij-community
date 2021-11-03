@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -21,6 +22,8 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.references.types.hints")
     override val name: String = KotlinBundle.message("hints.settings.types")
+    override val group: InlayGroup
+        get() = InlayGroup.TYPES_GROUP
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
         return object : ImmediateConfigurable {
@@ -66,7 +69,7 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         }
     }
 
-    override val previewText: String? = """
+    override val previewText: String = """
         val property = listOf(1, 2, 3).filter { num -> num % 2 == 0 }
         
         fun someFun(arg: Int) = print(arg)
@@ -83,4 +86,8 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
                 .collect(Collectors.toList())
         }
     """.trimIndent()
+
+    override fun getProperty(key: String): String {
+        return KotlinBundle.getMessage(key)
+    }
 }

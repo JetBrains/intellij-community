@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
+import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.ui.layout.RowBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -24,7 +25,7 @@ import java.util.function.Supplier;
  * See also {@link UiDslConfigurable.Simple} for more flexible alternative.
  */
 public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
-  implements UiDslConfigurable, ConfigurableWithOptionDescriptors {
+  implements UiDslConfigurable, UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
@@ -230,6 +231,11 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
 
   @Override
   public void createComponentRow(@NotNull RowBuilder builder) {
+    ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
+  }
+
+  @Override
+  public void createContent(@NotNull Panel builder) {
     ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 

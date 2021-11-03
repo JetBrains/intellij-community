@@ -88,7 +88,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private int myMaxWidth = -1;
   private volatile int myLookupTextWidth = 50;
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
-  private final SingleAlarm myLookupWidthUpdateAlarm;
+  private final Runnable myLookupWidthUpdater;
   private final boolean myShrinkLookup;
 
   private final AsyncRendering myAsyncRendering;
@@ -123,9 +123,20 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
 
-    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems,
-                                               ApplicationManager.getApplication().isUnitTestMode() ? 0 : 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
-                                               ModalityState.stateForComponent(editorComponent));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Avoid delay in unit tests
+      myLookupWidthUpdater = () -> ApplicationManager.getApplication().invokeLater(this::updateLookupWidthFromVisibleItems);
+    } else {
+      SingleAlarm alarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
+                                          ModalityState.stateForComponent(editorComponent));
+      myLookupWidthUpdater = () -> {
+        synchronized (alarm) {
+          if (!alarm.isDisposed()) {
+            alarm.request();
+          }
+        }
+      };
+    }
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
@@ -258,7 +269,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
                                 Color foreground,
                                 int allowedWidth,
                                 boolean nonFocusedSelection, FontMetrics fontMetrics) {
-    int style = getStyle(false, presentation.isStrikeout(), false, false);
+    int style = getStyle(presentation.isStrikeout(), false, false);
 
     for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
       if (allowedWidth < 0) {
@@ -334,7 +345,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     Font customItemFont = getCustomFont(item, bold, CUSTOM_NAME_FONT);
     myNameComponent.setFont(customItemFont != null ? customItemFont : bold ? myBoldFont : myNormalFont);
-    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
+    int style = getStyle(presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
 
     final FontMetrics metrics = getRealFontMetrics(item, bold, CUSTOM_NAME_FONT);
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
@@ -354,8 +365,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   @SimpleTextAttributes.StyleAttributeConstant
-  private static int getStyle(boolean bold, boolean strikeout, boolean underlined, boolean italic) {
-    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+  private static int getStyle(boolean strikeout, boolean underlined, boolean italic) {
+    int style = SimpleTextAttributes.STYLE_PLAIN;
     if (strikeout) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
@@ -535,11 +546,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void scheduleUpdateLookupWidthFromVisibleItems(){
-    synchronized (myLookupWidthUpdateAlarm) {
-      if (!myLookupWidthUpdateAlarm.isDisposed()) {
-        myLookupWidthUpdateAlarm.request();
-      }
-    }
+    myLookupWidthUpdater.run();
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {

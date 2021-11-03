@@ -168,6 +168,11 @@ class TextCompletionPopup<C : JTextComponent>(
       list.isFocusable = false
       list.font = textComponent.font
 
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_COPY))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_CUT))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_DELETE))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_PASTE))
+      list.removeKeyboardAction(getKeyStrokes(IdeActions.ACTION_SELECT_ALL))
       list.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
         fireVariantChosen(list.selectedValue as? TextCompletionInfo)
         hidePopup()

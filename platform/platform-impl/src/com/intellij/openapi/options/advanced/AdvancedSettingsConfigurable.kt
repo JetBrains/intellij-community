@@ -104,7 +104,10 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
                 }
               }
               val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for border
-              actionButton(resetAction, Dimension(minSize, minSize))
+              actionButton(resetAction)
+                .applyToComponent {
+                  setMinimumButtonSize(Dimension(minSize, minSize))
+                }
                 .visibleIf(advancedSetting.isDefault.not())
             }
             extension.description()?.let {
@@ -153,7 +156,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
       AdvancedSettingType.Int -> {
         val textField = intTextField()
-          .columns(10)
           .bindIntText({ AdvancedSettings.getInt(extension.id) }, { AdvancedSettings.setInt(extension.id, it) })
         AdvancedSettingControl(
           textField,
@@ -259,18 +261,19 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     return true
   }
 
-  private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-    val text = searchText?.takeIf { it.isNotBlank() }?.let {
-      @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
-                                              UIUtil.getSearchMatchGradientStartColor())
-      "<html>$highlightedText"
-    } ?: baseText
-    when (component) {
-      is JLabel -> component.text = text
-      is AbstractButton -> component.text = text
+  companion object {
+    fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+      val text = searchText?.takeIf { it.isNotBlank() }?.let {
+        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
+          UIUtil.getSearchMatchGradientStartColor())
+        "<html>$highlightedText"
+      } ?: baseText
+      when (component) {
+        is JLabel -> component.text = text
+        is AbstractButton -> component.text = text
+      }
     }
   }
-
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
   override fun getId(): String = "advanced.settings"

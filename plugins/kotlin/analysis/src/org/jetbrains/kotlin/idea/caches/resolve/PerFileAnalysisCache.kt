@@ -338,6 +338,12 @@ private class StackedCompositeBindingContextTrace(
         filtered
     }
 
+    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
+        if (diagnosticsCallback == null) {
+            super.setCallback(callback)
+        }
+    }
+
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
 
@@ -465,10 +471,9 @@ private object KotlinResolveDataProvider {
                 return AnalysisResult.success(bindingContext, moduleDescriptor)
             }
 
-            val trace = bindingTrace ?: DelegatingBindingTrace(
+            val trace = bindingTrace ?: BindingTraceForBodyResolve(
                 resolveSession.bindingContext,
-                "Trace for resolution of $analyzableElement",
-                allowSliceRewrite = true
+                "Trace for resolution of $analyzableElement"
             )
 
             val moduleInfo = analyzableElement.containingKtFile.getModuleInfo()
@@ -476,7 +481,6 @@ private object KotlinResolveDataProvider {
             val targetPlatform = moduleInfo.platform
 
             try {
-                trace.resetCallback()
                 callback?.let {
                     trace.setCallback(it)
                 }

@@ -31,6 +31,7 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.versions.KotlinJvmMetadataVersionIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.versions.KotlinJsMetadataVersionIndex"/>

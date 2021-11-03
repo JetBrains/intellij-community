@@ -346,6 +346,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ApplyNotConflictsRight = load("diff/applyNotConflictsRight.svg", -336068841948579553L, 2);
     /** 12x12 */ public static final @NotNull Icon Arrow = load("diff/arrow.svg", -7836097041821429743L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowLeftDown = load("diff/arrowLeftDown.svg", -820363719686844613L, 2);
+    /** 16x16 */ public static final @NotNull Icon ArrowLeftRight = load("diff/arrowLeftRight.svg", 4235443314577506245L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowRight = load("diff/arrowRight.svg", 8793156269469164122L, 2);
     /** 12x12 */ public static final @NotNull Icon ArrowRightDown = load("diff/arrowRightDown.svg", 2372859479439755474L, 2);
     /** 16x16 */ public static final @NotNull Icon Compare3LeftMiddle = load("diff/compare3LeftMiddle.svg", 4491397575224313917L, 2);
@@ -1084,6 +1085,9 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", -1146678817565759812L, 2);
     /** 13x13 */ public static final @NotNull Icon InfoEvents = load("toolwindows/infoEvents.svg", 7362079362733954038L, 2);
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", 5097176169930710668L, 2);
+    /** 13x13 */ public static final @NotNull Icon Notifications = load("toolwindows/notifications.svg", -133937446344451054L, 2);
+    /** 13x13 */ public static final @NotNull Icon NotificationsNew = load("toolwindows/notificationsNew.svg", 6343493903813610175L, 2);
+    /** 13x13 */ public static final @NotNull Icon NotificationsNewImportant = load("toolwindows/notificationsNewImportant.svg", 2949419273107119341L, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("toolwindows/problems.svg", -3654404648954575086L, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("toolwindows/problemsEmpty.svg", -4152233369359930308L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 1296641742748522434L, 2);

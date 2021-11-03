@@ -4,6 +4,9 @@ package com.jetbrains.python.refactoring.classes;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
@@ -21,10 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -34,6 +35,8 @@ public final class PyClassRefactoringUtil {
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
+  private static final Key<List<PyReferenceExpression>> INJECTION_REFERENCES = Key.create("PyInjectionReferences");
+  private static final Key<Set<FutureFeature>> ENCODED_FROM_FUTURE_IMPORTS = Key.create("PyFromFutureImports");
 
 
   private PyClassRefactoringUtil() {
@@ -182,6 +185,16 @@ public final class PyClassRefactoringUtil {
   public static void restoreNamedReferences(@NotNull final PsiElement newElement,
                                             @Nullable final PsiElement oldElement,
                                             final PsiElement @NotNull [] otherMovedElements) {
+    Set<FutureFeature> fromFutureImports = newElement.getCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS);
+    newElement.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, null);
+    PsiFile destFile = newElement.getContainingFile();
+    if (fromFutureImports != null & destFile != null) {
+      for (FutureFeature futureFeature: fromFutureImports) {
+        AddImportHelper.addOrUpdateFromImportStatement(destFile, PyNames.FUTURE_MODULE, futureFeature.toString(), null,
+                                                       AddImportHelper.ImportPriority.FUTURE, null);
+      }
+    }
+
     newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
@@ -199,18 +212,47 @@ public final class PyClassRefactoringUtil {
             }
           }
         }
+        restoreReference(node, node, otherMovedElements);
+      }
+
+      @Override
+      public void visitComment(@NotNull PsiComment comment) {
+        super.visitComment(comment);
+        if (comment instanceof PsiLanguageInjectionHost) {
+          restoreReference(comment, comment, otherMovedElements);
+        }
       }
     });
   }
 
 
-  public static void restoreReference(@NotNull PyReferenceExpression sourceNode,
-                                      @NotNull PyReferenceExpression targetNode,
+  public static void restoreReference(@NotNull PsiElement sourceNode,
+                                      @NotNull PsiElement targetNode,
                                       PsiElement @NotNull [] otherMovedElements) {
+    try {
+      if (sourceNode instanceof PyReferenceExpression) {
+        doRestoreReference((PyReferenceExpression)sourceNode, targetNode, otherMovedElements);
+      }
+      else if (sourceNode instanceof PsiLanguageInjectionHost) {
+        var injectionReferences = sourceNode.getCopyableUserData(INJECTION_REFERENCES);
+        if (injectionReferences != null) {
+          injectionReferences.forEach(expression -> doRestoreReference(expression, targetNode, otherMovedElements));
+        }
+      }
+    }
+    finally {
+      sourceNode.putCopyableUserData(INJECTION_REFERENCES, null);
+    }
+  }
+
+  private static void doRestoreReference(@NotNull PyReferenceExpression sourceNode,
+                                         @NotNull PsiElement targetNode,
+                                         PsiElement @NotNull [] otherMovedElements) {
     try {
       PsiNamedElement target = sourceNode.getCopyableUserData(ENCODED_IMPORT);
       final String asName = sourceNode.getCopyableUserData(ENCODED_IMPORT_AS);
       final Boolean useFromImport = sourceNode.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
+      if (target == null) return;
       if (target instanceof PsiDirectory) {
         target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, sourceNode);
       }
@@ -221,7 +263,6 @@ public final class PyClassRefactoringUtil {
           target = c;
         }
       }
-      if (target == null) return;
       if (PsiTreeUtil.isAncestor(targetNode.getContainingFile(), target, false)) return;
       if (ArrayUtil.contains(target, otherMovedElements)) return;
       if (target instanceof PyFile || target instanceof PsiDirectory) {
@@ -248,6 +289,12 @@ public final class PyClassRefactoringUtil {
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
   public static void rememberNamedReferences(@NotNull final PsiElement element, final String @NotNull ... namesToSkip) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      Set<FutureFeature> fromFutureImports = collectFromFutureImports((PyFile)containingFile);
+      element.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, fromFutureImports);
+    }
+
     element.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
@@ -263,7 +310,59 @@ public final class PyClassRefactoringUtil {
           rememberReference(node, element);
         }
       }
+
+      @Override
+      public void visitComment(@NotNull PsiComment comment) {
+        super.visitComment(comment);
+        if (comment instanceof PsiLanguageInjectionHost) {
+          rememberInjectionReferences((PsiLanguageInjectionHost)comment, element, namesToSkip);
+        }
+      }
+
+      @Override
+      public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression expression) {
+        super.visitPyStringLiteralExpression(expression);
+        rememberInjectionReferences(expression, element, namesToSkip);
+      }
     });
+  }
+
+  private static void rememberInjectionReferences(@NotNull PsiLanguageInjectionHost host,
+                                                  @NotNull PsiElement element,
+                                                  String @NotNull ... namesToSkip) {
+    final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
+    if (files == null) return;
+    for (Pair<PsiElement, TextRange> pair : files) {
+      pair.getFirst().accept(
+        new PyRecursiveElementVisitor() {
+          @Override
+          public void visitPyReferenceExpression(@NotNull PyReferenceExpression expression) {
+            super.visitPyReferenceExpression(expression);
+            if (!ArrayUtil.contains(expression.getText(), namesToSkip)) {
+              rememberReference(expression, element);
+              rememberReferenceInInjectionHost(expression, host);
+            }
+          }
+        });
+    }
+  }
+
+  private static void rememberReferenceInInjectionHost(@NotNull PyReferenceExpression expression,
+                                                       @NotNull PsiLanguageInjectionHost host) {
+    var encodedImports = host.getCopyableUserData(INJECTION_REFERENCES);
+    var rememberedReferences = encodedImports == null ? new ArrayList<PyReferenceExpression>() : encodedImports;
+    rememberedReferences.add(expression);
+    host.putCopyableUserData(INJECTION_REFERENCES, rememberedReferences);
+  }
+
+  private static @NotNull Set<FutureFeature> collectFromFutureImports(@NotNull PyFile file) {
+    EnumSet<FutureFeature> result = EnumSet.noneOf(FutureFeature.class);
+    for (FutureFeature feature: FutureFeature.values()) {
+      if (file.hasImportFromFuture(feature)) {
+        result.add(feature);
+      }
+    }
+    return result;
   }
 
   private static void rememberReference(@NotNull PyReferenceExpression node, @NotNull PsiElement element) {
@@ -422,7 +521,7 @@ public final class PyClassRefactoringUtil {
 
     @Override
     public String toString() {
-      return "DynamicNamedElement(file='" + getContainingFile().getName() + "', name='" + getName() +"')";
+      return "DynamicNamedElement(file='" + getContainingFile().getName() + "', name='" + getName() + "')";
     }
 
     @Override

@@ -119,7 +119,7 @@ public class SetupTaskDialog extends DialogWrapper {
     if (myCurrentCard.equals(CARD_OPTIONS)) {
       if (myOptionComponents.size() > 0) {
         final JComponent component = myOptionComponents.values().iterator().next();
-        return component instanceof LabeledComponent ? ((LabeledComponent)component).getComponent() : component;
+        return component instanceof LabeledComponent ? ((LabeledComponent<?>)component).getComponent() : component;
       }
       return super.getPreferredFocusedComponent();
     }

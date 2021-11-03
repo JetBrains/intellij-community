@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBLabel
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageOperations
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
@@ -41,13 +42,12 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         background = bgColor
 
         val viewModel = checkNotNull(value as? UiPackageModel<*>)
-        val hasVersionsToChooseFrom = viewModel.packageModel.getAvailableVersions(onlyStable).isNotEmpty()
-        val labelText = when (value) {
-            is UiPackageModel.Installed -> versionMessage(value.packageModel, onlyStable)
-            is UiPackageModel.SearchResult -> value.selectedVersion.displayName
-            else -> throw IllegalArgumentException("The value is expected to be a VersionViewModel, but wasn't.")
+        val labelText = when (viewModel) {
+            is UiPackageModel.Installed -> versionMessage(viewModel.packageModel, viewModel.packageOperations)
+            is UiPackageModel.SearchResult -> viewModel.selectedVersion?.displayName ?: viewModel.defaultVersion.displayName
         }
 
+        val hasVersionsToChooseFrom = viewModel.sortedVersions.isNotEmpty()
         val labelComponent = if (hasVersionsToChooseFrom) {
             JBComboBoxLabel().apply {
                 icon = AllIcons.General.LinkDropTriangle
@@ -66,7 +66,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     }
 
     @Nls
-    private fun versionMessage(packageModel: PackageModel.Installed, onlyStable: Boolean): String {
+    private fun versionMessage(packageModel: PackageModel.Installed, packageOperations: PackageOperations): String {
         val installedVersions = packageModel.usageInfo.asSequence()
             .map { it.version }
             .distinct()
@@ -79,11 +79,10 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         return buildString {
             append(installedVersions)
 
-            if (packageModel.canBeUpgraded(onlyStable)) {
-                val latestAvailableVersion = packageModel.getLatestAvailableVersion(onlyStable)
-                    ?: return@buildString
+            if (packageOperations.canUpgradePackage) {
+                val upgradeVersion = packageOperations.targetVersion ?: return@buildString
                 append(" → ")
-                append(latestAvailableVersion.displayName)
+                append(upgradeVersion.displayName)
             }
         }
     }

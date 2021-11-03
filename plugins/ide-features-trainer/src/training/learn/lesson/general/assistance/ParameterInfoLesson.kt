@@ -3,6 +3,7 @@ package training.learn.lesson.general.assistance
 
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
@@ -14,11 +15,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-
-    var caretOffset = 0
-    prepareRuntimeTask {
-      caretOffset = editor.caretModel.offset
-    }
+    val caretOffset = sample.getPosition(0).startOffset
 
     actionTask("ParameterInfo") {
       restoreIfModifiedOrMoved()
@@ -41,4 +38,11 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     val partOfSequence = sequence.subSequence(caretOffset, min(caretOffset + 20, sequence.length))
     return partOfSequence.matches(parametersRegex)
   }
+
+  override val suitableTips = listOf("ParameterInfo")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("parameter.info.help.link"),
+         LessonUtil.getHelpLink("viewing-reference-information.html#view-parameter-info")),
+  )
 }

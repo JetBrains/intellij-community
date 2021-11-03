@@ -75,7 +75,7 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
     if (myListModel.isEmpty()) {
       myListModel.add(new PopupFactoryImpl.ActionItem(
-        Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null,
+        Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null, null,
         false, null, null, false, null, null));
     }
   }
@@ -150,10 +150,10 @@ class ActionStepBuilder {
     if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
     LOG.assertTrue(text != null, "Action in `" + myActionPlace + "` has no presentation: " + action.getClass().getName());
-    myListModel.add(new PopupFactoryImpl.ActionItem(
-      action, text, mnemonic, myShowNumbers, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-      presentation.isEnabled(), icon, selectedIcon, prependSeparator, mySeparatorText,
-      presentation.getClientProperty(Presentation.PROP_VALUE)));
+    myListModel.add(new PopupFactoryImpl.ActionItem(action, text, mnemonic, myShowNumbers, presentation.getDescription(),
+                                                    (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+                                                    presentation.isEnabled(), icon, selectedIcon, prependSeparator, mySeparatorText,
+                                                    presentation.getClientProperty(Presentation.PROP_VALUE)));
     myPrependWithSeparator = false;
     mySeparatorText = null;
   }

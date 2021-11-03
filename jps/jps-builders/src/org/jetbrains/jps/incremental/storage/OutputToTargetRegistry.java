@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.Ref;
@@ -17,7 +17,7 @@ import java.util.Collections;
 /**
  * @author Eugene Zhuravlev
  */
-public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
+public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
   private final PathRelativizerService myRelativizer;
 
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
@@ -56,11 +56,11 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     myRelativizer = relativizer;
   }
 
-  protected void addMapping(String outputPath, int buildTargetId) throws IOException {
+  void addMapping(String outputPath, int buildTargetId) throws IOException {
     addMapping(Collections.singleton(outputPath), buildTargetId);
   }
 
-  protected void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
+  void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
     final TIntHashSet set = new TIntHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {

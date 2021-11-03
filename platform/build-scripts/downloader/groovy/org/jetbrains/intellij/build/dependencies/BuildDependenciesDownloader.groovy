@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.dependencies
 
 import groovy.transform.CompileStatic
@@ -11,7 +12,7 @@ import java.nio.file.attribute.FileTime
 import java.time.Instant
 
 @CompileStatic
-class BuildDependenciesDownloader {
+final class BuildDependenciesDownloader {
   private static String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
 
   static void debug(String message) {
@@ -30,7 +31,7 @@ class BuildDependenciesDownloader {
   static Properties loadProperties(Path file) {
     info("Loading properties from $file")
     Properties properties = new Properties()
-    Files.newBufferedReader(file).withCloseable { properties.load(it) }
+    Files.newInputStream(file).withCloseable { properties.load(it) }
     return properties
   }
 
@@ -160,7 +161,7 @@ class BuildDependenciesDownloader {
   }
 
   static void extractFile(Path archiveFile, Path target, Path communityRoot) {
-    def flagFile = getProjectLocalDownloadCache(communityRoot)
+    Path flagFile = getProjectLocalDownloadCache(communityRoot)
       .resolve(archiveFile.toString().sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
     extractFileWithFlagFileLocation(archiveFile, target, flagFile)
   }
@@ -178,18 +179,18 @@ class BuildDependenciesDownloader {
 
     info(" * Downloading $uri -> $target")
 
-    def tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".tmp")
+    Path tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".tmp")
     try {
       def connection = (HttpURLConnection)uri.toURL().openConnection()
       connection.instanceFollowRedirects = true
 
       if (connection.responseCode != 200) {
-        throw new IllegalStateException("Error download $uri: non-200 http status code ${connection.responseCode}")
+        throw new IllegalStateException("Error downloading $uri: non-200 http status code ${connection.responseCode}")
       }
 
       connection.inputStream.withStream { inputStream ->
-        new FileOutputStream(tempFile.toFile()).withStream { outputStream ->
-          BuildDependenciesUtil.copyStream(inputStream, outputStream)
+        Files.newOutputStream(tempFile).withCloseable { outputStream ->
+          inputStream.transferTo(outputStream)
         }
       }
 

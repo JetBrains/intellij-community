@@ -7,10 +7,7 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmMethod
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -53,14 +50,14 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
+    if (canCreateEnumConstant(javaClass, request)) {
+      result += CreateEnumConstantAction(javaClass, request)
+    }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {
       result += CreateFieldAction(javaClass, request)
-    }
-    if (canCreateEnumConstant(javaClass, request)) {
-      result += CreateEnumConstantAction(javaClass, request)
     }
     return result
   }
@@ -103,5 +100,19 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (request.expectedParameters.any { it.expectedTypes.isEmpty() || it.semanticNames.isEmpty() }) return emptyList()
 
     return listOf(ChangeMethodParameters(psiMethod, request))
+  }
+
+  override fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
+    val psiMethod = target as? PsiMethod ?: return emptyList()
+    if (psiMethod.language != JavaLanguage.INSTANCE) return emptyList()
+    val typeElement = psiMethod.returnTypeElement ?: return emptyList()
+    return listOf(ChangeType(typeElement, request))
+  }
+
+  override fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+    val psiParameter = target as? PsiParameter ?: return emptyList()
+    if (psiParameter.language != JavaLanguage.INSTANCE) return emptyList()
+    val typeElement = psiParameter.typeElement ?: return emptyList()
+    return listOf(ChangeType(typeElement, request))
   }
 }

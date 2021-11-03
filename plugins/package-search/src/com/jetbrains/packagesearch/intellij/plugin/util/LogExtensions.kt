@@ -5,7 +5,7 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 
-internal val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
+private val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
 
 internal fun logError(contextName: String? = null, messageProvider: () -> String) {
     logError(traceInfo = null, contextName = contextName, messageProvider = messageProvider)

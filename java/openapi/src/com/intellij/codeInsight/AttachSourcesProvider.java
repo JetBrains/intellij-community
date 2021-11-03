@@ -11,6 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Adds actions to "Attach sources" notification panel
+ * @see com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider
+ */
 public interface AttachSourcesProvider {
   @NotNull Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
 

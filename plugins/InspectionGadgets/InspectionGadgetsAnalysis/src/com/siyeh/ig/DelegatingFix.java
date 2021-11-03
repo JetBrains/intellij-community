@@ -58,12 +58,8 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
   }
 
   @Override
-  public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
-    LocalQuickFix fix = ObjectUtils.tryCast(delegate.getFileModifierForPreview(target), LocalQuickFix.class);
-    if (fix == null) return null;
-    if (fix == delegate) return this;
-    DelegatingFix newFix = new DelegatingFix(fix);
-    newFix.setOnTheFly(isOnTheFly());
-    return newFix;
+  public boolean applyFixForPreview(@NotNull Project project,
+                                    @NotNull ProblemDescriptor previewDescriptor) {
+    return delegate.applyFixForPreview(project, previewDescriptor);
   }
 }

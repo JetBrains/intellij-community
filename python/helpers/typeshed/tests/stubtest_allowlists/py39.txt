@@ -41,8 +41,6 @@ dataclasses.field
 dummy_threading
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
-ftplib.FTP.__init__
-ftplib.FTP_TLS.__init__
 functools.partialmethod.__get__
 functools.singledispatchmethod.__call__
 gettext.install

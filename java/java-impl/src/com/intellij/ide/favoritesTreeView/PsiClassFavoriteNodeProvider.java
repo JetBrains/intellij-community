@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -24,11 +24,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
+public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -131,7 +132,12 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     if (DumbService.isDumb(project)) {
       return null;
     }
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
 
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
     GlobalSearchScope scope = null;
     if (moduleName != null) {
       final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
@@ -142,8 +148,6 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     if (scope == null) {
       scope = GlobalSearchScope.allScope(project);
     }
-    final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(url, scope);
-    if (aClass == null) return null;
-    return new Object[]{aClass};
+    return JavaPsiFacade.getInstance(project).findClass(url, scope);
   }
 }

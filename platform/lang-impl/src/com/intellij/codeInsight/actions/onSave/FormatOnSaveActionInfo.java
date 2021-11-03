@@ -4,46 +4,46 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.application.options.GeneralCodeStylePanel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
-public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
-  private static final String FORMAT_ON_SAVE_PROPERTY = "format.on.save";
-  private static final boolean FORMAT_ON_SAVE_DEFAULT = false;
+public class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
 
-  private static final Key<Boolean> ONLY_CHANGED_LINES_KEY = Key.create("format.on.save.only.changed.lines");
-  private static final String ONLY_CHANGED_LINES_PROPERTY = "format.on.save.only.changed.lines";
-  private static final boolean ONLY_CHANGED_LINES_DEFAULT = false;
-
-  public static boolean isReformatOnSaveEnabled(@NotNull Project project) {
-    return PropertiesComponent.getInstance(project).getBoolean(FORMAT_ON_SAVE_PROPERTY, FORMAT_ON_SAVE_DEFAULT);
-  }
-
-  public static boolean isReformatOnlyChangedLinesOnSave(@NotNull Project project) {
-    return VcsFacade.getInstance().hasActiveVcss(project) &&
-           PropertiesComponent.getInstance(project).getBoolean(ONLY_CHANGED_LINES_PROPERTY, ONLY_CHANGED_LINES_DEFAULT);
-  }
-
-
-  private static void setReformatOnlyChangedLines(@NotNull Project project, boolean onlyChangedLines) {
-    PropertiesComponent.getInstance(project).setValue(ONLY_CHANGED_LINES_PROPERTY, onlyChangedLines, ONLY_CHANGED_LINES_DEFAULT);
-  }
+  private static final Key<FormatOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("format.on.save.options");
 
   public FormatOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
-    super(context,
-          CodeInsightBundle.message("actions.on.save.page.checkbox.reformat.code"),
-          FORMAT_ON_SAVE_PROPERTY,
-          FORMAT_ON_SAVE_DEFAULT);
+    super(context, CodeInsightBundle.message("actions.on.save.page.checkbox.reformat.code"), CURRENT_UI_STATE_KEY);
+  }
+
+  @Override
+  protected @NotNull FormatOnSaveOptions getOptionsFromStoredState() {
+    return FormatOnSaveOptions.getInstance(getProject());
+  }
+
+  private boolean isFormatOnlyChangedLines() {
+    return getCurrentUiState().isFormatOnlyChangedLines();
+  }
+
+  private void setFormatOnlyChangedLines(boolean changedLines) {
+    getCurrentUiState().setFormatOnlyChangedLines(changedLines);
   }
 
   @Override
@@ -58,36 +58,56 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfoBase {
 
   @Override
   public @NotNull List<? extends DropDownLink<?>> getDropDownLinks() {
-    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return Collections.emptyList();
-
-    String wholeFile = CodeInsightBundle.message("actions.on.save.page.label.whole.file");
-    String onlyChangedLines = CodeInsightBundle.message("actions.on.save.page.label.changed.lines");
-
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    boolean onlyChangedLinesOnly = onlyChangedLinesFromUi != null ? onlyChangedLinesFromUi : isReformatOnlyChangedLinesOnSave(getProject());
-    String current = onlyChangedLinesOnly ? onlyChangedLines : wholeFile;
-
-    return List.of(new DropDownLink<>(current, List.of(wholeFile, onlyChangedLines),
-                                      choice -> getContext().putUserData(ONLY_CHANGED_LINES_KEY, choice == onlyChangedLines)));
+    DropDownLink<String> fileTypesLink = createFileTypesDropDownLink();
+    DropDownLink<String> changedLinesLink = createChangedLinesDropDownLink();
+    return changedLinesLink != null ? List.of(fileTypesLink, changedLinesLink) : List.of(fileTypesLink);
   }
 
   @Override
-  protected void apply() {
-    super.apply();
+  protected void addApplicableFileTypes(@NotNull Collection<FileType> result) {
+    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
+    ExtensionPoint<KeyedLazyInstance<FormattingModelBuilder>> ep = LanguageFormatting.INSTANCE.getPoint();
+    if (ep != null) {
+      for (KeyedLazyInstance<FormattingModelBuilder> instance : ep.getExtensionList()) {
+        String languageId = instance.getKey();
+        Language language = Language.findLanguageByID(languageId);
+        ContainerUtil.addIfNotNull(result, language != null ? language.getAssociatedFileType() : null);
+      }
+    }
 
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    if (onlyChangedLinesFromUi != null) {
-      setReformatOnlyChangedLines(getProject(), onlyChangedLinesFromUi);
+    // Iterating only FormattingModelBuilders is not enough. Some FormattingModelBuilders may format several languages
+    // (for example, JavascriptFormattingModelBuilder handles both JavaScript and ActionsScript). Also, some file types may get formatted by
+    // external formatter integrated in the IDE (like ShExternalFormatter).
+    //
+    // A good sign that IDE supports some file type formatting is that it has a Code Style page for this file type. The following code makes
+    // sure that all file types that have their Code Style pages are included in the result set.
+    //
+    // The logic of iterating Code Style pages is similar to what's done in CodeStyleSchemesConfigurable.buildConfigurables()
+    for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+      Language language = provider.getLanguage();
+      if (provider.hasSettingsPage() && language != null) {
+        ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
+      }
+    }
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
+      ContainerUtil.addIfNotNull(result, provider.getLanguage().getAssociatedFileType());
     }
   }
 
+  private @Nullable DropDownLink<String> createChangedLinesDropDownLink() {
+    if (!VcsFacade.getInstance().hasActiveVcss(getProject())) return null;
+
+    String wholeFile = CodeInsightBundle.message("actions.on.save.page.label.whole.file");
+    String changedLines = CodeInsightBundle.message("actions.on.save.page.label.changed.lines");
+
+    String current = isFormatOnlyChangedLines() ? changedLines : wholeFile;
+
+    return new DropDownLink<>(current, List.of(wholeFile, changedLines), choice -> setFormatOnlyChangedLines(choice == changedLines));
+  }
+
+
   @Override
-  protected boolean isModified() {
-    if (super.isModified()) return true;
-
-    Boolean onlyChangedLinesFromUi = getContext().getUserData(ONLY_CHANGED_LINES_KEY);
-    if (onlyChangedLinesFromUi != null && isReformatOnlyChangedLinesOnSave(getProject()) != onlyChangedLinesFromUi) return true;
-
-    return false;
+  protected void apply() {
+    getOptionsFromStoredState().loadState(getCurrentUiState().getState().clone());
   }
 }

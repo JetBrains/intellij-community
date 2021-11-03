@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -25,6 +29,14 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal object CoroutineBlockingCallInspectionUtils {
 
+    fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
+        val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false
+        val searchScope = GlobalSearchScope.moduleWithLibrariesScope(module)
+        return module.project
+            .service<JavaPsiFacade>()
+            .findClass(DISPATCHERS_FQN, searchScope) != null
+    }
+
     fun isInsideFlowChain(resolvedCall: ResolvedCall<*>): Boolean {
         val descriptor = resolvedCall.resultingDescriptor
         val isFlowGenerator = descriptor.fqNameOrNull()?.asString()?.startsWith(FLOW_PACKAGE_FQN) ?: false
@@ -33,7 +45,7 @@ internal object CoroutineBlockingCallInspectionUtils {
 
     fun isCalledInsideNonIoContext(resolvedCall: ResolvedCall<*>): Boolean {
         val callFqn = resolvedCall.resultingDescriptor?.fqNameSafe?.asString() ?: return false
-        if (callFqn != "kotlinx.coroutines.withContext") return false
+        if (callFqn != WITH_CONTEXT_FQN) return false
         return isNonBlockingDispatcher(resolvedCall)
     }
 
@@ -42,7 +54,7 @@ internal object CoroutineBlockingCallInspectionUtils {
             ?.resolveToCall()
             ?.resultingDescriptor
             ?.fqNameSafe?.asString()
-        return dispatcherFqnOrNull != null && dispatcherFqnOrNull != "kotlinx.coroutines.Dispatchers.IO"
+        return dispatcherFqnOrNull != null && dispatcherFqnOrNull != IO_DISPATCHER_FQN
     }
 
     fun postProcessQuickFix(replacedElement: KtElement, project: Project) {
@@ -63,8 +75,9 @@ internal object CoroutineBlockingCallInspectionUtils {
         return candidate ?: dotQualifiedExpression.findFlowOnCall()
     }
 
-    const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
-    const val NONBLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.NonBlockingContext"
+    const val BLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.BlockingExecutor"
+    const val NONBLOCKING_EXECUTOR_ANNOTATION = "org.jetbrains.annotations.NonBlockingExecutor"
+    const val DISPATCHERS_FQN = "kotlinx.coroutines.Dispatchers"
     const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
     const val MAIN_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Main"
     const val DEFAULT_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.Default"
@@ -73,4 +86,5 @@ internal object CoroutineBlockingCallInspectionUtils {
     const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
     const val FLOW_PACKAGE_FQN = "kotlinx.coroutines.flow"
     const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
+    const val WITH_CONTEXT_FQN = "kotlinx.coroutines.withContext"
 }

@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -31,19 +29,23 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     return typeGroovy;
   };
 
-  private final GrClosableBlock myClosure;
+  private final SmartPsiElementPointer<GrClosableBlock> myClosure;
 
-  public ClosureSyntheticParameter(GrClosableBlock closure, boolean isOptional) {
+  public ClosureSyntheticParameter(@NotNull GrClosableBlock closure, boolean isOptional) {
     super(GrClosableBlock.IT_PARAMETER_NAME, TypesUtil.getJavaLangObject(closure), closure);
     setOptional(isOptional);
-    myClosure = closure;
+    myClosure = SmartPointerManager.createPointer(closure);
   }
 
   @Override
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
       GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);
-      myClosure.addParameter(parameter);
+      GrClosableBlock closure = myClosure.getElement();
+      if (closure == null) {
+        throw new IncorrectOperationException("Invalidated element pointer");
+      }
+      closure.addParameter(parameter);
     }
     return this;
   }
@@ -70,10 +72,22 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   @Override
   @NotNull
   public SearchScope getUseScope() {
-    return new LocalSearchScope(myClosure);
+    GrClosableBlock closure = myClosure.getElement();
+    if (closure == null) {
+      throw new IncorrectOperationException("Pointer is invalidated");
+    }
+    return new LocalSearchScope(closure);
+  }
+
+  public boolean isStillValid() {
+    return myClosure.getElement() != null;
   }
 
   public GrClosableBlock getClosure() {
-    return myClosure;
+    GrClosableBlock closure = myClosure.getElement();
+    if (closure == null) {
+      throw new IncorrectOperationException("Pointer is invalidated");
+    }
+    return closure;
   }
 }

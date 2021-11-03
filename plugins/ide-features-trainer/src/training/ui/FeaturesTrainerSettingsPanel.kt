@@ -3,7 +3,6 @@ package training.ui
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
@@ -12,6 +11,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.statistic.StatisticBase
 import training.util.SHOW_NEW_LESSONS_NOTIFICATION
+import training.util.getActionById
 import training.util.resetPrimaryLanguage
 import javax.swing.DefaultComboBoxModel
 
@@ -32,7 +32,7 @@ private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.messa
     }
     row {
       buttonFromAction(LearnBundle.message("learn.option.reset.progress"), "settings",
-                       ActionManager.getInstance().getAction("ResetLearningProgressAction"))
+                       getActionById("ResetLearningProgressAction"))
     }
     row {
       checkBox(LearnBundle.message("settings.checkbox.show.notifications.new.lessons"), {

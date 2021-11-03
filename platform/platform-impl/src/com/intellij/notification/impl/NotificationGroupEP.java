@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,12 +111,15 @@ public final class NotificationGroupEP implements PluginAware {
       return id;
     }
 
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, pluginDescriptor.getPluginClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName,
+                                                                             pluginDescriptor.getClassLoader());
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
   public @Nullable Icon getIcon(@NotNull PluginDescriptor pluginDescriptor) {
-    return icon == null ? null : IconLoader.findIcon(icon, pluginDescriptor.getPluginClassLoader());
+    return icon != null ?
+           IconLoader.findIcon(icon, pluginDescriptor.getClassLoader()) :
+           null;
   }
 
   //@Transient

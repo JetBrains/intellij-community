@@ -1,4 +1,4 @@
-from typing import IO, Any, Callable, Sequence, Tuple, Type
+from typing import IO, Any, Callable, Sequence, Type
 
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurve, EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives.hashes import HashAlgorithm
@@ -32,7 +32,7 @@ class ECDSAKey(PKey):
         data: bytes | None = ...,
         filename: str | None = ...,
         password: str | None = ...,
-        vals: Tuple[EllipticCurvePrivateKey, EllipticCurvePublicKey] | None = ...,
+        vals: tuple[EllipticCurvePrivateKey, EllipticCurvePublicKey] | None = ...,
         file_obj: IO[str] | None = ...,
         validate_point: bool = ...,
     ) -> None: ...

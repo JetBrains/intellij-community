@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.AbstractBundle;
@@ -63,7 +63,7 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
       return "!" + presentableNameKey + "!";
     }
     ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName,
-                                                                             myPluginDescriptor.getPluginClassLoader());
+                                                                             myPluginDescriptor.getClassLoader());
     return AbstractBundle.message(resourceBundle, presentableNameKey);
   }
 

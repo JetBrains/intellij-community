@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-abstract class KotlinExtensionsByReceiverTypeIndex : StringStubIndexExtension<KtCallableDeclaration>() {
+abstract class KotlinExtensionsByReceiverTypeIndex : AbstractStringStubIndexExtension<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
     fun buildKey(receiverTypeName: String, callableName: String): String = receiverTypeName + SEPARATOR + callableName
 
     fun receiverTypeNameFromKey(key: String): String = key.substringBefore(SEPARATOR, "")

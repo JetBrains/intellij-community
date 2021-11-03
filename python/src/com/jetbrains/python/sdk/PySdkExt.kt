@@ -44,6 +44,7 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -308,6 +309,18 @@ private val Sdk.associatedPathFromAdditionalData: String?
 
 private val Sdk.sitePackagesDirectory: VirtualFile?
   get() = PythonSdkUtil.getSitePackagesDirectory(this)
+
+val Sdk.sdkFlavor: PythonSdkFlavor?
+  get() {
+    val remoteSdkData = remoteSdkAdditionalData
+    if (remoteSdkData != null) {
+      return remoteSdkData.flavor
+    }
+    return PythonSdkFlavor.getFlavor(this)
+  }
+
+val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
+  get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
 private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   return isLocatedInsideBaseDir(module?.baseDir?.toNioPath())

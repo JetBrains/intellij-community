@@ -4,14 +4,12 @@ package com.intellij.util.xml.ui;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor;
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.BooleanTableCellEditor;
@@ -132,26 +130,19 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   @Override
   public BackgroundEditorHighlighter createDomHighlighter(final Project project, final PerspectiveFileEditor editor, final DomElement element) {
-    return new BackgroundEditorHighlighter() {
-      @Override
-      public HighlightingPass @NotNull [] createPassesForEditor() {
-        if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
+    return () -> {
+      if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
 
-        final XmlFile psiFile = DomUtil.getFile(element);
+      final XmlFile psiFile = DomUtil.getFile(element);
 
-        final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-        final Document document = psiDocumentManager.getDocument(psiFile);
-        if (document == null) return HighlightingPass.EMPTY_ARRAY;
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      final Document document = psiDocumentManager.getDocument(psiFile);
+      if (document == null) return HighlightingPass.EMPTY_ARRAY;
 
-        editor.commit();
+      editor.commit();
 
-        GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(),
-                                                                  true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());
-        LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
-                                                            document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                            new DefaultHighlightInfoProcessor(), true);
-        return new HighlightingPass[]{ghp, lip};
-      }
+      return TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
+        .instantiateMainPasses(psiFile, document, new DefaultHighlightInfoProcessor()).toArray(HighlightingPass.EMPTY_ARRAY);
     };
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
@@ -90,23 +89,17 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   fun getToolWindow(startScreenPoint: RelativePoint): ToolWindowImpl? {
-    val decorators = ArrayList(ComponentUtil.findComponentsOfType(pane, InternalDecoratorImpl::class.java))
-    for (decorator in decorators) {
-      if (!decorator.mode.isTopLevel) continue
-      val bounds = decorator.headerScreenBounds
-      if (bounds != null && bounds.contains(startScreenPoint.screenPoint)) {
-        val point = startScreenPoint.getPoint(decorator)
-        val child = SwingUtilities.getDeepestComponentAt(decorator, point.x, point.y)
-        if (isComponentDraggable(child) && ComponentUtil.findParentByCondition(child) { t -> t is ToolWindowHeader } != null) {
-          if (decorator.toolWindow.anchor != BOTTOM || decorator.locationOnScreen.y <= startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea())
-            return decorator.toolWindow
-        }
-      }
+    val p = startScreenPoint.getPoint(pane)
+    val clickedComponent = SwingUtilities.getDeepestComponentAt(pane, p.x, p.y)
+    if (clickedComponent != null && isComponentDraggable(clickedComponent)) {
+      val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
+      if (decorator != null &&
+          (decorator.toolWindow.anchor != BOTTOM ||
+           decorator.locationOnScreen.y <= startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea()))
+        return decorator.toolWindow
     }
-    val point = startScreenPoint.getPoint(pane)
-    val component = SwingUtilities.getDeepestComponentAt(pane, point.x, point.y)
-    if (component is StripeButton) {
-      return component.toolWindow
+    if (clickedComponent is StripeButton) {
+      return clickedComponent.toolWindow
     }
     return null
   }
@@ -239,7 +232,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
-    if (!checkModifiers(event)) return;
+    if (!checkModifiers(event)) return
     if (isDragJustStarted) {
       startDrag(event)
     }
@@ -348,6 +341,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       //}
       stripe.processDropButton(myInitialButton as StripeButton, dialog.contentPane as @NotNull JComponent, screenPoint)
       SwingUtilities.invokeLater(Runnable {
+        if (myInitialAnchor == null) return@Runnable
         val bounds = toolWindow.getBoundsOnScreen(stripe.anchor, screenPoint)
         val p = bounds.location
         SwingUtilities.convertPointFromScreen(p, pane.rootPane.layeredPane)

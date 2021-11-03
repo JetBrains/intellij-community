@@ -217,6 +217,11 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "#450073",
+      "newNotification.hoverBackground": "#450073"
+    },
+
     "OptionButton" : {
       "default.separatorColor": "#000000",
       "separatorColor": "#FFFFFF"
@@ -303,7 +308,7 @@
     "BookmarkIcon": {
       "background": "#E0861F"
     },
-    "MnemonicIcon": {
+    "BookmarkMnemonicIcon": {
       "foreground": "#FFFFFF",
       "background": "#000000",
       "borderColor": "#E0861F"

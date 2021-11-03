@@ -212,7 +212,7 @@ class VariableOrParameterNameWithTypeCompletion(
             }
         }
 
-        override fun handleInsert(context: InsertionContext) {
+        override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, element ->
             if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
                 val replacementOffset = context.offsetMap.tryGetOffset(REPLACEMENT_OFFSET)
                 if (replacementOffset != null) {
@@ -241,7 +241,7 @@ class VariableOrParameterNameWithTypeCompletion(
                 // update start offset so that it does not include the text we inserted
                 context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset + text.length)
 
-                super.handleInsert(context)
+                element.handleInsert(context)
             } else {
                 context.document.replaceString(startOffset, context.tailOffset, parameterName)
 

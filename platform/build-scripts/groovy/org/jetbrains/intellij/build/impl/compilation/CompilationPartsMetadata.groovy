@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.annotations.SerializedName
@@ -10,7 +10,7 @@ import groovy.transform.CompileStatic
  * URL for each part should be constructed like: <pre>${serverUrl}/${prefix}/${files.key}/${files.value}.jar</pre>
  */
 @CompileStatic
-class CompilationPartsMetadata {
+final class CompilationPartsMetadata {
   @SerializedName('server-url')
   String serverUrl
   String branch

@@ -35,6 +35,9 @@
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings"/>
+    <projectService
+      serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware"
+      serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider
       id="ExternalSystem.ProjectRefreshFloatingProvider"
@@ -48,6 +51,12 @@
     <notificationGroup id="External System Auto-Link Notification Group" displayType="STICKY_BALLOON"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings"/>
+
+    <!--Dependency Analyzer-->
+    <externalSystemDependencyAnalyzer
+      implementation="com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependencyAnalyzerExtension"/>
+    <registryKey key="external.system.dependency.analyzer" defaultValue="false"
+                 description="Gradle/Maven dependency analyzer"/>
 
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"

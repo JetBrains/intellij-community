@@ -4,8 +4,8 @@ package com.intellij.ide.ui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
@@ -166,13 +166,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   var showNavigationBar: Boolean
     get() = state.showNavigationBar
-    set(b) {
-      ToolbarSettings.getInstance().setNavBarVisible(b)
-      fireUISettingsChanged()
+    set(value) {
+      state.showNavigationBar = value
     }
-
-  val showToolbarInNavigationBar: Boolean
-    get() =  ToolbarSettings.getInstance().getShowToolbarInNavigationBar()
 
   var showMembersInNavigationBar: Boolean
     get() = state.showMembersInNavigationBar
@@ -208,10 +204,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showMainToolbar: Boolean
-    get() =  state.showMainToolbar
+    get() = state.showMainToolbar
     set(value) {
-      ToolbarSettings.getInstance().setToolbarVisible(value)
-      fireUISettingsChanged()
+      state.showMainToolbar = value
+
+      val toolbarSettingsState = ToolbarSettings.Instance.state!!
+      toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
   var showIconsInMenus: Boolean
@@ -669,12 +667,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.editorAAType != AntialiasingType.SUBPIXEL) {
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
-    }
-    if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
-      state.ideAAType = AntialiasingType.GREYSCALE
-    }
-    if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
-      state.editorAAType = AntialiasingType.GREYSCALE
     }
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)

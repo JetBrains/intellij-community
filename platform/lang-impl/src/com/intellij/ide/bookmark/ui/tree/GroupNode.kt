@@ -14,6 +14,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.tree.LeafState.ASYNC
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 
 internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeNode<BookmarkGroup>(project, group) {
@@ -55,8 +56,10 @@ internal class GroupNode(project: Project, group: BookmarkGroup) : AbstractTreeN
     }
 
     // reuse cached nodes
-    val nodes = cache.getNodes(bookmarks)
-    nodes.forEach { if (it is FileNode) it.removeChildren() }
+    val nodes = cache.getNodes(bookmarks).onEach {
+      if (it is BookmarkNode) it.bookmarkGroup = value
+      if (it is FileNode) it.removeChildren()
+    }
     if (provider == null) return nodes
 
     // group line bookmarks within corresponding file bookmarks

@@ -201,7 +201,7 @@ public final class MethodCallUtils {
   @Contract(pure = true)
   public static boolean isCallDuringObjectConstruction(PsiMethodCallExpression expression) {
     PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
+    if (qualifier != null && !(qualifier instanceof PsiQualifiedExpression)) {
       return false;
     }
     final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);

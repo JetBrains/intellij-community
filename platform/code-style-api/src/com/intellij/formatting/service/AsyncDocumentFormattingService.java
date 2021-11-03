@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Before the actual formatting starts, {@link #createFormattingTask(AsyncFormattingRequest)} method is called. It should be fast enough not to
  * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
  */
-@ApiStatus.Experimental
 public abstract class AsyncDocumentFormattingService extends AbstractDocumentFormattingService {
   private final static Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
 
@@ -319,6 +317,17 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myTaskSemaphore.release();
         FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
+      }
+    }
+
+    @Override
+    public void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                        @NotNull @NlsContexts.NotificationContent String message,
+                        int offset) {
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject())
+                                     .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
       }
     }
   }

@@ -49,6 +49,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.3+")
   public void testBasicCompositeBuild() throws Exception {
+    //enableGradleDebugWithSuspend();
     createSettingsFile("rootProject.name='adhoc'\n" +
                        "\n" +
                        "includeBuild '../my-app'\n" +
@@ -76,6 +77,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                            })
                            .project(":string-utils", it -> {
                              it
+                               .withMavenCentral()
                                .withJavaLibraryPlugin()
                                .addApiDependency("org.apache.commons:commons-lang3:3.4");
                            })
@@ -316,7 +318,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                                .addVersion("1.0")
                                .withJavaLibraryPlugin();
                            })
-                           .project(":string-utils", it -> { it.addApiDependency("org.apache.commons:commons-lang3:3.4"); })
+                           .project(":string-utils", it -> {
+                             it.withMavenCentral();
+                             it.addApiDependency("org.apache.commons:commons-lang3:3.4");
+                           })
                            .project(":api", it -> { it.addApiDependency("junit:junit:4.11"); })
                            .generate());
 

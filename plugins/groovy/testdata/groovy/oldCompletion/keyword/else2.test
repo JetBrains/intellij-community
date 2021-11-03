@@ -16,5 +16,6 @@ instanceof
 new
 null
 super
+switch
 this
 true

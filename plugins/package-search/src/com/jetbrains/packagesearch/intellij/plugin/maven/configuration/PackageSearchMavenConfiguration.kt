@@ -4,18 +4,22 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 
-fun packageSearchMavenConfigurationForProject(project: Project): PackageSearchMavenConfiguration =
-    project.getService(PackageSearchMavenConfiguration::class.java)
-
 @State(
     name = "PackageSearchMavenConfiguration",
-    storages = [(Storage(PackageSearchGeneralConfiguration.StorageFileName))]
+    storages = [(Storage(PackageSearchGeneralConfiguration.StorageFileName))],
 )
-class PackageSearchMavenConfiguration : BaseState(), PersistentStateComponent<PackageSearchMavenConfiguration> {
+internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateComponent<PackageSearchMavenConfiguration> {
+
+    companion object {
+
+        @JvmStatic
+        fun getInstance(project: Project) = project.service<PackageSearchMavenConfiguration>()
+    }
 
     override fun getState(): PackageSearchMavenConfiguration = this
 
@@ -24,17 +28,9 @@ class PackageSearchMavenConfiguration : BaseState(), PersistentStateComponent<Pa
     }
 
     @get:OptionTag("MAVEN_SCOPES_DEFAULT")
-    var defaultMavenScope by string(PackageSearchMavenConfigurationDefaults.MavenScope)
+    var defaultMavenScope by string("compile")
 
-    fun determineDefaultMavenScope(): String =
-        if (!defaultMavenScope.isNullOrEmpty()) {
-            defaultMavenScope!!
-        } else {
-            PackageSearchMavenConfigurationDefaults.MavenScope
-        }
+    fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else "compile"
 
-    fun getMavenScopes(): List<String> = PackageSearchMavenConfigurationDefaults.MavenScopes
-        .split(",", ";", "\n")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
+    fun getMavenScopes() = listOf("compile", "provided", "runtime", "test", "system", "import")
 }

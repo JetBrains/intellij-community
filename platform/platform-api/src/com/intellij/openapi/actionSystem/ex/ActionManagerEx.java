@@ -3,6 +3,8 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Comparator;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
 
 public abstract class ActionManagerEx extends ActionManager {
   public static ActionManagerEx getInstanceEx() {
@@ -99,5 +103,18 @@ public abstract class ActionManagerEx extends ActionManager {
    * Allows receiving notifications when popup menus created from action groups are shown and hidden.
    */
   public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
+
+  @ApiStatus.Internal
+  public static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
+    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (created == null) {
+      ForkJoinPool.commonPool().execute(() -> {
+        ActionManager actionManager = getInstanceEx();
+        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
+      });
+    } else {
+      whatToDo.accept(created);
+    }
+  }
 }
 

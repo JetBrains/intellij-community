@@ -1,6 +1,6 @@
 from stat import S_IMODE as S_IMODE
 from types import TracebackType
-from typing import IO, Any, Callable, ContextManager, Sequence, Text, Tuple, Type, Union
+from typing import IO, Any, Callable, ContextManager, Sequence, Text, Type, Union
 from typing_extensions import Literal
 
 import paramiko
@@ -106,9 +106,9 @@ class Connection:
     @property
     def sftp_client(self) -> paramiko.SFTPClient: ...
     @property
-    def active_ciphers(self) -> Tuple[str, str]: ...
+    def active_ciphers(self) -> tuple[str, str]: ...
     @property
-    def active_compression(self) -> Tuple[str, str]: ...
+    def active_compression(self) -> tuple[str, str]: ...
     @property
     def security_options(self) -> paramiko.SecurityOptions: ...
     @property

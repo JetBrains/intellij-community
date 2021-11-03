@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -146,6 +147,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     super.update(e);
     boolean hasToolbars = iterateToolbars(myProducer.get()).iterator().hasNext();
     e.getPresentation().setVisible(hasToolbars);
+  }
+
+  public static boolean hasVisibleToolwindowToolbars(@NotNull ToolWindow toolWindow) {
+    Iterator<ActionToolbar> iterator = iterateToolbars(Collections.singletonList(toolWindow.getContentManager().getComponent())).iterator();
+    return iterator.hasNext() && iterator.next().getComponent().isVisible();
   }
 
   @Override

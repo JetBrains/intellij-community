@@ -28,6 +28,7 @@ public class WizardContext extends UserDataHolderBase {
   @Nullable
   private final Project myProject;
   private final Disposable myDisposable;
+  private Session mySessionId = null;
   private Path myProjectFileDirectory;
   private String myProjectName;
   private String myCompilerOutputDirectory;
@@ -77,8 +78,9 @@ public class WizardContext extends UserDataHolderBase {
   }
 
   public interface Listener {
-    void buttonsUpdateRequested();
-    void nextStepRequested();
+    default void buttonsUpdateRequested() {}
+    default void nextStepRequested() {}
+    default void switchToRequested(@NotNull String placeId) {}
   }
 
   public WizardContext(@Nullable Project project, Disposable parentDisposable) {
@@ -86,6 +88,9 @@ public class WizardContext extends UserDataHolderBase {
     myDisposable = parentDisposable;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
+    if (isNewWizard()) {
+      mySessionId = Session.createRandomId();
     }
   }
 
@@ -159,6 +164,12 @@ public class WizardContext extends UserDataHolderBase {
     }
   }
 
+  public void requestSwitchTo(@NotNull String placeId) {
+    for (Listener listener : myListeners) {
+      listener.switchToRequested(placeId);
+    }
+  }
+
   public void addContextListener(Listener listener) {
     myListeners.add(listener);
   }
@@ -196,5 +207,9 @@ public class WizardContext extends UserDataHolderBase {
 
   public StorageScheme getProjectStorageFormat() {
     return myProjectStorageFormat;
+  }
+
+  public Session getSessionId() {
+    return mySessionId;
   }
 }

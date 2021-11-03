@@ -51,7 +51,7 @@ import java.util.*;
 /**
  * @author Maxim.Mossienko
  */
-public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
+public final class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
   private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(PsiMethod.class);
@@ -859,8 +859,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     Caret caret = editor.getCaretModel().getCurrentCaret();
     int caretOffset = caret.getOffset();
     ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
-    List<Inlay> inlays = pm.getParameterHintsInRange(editor, caretOffset, caretOffset);
-    if (inlays.isEmpty()) return 0;
+    List<Inlay<?>> inlays = pm.getParameterHintsInRange(editor, caretOffset, caretOffset);
+    if (inlays.isEmpty()) {
+      return 0;
+    }
 
     VisualPosition caretPosition = caret.getVisualPosition();
     return ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&

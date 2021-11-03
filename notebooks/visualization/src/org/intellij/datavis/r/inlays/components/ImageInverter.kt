@@ -129,13 +129,20 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
   }
 
   private fun invertInPlace(image: BufferedImage, outputImage: BufferedImage) {
-    for (x in 0 until image.width) {
-      for (y in 0 until image.height) {
-        val argb = image.getRGB(x, y)
-        val alpha = invert(argb)
-        outputImage.setRGB(x, y, convertHSLtoRGB(hsl, alpha))
+    val rgbArray = image.getRGB(0, 0, image.width, image.height, null, 0, image.width)
+    if (rgbArray.isEmpty()) return
+    // Usually graph data contains regions with same color. Previous converted color may be reused.
+    var prevArgb = rgbArray[0]
+    var prevConverted = convertHSLtoRGB(hsl, invert(prevArgb))
+    for (i in rgbArray.indices) {
+      val argb = rgbArray[i]
+      if (argb != prevArgb) {
+        prevArgb = argb
+        prevConverted = convertHSLtoRGB(hsl, invert(argb))
       }
+      rgbArray[i] = prevConverted
     }
+    outputImage.setRGB(0, 0, image.width, image.height, rgbArray, 0, image.width)
   }
 
   private fun createImageWithInvertedPalette(image: BufferedImage): BufferedImage {

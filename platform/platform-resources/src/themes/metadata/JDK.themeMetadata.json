@@ -1024,7 +1024,8 @@
     {
       "key": "StatusBar.hoverBackground",
       "since": "2019.2",
-      "description": "Appears under widgets in status bar"
+      "description": "Appears under widgets in status bar. Use StatusBar.Widget.hoverBackground instead",
+      "deprecated": true
     },
     {
       "key": "StatusBar.bottomColor",

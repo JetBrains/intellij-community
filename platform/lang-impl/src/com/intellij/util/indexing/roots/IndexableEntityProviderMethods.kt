@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -11,14 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
-  private val LOG = Logger.getInstance(IndexableEntityProviderMethods::class.java)
+  private val LOG = thisLogger()
 
   fun findModuleForEntity(entity: ModuleEntity, project: Project): Module? {
     val moduleName = entity.name
@@ -29,16 +26,9 @@ object IndexableEntityProviderMethods {
     return module
   }
 
-  fun findLibraryForEntity(entity: LibraryEntity,
-                           storageAfter: WorkspaceEntityStorage): LibraryBridge? =
-    storageAfter.libraryMap.getDataByEntity(entity)
-
   fun createIterators(entity: ModuleEntity, roots: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    val module = findModuleForEntity(entity, project)
-    if (module == null) {
-      return emptyList()
-    }
+    val module = findModuleForEntity(entity, project) ?: return emptyList()
     return createIterators(module, roots)
   }
 
@@ -63,7 +53,7 @@ object IndexableEntityProviderMethods {
     @Suppress("DEPRECATION")
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
-      val entityStorage = WorkspaceModel.Companion.getInstance(project).entityStorage.current
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))

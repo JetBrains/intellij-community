@@ -63,6 +63,8 @@
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
 
+    <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
+
     <applicationService serviceImplementation="training.lang.LangManager"/>
     <applicationService serviceImplementation="training.ui.UISettings"/>
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
@@ -104,7 +106,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
-                 defaultValue="FALSE"
+                 defaultValue="TRUE"
                  restartRequired="false"/>
     <registryKey key="ift.experimental.lessons"
                  description="Turn on it to preview incomplete lessons"

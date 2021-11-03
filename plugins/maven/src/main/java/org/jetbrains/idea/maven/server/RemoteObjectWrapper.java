@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -58,7 +57,7 @@ public abstract class RemoteObjectWrapper<T> {
   }
 
   protected synchronized void handleRemoteError(RemoteException e) {
-    MavenLog.LOG.debug("Connection failed. Will be reconnected on the next request.", e);
+    MavenLog.LOG.debug("[connector] Connection failed. Will be reconnected on the next request.", e);
     onError();
   }
 

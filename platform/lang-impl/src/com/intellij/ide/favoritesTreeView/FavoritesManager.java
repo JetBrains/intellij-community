@@ -425,7 +425,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
   @Nullable
   public static AbstractUrl createUrlByElement(Object element, final Project project) {
     if (element instanceof SmartPsiElementPointer) {
-      element = ((SmartPsiElementPointer)element).getElement();
+      element = ((SmartPsiElementPointer<?>)element).getElement();
     }
 
     for (FavoriteNodeProvider nodeProvider : FavoriteNodeProvider.EP_NAME.getExtensions(project)) {
@@ -492,7 +492,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
       }
       Object element = path[path.length - 1];
       if (element instanceof SmartPsiElementPointer) {
-        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(((SmartPsiElementPointer)element).getElement());
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(((SmartPsiElementPointer<?>)element).getElement());
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())) {
           return true;

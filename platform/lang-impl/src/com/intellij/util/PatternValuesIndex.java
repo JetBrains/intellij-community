@@ -39,7 +39,7 @@ public final class PatternValuesIndex {
         }
         for (PatternCondition<?> condition : patternCondition.getConditions()) {
           if (condition instanceof PatternConditionPlus) {
-            stack.add(((PatternConditionPlus)condition).getValuePattern());
+            stack.add(((PatternConditionPlus<?, ?>)condition).getValuePattern());
           }
           else if (condition instanceof ValuePatternCondition) {
             Collection<Object> values = ((ValuePatternCondition)condition).getValues();

@@ -87,7 +87,10 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
   }
 
   private fun preprocessNode(node: Node): Node {
-    if (node.nodeName() != "img" || node.hasAttr(IntelliJImageGeneratingProvider.generatedAttributeName)) {
+    if (node.nodeName() != "img" ||
+        node.hasAttr(IntelliJImageGeneratingProvider.generatedAttributeName) ||
+        node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName))
+    {
       return node
     }
     val url = Urls.parse(node.attr("src"), asLocalIfNoScheme = true) ?: return node

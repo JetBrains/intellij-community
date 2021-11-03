@@ -38,7 +38,7 @@
 
     <component>
       <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
-      <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolverImpl</implementation-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
     </component>
 
@@ -150,6 +150,8 @@
     <listener class="com.intellij.diagnostic.IdeaFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
 
+    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+              topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.EventLog$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
@@ -180,6 +182,8 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
   <projectListeners>
+    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+              topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyBeforeFileEditorManagerListener"

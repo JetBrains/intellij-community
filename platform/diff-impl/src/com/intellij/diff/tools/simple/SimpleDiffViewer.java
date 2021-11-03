@@ -171,7 +171,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   boolean needAlignChanges() {
-    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF));
+    return Boolean.TRUE.equals(myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF))
+           || getTextSettings().isEnableAligningChangesMode();
   }
 
   @NotNull
@@ -692,7 +693,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MySyncScrollable extends BaseSyncScrollable {
     @Override
     public boolean isSyncScrollEnabled() {
-      return getTextSettings().isEnableSyncScroll();
+      return getTextSettings().isEnableSyncScroll() || getTextSettings().isEnableAligningChangesMode();
+    }
+
+    @Override
+    public boolean forceSyncVerticalScroll() {
+      return needAlignChanges();
     }
 
     @NotNull

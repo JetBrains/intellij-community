@@ -7,7 +7,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -21,6 +23,8 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
@@ -40,10 +44,12 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Method;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
+  private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private final String myPlace;
   private final DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -53,13 +59,15 @@ public final class ActionMenu extends JBMenu {
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myUseDarkIcons;
   private Disposable myDisposable;
+  private final Menu myScreenMenuPeer;
 
   public ActionMenu(@Nullable DataContext context,
                     @NotNull String place,
                     @NotNull ActionGroup group,
                     @NotNull PresentationFactory presentationFactory,
                     boolean enableMnemonics,
-                    boolean useDarkIcons) {
+                    boolean useDarkIcons,
+                    Menu screenMenuPeer) {
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
@@ -67,6 +75,29 @@ public final class ActionMenu extends JBMenu {
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
     myUseDarkIcons = useDarkIcons;
+    myScreenMenuPeer = screenMenuPeer;
+    if (myScreenMenuPeer != null) {
+      myScreenMenuPeer.setActionDelegate(()-> {
+        // Called on AppKit when menu opening
+        if (USE_STUB) {
+          // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
+          myScreenMenuPeer.addItem(new MenuItem(), false/*already on AppKit thread*/);
+          ApplicationManager.getApplication().invokeLater(()->{
+            fillMenu();
+            myScreenMenuPeer.endFill(true);
+          });
+        } else {
+          invokeWithLWCToolkit(() -> fillMenu(), ()->myScreenMenuPeer.endFill(false/*already on AppKit thread*/), this);
+        }
+      });
+      myScreenMenuPeer.setOnClose(()-> {
+        // Called on AppKit when menu closed
+        invokeWithLWCToolkit(() -> setSelected(false), null, this);
+      });
+
+      // update from presentation
+      myScreenMenuPeer.setEnabled(myPresentation.isEnabled());
+    }
 
     updateUI();
 
@@ -74,6 +105,15 @@ public final class ActionMenu extends JBMenu {
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
+  }
+
+  public ActionMenu(@Nullable DataContext context,
+                    @NotNull String place,
+                    @NotNull ActionGroup group,
+                    @NotNull PresentationFactory presentationFactory,
+                    boolean enableMnemonics,
+                    boolean useDarkIcons) {
+    this(context, place, group, presentationFactory, enableMnemonics, useDarkIcons, null);
   }
 
   @Override
@@ -114,6 +154,12 @@ public final class ActionMenu extends JBMenu {
     if (popupMenu != null) {
       popupMenu.updateUI();
     }
+  }
+
+  public Menu getScreenMenuPeer() {
+    if (!Menu.isJbScreenMenuEnabled() || !ActionPlaces.MAIN_MENU.equals(myPlace))
+      return null;
+    return myScreenMenuPeer;
   }
 
   private void init() {
@@ -429,6 +475,25 @@ public final class ActionMenu extends JBMenu {
       myEventToRedispatch = null;
       myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+    }
+  }
+
+  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
+    try {
+      Class toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
+      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class);
+      if (invokeMethod != null) {
+        try {
+          invokeMethod.invoke(toolkitClass, r, invoker);
+        } catch (Exception e) {
+          Logger.getInstance(ActionMenu.class).error(e);
+        }
+        if (after != null) after.run();
+      } else {
+        Logger.getInstance(ActionMenu.class).error("can't find sun.lwawt.macosx.LWCToolkit.invokeAndWait, screen menu won't be filled");
+      }
+    } catch (ClassNotFoundException e) {
+      Logger.getInstance(ActionMenu.class).error("can't find sun.lwawt.macosx.LWCToolkit, screen menu won't be filled");
     }
   }
 }

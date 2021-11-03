@@ -3,13 +3,13 @@ package training.ui
 
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ui.EdtInvocationManager
-import org.fest.swing.awt.AWT
-import org.fest.swing.core.*
-import org.fest.swing.core.Robot
-import org.fest.swing.edt.GuiActionRunner
-import org.fest.swing.edt.GuiQuery
-import org.fest.swing.hierarchy.ComponentHierarchy
-import org.fest.swing.timing.Pause
+import org.assertj.swing.awt.AWT
+import org.assertj.swing.core.*
+import org.assertj.swing.core.Robot
+import org.assertj.swing.edt.GuiActionRunner
+import org.assertj.swing.edt.GuiQuery
+import org.assertj.swing.hierarchy.ComponentHierarchy
+import org.assertj.swing.timing.Pause
 import java.awt.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -97,6 +97,10 @@ internal class IftSmartWaitRobot : Robot {
     basicRobot.pressModifiers(p0)
   }
 
+  override fun pressModifiersWhileRunning(modifierMask: Int, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
   override fun pressMouse(mouseButton: MouseButton) {
     basicRobot.pressMouse(mouseButton)
   }
@@ -113,6 +117,22 @@ internal class IftSmartWaitRobot : Robot {
     basicRobot.pressMouse(point, mouseButton)
   }
 
+  override fun pressMouseWhileRunning(button: MouseButton?, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun pressMouseWhileRunning(c: Component?, where: Point?, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun pressMouseWhileRunning(c: Component?, where: Point?, button: MouseButton?, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun pressMouseWhileRunning(where: Point?, button: MouseButton?, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
   override fun hierarchy(): ComponentHierarchy =
     basicRobot.hierarchy()
 
@@ -126,10 +146,6 @@ internal class IftSmartWaitRobot : Robot {
 
   override fun type(char: Char) {
     basicRobot.type(char)
-  }
-
-  override fun type(char: Char, component: Component) {
-    basicRobot.type(char, component)
   }
 
   override fun requireNoJOptionPaneIsShowing() {
@@ -148,14 +164,14 @@ internal class IftSmartWaitRobot : Robot {
     basicRobot.pressKey(p0)
   }
 
+  override fun pressKeyWhileRunning(keyCode: Int, runnable: Runnable?) {
+    TODO("Not yet implemented")
+  }
+
   override fun settings(): Settings = basicRobot.settings()
 
   override fun enterText(text: String) {
     basicRobot.enterText(text)
-  }
-
-  override fun enterText(text: String, component: Component) {
-    basicRobot.enterText(text, component)
   }
 
   override fun releaseMouseButtons() {
@@ -204,7 +220,7 @@ internal class IftSmartWaitRobot : Robot {
     basicRobot.pressAndReleaseKeys(*p0)
   }
 
-  override fun finder(): ComponentFinder = basicRobot.finder()
+  override fun finder(): ComponentFinder = IftComponentFinder(basicRobot.finder(), basicRobot.hierarchy(), basicRobot.settings())
 
   private val basicRobot: BasicRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock() as BasicRobot
 

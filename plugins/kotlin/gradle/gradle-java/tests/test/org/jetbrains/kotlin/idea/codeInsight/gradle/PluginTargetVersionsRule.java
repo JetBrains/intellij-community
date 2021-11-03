@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.util.KotlinVersionUtils;
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
-import org.junit.AssumptionViolatedException;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -57,8 +56,8 @@ public class PluginTargetVersionsRule implements MethodRule {
             return new Statement() {
                 @Override
                 public void evaluate() {
-                    throw new AssumptionViolatedException(
-                            "Test is ignored\n" +
+                    System.out.println(
+                            "Test is marked passed due to unmet requirements\n" +
                             "Gradle version: " +
                             testCase.gradleVersion +
                             " | Requirement: " +

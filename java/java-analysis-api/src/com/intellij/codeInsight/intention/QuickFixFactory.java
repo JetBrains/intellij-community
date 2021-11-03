@@ -369,6 +369,10 @@ public abstract class QuickFixFactory {
                                                                             @NotNull String typeName,
                                                                             @NotNull String boxedTypeName);
 
+  @Nullable
+  public abstract IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiType operandType,
+                                                                            @NotNull PsiTypeElement checkTypeElement);
+
   @NotNull
   public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter);
 
@@ -386,9 +390,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
-  public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter,
-                                                       @NotNull Object highlightInfo,
-                                                       boolean excludingHierarchy);
+  @NotNull
+  public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
 
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
@@ -547,4 +550,11 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
+
+  @Nullable
+  public abstract IntentionAction createMergeDuplicateAttributesFix(@NotNull PsiNameValuePair pair);
+
+  @NotNull
+  public abstract IntentionAction createMoveSwitchBranchUpFix(@NotNull PsiCaseLabelElement moveBeforeLabel,
+                                                              @NotNull PsiCaseLabelElement labelElement);
 }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -32,6 +33,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
     KtCallExpression::class.java,
     intentionName
 ) {
+    @SafeFieldForPreview
     private val conversions = conversions.associateBy { it.fromFunctionName }
 
     override fun applicabilityRange(element: KtCallExpression): TextRange? {

@@ -17,12 +17,15 @@ import org.jetbrains.kotlin.idea.core.canAddRootPrefix
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver.Companion.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_WITH_DOT
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -35,7 +38,8 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
         val file = context.file
         if (file is KtFile) {
             if (!context.isAfterDot()) {
-                val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+                val project = context.project
+                val psiDocumentManager = PsiDocumentManager.getInstance(project)
                 psiDocumentManager.commitAllDocuments()
 
                 val startOffset = context.startOffset
@@ -43,9 +47,18 @@ object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
 
                 val lookupObject = item.`object` as DeclarationLookupObject
                 // never need to insert import or use qualified name for import-aliased class
-                if (lookupObject.descriptor?.isArtificialImportAliasedDescriptor == true) return
+                val descriptor = lookupObject.descriptor
+                if (descriptor?.isArtificialImportAliasedDescriptor == true) return
 
                 val qualifiedName = qualifiedName(lookupObject)
+
+                descriptor?.takeIf { DescriptorUtils.isTopLevelDeclaration(it) }?.let {
+                    val importDescriptorResult = ImportInsertHelper.getInstance(project).importDescriptor(file, it)
+                    if (importDescriptorResult == ImportDescriptorResult.FAIL) {
+                        document.replaceString(startOffset, context.tailOffset, qualifiedName)
+                    }
+                    return
+                }
 
                 // first try to resolve short name for faster handling
                 val token = file.findElementAt(startOffset)!!

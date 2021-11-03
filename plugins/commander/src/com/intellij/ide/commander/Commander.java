@@ -346,7 +346,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (toolWindow != null) {
       AbstractTreeNode<?> node = activePanel.getSelectedNode();
       if (node instanceof ProjectViewNode) {
-        toolWindow.setTitle(ObjectUtils.notNull(((ProjectViewNode)node).getTitle(), ""));
+        toolWindow.setTitle(ObjectUtils.notNull(((ProjectViewNode<?>)node).getTitle(), ""));
       }
     }
   }

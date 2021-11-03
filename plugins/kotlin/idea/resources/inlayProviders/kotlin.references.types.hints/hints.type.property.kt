@@ -1,0 +1,1 @@
+val a = listOf(1, 2, 3).sum()

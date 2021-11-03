@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -47,7 +46,6 @@ class ProtectedInFinalInspection : AbstractKotlinInspection() {
         override fun getFamilyName(): String = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)
                 ?: throw IllegalStateException("Can't find modifier list owner for modifier")
             addModifier(modifierListOwner, KtTokens.PRIVATE_KEYWORD)
@@ -60,7 +58,6 @@ class ProtectedInFinalInspection : AbstractKotlinInspection() {
         override fun getFamilyName(): String = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)
                 ?: throw IllegalStateException("Can't find modifier list owner for modifier")
             val parentClass = modifierListOwner.getParentOfType<KtClass>(true) ?: return

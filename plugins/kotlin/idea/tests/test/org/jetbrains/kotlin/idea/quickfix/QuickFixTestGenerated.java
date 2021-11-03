@@ -566,6 +566,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addEmptyArgumentList")
+    public static class AddEmptyArgumentList extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("testData/quickfix/addEmptyArgumentList/suspend.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addEqEqTrue")
     public static class AddEqEqTrue extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1827,6 +1840,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/autoImports/libraryTopLevelFunctionImportRuntime.kt");
         }
 
+        @TestMetadata("multipleReceiversSingleCandidateExtensionInObject1.kt")
+        public void testMultipleReceiversSingleCandidateExtensionInObject1() throws Exception {
+            runTest("testData/quickfix/autoImports/multipleReceiversSingleCandidateExtensionInObject1.kt");
+        }
+
+        @TestMetadata("multipleReceiversSingleCandidateExtensionInObject2.kt")
+        public void testMultipleReceiversSingleCandidateExtensionInObject2() throws Exception {
+            runTest("testData/quickfix/autoImports/multipleReceiversSingleCandidateExtensionInObject2.kt");
+        }
+
+        @TestMetadata("multipleReceiversSingleCandidateExtensionInObject3.kt")
+        public void testMultipleReceiversSingleCandidateExtensionInObject3() throws Exception {
+            runTest("testData/quickfix/autoImports/multipleReceiversSingleCandidateExtensionInObject3.kt");
+        }
+
         @TestMetadata("namelessClass.kt")
         public void testNamelessClass() throws Exception {
             runTest("testData/quickfix/autoImports/namelessClass.kt");
@@ -1900,6 +1928,234 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("unresolvedReferenceInCall.kt")
         public void testUnresolvedReferenceInCall() throws Exception {
             runTest("testData/quickfix/autoImports/unresolvedReferenceInCall.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
+        public static class CallablesDeclaredInClasses extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractExtensionSingleImport.kt")
+            public void testAbstractExtensionSingleImport() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/abstractExtensionSingleImport.kt");
+            }
+
+            @TestMetadata("companionObjectDeepInheritance.kt")
+            public void testCompanionObjectDeepInheritance() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectDeepInheritance.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionInClassImportFromChildObject.kt")
+            public void testCompanionObjectExtensionFunctionInClassImportFromChildObject() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionInClassImportFromChildObject.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionInClassImportFromChildObjectNoClassName.kt")
+            public void testCompanionObjectExtensionFunctionInClassImportFromChildObjectNoClassName() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionInClassImportFromChildObjectNoClassName.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionInUnrelatedClass.kt")
+            public void testCompanionObjectExtensionFunctionInUnrelatedClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionInUnrelatedClass.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionInUnrelatedClassNamedCompanion.kt")
+            public void testCompanionObjectExtensionFunctionInUnrelatedClassNamedCompanion() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionInUnrelatedClassNamedCompanion.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionTwoCandidatesA.kt")
+            public void testCompanionObjectExtensionFunctionTwoCandidatesA() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionTwoCandidatesA.kt");
+            }
+
+            @TestMetadata("companionObjectExtensionFunctionTwoCandidatesB.kt")
+            public void testCompanionObjectExtensionFunctionTwoCandidatesB() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/companionObjectExtensionFunctionTwoCandidatesB.kt");
+            }
+
+            @TestMetadata("genericClassSpecificTypeChild.kt")
+            public void testGenericClassSpecificTypeChild() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericClassSpecificTypeChild.kt");
+            }
+
+            @TestMetadata("genericExtensionFunction.kt")
+            public void testGenericExtensionFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericExtensionFunction.kt");
+            }
+
+            @TestMetadata("genericExtensionFunctionSubtype.kt")
+            public void testGenericExtensionFunctionSubtype() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericExtensionFunctionSubtype.kt");
+            }
+
+            @TestMetadata("genericExtensionFunctionTypeConstraint.kt")
+            public void testGenericExtensionFunctionTypeConstraint() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericExtensionFunctionTypeConstraint.kt");
+            }
+
+            @TestMetadata("genericExtensionFunctionTypeConstraintVariable.kt")
+            public void testGenericExtensionFunctionTypeConstraintVariable() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericExtensionFunctionTypeConstraintVariable.kt");
+            }
+
+            @TestMetadata("genericExtensionFunctionVariable.kt")
+            public void testGenericExtensionFunctionVariable() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericExtensionFunctionVariable.kt");
+            }
+
+            @TestMetadata("genericTypeExtension1.kt")
+            public void testGenericTypeExtension1() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericTypeExtension1.kt");
+            }
+
+            @TestMetadata("genericTypeExtension2.kt")
+            public void testGenericTypeExtension2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/genericTypeExtension2.kt");
+            }
+
+            @TestMetadata("intTypeExtensionFunction.kt")
+            public void testIntTypeExtensionFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/intTypeExtensionFunction.kt");
+            }
+
+            @TestMetadata("intTypeExtensionFunctionCallChainVariable.kt")
+            public void testIntTypeExtensionFunctionCallChainVariable() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/intTypeExtensionFunctionCallChainVariable.kt");
+            }
+
+            @TestMetadata("intTypeExtensionFunctionUnnecessaryCallChainLiteral.kt")
+            public void testIntTypeExtensionFunctionUnnecessaryCallChainLiteral() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/intTypeExtensionFunctionUnnecessaryCallChainLiteral.kt");
+            }
+
+            @TestMetadata("intTypeExtensionFunctionUnnecessaryCallChainVariable.kt")
+            public void testIntTypeExtensionFunctionUnnecessaryCallChainVariable() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/intTypeExtensionFunctionUnnecessaryCallChainVariable.kt");
+            }
+
+            @TestMetadata("intTypeExtensionFunctionVariable.kt")
+            public void testIntTypeExtensionFunctionVariable() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/intTypeExtensionFunctionVariable.kt");
+            }
+
+            @TestMetadata("multipleReceiversSingleCandidate1.kt")
+            public void testMultipleReceiversSingleCandidate1() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/multipleReceiversSingleCandidate1.kt");
+            }
+
+            @TestMetadata("multipleReceiversSingleCandidate2.kt")
+            public void testMultipleReceiversSingleCandidate2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/multipleReceiversSingleCandidate2.kt");
+            }
+
+            @TestMetadata("noImportCompanionExtensionFunctionAsClassFunction.kt")
+            public void testNoImportCompanionExtensionFunctionAsClassFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportCompanionExtensionFunctionAsClassFunction.kt");
+            }
+
+            @TestMetadata("noImportGenericClassSpecificTypeChild.kt")
+            public void testNoImportGenericClassSpecificTypeChild() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportGenericClassSpecificTypeChild.kt");
+            }
+
+            @TestMetadata("noImportGenericExtensionFunctionTypeConstraintWrongReceiver.kt")
+            public void testNoImportGenericExtensionFunctionTypeConstraintWrongReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportGenericExtensionFunctionTypeConstraintWrongReceiver.kt");
+            }
+
+            @TestMetadata("noImportGenericExtensionFunctionTypeConstraintWrongReceiver2.kt")
+            public void testNoImportGenericExtensionFunctionTypeConstraintWrongReceiver2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportGenericExtensionFunctionTypeConstraintWrongReceiver2.kt");
+            }
+
+            @TestMetadata("noImportIntTypeExtensionFunctionVariableWrongReceiver.kt")
+            public void testNoImportIntTypeExtensionFunctionVariableWrongReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIntTypeExtensionFunctionVariableWrongReceiver.kt");
+            }
+
+            @TestMetadata("noImportIntTypeExtensionFunctionWrongReceiver.kt")
+            public void testNoImportIntTypeExtensionFunctionWrongReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIntTypeExtensionFunctionWrongReceiver.kt");
+            }
+
+            @TestMetadata("noImportIrrelevantFunctions1.kt")
+            public void testNoImportIrrelevantFunctions1() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIrrelevantFunctions1.kt");
+            }
+
+            @TestMetadata("noImportIrrelevantFunctions2.kt")
+            public void testNoImportIrrelevantFunctions2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIrrelevantFunctions2.kt");
+            }
+
+            @TestMetadata("noImportIrrelevantFunctions3.kt")
+            public void testNoImportIrrelevantFunctions3() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIrrelevantFunctions3.kt");
+            }
+
+            @TestMetadata("noImportIrrelevantFunctions4.kt")
+            public void testNoImportIrrelevantFunctions4() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportIrrelevantFunctions4.kt");
+            }
+
+            @TestMetadata("noImportThisExtensionReceiverWrongType.kt")
+            public void testNoImportThisExtensionReceiverWrongType() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportThisExtensionReceiverWrongType.kt");
+            }
+
+            @TestMetadata("objectExtensionFunctionInClass.kt")
+            public void testObjectExtensionFunctionInClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtensionFunctionInClass.kt");
+            }
+
+            @TestMetadata("regularFunction.kt")
+            public void testRegularFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/regularFunction.kt");
+            }
+
+            @TestMetadata("regularProperty.kt")
+            public void testRegularProperty() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/regularProperty.kt");
+            }
+
+            @TestMetadata("thisExtensionReceiver.kt")
+            public void testThisExtensionReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/thisExtensionReceiver.kt");
+            }
+
+            @TestMetadata("twoSupertypes1.kt")
+            public void testTwoSupertypes1() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/twoSupertypes1.kt");
+            }
+
+            @TestMetadata("twoSupertypes2.kt")
+            public void testTwoSupertypes2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/twoSupertypes2.kt");
+            }
+
+            @TestMetadata("typealiasExtension1.kt")
+            public void testTypealiasExtension1() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/typealiasExtension1.kt");
+            }
+
+            @TestMetadata("typealiasExtension2.kt")
+            public void testTypealiasExtension2() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/typealiasExtension2.kt");
+            }
+
+            @TestMetadata("typealiasExtension3.kt")
+            public void testTypealiasExtension3() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/typealiasExtension3.kt");
+            }
+
+            @TestMetadata("typealiasExtension4.kt")
+            public void testTypealiasExtension4() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/typealiasExtension4.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -8044,6 +8300,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/inlineClass")
+    public static class InlineClass extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inlineClassDeprecated.kt")
+        public void testInlineClassDeprecated() throws Exception {
+            runTest("testData/quickfix/inlineClass/inlineClassDeprecated.kt");
+        }
+
+        @TestMetadata("inlineClassDeprecated_js.kt")
+        public void testInlineClassDeprecated_js() throws Exception {
+            runTest("testData/quickfix/inlineClass/inlineClassDeprecated_js.kt");
+        }
+
+        @TestMetadata("publicInlineClass.kt")
+        public void testPublicInlineClass() throws Exception {
+            runTest("testData/quickfix/inlineClass/publicInlineClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/inlineClassConstructorNotValParameter")
     public static class InlineClassConstructorNotValParameter extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -9266,6 +9545,64 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/nonPublicCallFromPublicInline")
+    public static class NonPublicCallFromPublicInline extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("internalFunction.kt")
+        public void testInternalFunction() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction.kt");
+        }
+
+        @TestMetadata("internalFunction2.kt")
+        public void testInternalFunction2() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction2.kt");
+        }
+
+        @TestMetadata("internalFunction3.kt")
+        public void testInternalFunction3() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/internalFunction3.kt");
+        }
+
+        @TestMetadata("privateProperty.kt")
+        public void testPrivateProperty() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty.kt");
+        }
+
+        @TestMetadata("privateProperty2.kt")
+        public void testPrivateProperty2() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty2.kt");
+        }
+
+        @TestMetadata("privateProperty3.kt")
+        public void testPrivateProperty3() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/privateProperty3.kt");
+        }
+
+        @TestMetadata("protectedFunction.kt")
+        public void testProtectedFunction() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction.kt");
+        }
+
+        @TestMetadata("protectedFunction2.kt")
+        public void testProtectedFunction2() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction2.kt");
+        }
+
+        @TestMetadata("protectedFunction3.kt")
+        public void testProtectedFunction3() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/protectedFunction3.kt");
+        }
+
+        @TestMetadata("reifiedTypeParameter.kt")
+        public void testReifiedTypeParameter() throws Exception {
+            runTest("testData/quickfix/nonPublicCallFromPublicInline/reifiedTypeParameter.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/nullables")
     public static class Nullables extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -10157,6 +10494,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public static class RemoveAnnotation extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/jvmField.kt");
+        }
+
+        @TestMetadata("jvmFieldOnOverridingProperty.kt")
+        public void testJvmFieldOnOverridingProperty() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/jvmFieldOnOverridingProperty.kt");
         }
 
         @TestMetadata("jvmOverloads.kt")
@@ -13710,6 +14057,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("typeMismatchInReturnStatement.kt")
             public void testTypeMismatchInReturnStatement() throws Exception {
                 runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInReturnStatement.kt");
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn")
+            public static class MultiReturn extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/labeledReturn.kt");
+                }
+
+                @TestMetadata("returnDifferentType.kt")
+                public void testReturnDifferentType() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnDifferentType.kt");
+                }
+
+                @TestMetadata("returnNull.kt")
+                public void testReturnNull() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNull.kt");
+                }
+
+                @TestMetadata("returnNull2.kt")
+                public void testReturnNull2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNull2.kt");
+                }
+
+                @TestMetadata("returnNullable.kt")
+                public void testReturnNullable() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnNullable.kt");
+                }
+
+                @TestMetadata("returnSuperType.kt")
+                public void testReturnSuperType() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/returnSuperType.kt");
+                }
+
+                @TestMetadata("unrelatedLabeledReturn.kt")
+                public void testUnrelatedLabeledReturn() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/multiReturn/unrelatedLabeledReturn.kt");
+                }
             }
         }
 

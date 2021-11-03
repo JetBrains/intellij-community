@@ -370,7 +370,7 @@ public class LocalDebugger implements Debugger {
   }
 
   public void popSource() {
-    ((AbstractFrame)mySourceFrames.removeFirst()).invalidate();
+    ((AbstractFrame<?>)mySourceFrames.removeFirst()).invalidate();
   }
 
   interface Condition {

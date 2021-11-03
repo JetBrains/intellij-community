@@ -17,7 +17,7 @@ class KotlinConstructorDelegationCallReferenceSearcher : QueryExecutorBase<PsiRe
             val method = queryParameters.method
             if (!method.isConstructor) return@runReadAction null
             if (!method.canBeResolvedWithFrontEnd()) return@runReadAction null
-            val searchScope = method.useScope.intersectWith(queryParameters.effectiveSearchScope)
+            val searchScope = queryParameters.effectiveSearchScope
 
             method.buildProcessDelegationCallConstructorUsagesTask(searchScope) {
                 it.calleeExpression?.mainReference?.let(consumer::process) ?: true

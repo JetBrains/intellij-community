@@ -93,7 +93,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();
           if (runConfiguration instanceof LocatableConfigurationBase) {
-            ((LocatableConfigurationBase)runConfiguration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase<?>)runConfiguration).setNameChangedByUser(true);
           }
         }
       }
@@ -121,6 +121,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = super.getSnapshot();
     snapshot.setName(getNameText());
+    snapshot.setFolderName(getFolderName());
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
     if (original.isStoredInDotIdeaFolder()) {

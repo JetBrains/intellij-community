@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModulePathMacro extends Macro {
+public final class ModulePathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined
  * in platform/platform-resources/src/idea/ApplicationInfo.xsd,
@@ -30,7 +32,7 @@ import java.util.*;
  */
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
-  static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
+         static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   private static volatile ApplicationInfoImpl instance;
 
@@ -57,9 +59,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressY = 350;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
-  private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl;
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
@@ -125,10 +125,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           myFullVersionFormat = child.getAttributeValue("full");
           myCodeName = child.getAttributeValue("codename");
           myEAP = Boolean.parseBoolean(child.getAttributeValue("eap"));
-          myVersionSuffix = child.getAttributeValue("suffix");
-          if (myVersionSuffix == null && myEAP) {
-            myVersionSuffix = "EAP";
-          }
+          myVersionSuffix = child.getAttributeValue("suffix", myEAP ? "EAP" : null);
         }
         break;
 
@@ -182,9 +179,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "icon": {
-          myIconUrl = child.getAttributeValue("size32");
           mySmallIconUrl = child.getAttributeValue("size16", mySmallIconUrl);
-          myBigIconUrl = getAttributeValue(child, "size128");
           String toolWindowIcon = getAttributeValue(child, "size12");
           if (toolWindowIcon != null) {
             myToolWindowIconUrl = toolWindowIcon;
@@ -337,7 +332,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     essentialPluginsIds.sort(null);
   }
 
-  private void readLogoInfo(@NotNull XmlElement element) {
+  private void readLogoInfo(XmlElement element) {
     mySplashImageUrl = getAttributeValue(element, "url");
     String v = element.getAttributeValue("progressColor");
     if (v != null && !v.isEmpty()) {
@@ -366,8 +361,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           continue;
         }
 
-        String slideUrl = Objects.requireNonNull(child.getAttributeValue("url"));
-        String progressPercent = Objects.requireNonNull(child.getAttributeValue("progressPercent"));
+        String slideUrl = requireNonNull(child.getAttributeValue("url"));
+        String progressPercent = requireNonNull(child.getAttributeValue("progressPercent"));
         int progressPercentInt = Integer.parseInt(progressPercent);
         if (progressPercentInt < 0 || progressPercentInt > 100) {
           throw new IllegalArgumentException("Expected [0, 100], got " + progressPercent);
@@ -427,7 +422,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @NotNull BuildNumber getBuild() {
-    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
+    return requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -439,7 +434,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      BuildNumber api = fromStringWithProductCode(myApiVersion, build);
+      BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
         return api;
       }
@@ -547,18 +542,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getIconUrl() {
-    return myIconUrl;
-  }
-
-  @Override
   public @NotNull String getSmallIconUrl() {
     return mySmallIconUrl;
-  }
-
-  @Override
-  public @Nullable String getBigIconUrl() {
-    return myBigIconUrl;
   }
 
   @Override
@@ -772,24 +757,18 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
-    @Nullable BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+    BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
     BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
-
-    BuildNumber buildNumber = fromStringWithProductCode(version.asString(),
-                                                        getBuild());
-    return Objects.requireNonNull(buildNumber);
+    BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
+    return requireNonNull(buildNumber);
   }
 
-  private static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull BuildNumber buildNumber) {
-    return BuildNumber.fromStringWithProductCode(version, buildNumber.getProductCode());
-  }
-
-  private static @Nullable String getAttributeValue(@NotNull XmlElement element, @NotNull String name) {
+  private static @Nullable String getAttributeValue(XmlElement element, String name) {
     String value = element.getAttributeValue(name);
     return (value == null || value.isEmpty()) ? null : value;
   }
 
-  private void readBuildInfo(@NotNull XmlElement element) {
+  private void readBuildInfo(XmlElement element) {
     myBuildNumber = getAttributeValue(element, "number");
     myApiVersion = getAttributeValue(element, "apiVersion");
 
@@ -836,9 +815,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
-    if (pluginsHost != null) {
-      pluginManagerUrl = pluginsHost.endsWith("/") ? pluginsHost.substring(0, pluginsHost.length() - 1) : pluginsHost;
+    String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
+    if (pluginHost != null) {
+      pluginManagerUrl = pluginHost.endsWith("/") ? pluginHost.substring(0, pluginHost.length() - 1) : pluginHost;
       pluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
@@ -853,17 +832,14 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   // copy of ApplicationInfoProperties.shortenCompanyName
-  private static String shortenCompanyName(@NotNull String name) {
-    if (name.endsWith(" s.r.o.")) {
-      name = name.substring(0, name.length() - " s.r.o.".length());
-    }
-    if (name.endsWith(" Inc.")) {
-      name = name.substring(0, name.length() - " Inc.".length());
-    }
+  @SuppressWarnings("SSBasedInspection")
+  private static String shortenCompanyName(String name) {
+    if (name.endsWith(" s.r.o.")) name = name.substring(0, name.length() - " s.r.o.".length());
+    if (name.endsWith(" Inc.")) name = name.substring(0, name.length() - " Inc.".length());
     return name;
   }
 
-  private static @NotNull GregorianCalendar parseDate(@NotNull String dateString) {
+  private static GregorianCalendar parseDate(String dateString) {
     GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
       calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
@@ -882,7 +858,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return calendar;
   }
 
-  private static long parseColor(@NotNull String colorString) {
+  private static long parseColor(String colorString) {
     return Long.parseLong(colorString, 16);
   }
 
@@ -925,7 +901,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     private final String myCheckingUrl;
     private final String myPatchesUrl;
 
-    private UpdateUrlsImpl(@NotNull XmlElement element) {
+    private UpdateUrlsImpl(XmlElement element) {
       myCheckingUrl = element.getAttributeValue("check");
       myPatchesUrl = element.getAttributeValue("patches");
     }

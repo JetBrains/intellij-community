@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -81,6 +81,14 @@ public final class BrowserUtil {
 
   public static void browse(@NotNull String url, @Nullable Project project) {
     getBrowserLauncher().browse(url, null, project);
+  }
+
+  public static boolean browseAbsolute(@NotNull String url) {
+    if (isAbsoluteURL(url)) {
+      browse(url);
+      return true;
+    }
+    return false;
   }
 
   private static BrowserLauncher getBrowserLauncher() {

@@ -26,19 +26,18 @@ object SimpleNodeJsTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.description")
 
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.js
+                && when (module.configurator) {
+                    JsNodeTargetConfigurator, NodeJsSinglePlatformModuleConfigurator -> true
+                    else -> false
+                }
 
     @NonNls
     override val id: String = "simpleNodeJs"
 
-    override fun isApplicableTo(
-        reader: Reader,
-        module: Module
-    ): Boolean = when (module.configurator) {
-        JsNodeTargetConfigurator, NodeJsSinglePlatformModuleConfigurator -> true
-        else -> false
-    }
+    private const val mainFile = "Main.kt"
+    override val filesToOpenInEditor = listOf(mainFile)
 
     val useKotlinxNodejs by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.use.kotlinx.nodejs"),
@@ -69,7 +68,7 @@ object SimpleNodeJsTemplate : Template() {
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> =
         withSettingsOf(module.originalModule) {
             buildList {
-                +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/main.kt.vm", mainFile.asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
             }
         }

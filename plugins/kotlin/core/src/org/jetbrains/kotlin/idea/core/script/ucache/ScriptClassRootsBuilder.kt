@@ -20,6 +20,13 @@ class ScriptClassRootsBuilder(
 
     private var customDefinitionsUsed: Boolean = false
 
+    constructor(builder: ScriptClassRootsBuilder) : this(
+        builder.project,
+        builder.classes.toMutableSet(),
+        builder.sources.toMutableSet(),
+        builder.scripts.toMutableMap()
+    )
+
     fun build(): ScriptClassRootsCache =
         ScriptClassRootsCache(
             scripts, classes, sources,

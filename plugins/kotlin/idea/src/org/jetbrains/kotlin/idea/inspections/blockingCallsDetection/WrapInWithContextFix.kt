@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.IO_DISPATCHER_FQN
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.WITH_CONTEXT_FQN
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -21,7 +23,7 @@ internal class WrapInWithContextFix : LocalQuickFix {
         val wrappedBlockingCall = callExpression.replaced(
             ktPsiFactory.createExpression(
                 """
-                    |kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    |$WITH_CONTEXT_FQN($IO_DISPATCHER_FQN) {
                     |   ${callExpression.text}
                     |}
                 """.trimMargin()

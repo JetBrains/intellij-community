@@ -362,7 +362,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
     for (filePath in updatedFilePaths) {
-      val deletedAndAddedRunConfigs = lock.write { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
+      val deletedAndAddedRunConfigs = lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)

@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.Function;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -70,11 +74,21 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
+        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+          ApplicationManager.getApplication()
+            .getService(CommandQueueForPythonConsoleService.class)
+            .removeCommand(PythonDebugConsoleCommunication.this, false);
+        }
       }
 
       @Override
       public void error(PyDebuggerException exception) {
         callback.error(exception);
+        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+          ApplicationManager.getApplication()
+            .getService(CommandQueueForPythonConsoleService.class)
+            .removeCommand(PythonDebugConsoleCommunication.this, true);
+        }
       }
     });
   }

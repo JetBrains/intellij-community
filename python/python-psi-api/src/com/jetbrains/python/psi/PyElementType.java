@@ -19,12 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PythonFileType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.util.function.Function;
 
 public class PyElementType extends IElementType {
@@ -35,25 +33,6 @@ public class PyElementType extends IElementType {
   public PyElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
     myPsiCreator = node -> { throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");};
-    mySpecialMethodName = null;
-  }
-
-  /**
-   * @deprecated use {@link #PyElementType(String, Function)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public PyElementType(@NotNull @NonNls String debugName, @NotNull Class<? extends PsiElement> psiElementClass) {
-    super(debugName, PythonFileType.INSTANCE.getLanguage());
-    myPsiCreator = node -> {
-      try {
-        Constructor<? extends PsiElement> constructor = psiElementClass.getConstructor(ASTNode.class);
-        return constructor.newInstance(node);
-      }
-      catch (Exception e) {
-        throw new IllegalStateException("No necessary constructor for " + node.getElementType(), e);
-      }
-    };
     mySpecialMethodName = null;
   }
 

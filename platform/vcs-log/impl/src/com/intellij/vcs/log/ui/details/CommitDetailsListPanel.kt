@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.VerticalFlowLayout
@@ -18,66 +19,72 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.ProfileListener
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Graphics
+import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import kotlin.math.max
-import kotlin.math.min
 
-abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Disposable) :
+class CommitDetailsListPanel
+@JvmOverloads constructor(private val project: Project, parent: Disposable,
+                          private val createDetailsPanel: () -> CommitDetailsPanel = { CommitDetailsPanel() }) :
   BorderLayoutPanel(),
   EditorColorsListener,
   ComponentWithEmptyText {
 
   companion object {
-    private const val MAX_ROWS = 50
     private const val MIN_SIZE = 20
   }
 
-  private val commitDetailsList = mutableListOf<Panel>()
+  private var displayedCommits: List<CommitId> = emptyList()
 
-  private val viewPanel = ViewPanel()
-  private val loadingPanel = object : JBLoadingPanel(BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
-    override fun getBackground(): Color = getCommitDetailsBackground()
-  }.apply {
+  private val statusText: StatusText = object : StatusText(this) {
+    override fun isStatusVisible(): Boolean = displayedCommits.isEmpty()
+  }
+
+  private val detailsPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty()
+  }
+  private val viewPanel = ScrollablePanel(BorderLayout()).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty()
+    add(detailsPanel, BorderLayout.CENTER)
+  }
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+    isOpaque = false
+
     val scrollPane = JBScrollPane(
       viewPanel,
       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    )
-    scrollPane.border = JBUI.Borders.empty()
-    scrollPane.viewportBorder = JBUI.Borders.empty()
+    ).apply {
+      border = JBUI.Borders.empty()
+      viewportBorder = JBUI.Borders.empty()
+      isOpaque = false
+      viewport.isOpaque = false
+    }
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  private val mainContentPanel = object : BorderLayoutPanel() {
-    init {
-      isOpaque = false
-      addToCenter(loadingPanel)
-    }
-
-    val statusText: StatusText = object : StatusText(this) {
-      override fun isStatusVisible(): Boolean = isEmptyStatusVisible()
-    }
-
-    override fun paintChildren(g: Graphics) {
-      if (isEmptyStatusVisible()) {
-        statusText.paint(this, g)
-      }
-      else {
-        super.paintChildren(g)
-      }
-    }
-  }
-
-
   init {
-    addToCenter(mainContentPanel)
+    project.messageBus.connect(parent).subscribe(CommitMessageInspectionProfile.TOPIC, ProfileListener { update() })
+
+    setStatusText(VcsLogBundle.message("vcs.log.commit.details.status"))
+
+    background = getCommitDetailsBackground()
+
+    addToCenter(loadingPanel)
   }
 
   fun startLoadingDetails() {
@@ -89,88 +96,99 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
   }
 
   fun setStatusText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
-    mainContentPanel.statusText.text = text
+    statusText.text = text
   }
 
-  protected fun rebuildPanel(rows: Int): Int {
-    val oldRowsCount = commitDetailsList.size
-    val newRowsCount = min(rows, MAX_ROWS)
+  internal fun rebuildPanel(commits: List<CommitId>) {
+    val oldRowsCount = displayedCommits.size
+    displayedCommits = commits
+    val newRowsCount = displayedCommits.size
 
     for (i in oldRowsCount until newRowsCount) {
-      val panel = getCommitDetailsPanel()
+      val panel = createDetailsPanel()
       if (i != 0) {
-        viewPanel.add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
+        detailsPanel.add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
       }
-      viewPanel.add(panel)
-      commitDetailsList.add(panel)
+      detailsPanel.add(panel)
     }
 
     // clear superfluous items
-    while (viewPanel.componentCount != 0 && viewPanel.componentCount > 2 * newRowsCount - 1) {
-      viewPanel.remove(viewPanel.componentCount - 1)
-    }
-    while (commitDetailsList.size > newRowsCount) {
-      commitDetailsList.removeAt(commitDetailsList.size - 1)
-    }
-
-    if (rows > MAX_ROWS) {
-      viewPanel.add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
-      val label = JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", MAX_ROWS, rows)).apply {
-        font = FontUtil.getCommitMetadataFont()
-        border = JBUI.Borders.emptyLeft(CommitDetailsPanel.SIDE_BORDER)
-      }
-      viewPanel.add(label)
+    while (detailsPanel.componentCount != 0 && detailsPanel.componentCount > 2 * newRowsCount - 1) {
+      detailsPanel.remove(detailsPanel.componentCount - 1)
     }
 
     revalidate()
     repaint()
-    return newRowsCount
   }
 
-  fun forEachPanelIndexed(f: (Int, Panel) -> Unit) {
-    commitDetailsList.forEachIndexed(f)
+  fun showOverflowLabelIfNeeded(max: Int, requested: Int) {
+    val componentCount = viewPanel.componentCount
+    if (componentCount > 1) {
+      viewPanel.remove(componentCount - 1)
+    }
+
+    if (requested > max) {
+      val overflowLabelPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)).apply {
+        isOpaque = false
+
+        add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
+        add(JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", max, requested)).apply {
+          font = FontUtil.getCommitMetadataFont()
+          border = JBUI.Borders.emptyLeft(CommitDetailsPanel.SIDE_BORDER)
+        })
+      }
+      viewPanel.add(overflowLabelPanel, BorderLayout.SOUTH)
+    }
+
+    viewPanel.revalidate()
+    viewPanel.repaint()
+  }
+
+  override fun paintChildren(g: Graphics) {
+    statusText.paint(this, g)
+    super.paintChildren(g)
+  }
+
+  fun forEachPanelIndexed(f: (Int, CommitDetailsPanel) -> Unit) {
+    var idx = 0
+    detailsPanel.components.forEach {
+      if (it is CommitDetailsPanel) {
+        f(idx, it)
+        idx++
+      }
+    }
     update()
   }
 
+  fun forEachPanel(consumer: (CommitId, CommitDetailsPanel) -> Unit) {
+    forEachPanelIndexed { idx, panel ->
+      consumer(displayedCommits[idx], panel)
+    }
+  }
+
   fun setCommits(commits: List<VcsCommitMetadata>) {
-    rebuildPanel(commits.size)
+    rebuildPanel(commits.map { CommitId(it.id, it.root) })
     forEachPanelIndexed { i, panel ->
       val commit = commits[i]
-      panel.setCommit(commit)
+      val presentation = CommitPresentationUtil.buildPresentation(project, commit, mutableSetOf())
+      panel.setCommit(presentation)
     }
   }
 
   fun update() {
-    commitDetailsList.forEach { it.update() }
+    detailsPanel.components.forEach {
+      if (it is CommitDetailsPanel) it.update()
+    }
   }
 
-  protected open fun navigate(commitId: CommitId) {}
-
-  protected abstract fun getCommitDetailsPanel(): Panel
-
-  protected open fun isEmptyStatusVisible(): Boolean = commitDetailsList.isEmpty()
-
-  override fun getEmptyText(): StatusText = mainContentPanel.statusText
+  override fun getEmptyText(): StatusText = statusText
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     update()
   }
 
-  override fun getBackground(): Color = getCommitDetailsBackground()
-
   override fun getMinimumSize(): Dimension {
     val minimumSize = super.getMinimumSize()
     return Dimension(max(minimumSize.width, JBUIScale.scale(MIN_SIZE)), max(minimumSize.height, JBUIScale.scale(MIN_SIZE)))
-  }
-
-  private inner class ViewPanel : ScrollablePanel(
-    VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)
-  ) {
-    init {
-      isOpaque = false
-      border = JBUI.Borders.empty()
-    }
-
-    override fun getBackground(): Color = getCommitDetailsBackground()
   }
 }

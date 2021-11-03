@@ -44,7 +44,7 @@ final class LayoutBuilder {
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER"
     if (!ant.project.hasReference(contextLoaderRef)) {
-      ClassLoader contextLoader = Thread.currentThread().contextClassLoader
+      ClassLoader contextLoader = getClass().getClassLoader()
       if (!(contextLoader instanceof AntClassLoader)) {
         contextLoader = new AntClassLoader(contextLoader, ant.project, null)
       }

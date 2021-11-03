@@ -344,7 +344,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     Enumeration enumeration = getRoot().depthFirstEnumeration();
 
     while (isFlat && enumeration.hasMoreElements()) {
-      isFlat = ((ChangesBrowserNode)enumeration.nextElement()).getLevel() <= 1;
+      isFlat = ((ChangesBrowserNode<?>)enumeration.nextElement()).getLevel() <= 1;
     }
 
     return isFlat;
@@ -732,7 +732,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode)component).getBackgroundColor(myProject);
+      return ((ChangesBrowserNode<?>)component).getBackgroundColor(myProject);
     }
     return null;
   }

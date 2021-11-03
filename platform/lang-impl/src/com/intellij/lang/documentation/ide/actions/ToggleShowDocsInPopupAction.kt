@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 
-class ToggleShowDocsInPopupAction : ToggleAction(), DumbAware {
+internal class ToggleShowDocsInPopupAction : ToggleAction(), DumbAware {
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return !DocumentationManager.skipPopup

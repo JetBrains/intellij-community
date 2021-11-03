@@ -49,6 +49,8 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         }
 
         private fun inBlockModifications(elements: Array<ASTNode>): List<KtElement> {
+            if (elements.any { !it.psi.isValid }) return emptyList()
+
             // When a code fragment is reparsed, Intellij doesn't do an AST diff and considers the entire
             // contents to be replaced, which is represented in a POM event as an empty list of changed elements
 
@@ -108,6 +110,19 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
             if (KtPsiUtil.isLocal(blockDeclaration))
                 return null
 
+            val directParentClassOrObject = PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java)
+            val parentClassOrObject = directParentClassOrObject
+                ?.takeIf { !it.isTopLevel() && it.hasModifier(KtTokens.INNER_KEYWORD) }?.let {
+                var e: KtClassOrObject? = it
+                while (e != null) {
+                    e = PsiTreeUtil.getParentOfType(e, KtClassOrObject::class.java)
+                    if (e?.hasModifier(KtTokens.INNER_KEYWORD) == false) {
+                        break
+                    }
+                }
+                e
+            } ?: directParentClassOrObject
+
             when (blockDeclaration) {
                 is KtNamedFunction -> {
                     //                    if (blockDeclaration.visibilityModifierType()?.toVisibility() == Visibilities.PRIVATE) {
@@ -119,12 +134,24 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                         // case like `fun foo(): String {...<caret>...}`
                         return blockDeclaration.bodyExpression
                             ?.takeIf { it.isAncestor(element) }
-                            ?.let { BlockModificationScopeElement(blockDeclaration, it) }
+                            ?.let {
+                                if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(blockDeclaration, it)
+                                } else if (parentClassOrObject != null) {
+                                    BlockModificationScopeElement(parentClassOrObject, it)
+                                } else null
+                            }
                     } else if (blockDeclaration.hasDeclaredReturnType()) {
                         // case like `fun foo(): String = b<caret>labla`
                         return blockDeclaration.initializer
                             ?.takeIf { it.isAncestor(element) }
-                            ?.let { BlockModificationScopeElement(blockDeclaration, it) }
+                            ?.let {
+                                if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(blockDeclaration, it)
+                                } else if (parentClassOrObject != null) {
+                                    BlockModificationScopeElement(parentClassOrObject, it)
+                                } else null
+                            }
                     }
                 }
 
@@ -152,7 +179,11 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                                     blockDeclaration.findTopmostParentOfType<KtClassOrObject>() as? KtElement
 
                                 if (declaration != null) {
-                                    return BlockModificationScopeElement(declaration, properExpression)
+                                    return if (parentClassOrObject == directParentClassOrObject) {
+                                        BlockModificationScopeElement(declaration, properExpression)
+                                    } else if (parentClassOrObject != null) {
+                                        BlockModificationScopeElement(parentClassOrObject, properExpression)
+                                    } else null
                                 }
                             }
                         }
@@ -172,8 +203,12 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     blockDeclaration
                         .takeIf { it.isAncestor(element) }
                         ?.let { ktClassInitializer ->
-                            (PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java))?.let {
-                                return BlockModificationScopeElement(it, ktClassInitializer)
+                            parentClassOrObject?.let {
+                                return if (parentClassOrObject == directParentClassOrObject) {
+                                    BlockModificationScopeElement(it, ktClassInitializer)
+                                } else {
+                                    BlockModificationScopeElement(parentClassOrObject, ktClassInitializer)
+                                }
                             }
                         }
                 }
@@ -182,8 +217,12 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     blockDeclaration.takeIf {
                         it.bodyExpression?.isAncestor(element) ?: false || it.getDelegationCallOrNull()?.isAncestor(element) ?: false
                     }?.let { ktConstructor ->
-                        PsiTreeUtil.getParentOfType(blockDeclaration, KtClassOrObject::class.java)?.let {
-                            return BlockModificationScopeElement(it, ktConstructor)
+                        parentClassOrObject?.let {
+                            return if (parentClassOrObject == directParentClassOrObject) {
+                                BlockModificationScopeElement(it, ktConstructor)
+                            } else {
+                                BlockModificationScopeElement(parentClassOrObject, ktConstructor)
+                            }
                         }
                     }
                 }

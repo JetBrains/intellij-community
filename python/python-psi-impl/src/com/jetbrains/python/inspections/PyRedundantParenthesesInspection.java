@@ -28,6 +28,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +52,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -78,8 +79,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   }
 
   private class Visitor extends PyInspectionVisitor {
-    Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@NotNull ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

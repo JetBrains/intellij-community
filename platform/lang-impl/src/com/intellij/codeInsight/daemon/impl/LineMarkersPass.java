@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -31,13 +31,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
-public class LineMarkersPass extends TextEditorHighlightingPass {
+public final class LineMarkersPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
 
   private volatile List<LineMarkerInfo<?>> myMarkers = Collections.emptyList();
@@ -61,6 +62,8 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     try {
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, myMarkers, getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -74,7 +77,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
       final PsiFile root = viewProvider.getPsi(language);
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
       if (!highlightingLevelManager.shouldHighlight(root)) continue;
-      Divider.divideInsideAndOutsideInOneRoot(root, Divider.toScalarRange(myRestrictRange), Divider.toScalarRange(myPriorityBounds),
+      Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange.toScalarRange(), myPriorityBounds.toScalarRange(),
            elements -> {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
@@ -100,7 +103,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
-    TIntObjectHashMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new TIntObjectHashMap<>();
+    Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectOpenHashMap<>();
 
     for (int i = markers.size() - 1; i >= 0; i--) {
       LineMarkerInfo<?> marker = markers.get(i);
@@ -118,12 +121,14 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (sameLineMarkers.isEmpty()) return markers;
+    if (sameLineMarkers.isEmpty()) {
+      return markers;
+    }
 
     List<LineMarkerInfo<?>> result = new ArrayList<>(markers);
-
-    sameLineMarkers.forEachValue(infos -> result.addAll(MergeableLineMarkerInfo.merge(infos)));
-
+    for (List<MergeableLineMarkerInfo<?>> value : sameLineMarkers.values()) {
+      result.addAll(MergeableLineMarkerInfo.merge(value));
+    }
     return result;
   }
 

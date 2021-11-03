@@ -500,7 +500,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (map == null) return;
     if (changeInfo.isNameChanged()) {
       if (element instanceof GrReferenceElement) {
-        element = ((GrReferenceElement)element).handleElementRename(changeInfo.getNewName());
+        element = ((GrReferenceElement<?>)element).handleElementRename(changeInfo.getNewName());
       }
     }
     if (toChangeArguments) {

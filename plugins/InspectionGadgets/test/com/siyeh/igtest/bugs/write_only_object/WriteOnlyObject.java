@@ -79,3 +79,18 @@ final class MyBuilder {
     return this;
   }
 }
+class MyClass implements Cloneable {
+  int x;
+
+  public Object clone() throws CloneNotSupportedException {
+    MyClass <warning descr="Write-only object">myClass</warning> = (MyClass) super.clone();
+    myClass.x = 10;
+    return super.clone();
+  }
+
+  public Object clone2() throws CloneNotSupportedException {
+    MyClass myClass = (MyClass) super.clone();
+    System.out.println(myClass.x = 10);
+    return super.clone();
+  }
+}

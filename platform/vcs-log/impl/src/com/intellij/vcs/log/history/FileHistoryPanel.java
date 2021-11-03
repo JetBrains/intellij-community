@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -27,12 +26,16 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
+import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +60,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogUiProperties myProperties;
 
   @NotNull private final VcsLogGraphTable myGraphTable;
+  @NotNull private final FileHistorySpeedSearch mySpeedSearch;
 
-  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
+  @NotNull private final CommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
 
   @Nullable private FileHistoryEditorDiffPreview myEditorDiffPreview;
@@ -76,11 +80,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
                                         logUi::requestMore, disposable) {
       @Override
-      protected boolean isSpeedSearchEnabled() {
-        return true;
-      }
-
-      @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
         if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
@@ -94,24 +93,25 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
+    mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
 
-    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
-      @Override
-      protected void navigate(@NotNull CommitId commit) {
+    myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
+      return new CommitDetailsPanel(commit -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           ui.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
         });
-      }
-    };
+        return Unit.INSTANCE;
+      });
+    });
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this,
+                                                    new VcsLogColorManagerImpl(Collections.singleton(myRoot)));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
                                                                 logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
-
-    myDetailsPanel.installCommitSelectionListener(myGraphTable);
 
     setEditorDiffPreview();
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
@@ -187,6 +187,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    mySpeedSearch.setVisiblePack(visiblePack);
   }
 
   public void showDetails(boolean show) {

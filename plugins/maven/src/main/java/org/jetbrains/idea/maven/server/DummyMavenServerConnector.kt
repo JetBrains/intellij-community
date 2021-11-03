@@ -116,28 +116,24 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
 }
 
 class DummyIndexer : MavenServerIndexer {
-  override fun createIndex(indexId: String, repositoryId: String, file: File?, url: String?, indexDir: File, token: MavenToken?): Int {
-    return 0
-  }
 
-  override fun releaseIndex(id: Int, token: MavenToken?) {
+  override fun releaseIndex(id: MavenIndexId, token: MavenToken?) {
   }
 
   override fun getIndexCount(token: MavenToken?): Int {
     return 0;
   }
 
-  override fun updateIndex(id: Int, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
-  override fun processArtifacts(indexId: Int, processor: MavenServerIndicesProcessor?, token: MavenToken?) {
-  }
+  override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
 
-  override fun addArtifact(indexId: Int, artifactFile: File?, token: MavenToken?): IndexedMavenId {
+  override fun addArtifact(indexId: MavenIndexId, artifactFile: File?, token: MavenToken?): IndexedMavenId {
     return IndexedMavenId(null, null, null, null, null)
   }
 
-  override fun search(indexId: Int, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
+  override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
     return emptySet()
   }
 
@@ -155,13 +151,24 @@ class DummyIndexer : MavenServerIndexer {
 }
 
 class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun customize(workspaceMap: MavenWorkspaceMap?,
-                         failOnUnresolvedDependency: Boolean,
-                         console: MavenServerConsole,
-                         indicator: MavenServerProgressIndicator,
-                         alwaysUpdateSnapshots: Boolean,
-                         userProperties: Properties?,
-                         token: MavenToken?) {
+  override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
+                                                failOnUnresolvedDependency: Boolean,
+                                                alwaysUpdateSnapshots: Boolean,
+                                                userProperties: Properties?,
+                                                token: MavenToken?): MavenServerPullProgressIndicator {
+    return object: MavenServerPullProgressIndicator {
+      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
+        return null
+      }
+
+      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
+       return null
+      }
+
+      override fun cancel() {
+      }
+
+    }
   }
 
   override fun customizeComponents(token: MavenToken?) {

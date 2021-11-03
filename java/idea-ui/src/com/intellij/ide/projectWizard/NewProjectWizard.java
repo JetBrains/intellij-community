@@ -19,7 +19,6 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
@@ -73,10 +72,6 @@ public class NewProjectWizard extends AbstractProjectWizard {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
-  }
-
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
@@ -33,7 +34,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *     print(f'# {line&lt;caret&gt;}')
  * </code></pre>
  */
-public class PyFStringLikeCompletionContributor extends CompletionContributor {
+public class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)

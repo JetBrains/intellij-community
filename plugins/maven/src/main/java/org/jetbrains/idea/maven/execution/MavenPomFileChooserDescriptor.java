@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 /**
@@ -33,7 +34,7 @@ public class MavenPomFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileSelectable(VirtualFile file) {
+  public boolean isFileSelectable(@Nullable VirtualFile file) {
     if (!super.isFileSelectable(file)) return false;
     return MavenUtil.streamPomFiles(myProject, file).findAny().isPresent();
   }

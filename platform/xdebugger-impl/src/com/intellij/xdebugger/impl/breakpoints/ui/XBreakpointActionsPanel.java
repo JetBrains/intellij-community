@@ -59,7 +59,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
     myTemporaryCheckBox.setVisible(isLineBreakpoint);
     if (isLineBreakpoint) {
-      myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
+      myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint<?>)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
     }
   }
 
@@ -72,7 +72,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   @Override
   public boolean lightVariant(boolean showAllOptions) {
     if (!showAllOptions && !myBreakpoint.isLogMessage() && !myBreakpoint.isLogStack() && myBreakpoint.getLogExpression() == null &&
-        (!(myBreakpoint instanceof XLineBreakpoint) || !((XLineBreakpoint)myBreakpoint).isTemporary()) ) {
+        (!(myBreakpoint instanceof XLineBreakpoint) || !((XLineBreakpoint<?>)myBreakpoint).isTemporary()) ) {
       myMainPanel.setVisible(false);
       return true;
     } else {
@@ -93,7 +93,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     myLogStack.setSelected(myBreakpoint.isLogStack());
 
     if (myBreakpoint instanceof XLineBreakpoint) {
-      myTemporaryCheckBox.setSelected(((XLineBreakpoint)myBreakpoint).isTemporary());
+      myTemporaryCheckBox.setSelected(((XLineBreakpoint<?>)myBreakpoint).isTemporary());
     }
 
     if (myLogExpressionComboBox != null) {
@@ -110,7 +110,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     myBreakpoint.setLogStack(myLogStack.isSelected());
 
     if (myBreakpoint instanceof XLineBreakpoint) {
-      ((XLineBreakpoint)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());
+      ((XLineBreakpoint<?>)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());
     }
 
     if (myLogExpressionComboBox != null) {

@@ -13,12 +13,6 @@ internal fun createLayoutBuilder(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@PublishedApi
-@Deprecated(message = "isUseMagic not used anymore")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-internal fun createLayoutBuilder(isUseMagic: Boolean) = createLayoutBuilder()
-
 interface LayoutBuilderImpl {
   val rootRow: Row
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)

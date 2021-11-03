@@ -15,6 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
+  @NonNls public static final String PROP_CONTENT_MANAGER = "contentManager";
   private @NlsContexts.TabTitle String myDisplayName;
   private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
@@ -173,7 +174,9 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void setManager(@Nullable ContentManager manager) {
+    ContentManager oldValue = myManager;
     myManager = manager;
+    myChangeSupport.firePropertyChange(PROP_CONTENT_MANAGER, oldValue, myManager);
   }
 
   @Override

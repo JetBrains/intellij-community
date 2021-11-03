@@ -25,6 +25,7 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
+import training.util.isToStringContains
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -159,7 +160,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task {
       text(LessonsBundle.message("recent.files.locations.search.jump", LessonUtil.rawEnter()))
       triggerByListItemAndHighlight { item ->
-        item.toString().contains(transitionFileName)
+        item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreState {
@@ -215,10 +216,17 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private fun TaskContext.triggerOnRecentFilesShown() {
     val recentFilesText = IdeBundle.message("title.popup.recent.files")
     triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
-      ui.text?.contains(recentFilesText) == true
+      ui.text.isToStringContains(recentFilesText)
     }
   }
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
+
+  override val suitableTips = listOf("recent-locations", "RecentFiles")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("recent.files.locations.help.link"),
+         LessonUtil.getHelpLink("navigating-through-the-source-code.html#recent_locations")),
+  )
 }

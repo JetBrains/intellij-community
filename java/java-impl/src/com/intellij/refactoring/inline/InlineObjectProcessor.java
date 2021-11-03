@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -355,7 +355,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
-        if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        if (qualifier instanceof PsiQualifiedExpression) {
           leak = true;
           stopWalking();
         }

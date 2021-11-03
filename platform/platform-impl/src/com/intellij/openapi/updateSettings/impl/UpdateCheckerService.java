@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -51,7 +52,7 @@ final class UpdateCheckerService {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
-  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
@@ -90,9 +91,18 @@ final class UpdateCheckerService {
   private static void updateDefaultChannel(UpdateSettings settings) {
     ChannelStatus current = settings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
+
+    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
+    ChannelStatus changedChannel = customization.changeDefaultChannel(current);
+    if (changedChannel != null) {
+      settings.setSelectedChannelStatus(changedChannel);
+      LOG.info("channel set to '" + changedChannel.getCode() + "' by " + customization.getClass().getName());
+      return;
+    }
+
     boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
 
-    if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+    if (eap && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
@@ -149,14 +159,10 @@ final class UpdateCheckerService {
     public void runActivity(@NotNull Project project) {
       if (ourStarted.getAndSet(true)) return;
 
-      checkIfPreviousUpdateFailed();
-
-      PropertiesComponent properties = PropertiesComponent.getInstance();
-      BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
       BuildNumber current = ApplicationInfo.getInstance().getBuild();
-      properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
-      showWhatsNew(project, previous, current);
-      showSnapUpdateNotification(project, previous, current);
+      checkIfPreviousUpdateFailed(current);
+      showWhatsNew(project, current);
+      showSnapUpdateNotification(project, current);
 
       showUpdatedPluginsNotification(project);
 
@@ -166,49 +172,62 @@ final class UpdateCheckerService {
     }
   }
 
-  private static void checkIfPreviousUpdateFailed() {
+  private static void checkIfPreviousUpdateFailed(BuildNumber current) {
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
+    if (current.asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
         new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
-      IdeUpdateUsageTriggerCollector.trigger("update.failed");
+      IdeUpdateUsageTriggerCollector.UPDATE_FAILED.log();
       LOG.info("The previous IDE update failed");
     }
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
   }
 
-  private static void showWhatsNew(Project project, @Nullable BuildNumber previous, BuildNumber current) {
-    if (!WhatsNewAction.isAvailable() || !UpdateSettings.getInstance().isShowWhatsNewEditor()) return;
-
-    if (previous == null || previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a new install or a downgrade
-
-    if (ApplicationInfoEx.getInstanceEx().isMajorEAP()) return;
-
-    int shownFor = PropertiesComponent.getInstance().getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
-    if (shownFor == current.getBaselineVersion()) return;  // already shown for this release
-
+  private static void showWhatsNew(Project project, BuildNumber current) {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
-    if (url == null) return;
+    if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
+      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+      IdeUpdateUsageTriggerCollector.UPDATE_WHATS_NEW.log(project);
+    }
+  }
 
-    Product product = loadProductData();
-    if (product == null) return;
+  @VisibleForTesting
+  static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
 
-    int lastRelease = 0;
-    for (UpdateChannel updateChannel : product.getChannels()) {
-      if (updateChannel.getLicensing() == UpdateChannel.Licensing.RELEASE && updateChannel.getStatus() == ChannelStatus.RELEASE) {
-        for (BuildInfo buildInfo : updateChannel.getBuilds()) {
-          lastRelease = max(lastRelease, buildInfo.getNumber().getBaselineVersion());
+    int lastShownFor = properties.getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
+    if (lastShownFor == 0) {
+      // ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
+      // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
+      properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+      return false;
+    }
+
+    if (!majorEap && lastShownFor < current.getBaselineVersion() && UpdateSettings.getInstance().isShowWhatsNewEditor()) {
+      Product product = loadProductData();
+      if (product != null) {
+        // checking whether the actual "what's new" page is relevant to the current release
+        int lastRelease = product.getChannels().stream()
+          .filter(channel -> channel.getLicensing() == UpdateChannel.Licensing.RELEASE && channel.getStatus() == ChannelStatus.RELEASE)
+          .flatMap(channel -> channel.getBuilds().stream())
+          .mapToInt(build -> build.getNumber().getBaselineVersion())
+          .max().orElse(0);
+        if (lastRelease == current.getBaselineVersion()) {
+          properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+          return true;
         }
       }
     }
-    if (lastRelease != current.getBaselineVersion()) return;  // not an actual release
 
-    PropertiesComponent.getInstance().setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
-    ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
-    IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+    return false;
   }
 
-  private static void showSnapUpdateNotification(Project project, @Nullable BuildNumber previous, BuildNumber current) {
-    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP || previous == null || current.equals(previous)) return;
+  private static void showSnapUpdateNotification(Project project, BuildNumber current) {
+    if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
+
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
+    properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
+    if (previous == null || current.equals(previous)) return;
 
     String blogPost = null;
     Product product = loadProductData();
@@ -274,7 +293,7 @@ final class UpdateCheckerService {
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
     UpdateChecker.getNotificationGroupForUpdateResults()
       .createNotification(title, text, NotificationType.INFORMATION)
-      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed on project close
+      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed of on project close
       .setDisplayId("plugins.updated.after.restart")
       .notify(project);
   }

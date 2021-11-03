@@ -17,6 +17,7 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,12 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   private transient volatile String myLibraryNameCache;
 
   private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
+  private static final Condition<File> ourDefaultFileExists = new Condition<File>() {
+    @Override
+    public boolean value(File f) {
+      return f.exists();
+    }
+  };
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -130,12 +137,24 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return myExtension;
   }
 
+  /**
+   * @deprecated use MavenArtifactUtilKt#resolved
+   */
+  @Deprecated
   public boolean isResolved() {
+    return isResolved(ourDefaultFileExists);
+  }
+
+  /**
+   * @deprecated use MavenArtifactUtilKt#resolved
+   */
+  @Deprecated
+  public boolean isResolved(Condition<? super File> fileExists) {
     if (myResolved && !myStubbed) {
       long currentTime = System.currentTimeMillis();
 
       if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
-        if (!myFile.exists()) {
+        if (!fileExists.value(myFile)) {
           return false; // Don't cache result if file is not exist.
         }
 

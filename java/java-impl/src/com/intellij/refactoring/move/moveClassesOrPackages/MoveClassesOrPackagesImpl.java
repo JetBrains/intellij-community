@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
@@ -28,9 +29,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class MoveClassesOrPackagesImpl {
@@ -138,7 +138,7 @@ public final class MoveClassesOrPackagesImpl {
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
       String resultMessage = message.toString();
-      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
+      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getQuestionIcon());
       if (ret != Messages.YES) {
         return false;
       }
@@ -285,10 +285,11 @@ public final class MoveClassesOrPackagesImpl {
       return;
     }
 
-    List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
+    Map<PsiDirectory, String> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle(JavaRefactoringBundle.message("select.source.root.chooser.title"));
-    chooser.fillList(sourceRootDirectories.toArray(PsiDirectory.EMPTY_ARRAY), null, project, "");
+    chooser.setTitle(JavaRefactoringBundle.message("dialog.title.move.directory.to.source.root"));
+    chooser.setDescription(JavaRefactoringBundle.message("move.label.text") + "  ../" + SymbolPresentationUtil.getFilePathPresentation(directories[0]));
+    chooser.fillList(sourceRootDirectories.keySet().toArray(PsiDirectory.EMPTY_ARRAY), null, project, sourceRootDirectories);
     if (!chooser.showAndGet()) {
       return;
     }
@@ -322,9 +323,9 @@ public final class MoveClassesOrPackagesImpl {
     }
   }
 
-  private static List<PsiDirectory> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
+  private static LinkedHashMap<PsiDirectory, String> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
     final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
-    List<PsiDirectory> sourceRootDirectories = new ArrayList<>();
+    LinkedHashMap<PsiDirectory, String> sourceRootDirectories = new LinkedHashMap<>();
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
@@ -332,13 +333,14 @@ public final class MoveClassesOrPackagesImpl {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceRootDirectory);
       if (aPackage == null) continue;
       final String packagePrefix = aPackage.getQualifiedName();
+      String qualifiedName = null;
       for (final PsiDirectory directory : directories) {
-        String qualifiedName = JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName();
+        qualifiedName = JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName();
         if (!qualifiedName.startsWith(packagePrefix)) {
           continue sourceRoots;
         }
       }
-      sourceRootDirectories.add(sourceRootDirectory);
+      sourceRootDirectories.put(sourceRootDirectory, qualifiedName != null ? File.separator + qualifiedName.replaceAll("\\.", File.separator) : null);
     }
     return sourceRootDirectories;
   }

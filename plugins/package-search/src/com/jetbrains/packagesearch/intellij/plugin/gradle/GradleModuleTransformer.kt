@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -16,29 +17,25 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
-    val index = this.text.indexOf(text)
-    return if (index >= 0) getElementAtOffsetOrNull(index) else null
-}
-
-private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
-    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
-
-class GradleModuleTransformer : ModuleTransformer {
+internal class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
         fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
-            val isKotlinDependency = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
+            val isKotlinDependencyInKts = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
                 && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
-            val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
-            val searchableText = if (isKotlinDependency) kotlinDependencyImport else "$groupId:$artifactId"
-            return file.firstElementContaining(searchableText)
+
+            val textToSearchFor = if (isKotlinDependencyInKts) {
+                "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
+            } else {
+                "$groupId:$artifactId"
+            }
+            return file.firstElementContainingExactly(textToSearchFor)
         }
     }
 
@@ -55,6 +52,9 @@ class GradleModuleTransformer : ModuleTransformer {
                     } else {
                         BuildSystemType.GRADLE_GROOVY
                     }
+                val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
+                    .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
+
                 ProjectModule(
                     name = externalProject.name,
                     nativeModule = nativeModule,
@@ -62,7 +62,8 @@ class GradleModuleTransformer : ModuleTransformer {
                     buildFile = buildVirtualFile,
                     buildSystemType = buildSystemType,
                     moduleType = GradleProjectModuleType,
-                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
+                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile),
+                    availableScopes = scopes
                 )
             }
             .flatMap { getAllSubmodules(project, it) }
@@ -167,7 +168,8 @@ class GradleModuleTransformer : ModuleTransformer {
                 buildFile = projectBuildFile,
                 buildSystemType = BuildSystemType.GRADLE_GROOVY,
                 moduleType = GradleProjectModuleType,
-                navigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile)
+                navigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile),
+                availableScopes = emptyList()
             )
 
             modules += projectModule
@@ -177,9 +179,22 @@ class GradleModuleTransformer : ModuleTransformer {
 
     private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) =
         { groupId: String, artifactId: String, _: PackageVersion ->
-            PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
-                val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
-                return@let dependencyElement as Navigatable
+            runReadAction {
+                PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
+                    val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
+                    return@let dependencyElement as Navigatable
+                }
             }
         }
 }
+
+private fun PsiFile.firstElementContainingExactly(value: String): PsiElement? {
+    val index = text.indexOf(value)
+    if (index < 0) return null
+    if (text.length > value.length && text[index + value.length] != ':') return null
+    val element = getElementAtOffsetOrNull(index)
+    return element
+}
+
+private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
+    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }

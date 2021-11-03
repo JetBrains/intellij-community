@@ -64,7 +64,7 @@ public class MarkdownParserDefinition implements ParserDefinition {
   public PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     return type instanceof MarkdownStubElementType
-           ? ((MarkdownStubElementType)type).createElement(node)
+           ? ((MarkdownStubElementType<?, ?>)type).createElement(node)
            : MarkdownPsiFactory.INSTANCE.createElement(node);
   }
 

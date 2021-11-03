@@ -64,7 +64,9 @@ class CtxDialogs {
         // NOTE: possible optimization - listen for components hierarchy changes and do traverse only when it was changed
         final List<AnAction> allActs = findAllTouchbarActions(myRoot.get());
         actions.removeAll();
-        actions.addAll(allActs);
+        if (allActs != null) {
+          actions.addAll(allActs);
+        }
       }
     };
     customizer.addBaseCustomizations((pc, button, presentation)-> {

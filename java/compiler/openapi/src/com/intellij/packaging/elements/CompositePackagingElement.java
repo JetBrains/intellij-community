@@ -276,7 +276,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   @Nullable
   public CompositePackagingElement<?> findCompositeChild(@NotNull String name) {
     for (PackagingElement<?> child : getChildren()) {
-      if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement)child).getName())) {
+      if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement<?>)child).getName())) {
         return (CompositePackagingElement)child;
       }
     }

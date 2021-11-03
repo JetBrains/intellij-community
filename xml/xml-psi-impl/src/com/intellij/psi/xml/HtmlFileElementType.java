@@ -25,7 +25,7 @@ public class HtmlFileElementType extends IStubFileElementType<PsiFileStub<?>> {
     IElementType[] dataElementTypes = IElementType.enumerate(
       (elementType) -> elementType instanceof IStubFileElementType && isAcceptable(elementType));
 
-    int res = Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType)e).getStubVersion()).sum();
+    int res = Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
     stubVersion = res;
     
     return res;

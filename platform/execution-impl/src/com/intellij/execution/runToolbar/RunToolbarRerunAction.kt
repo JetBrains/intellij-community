@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
@@ -18,16 +18,13 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
   override fun update(e: AnActionEvent) {
     e.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
-    e.presentation.isEnabledAndVisible =
-      e.presentation.isEnabled
-      && e.presentation.isVisible
-      && e.isActiveProcess()
-      && !e.isProcessTerminating()
-      && e.presentation.isVisible
+    e.presentation.isVisible = e.isActiveProcess()
 
-    if (!RunToolbarProcess.experimentalUpdating()) {
+    e.presentation.isEnabled = !e.isProcessTerminating()
+
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
   }

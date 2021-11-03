@@ -23,7 +23,7 @@ class MigrationTest : AbstractEditorTest() {
 
     assertEquals(1, manager.bookmarks.size)
     assertEquals(1, manager.groups.size)
-    assertNotNull(manager.defaultGroup)
+    assertNull(manager.defaultGroup)
 
     val group = manager.groups[0]
     val bookmark = manager.bookmarks[0]

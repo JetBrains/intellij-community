@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityAction, Iconable {
-  private final String myID;
+  private final String myShortName;
   private final String myProperty;
   private final @IntentionName String myMessage;
   private final boolean myValue;
@@ -31,12 +31,12 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
   private final Function<InspectionProfileEntry, InspectionProfileEntry> myExtractor;
 
   public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, boolean value) {
-    this(inspection.getID(), property, message, value, null);
+    this(inspection.getShortName(), property, message, value, null);
   }
 
-  private SetInspectionOptionFix(@NotNull String id, @NonNls String property, @IntentionName String message, boolean value,
+  private SetInspectionOptionFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, boolean value,
                                  @Nullable Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
-    myID = id;
+    myShortName = shortName;
     myProperty = property;
     myMessage = message;
     myValue = value;
@@ -47,9 +47,9 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
    * @param extractor may be useful for composed inspections e.g. unused declaration, when you need to unwrap a nested inspection's instance
    */
   @NotNull
-  public static SetInspectionOptionFix createFix(@NotNull String id, @NonNls String property, @IntentionName String message, boolean value,
+  public static SetInspectionOptionFix createFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, boolean value,
                                                  @NotNull Function<InspectionProfileEntry, InspectionProfileEntry> extractor) {
-    return new SetInspectionOptionFix(id, property, message, value, extractor);
+    return new SetInspectionOptionFix(shortName, property, message, value, extractor);
   }
 
   @NotNull
@@ -94,7 +94,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
     PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     if (file == null) return;
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-      InspectionToolWrapper tool = model.getToolById(myID, file);
+      InspectionToolWrapper<?, ?> tool = model.getInspectionTool(myShortName, file);
       if (tool == null) return;
       InspectionProfileEntry inspection = tool.getTool();
       if (myExtractor != null) {

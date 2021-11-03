@@ -94,20 +94,20 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     //copy junit to repository
     File artifactDir = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit");
     FileUtil.copyDir(artifactDir, localRepo);
-    assertFalse(localIndex.hasGroupId("junit"));
+    assertTrue(localIndex.getArtifactIds("junit").isEmpty());
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    MavenIndicesManager.getInstance(myProject).fixArtifactIndex(artifactFile, localRepo);
+    MavenIndicesManager.getInstance(myProject).fixArtifactIndexAsync(artifactFile, localRepo);
     new WaitFor(500) {
       @Override
       protected boolean condition() {
-        return localIndex.hasGroupId("junit");
+        return !localIndex.getArtifactIds("junit").isEmpty();
       }
     };
 
-    assertTrue(localIndex.hasGroupId("junit"));
-    assertTrue(localIndex.hasArtifactId("junit", "junit"));
-    assertTrue(localIndex.hasVersion("junit", "junit", "4.0"));
-    assertFalse(localIndex.hasVersion("junit", "junit", "3.8.2")); // copied but not used
+    Set<String> versions = localIndex.getVersions("junit", "junit");
+    assertFalse(versions.isEmpty());
+    assertTrue(versions.contains("4.0"));
+    assertFalse(versions.contains("3.8.2")); // copied but not used
   }
 
   private void assertArchetypeExists(String archetypeId) {

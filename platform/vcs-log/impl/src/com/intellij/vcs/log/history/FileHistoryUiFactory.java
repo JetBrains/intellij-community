@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.FilePath;
@@ -14,6 +15,8 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   @NotNull private final FilePath myFilePath;
@@ -32,12 +35,18 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
     VcsLogFilterCollection filters = FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot,
                                                                        properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
-    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData,
-                                                                                 filters,
-                                                                                 PermanentGraph.SortType.Normal,
-                                                                                 new FileHistoryFilterer(logData),
-                                                                                 FileHistoryUi.getFileHistoryLogId(myFilePath, myHash));
-    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot);
+    String logId = FileHistoryUi.getFileHistoryLogId(myFilePath, myHash);
+    FileHistoryFilterer filterer = new FileHistoryFilterer(logData, logId);
+    VisiblePackRefresherImpl visiblePackRefresher = new VisiblePackRefresherImpl(project, logData, filters, PermanentGraph.SortType.Normal,
+                                                                                 filterer, logId) {
+      @Override
+      public void dispose() {
+        super.dispose();
+        Disposer.dispose(filterer); // disposing filterer after the refresher
+      }
+    };
+    FileHistoryUi ui = new FileHistoryUi(logData, properties, visiblePackRefresher, myFilePath, myHash, myRoot, logId,
+                                         Objects.requireNonNull(logData.getLogProvider(myRoot).getDiffHandler()));
 
     RegistryValueListener registryValueListener = new RegistryValueListener() {
       @Override

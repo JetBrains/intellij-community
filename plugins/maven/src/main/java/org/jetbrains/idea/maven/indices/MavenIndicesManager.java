@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -20,7 +19,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -108,16 +106,6 @@ public final class MavenIndicesManager implements Disposable {
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
-
-  /**
-   * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public static MavenIndicesManager getInstance() {
-    // should not be used as it lead to plugin classloader leak on the plugin unload
-    return ProjectManager.getInstance().getDefaultProject().getService(MavenIndicesManager.class);
-  }
 
   public static MavenIndicesManager getInstance(@NotNull Project project) {
     return project.getService(MavenIndicesManager.class);
@@ -275,16 +263,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private void addArtifact(File artifactFile, String relativePath) {
-    String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
-
-    MavenIndices indices = getIndicesObject();
-    MavenIndex index = indices.find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      index.addArtifact(artifactFile);
-    }
+    File repositoryFile = getRepositoryFile(artifactFile, relativePath);
+    fixArtifactIndexAsync(artifactFile, repositoryFile);
   }
 
-  public void fixArtifactIndex(File artifactFile, File localRepository) {
+  public void fixArtifactIndexAsync(File artifactFile, File localRepository) {
+    if (!myKeeper.isDone()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
       if (index != null) {
@@ -293,14 +277,14 @@ public final class MavenIndicesManager implements Disposable {
     });
   }
 
-  private static String getRepositoryUrl(File artifactFile, String name) {
+  private static File getRepositoryFile(File artifactFile, String name) {
     List<String> parts = getArtifactParts(name);
 
     File result = artifactFile;
     for (int i = 0; i < parts.size(); i++) {
       result = result.getParentFile();
     }
-    return result.getPath();
+    return result;
   }
 
   private static List<String> getArtifactParts(String name) {
@@ -532,10 +516,19 @@ public final class MavenIndicesManager implements Disposable {
       @Override
       public void run() {
         Pair<File, MavenIndex> elementToAdd;
+        ArrayList<Pair<File, MavenIndex>> retryElements = new ArrayList<>();
         while ((elementToAdd = queueToAdd.poll()) != null) {
-          elementToAdd.second.addArtifact(elementToAdd.first);
-          indexedCache.add(elementToAdd.first.getName());
+          if (indexedCache.contains(elementToAdd.first.getName())) {
+            continue;
+          }
+          boolean added = elementToAdd.second.tryAddArtifact(elementToAdd.first);
+          if (added) {
+            indexedCache.add(elementToAdd.first.getName());
+          } else {
+            retryElements.add(elementToAdd);
+          }
         }
+        if (retryElements.size() < 10_000) queueToAdd.addAll(retryElements);
       }
     }
   }

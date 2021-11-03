@@ -169,7 +169,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'api', 'impl' ");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .addImplementationDependency(it.project(":api"))
         .addTestImplementationDependency(it.project(":impl"))
         .addTestImplementationDependency("junit:junit:4.11")
@@ -303,7 +303,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'api', 'impl' ");
 
     importProject(script(it -> {
-      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+      it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project("impl", p -> {
           p.addPrefix("sourceSets {",
                       "  myCustomSourceSet",
@@ -596,7 +596,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
 
     VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder.withJavaPlugin()
         .addPrefix("sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")")
@@ -730,7 +730,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project(":api", it -> {
           it
             .addPostfix("configurations { tests }")
@@ -783,7 +783,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .subprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .subprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
         .project(":project1", it -> {
           it
             .withJavaLibraryPlugin()
@@ -952,16 +952,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.0 <=> 6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
-    String compileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
     createProjectSubFile("project1/build.gradle",
                          createBuildScriptBuilder()
-                           .withJavaLibraryPlugin()
+                           .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
                              "  aParentCfg",
-                             "  " + compileConfiguration + ".extendsFrom aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
                              "}",
                              "sourceSets {",
                              "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",
@@ -978,7 +978,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                            .generate()
     );
 
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     createProjectSubFile("project2/build.gradle", builder
       .withJavaPlugin()
       .addImplementationDependency(builder.project(":project1"))
@@ -1304,7 +1304,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12+")
   public void testCompileOnlyAndCompileScope() throws Exception {
     createSettingsFile("include 'app'\n");
-    GradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder
         .withJavaPlugin()

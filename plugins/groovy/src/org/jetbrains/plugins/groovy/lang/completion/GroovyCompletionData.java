@@ -128,7 +128,11 @@ public final class GroovyCompletionData {
       if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
         addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
         result.addElement(keyword(PsiKeyword.NEW, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
+          result.addElement(keyword(PsiKeyword.SWITCH, TailTypes.SWITCH_LPARENTH));
+        }
       }
+
 
       if (isAfterForParameter(position)) {
         result.addElement(keyword("in", TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -137,8 +141,16 @@ public final class GroovyCompletionData {
         addKeywords(result, true, "as", "in", PsiKeyword.INSTANCEOF);
       }
       if (suggestPrimitiveTypes(position)) {
-        final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) && !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) && !isInExpression(position);
+        final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) &&
+                                 !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) &&
+                                 !isInExpression(position);
         addKeywords(result, addSpace, BUILT_IN_TYPES);
+      }
+
+
+      if (GroovyConfigUtils.isAtLeastGroovy40(position) && PsiJavaPatterns.psiElement(GrReferenceExpression.class).inside(
+        PsiJavaPatterns.psiElement(GrCaseSection.class)).accepts(parent)) {
+        addKeywords(result, true, PsiKeyword.YIELD);
       }
 
       if (PsiJavaPatterns.psiElement(GrReferenceExpression.class).inside(
@@ -219,7 +231,7 @@ public final class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, GroovyTokenTypes.kTRAIT.toString());
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, PsiKeyword.RECORD, GroovyTokenTypes.kTRAIT.toString());
     }
   }
 
@@ -254,7 +266,7 @@ public final class GroovyCompletionData {
     }
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
-    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
+    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition || elem instanceof GrRecordDefinition;
     permits &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition || elem instanceof GrTraitTypeDefinition;
     if (!ext && !impl && !permits) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
@@ -303,8 +315,10 @@ public final class GroovyCompletionData {
       result.addElement(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailType.HUMBLE_SPACE_BEFORE_WORD : TailType.NONE));
     }
     if (inCaseSection(context)) {
+      boolean isArrowAllowed = GroovyConfigUtils.isAtLeastGroovy40(context);
+      TailType defaultType = isArrowAllowed ? TailTypes.CASE_ARROW : TailType.CASE_COLON;
       result.addElement(keyword("case", TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.addElement(keyword("default", TailType.CASE_COLON));
+      result.addElement(keyword("default", defaultType));
     }
     if (afterTry(context)) {
       result.addElement(keyword(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH));
@@ -521,11 +535,15 @@ public final class GroovyCompletionData {
       return true;
     }
 
-    final GrSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(context, GrSwitchStatement.class, true, GrCodeBlock.class);
-    if (switchStatement == null) return false;
+    final GrSwitchElement switchElement = PsiTreeUtil.getParentOfType(context, GrSwitchElement.class, true, GrCodeBlock.class);
+    if (switchElement == null) return false;
 
-    final GrExpression condition = switchStatement.getCondition();
+    final GrExpression condition = switchElement.getCondition();
     return condition == null || !PsiTreeUtil.isAncestor(condition, context, false);
+  }
+
+  private static boolean inSwitchExpression(PsiElement context) {
+    return context.getParent() instanceof GrCodeBlock && context.getParent().getParent() instanceof GrSwitchElement;
   }
 
   private static boolean afterTry(PsiElement context) {

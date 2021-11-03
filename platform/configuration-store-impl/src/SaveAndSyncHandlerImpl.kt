@@ -3,10 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.FrameStateListener
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
@@ -33,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
+import com.intellij.util.application
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -54,6 +52,8 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   private val saveQueue = ArrayDeque<SaveTask>()
 
   private val currentJob = AtomicReference<Job?>()
+
+  private val eventPublisher = application.messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
 
   init {
     // add listeners after some delay - doesn't make sense to listen earlier
@@ -79,12 +79,12 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       if (!forceExecuteImmediately) {
         delay(300)
       }
-      processTasks()
+      processTasks(forceExecuteImmediately)
       currentJob.set(null)
     })?.cancel(CancellationException("Superseded by another request"))
   }
 
-  private suspend fun processTasks() {
+  private suspend fun processTasks(forceExecuteImmediately: Boolean) {
     while (true) {
       val app = ApplicationManager.getApplication()
       if (app == null || app.isDisposed || blockSaveOnFrameDeactivationCount.get() != 0) {
@@ -104,6 +104,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       LOG.runAndLogException {
+        eventPublisher.beforeSave(task, forceExecuteImmediately)
         saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }
     }
@@ -256,6 +257,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
   }
 
   private fun doScheduledRefresh() {
+    eventPublisher.beforeRefresh()
     if (canSyncOrSave()) {
       refreshOpenFiles()
     }

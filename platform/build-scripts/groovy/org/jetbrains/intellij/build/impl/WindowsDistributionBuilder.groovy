@@ -162,7 +162,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String fullName = buildContext.applicationInfo.productName
     String baseName = buildContext.productProperties.baseFileName
     String scriptName = "${baseName}.bat"
-    String vmOptionsFileName = "${baseName}%BITS%.exe"
+    String vmOptionsFileName = "${baseName}64.exe"
 
     String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\"\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it\"" }.join("\n")

@@ -23,7 +23,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
-    <plugin id="org.intellij.plugins.markdown"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -52,6 +51,7 @@
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
 
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffExtension"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
@@ -166,6 +166,10 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="Github.PullRequest.Changes.Reload"/>
+      <action id="Github.PullRequest.Changes.MarkViewed"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
+      <action id="Github.PullRequest.Changes.MarkNotViewed"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesNotViewedAction"/>
     </group>
 
     <group id="Github.PullRequest.Timeline.Popup">
@@ -194,7 +198,7 @@
       <add-to-group group-id="Diff.EditorPopupMenu"/>
     </action>
 
-    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider">
+    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="CopyFileReference"/>
     </action>
   </actions>

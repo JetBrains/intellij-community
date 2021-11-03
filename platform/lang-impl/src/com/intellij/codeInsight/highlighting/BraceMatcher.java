@@ -25,6 +25,13 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This extension point allows codeinsight subsystem to highlight and navigate braces in your language.
+ * Brace matching is based on lexer (provided by {@link HighlighterIterator}) which supplies pairs of {@link IElementType} for corresponding braces.
+ *
+ * For example, {@link com.intellij.xml.impl.XmlBraceMatcher} defines several brace types,
+ * e.g. {@link com.intellij.psi.xml.XmlTokenType#XML_CDATA_START} and {@link com.intellij.psi.xml.XmlTokenType#XML_CDATA_END} to match.
+ */
 public interface BraceMatcher {
   ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>> EP_NAME = new ExtensionPointName<>("com.intellij.braceMatcher");
 

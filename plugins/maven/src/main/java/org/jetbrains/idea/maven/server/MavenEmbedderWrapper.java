@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +16,17 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
-import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
   private final Project myProject;
+  private ScheduledFuture<?> myProgressPullingFuture;
+  private AtomicInteger myFails = new AtomicInteger(0);
 
   public MavenEmbedderWrapper(@NotNull Project project, @Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
@@ -39,7 +42,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
-    boolean alwaysUpdateSnapshots = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    boolean alwaysUpdateSnapshots =
+      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
     setCustomization(console, indicator, null, false, alwaysUpdateSnapshots, null);
     perform(() -> {
       doCustomize();
@@ -47,7 +51,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     });
   }
 
-  public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator, boolean alwaysUpdateSnapshot) {
+  public void customizeForResolve(MavenWorkspaceMap workspaceMap,
+                                  MavenConsole console,
+                                  MavenProgressIndicator indicator,
+                                  boolean alwaysUpdateSnapshot) {
     customizeForResolve(workspaceMap, console, indicator, alwaysUpdateSnapshot, null);
   }
 
@@ -72,7 +79,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
     MavenWorkspaceMap serverWorkspaceMap = convertWorkspaceMap(workspaceMap);
-    boolean alwaysUpdateSnapshots = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    boolean alwaysUpdateSnapshots =
+      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
     setCustomization(console, indicator, serverWorkspaceMap, true, alwaysUpdateSnapshots, null);
     perform(() -> {
       doCustomize();
@@ -92,26 +100,80 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   private synchronized void doCustomize() throws RemoteException {
-    getOrCreateWrappee().customize(myCustomization.workspaceMap,
-                                   myCustomization.failOnUnresolvedDependency,
-                                   myCustomization.console,
-                                   myCustomization.indicator,
-                                   myCustomization.alwaysUpdateSnapshot,
-                                   myCustomization.userProperties,
-                                   ourToken);
+    MavenServerPullProgressIndicator pullProgressIndicator =
+      getOrCreateWrappee().customizeAndGetProgressIndicator(myCustomization.workspaceMap,
+                                                            myCustomization.failOnUnresolvedDependency,
+                                                            myCustomization.alwaysUpdateSnapshot,
+                                                            myCustomization.userProperties,
+                                                            ourToken);
+    if (pullProgressIndicator == null) return;
+    startPullingProgress(pullProgressIndicator, myCustomization.console, myCustomization.indicator);
+  }
+
+  private void startPullingProgress(MavenServerPullProgressIndicator serverPullProgressIndicator,
+                                    MavenConsole console,
+                                    MavenProgressIndicator indicator) {
+    ScheduledFuture<?> future = myProgressPullingFuture;
+    if(future!=null && !future.isCancelled()) {
+      future.cancel(true);
+    }
+    myProgressPullingFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+      try {
+        if (indicator.isCanceled()) serverPullProgressIndicator.cancel();
+
+        List<MavenArtifactDownloadServerProgressEvent> artifactEvents = serverPullProgressIndicator.pullDownloadEvents();
+        if (artifactEvents != null) {
+          for (MavenArtifactDownloadServerProgressEvent e : artifactEvents) {
+            switch (e.getArtifactEventType()) {
+              case DOWNLOAD_STARTED:
+                indicator.startedDownload(e.getResolveType(), e.getDependencyId());
+                break;
+              case DOWNLOAD_COMPLETED:
+                indicator.completedDownload(e.getResolveType(), e.getDependencyId());
+                break;
+              case DOWNLOAD_FAILED:
+                indicator.failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
+            }
+          }
+        }
+
+        List<MavenServerConsoleEvent> consoleEvents = serverPullProgressIndicator.pullConsoleEvents();
+        if (consoleEvents != null) {
+          for (MavenServerConsoleEvent e : consoleEvents) {
+            console.printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
+          }
+        }
+        myFails.set(0);
+      }
+      catch (RemoteException e) {
+        if (!Thread.currentThread().isInterrupted()) {
+          myFails.incrementAndGet();
+        }
+      }
+    }, 500, 500, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  protected synchronized void cleanup() {
+    myProgressPullingFuture.cancel(true);
+    int count = myFails.get();
+    if (count != 0) {
+       MavenLog.LOG.warn("Maven embedder download listener was failed: " + count + " times");
+    }
+    super.cleanup();
   }
 
   public MavenServerExecutionResult resolveProject(@NotNull final VirtualFile file,
-                                                               @NotNull final Collection<String> activeProfiles,
-                                                               @NotNull final Collection<String> inactiveProfiles)
+                                                   @NotNull final Collection<String> activeProfiles,
+                                                   @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
     return resolveProject(Collections.singleton(file), activeProfiles, inactiveProfiles).iterator().next();
   }
 
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<VirtualFile> files,
-                                                   @NotNull final Collection<String> activeProfiles,
-                                                   @NotNull final Collection<String> inactiveProfiles)
+                                                               @NotNull final Collection<String> activeProfiles,
+                                                               @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
     return performCancelable(() -> {
       Transformer transformer = files.isEmpty() ?
@@ -124,7 +186,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
         for (MavenServerExecutionResult result : results) {
           MavenServerExecutionResult.ProjectData data = result.projectData;
           if (data == null) continue;
-          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(data.mavenModel);
+          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s), s -> transformer.canBeRemotePath(s)).perform(data.mavenModel);
         }
       }
       return results;
@@ -216,31 +278,32 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                             final boolean alsoMake,
                                             final boolean alsoMakeDependents) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee()
-      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, selectedProjects, alsoMake, alsoMakeDependents, ourToken));
+      .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, selectedProjects, alsoMake, alsoMakeDependents,
+               ourToken));
   }
 
   public void reset() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
     try {
+      stopPulling();
       w.reset(ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
     }
-    resetCustomization();
   }
 
   public void release() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
     try {
+      stopPulling();
       w.release(ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
     }
-    resetCustomization();
   }
 
 
@@ -272,45 +335,33 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                              boolean failOnUnresolvedDependency,
                                              boolean alwaysUpdateSnapshot,
                                              @Nullable Properties userProperties) {
-    resetCustomization();
-    myCustomization = new Customization(wrapAndExport(console),
-                                        wrapAndExport(indicator),
+    stopPulling();
+    myCustomization = new Customization(console,
+                                        indicator,
                                         workspaceMap,
                                         failOnUnresolvedDependency,
                                         alwaysUpdateSnapshot,
                                         userProperties);
   }
 
-  private synchronized void resetCustomization() {
-    if (myCustomization == null) return;
-
-    try {
-      UnicastRemoteObject.unexportObject(myCustomization.console, true);
+  private synchronized void stopPulling() {
+    if (myProgressPullingFuture != null) {
+      myProgressPullingFuture.cancel(true);
     }
-    catch (NoSuchObjectException e) {
-      MavenLog.LOG.warn(e);
-    }
-    try {
-      UnicastRemoteObject.unexportObject(myCustomization.indicator, true);
-    }
-    catch (NoSuchObjectException e) {
-      MavenLog.LOG.warn(e);
-    }
-
     myCustomization = null;
   }
 
   private static final class Customization {
-    private final MavenServerConsole console;
-    private final MavenServerProgressIndicator indicator;
+    private final MavenConsole console;
+    private final MavenProgressIndicator indicator;
 
     private final MavenWorkspaceMap workspaceMap;
     private final boolean failOnUnresolvedDependency;
     private final boolean alwaysUpdateSnapshot;
     private final Properties userProperties;
 
-    private Customization(MavenServerConsole console,
-                          MavenServerProgressIndicator indicator,
+    private Customization(MavenConsole console,
+                          MavenProgressIndicator indicator,
                           MavenWorkspaceMap workspaceMap,
                           boolean failOnUnresolvedDependency,
                           boolean alwaysUpdateSnapshot,
@@ -325,13 +376,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
 
-
-
-
-  protected MavenServerConsole wrapAndExport(final MavenConsole console) {
-    return doWrapAndExport(new RemoteMavenServerConsole(console));
-  }
-
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
 
@@ -344,5 +388,4 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       myConsole.printMessage(level, message, throwable);
     }
   }
-
 }

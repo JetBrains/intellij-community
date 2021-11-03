@@ -13,16 +13,19 @@ Groovy script
     PsiErrorElement:'{' expected, got 'permits'
       <empty list>
   PsiWhiteSpace(' ')
-  PsiElement(permits)('permits')
-  PsiWhiteSpace(' ')
-  Method call
+  Call expression
     Reference expression
-      PsiElement(identifier)('B')
+      PsiElement(permits)('permits')
     PsiWhiteSpace(' ')
-    Arguments
-      <empty list>
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        <empty list>
-      PsiElement(})('}')
+    Command arguments
+      Method call
+        Reference expression
+          PsiElement(identifier)('B')
+        PsiWhiteSpace(' ')
+        Arguments
+          <empty list>
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          PsiElement(})('}')

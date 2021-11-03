@@ -505,10 +505,7 @@ public final class CodeStyle {
   @NotNull
   public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile != null) {
-      return new DefaultCodeStyleSettingsFacade(getSettings(psiFile), fileType);
-    }
-    return new DefaultCodeStyleSettingsFacade(getSettings(project), fileType);
+    return new DefaultCodeStyleSettingsFacade(psiFile == null ? getSettings(project) : getSettings(psiFile), fileType);
   }
 
   /**

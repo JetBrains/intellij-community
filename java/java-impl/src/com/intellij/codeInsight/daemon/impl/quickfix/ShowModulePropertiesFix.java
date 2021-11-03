@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor>, IntentionAction {
+public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor>, IntentionAction, LowPriorityAction {
   private final String myModuleName;
 
   public ShowModulePropertiesFix(@NotNull PsiElement context) {

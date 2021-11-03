@@ -157,9 +157,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     );
   }
 
-  protected Boolean addEditRunConfigurationItem() {
-    return true;
-  }
 
   @Override
   @NotNull
@@ -169,8 +166,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (project == null) {
       return allActionsGroup;
     }
-    if(addEditRunConfigurationItem()) {
-      allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+
+    AnAction editRunConfigurationAction = getEditRunConfigurationAction();
+    if(editRunConfigurationAction != null) {
+      allActionsGroup.add(editRunConfigurationAction);
     }
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
@@ -202,6 +201,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       allActionsGroup.addSeparator();
     }
     return allActionsGroup;
+  }
+
+  protected @Nullable AnAction getEditRunConfigurationAction() {
+    return ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
   }
 
   protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {

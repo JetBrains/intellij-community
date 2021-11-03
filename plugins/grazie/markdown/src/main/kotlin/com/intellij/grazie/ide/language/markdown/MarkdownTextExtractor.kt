@@ -21,6 +21,7 @@ class MarkdownTextExtractor : TextExtractor() {
           e.elementType == MarkdownElementTypes.IMAGE ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }
+        .removingIndents(" \t")
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
     }
     return null

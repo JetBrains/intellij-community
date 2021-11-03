@@ -151,16 +151,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final void addErrorText(String aText, String errorTooltipText) {
-    getTemplatePresentation().addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void clearColoredText() {
     getTemplatePresentation().clearText();
   }
@@ -183,16 +173,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final void addColoredFragment(ColoredFragment fragment) {
-    getTemplatePresentation().addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
 
   protected void doUpdate() {
@@ -261,16 +241,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setUniformIcon(Icon aIcon) {
     setIcon(aIcon);
-  }
-
-  /**
-   * @deprecated never called by Tree classes
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final ColoredFragment[] getColoredText() {
-    final List<ColoredFragment> list = getTemplatePresentation().getColoredText();
-    return list.toArray(new ColoredFragment[0]);
   }
 
   @Override

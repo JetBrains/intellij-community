@@ -7,9 +7,8 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.jetbrains.python.PythonHelpersLocator
 
-object HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
-  override val targetEnvironmentRequest: TargetEnvironmentRequest
-    get() = LocalTargetEnvironmentRequest()
+class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
+  override val targetEnvironmentRequest: TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
   override fun preparePyCharmHelpers(): TargetEnvironmentFunction<String> = constant(PythonHelpersLocator.getHelpersRoot().path)
 }

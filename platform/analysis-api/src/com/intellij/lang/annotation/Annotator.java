@@ -20,7 +20,7 @@ public interface Annotator {
   /**
    * Annotates the specified PSI element.
    * It is guaranteed to be executed in non-reentrant fashion.
-   * I.e there will be no call of this method for this instance before previous call get completed.
+   * I.e, there will be no call of this method for this instance before previous call get completed.
    * Multiple instances of the annotator might exist simultaneously, though.
    *
    * @param element to annotate.

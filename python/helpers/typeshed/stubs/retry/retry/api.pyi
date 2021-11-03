@@ -13,7 +13,7 @@ def retry_call(
     delay: float = ...,
     max_delay: float | None = ...,
     backoff: float = ...,
-    jitter: Tuple[float, float] | float = ...,
+    jitter: tuple[float, float] | float = ...,
     logger: Logger | None = ...,
 ) -> _R: ...
 def retry(
@@ -22,6 +22,6 @@ def retry(
     delay: float = ...,
     max_delay: float | None = ...,
     backoff: float = ...,
-    jitter: Tuple[float, float] | float = ...,
+    jitter: tuple[float, float] | float = ...,
     logger: Logger | None = ...,
 ) -> IdentityFunction: ...

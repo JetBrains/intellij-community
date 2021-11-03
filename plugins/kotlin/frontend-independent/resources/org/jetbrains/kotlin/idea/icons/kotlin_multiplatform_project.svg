@@ -1,16 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 24.1.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#9AA7B0;}
-	.st1{fill:url(#SVGID_1_);}
-</style>
-<path class="st0" d="M13,16v-4H9v-1h5v5H13z M15,16v-6H9V9h7v7H15z M9,13h3v3H9V13z"/>
-<radialGradient id="SVGID_1_" cx="-33.7003" cy="109.2146" r="16.4772" gradientTransform="matrix(0.9733 0 0 -0.9733 47.3382 107.8764)" gradientUnits="userSpaceOnUse">
-	<stop  offset="3.435144e-03" style="stop-color:#E44857"/>
-	<stop  offset="0.4689" style="stop-color:#C711E1"/>
-	<stop  offset="1" style="stop-color:#7F52FF"/>
-</radialGradient>
-<polygon class="st1" points="8,7.8 15,1 1,1 1,15 8,15 "/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="kotlin_multiplatform_project">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M9 9H16V16H15V10H9V9ZM14 11H9V12H13V16H14V11ZM12 13H9V16H12V13Z" fill="#9AA7B0"/>
+<path id="Vector" d="M8 7.8L15 1H1V15H8V7.8Z" fill="#B99BF8"/>
+</g>
 </svg>

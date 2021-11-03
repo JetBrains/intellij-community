@@ -4,7 +4,7 @@ package git4idea.log
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.ui.VcsLogAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.impl.showRepositoryBrowser
+import com.intellij.openapi.vcs.impl.RepositoryBrowser
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
@@ -18,8 +18,8 @@ class GitBrowseRepoAtRevisionAction : VcsLogAction<GitRepository>() {
     val repo = grouped.keySet().single()
     val commit = grouped.values().single()
     val root = GitDirectoryVirtualFile(repo, null, "", commit)
-    showRepositoryBrowser(project, root, repo.root,
-                          GitBundle.message("tab.title.repo.root.name.at.revision", repo.root.name, commit.id.toShortString()))
+    RepositoryBrowser.showRepositoryBrowser(project, root, repo.root,
+      GitBundle.message("tab.title.repo.root.name.at.revision", repo.root.name, commit.id.toShortString()))
   }
 
   override fun isEnabled(grouped: MultiMap<GitRepository, Hash>): Boolean {

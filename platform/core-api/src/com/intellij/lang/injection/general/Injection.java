@@ -12,11 +12,10 @@ import org.jetbrains.annotations.Nullable;
  * {@link LanguageInjectionContributor#getInjection(PsiElement)} call and corresponds to the given {@code PsiElement}
  */
 public interface Injection {
-
   @NotNull
   @NlsSafe
   String getInjectedLanguageId();
-  
+
   @Nullable
   Language getInjectedLanguage();
 
@@ -39,11 +38,10 @@ public interface Injection {
 
   /**
    * @return the ID of a tool which will provide UI utils to manage this injection.
-   *
+   * <p>
    * If the {@code LanguageInjectionSupport} with such ID is registered it will be used
    * if {@link LanguageInjectionPerformer} will not force other implementation
    */
   @Nullable
   @NlsSafe String getSupportId();
 }
-

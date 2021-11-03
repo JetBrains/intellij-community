@@ -66,7 +66,7 @@ public final class TrackRunningTestUtil {
       if (component instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)component).getUserObject();
         if (userObject instanceof NodeDescriptor) {
-          return (AbstractTestProxy)((NodeDescriptor)userObject).getElement();
+          return (AbstractTestProxy)((NodeDescriptor<?>)userObject).getElement();
         }
       }
     }

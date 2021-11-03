@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Test
 

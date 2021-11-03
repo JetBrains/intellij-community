@@ -5,7 +5,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
@@ -30,9 +29,7 @@ internal object MarkdownSettingsUtil {
   fun downloadExtension(extension: MarkdownExtensionWithExternalFiles, project: Project? = null, enableAfterDownload: Boolean = false): Boolean {
     if (downloadExtensionFiles(extension)) {
       if (enableAfterDownload) {
-        MarkdownSettings.getInstance(currentOrDefaultProject(project)).update {
-          it.extensionsEnabledState[extension.id] = true
-        }
+        MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extension.id] = true
       }
       Notifications.Bus.notify(
         Notification(

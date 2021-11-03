@@ -24,6 +24,7 @@ public final class SlowOperations {
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
+  public static final String RESET = "  reset  ";
 
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
@@ -86,6 +87,9 @@ public final class SlowOperations {
       return;
     }
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
         return;
       }
@@ -102,6 +106,9 @@ public final class SlowOperations {
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
     for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
       if (activityName == activity) {
         return true;
       }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
@@ -21,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.dataflow.CreateNullBranchFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -162,7 +164,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
-  protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
     final List<LocalQuickFix> fixes = new SmartList<>();
@@ -199,7 +201,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       }
 
       ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
+
+      addCreateNullBranchFix(qualifier, fixes);
     }
+
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -212,7 +217,16 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
       result.add(new ReplaceWithBooleanEqualsFix(qualifier));
     }
+    addCreateNullBranchFix(qualifier, result);
     return result;
+  }
+
+  private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<LocalQuickFix> fixes) {
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
+    if (parent instanceof PsiSwitchBlock && PsiUtil.skipParenthesizedExprDown(((PsiSwitchBlock)parent).getExpression()) == qualifier) {
+      fixes.add(new CreateNullBranchFix((PsiSwitchBlock)parent));
+    }
   }
 
   @Override

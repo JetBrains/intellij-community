@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAbstractClasses = false;
+  public boolean ignoreRecords = true;
   public boolean reportMethodReturns = true;
   public boolean reportMethodParameters = true;
   public boolean reportLocalVariables = true;
@@ -59,6 +61,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     var panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.abstract"), "ignoreAbstractClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.records"), "ignoreRecords");
     panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.method.returns"), "reportMethodReturns");
     panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.parameter"), "reportMethodParameters");
     panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.local.variable"), "reportLocalVariables");
@@ -74,17 +77,17 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     return new MethodReturnOfConcreteClassVisitor();
   }
 
-  @Contract("null, _ -> false")
-  private static boolean typeIsConcreteClass(@Nullable PsiTypeElement typeElement, boolean ignoreCastToAbstractClass) {
+  @Contract("null -> false")
+  private boolean typeIsConcreteClass(@Nullable PsiTypeElement typeElement) {
     if (typeElement == null || typeElement.isInferredType()) {
       return false;
     }
     final PsiType type = typeElement.getType();
-    return typeIsConcreteClass(type, ignoreCastToAbstractClass);
+    return typeIsConcreteClass(type);
   }
 
-  @Contract("null, _ -> false")
-  private static boolean typeIsConcreteClass(@Nullable PsiType type, boolean ignoreCastToAbstractClass) {
+  @Contract("null -> false")
+  private boolean typeIsConcreteClass(@Nullable PsiType type) {
     if (type == null) {
       return false;
     }
@@ -93,7 +96,10 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     if (aClass == null) {
       return false;
     }
-    if (ignoreCastToAbstractClass && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (ignoreAbstractClasses && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+    if (ignoreRecords && aClass.isRecord()) {
       return false;
     }
     if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
@@ -113,7 +119,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
       if (!reportMethodReturns) return;
       if (method.isConstructor()) return;
       final PsiTypeElement typeElement = method.getReturnTypeElement();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       registerError(typeElement, InspectionGadgetsBundle.message("method.return.concrete.class.problem.descriptor"));
     }
 
@@ -125,8 +131,12 @@ public class UseOfConcreteClassInspection extends BaseInspection {
       boolean report = methodParameter && reportMethodParameters ||
                        !methodParameter && !catchParameter && reportLocalVariables;
       if (!report) return;
+      if (parameter instanceof PsiPatternVariable) {
+        // Will be reported in instanceof check
+        return;
+      }
       final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       final String variableName = parameter.getName();
       registerError(typeElement, InspectionGadgetsBundle.message(
         methodParameter ? "concrete.class.method.parameter.problem.descriptor" :
@@ -137,7 +147,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       if (!reportLocalVariables) return;
       final PsiTypeElement typeElement = variable.getTypeElement();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (MethodUtils.isEquals(method)) return;
       registerError(typeElement, InspectionGadgetsBundle.message(
@@ -151,7 +161,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
                        !isStatic && reportInstanceFields;
       if (!report) return;
       final PsiTypeElement typeElement = field.getTypeElement();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       final String variableName = field.getName();
       registerError(typeElement, InspectionGadgetsBundle.message(
         isStatic ? "static.variable.of.concrete.class.problem.descriptor"
@@ -164,7 +174,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
         PsiExpression other = ExpressionUtils.getExpressionComparedTo(call);
         if (other instanceof PsiClassObjectAccessExpression) {
           PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)other).getOperand();
-          if (typeIsConcreteClass(typeElement, ignoreAbstractClasses)) {
+          if (typeIsConcreteClass(typeElement)) {
             PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
             if (!MethodUtils.isEquals(method)) {
               registerError(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.equality.problem.descriptor"));
@@ -177,7 +187,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
         if (qualifier != null) {
           PsiType qualifierType = qualifier.getType();
           PsiType targetClass = PsiUtil.substituteTypeParameter(qualifierType, CommonClassNames.JAVA_LANG_CLASS, 0, false);
-          if (!typeIsConcreteClass(targetClass, ignoreAbstractClasses)) return;
+          if (!typeIsConcreteClass(targetClass)) return;
           PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
           if (!MethodUtils.isEquals(method) && !CloneUtils.isClone(method)) {
             registerMethodCallError(call, InspectionGadgetsBundle
@@ -188,20 +198,32 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     }
 
     @Override
+    public void visitTypeTestPattern(@NotNull PsiTypeTestPattern pattern) {
+      PsiTypeElement typeElement = pattern.getCheckType();
+      processInstanceOfCheck(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.pattern.problem.descriptor"));
+    }
+
+    @Override
     public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
+      super.visitInstanceOfExpression(expression);
+      if (expression.getPattern() == null) {
+        processInstanceOfCheck(expression.getCheckType(), InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor"));
+      }
+    }
+
+    private void processInstanceOfCheck(@Nullable PsiTypeElement typeElement, @NotNull @Nls String message) {
       if (!reportInstanceOf) return;
-      PsiTypeElement typeElement = expression.getCheckType();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (MethodUtils.isEquals(method)) return;
-      registerError(typeElement, InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor"));
+      registerError(typeElement, message);
     }
 
     @Override
     public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       if (!reportCast) return;
       final PsiTypeElement typeElement = expression.getCastType();
-      if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;
+      if (!typeIsConcreteClass(typeElement)) return;
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (MethodUtils.isEquals(method) || CloneUtils.isClone(method)) return;
       registerError(typeElement, InspectionGadgetsBundle

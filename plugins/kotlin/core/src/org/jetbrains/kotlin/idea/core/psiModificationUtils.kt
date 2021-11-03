@@ -309,17 +309,7 @@ fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
         return null
     }
 
-    val bindingContext = analyze()
-    // TODO: temporary code
-    if (this is KtPrimaryConstructor) {
-        return this.getContainingClassOrObject().resolveToDescriptorIfAny()?.unsubstitutedPrimaryConstructor
-    }
-
-    val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-    if (descriptor is ValueParameterDescriptor) {
-        return bindingContext[BindingContext.VALUE_PARAMETER_AS_PROPERTY, descriptor]
-    }
-    return descriptor
+    return resolveToDescriptorIfAny()
 }
 
 fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken, addImplicitVisibilityModifier: Boolean = false) {

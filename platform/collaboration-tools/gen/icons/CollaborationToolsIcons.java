@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -18,7 +19,9 @@ public final class CollaborationToolsIcons {
   /** 16x16 */ public static final @NotNull Icon Branch = load("icons/branch.svg", 7013179854221709094L, 2);
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", -3056595990209732615L, 0);
   /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/commentHovered.svg", 7093337652238115394L, 0);
+  /** 16x16 */ public static final @NotNull Icon CommentReadMany = load("icons/commentReadMany.svg", -8146519964560751992L, 2);
   /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/commentUnread.svg", 579344038052724333L, 0);
+  /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/commentUnreadMany.svg", -1636800867176678969L, 2);
   /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/commentUnresolved.svg", -3228706837827983826L, 0);
   /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -7096832826219323469L, 0);
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", 6938120386099586696L, 0);

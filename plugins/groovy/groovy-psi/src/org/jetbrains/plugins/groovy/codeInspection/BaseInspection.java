@@ -17,11 +17,11 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +29,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends LocalInspectionTool {
-  /**
-   * @deprecated Use {@link #getProbableBugs()} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final String PROBABLE_BUGS = getProbableBugs();
-
   @Nullable
   @InspectionMessage
   protected String buildErrorString(Object... args) {
@@ -46,7 +40,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 

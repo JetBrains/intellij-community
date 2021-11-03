@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newCounterMetric
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.*
@@ -16,19 +16,26 @@ import java.util.concurrent.TimeUnit
 
 @NonNls
 internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
+  companion object  {
+    private val GROUP = EventLogGroup("vcs.log.index.application", 3)
+    private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
+    private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
+    private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
+
+  }
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
     if (!Registry.`is`("vcs.log.index.git")) {
-      metricEvents.add(newMetric("index.disabled.in.registry", true))
+      metricEvents.add(INDEX_DISABLED_IN_REGISTRY.metric(true))
     }
 
     if (Registry.`is`("vcs.log.index.force")) {
-      metricEvents.add(newMetric("index.forced.in.registry", true))
+      metricEvents.add(INDEX_FORCED_IN_REGISTRY.metric(true))
     }
 
     getBigRepositoriesList()?.let { bigRepositoriesList ->
       if (bigRepositoriesList.repositoriesCount > 0) {
-        metricEvents.add(newCounterMetric("big.repositories", bigRepositoriesList.repositoriesCount))
+        metricEvents.add(BIG_REPOSITORIES.metric(bigRepositoriesList.repositoriesCount))
       }
     }
 
@@ -37,23 +44,29 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
 
   private fun getBigRepositoriesList() = serviceIfCreated<VcsLogBigRepositoriesList>()
 
-  override fun getGroupId(): String = "vcs.log.index.application"
-
-  override fun getVersion(): Int = 2
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 }
 
 class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
+  companion object {
+    private val GROUP = EventLogGroup("vcs.log.index.project", 3)
+    private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
+    private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
+  }
+
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
-      usages.add(newCounterMetric("indexing.time.minutes", indexingTime))
+      usages.add(INDEXING_TIME.metric(indexingTime))
     }
 
     getSharedSettings(project)?.let { sharedSettings ->
       if (!sharedSettings.isIndexSwitchedOn) {
-        usages.add(newMetric("index.disabled.in.project", true))
+        usages.add(INDEX_DISABLED.metric(true))
       }
     }
 
@@ -64,9 +77,10 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
 
   private fun getIndexCollector(project: Project) = project.serviceIfCreated<VcsLogIndexCollector>()
 
-  override fun getGroupId(): String = "vcs.log.index.project"
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 
-  override fun getVersion(): Int = 2
 }
 
 class VcsLogIndexCollectorState {

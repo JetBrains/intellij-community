@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
-  private static final int USED_FOR_READING_MASK = 0x10000;
-  private static final int USED_FOR_WRITING_MASK = 0x20000;
-  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0x40000;
+  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
+  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
+  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000;
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
@@ -34,7 +34,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
     RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
-    ((WritableRefEntity)owner).add(this);
+    this.setOwner((WritableRefEntity)owner);
 
     if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
       setIsStatic(true);

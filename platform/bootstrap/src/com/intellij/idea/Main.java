@@ -5,7 +5,6 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.PathClassLoader;
@@ -23,9 +22,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Main {
   public static final int NO_GRAPHICS = 1;
@@ -36,7 +38,7 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  public static final int UNKNOWN_COMMAND = 9;
+  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
@@ -54,7 +56,7 @@ public final class Main {
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme", "remoteDevShowHelp");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -69,12 +71,6 @@ public final class Main {
     startupTimings.put("startup begin", System.nanoTime());
 
     if (args.length == 1 && "%f".equals(args[0])) {
-      //noinspection SSBasedInspection
-      args = new String[0];
-    }
-
-    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       //noinspection SSBasedInspection
       args = new String[0];
     }
@@ -107,6 +103,19 @@ public final class Main {
     PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
     if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
+      // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
+      // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+      // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
+      Path remoteDevPluginLibs = Paths.get(PathManager.getPreInstalledPluginsPath(), "cwm-plugin-projector", "lib", "projector");
+      if (!Files.exists(remoteDevPluginLibs)) remoteDevPluginLibs = Paths.get(PathManager.getPluginsPath(), "cwm-plugin", "lib", "projector");
+
+      if (Files.exists(remoteDevPluginLibs)) {
+        try (Stream<Path> libs = Files.list(remoteDevPluginLibs)) {
+          // add all files in that dir except for plugin jar
+          newClassLoader.addFiles(libs.collect(Collectors.toList()));
+        }
+      }
+
       // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
       Class<ClassLoader> aClass = ClassLoader.class;
       MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);

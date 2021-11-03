@@ -39,6 +39,14 @@ private class SimpleConstructorRequest(
   override fun getExpectedParameters() = expectedParameters
 }
 
+private class SimpleTypeRequest(private val fqn: String?, private val annotations: List<AnnotationRequest>): ChangeTypeRequest {
+  override fun isValid(): Boolean = true
+  
+  override fun getQualifiedName(): String? = fqn
+
+  override fun getAnnotations(): List<AnnotationRequest> = annotations
+}
+
 fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
   return SimpleMethodRequest(
     methodName = methodName,
@@ -54,6 +62,9 @@ fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }
+
+fun typeRequest(fqn: String?, annotations: List<AnnotationRequest>): ChangeTypeRequest = 
+  SimpleTypeRequest(fqn, annotations)
 
 fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
   SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })

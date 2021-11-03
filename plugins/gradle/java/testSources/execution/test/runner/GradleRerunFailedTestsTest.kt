@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.junit.Test
 
 class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {

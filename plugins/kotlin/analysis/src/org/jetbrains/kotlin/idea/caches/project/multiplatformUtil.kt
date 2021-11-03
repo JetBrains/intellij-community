@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
@@ -86,11 +88,19 @@ val Module.implementingModules: List<Module>
         }
     }
 
+/**
+ * Stable module name should match the Gradle name put into Kotlin facet during import.
+ * The External system can provide the name, but only for modules that were imported from
+ * a build system under the responsibility of the External system.
+ * For all other modules their workspace name is used.
+ * Some tests (e.g. [org.jetbrains.kotlin.idea.codeMetaInfo.AbstractCodeMetaInfoTest]) rely on this.
+ * These tests set up modules and Kotlin facets manually without involvement of the External system.
+ */
 private val Module.stableModuleName: String
-    get() = ExternalSystemModulePropertyManager.getInstance(this).getLinkedProjectId()
-        ?: name.also {
-            if (!isUnitTestMode()) LOG.error("Don't have a LinkedProjectId for module $this for HMPP!")
-        }
+    get() = if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, this)) {
+        ExternalSystemModulePropertyManager.getInstance(this).getLinkedProjectId()
+            ?: name.also { LOG.error("Don't have a LinkedProjectId for module $this for HMPP!") }
+    } else name
 
 private val Project.modulesByLinkedKey: Map<String, Module>
     get() = cacheInvalidatingOnRootModifications {

@@ -8,6 +8,7 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
@@ -20,13 +21,18 @@ import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
-public class FindUsagesAction extends AnAction {
+public class FindUsagesAction extends AnAction implements UpdateInBackground {
 
   @Experimental
   public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
 
   public FindUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public final boolean isUpdateInBackground() {
+    return !Registry.is("ide.find.usages.data.rule");
   }
 
   protected boolean toShowDialog() {

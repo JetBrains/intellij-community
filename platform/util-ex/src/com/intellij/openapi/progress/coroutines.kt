@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -43,14 +44,19 @@ suspend fun checkCanceled() {
  */
 fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
-  return runSuspendingAction(indicator, action)
+  if (indicator != null) {
+    return runSuspendingAction(indicator, action)
+  }
+  val currentJob = Cancellation.currentJob()
+  if (currentJob != null) {
+    // make runBlocking Job a child of the current one to propagate cancellation
+    return runBlocking(context = currentJob, block = action)
+  }
+  // we are not under indicator => just run the action, since nobody will cancel it anyway
+  return runBlocking(block = action)
 }
 
-fun <T> runSuspendingAction(indicator: ProgressIndicator?, action: suspend CoroutineScope.() -> T): T {
-  if (indicator == null) {
-    // we are not under indicator => just run the action, since nobody will cancel it anyway
-    return runBlocking(block = action)
-  }
+fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   // we are under indicator => the Job must be canceled when indicator is canceled
   return runBlocking(progressSinkElement(ProgressIndicatorSink(indicator)) + CoroutineName("indicator run blocking")) {
     val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
@@ -89,8 +95,9 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
   return runUnderIndicator(ctx.job, ctx.progressSink, action)
 }
 
+@Internal
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
+fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
   val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
   try {

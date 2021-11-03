@@ -2,6 +2,8 @@
 package com.intellij.java.ift.lesson.navigation
 
 import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.learn.LessonsBundle
 import training.learn.lesson.general.navigation.RecentFilesLesson
 
 class JavaRecentFilesLesson : RecentFilesLesson() {
@@ -12,4 +14,9 @@ class JavaRecentFilesLesson : RecentFilesLesson() {
   override val stringForRecentFilesSearch: String = "print"
 
   override fun LessonContext.setInitialPosition() = caret("println")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("recent.files.locations.help.link"),
+         LessonUtil.getHelpLink("idea", "discover-intellij-idea.html#recent-files")),
+  )
 }

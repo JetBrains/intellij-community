@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
@@ -16,11 +16,10 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 open class ModuleIndexableFilesPolicy {
   companion object {
-    fun getInstance() = ApplicationManager.getApplication().getService(ModuleIndexableFilesPolicy::class.java)
+    fun getInstance() = service<ModuleIndexableFilesPolicy>()
   }
 
   open fun shouldIndexSeparateRoots() = true
@@ -29,10 +28,14 @@ open class ModuleIndexableFilesPolicy {
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
                                                 private val roots: List<VirtualFile>,
                                                 private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
+  init {
+    assert(roots.isNotEmpty())
+  }
+
   companion object {
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "22.1")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
                 "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
                 "Should be removed once new code proves stable")
@@ -50,28 +53,12 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      "Module '" + module.name + "' (" +
-      if (roots.isEmpty()) "empty"
-      else roots.joinToString(", ") { it.name } +
-           ")"
+      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ")
+      "Module '" + module.name + "' ($rootsDebugStr)"
     }
     else {
       "Module '${module.name}'"
     }
-
-  fun getDebugDescription(): @NonNls String {
-    val sb = StringBuilder("ModuleIndexableFilesIteratorImpl ")
-    if (roots.isEmpty()) {
-      sb.append("with no roots")
-    }
-    else {
-      sb.append("with roots:")
-      for (root in roots) {
-        sb.append("\n   ").append(root)
-      }
-    }
-    return sb.toString()
-  }
 
   override fun getIndexingProgressText(): String =
     if (ModuleType.isInternal(module)) {

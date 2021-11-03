@@ -59,7 +59,7 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {
       when (it) {
-        is HintInfo.OptionInfo -> null
+        is HintInfo.OptionInfo, null -> null
         is MethodInfo -> it.toPattern()
       }}
   }
@@ -71,7 +71,7 @@ class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
   }
 }
 
-fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?) {
+fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
   val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
   val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
@@ -79,7 +79,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
   InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
 
   val offset = editor.caretModel.offset
-  val info = getHintInfoFromProvider(offset, file, editor) ?: return
+  val info = getHintInfoFromProvider(offset, file, editor)
 
   val selectedLanguage = (info as? MethodInfo)?.language ?: fileLanguage
 

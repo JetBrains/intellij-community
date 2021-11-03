@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
 
 internal class SearchEverywhereContextFeaturesProvider {
   companion object {
@@ -18,7 +17,6 @@ internal class SearchEverywhereContextFeaturesProvider {
     private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
 
     private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
-    private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
   }
 
   fun getContextFeatures(project: Project?): Map<String, Any> {
@@ -33,22 +31,6 @@ internal class SearchEverywhereContextFeaturesProvider {
     data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
 
     project?.let {
-      if (project.isDisposed) {
-        return@let
-      }
-
-      // report tool windows' ids
-      val twm = ToolWindowManager.getInstance(project)
-      var id: String? = null
-      ApplicationManager.getApplication().invokeAndWait {
-        id = twm.lastActiveToolWindowId
-      }
-
-      id?.let { toolwindowId ->
-        data[LAST_ACTIVE_TOOL_WINDOW_KEY] = toolwindowId
-      }
-
-      // report types of open files in editor: fileType -> amount
       if (project.isDisposed) {
         return@let
       }

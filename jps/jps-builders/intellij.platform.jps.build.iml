@@ -53,5 +53,6 @@
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
   </component>
 </module>

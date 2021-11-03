@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
@@ -18,6 +19,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.layout.*
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
@@ -26,8 +28,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Point2D
@@ -133,33 +133,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         }
       }
 
-      showDemoBtn.addMouseListener(object : MouseAdapter() {
-
-        private val consumers = arrayOf(
-          consumer(DoubleColorFunction(showDemoBtn.background, showDemoBtn.foreground), showDemoBtn::setBackground),
-          consumer(DoubleColorFunction(showDemoBtn.foreground, showDemoBtn.background), showDemoBtn::setForeground),
-        )
-
-        val animator = JBAnimator()
-        val statefulEasing = CubicBezierEasing(0.215, 0.61, 0.355, 1.0).stateful()
-
-        override fun mouseEntered(e: MouseEvent) {
-          animator.animate(Animation(*consumers).apply {
-            duration = 500
-            easing = statefulEasing.coerceIn(statefulEasing.value, 1.0)
-            duration = (duration * (1.0 - statefulEasing.value)).roundToInt()
-          })
-        }
-
-        override fun mouseExited(e: MouseEvent) {
-          animator.animate(Animation(*consumers).apply {
-            delay = 50
-            duration = 450
-            easing = statefulEasing.coerceIn(0.0, statefulEasing.value).reverse()
-            duration = (duration * statefulEasing.value).roundToInt()
-          })
-        }
-      })
+      UpdateColorsOnHover(showDemoBtn)
     }
 
     private fun loadStage2() {
@@ -613,5 +587,21 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
       override fun createActions() = emptyArray<Action>()
     }.show()
+  }
+
+  private class UpdateColorsOnHover(private val component: JComponent) : HoverStateListener() {
+    private val backgroundFunction = DoubleColorFunction(component.background, component.foreground)
+    private val foregroundFunction = DoubleColorFunction(component.foreground, component.background)
+
+    private val helper = ShowHideAnimator(CubicBezierEasing(0.215, 0.61, 0.355, 1.0)) {
+      component.background = backgroundFunction.apply(it)
+      component.foreground = foregroundFunction.apply(it)
+    }
+
+    init {
+      addTo(component)
+    }
+
+    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered)
   }
 }

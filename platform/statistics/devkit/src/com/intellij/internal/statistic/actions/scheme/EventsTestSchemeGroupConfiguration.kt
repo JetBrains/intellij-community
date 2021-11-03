@@ -7,10 +7,10 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
@@ -33,21 +33,23 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.PairProcessor
 import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.collections.HashMap
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
                                          productionGroups: EventGroupRemoteDescriptors,
@@ -319,15 +321,12 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
         psiFile
       }
       if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
-      val problemHolder = ProblemsHolder(InspectionManager.getInstance(project), file, true)
-      val inspectionSession = LocalInspectionToolSession(file, file.textRange.startOffset, file.textRange.endOffset)
-      val inspectionVisitor = JsonSchemaComplianceInspection()
-        .buildVisitor(problemHolder, problemHolder.isOnTheFly, inspectionSession)
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser) {
-        element.accept(inspectionVisitor)
-      }
-      return problemHolder.results.map { ValidationInfo("Line ${it.lineNumber + 1}: ${it.descriptionTemplate}") }
+      val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
+        Collections.singletonList(LocalInspectionToolWrapper(JsonSchemaComplianceInspection())),
+        file, file.textRange, file.getTextRange(), true, false, true, DaemonProgressIndicator(),
+        PairProcessor.alwaysTrue())
+
+      return map.values.flatten().map { descriptor -> ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}") }
     }
 
     private fun isValidJson(customRules: String): Boolean {

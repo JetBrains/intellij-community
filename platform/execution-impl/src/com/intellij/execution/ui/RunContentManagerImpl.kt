@@ -7,6 +7,7 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
@@ -30,8 +31,10 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.content.*
+import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ObjectUtils
@@ -44,7 +47,6 @@ import java.util.function.Predicate
 import javax.swing.Icon
 
 private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
-private val CLOSE_LISTENER_KEY: Key<ContentManagerListener> = Key.create("CloseListener")
 
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
@@ -135,6 +137,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
       id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
+    if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
+      UIUtil.putClientProperty(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+    }
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {
@@ -469,7 +474,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   fun moveContent(executor: Executor, descriptor: RunContentDescriptor) {
     val content = descriptor.attachedContent ?: return
     val oldContentManager = content.manager
-    val newContentManager = getContentManagerForRunner(executor, descriptor)
+    val newContentManager = getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
     if (oldContentManager == null || oldContentManager === newContentManager) return
     val listener = content.getUserData(CLOSE_LISTENER_KEY)
     if (listener != null) {
@@ -485,9 +490,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     newContentManager.addContent(content)
-    if (listener != null) {
-      newContentManager.addContentManagerListener(listener)
-    }
+    // Close listener is added to new content manager by propertyChangeListener in BaseContentCloseListener.
   }
 
   private fun updateToolWindowIcon(contentManagerToUpdate: ContentManager, alive: Boolean) {

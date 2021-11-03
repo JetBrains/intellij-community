@@ -10,7 +10,7 @@ import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
@@ -34,23 +34,24 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-        val isAvailable = project.packageSearchDataService.projectModulesStateFlow.value.isNotEmpty()
+        val isAvailable = project.packageSearchProjectService.projectModulesStateFlow.value.isNotEmpty()
 
-        if (!isAvailable) project.packageSearchDataService.projectModulesStateFlow
-            .filter { it.isNotEmpty() }
-            .take(1)
-            .map {
-                RegisterToolWindowTask.closable(
-                    ToolWindowId,
-                    PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
-                    PackageSearchIcons.ArtifactSmall
-                )
-            }
-            .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
-            .onEach { toolWindow -> toolWindow.initialize(project) }
-            .flowOn(Dispatchers.AppUI)
-            .launchIn(project.lifecycleScope)
-
+        if (!isAvailable) {
+            project.packageSearchProjectService.projectModulesStateFlow
+                .filter { it.isNotEmpty() }
+                .take(1)
+                .map {
+                    RegisterToolWindowTask.closable(
+                        ToolWindowId,
+                        PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
+                        PackageSearchIcons.ArtifactSmall
+                    )
+                }
+                .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
+                .onEach { toolWindow -> toolWindow.initialize(project) }
+                .flowOn(Dispatchers.AppUI)
+                .launchIn(project.lifecycleScope)
+        }
         return isAvailable
     }
 

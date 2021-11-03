@@ -59,14 +59,14 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
   private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
   private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.ProfileCPU, Daemon_sign);
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.MenuSaveall, Daemon_sign);
-  private final JBList myThreadList;
+  private final JBList<ThreadState> myThreadList;
   private final List<ThreadState> myThreadDump;
   private final List<ThreadState> myMergedThreadDump;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
 
-  public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
+  public ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
     myMergedThreadDump = new ArrayList<>();
@@ -100,19 +100,23 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     myFilterPanel.add(myFilterField);
     myFilterPanel.setVisible(false);
 
-    myThreadList = new JBList(new DefaultListModel());
+    myThreadList = new JBList<>(new DefaultListModel<>());
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myThreadList.addListSelectionListener(new ListSelectionListener() {
+      int currentSelectedIndex = -2; // to avoid multiple expensive invocations of printStackTrace()
       @Override
-      public void valueChanged(final ListSelectionEvent e) {
+      public void valueChanged(ListSelectionEvent e) {
         int index = myThreadList.getSelectedIndex();
-        if (index >= 0) {
-          ThreadState selection = (ThreadState)myThreadList.getModel().getElementAt(index);
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
-        }
-        else {
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+        if (index != currentSelectedIndex) {
+          if (index >= 0) {
+            ThreadState selection = myThreadList.getModel().getElementAt(index);
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
+          }
+          else {
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+          }
+          currentSelectedIndex = index;
         }
         myThreadList.repaint();
       }
@@ -135,16 +139,16 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
     leftPanel.add(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT), BorderLayout.CENTER);
 
-    final Splitter splitter = new Splitter(false, 0.3f);
+    Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(consoleView.getComponent());
     add(splitter, BorderLayout.CENTER);
 
-    new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+    new ListSpeedSearch<>(myThreadList).setComparator(new SpeedSearchComparator(false, true));
 
     updateThreadList();
 
-    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
+    Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
       editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
@@ -170,14 +174,13 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
   private void updateThreadList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     Object selection = myThreadList.getSelectedValue();
-    DefaultListModel model = (DefaultListModel)myThreadList.getModel();
+    DefaultListModel<ThreadState> model = (DefaultListModel<ThreadState>)myThreadList.getModel();
     model.clear();
     int selectedIndex = 0;
     int index = 0;
     List<ThreadState> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-        //noinspection unchecked
         model.addElement(state);
         if (selection == state) {
           selectedIndex = index;
@@ -193,9 +196,9 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
-    final HighlightManager highlightManager = HighlightManager.getInstance(project);
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+    TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
     String documentText = editor.getDocument().getText();
     int i = -1;
     while (true) {
@@ -209,8 +212,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private static Icon getThreadStateIcon(final ThreadState threadState) {
-    final boolean daemon = threadState.isDaemon();
+  private static Icon getThreadStateIcon(ThreadState threadState) {
+    boolean daemon = threadState.isDaemon();
     if (threadState.isSleeping()) {
       return daemon ? PAUSE_ICON_DAEMON : AllIcons.Actions.Pause;
     }
@@ -233,7 +236,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
-  private static StateCode getThreadStateCode(final ThreadState state) {
+  private static StateCode getThreadStateCode(ThreadState state) {
     if (state.isSleeping()) return StateCode.PAUSED;
     if (state.isWaiting()) return StateCode.LOCKED;
     if (state.getOperation() == ThreadOperation.Socket) return StateCode.RUN_SOCKET;
@@ -244,7 +247,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     return StateCode.RUN;
   }
 
-  private static SimpleTextAttributes getAttributes(final ThreadState threadState) {
+  private static SimpleTextAttributes getAttributes(@NotNull ThreadState threadState) {
     if (threadState.isSleeping()) {
       return SimpleTextAttributes.GRAY_ATTRIBUTES;
     }
@@ -257,14 +260,12 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private static class ThreadListCellRenderer extends ColoredListCellRenderer {
-
+  private static class ThreadListCellRenderer extends ColoredListCellRenderer<ThreadState> {
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-      ThreadState threadState = (ThreadState) value;
+    protected void customizeCellRenderer(@NotNull JList<? extends ThreadState> list, ThreadState threadState, int index, boolean selected, boolean hasFocus) {
       setIcon(getThreadStateIcon(threadState));
       if (!selected) {
-        ThreadState selectedThread = (ThreadState)list.getSelectedValue();
+        ThreadState selectedThread = list.getSelectedValue();
         if (threadState.isDeadlocked()) {
           setBackground(LightColors.RED);
         }
@@ -342,7 +343,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final StringBuilder buf = new StringBuilder();
+      StringBuilder buf = new StringBuilder();
       buf.append("Full thread dump").append("\n\n");
       for (ThreadState state : myThreadDump) {
         buf.append(state.getStackTrace()).append("\n\n");
@@ -423,7 +424,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     @NotNull
     @Override
     public String getDefaultFilePath() {
-      final VirtualFile baseDir = myProject.getBaseDir();
+      VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
       }

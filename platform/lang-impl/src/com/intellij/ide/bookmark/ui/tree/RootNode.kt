@@ -11,7 +11,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.util.containers.ContainerUtil
 
 internal class RootNode(panel: BookmarksView) : AbstractTreeNode<BookmarksView>(panel.project, panel) {
-  private val extra = BookmarksListProvider.EP.getExtensions(panel.project).sortedByDescending { it.weight }.mapNotNull { it.createNode() }
+  private val extra by lazy {
+    BookmarksListProvider.EP
+      .getExtensions(panel.project)
+      .sortedByDescending { it.weight }
+      .mapNotNull { it.createNode() }
+      .onEach { it.parent = this }
+  }
+
   private val cache = AbstractTreeNodeCache<BookmarkGroup, GroupNode>(this) { GroupNode(project!!, it) }
 
   private val BookmarkGroup.anyLineBookmark
@@ -21,7 +28,7 @@ internal class RootNode(panel: BookmarksView) : AbstractTreeNode<BookmarksView>(
   override fun getChildren(): List<AbstractTreeNode<*>> {
     val nodes = cache.getNodes(bookmarksManager?.groups?.filter { !value.isPopup || it.anyLineBookmark } ?: emptyList())
     return when {
-      !value.isPopup -> ContainerUtil.concat(nodes, extra.onEach { it.parent = this })
+      !value.isPopup -> ContainerUtil.concat(nodes, extra.filter { it.children.isNotEmpty() })
       nodes.size == 1 -> nodes[0].children.onEach { it.parent = this }
       else -> nodes
     }

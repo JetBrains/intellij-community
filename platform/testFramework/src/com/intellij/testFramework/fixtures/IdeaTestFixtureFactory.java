@@ -54,4 +54,7 @@ public abstract class IdeaTestFixtureFactory {
 
   @NotNull
   public abstract BareTestFixture createBareFixture();
+
+  @NotNull
+  public abstract SdkTestFixture createSdkFixture();
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -23,12 +24,12 @@ import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationR
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
+abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
   companion object {
-    internal fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
-      val branchesGetter = data.containingBranchesGetter
-      val branches = branchesGetter.getContainingBranchesQuickly(root, hash)
+    fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
+      val branches = findContainingBranchesQuickly(data, root, hash)
       if (branches == null) {
+        val branchesGetter = data.containingBranchesGetter
         return ProgressManager.getInstance()
           .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
             {
@@ -41,6 +42,72 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
       }
       return branches
     }
+
+    fun findContainingBranchesQuickly(data: VcsLogData, root: VirtualFile, hash: Hash): List<String>? {
+      val branchesGetter = data.containingBranchesGetter
+      return branchesGetter.getContainingBranchesQuickly(root, hash)
+    }
+
+    /**
+     * Check that a path which contains selected commits and doesn't contain merge commits exists in HEAD
+     */
+    @Nls
+    fun checkHeadLinearHistory(commitEditingData: MultipleCommitEditingData, @NlsContexts.ProgressTitle progressText: String): String? {
+      val project = commitEditingData.project
+      val root = commitEditingData.repository.root
+      val logData = commitEditingData.logData
+      val dataPack = logData.dataPack
+      val commits = commitEditingData.selectedCommitList
+      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+      val commitsInfo = permanentGraph.permanentCommitsInfo
+      val commitIndices = commits.map { logData.getCommitIndex(it.id, root) }
+
+      var description: String? = null
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        {
+          val commitNodeIds = commitsInfo.convertToNodeIds(commitIndices).toMutableSet()
+          val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD)!!
+          val headIndex = logData.getCommitIndex(headRef.commitHash, root)
+          val headId = commitsInfo.getNodeId(headIndex)
+          val maxNodeId = commitNodeIds.maxOrNull()!!
+
+          val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
+          val used = BitSetFlags(permanentGraph.linearGraph.nodesCount())
+          DfsWalk(listOf(headId), graph, used).walk(true) { nodeId ->
+            ProgressManager.checkCanceled()
+            val parents = graph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
+            when {
+              parents.size != 1 -> { // commit is root or merge
+                val commit = getCommitIdByNodeId(logData, permanentGraph, nodeId)
+                description = GitBundle.message(
+                  "rebase.log.multiple.commit.editing.action.specific.commit.root.or.merge",
+                  commit.hash,
+                  parents.size
+                )
+                false
+              }
+              nodeId > maxNodeId -> { // we can no longer meet remaining selected commits below
+                val commitNotInHead = getCommitIdByNodeId(logData, permanentGraph, commitNodeIds.first())
+                description = GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.not.in.head", commitNotInHead.hash)
+                false
+              }
+              else -> {
+                commitNodeIds.remove(nodeId)
+                commitNodeIds.isNotEmpty()
+              }
+            }
+          }
+        }, progressText,
+        true,
+        project
+      )
+      return description
+    }
+
+    private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: Int): CommitId =
+      data.getCommitId(permanentGraph.permanentCommitsInfo.getCommitId(nodeId))!!
+
   }
 
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
@@ -153,7 +220,8 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
   @Nls
   protected open fun checkCommitsEditingAvailability(commitEditingData: T): String? {
-    val description = checkHeadLinearHistory(commitEditingData)
+    val description = checkHeadLinearHistory(commitEditingData,
+      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"))
     if (description != null) {
       return description
     }
@@ -167,67 +235,6 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     }
 
     return null
-  }
-
-  private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: Int): CommitId =
-    data.getCommitId(permanentGraph.permanentCommitsInfo.getCommitId(nodeId))!!
-
-  /**
-   * Check that a path which contains selected commits and doesn't contain merge commits exists in HEAD
-   */
-  @Nls
-  private fun checkHeadLinearHistory(commitEditingData: MultipleCommitEditingData): String? {
-    val project = commitEditingData.project
-    val root = commitEditingData.repository.root
-    val logData = commitEditingData.logData
-    val dataPack = logData.dataPack
-    val commits = commitEditingData.selectedCommitList
-    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
-    val commitsInfo = permanentGraph.permanentCommitsInfo
-    val commitIndices = commits.map { logData.getCommitIndex(it.id, root) }
-
-    var description: String? = null
-
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        val commitNodeIds = commitsInfo.convertToNodeIds(commitIndices).toMutableSet()
-        val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD)!!
-        val headIndex = logData.getCommitIndex(headRef.commitHash, root)
-        val headId = commitsInfo.getNodeId(headIndex)
-        val maxNodeId = commitNodeIds.maxOrNull()!!
-
-        val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
-        val used = BitSetFlags(permanentGraph.linearGraph.nodesCount())
-        DfsWalk(listOf(headId), graph, used).walk(true) { nodeId ->
-          ProgressManager.checkCanceled()
-          val parents = graph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
-          when {
-            parents.size != 1 -> { // commit is root or merge
-              val commit = getCommitIdByNodeId(logData, permanentGraph, nodeId)
-              description = GitBundle.message(
-                "rebase.log.multiple.commit.editing.action.specific.commit.root.or.merge",
-                commit.hash,
-                parents.size
-              )
-              false
-            }
-            nodeId > maxNodeId -> { // we can no longer meet remaining selected commits below
-              val commitNotInHead = getCommitIdByNodeId(logData, permanentGraph, commitNodeIds.first())
-              description = GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.not.in.head", commitNotInHead.hash)
-              false
-            }
-            else -> {
-              commitNodeIds.remove(nodeId)
-              commitNodeIds.isNotEmpty()
-            }
-          }
-        }
-      },
-      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
-      true,
-      project
-    )
-    return description
   }
 
   private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {

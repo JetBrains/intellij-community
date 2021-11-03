@@ -76,6 +76,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             GenerationPhase.PROJECT_GENERATION
         ) {
             defaultValue = value(JsCompiler.BOTH)
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.tooltip")
             filter = { reference, compilerCandidate ->
                 when {
                     reference !is ModuleConfiguratorSettingReference<*, *> -> false

@@ -4,18 +4,16 @@ Reports generic classes with omitted type parameters. Such <i>raw</i> use of gen
 in Java, but it defeats the purpose of type parameters and may mask bugs. This inspection mirrors the
 <code>rawtypes</code> warning of <code>javac</code>.
 <p><b>Examples:</b></p>
-<ul>
-  <li>
-    <pre><code>
-      List list = new ArrayList&lt;String&gt;(); //warning: Raw use of parameterized class 'List'
-      list.add(1);                         //list of strings was created but integer was accepted as well which would lead to runtime exceptions
-    </code></pre>
-  </li>
-  <li>
-    <pre><code>
-      IntFunction&lt;List&lt;?&gt;[]> fun = List[]::new; //no warning as it's impossible to provide type arguments during array creation</code></pre>
-  </li>
-</ul>
+<pre><code>
+//warning: Raw use of parameterized class 'List'
+List list = new ArrayList&lt;String&gt;();
+//list of strings was created but integer is accepted as well
+list.add(1);
+</code></pre>
+<pre><code>
+//no warning as it's impossible to provide type arguments during array creation
+IntFunction&lt;List&lt;?&gt;[]> fun = List[]::new;
+</code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>

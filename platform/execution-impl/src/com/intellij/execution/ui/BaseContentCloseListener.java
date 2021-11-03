@@ -20,10 +20,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Objects;
 
 public abstract class BaseContentCloseListener implements VetoableProjectManagerListener,
@@ -45,6 +48,17 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     final ContentManager contentManager = content.getManager();
     if (contentManager != null) {
       contentManager.addContentManagerListener(this);
+      content.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (ContentImpl.PROP_CONTENT_MANAGER.equals(evt.getPropertyName())) {
+            ContentManager oldValue = (ContentManager)evt.getOldValue();
+            ContentManager newValue = (ContentManager)evt.getNewValue();
+            if (oldValue != null) oldValue.removeContentManagerListener(BaseContentCloseListener.this);
+            if (newValue != null) newValue.addContentManagerListener(BaseContentCloseListener.this);
+          }
+        }
+      });
     }
     ProjectManager.getInstance().addProjectManagerListener(myProject, this);
     Disposer.register(parentDisposable, this);
@@ -58,6 +72,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     }
   }
 
+  @Override
   public void dispose() {
     if (myContent == null) return;
 
@@ -125,7 +140,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
       // Do not show any UI, destroy the process silently, do not wait for process termination.
       processHandler.destroyProcess();
       LOG.info("Destroying process under write action (name: " + sessionName + ", "
-               + processHandler.getClass() + ", " + processHandler.toString() + ")");
+               + processHandler.getClass() + ", " + processHandler + ")");
       return true;
     }
     GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);

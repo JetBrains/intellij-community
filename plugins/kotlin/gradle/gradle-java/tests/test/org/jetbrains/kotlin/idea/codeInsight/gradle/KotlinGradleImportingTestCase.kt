@@ -169,16 +169,17 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return getRootManager(moduleName).orderEntries.asList().filterIsInstanceWithChecker { it.presentableName == depName }
     }
 
-    protected fun linkProject(projectFilePath: String) {
+    protected fun linkProject(projectFilePath: String = projectPath) {
         val localFileSystem = LocalFileSystem.getInstance()
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
+            ?: error("Failed to find projectFile: $projectFilePath")
         ExternalSystemUtil.linkExternalProject(
-            GradleConstants.SYSTEM_ID,
-            createLinkSettings(projectFile!!.toNioPath(), myProject),
-            myProject,
-            null,
-            false,
-            ProgressExecutionMode.MODAL_SYNC
+            /* externalSystemId = */ GradleConstants.SYSTEM_ID,
+            /* projectSettings = */ createLinkSettings(projectFile.toNioPath(), myProject),
+            /* project = */ myProject,
+            /* importResultCallback = */ null,
+            /* isPreviewMode = */ false,
+            /* progressExecutionMode = */ ProgressExecutionMode.MODAL_SYNC
         )
     }
 

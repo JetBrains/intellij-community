@@ -22,8 +22,10 @@ import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.getParentVer
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.reposearch.DependencySearchService
 import java.util.regex.Pattern
 
@@ -59,8 +61,23 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return false
     }
 
-    return if (MAGIC_VERSION_PATTERN.matcher(id.version!!).matches()) true
-    else manager.hasVersion(id.groupId, id.artifactId, id.version) // todo handle ranges more sensibly
+    if (MAGIC_VERSION_PATTERN.matcher(id.version!!).matches()) return true
+
+    val projectsManager = MavenProjectsManager.getInstance(context.project)
+    if (projectsManager.findProject(id) != null) return true
+
+    // Check if artifact was found on importing.
+    val projectFile = getMavenProjectFile(context)
+    val mavenProject = if (projectFile == null) null else projectsManager.findProject(projectFile)
+    if (mavenProject != null) {
+      for (artifact in mavenProject.findDependencies(id)) {
+        if (artifact.resolved()) {
+          return true
+        }
+      }
+    }
+
+    return manager.hasLocalVersion(id.groupId, id.artifactId, id.version) ?: false
   }
 
   override fun doGetVariants(id: MavenId, searchService: DependencySearchService): Set<String> {

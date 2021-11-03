@@ -122,7 +122,7 @@ internal open class UpdateIdeFromSourcesAction
       state.pluginDirectoriesForDisabledPlugins = list
       bundledPluginDirsToSkip = list
       nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
-        !it.isBundled && it.isEnabled && it.version != null && it.version.contains("SNAPSHOT")
+        !it.isBundled && it.isEnabled
       }.map { it.path }.filter { it.isDirectory }.map { it.name }
     }
     else {

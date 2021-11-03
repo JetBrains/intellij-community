@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -337,5 +337,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     remotePrefix = norm(remotePrefix);
     return path.startsWith(remotePrefix) &&
            (path.length() == remotePrefix.length() || remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
+  }
+
+  @Override
+  public String toString() {
+    return "PathMappingSettings{" +
+           "myPathMappings=" + myPathMappings +
+           "} " + super.toString();
   }
 }

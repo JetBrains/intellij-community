@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
@@ -180,7 +179,7 @@ final class BuildTasksImpl extends BuildTasks {
       void run() {
         buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
         buildContext.messages.debug("Building provided modules list for the following modules: $modules")
-        FileUtil.delete(targetFile)
+        Files.deleteIfExists(targetFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
         runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules,
                               List.of("listBundledPlugins", targetFile.toString()))
@@ -224,15 +223,13 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
-    List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
-      "idea.home.path"   : context.paths.projectHome,
-      "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
-      "idea.config.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/config"
-    ])))
-    if (context.productProperties.platformPrefix != null) {
-      //noinspection SpellCheckingInspection
-      jvmArgs.add("-Didea.platform.prefix=" + context.productProperties.platformPrefix)
-    }
+    List<String> jvmArgs = new ArrayList<>()
+    BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome)
+    BuildUtils.addVmProperty(jvmArgs, "idea.system.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/system")
+    BuildUtils.addVmProperty(jvmArgs, "idea.config.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/config")
+
+    BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
+    BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
     String debugPort = System.getProperty("intellij.build.${arguments.first()}.debug.port")
@@ -243,10 +240,13 @@ final class BuildTasksImpl extends BuildTasks {
     List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
     Set<String> additionalPluginIds = new HashSet<>()
     for (Path pluginPath : additionalPluginPaths) {
-      for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
-        if (ideClasspath.add(jarFile.absolutePath)) {
+      for (Path jarFile : BuildUtils.getPluginJars(pluginPath)) {
+        if (ideClasspath.add(jarFile.toString())) {
           context.messages.debug("$jarFile from plugin $pluginPath")
-          ContainerUtil.addIfNotNull(additionalPluginIds, BuildUtils.readPluginId(jarFile))
+          String pluginId = BuildUtils.readPluginId(jarFile)
+          if (pluginId != null) {
+            additionalPluginIds.add(pluginId)
+          }
         }
       }
     }
@@ -676,37 +676,6 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  static List<String> addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
-    Path destLibDir = distDir.resolve("lib")
-    Path destProjectorLibDir = destLibDir.resolve("projector")
-    List<String> extraJars = new ArrayList<>()
-    Files.createDirectories(destProjectorLibDir)
-
-    def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
-
-    ArrayList<File> projectorLibsToCopy = new ArrayList<>()
-    ArrayList<String> failedLibs = new ArrayList<>()
-    for (String libName : libNamesToCopy) {
-      try {
-        projectorLibsToCopy.addAll(buildContext.project.libraryCollection.findLibrary(libName).getFiles(JpsOrderRootType.COMPILED))
-      } catch (Throwable ignored) {
-        failedLibs.add(libName)
-      }
-    }
-
-    if (!failedLibs.isEmpty()) {
-      buildContext.messages.error("Failed to get projector libraries: ${failedLibs.join(", ")}")
-    }
-
-    for (File file : projectorLibsToCopy) {
-      Files.copy(file.toPath(), destProjectorLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
-      extraJars += "projector/" + file.name
-    }
-
-    return extraJars
-  }
-
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
@@ -927,7 +896,11 @@ idea.fatal.error.notification=disabled
   }
 
   static <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks, BuildContext buildContext) {
-    if (tasks.empty) return Collections.emptyList()
+    tasks = tasks.findAll { !buildContext.options.buildStepsToSkip.contains(it.stepId) }
+    if (tasks.empty) {
+      return Collections.emptyList()
+    }
+
     if (!buildContext.options.runBuildStepsInParallel) {
       return tasks.collect {
         it.execute(buildContext)
@@ -1027,7 +1000,7 @@ idea.fatal.error.notification=disabled
       jar(artifactName, true) {
         module(updaterModule)
         for (file in libraryFiles) {
-          ant.zipfileset(src: file.absolutePath)
+          ant.zipfileset(src: file.absolutePath, excludes: 'META-INF/**')
         }
       }
     }

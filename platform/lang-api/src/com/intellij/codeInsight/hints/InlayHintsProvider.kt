@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -14,14 +15,28 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
-const val CODE_VISION_GROUP = "code.vision"
-const val TYPES_GROUP = "types"
+enum class InlayGroup(val key: String) {
+  CODE_VISION_GROUP("settings.hints.group.code.vision"),
+  PARAMETERS_GROUP("settings.hints.group.parameters"),
+  TYPES_GROUP("settings.hints.group.types"),
+  VALUES_GROUP("settings.hints.group.values"),
+  ANNOTATIONS_GROUP("settings.hints.group.annotations"),
+  METHOD_CHAINS_GROUP("settings.hints.group.method.chains"),
+  LAMBDAS_GROUP("settings.hints.group.lambdas"),
+  CODE_AUTHOR_GROUP("settings.hints.group.code.author"),
+  URL_PATH_GROUP("settings.hints.group.url.path"),
+  OTHER_GROUP("settings.hints.group.other");
+
+  override fun toString(): @Nls String {
+    return ApplicationBundle.message(key)
+  }}
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
   private fun findLanguagesWithHintsSupport(): List<Language> {
@@ -58,6 +73,14 @@ interface InlayHintsProvider<T : Any> {
   fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector?
 
   /**
+   * Returns quick collector of placeholders.
+   * Placeholders are shown on editor opening and stay until [getCollectorFor] collector hints are calculated.
+   */
+  @ApiStatus.Experimental
+  @JvmDefault
+  fun getPlaceholdersCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector? = null
+
+  /**
    * Settings must be plain java object, fields of these settings will be copied via serialization.
    * Must implement `equals` method, otherwise settings won't be able to track modification.
    * Returned object will be used to create configurable and collector.
@@ -74,12 +97,18 @@ interface InlayHintsProvider<T : Any> {
   val name: String
 
   @JvmDefault
-  val groupId: String get() = CODE_VISION_GROUP
+  val group: InlayGroup get() = InlayGroup.OTHER_GROUP
 
   /**
    * Used for persisting settings.
    */
   val key: SettingsKey<T>
+
+  @JvmDefault
+  val description: String?
+    get() {
+      return getProperty("inlay." + key.id + ".description")
+    }
 
   /**
    * Text, that will be used in the settings as a preview.
@@ -101,6 +130,10 @@ interface InlayHintsProvider<T : Any> {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
+
+  @Nls
+  @JvmDefault
+  fun getProperty(key: String): String? = null
 
   val isVisibleInSettings: Boolean
     get() = true

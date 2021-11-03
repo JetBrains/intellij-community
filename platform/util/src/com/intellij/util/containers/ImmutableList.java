@@ -98,7 +98,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     if (this instanceof SubList) {
       //noinspection unchecked
       List<E> original = ((SubList)this).l;
-      int originalOffset = ((SubList)this).offset;
+      int originalOffset = ((SubList<?>)this).offset;
       return new SubList<>(original, fromIndex + originalOffset, toIndex + originalOffset);
     }
     return new SubList<>(this, fromIndex, toIndex);

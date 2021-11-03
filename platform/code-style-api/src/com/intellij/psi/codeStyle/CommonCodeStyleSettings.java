@@ -240,6 +240,9 @@ public class CommonCodeStyleSettings {
    * Tells if a space is added when commenting/uncommenting lines with a line comment.
    */
   public boolean LINE_COMMENT_ADD_SPACE = false;
+  public boolean BLOCK_COMMENT_ADD_SPACE = false;
+
+  public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 

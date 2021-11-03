@@ -7,7 +7,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
@@ -44,7 +44,7 @@ interface ProjectModuleOperationProvider {
      *
      * @return `true` opt in to [PackageUpdateInspection], false otherwise.
      * @see PackageUpdateInspection
-     * @see PackageSearchDependencyUpdateQuickFix
+     * @see PackageSearchDependencyUpgradeQuickFix
      */
     fun usesSharedPackageUpdateInspection(): Boolean = false
 

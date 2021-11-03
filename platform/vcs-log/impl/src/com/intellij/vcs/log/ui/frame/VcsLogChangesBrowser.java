@@ -20,7 +20,10 @@ import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
@@ -46,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
@@ -112,6 +114,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       });
     }
 
+    hideViewerBorder();
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
@@ -131,12 +134,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
-  }
-
-  @NotNull
-  @Override
-  protected Border createViewerBorder() {
-    return IdeBorderFactory.createBorder(SideBorder.TOP);
   }
 
   public void setToolbarHeightReferent(@NotNull JComponent referent) {

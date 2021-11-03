@@ -23,8 +23,7 @@ internal sealed class KnownRepositories(
                     targetModules.modules.map { it.projectModule }
                         .contains(usageInfo.projectModule)
                 }
-            }
-        )
+            }, this)
 
         companion object {
 
@@ -32,12 +31,14 @@ internal sealed class KnownRepositories(
         }
     }
 
-    data class InTargetModules(override val repositories: List<RepositoryModel>) : KnownRepositories(repositories) {
+    data class InTargetModules(
+        override val repositories: List<RepositoryModel>,
+        val allKnownRepositories: All
+    ) : KnownRepositories(repositories) {
 
         fun repositoryToAddWhenInstallingOrUpgrading(
             packageModel: PackageModel,
-            selectedVersion: PackageVersion,
-            allKnownRepositories: All
+            selectedVersion: PackageVersion
         ): RepositoryModel? {
             val versionRepositoryIds = packageModel.remoteInfo?.versions
                 ?.find { it.version == selectedVersion.versionName }
@@ -51,7 +52,7 @@ internal sealed class KnownRepositories(
 
         companion object {
 
-            val EMPTY = InTargetModules(emptyList())
+            val EMPTY = InTargetModules(emptyList(), All.EMPTY)
         }
     }
 }

@@ -244,12 +244,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     return true;
   }
 
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "deprecation"})
   void updateTheOnlyProjectField() {
     boolean isDefaultInitialized = isDefaultProjectInitialized();
     boolean isLightEditActive = LightEditService.getInstance().getProject() != null;
     synchronized (lock) {
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null;
+      ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null);
     }
   }
 
@@ -283,6 +282,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @Override
   public boolean forceCloseProject(@NotNull Project project) {
     return closeProject(project, /* isSaveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
+  }
+
+  @Override
+  public boolean saveAndForceCloseProject(@NotNull Project project) {
+    return closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, /* checkCanClose = */ false);
   }
 
   // return true if successful

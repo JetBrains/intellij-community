@@ -3,7 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
@@ -12,34 +11,34 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultStateSetter
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageSetter
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
-import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.newCoroutineContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
@@ -47,57 +46,50 @@ import javax.swing.JScrollPane
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
-    rootDataModelProvider: RootDataModelProvider,
-    selectedPackageSetter: SelectedPackageSetter,
-    searchResultStateSetter: SearchResultStateSetter,
-    targetModuleSetter: TargetModuleSetter,
-    searchClient: SearchClient,
-    operationExecutor: OperationExecutor,
-    project: Project,
-    programmaticSearchQueryInputsFlow: Flow<String>
+    val project: Project,
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
-
-    companion object {
-
-        operator fun invoke(project: Project) = PackageManagementPanel(
-            rootDataModelProvider = project.packageSearchDataService,
-            selectedPackageSetter = project.packageSearchDataService,
-            searchResultStateSetter = project.packageSearchDataService,
-            targetModuleSetter = project.packageSearchDataService,
-            searchClient = project.packageSearchDataService,
-            operationExecutor = project.packageSearchDataService,
-            project = project,
-            programmaticSearchQueryInputsFlow = project.packageSearchDataService.programmaticSearchQueryStateFlow
-        )
-    }
 
     override val coroutineContext =
         project.lifecycleScope.newCoroutineContext(SupervisorJob() + CoroutineName("PackageManagementPanel"))
 
     private val operationFactory = PackageSearchOperationFactory()
+    private val operationExecutor = NotifyingOperationExecutor(project)
 
-    private val modulesTree = ModulesTree(targetModuleSetter)
+    private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val targetModulesFlow = targetModulesChannel.consumeAsFlow()
+        .shareIn(this, SharingStarted.Eagerly, 0)
+
+    private val modulesTree = ModulesTree { targetModulesChannel.trySend(it) }
     private val modulesScrollPanel = JBScrollPane(
         modulesTree,
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
         JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     )
 
-    private val project = rootDataModelProvider.project
+    private val knownRepositoriesInTargetModulesFlow = combine(
+        targetModulesFlow,
+        project.packageSearchProjectService.allInstalledKnownRepositoriesFlow
+    ) { targetModules, installedRepositories ->
+        installedRepositories.filterOnlyThoseUsedIn(targetModules)
+    }
 
     private val packagesListPanel = PackagesListPanel(
         project = project,
-        searchClient = searchClient,
         operationExecutor = operationExecutor,
         operationFactory = operationFactory,
-        onItemSelectionChanged = { launch { selectedPackageSetter.setSelectedPackage(it) } },
-        onSearchResultStateChanged = { searchResult, version, scope ->
-            launch { searchResultStateSetter.setSearchResultState(searchResult, version, scope) }
+        viewModelFlow = combine(
+            targetModulesFlow,
+            project.packageSearchProjectService.installedPackagesStateFlow,
+            project.packageSearchProjectService.packageUpgradesStateFlow,
+            knownRepositoriesInTargetModulesFlow
+        ) { targetModules, installedPackages,
+            packageUpgrades, knownReposInModules ->
+            PackagesListPanel.ViewModel(targetModules, installedPackages, packageUpgrades, knownReposInModules)
         },
-        programmaticSearchQueryInputsFlow = programmaticSearchQueryInputsFlow
+        dataProvider = project.packageSearchProjectService.dataProvider
     )
 
-    private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
+    private val packageDetailsPanel = PackageDetailsPanel(operationExecutor)
 
     private val packagesSplitter = JBSplitter(
         "PackageSearch.PackageManagementPanel.DetailsSplitter",
@@ -119,6 +111,10 @@ internal class PackageManagementPanel(
     init {
         updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
 
+        project.uiStateSource.targetModulesFlow
+            .onEach { targetModulesChannel.send(it) }
+            .launchIn(this)
+
         modulesScrollPanel.apply {
             border = BorderFactory.createEmptyBorder()
             minimumSize = Dimension(250.scaled(), 0)
@@ -128,73 +124,30 @@ internal class PackageManagementPanel(
 
         packagesListPanel.content.minimumSize = Dimension(250.scaled(), 0)
 
-        packagesListPanel.selectedPackage.onEach { selectedPackage ->
-            selectedPackageSetter.setSelectedPackage(selectedPackage)
-        }.launchIn(this)
-
-        rootDataModelProvider.dataStatusState.onEach { status ->
-            packagesListPanel.setIsBusy(status.isBusy)
-        }.launchIn(this)
-
-        rootDataModelProvider.dataStatusState.map { it.isExecutingOperations }
-            .onEach { isExecutingOperations ->
-                content.isEnabled = !isExecutingOperations
-                content.updateAndRepaint()
-            }.launchIn(this)
-
-        rootDataModelProvider.dataModelFlow.filter { it.moduleModels.isNotEmpty() }
-            .onEach { data ->
-                val (treeModel, selectionPath) = readAction {
-                    computeModuleTreeModel(
-                        modules = data.moduleModels,
-                        currentTargetModules = data.targetModules,
-                        traceInfo = data.traceInfo
-                    )
-                }
-                modulesTree.display(
-                    ModulesTree.ViewModel(
-                        treeModel = treeModel,
-                        traceInfo = data.traceInfo,
-                        pendingSelectionPath = selectionPath
-                    )
-                )
-            }
+        project.packageSearchProjectService.moduleModelsStateFlow
+            .map { computeModuleTreeModel(it) }
+            .flowOn(Dispatchers.Default)
+            .onEach { modulesTree.display(it) }
+            .flowOn(Dispatchers.AppUI)
             .launchIn(this)
 
-        rootDataModelProvider.dataModelFlow.onEach { data ->
-            val tableItems = readAction {
-                computePackagesTableItems(
-                    project = project,
-                    packages = data.packageModels,
-                    selectedPackage = data.selectedPackage,
-                    targetModules = data.targetModules,
-                    traceInfo = data.traceInfo
-                )
-            }
-
-            packagesListPanel.display(
-                PackagesListPanel.ViewModel(
-                    headerData = data.headerData,
-                    targetModules = data.targetModules,
-                    knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
-                    allKnownRepositories = data.allKnownRepositories,
-                    filterOptions = data.filterOptions,
-                    tableItems = tableItems,
-                    traceInfo = data.traceInfo
-                )
+        combine(
+            knownRepositoriesInTargetModulesFlow,
+            packagesListPanel.selectedPackageStateFlow,
+            targetModulesFlow,
+            packagesListPanel.onlyStableStateFlow
+        ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
+            targetModules, onlyStable ->
+            PackageDetailsPanel.ViewModel(
+                selectedPackageModel = selectedUiPackageModel,
+                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                targetModules = targetModules,
+                onlyStable = onlyStable,
+                invokeLaterScope = this
             )
-
-            packageDetailsPanel.display(
-                PackageDetailsPanel.ViewModel(
-                    selectedPackageModel = data.selectedPackage,
-                    knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
-                    allKnownRepositories = data.allKnownRepositories,
-                    targetModules = data.targetModules,
-                    onlyStable = data.filterOptions.onlyStable,
-                    invokeLaterScope = this
-                )
-            )
-        }
+        }.flowOn(Dispatchers.Default)
+            .onEach { packageDetailsPanel.display(it) }
+            .flowOn(Dispatchers.AppUI)
             .launchIn(this)
     }
 

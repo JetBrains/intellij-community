@@ -151,7 +151,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
     if (!needHeadBreak(data, firstElement, JoinOrSplit.JOIN)) {
       val prevBreak = prevBreak(data, firstElement)
       if (prevBreak != null) {
-        replacements.add(prevBreak.textRange to getHeadBreakJoinReplacement())
+        replacements.add(prevBreak.textRange to getHeadBreakJoinReplacement(firstElement))
         addSiblingWhitespaceReplacement(replacements, prevBreak)
       }
     }
@@ -172,14 +172,14 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
     if (!needTailBreak(data, lastElement, JoinOrSplit.JOIN)) {
       val nextBreak = nextBreak(data, lastElement)
       if (nextBreak != null) {
-        replacements.add(nextBreak.textRange to getTailBreakJoinReplacement())
+        replacements.add(nextBreak.textRange to getTailBreakJoinReplacement(lastElement))
         addSiblingWhitespaceReplacement(replacements, nextBreak)
       }
     }
   }
 
-  protected open fun getTailBreakJoinReplacement() = ""
-  protected open fun getHeadBreakJoinReplacement() = ""
+  protected open fun getTailBreakJoinReplacement(lastElement: PsiElement) = ""
+  protected open fun getHeadBreakJoinReplacement(firstElement: PsiElement) = ""
 
   protected fun findOffsetForBreakAfter(data: ListWithElements, element: PsiElement): Int {
     val after = skipAcceptableElements(data, element)

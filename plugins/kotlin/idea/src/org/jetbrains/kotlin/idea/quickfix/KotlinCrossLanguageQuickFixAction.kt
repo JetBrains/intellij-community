@@ -12,9 +12,10 @@ abstract class KotlinCrossLanguageQuickFixAction<out T : PsiElement>(element: T)
     override val isCrossLanguageFix: Boolean
         get() = true
 
-    override final fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+    final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val element = element
-        if (element != null && FileModificationService.getInstance().prepareFileForWrite(element.containingFile)) {
+        if (element != null &&
+            (!element.isPhysical || FileModificationService.getInstance().prepareFileForWrite(element.containingFile))) {
             invokeImpl(project, editor, file)
         }
     }

@@ -171,13 +171,13 @@ public final class Switcher extends BaseSwitcherAction {
       }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
+      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       if (pinned) {
+        registerAction(this::closeTabOrToolWindow, ActionUtil.getShortcutSet("DeleteRecentFiles"));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
       }
-      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
-      registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
-      if (!pinned) {
+      else {
         registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
         registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
         registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT");

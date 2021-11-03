@@ -10,21 +10,21 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableCon
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.logPreferencesChanged
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultMavenScopeChangedField
-import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfigurationDefaults
-import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.packageSearchMavenConfigurationForProject
+import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-class MavenConfigurableContributor(private val project: Project) : ConfigurableContributor {
+internal class MavenConfigurableContributor(private val project: Project) : ConfigurableContributor {
 
     override fun createDriver() = MavenConfigurableContributorDriver(project)
 }
 
-class MavenConfigurableContributorDriver(project: Project) : ConfigurableContributorDriver {
+internal class MavenConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
 
     private var modified: Boolean = false
-    private val configuration = packageSearchMavenConfigurationForProject(project)
+    private val configuration
+        get() = PackageSearchMavenConfiguration.getInstance(project)
 
     private val textFieldChangeListener = object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -49,7 +49,7 @@ class MavenConfigurableContributorDriver(project: Project) : ConfigurableContrib
 
         val label = JLabel(
             " ${PackageSearchBundle.message("packagesearch.configuration.maven.scopes")} " +
-                PackageSearchMavenConfigurationDefaults.MavenScopes.replace(",", ", ")
+                configuration.getMavenScopes().joinToString(", ")
         )
         builder.addComponentToRightColumn(
             RelativeFont.TINY.install(RelativeFont.ITALIC.install(label))
@@ -66,7 +66,7 @@ class MavenConfigurableContributorDriver(project: Project) : ConfigurableContrib
     }
 
     override fun restoreDefaults() {
-        mavenScopeEditor.text = PackageSearchMavenConfigurationDefaults.MavenScope
+        mavenScopeEditor.text = configuration.determineDefaultMavenScope()
         modified = true
     }
 
@@ -74,9 +74,8 @@ class MavenConfigurableContributorDriver(project: Project) : ConfigurableContrib
         configuration.defaultMavenScope = mavenScopeEditor.text
 
         logPreferencesChanged(
-            preferencesDefaultMavenScopeChangedField.with(
-                configuration.defaultMavenScope != PackageSearchMavenConfigurationDefaults.MavenScope
-            ),
+            preferencesDefaultMavenScopeChangedField
+                .with(configuration.defaultMavenScope != configuration.determineDefaultMavenScope()),
         )
     }
 }

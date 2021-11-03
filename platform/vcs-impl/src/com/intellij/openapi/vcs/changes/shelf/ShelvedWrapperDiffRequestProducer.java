@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -55,6 +56,19 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer {
   @Override
   public @NotNull String getName() {
     return myChange.getRequestName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ShelvedWrapperDiffRequestProducer producer = (ShelvedWrapperDiffRequestProducer)o;
+    return Objects.equals(myChange, producer.myChange);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myChange);
   }
 
   @Override

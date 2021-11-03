@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -285,8 +286,21 @@ public final class CommandMerger {
           if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
           break;
         }
+
+        // if undo is block by other global command, trying to split global command and undo only local change in editor
+        if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (myManager.splitGlobalCommand(undoRedo)) {
+            var splittedUndo = createUndoOrRedo(editor, true);
+            if (splittedUndo != null) undoRedo = splittedUndo;
+          }
+        }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
+
+      if(editor != null && !isUndo && Registry.is("ide.undo.fallback")){
+        myManager.gatherGlobalCommand(undoRedo);
+      }
+
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();

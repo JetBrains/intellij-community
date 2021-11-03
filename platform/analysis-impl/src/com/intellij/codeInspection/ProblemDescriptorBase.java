@@ -56,7 +56,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     TextRange startElementRange = getAnnotationRange(startElement);
     LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
-    TextRange endElementRange = getAnnotationRange(endElement);
+    TextRange endElementRange = startElement == endElement ? startElementRange : getAnnotationRange(endElement);
     LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
     if (startElementRange != null
         && endElementRange != null

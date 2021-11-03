@@ -9,12 +9,12 @@ import com.intellij.openapi.project.DumbAwareAction
 internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete")) {
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = false
+    event.presentation.isEnabledAndVisible = false
     val project = event.project ?: return
     val nodes = event.bookmarksView?.selectedNodes ?: return
     val provider = BookmarksListProvider.EP.findFirstSafe(project) { it.canDelete(nodes) } ?: return
     provider.deleteActionText?.let { event.presentation.text = it }
-    event.presentation.isEnabled = true
+    event.presentation.isEnabledAndVisible = true
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -22,5 +22,9 @@ internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete"
     val view = event.bookmarksView ?: return
     val nodes = view.selectedNodes ?: return
     BookmarksListProvider.EP.findFirstSafe(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
+  }
+
+  init {
+    isEnabledInModalContext = true
   }
 }

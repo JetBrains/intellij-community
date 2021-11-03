@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
-import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
@@ -22,6 +22,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
 
+  private val performanceTracker = PerformanceTracker()
+
   init {
     providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
       .associate { it::class.java to it.getDataToCache(project) }
@@ -35,17 +37,21 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                       keysTyped: Int,
                       backspacesTyped: Int,
                       queryLength: Int) {
+    val prevTimeToResult = performanceTracker.timeElapsed
+
     val prevState = currentSearchState.getAndUpdate { prevState ->
       val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
+      performanceTracker.start()
+
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-                                    queryLength, providersCaches)
+        queryLength, providersCaches)
     }
 
-    if (prevState != null && isMLSupportedTab(tabId)) {
+    if (prevState != null && isMLSupportedTab(prevState.tabId)) {
       logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
-                               previousElementsProvider)
+        prevTimeToResult, previousElementsProvider)
     }
   }
 
@@ -59,7 +65,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
         itemIdProvider, cachedContextInfo, state,
-        indexes, selectedItems, closePopup, elementsProvider
+        indexes, selectedItems, closePopup,
+        performanceTracker.timeElapsed, elementsProvider
       )
     }
   }
@@ -73,16 +80,20 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
         itemIdProvider, cachedContextInfo, state,
-        elementsProvider
+        performanceTracker.timeElapsed, elementsProvider
       )
     }
   }
 
-  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
+  fun notifySearchResultsUpdated() {
+    performanceTracker.stop()
+  }
+
+  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val state = getCurrentSearchState()
-    if (state != null && isActionsTab(state.tabId)) {
+    if (state != null && isMLSupportedTab(state.tabId)) {
       val id = itemIdProvider.getId(element)
-      return state.getMLWeight(id, element, contributor, cachedContextInfo, element.matchingDegree)
+      return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
     }
     return -1.0
   }

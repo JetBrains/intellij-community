@@ -132,8 +132,8 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       protected void importScheme(@NotNull String importerName) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
         descriptor.setDescription(AnalysisBundle.message("inspections.settings.profile.file.chooser.description"));

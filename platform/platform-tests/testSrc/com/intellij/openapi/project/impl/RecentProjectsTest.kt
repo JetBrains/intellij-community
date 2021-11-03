@@ -80,11 +80,11 @@ class RecentProjectsTest {
 
   @Test
   fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
-    val path = tempDir.newPath("z1")
-    var project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+    val z1 = tempDir.newPath("z1")
+    var project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
     try {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+      project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
       val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"

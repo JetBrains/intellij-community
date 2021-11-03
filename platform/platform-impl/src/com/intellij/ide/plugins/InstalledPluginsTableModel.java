@@ -25,13 +25,9 @@ public class InstalledPluginsTableModel {
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final @Nullable Project myProject;
-  private final @Nullable ProjectPluginTracker myPluginTracker;
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
-    myPluginTracker = myProject != null ?
-                      ProjectPluginTrackerManager.getInstance().getPluginTracker(myProject) :
-                      null;
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -45,8 +41,9 @@ public class InstalledPluginsTableModel {
     }
     view.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
+    ProjectPluginTracker pluginTracker = myProject != null ? DynamicPluginEnabler.findPluginTracker(myProject) : null;
     for (IdeaPluginDescriptor descriptor : view) {
-      setEnabled(descriptor);
+      setEnabled(descriptor, pluginTracker);
     }
   }
 
@@ -58,12 +55,13 @@ public class InstalledPluginsTableModel {
     return isLoaded(pluginId, getEnabledMap());
   }
 
-  protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
+  private void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor,
+                          @Nullable ProjectPluginTracker pluginTracker) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
 
-    PluginEnabledState enabled = myPluginTracker != null && myPluginTracker.isEnabled(pluginId) ?
+    PluginEnabledState enabled = pluginTracker != null && pluginTracker.isEnabled(pluginId) ?
                                  PluginEnabledState.ENABLED_FOR_PROJECT :
-                                 myPluginTracker != null && myPluginTracker.isDisabled(pluginId) ?
+                                 pluginTracker != null && pluginTracker.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED_FOR_PROJECT :
                                  PluginManagerCore.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED :
@@ -136,14 +134,6 @@ public class InstalledPluginsTableModel {
         enabledMap.put(pluginId, newState);
       }
     }
-  }
-
-  public boolean isEnabled(@NotNull PluginId pluginId) {
-    return !isDisabled(pluginId, myEnabled);
-  }
-
-  public boolean isDisabled(@NotNull PluginId pluginId) {
-    return !isEnabled(pluginId, myEnabled);
   }
 
   protected final @NotNull Map<PluginId, PluginEnabledState> getEnabledMap() {

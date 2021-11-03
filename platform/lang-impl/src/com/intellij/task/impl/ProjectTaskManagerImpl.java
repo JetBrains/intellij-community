@@ -18,10 +18,10 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -110,22 +110,13 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(Module module,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-  }
-
-  @Override
-  public ProjectTask createModulesBuildTask(Module[] modules,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(Arrays.asList(modules), module ->
-             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    if (modules.length == 1) {
+      return new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests);
+    }
+    return new ProjectTaskList(
+      map(Arrays.asList(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests))
+    );
   }
 
   @Override
@@ -143,6 +134,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
+    Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
     List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
 
@@ -170,6 +162,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
       @Override
       public @NotNull <T extends ProjectTask> List<T> getRequestedTasks(@NotNull Class<T> instanceOf) {
@@ -234,6 +227,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     else {
       runnable.run();
     }
+    promiseResult.onProcessed(result -> {
+      buildSpan.complete();
+    });
     return promiseResult;
   }
 

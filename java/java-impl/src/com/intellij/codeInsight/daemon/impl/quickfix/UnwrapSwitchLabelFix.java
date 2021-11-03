@@ -30,7 +30,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiExpression label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    PsiCaseLabelElement label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCaseLabelElement.class);
     if (label == null) return;
     PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;
@@ -52,7 +52,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     tryUnwrap(labelStatement, block);
   }
 
-  public void tryUnwrap(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock block) {
+  private static void tryUnwrap(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock block) {
     if (block instanceof PsiSwitchStatement) {
       BreakConverter converter = BreakConverter.from(block);
       if (converter == null) return;

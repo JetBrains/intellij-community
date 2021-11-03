@@ -13,10 +13,7 @@ class KotlinTopLevelTypeAliasByPackageIndex : StringStubIndexExtension<KtTypeAli
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
     override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        StubIndex.getElements<String, KtTypeAlias>(
-            KEY, s, project,
-            scope, KtTypeAlias::class.java
-        )
+        StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
 
     companion object {
         val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelTypeAliasByPackageIndex::class.java)

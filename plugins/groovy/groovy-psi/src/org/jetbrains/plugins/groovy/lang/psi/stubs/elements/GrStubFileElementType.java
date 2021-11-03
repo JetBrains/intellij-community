@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
@@ -55,7 +55,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
         if (childType == GroovyStubElementTypes.PARAMETER && parentType != GroovyEmptyStubElementTypes.PARAMETER_LIST) {
           return true;
         }
-        if (childType == GroovyEmptyStubElementTypes.PARAMETER_LIST && !(parent.getPsi() instanceof GrMethod)) {
+        if (childType == GroovyEmptyStubElementTypes.PARAMETER_LIST && !(parent.getPsi() instanceof GrMethod || parentType == GroovyStubElementTypes.RECORD_TYPE_DEFINITION)) {
           return true;
         }
         if (childType == GroovyStubElementTypes.MODIFIER_LIST) {

@@ -17,13 +17,19 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
@@ -44,13 +50,14 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -101,11 +108,33 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
             !inheritedProperties.contains(attributeName) &&
             !localProperties.containsKey(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
-          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
-                          new PyMoveAttributeToInitQuickFix());
+          final PyExpression assignedValue = attribute.findAssignedValue();
+          if (assignedValue == null) continue;
+
+          if (expressionReferencesLocalName(assignedValue, node)) {
+            registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
+                            new AddFieldQuickFix(attributeName, "None", containingClass.getName(), false));
+          }
+          else {
+            registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
+                            new PyMoveAttributeToInitQuickFix(),
+                            new AddFieldQuickFix(attributeName, "None", containingClass.getName(), false));
+          }
         }
       }
     }
+  }
+
+  private static boolean expressionReferencesLocalName(@NotNull PyExpression assignedValue, @NotNull PyFunction function) {
+    Collection<PyReferenceExpression> references = PsiTreeUtil.collectElementsOfType(assignedValue, PyReferenceExpression.class);
+    for (PyReferenceExpression reference : references) {
+      if (reference.isQualified()) continue;
+      Collection<PsiElement> resolved = PyResolveUtil.resolveLocally(reference);
+      if (resolved.isEmpty()) continue;
+      if (ContainerUtil.exists(resolved, it -> it instanceof PyParameter && ((PyParameter)it).isSelf())) continue;
+      if (ContainerUtil.exists(resolved, it -> function == ScopeUtil.getScopeOwner(it))) return true;
+    }
+    return false;
   }
 
   private static boolean isDefinedByProperty(@NotNull PyTargetExpression attribute,

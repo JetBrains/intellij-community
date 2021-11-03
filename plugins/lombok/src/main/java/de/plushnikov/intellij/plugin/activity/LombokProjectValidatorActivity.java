@@ -1,7 +1,10 @@
 package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.compiler.server.BuildManagerListener;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -44,7 +47,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
         for (Module module : moduleManager.getModules()) {
           String lombokVersion = Version.parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
-          if (Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
+          if (lombokVersion != null && Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
             return getNotificationGroup().createNotification(
               LombokBundle.message("config.warn.dependency.outdated.title"),
               LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),

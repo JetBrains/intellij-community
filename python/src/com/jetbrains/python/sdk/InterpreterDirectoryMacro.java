@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.PathMacro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class InterpreterDirectoryMacro extends Macro {
+public class InterpreterDirectoryMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

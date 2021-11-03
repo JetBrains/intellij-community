@@ -7,15 +7,15 @@
       "description": "The background of the default bookmark icon."
     },
     {
-      "key": "MnemonicIcon.foreground",
+      "key": "BookmarkMnemonicIcon.foreground",
       "description": "The text color on the bookmark icon with mnemonic."
     },
     {
-      "key": "MnemonicIcon.background",
+      "key": "BookmarkMnemonicIcon.background",
       "description": "The background of the bookmark icon with mnemonic."
     },
     {
-      "key": "MnemonicIcon.borderColor",
+      "key": "BookmarkMnemonicIcon.borderColor",
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {
@@ -579,6 +579,15 @@
       "key": "Notification.ToolWindow.warningForeground"
     },
     {
+      "key": "NotificationsToolwindow.newNotification.background"
+    },
+    {
+      "key": "NotificationsToolwindow.newNotification.hoverBackground"
+    },
+    {
+      "key": "NotificationsToolwindow.Notification.hoverBackground"
+    },
+    {
       "key": "Panel.mouseShortcutBackground",
       "description": "Background of mouse shortcut panel"
     },
@@ -1026,7 +1035,7 @@
       "since": "2021.3"
     },
     {
-      "key": "ToolWindow.Background",
+      "key": "ToolWindow.background",
       "since": "2021.3"
     },
     {
@@ -1312,6 +1321,9 @@
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"
+    },
+    {
+      "key": "Tag.background"
     }
   ]
 }

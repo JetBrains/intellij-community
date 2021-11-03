@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuic
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class PyStatementEffectInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -48,8 +49,8 @@ public class PyStatementEffectInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

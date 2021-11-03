@@ -729,12 +729,10 @@ public final class ExpectedTypesProvider {
         expr.getParent().accept(visitor);
         myResult.addAll(visitor.myResult);
         if (!(expr.getParent() instanceof PsiExpressionList)) {
-          for (int i = 0; i < myResult.size(); i++) {
-            final ExpectedTypeInfo info = myResult.get(i);
-            myResult.set(i, createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailType.NONE, info.getCalledMethod(),
-                                           ((ExpectedTypeInfoImpl)info)::getExpectedName
+          myResult.replaceAll(
+            info -> createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailType.NONE, info.getCalledMethod(),
+                                   ((ExpectedTypeInfoImpl)info)::getExpectedName
             ));
-          }
         }
         return;
       }

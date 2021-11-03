@@ -360,6 +360,8 @@ final class BuildContextImpl extends BuildContext {
     if (options.bundledJreVersion >= 17) {
       jvmArgs.addAll([
         '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.text=ALL-UNNAMED',
+        '--add-opens=java.base/java.time=ALL-UNNAMED',
         '--add-opens=java.base/java.util=ALL-UNNAMED',
         '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
         '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',

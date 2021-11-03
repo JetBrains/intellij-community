@@ -26,6 +26,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.repo.GitRepository
 import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -200,7 +201,7 @@ open class GHOpenInBrowserActionGroup
           return
         }
 
-        val githubUrl = makeUrlToOpen(editor, relativePath, hash, path)
+        val githubUrl = GHPathUtil.makeUrlToOpen(editor, relativePath, hash, path)
         if (githubUrl != null) BrowserUtil.browse(githubUrl)
       }
 
@@ -217,36 +218,52 @@ open class GHOpenInBrowserActionGroup
         }.queue()
         return if (ref.isNull) null else ref.get().rev
       }
+    }
+  }
+}
 
-      private fun makeUrlToOpen(editor: Editor?,
-                                relativePath: String,
-                                branch: String,
-                                path: GHRepositoryCoordinates): String? {
-        val builder = StringBuilder()
+object GHPathUtil {
+  fun getFileURL(repository: GitRepository,
+                 path: GHRepositoryCoordinates,
+                 virtualFile: VirtualFile,
+                 editor: Editor?): String? {
+    val relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.root)
+    if (relativePath == null) {
+      return null
+    }
 
-        if (StringUtil.isEmptyOrSpaces(relativePath)) {
-          builder.append(path.toUrl()).append("/tree/").append(branch)
-        }
-        else {
-          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
-        }
+    val hash = repository.currentRevision
+    if (hash == null) {
+      return null
+    }
 
-        if (editor != null && editor.document.lineCount >= 1) {
-          // lines are counted internally from 0, but from 1 on github
-          val selectionModel = editor.selectionModel
-          val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
-          val selectionEnd = selectionModel.selectionEnd
-          var end = editor.document.getLineNumber(selectionEnd) + 1
-          if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
-            end -= 1
-          }
-          builder.append("#L").append(begin)
-          if (begin != end) {
-            builder.append("-L").append(end)
-          }
-        }
-        return builder.toString()
+    return makeUrlToOpen(editor, relativePath, hash, path)
+  }
+
+  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GHRepositoryCoordinates): String? {
+    val builder = StringBuilder()
+
+    if (StringUtil.isEmptyOrSpaces(relativePath)) {
+      builder.append(path.toUrl()).append("/tree/").append(branch)
+    }
+    else {
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+    }
+
+    if (editor != null && editor.document.lineCount >= 1) {
+      // lines are counted internally from 0, but from 1 on github
+      val selectionModel = editor.selectionModel
+      val begin = editor.document.getLineNumber(selectionModel.selectionStart) + 1
+      val selectionEnd = selectionModel.selectionEnd
+      var end = editor.document.getLineNumber(selectionEnd) + 1
+      if (editor.document.getLineStartOffset(end - 1) == selectionEnd) {
+        end -= 1
+      }
+      builder.append("#L").append(begin)
+      if (begin != end) {
+        builder.append("-L").append(end)
       }
     }
+    return builder.toString()
   }
 }

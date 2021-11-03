@@ -82,5 +82,8 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>
 </module>

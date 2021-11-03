@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -377,7 +378,7 @@ public final class EditorWindow {
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
     int index = findFileEditorIndex(file);
     if (index != -1) {
-      Color color = EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file);
+      Color color = ExperimentalUI.isNewEditorTabs() ? null : EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file);
       setBackgroundColorAt(index, color);
     }
   }

@@ -24,6 +24,11 @@ class WithTailInsertHandler(
         postHandleInsert(context, item)
     }
 
+    val asPostInsertHandler: InsertHandler<LookupElement>
+        get() = InsertHandler { context, item ->
+            postHandleInsert(context, item)
+        }
+
     fun postHandleInsert(context: InsertionContext, item: LookupElement) {
         val completionChar = context.completionChar
         if (completionChar == tailText.singleOrNull() || (spaceAfter && completionChar == ' ')) {

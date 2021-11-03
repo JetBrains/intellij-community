@@ -93,16 +93,8 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
   }
 
   private fun isAtCollapseVerticalStripe(editor: EditorEx, point: Point): Boolean =
-    if ((editor as EditorImpl).isMirrored) {
-      val margin = editor.notebookAppearance.LINE_NUMBERS_MARGIN
-      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
-        point.x in it + margin until it + CollapsingComponent.COLLAPSING_RECT_WIDTH + margin
-      }
-    }
-    else {
-      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
-        point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
-      }
+    CollapsingComponent.collapseRectHorizontalLeft(editor).let {
+      point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
     }
 
   private fun getCollapsingComponent(editor: EditorEx, point: Point): CollapsingComponent? {

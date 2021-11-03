@@ -44,4 +44,10 @@ public class ImmutableTextTest extends UsefulTestCase {
       assertBalanced(tail);
     }
   }
+
+  public void testEquals() {
+    ImmutableText i1 = ImmutableText.valueOf("anything");
+    ImmutableText i2 = ImmutableText.valueOf("");
+    assertFalse(i1.equals(i2));
+  }
 }

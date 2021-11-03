@@ -14,7 +14,7 @@ import org.assertj.core.api.Condition
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction

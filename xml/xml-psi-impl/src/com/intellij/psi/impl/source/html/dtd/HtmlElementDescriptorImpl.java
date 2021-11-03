@@ -220,6 +220,11 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return super.getAttributesDescriptors(context);
   }
 
+  public XmlAttributeDescriptor getDefaultAttributeDescriptor(String attributeName, final XmlTag context) {
+    String caseSensitiveAttributeName = toLowerCaseIfNeeded(attributeName);
+    return super.getAttributeDescriptor(caseSensitiveAttributeName, context);
+  }
+
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
     return true;
   }

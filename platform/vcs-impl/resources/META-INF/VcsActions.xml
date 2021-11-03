@@ -377,6 +377,7 @@
  <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="after" relative-to-action="CloseAllEditors"/>
+      <add-to-group group-id="EditorTabsEntryPoint" anchor="after" relative-to-action="CloseAllEditors"/>
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
@@ -390,6 +391,10 @@
     <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
       <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
+    </action>
+    <action id="Vcs.Diff.ToggleDiffAligningMode" class="com.intellij.diff.actions.impl.ToggleDiffAligningModeAction">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+      <override-text place="popup@DiffToolbar"/>
     </action>
     <group>
       <action id="Vcs.Diff.ShowDiffInNewWindow"
@@ -526,6 +531,12 @@
 
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
+
+    <group id="Vcs.ToolWindow.CreateRepository" searchable="false"/>
+
+    <action id="ActivateCommitToolWindow" class="com.intellij.openapi.vcs.changes.ui.ActivateCommitToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
 
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>

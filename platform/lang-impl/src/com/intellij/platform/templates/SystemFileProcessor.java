@@ -87,7 +87,7 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
           }
         }
         else if (component instanceof PersistentStateComponent) {
-          Object state = WriteAction.compute(() -> ((PersistentStateComponent)component).getState());
+          Object state = WriteAction.compute(() -> ((PersistentStateComponent<?>)component).getState());
 
           if(state == null){
             return;

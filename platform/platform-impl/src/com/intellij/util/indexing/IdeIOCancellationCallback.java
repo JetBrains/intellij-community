@@ -3,11 +3,17 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.util.io.IOCancellationCallback;
 
 public final class IdeIOCancellationCallback implements IOCancellationCallback {
   @Override
   public void checkCancelled() throws ProcessCanceledException {
     ProgressManager.checkCanceled();
+  }
+
+  @Override
+  public void interactWithUI() {
+    PingProgress.interactWithEdtProgress();
   }
 }

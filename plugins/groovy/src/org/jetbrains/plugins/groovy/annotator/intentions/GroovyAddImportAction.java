@@ -117,7 +117,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   @Override
   protected String getRequiredMemberName(@NotNull GrReferenceElement reference) {
     if (reference.getParent() instanceof GrReferenceElement) {
-      return ((GrReferenceElement)reference.getParent()).getReferenceName();
+      return ((GrReferenceElement<?>)reference.getParent()).getReferenceName();
     }
     return super.getRequiredMemberName(reference);
   }

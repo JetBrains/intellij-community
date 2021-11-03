@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
@@ -84,7 +84,7 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
   class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
       invokeLater {
-        project.messageBus.syncPublisher(NewToolbarPaneListener.TOPIC).stateChanged()
+        if (!project.isDisposed) project.messageBus.syncPublisher(NewToolbarPaneListener.TOPIC).stateChanged()
       }
     }
   }

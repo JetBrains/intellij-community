@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,6 +57,8 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
   private boolean myCanBeHidden = false;
+
+  private boolean isSelected;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -208,7 +212,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public boolean isSelected() {
-    return myComponent.isVisible();
+    return isSelected;
   }
 
   public boolean isInitiallyVisible(Settings settings) {
@@ -286,6 +290,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setSelected(boolean selected) {
+    isSelected = selected;
     myComponent.setVisible(selected);
     if (myHintComponent != null) {
       myHintComponent.setVisible(selected);
@@ -398,7 +403,8 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setActionHint(@Nullable @Nls String hint) {
-    myActionHint = hint;
+    //noinspection HardCodedStringLiteral
+    myActionHint = ObjectUtils.doIfNotNull(hint, it -> StringUtil.removeHtmlTags(it, true));
   }
 
   public @Nullable String getHint(@Nullable JComponent component) {

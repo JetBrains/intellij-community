@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.ui.ColoredTableCellRenderer
@@ -13,10 +13,14 @@ import javax.swing.JTable
  * @param contentSampleProvider used to estimate the width of the column,
  * null if content width may vary significantly and width cannot be estimated from the sample.
  */
-class VcsLogStringCellRenderer(
+class VcsLogStringCellRenderer internal constructor(
   private val withSpeedSearchHighlighting: Boolean = false,
   private val contentSampleProvider: (() -> @Nls String?)? = null
 ) : ColoredTableCellRenderer(), VcsLogCellRenderer {
+
+  constructor(contentSampleProvider: (() -> @Nls String?)? = null) : this(withSpeedSearchHighlighting = false,
+                                                                          contentSampleProvider = contentSampleProvider)
+
   init {
     cellState = BorderlessTableCellState()
   }

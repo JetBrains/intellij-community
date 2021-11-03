@@ -78,7 +78,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
         val unlinkedProject = unlinkedProjects.keys.single()
         if (LOG.isDebugEnabled) {
           val projectId = unlinkedProject.getProjectId(externalProjectPath)
-          LOG.debug("Auto-linked ${projectId.readableName} project")
+          LOG.debug("Auto-linked ${projectId.debugName} project")
         }
         unlinkedProject.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
       }
@@ -188,7 +188,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
           .finishOnUiThread(ModalityState.defaultModalityState()) { buildFiles ->
             if (LOG.isDebugEnabled && buildFiles.isNotEmpty()) {
               val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
-              LOG.debug("Found unlinked ${projectId.readableName} project; buildFiles=${buildFiles.map(VirtualFile::getPath)}")
+              LOG.debug("Found unlinked ${projectId.debugName} project; buildFiles=${buildFiles.map(VirtualFile::getPath)}")
             }
             complete(buildFiles)
           }

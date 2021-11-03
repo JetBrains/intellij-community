@@ -766,8 +766,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private class ExplicitSuperDeleter extends JavaRecursiveElementWalkingVisitor {
-    private final PsiExpression myThisExpression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("this", null);
-
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
@@ -779,10 +777,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
 
-    @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
-      expression.replace(myThisExpression);
-    }
 
     @Override
     public void visitClass(PsiClass aClass) {

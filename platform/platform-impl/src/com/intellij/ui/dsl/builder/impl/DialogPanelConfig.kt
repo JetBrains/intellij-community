@@ -6,6 +6,7 @@ import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -38,7 +39,6 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val horizontalIndent = JBUI.scale(20)
     override val horizontalToggleButtonIndent = JBUI.scale(20)
     override val verticalComponentGap = JBUI.scale(6)
-    override val groupTopGap = JBUI.scale(20)
     override val verticalSmallGap = JBUI.scale(8)
     override val verticalMediumGap = JBUI.scale(20)
     override val buttonGroupHeaderBottomGap = JBUI.scale(2)
@@ -49,13 +49,13 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
 
 internal class Context {
 
-  private val buttonGroupsStack: MutableList<BindButtonGroup<*>> = mutableListOf()
+  private val buttonGroupsStack: MutableList<ButtonGroup> = mutableListOf()
 
-  fun addButtonGroup(buttonGroup: BindButtonGroup<*>) {
+  fun addButtonGroup(buttonGroup: ButtonGroup) {
     buttonGroupsStack.add(buttonGroup)
   }
 
-  fun getButtonGroup(): BindButtonGroup<*>? {
+  fun getButtonGroup(): ButtonGroup? {
     return buttonGroupsStack.lastOrNull()
   }
 

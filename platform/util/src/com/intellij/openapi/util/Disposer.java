@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,10 +114,23 @@ public final class Disposer {
   }
 
   /**
-   * <b>Note</b>: This method may return wrong result after dynamic plugin unload (see {@link #clearDisposalTraces}).<br/>
-   * If this method is intent to be used in such cases, consider to use own <b>myDisposed</b> flag instead.
-   *
    * @return true if {@code disposable} is disposed or being disposed (i.e. its {@link Disposable#dispose()} method is executing).
+   *
+   * <b>Note</b>: This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
+   * for example on dynamic plugin unload or major GC run.</br>
+   * Thus, it's not wise to rely on this method in your production-grade code.
+   * Instead, please use corresponding predicate inside the disposable object if available, i.e., {@link com.intellij.openapi.components.ComponentManager#isDisposed()}
+   * Or introduce boolean flag into your object like this:
+   * <pre> {@code class MyDisposable implements Disposable {
+   *   boolean isDisposed;
+   *   void dispose() {
+   *     isDisposed = true;
+   *   }
+   *   boolean isDisposed() {
+   *     return isDisposed;
+   *   }
+   * }}
+   * </pre>
    */
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.getDisposalInfo(disposable) != null;
@@ -127,6 +141,8 @@ public final class Disposer {
    */
   @Deprecated
   public static boolean isDisposing(@NotNull Disposable disposable) {
+    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
+    Logger.getInstance(Disposer.class).error(message);
     return isDisposed(disposable);
   }
 

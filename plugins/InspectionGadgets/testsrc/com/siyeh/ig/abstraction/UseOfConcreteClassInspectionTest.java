@@ -16,12 +16,19 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOfConcreteClassInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new UseOfConcreteClassInspection();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
   }
 
   @Override

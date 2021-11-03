@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DEPRECATION_ERROR")
+@file:Suppress("DEPRECATION_ERROR", "DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -21,14 +21,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
@@ -38,11 +38,15 @@ import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.*
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
-import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
+import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
@@ -55,6 +59,8 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
+@Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION", "UNUSED")
+@Deprecated("Compiler arguments are stored in KotlinGradleSourceSetData nodes cached", level = DeprecationLevel.ERROR)
 var Module.compilerArgumentsBySourceSet
         by UserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
@@ -200,7 +206,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     }
 }
 
-fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val pluginId = moduleNode.kotlinGradleProjectDataOrNull?.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
@@ -220,7 +226,7 @@ fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind
     }
 }
 
-private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
+private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatformKind? {
     val detectedPlatforms =
         mavenLibraryIdToPlatform.entries
             .filter { moduleNode.getResolvedVersionByModuleData(KOTLIN_GROUP_ID, listOf(it.key)) != null }
@@ -274,22 +280,22 @@ fun configureFacetByGradleModule(
     )
 
     if (sourceSetNode == null) {
-        ideModule.compilerArgumentsBySourceSet = moduleNode.compilerArgumentsBySourceSet
         ideModule.sourceSetName = sourceSetName
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
-    val argsInfo = kotlinGradleSourceSetData?.compilerArguments
-    if (argsInfo != null) {
-        configureFacetByCompilerArguments(kotlinFacet, argsInfo, modelsProvider)
+    val cacheHolder = moduleNode.kotlinIdeaProjectDataOrFail.compilerArgumentsCacheHolder
+    if (sourceSetNode != null) {
+        val cachedArgsInfo = ExternalSystemApiUtil.find(sourceSetNode, KotlinGradleSourceSetData.KEY)?.data?.cachedArgsInfo
+            ?: error("KotlinGradleSourceSetData node was not created for $sourceSetNode")
+        configureFacetByCachedCompilerArguments(kotlinFacet, cachedArgsInfo, cacheHolder, modelsProvider)
     }
 
     val implementedModulesAware = (kotlinGradleSourceSetData ?: kotlinGradleProjectData) as ImplementedModulesAware
 
     with(kotlinFacet.configuration.settings) {
         implementedModuleNames = implementedModulesAware.implementedModuleNames
-        productionOutputPath = getExplicitOutputPath(moduleNode, platformKind, "main")
-        testOutputPath = getExplicitOutputPath(moduleNode, platformKind, "test")
+        configureOutputPaths(moduleNode, platformKind)
     }
 
     kotlinFacet.noVersionAutoAdvance()
@@ -299,6 +305,41 @@ fun configureFacetByGradleModule(
     }
 
     return kotlinFacet
+}
+
+private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
+
+    fun DataNode<GradleSourceSetData>.compilerArgumentsOrNull(cacheHolder: CompilerArgumentsCacheHolder): CommonCompilerArguments? =
+        ExternalSystemApiUtil.findAll(this, KotlinGradleSourceSetData.KEY).singleOrNull()?.let {
+            CachedArgumentsRestoring.restoreExtractedArgs(it.data.cachedArgsInfo, cacheHolder).currentCompilerArguments
+        }
+
+    if (!platformKind.isJavaScript) {
+        productionOutputPath = null
+        testOutputPath = null
+        return
+    }
+
+    val cacheHolder = moduleNode.kotlinIdeaProjectDataOrNull?.compilerArgumentsCacheHolder ?: return
+    val sourceSetDataNodes = ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY)
+    sourceSetDataNodes.find { it.data.moduleName == "main" }?.let {
+        productionOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
+    }
+    sourceSetDataNodes.find { it.data.moduleName == "test" }?.let {
+        testOutputPath = (it.compilerArgumentsOrNull(cacheHolder) as? K2JSCompilerArguments)?.outputFile
+    }
+}
+
+fun configureFacetByCachedCompilerArguments(
+    kotlinFacet: KotlinFacet,
+    cachedArgsInfo: CachedExtractedArgsInfo,
+    cacheHolder: CompilerArgumentsCacheHolder,
+    modelsProvider: IdeModifiableModelsProvider?
+) {
+    with(CachedArgumentsRestoring.restoreExtractedArgs(cachedArgsInfo, cacheHolder)) {
+        applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
+        adjustClasspath(kotlinFacet, dependencyClasspath.toList())
+    }
 }
 
 fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsInfo, modelsProvider: IdeModifiableModelsProvider?) {
@@ -311,7 +352,7 @@ fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsIn
     adjustClasspath(kotlinFacet, dependencyClasspath)
 }
 
-private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind<*>?, sourceSet: String): String? {
+private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?, sourceSet: String): String? {
     if (!platformKind.isJavaScript) {
         return null
     }

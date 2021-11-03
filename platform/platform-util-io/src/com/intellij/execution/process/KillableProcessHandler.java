@@ -21,10 +21,12 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 /**
- * This process handler supports the "soft-kill" feature (see {@link KillableProcessHandler}).
- * At first "stop" button send SIGINT signal to process, if it still hangs user can terminate it recursively with SIGKILL signal.
+ * This process handler supports the "soft-kill" / "graceful termination" feature.
+ * For example, a process is terminated gracefully ({@link #destroyProcessGracefully()}) when "Stop" button is clicked for the first time,
+ * and the process is terminated forcibly ({@link #killProcess()}) on subsequent clicks.
  * <p>
- * Soft kill works on Unix, and also on Windows if a mediator process was used.
+ * On Unix, graceful termination corresponds to sending SIGINT signal.
+ * On Windows, graceful termination executes GenerateConsoleCtrlEvent under the hood.
  */
 public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
@@ -44,8 +46,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   /**
-   * Starts a process with a {@link WinRunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
   }
@@ -73,6 +77,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     myMediatedProcess = false;
   }
 
+  /**
+   * @deprecated just don't use this method
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
@@ -205,9 +214,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-            return ProcessService.getInstance().sendWinProcessCtrlC(myProcess);
-          });
+          return getProcessService().sendWinProcessCtrlC(myProcess);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
@@ -235,9 +242,19 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       }
     }
     else if (SystemInfo.isUnix) {
-      return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+      if (shouldDestroyProcessRecursively()) {
+        return UnixProcessManager.sendSigIntToProcessTree(myProcess);
+      }
+      return UnixProcessManager.sendSignal(UnixProcessManager.getProcessId(myProcess), UnixProcessManager.SIGINT) == 0;
     }
     return false;
+  }
+
+  private static @NotNull ProcessService getProcessService() {
+    // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      return ProcessService.getInstance();
+    });
   }
 
   /**
@@ -252,6 +269,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @return true if the character has been written successfully
    */
   private boolean sendInterruptToPtyProcess() {
+    if (!getProcessService().hasControllingTerminal(myProcess)) {
+      return false;
+    }
     OutputStream outputStream = myProcess.getOutputStream();
     if (outputStream != null) {
       try {

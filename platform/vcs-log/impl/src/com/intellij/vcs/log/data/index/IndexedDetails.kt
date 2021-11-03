@@ -6,13 +6,15 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.data.LoadingDetailsImpl
 import com.intellij.vcs.log.data.VcsLogStorage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
                      private val commitIndex: Int,
-                     loadingTaskIndex: Long) : LoadingDetails({ storage.getCommitId(commitIndex) }, loadingTaskIndex) {
+                     loadingTaskIndex: Long = 0) : LoadingDetailsImpl({ storage.getCommitId(commitIndex) }, loadingTaskIndex) {
   private val _parents by lazy { dataGetter.getParents(commitIndex) }
   private val _author by lazy { dataGetter.getAuthor(commitIndex) }
   private val _committer by lazy { dataGetter.getCommitter(commitIndex) }

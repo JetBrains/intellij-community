@@ -557,6 +557,11 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent) {
+    return new ExpandableIndent(type, relativeToDirectParent);
+  }
+
+  @Override
   public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }

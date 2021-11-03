@@ -16,6 +16,11 @@ import javax.swing.*;
  * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
  */
 public final class ValidationInfo {
+  /**
+   * The description of a validation problem to display to user.
+   * The blank message means that there is still a problem, but nothing to display.
+   * It can be used for some obvious problems like an empty text field.
+   */
   @NlsContexts.DialogMessage
   @NotNull
   public final String message;

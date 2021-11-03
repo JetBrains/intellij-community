@@ -18,12 +18,16 @@ import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
@@ -31,7 +35,7 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import java.io.File
 import java.lang.reflect.Method
 
-class KotlinMPPGradleModelBuilder : ModelBuilderService {
+class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder
             .create(project, e, "Gradle import errors")
@@ -42,12 +46,23 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         return modelName == KotlinMPPGradleModel::class.java.name
     }
 
-    override fun buildAll(modelName: String, project: Project): Any? {
+    override fun buildAll(modelName: String, project: Project): KotlinMPPGradleModel? {
+        return buildAll(project, null)
+    }
+
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KotlinMPPGradleModel? {
+        return buildAll(project, builderContext)
+    }
+
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinMPPGradleModel? {
         try {
             val projectTargets = project.getTargets() ?: return null
+            val masterCompilerArgumentsCacheMapper = builderContext?.getData(CACHE_MAPPER_BRANCHING) ?: return null
+            val detachableCompilerArgumentsCacheMapper = masterCompilerArgumentsCacheMapper.branchOffDetachable()
+
             val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(project))
             val dependencyMapper = KotlinDependencyMapper()
-            val importingContext = MultiplatformModelImportingContextImpl(project)
+            val importingContext = MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper)
 
             importingContext.initializeSourceSets(buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null)
 
@@ -68,7 +83,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
                     isNativeDependencyPropagationEnabled = importingContext.getProperty(ENABLE_NATIVE_DEPENDENCY_PROPAGATION)
                 ),
                 kotlinNativeHome = kotlinNativeHome,
-                dependencyMap = dependencyMapper.toDependencyMap()
+                dependencyMap = dependencyMapper.toDependencyMap(),
+                partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
             )
             return model
         } catch (throwable: Throwable) {
@@ -513,8 +529,10 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
         val compileKotlinTask = getCompileKotlinTaskName(importingContext.project, gradleCompilation) ?: return null
         val output = buildCompilationOutput(gradleCompilation, compileKotlinTask) ?: return null
-        val arguments = buildCompilationArguments(compileKotlinTask)
-        val dependencyClasspath = buildDependencyClasspath(compileKotlinTask)
+        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware)
+            buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
+        else
+            buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
         val dependencies =
             buildCompilationDependencies(importingContext, gradleCompilation, classifier, dependencyResolver, dependencyMapper)
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
@@ -532,14 +550,16 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
 
+        @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = gradleCompilation.name,
             allSourceSets = allSourceSets,
             declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
             dependencies = dependencies.map { dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
-            arguments = arguments,
-            dependencyClasspath = dependencyClasspath.toTypedArray(),
+            arguments = KotlinCompilationArgumentsImpl(emptyArray(), emptyArray()),
+            dependencyClasspath = emptyArray(),
+            cachedArgsInfo = cachedArgsInfo,
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions
         )
@@ -701,34 +721,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
                 DefaultFileCollectionDependency(collection)
             }
         } ?: emptyList()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun safelyGetArguments(compileKotlinTask: Task, accessor: Method?) = try {
-        accessor?.invoke(compileKotlinTask) as? List<String>
-    } catch (e: Exception) {
-        logger.info(e.message ?: "Unexpected exception: $e", e)
-        null
-    } ?: emptyList()
-
-    private fun buildCompilationArguments(compileKotlinTask: Task): KotlinCompilationArguments {
-        val compileTaskClass = compileKotlinTask.javaClass
-        val getCurrentArguments = compileTaskClass.getMethodOrNull("getSerializedCompilerArguments")
-        val getDefaultArguments = compileTaskClass.getMethodOrNull("getDefaultSerializedCompilerArguments")
-        val currentArguments = safelyGetArguments(compileKotlinTask, getCurrentArguments)
-        val defaultArguments = safelyGetArguments(compileKotlinTask, getDefaultArguments)
-        return KotlinCompilationArgumentsImpl(defaultArguments.toTypedArray(), currentArguments.toTypedArray())
-    }
-
-    private fun buildDependencyClasspath(compileKotlinTask: Task): List<String> {
-        val abstractKotlinCompileClass =
-            compileKotlinTask.javaClass.classLoader.loadClass(AbstractKotlinGradleModelBuilder.ABSTRACT_KOTLIN_COMPILE_CLASS)
-        val getCompileClasspath =
-            abstractKotlinCompileClass.getDeclaredMethodOrNull("getCompileClasspath") ?: abstractKotlinCompileClass.getDeclaredMethodOrNull(
-                "getClasspath"
-            ) ?: return emptyList()
-        @Suppress("UNCHECKED_CAST")
-        return (getCompileClasspath(compileKotlinTask) as? Collection<File>)?.map { it.path } ?: emptyList()
     }
 
     private fun buildCompilationOutput(
@@ -951,6 +943,11 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
 
     companion object {
         private val logger = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
+        private const val COMPILER_ARGUMENT_AWARE_CLASS = "org.jetbrains.kotlin.gradle.internal.CompilerArgumentAware"
+
+        private val Task.isCompilerArgumentAware: Boolean
+            get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
+
 
         fun Project.getTargets(): Collection<Named>? {
             val kotlinExt = project.extensions.findByName("kotlin") ?: return null

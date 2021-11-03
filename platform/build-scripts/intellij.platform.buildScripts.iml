@@ -14,5 +14,8 @@
     <orderEntry type="library" exported="" scope="PROVIDED" name="commons-cli" level="project" />
     <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="jackson" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="opentelemetry-exporter-jaeger" level="project" />
   </component>
 </module>

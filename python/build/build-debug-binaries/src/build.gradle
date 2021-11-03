@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.util.regex.Pattern
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.30"
+  id "com.jetbrains.python.envs" version "0.0.31"
 }
 
 ext {
@@ -19,8 +19,8 @@ envs {
   String python35version = isWindows ? "3.5.4" : "3.5.7"
   String python36version = "3.6.8"
   String python37version = "3.7.9"
-  String python38version = "3.8.5"
-  String python39version = "3.9.0"
+  String python38version = "3.8.10"
+  String python39version = "3.9.5"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir

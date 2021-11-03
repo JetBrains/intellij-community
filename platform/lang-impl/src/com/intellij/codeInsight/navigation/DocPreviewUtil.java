@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +23,7 @@ import java.util.regex.Pattern;
  * @author Denis Zhdanov
  */
 public final class DocPreviewUtil {
-
-  private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
+  private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {
     ALLOWED_LINK_SEPARATORS.add(',');
     ALLOWED_LINK_SEPARATORS.add(' ');

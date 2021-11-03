@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -559,6 +560,7 @@ abstract class Cell : BaseBuilder {
   ): CellBuilder<TextFieldWithBrowseButton> {
     return textFieldWithBrowseButton(property, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
       .applyToComponent { emptyText.bind(emptyTextProperty) }
+      .applyToComponent { emptyText.text = emptyTextProperty.get() }
   }
 
   fun textFieldWithBrowseButton(
@@ -671,20 +673,6 @@ abstract class Cell : BaseBuilder {
   }
 }
 
-internal fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      isSelected = property.get()
-    }
-  }
-  addItemListener {
-    mutex.lockOrSkip {
-      property.set(isSelected)
-    }
-  }
-}
-
 class InnerCell(val cell: Cell) : Cell() {
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
@@ -709,7 +697,7 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
-fun <T> ComboBox<T>.bind(property: ObservableClearableProperty<T>) {
+fun <T, C : ComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -726,11 +714,24 @@ fun <T> ComboBox<T>.bind(property: ObservableClearableProperty<T>) {
   }
 }
 
+fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      setSelectedValue(it, true)
+    }
+  }
+  addListSelectionListener {
+    mutex.lockOrSkip {
+      property.set(selectedValue)
+    }
+  }
+}
+
 private val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
 
-fun StatusText.bind(property: ObservableClearableProperty<String>) {
-  text = property.get()
+fun <C : StatusText> C.bind(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
   property.afterChange {
     text = it
   }
@@ -739,11 +740,34 @@ fun StatusText.bind(property: ObservableClearableProperty<String>) {
   }
 }
 
-fun TextFieldWithBrowseButton.bind(property: ObservableClearableProperty<String>) {
+fun <C : JLabel> C.bind(property: ObservableClearableProperty<@Label String>): C = apply {
+  property.afterChange {
+    text = it
+  }
+  property.afterReset {
+    text = property.get()
+  }
+}
+
+fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      isSelected = it
+    }
+  }
+  addItemListener {
+    mutex.lockOrSkip {
+      property.set(isSelected)
+    }
+  }
+}
+
+fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
   textField.bind(property)
 }
 
-fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
+fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -755,6 +779,23 @@ fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
       override fun textChanged(e: DocumentEvent) {
         mutex.lockOrSkip {
           property.set(text)
+        }
+      }
+    }
+  )
+}
+fun JTextComponent.bindIntProperty(property: ObservableClearableProperty<Int>) {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      text = it.toString()
+    }
+  }
+  document.addDocumentListener(
+    object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        mutex.lockOrSkip {
+          property.set(text.toInt())
         }
       }
     }

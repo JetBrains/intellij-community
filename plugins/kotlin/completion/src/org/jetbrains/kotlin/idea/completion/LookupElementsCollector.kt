@@ -146,7 +146,7 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
         return insertedText == element.getUserDataDeep(KotlinCompletionCharFilter.JUST_TYPING_PREFIX)
     }
 
-    override fun handleInsert(context: InsertionContext) {
+    override fun getDecoratorInsertHandler(): InsertHandler<LookupElementDecorator<LookupElement>> = InsertHandler { context, decorator ->
         delegate.handleInsert(context)
 
         if (context.shouldAddCompletionChar() && !isJustTyping(context, this)) {
@@ -162,13 +162,13 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
             }
         }
 
-        val (typeArgs, exprOffset) = argList ?: return
-        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
+        val (typeArgs, exprOffset) = argList ?: return@InsertHandler
+        val beforeCaret = context.file.findElementAt(exprOffset) ?: return@InsertHandler
         val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
             is KtCallExpression -> beforeCaretExpr
             is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
             else -> null
-        } ?: return
+        } ?: return@InsertHandler
 
         InsertExplicitTypeArgumentsIntention.applyTo(callExpr, typeArgs, true)
     }

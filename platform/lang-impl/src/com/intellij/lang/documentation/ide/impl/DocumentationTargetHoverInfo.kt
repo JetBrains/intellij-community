@@ -4,7 +4,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.lang.documentation.ide.EditorDocumentationTargetProvider
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -34,7 +34,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     val request = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
-        EditorDocumentationTargetProvider.getInstance()::documentationTargets
+        IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
       targets?.singleOrNull()?.documentationRequest()
     }
@@ -42,7 +42,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
       return@runSuspendingAction null
     }
     val preview = withContext(Dispatchers.EDT) {
-      DocumentationToolWindowManager.instance(project).updateVisiblePreview(request)
+      DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
     }
     if (preview) {
       return@runSuspendingAction null
@@ -61,13 +61,24 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
 private fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
-  val injectedLeaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostOffset)
-                     ?: return f(hostEditor, hostFile, hostOffset)
-  val injectedFile = injectedLeaf.containingFile
-  val injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile)
-  val injectedOffset = (injectedEditor as EditorWindow).document.hostToInjected(hostOffset)
-  return f(injectedEditor, injectedFile, injectedOffset)
+  return tryInjected(project, hostFile, hostEditor, hostOffset, f)
          ?: f(hostEditor, hostFile, hostOffset)
+}
+
+private fun <X : Any> tryInjected(
+  project: Project,
+  hostFile: PsiFile,
+  hostEditor: Editor,
+  hostOffset: Int,
+  f: (Editor, PsiFile, Int) -> X?
+): X? {
+  val injectedLeaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostOffset)
+                     ?: return null
+  val injectedFile = injectedLeaf.containingFile
+  val injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile) as? EditorWindow
+                       ?: return null
+  val injectedOffset = injectedEditor.document.hostToInjected(hostOffset)
+  return f(injectedEditor, injectedFile, injectedOffset)
 }
 
 private class DocumentationTargetHoverInfo(

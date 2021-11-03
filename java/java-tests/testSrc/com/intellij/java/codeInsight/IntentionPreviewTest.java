@@ -4,7 +4,12 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
+
+import java.util.concurrent.ExecutionException;
 
 public class IntentionPreviewTest extends LightQuickFixTestCase {
   public void testIntentionPreview() {
@@ -41,6 +46,28 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
                  "  }", text);
   }
 
+  public void testIntentionPreviewWithTemplate() {
+    // TEMPLATE_STARTED_TOPIC event should not fire for preview editor
+    getProject().getMessageBus().connect(getTestRootDisposable())
+        .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> fail());
+    configureFromFileText("Test.java",
+                          "class Computer {\n" +
+                          "    void f() {\n" +
+                          "      int i;\n" +
+                          "      int j = <caret>i;\n" +
+                          "    }\n" +
+                          "  }");
+    IntentionAction action = findActionWithText("Initialize variable 'i'");
+    assertNotNull(action);
+    String text = getPreviewText(action);
+    assertEquals("class Computer {\n" +
+                 "    void f() {\n" +
+                 "      int i = 0;\n" +
+                 "      int j = i;\n" +
+                 "    }\n" +
+                 "  }", text);
+  }
+
   public void testIntentionPreviewInjection() {
     configureFromFileText("Test.java",
                           "import java.util.regex.Pattern;\n" +
@@ -51,12 +78,23 @@ public class IntentionPreviewTest extends LightQuickFixTestCase {
     enableInspectionTool(new DuplicateCharacterInClassInspection());
     IntentionAction action = findActionWithText("Remove duplicate '1' from character class");
     assertNotNull(action);
-    String text = IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor());
+    String text = getPreviewText(action);
     assertEquals("[\"123]", text);
   }
 
   @Override
   protected void setupEditorForInjectedLanguage() {
     // we want to stay at host editor
+  }
+
+  private String getPreviewText(IntentionAction action) {
+    // Run in background thread to catch accidental write-actions during preview generation
+    try {
+      return ReadAction.nonBlocking(() -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), action, getFile(), getEditor()))
+        .submit(AppExecutorUtil.getAppExecutorService()).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

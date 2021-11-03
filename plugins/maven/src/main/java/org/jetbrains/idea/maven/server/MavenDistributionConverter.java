@@ -16,7 +16,7 @@ public class MavenDistributionConverter extends Converter<MavenDistribution> {
     if (file == null) return null;
     WslPath wslPath = WslPath.parseWindowsUncPath(file.getAbsolutePath());
     if (wslPath == null) {
-      return new LocalMavenDistribution(file, value);
+      return new LocalMavenDistribution(file.toPath(), value);
     }
     else {
       return new WslMavenDistribution(wslPath.getDistribution(), wslPath.getLinuxPath(), value);
@@ -25,6 +25,6 @@ public class MavenDistributionConverter extends Converter<MavenDistribution> {
 
   @Override
   public @Nullable String toString(@NotNull MavenDistribution value) {
-    return value.getMavenHome().getAbsolutePath();
+    return value.getMavenHome().toAbsolutePath().toString();
   }
 }

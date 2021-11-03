@@ -594,7 +594,7 @@ public final class PyNames {
    * @param name what to check
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
-  public static boolean isReserved(@NonNls String name) {
+  public static boolean isReserved(@Nullable @NonNls String name) {
     return name != null && KEYWORDS.contains(name) || NONE.equals(name);
   }
 

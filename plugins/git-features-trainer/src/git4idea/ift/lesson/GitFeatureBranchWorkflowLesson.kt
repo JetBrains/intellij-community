@@ -69,7 +69,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private val illustration2 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration02.svg") }
   private val illustration3 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration03.svg") }
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   override val lessonContent: LessonContext.() -> Unit = {
     task("ActivateVersionControlToolWindow") {
@@ -79,6 +79,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
       }
+      test { actions(it) }
     }
 
     resetGitLogWindow()
@@ -103,6 +104,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.1", strong(main), action(it)))
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 0))
       triggerOnBranchesPopupShown()
+      test { actions(it) }
     }
 
     task {
@@ -125,6 +127,12 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       highlightListItemAndRehighlight(restartDelayMillis = 4 * defaultRestoreDelay) { item ->
         (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
+      test {
+        ideFrame {
+          jList(main).clickItem(main)
+          jList(checkoutItemText).clickItem(checkoutItemText)
+        }
+      }
     }
 
     prepareRuntimeTask {
@@ -139,6 +147,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         ui.title?.contains(updateProjectDialogTitle) == true
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
+      test { actions(it) }
     }
 
     task {
@@ -151,6 +160,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
       restoreState(delayMillis = 6 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+      }
+      test(waitEditorToBeReady = false) {
+        ideFrame { button(CommonBundle.getOkButtonText()).click() }
       }
     }
 
@@ -171,6 +183,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       illustration(illustration3)
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
       triggerOnBranchesPopupShown()
+      test { actions(it) }
     }
 
     task {
@@ -189,11 +202,18 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       restoreState(secondShowBranchesTaskId, delayMillis = 4 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
       }
+      test {
+        ideFrame {
+          jList(branchName).clickItem(branchName)
+          jList(checkoutAndRebaseText).clickItem(checkoutAndRebaseText)
+        }
+      }
     }
 
     task("Vcs.Push") {
       openPushDialogText(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName)))
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
+      test { actions(it) }
     }
 
     val forcePushText = DvcsBundle.message("action.force.push").dropMnemonic()
@@ -206,6 +226,12 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         ui.title?.contains(forcePushDialogTitle) == true
       }
       restoreByUi()
+      test(waitEditorToBeReady = false) {
+        ideFrame {
+          button { _: BasicOptionButtonUI.ArrowButton -> true }.click()
+          jList(forcePushText).clickItem(forcePushText)
+        }
+      }
     }
 
     task {
@@ -215,6 +241,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
       restoreByUi(delayMillis = 4 * defaultRestoreDelay)
+      test(waitEditorToBeReady = false) {
+        ideFrame { button(forcePushText).click() }
+      }
     }
   }
 
@@ -276,4 +305,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     val task = { Git.getInstance().runCommand(handler).throwOnError() }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(task, "", false, null)
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(GitLessonsBundle.message("git.feature.branch.help.link"),
+         LessonUtil.getHelpLink("manage-branches.html")),
+  )
 }

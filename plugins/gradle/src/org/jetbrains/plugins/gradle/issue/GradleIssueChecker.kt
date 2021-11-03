@@ -9,12 +9,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
- * @author Vladislav.Soroka
+ * Extension point to allow handling Gradle build output failure text.
  */
 @ApiStatus.Experimental
 interface GradleIssueChecker : BuildIssueChecker<GradleIssueData> {
   /**
-   * Allows to customize Gradle build output failure message handling.
+   * Allows customizing Gradle build output failure message handling.
    * The format of this piece of the build output:
    *
    *    * Where:

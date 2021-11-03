@@ -58,13 +58,13 @@ class ClassLoaderConfigurator(
 
   fun configureDependenciesIfNeeded(mainToModule: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
     for ((mainDependent, modules) in mainToModule) {
-      val mainDependentClassLoader = mainDependent.classLoader as PluginClassLoader
+      val mainDependentClassLoader = mainDependent.pluginClassLoader as PluginClassLoader
       mainToClassPath.put(mainDependent.pluginId, MainInfo(classPath = mainDependentClassLoader.classPath,
                                                            files = mainDependentClassLoader.files,
                                                            libDirectories = mainDependentClassLoader.libDirectories))
       if (mainDependent.packagePrefix == null) {
         for (module in modules) {
-          module.classLoader = mainDependentClassLoader
+          module.pluginClassLoader = mainDependentClassLoader
         }
       }
       else {
@@ -126,7 +126,7 @@ class ClassLoaderConfigurator(
       else {
         createPluginClassLoader(module, mainInfo = mainInfo, dependencies = dependencies)
       }
-      module.classLoader = mainDependentClassLoader
+      module.pluginClassLoader = mainDependentClassLoader
       configureDependenciesInOldFormat(module, mainDependentClassLoader)
     }
     else {
@@ -137,13 +137,13 @@ class ClassLoaderConfigurator(
       assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
       for (dependency in dependencies) {
         // if the module depends on an unavailable plugin, it will not be loaded
-        if (dependency.classLoader == null) {
+        if (dependency.pluginClassLoader == null) {
           return
         }
       }
 
       if (module.useCoreClassLoader) {
-        module.classLoader = coreLoader
+        module.pluginClassLoader = coreLoader
         return
       }
 
@@ -157,7 +157,7 @@ class ClassLoaderConfigurator(
         }
       }
       else {
-        module.classLoader = PluginClassLoader(
+        module.pluginClassLoader = PluginClassLoader(
           mainInfo.files,
           mainInfo.classPath,
           dependencies,
@@ -178,7 +178,7 @@ class ClassLoaderConfigurator(
         continue
       }
       // classLoader must be set - otherwise sub descriptor considered as inactive
-      subDescriptor.classLoader = mainDependentClassLoader
+      subDescriptor.pluginClassLoader = mainDependentClassLoader
       configureDependenciesInOldFormat(subDescriptor, mainDependentClassLoader)
     }
   }
@@ -190,7 +190,7 @@ class ClassLoaderConfigurator(
       return
     }
 
-    module.classLoader = PluginClassLoader(
+    module.pluginClassLoader = PluginClassLoader(
       Collections.emptyList(),
       coreUrlClassLoader.classPath,
       deps,
@@ -228,7 +228,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
-    rootDescriptor.classLoader = classLoader
+    rootDescriptor.pluginClassLoader = classLoader
     for (dependency in rootDescriptor.pluginDependencies) {
       val subDescriptor = dependency.subDescriptor
       if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {

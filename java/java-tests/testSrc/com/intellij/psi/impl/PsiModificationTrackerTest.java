@@ -369,8 +369,8 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     rename(file, "Bar.java");
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", scope));
-    assertTrue(count1 != getTracker().getModificationCount());
-    assertTrue(stamp1 != psiManager.findFile(file).getModificationStamp());
+    assertTrue(String.valueOf(count1), count1 != getTracker().getModificationCount());
+    assertTrue(String.valueOf(stamp1), stamp1 != psiManager.findFile(file).getModificationStamp());
     assertEquals(hc, psiManager.findFile(file).hashCode());
   }
 

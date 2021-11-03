@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.stackFrame
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.xdebugger.frame.XStackFrame
-import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
 
 object InlineStackTraceCalculator {
@@ -62,11 +62,11 @@ object InlineStackTraceCalculator {
             .map { InlineStackFrameInfo(it, location, 0) }
 
     private fun Method.getInlineFunctionInfos(): List<AbstractInlineFunctionInfo> {
-        val localVariables = safeVariables()?.filterIsInstance<LocalVariableImpl>() ?: return emptyList()
+        val localVariables = safeVariables() ?: return emptyList()
         val inlineFunctionInfos = mutableListOf<AbstractInlineFunctionInfo>()
         for (variable in localVariables) {
+            val borders = variable.getBorders() ?: continue
             val variableName = variable.name()
-            val borders = variable.scopeStart..variable.scopeEnd
             if (variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) {
                 inlineFunctionInfos.add(InlineFunctionInfo(variableName, borders))
             } else if (variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)) {
@@ -91,7 +91,6 @@ object InlineStackTraceCalculator {
     //     $i$a$-bar-MainKt$foo$1$iv -> 1
     //     $i$a$-foo-MainKt$main$1   -> 0
     //     baz                       -> 1
-    //
     private fun List<InlineStackFrameInfo>.fetchDepths() {
         var currentDepth = 0
         val depths = mutableMapOf<String, Int>()

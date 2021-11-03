@@ -38,5 +38,11 @@ sealed class KotlinStepAction {
         }
     }
 
+    class KotlinStepInto(private val filter: MethodFilter?) : KotlinStepAction() {
+        override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
+            return KotlinStepActionFactory.createKotlinStepIntoCommand(debugProcess, suspendContext, ignoreBreakpoints, filter)
+        }
+    }
+
     abstract fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand
 }

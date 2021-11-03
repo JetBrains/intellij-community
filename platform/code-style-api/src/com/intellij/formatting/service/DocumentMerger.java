@@ -5,6 +5,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Merges the current document with the new text content.
+ */
 public interface DocumentMerger {
 
   ExtensionPointName<DocumentMerger> EP_NAME = ExtensionPointName.create("com.intellij.documentMerger");

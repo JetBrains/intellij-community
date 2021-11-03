@@ -114,8 +114,10 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
 
         // TODO: check this against kotlin-dsl branch that uses daemon
         private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
+            val stdlibPath = gradleLibDir.listDirectoryEntries("kotlin-stdlib-[1-9]*").firstOrNull()
             // additionally need compiler jar to load gradle resolver
-            return gradleLibDir.listDirectoryEntries("{kotlin-compiler-embeddable,kotlin-stdlib}*").firstOrNull()?.let(::listOf).orEmpty()
+            val compilerPath = gradleLibDir.listDirectoryEntries("kotlin-compiler-embeddable*").firstOrNull()
+            return listOfNotNull(stdlibPath, compilerPath)
         }
 
         private val kotlinStdLibSelector = Regex("^(kotlin-compiler-embeddable|kotlin-stdlib)-(\\d+\\.\\d+).*\\.jar\$")

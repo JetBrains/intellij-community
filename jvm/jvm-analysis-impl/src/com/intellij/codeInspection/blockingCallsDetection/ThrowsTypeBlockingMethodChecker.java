@@ -45,6 +45,9 @@ final class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     String classQualifiedName = containingClass.getQualifiedName();
-    return classQualifiedName != null && classQualifiedName.startsWith("java");
+    return classQualifiedName != null
+           && (classQualifiedName.startsWith("java.")
+               || classQualifiedName.startsWith("javax.")
+               || classQualifiedName.startsWith("jakarta."));
   }
 }

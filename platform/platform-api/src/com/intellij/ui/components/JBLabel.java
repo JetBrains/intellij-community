@@ -112,6 +112,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (myEditorPane != null) {
+      myEditorPane.setEnabled(enabled);
+    }
+  }
+
+  @Override
   public void setAnchor(@Nullable JComponent anchor) {
     myAnchor = anchor;
   }
@@ -235,9 +243,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
+  @Override
+  public void setHorizontalTextPosition(int textPosition) {
+    super.setHorizontalTextPosition(textPosition);
+    if (myEditorPane != null) {
+      updateLayout();
+    }
+  }
+
   private void updateLayout() {
     setLayout(new BorderLayout(getIcon() == null ? 0 : getIconTextGap(), 0));
-    add(myIconLabel, BorderLayout.WEST);
+    int position = getHorizontalTextPosition();
+    String iconConstraint = getComponentOrientation().isLeftToRight() ? BorderLayout.WEST : BorderLayout.EAST;
+    if (getComponentOrientation().isLeftToRight() && position == SwingConstants.LEADING) iconConstraint = BorderLayout.EAST;
+    if (!getComponentOrientation().isLeftToRight() && position == SwingConstants.TRAILING) iconConstraint = BorderLayout.EAST;
+    if (position == SwingConstants.LEFT) iconConstraint = BorderLayout.EAST;
+    add(myIconLabel, iconConstraint);
     add(myEditorPane, BorderLayout.CENTER);
   }
 

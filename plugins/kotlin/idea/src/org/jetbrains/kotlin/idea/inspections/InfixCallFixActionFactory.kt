@@ -25,7 +25,7 @@ object InfixCallFixActionFactory : KotlinSingleIntentionActionFactory() {
             return null
         }
 
-        val infixCall = (diagnostic.psiElement as? KtOperationReferenceExpression)?.parent as? KtBinaryExpression ?: return null
-        return IntentionWrapper(InfixCallToOrdinaryIntention(), infixCall.containingFile)
+        if ((diagnostic.psiElement as? KtOperationReferenceExpression)?.parent !is KtBinaryExpression) return null
+        return IntentionWrapper(InfixCallToOrdinaryIntention())
     }
 }

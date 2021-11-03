@@ -21,7 +21,7 @@ from glob import glob
 from pathlib import Path
 from typing import Dict, NamedTuple
 
-import toml
+import tomli
 
 parser = argparse.ArgumentParser(description="Test runner for typeshed. Patterns are unanchored regexps on the full path.")
 parser.add_argument("-v", "--verbose", action="count", default=0, help="More output")
@@ -101,7 +101,7 @@ def parse_version(v_str):
 def is_supported(distribution, major):
     dist_path = Path("stubs", distribution)
     with open(dist_path / "METADATA.toml") as f:
-        data = dict(toml.loads(f.read()))
+        data = dict(tomli.loads(f.read()))
     if major == 2:
         # Python 2 is not supported by default.
         return bool(data.get("python2", False)) or (dist_path / "@python2").exists()
@@ -154,7 +154,7 @@ def add_configuration(configurations, seen_dist_configs, distribution):
         return
 
     with open(os.path.join("stubs", distribution, "METADATA.toml")) as f:
-        data = dict(toml.loads(f.read()))
+        data = dict(tomli.loads(f.read()))
 
     mypy_tests_conf = data.get("mypy-tests")
     if not mypy_tests_conf:
