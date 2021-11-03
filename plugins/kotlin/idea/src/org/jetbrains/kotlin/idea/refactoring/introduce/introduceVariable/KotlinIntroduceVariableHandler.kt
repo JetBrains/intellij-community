@@ -493,12 +493,17 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         val dataFlowInfo = bindingContext.getDataFlowInfoAfter(physicalExpression)
 
         val bindingTrace = ObservableBindingTrace(BindingTraceContext())
+        val typeInfoComputable = {
+            physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
+        }
         val typeNoExpectedType = substringInfo?.type
-            ?: ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-                runReadAction {
-                    physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
-                }
-            }, KotlinBundle.message("progress.title.calculating.type"), true, project)
+            ?: if (container.isPhysical) {
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                    ThrowableComputable { runReadAction(typeInfoComputable) }, KotlinBundle.message("progress.title.calculating.type"), true, project)
+            } else {
+                // Preview mode
+                typeInfoComputable()
+            }
         val noTypeInference = expressionType != null
                 && typeNoExpectedType != null
                 && !TypeCheckerImpl(project).equalTypes(expressionType, typeNoExpectedType)
@@ -575,6 +580,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     expression, suggestedNames, allReplaces, commonContainer, commonParent,
                     replaceOccurrence, noTypeInference, expressionType, componentFunctions, bindingContext, resolutionFacade
                 )
+
+                if (!container.isPhysical) {
+                    // Preview mode
+                    introduceVariableContext.runRefactoring(isVar)
+                    return@chooseApplicableComponentFunctionsForVariableDeclaration
+                }
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
                     runWriteAction { introduceVariableContext.runRefactoring(isVar) }
