@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
 import com.intellij.ide.impl.TrustChangeNotifier
@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileEditor
@@ -75,7 +74,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
 
     override fun shouldShowEditorNotification(project: Project): Boolean {
       val settings = manager.settingsProvider.`fun`(project)
-      return !executesTrustedCodeOnly(systemId) && settings.linkedProjectsSettings.isNotEmpty()
+      return settings.linkedProjectsSettings.isNotEmpty()
     }
 
     override fun loadAllLinkedProjects(project: Project) {
