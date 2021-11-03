@@ -5,12 +5,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
@@ -35,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,6 +85,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                    final boolean prevSearchWholeFiles,
                    final Object selection,
                    @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
+    initialize(project, suggestSearchInLibs, prevSearchWholeFiles, selection, scopeFilter);
+  }
+
+  public Promise<?> initialize(final Project project,
+                               final boolean suggestSearchInLibs,
+                               final boolean prevSearchWholeFiles,
+                               final String preselect) {
+    return initialize(project, suggestSearchInLibs, prevSearchWholeFiles, preselect, null);
+  }
+
+  public Promise<?> initialize(final Project project,
+                               final boolean suggestSearchInLibs,
+                               final boolean prevSearchWholeFiles,
+                               final Object selection,
+                               @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
     if (myProject != null) {
       throw new IllegalStateException("scope chooser combo already initialized");
     }
@@ -109,7 +121,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
 
-    rebuildModelAndSelectScopeOnSuccess(selection);
+    return rebuildModelAndSelectScopeOnSuccess(selection);
   }
 
   @NotNull
@@ -137,10 +149,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   public void selectItem(@Nullable Object selection) {
     if (selection == null) return;
-    JComboBox combo = getComboBox();
-    DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
+    JComboBox<ScopeDescriptor> combo = getComboBox();
+    DefaultComboBoxModel<ScopeDescriptor> model = (DefaultComboBoxModel<ScopeDescriptor>)combo.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
+      ScopeDescriptor descriptor = model.getElementAt(i);
       if (selection instanceof String && selection.equals(descriptor.getDisplayName()) ||
           selection instanceof SearchScope && descriptor.scopeEquals((SearchScope)selection)) {
         combo.setSelectedIndex(i);
@@ -225,16 +237,16 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return true;
   }
 
-  private void rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
+  private @NotNull Promise<?> rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-    Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
-    promise.onSuccess(c -> {
-      processScopes(model, c)
-        .onSuccess(__ -> {
-          getComboBox().setModel(model);
-          selectItem(selection);
-        });
-    });
+    return DataManager.getInstance()
+      .getDataContextFromFocusAsync()
+      .thenAsync(c -> processScopes(model, c)
+      .onSuccess(__ -> {
+        getComboBox().setModel(model);
+        selectItem(selection);
+      })
+    );
   }
 
   private @NotNull Promise<?> processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
