@@ -9652,6 +9652,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantWith/nested.kt");
         }
 
+        @TestMetadata("notApplicable_destructuringDeclarationEntry.kt")
+        public void testNotApplicable_destructuringDeclarationEntry() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/notApplicable_destructuringDeclarationEntry.kt");
+        }
+
         @TestMetadata("notApplicable_explicitThis.kt")
         public void testNotApplicable_explicitThis() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/notApplicable_explicitThis.kt");

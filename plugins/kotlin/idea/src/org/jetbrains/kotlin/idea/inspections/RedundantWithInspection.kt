@@ -53,7 +53,11 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                         return
                     }
 
-                    val resolvedCall = element.getResolvedCall(context) ?: return
+                    val resolvedCall = if (element is KtDestructuringDeclarationEntry) {
+                        context[BindingContext.COMPONENT_RESOLVED_CALL, element]
+                    } else {
+                        element.getResolvedCall(context)
+                    } ?: return
 
                     if (isUsageOfDescriptor(lambdaDescriptor, resolvedCall, context)) {
                         used = true
