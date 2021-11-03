@@ -57,6 +57,7 @@ Includes the following features:</p>
     <codeInsight.inlayProvider language="Markdown"
                                implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
                                id="MarkdownTableInlayProvider"/>
+    <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.tables.ui.MarkdownInlayUpdateOnSoftWrapListener"/>
 
     <localInspection language="Markdown"
                      shortName="MarkdownIncorrectTableFormatting"
