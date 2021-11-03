@@ -86,6 +86,7 @@
       <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <action internal="true" id="ShowOnboardingFeedbackForm" class="training.actions.ShowOnboardingFeedbackForm"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
