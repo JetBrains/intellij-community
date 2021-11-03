@@ -7,7 +7,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
@@ -187,7 +187,6 @@ object ProjectUtils {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
-      project.setTrusted(true)
       postInitCallback(project)
     }
   }
@@ -211,8 +210,9 @@ object ProjectUtils {
         error("Cannot create learning demo project. See LOG files for details.")
       }
     }
-    val path = langSupport.getLearningProjectPath(targetDirectory).toAbsolutePath().toString()
-    LangManager.getInstance().setLearningProjectPath(langSupport, path)
+    val path = langSupport.getLearningProjectPath(targetDirectory)
+    LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
+    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
     return targetDirectory
   }
 
