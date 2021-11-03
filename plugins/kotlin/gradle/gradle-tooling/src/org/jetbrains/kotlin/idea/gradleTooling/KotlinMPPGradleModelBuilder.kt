@@ -529,10 +529,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
         val compileKotlinTask = getCompileKotlinTaskName(importingContext.project, gradleCompilation) ?: return null
         val output = buildCompilationOutput(gradleCompilation, compileKotlinTask) ?: return null
-        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware)
-            buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
-        else
-            buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
         val dependencies =
             buildCompilationDependencies(importingContext, gradleCompilation, classifier, dependencyResolver, dependencyMapper)
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
@@ -549,6 +545,11 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         val allSourceSets = kotlinSourceSets
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
+
+        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware)
+            buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
+        else
+            buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
 
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
