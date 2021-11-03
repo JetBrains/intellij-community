@@ -33,7 +33,9 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
   override fun actionPerformed(event: AnActionEvent) {
     event.environment()?.let {
-      event.addWaitingForAProcess(it.executor.id)
+      it.runnerAndConfigurationSettings?.let { settings ->
+        event.runToolbarData()?.startWaitingForAProcess(it.project, settings, it.executor.id)
+      }
       super.actionPerformed(event)
     }
 
