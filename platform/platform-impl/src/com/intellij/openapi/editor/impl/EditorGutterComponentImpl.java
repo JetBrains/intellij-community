@@ -193,7 +193,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (project != null) {
       project.getMessageBus().connect(myEditor.getDisposable()).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
-        public void exitDumbMode() {
+        public void exitDumbMode(){
           updateSize();
         }
       });
@@ -237,6 +237,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             if (draggableObject != null) {
               final int line = convertPointToLineNumber(e.getPoint());
               if (line != -1) {
+
+
+
+
+
                 draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
               }
             }
@@ -1713,6 +1718,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getIconAreaOffset() {
+    if (ExperimentalUI.isNewUI()) {
+      return getLineMarkerFreePaintersAreaOffset() + getLeftFreePaintersAreaWidth() + getGapBetweenAreas();
+    }
     return getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth();
   }
 
@@ -1723,7 +1731,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
     if (ExperimentalUI.isNewUI()) {
-      return getLineNumberAreaOffset() + getLineMarkerAreaWidth() + getGapBetweenAreas();
+      return getAnnotationsAreaOffset() + getAnnotationsAreaWidth() + getGapBetweenAreas();
     }
     return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
   }
