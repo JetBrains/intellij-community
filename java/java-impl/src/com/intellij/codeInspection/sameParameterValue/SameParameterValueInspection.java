@@ -37,6 +37,7 @@ import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +121,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (parameter == null) continue;
           Boolean isFixAvailable = isFixAvailable(parameter, value, refParameter.isUsedForWriting());
           if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return null;
-          problems.add(registerProblem(manager, parameter, value, Boolean.TRUE.equals(isFixAvailable)));
+          ContainerUtil.addIfNotNull(problems, registerProblem(manager, parameter, value, Boolean.TRUE.equals(isFixAvailable)));
         }
       }
     }
@@ -188,11 +189,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     return new LocalSameParameterValueInspection(this);
   }
 
-  private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
-                                            UParameter parameter,
-                                            Object value,
-                                            boolean suggestFix) {
+  private @Nullable ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
+                                                      @NotNull UParameter parameter,
+                                                      Object value,
+                                                      boolean suggestFix) {
     final String name = parameter.getName();
+    if (name.isEmpty()) return null;
     String shortName;
     String stringPresentation;
 
@@ -210,17 +212,21 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                  PsiSubstitutor.EMPTY);
       }
       else if (value instanceof Character) {
-        stringPresentation = shortName =  "'" + value + "'";
+        stringPresentation = shortName = "'" + value + "'";
       }
       else {
-        stringPresentation = shortName =  String.valueOf(value);
+        stringPresentation = shortName = String.valueOf(value);
       }
     }
-    return manager.createProblemDescriptor(ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter),
+    PsiElement anchor = ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter);
+    if (!anchor.isPhysical()) return null;
+    return manager.createProblemDescriptor(anchor,
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     name,
-                                                                     StringUtil.unquoteString(shortName)),
-                                           suggestFix ? createFix(name, stringPresentation.startsWith("\"\"") ? stringPresentation : StringUtil.escapeLineBreak(stringPresentation)) : null,
+                                                              name,
+                                                              StringUtil.unquoteString(shortName)),
+                                           suggestFix ? createFix(name, stringPresentation.startsWith("\"\"")
+                                                                        ? stringPresentation
+                                                                        : StringUtil.escapeLineBreak(stringPresentation)) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 
@@ -473,7 +479,10 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                 final UParameter parameter = parameters.get(i);
                 Boolean isFixAvailable = isFixAvailable(parameter, value, false);
                 if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return true;
-                holder.registerProblem(registerProblem(holder.getManager(), parameter, value, Boolean.TRUE.equals(isFixAvailable)));
+                ProblemDescriptor descriptor = registerProblem(holder.getManager(), parameter, value, Boolean.TRUE.equals(isFixAvailable));
+                if (descriptor != null) {
+                  holder.registerProblem(descriptor);
+                }
               }
             }
           }
