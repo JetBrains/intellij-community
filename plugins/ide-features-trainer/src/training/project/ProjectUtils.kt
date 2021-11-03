@@ -150,10 +150,10 @@ object ProjectUtils {
                                           langSupport: LangSupport,
                                           openProjectTask: OpenProjectTask,
                                           postInitCallback: (learnProject: Project) -> Unit) {
-    val copied = copyLearningProjectFiles(contentRoot, langSupport)
-    if (!copied) return
-    createVersionFile(contentRoot)
-    openOrImportLearningProject(contentRoot, openProjectTask, langSupport) {
+    val actualContentRoot = copyLearningProjectFiles(contentRoot, langSupport)
+    if (actualContentRoot == null) return
+    createVersionFile(actualContentRoot)
+    openOrImportLearningProject(actualContentRoot, openProjectTask, langSupport) {
       updateLearningModificationTimestamp(it)
       postInitCallback(it)
     }
@@ -194,12 +194,17 @@ object ProjectUtils {
     }
   }
 
-  private fun copyLearningProjectFiles(newContentDirectory: Path, langSupport: LangSupport): Boolean {
+  /**
+   * Returns [newContentDirectory] if learning project files successfully copied on the first try,
+   *         path to the directory chosen by user if learning project files successfully copied on the second try,
+   *         null if user closed the directory chooser.
+   */
+  private fun copyLearningProjectFiles(newContentDirectory: Path, langSupport: LangSupport): Path? {
     var targetDirectory = newContentDirectory
     if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
       targetDirectory = invokeAndWaitIfNeeded {
         chooseParentDirectoryForLearningProject(langSupport)
-      } ?: return false
+      } ?: return null
       if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
         invokeLater {
           Messages.showInfoMessage(LearnBundle.message("learn.project.initializing.cannot.create.message"),
@@ -210,7 +215,7 @@ object ProjectUtils {
     }
     val path = langSupport.getLearningProjectPath(targetDirectory).toAbsolutePath().toString()
     LangManager.getInstance().setLearningProjectPath(langSupport, path)
-    return true
+    return targetDirectory
   }
 
   fun learningProjectUrl(langSupport: LangSupport) =
