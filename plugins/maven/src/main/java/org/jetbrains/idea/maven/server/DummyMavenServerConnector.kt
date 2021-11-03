@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.build.events.MessageEvent
@@ -95,7 +95,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
     val future = CompletableFuture<Void>()
     ApplicationManager.getApplication().invokeLater {
       try {
-        val result = MavenUtil.isProjectTrustedEnoughToImport(project, true)
+        val result = MavenUtil.isProjectTrustedEnoughToImport(project)
         if (result) {
           MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }
