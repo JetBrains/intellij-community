@@ -679,34 +679,18 @@ public final class ExternalSystemUtil {
 
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
-    ProjectSystemId... systemIds
+    @NotNull ProjectSystemId systemId
   ) {
-    return confirmLoadingUntrustedProject(project, true, systemIds);
+    return confirmLoadingUntrustedProject(project, Collections.singletonList(systemId));
   }
 
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
-    @NotNull Collection<ProjectSystemId> systemIds
-  ) {
-    return confirmLoadingUntrustedProject(project, true, systemIds);
-  }
-
-  public static boolean confirmLoadingUntrustedProject(
-    @NotNull Project project,
-    boolean askConfirmation,
-    ProjectSystemId... systemIds
-  ) {
-    return confirmLoadingUntrustedProject(project, askConfirmation, Arrays.asList(systemIds));
-  }
-
-  public static boolean confirmLoadingUntrustedProject(
-    @NotNull Project project,
-    boolean askConfirmation,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
     String systemsPresentation = naturalJoinSystemIds(systemIds);
     return TrustedProjects.isTrusted(project) ||
-           askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
+           TrustedProjects.confirmLoadingUntrustedProject(
              project,
              IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
              IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),

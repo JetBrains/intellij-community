@@ -1063,8 +1063,8 @@ public class MavenUtil {
             || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
   }
 
-  public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, askConfirmation, SYSTEM_ID);
+  public static boolean isProjectTrustedEnoughToImport(Project project) {
+    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
   public static void restartMavenConnectors(Project project) {
