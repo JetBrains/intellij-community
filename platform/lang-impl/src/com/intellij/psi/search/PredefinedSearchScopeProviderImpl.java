@@ -53,9 +53,6 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 // used by Rider
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
@@ -80,16 +77,11 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                boolean suggestSearchInLibs,
                                                boolean prevSearchFiles,
                                                boolean currentSelection, boolean usageView, boolean showEmptyScopes) {
-
-    try {
-      List<SearchScope> scopes = getPredefinedScopesAsync(project, dataContext, suggestSearchInLibs, prevSearchFiles, currentSelection,
-                                                          usageView, showEmptyScopes).blockingGet(10, TimeUnit.SECONDS);
-      return scopes == null ? Collections.emptyList() : scopes;
-    }
-    catch (TimeoutException | ExecutionException e) {
-      LOG.error(e); // consider using getPredefinedScopesAsync
-      return Collections.emptyList();
-    }
+    ScopeCollectionContext context =
+      ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
+    Collection<SearchScope> result = context.result;
+    result.addAll(context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes));
+    return new ArrayList<>(result);
   }
 
   @Override
@@ -100,52 +92,100 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                              boolean currentSelection,
                                                              boolean usageView,
                                                              boolean showEmptyScopes) {
-    Collection<SearchScope> result = new LinkedHashSet<>();
-    result.add(GlobalSearchScope.everythingScope(project));
-    result.add(GlobalSearchScope.projectScope(project));
-    if (suggestSearchInLibs) {
-      result.add(GlobalSearchScope.allScope(project));
-    }
-
-    DataContext adjustedContext = dataContext != null ? dataContext : SimpleDataContext.getProjectContext(project);
-    for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
-      result.addAll(each.getGeneralSearchScopes(project, adjustedContext));
-    }
-
-    if (ModuleUtil.hasTestSourceRoots(project)) {
-      result.add(GlobalSearchScopesCore.projectProductionScope(project));
-      result.add(GlobalSearchScopesCore.projectTestScope(project));
-    }
-
-    result.add(ScratchesSearchScope.getScratchesScope(project));
-
-    SearchScope recentFilesScope = recentFilesScope(project, false);
-    ContainerUtil.addIfNotNull(
-      result, !SearchScope.isEmptyScope(recentFilesScope) ? recentFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()) : null);
-    SearchScope recentModFilesScope = recentFilesScope(project, true);
-    ContainerUtil.addIfNotNull(
-      result, !SearchScope.isEmptyScope(recentModFilesScope) ? recentModFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName()) : null);
-    GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
-    ContainerUtil.addIfNotNull(
-      result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText()) : null);
-
-    Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
-                                ? FileEditorManager.getInstance(project).getSelectedTextEditor()
-                                : null;
-    PsiFile psiFile =
-      selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-    PsiFile currentFile = fillFromDataContext(dataContext, result, psiFile);
-    SearchScope selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile);
-
-    Collection<SearchScope> scopesFromUsageView = usageView ? getScopesFromUsageView(project, prevSearchFiles) : Collections.emptyList();
-
+    ScopeCollectionContext context =
+      ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
     AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
-    ReadAction.nonBlocking(() -> {
+    ReadAction.nonBlocking(() -> context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.defaultModalityState(), backgroundResult -> {
+        Collection<SearchScope> result = context.result;
+        result.addAll(backgroundResult);
+        promise.setResult(new ArrayList<>(result));
+      }).submit(AppExecutorUtil.getAppExecutorService());
+    return promise;
+  }
+
+  private static class ScopeCollectionContext {
+    private final PsiFile psiFile;
+    private final Editor selectedTextEditor;
+    private final Collection<SearchScope> scopesFromUsageView;
+    private final PsiFile currentFile;
+    private final SearchScope selectedFilesScope;
+    private final Collection<SearchScope> result;
+
+    private ScopeCollectionContext(PsiFile psiFile,
+                                   Editor selectedTextEditor,
+                                   Collection<SearchScope> scopesFromUsageView,
+                                   PsiFile currentFile,
+                                   SearchScope selectedFilesScope,
+                                   Collection<SearchScope> result) {
+      this.psiFile = psiFile;
+      this.selectedTextEditor = selectedTextEditor;
+      this.scopesFromUsageView = scopesFromUsageView;
+      this.currentFile = currentFile;
+      this.selectedFilesScope = selectedFilesScope;
+      this.result = result;
+    }
+
+
+    // in EDT
+    static ScopeCollectionContext collectContext(@NotNull Project project,
+                                                 @Nullable DataContext dataContext,
+                                                 boolean suggestSearchInLibs,
+                                                 boolean prevSearchFiles,
+                                                 boolean usageView,
+                                                 boolean showEmptyScopes) {
+      Collection<SearchScope> result = new LinkedHashSet<>();
+      result.add(GlobalSearchScope.everythingScope(project));
+      result.add(GlobalSearchScope.projectScope(project));
+      if (suggestSearchInLibs) {
+        result.add(GlobalSearchScope.allScope(project));
+      }
+
+      DataContext adjustedContext = dataContext != null ? dataContext : SimpleDataContext.getProjectContext(project);
+      for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
+        result.addAll(each.getGeneralSearchScopes(project, adjustedContext));
+      }
+
+      if (ModuleUtil.hasTestSourceRoots(project)) {
+        result.add(GlobalSearchScopesCore.projectProductionScope(project));
+        result.add(GlobalSearchScopesCore.projectTestScope(project));
+      }
+
+      result.add(ScratchesSearchScope.getScratchesScope(project));
+
+      SearchScope recentFilesScope = recentFilesScope(project, false);
+      ContainerUtil.addIfNotNull(
+        result, !SearchScope.isEmptyScope(recentFilesScope) ? recentFilesScope :
+                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()) : null);
+      SearchScope recentModFilesScope = recentFilesScope(project, true);
+      ContainerUtil.addIfNotNull(
+        result, !SearchScope.isEmptyScope(recentModFilesScope) ? recentModFilesScope :
+                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName()) : null);
+      GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
+      ContainerUtil.addIfNotNull(
+        result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
+                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText()) : null);
+
+      Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
+                           ? FileEditorManager.getInstance(project).getSelectedTextEditor()
+                           : null;
+      PsiFile psiFile = selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
+      PsiFile currentFile = fillFromDataContext(dataContext, result, psiFile);
+      SearchScope selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile);
+
+      Collection<SearchScope> scopesFromUsageView = usageView ? getScopesFromUsageView(project, prevSearchFiles) : Collections.emptyList();
+      return new ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result);
+    }
+
+
+    // under read action
+    Collection<SearchScope> collectRestScopes(@NotNull Project project,
+                                              boolean currentSelection,
+                                              boolean usageView,
+                                              boolean showEmptyScopes) {
       Collection<SearchScope> backgroundResult = new LinkedHashSet<>();
-      if ((psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
+      if (project.isDisposed() || (psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
         return backgroundResult;
       }
       if (currentFile != null || showEmptyScopes) {
@@ -167,11 +207,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
       ContainerUtil.addIfNotNull(backgroundResult, selectedFilesScope);
       return backgroundResult;
-    }).finishOnUiThread(ModalityState.defaultModalityState(), backgroundResult -> {
-      result.addAll(backgroundResult);
-      promise.setResult(new ArrayList<>(result));
-    }).submit(AppExecutorUtil.getAppExecutorService());
-    return promise;
+    }
   }
 
   // in EDT
