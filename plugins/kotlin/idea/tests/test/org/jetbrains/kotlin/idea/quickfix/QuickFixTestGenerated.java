@@ -4468,6 +4468,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/classNoExplicitReceiver.kt");
                     }
 
+                    @TestMetadata("companion.kt")
+                    public void testCompanion() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/companion.kt");
+                    }
+
                     @TestMetadata("explicitReceiverOfContainingClass.kt")
                     public void testExplicitReceiverOfContainingClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/explicitReceiverOfContainingClass.kt");
