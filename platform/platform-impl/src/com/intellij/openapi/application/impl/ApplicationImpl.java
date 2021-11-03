@@ -447,7 +447,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeAndWait(wrapWithRunIntendedWriteAction(r), modalityState);
   }
 
   @NotNull
