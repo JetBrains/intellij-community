@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
 import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.search.syntheticAssessors
+import org.jetbrains.kotlin.idea.search.syntheticAccessors
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -45,7 +45,7 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
 
         p.project.runReadActionInSmartMode {
             val containingClass = method.containingClass ?: return@runReadActionInSmartMode
-            val syntheticAssessors = method.syntheticAssessors.ifEmpty { return@runReadActionInSmartMode }
+            val syntheticAssessors = method.syntheticAccessors.ifEmpty { return@runReadActionInSmartMode }
 
             val processor = getTextOccurrenceProcessor(arrayOf(method), containingClass, false)
             for (name in syntheticAssessors) {

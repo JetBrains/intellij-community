@@ -175,7 +175,7 @@ private val PsiMethod.canBeGetter: Boolean
 private val PsiMethod.canBeSetter: Boolean
     get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
 
-private val PsiMethod.probablyCanHaveSyntheticAssessors: Boolean
+private val PsiMethod.probablyCanHaveSyntheticAccessors: Boolean
     get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
 
 private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
@@ -189,9 +189,9 @@ private val PsiMethod.isFinalProperty: Boolean
         return containingClassOrObject is KtObjectDeclaration
     }
 
-val PsiMethod.syntheticAssessors: Collection<Name>
+val PsiMethod.syntheticAccessors: Collection<Name>
     get() {
-        if (!probablyCanHaveSyntheticAssessors) return emptyList()
+        if (!probablyCanHaveSyntheticAccessors) return emptyList()
 
         return when {
             canBeGetter -> listOfNotNull(getterName)
@@ -200,11 +200,11 @@ val PsiMethod.syntheticAssessors: Collection<Name>
         }
     }
 
-val PsiMethod.canHaveSyntheticAssessors: Boolean get() = probablyCanHaveSyntheticAssessors && (canBeGetter || canBeSetter)
+val PsiMethod.canHaveSyntheticAccessors: Boolean get() = probablyCanHaveSyntheticAccessors && (canBeGetter || canBeSetter)
 
-val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAssessors && canBeGetter
+val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeGetter
 
-val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAssessors && canBeSetter
+val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeSetter
 
 val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
 
