@@ -26,8 +26,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
     private val whitelist : Set<String> = setOf(
         // TODO: resolve to inline and stdlib
         "uast-kotlin/testData/Resolve.kt",
-        // TODO: no lambda call receiver?
-        "uast-kotlin/testData/Lambdas.kt",
         // TODO: resolve to local declarations/constructors
         "uast-kotlin/testData/LocalDeclarations.kt",
         // TODO: return type of inline functions

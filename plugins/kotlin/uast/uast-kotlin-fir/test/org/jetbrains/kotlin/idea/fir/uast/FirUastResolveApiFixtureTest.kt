@@ -14,8 +14,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override val isFirUastPlugin: Boolean = true
 
     private val whitelist : Set<String> = setOf(
-        // TODO: Expected: PROPERTY, Actual: LightVariableBuilder:s
-        "ResolveStringFromUast",
         // TODO: multiResolve, getArgumentForParameter
         "MultiResolve",
         // TODO: multiResolve, getArgumentForParameter
