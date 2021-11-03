@@ -63,16 +63,18 @@ final class RepairUtilityBuilder {
                                .setAttribute("os", os.osName), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Runnable() {
       @Override
       void run() {
-        if (BINARIES_CACHE == null) {
-          BINARIES_CACHE = buildBinaries(buildContext)
+        Map<Binary, Path> cache = BINARIES_CACHE
+        if (cache == null) {
+          cache = buildBinaries(buildContext)
+          BINARIES_CACHE = cache
         }
 
-        if (BINARIES_CACHE.isEmpty()) {
+        if (cache.isEmpty()) {
           return
         }
 
         Binary binary = findBinary(buildContext, os, arch)
-        Path path = BINARIES_CACHE.get(binary)
+        Path path = cache.get(binary)
         if (path == null) {
           buildContext.messages.error("No binary was built for $os and $arch")
         }
@@ -134,10 +136,12 @@ final class RepairUtilityBuilder {
   @Nullable
   static synchronized Binary binaryFor(BuildContext buildContext, OsFamily os, JvmArchitecture arch) {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      if (BINARIES_CACHE == null) {
-        BINARIES_CACHE = buildBinaries(buildContext)
+      Map<Binary, Path> cache = BINARIES_CACHE
+      if (cache == null) {
+        cache = buildBinaries(buildContext)
+        BINARIES_CACHE = cache
       }
-      if (!BINARIES_CACHE.isEmpty()) {
+      if (!cache.isEmpty()) {
         return findBinary(buildContext, os, arch)
       }
     }
@@ -182,7 +186,6 @@ final class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          e.printStackTrace(System.err)
           return Collections.<Binary, Path>emptyMap()
         }
 
