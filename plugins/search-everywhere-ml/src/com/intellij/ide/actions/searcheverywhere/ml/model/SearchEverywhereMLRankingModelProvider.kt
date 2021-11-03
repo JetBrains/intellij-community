@@ -21,11 +21,43 @@ internal abstract class SearchEverywhereMLRankingModelProvider {
     }
   }
 
-  abstract val model: DecisionFunction
+  /**
+   * Returns a model used for ranking.
+   * If a path to a local model is specified, a local model will be returned, provided that the user is in an experimental group.
+   * This is so that, a new model can be easily compared to an existing one.
+   *
+   * If no path is specified, then a bundled model will be provided which can either be experimental or standard,
+   * depending on the return value of [shouldProvideExperimentalModel].
+   */
+  val model: DecisionFunction
+    get() {
+      return if (shouldProvideLocalModel() && shouldProvideExperimentalModel()) {
+        getLocalModel()
+      } else {
+        getBundledModel()
+      }
+    }
+
+  /**
+   * Returns a model bundled with the IDE.
+   * This function, if implemented in a ranking provider where sorting by ML is enabled by default,
+   * should use [shouldProvideExperimentalModel] function to return an appropriate model.
+   *
+   * For providers that only have one experimental model, just returning that model will suffice.
+   */
+  protected abstract fun getBundledModel(): DecisionFunction
 
   protected abstract val supportedContributor: Class<out SearchEverywhereContributor<*>>
 
   protected fun shouldProvideExperimentalModel(): Boolean {
     return SearchEverywhereMlSessionService.getService().shouldUseExperimentalModel(supportedContributor.simpleName)
+  }
+
+  private fun shouldProvideLocalModel(): Boolean {
+    return LocalRankingModelProviderUtil.isPathToLocalModelSpecified(supportedContributor.simpleName)
+  }
+
+  private fun getLocalModel(): DecisionFunction {
+    return LocalRankingModelProviderUtil.getLocalModel(supportedContributor.simpleName)!!
   }
 }

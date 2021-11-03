@@ -15,14 +15,14 @@ internal class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLR
 
   override val supportedContributor = ActionSearchEverywhereContributor::class.java
 
-  override val model: DecisionFunction
-    get() {
-      return if (shouldProvideExperimentalModel()) {
-        getExperimentalModel()
-      } else {
-        getStandardModel()
-      }
+  override fun getBundledModel(): DecisionFunction {
+    return if (shouldProvideExperimentalModel()) {
+      getExperimentalModel()
     }
+    else {
+      getStandardModel()
+    }
+  }
 
   private fun getStandardModel(): SearchEverywhereMLRankingDecisionFunction {
     val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
