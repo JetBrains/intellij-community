@@ -94,12 +94,9 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
         })
         Assert.assertNotNull("Foo::bar is not resolved", barReference)
-        if (!isFirUastPlugin) {
-            // TODO: FIR UAST doesn't need this unwrapping. Is this a breaking change?
-            barReference = (barReference as KtLightMethod).kotlinOrigin
-        }
-        Assert.assertTrue("Foo::bar is not a function", barReference is KtNamedFunction)
-        Assert.assertEquals("Foo.bar", (barReference as KtNamedFunction).fqName?.asString())
+        val barReferenceOrigin = (barReference as KtLightMethod).kotlinOrigin
+        Assert.assertTrue("Foo::bar is not a function", barReferenceOrigin is KtNamedFunction)
+        Assert.assertEquals("Foo.bar", (barReferenceOrigin as KtNamedFunction).fqName?.asString())
     }
 
     fun checkCallbackForImports(filePath: String, uFile: UFile) {

@@ -14,17 +14,17 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                     ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 2) [2] = 2
-                UBinaryExpression (operator = =) [b = a] = Undetermined
+                UBinaryExpression (operator = =) [b = a] = (var a = 1)
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     USimpleNameReferenceExpression (identifier = b) [b] = (var b = 2)
                     USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
-                UIfExpression [if (a > 2) a else b] = (var b = 2)
+                UIfExpression [if (a > 2) a else b] = (var b = (var a = 1))
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UBinaryExpression (operator = >) [a > 2] = false (depending on: (var a = 1))
                         USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
                         ULiteralExpression (value = 2) [2] = 2
                     USimpleNameReferenceExpression (identifier = a) [a] = (var a = 1)
-                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = 2)
+                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (var a = 1))
                 UDeclarationsExpression [var c: int = elvis {...}] = Undetermined
                     ULocalVariable (name = c) [var c: int = elvis {...}]
                         UExpressionList (elvis) [elvis {...}] = Undetermined
