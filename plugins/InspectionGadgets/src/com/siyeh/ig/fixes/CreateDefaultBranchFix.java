@@ -80,12 +80,15 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
    */
   public static void startTemplateOnStatement(@Nullable PsiStatement statementToAdjust) {
     if (statementToAdjust == null) return;
+    SmartPsiElementPointer<PsiStatement> pointer = SmartPointerManager.createPointer(statementToAdjust);
+    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(statementToAdjust);
+    if (editor == null) return;
+    statementToAdjust = pointer.getElement();
+    if (statementToAdjust == null) return;
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(statementToAdjust, PsiSwitchBlock.class);
     if (block == null || !block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
-    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
-    if (editor == null) return;
     if (statementToAdjust instanceof PsiSwitchLabeledRuleStatement) {
       statementToAdjust = ((PsiSwitchLabeledRuleStatement)statementToAdjust).getBody();
     }
