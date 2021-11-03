@@ -30,4 +30,9 @@ public class SmartUnSelect extends SmartSelect {
     //noinspection unchecked
     provider.decreaseSelection(provider.getSource(e.getDataContext()));
   }
+
+  @Override
+  protected boolean isIncreasing() {
+    return false;
+  }
 }
