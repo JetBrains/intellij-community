@@ -1,5 +1,5 @@
-UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt {...]
-    UClass (name = StringTemplateComplexForUInjectionHostKt) [public final class StringTemplateComplexForUInjectionHostKt {...}]
+UFile (package = ) [public final class StringTemplateComplexKt {...]
+    UClass (name = StringTemplateComplexKt) [public final class StringTemplateComplexKt {...}]
         UField (name = muchRecur) [@org.jetbrains.annotations.NotNull private static final var muchRecur: java.lang.String = "abc"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULiteralExpression (value = "abc") ["abc"] = "abc"
@@ -23,7 +23,7 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                 ULiteralExpression (value = "a ") ["a "] = "a "
                 UPolyadicExpression (operator = +) ["literal" + case4] = Undetermined
                     ULiteralExpression (value = "literal") ["literal"] = "literal"
-                    USimpleNameReferenceExpression (identifier = case4) [case4] = Undetermined
+                    USimpleNameReferenceExpression (identifier = case4) [case4] = external case4()
                 ULiteralExpression (value = " z") [" z"] = " z"
         UField (name = literalInLiteral2) [@org.jetbrains.annotations.NotNull private static final var literalInLiteral2: java.lang.String = "a " + "literal" + case4.repeat(4) + " z"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -32,7 +32,7 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                 UQualifiedReferenceExpression ["literal" + case4.repeat(4)] = external repeat(4)(4)
                     UPolyadicExpression (operator = +) ["literal" + case4] = Undetermined
                         ULiteralExpression (value = "literal") ["literal"] = "literal"
-                        USimpleNameReferenceExpression (identifier = case4) [case4] = Undetermined
+                        USimpleNameReferenceExpression (identifier = case4) [case4] = external case4()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [repeat(4)] = external repeat(4)(4)
                         UIdentifier (Identifier (repeat)) [UIdentifier (Identifier (repeat))]
                         USimpleNameReferenceExpression (identifier = repeat, resolvesTo = null) [repeat] = external repeat(4)(4)

@@ -72,6 +72,8 @@ dependencies {
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/low-level-api-fir-for-ide/1.6.255/low-level-api-fir-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.analysis-api-providers-ide-impl", JpsDepScope.RUNTIME)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.255/analysis-api-providers-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.analysis-project-structure-ide-impl", JpsDepScope.RUNTIME)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/analysis-project-structure-for-ide/1.6.255/analysis-project-structure-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/symbol-light-classes-for-ide/1.6.255/symbol-light-classes-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.RUNTIME)
 }
 

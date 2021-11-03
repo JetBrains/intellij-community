@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtLiteralConstantValue
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
@@ -256,20 +258,25 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
-        when (ktExpression) {
+        val resolvedTargetElement = when (ktExpression) {
             is KtExpressionWithLabel -> {
                 analyseForUast(ktExpression) {
-                    return ktExpression.getTargetLabel()?.mainReference?.resolve()
+                    ktExpression.getTargetLabel()?.mainReference?.resolve()
                 }
             }
             is KtReferenceExpression -> {
                 analyseForUast(ktExpression) {
-                    return ktExpression.mainReference.resolve()
+                    ktExpression.mainReference.resolve()
                 }
             }
             else ->
                 return null
         }
+        val lightElement = resolvedTargetElement?.takeIf {
+            it is KtDeclaration && it.getKtModule() is KtSourceModule
+        }?.getMaybeLightElement(ktExpression)
+        // TODO: need to handle resolved target to library source
+        return lightElement ?: resolvedTargetElement
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
