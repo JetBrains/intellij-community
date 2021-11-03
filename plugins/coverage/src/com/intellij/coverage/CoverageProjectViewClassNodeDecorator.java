@@ -7,9 +7,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -80,6 +78,17 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
         final String qName = ((PsiClass)element).getQualifiedName();
         if (qName != null) {
           data.setLocationString(javaCovAnnotator.getClassCoverageInformationString(qName, coverageDataManager));
+        }
+      }
+    }
+    else if (element instanceof PsiNamedElement &&
+             // handled in CoverageProjectViewDirectoryNodeDecorator
+             !(element instanceof PsiFile || element instanceof PsiDirectory)) {
+      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+        final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(javaCovAnnotator, (PsiNamedElement)element);
+        if (info != null) {
+          data.setLocationString(JavaCoverageAnnotator.getClassCoverageInformationString(info, coverageDataManager));
+          break;
         }
       }
     }
