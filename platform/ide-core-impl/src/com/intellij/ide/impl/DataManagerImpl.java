@@ -19,8 +19,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FloatingDecoratorMarker;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,11 @@ public class DataManagerImpl extends DataManager {
   private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
+
+  private static class GetDataRuleBean extends KeyedLazyInstanceEP<GetDataRule> {
+    @Attribute("injectedContext")
+    public boolean injectedContext;
+  }
 
   public DataManagerImpl() {
   }
@@ -96,6 +104,16 @@ public class DataManagerImpl extends DataManager {
     }
 
     return dataProvider;
+  }
+
+  static {
+    for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      // initialize data-key instances for rules
+      DataKey<?> dataKey = DataKey.create(instance.getKey());
+      if (!((GetDataRuleBean)instance).injectedContext) continue;
+      // add "injected" data-key for rules like "usageTarget"
+      InjectedDataKeys.injectedKey(dataKey);
+    }
   }
 
   public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
