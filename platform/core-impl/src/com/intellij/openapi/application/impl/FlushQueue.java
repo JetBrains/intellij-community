@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.util.*;
-import java.util.function.Consumer;
 
 final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
@@ -23,22 +23,19 @@ final class FlushQueue {
 
   private final List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
 
-  private final ArrayDeque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
-  private final @NotNull Consumer<? super Runnable> myRunnableExecutor;
-
+  private final Deque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
   private volatile boolean myMayHaveItems;
 
   private RunnableInfo myLastInfo;
 
-  FlushQueue(@NotNull Consumer<? super Runnable> executor) {
-    myRunnableExecutor = executor;
+  FlushQueue() {
   }
 
-  public void scheduleFlush() {
-    myRunnableExecutor.accept(FLUSH_NOW);
+  void scheduleFlush() {
+    SwingUtilities.invokeLater(FLUSH_NOW);
   }
 
-  public void flushNow() {
+  private void flushNow() {
     LaterInvocator.FLUSHER_SCHEDULED.set(false);
     myMayHaveItems = false;
 
@@ -55,7 +52,7 @@ final class FlushQueue {
     LaterInvocator.requestFlush();
   }
 
-  public void push(@NotNull RunnableInfo runnableInfo) {
+  void push(@NotNull RunnableInfo runnableInfo) {
     synchronized (LOCK) {
       myQueue.add(runnableInfo);
       myMayHaveItems = true;

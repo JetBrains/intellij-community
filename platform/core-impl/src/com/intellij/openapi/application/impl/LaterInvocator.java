@@ -45,7 +45,7 @@ public final class LaterInvocator {
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
-  private static final FlushQueue ourEdtQueue = new FlushQueue(SwingUtilities::invokeLater);
+  private static final FlushQueue ourEdtQueue = new FlushQueue();
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
     if (!ourModalityStateMulticaster.getListeners().contains(listener)) {
@@ -351,7 +351,7 @@ public final class LaterInvocator {
   }
 
   /**
-   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances
+   * There might be some requests in the queue, but {@link FlushQueue#FLUSH_NOW} might not be scheduled yet. In these circumstances
    * {@link EventQueue#peekEvent()} default implementation would return null, and {@link com.intellij.util.ui.UIUtil#dispatchAllInvocationEvents()} would
    * stop processing events too early and lead to spurious test failures.
    *
