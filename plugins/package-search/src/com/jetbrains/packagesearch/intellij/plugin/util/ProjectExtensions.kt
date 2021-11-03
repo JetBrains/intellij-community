@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.impl.TrustChangeNotifier
-import com.intellij.ide.impl.getTrustedState
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.service
@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Function
-import com.intellij.util.ThreeState
+import com.intellij.util.messages.Topic
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
@@ -26,73 +26,68 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.mapLatest
+import kotlin.experimental.ExperimentalTypeInference
 import kotlin.streams.toList
 
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
 
-internal val Project.trustedProjectFlow: Flow<ThreeState>
-    get() = callbackFlow {
-        send(getTrustedState())
-        val connection = messageBus.simpleConnect()
-        connection.subscribe(
-            TrustChangeNotifier.TOPIC,
-            TrustChangeNotifier {
-                if (it == this@trustedProjectFlow) trySend(getTrustedState())
-            }
-        )
-        awaitClose { connection.disconnect() }
+@OptIn(ExperimentalTypeInference::class)
+internal fun <L : Any, K> Project.messageBusFlow(
+    topic: Topic<L>,
+    initialValue: (suspend () -> K)? = null,
+    @BuilderInference listener: ProducerScope<K>.() -> L
+) = callbackFlow {
+    initialValue?.let { send(it()) }
+    val connection = messageBus.simpleConnect()
+    connection.subscribe(topic, listener())
+    awaitClose { connection.disconnect() }
+}
+
+internal val Project.trustedProjectFlow: Flow<Boolean>
+    get() = messageBusFlow(TrustChangeNotifier.TOPIC, { isTrusted() }) {
+        TrustChangeNotifier { if (it == this@trustedProjectFlow) trySend(isTrusted()) }
     }.distinctUntilChanged()
 
-@Suppress("BlockingMethodInNonBlockingContext")
 internal val Project.nativeModulesChangesFlow
-    get() = callbackFlow {
-        send(getNativeModules())
-
-        val connection = messageBus.simpleConnect()
-        connection.subscribe(
-            ProjectTopics.MODULES,
-            object : ModuleListener {
-                override fun moduleAdded(project: Project, module: Module) {
-                    trySend(getNativeModules())
-                }
-
-                override fun moduleRemoved(project: Project, module: Module) {
-                    trySend(getNativeModules())
-                }
-
-                override fun modulesRenamed(project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>) {
-                    trySend(getNativeModules())
-                }
+    get() = messageBusFlow(ProjectTopics.MODULES, { getNativeModules() }) {
+        object : ModuleListener {
+            override fun moduleAdded(project: Project, module: Module) {
+                trySend(getNativeModules())
             }
-        )
-        awaitClose { connection.disconnect() }
-    }.mapLatest { it.toList() }
+
+            override fun moduleRemoved(project: Project, module: Module) {
+                trySend(getNativeModules())
+            }
+
+            override fun modulesRenamed(
+                project: Project,
+                modules: MutableList<out Module>,
+                oldNameProvider: Function<in Module, String>
+            ) {
+                trySend(getNativeModules())
+            }
+        }
+    }
 
 internal val Project.filesChangedEventFlow
-    get() = channelFlow {
-        val connection = messageBus.simpleConnect()
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
+        object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {
                 trySend(events)
             }
-        })
-        awaitClose { connection.disconnect() }
+        }
     }
 
-internal fun Project.getNativeModules(): Array<Module> = ModuleManager.getInstance(this).modules
+internal fun Project.getNativeModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 
 internal val Project.moduleChangesSignalFlow
     get() = ModuleChangesSignalProvider.listenToModuleChanges(this)
-
-internal fun List<ModuleTransformer>.flatMapTransform(project: Project, nativeModule: List<Module>) =
-    flatMap { it.transformModules(project, nativeModule) }
 
 internal val Project.lifecycleScope: CoroutineScope
     get() = service<ProjectLifecycleHolderService>()
@@ -113,14 +108,8 @@ internal val Project.coroutineModuleTransformer: List<CoroutineModuleTransformer
     get() = CoroutineModuleTransformer.extensionPointName.extensions(this).toList()
 
 internal val Project.lookAndFeelFlow
-    get() = callbackFlow {
-        val connection = messageBus.simpleConnect()
-        send(LafManager.getInstance()!!)
-        connection.subscribe(
-            LafManagerListener.TOPIC,
-            LafManagerListener { trySend(it) }
-        )
-        awaitClose { connection.disconnect() }
+    get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
+        LafManagerListener { trySend(it) }
     }
 
 internal val Project.toolWindowManager
