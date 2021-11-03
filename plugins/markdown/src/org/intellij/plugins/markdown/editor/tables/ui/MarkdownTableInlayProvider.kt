@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables.ui
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -34,6 +35,9 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
 
   private class Collector(editor: Editor): FactoryInlayHintsCollector(editor) {
     override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+      if (editor.getUserData(DISABLE_TABLE_INLAYS) == true) {
+        return true
+      }
       if (element is MarkdownTableRowImpl || element is MarkdownTableSeparatorRow) {
         if (DocumentUtil.isAtLineStart(element.startOffset, editor.document) && TableUtils.findTable(element)?.hasCorrectBorders() == true) {
           val presentation = VerticalBarPresentation.create(factory, editor, element)
@@ -66,5 +70,7 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
 
   companion object {
     private val settingsKey = SettingsKey<NoSettings>("MarkdownTableInlayProviderSettingsKey")
+
+    val DISABLE_TABLE_INLAYS = Key<Boolean>("MarkdownDisableTableInlaysKey")
   }
 }
