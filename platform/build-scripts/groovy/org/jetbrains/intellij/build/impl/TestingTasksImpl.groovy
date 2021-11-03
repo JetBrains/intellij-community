@@ -328,7 +328,17 @@ class TestingTasksImpl extends TestingTasks {
 
     Path classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
-    Files.writeString(classpathFile, String.join("\n", testsClasspath.findAll({ Files.exists(Path.of(it)) })))
+
+    StringBuilder classPathString = new StringBuilder()
+    for (String s : testsClasspath) {
+      if (Files.exists(Path.of(s))) {
+        classPathString.append(s).append('\n' as char)
+      }
+    }
+    if (classPathString.size() > 0) {
+      classPathString.setLength(classPathString.size() - 1)
+    }
+    Files.writeString(classpathFile, classPathString)
 
     Map<String, String> allSystemProperties = new HashMap<String, String>(systemProperties)
     allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
@@ -432,7 +442,12 @@ class TestingTasksImpl extends TestingTasks {
       "file.encoding"                                     : "UTF-8",
       "io.netty.leakDetectionLevel"                       : "PARANOID",
     ] as Map<String, String>
-    defaultSystemProperties.each { k, v -> systemProperties.putIfAbsent(k, v) }
+    defaultSystemProperties.forEach(new BiConsumer<String, String>() {
+      @Override
+      void accept(String k, String v) {
+        systemProperties.putIfAbsent(k, v)
+      }
+    })
 
     (System.getProperties() as Hashtable<String, String>).each { String key, String value ->
       if (key.startsWith("pass.")) {
