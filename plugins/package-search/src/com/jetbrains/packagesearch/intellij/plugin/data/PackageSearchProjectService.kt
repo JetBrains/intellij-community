@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
-import com.intellij.util.ThreeState
 import com.intellij.util.io.exists
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
@@ -89,12 +88,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     ) { booleans -> emit(booleans.any { it }) }
         .stateIn(this, SharingStarted.Eagerly, false)
 
-
-    private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { trustedState ->
-        when (trustedState) {
-            ThreeState.YES -> project.nativeModulesChangesFlow
-            else -> flowOf(emptyList())
-        }
+    private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
+        if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
     }
         .replayOnSignals(retryFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow, timer(Duration.minutes(15)))
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
