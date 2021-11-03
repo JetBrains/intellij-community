@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -180,7 +181,7 @@ public final class MavenServerManager implements Disposable {
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
-    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
+    if (TrustedProjects.isTrusted(project)) {
       MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
       connector =
         new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
