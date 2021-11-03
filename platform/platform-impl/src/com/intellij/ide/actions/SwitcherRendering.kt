@@ -109,8 +109,12 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    val defaultIcon = if (ExperimentalUI.isNewUI()) EmptyIcon.ICON_16 else EmptyIcon.ICON_13
+    val defaultWidth = defaultIcon.iconWidth
+    val icon = RenderingUtil.getIcon(window.icon, selected) ?: defaultIcon
+    val iconWidth = icon.iconWidth
     component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
-    component.icon = RenderingUtil.getIcon(window.icon ?: EmptyIcon.ICON_13, selected)
+    component.icon = if (iconWidth == defaultWidth) icon else IconUtil.scale(icon, null, defaultWidth / iconWidth.toFloat())
     component.append(mainText)
   }
 }
