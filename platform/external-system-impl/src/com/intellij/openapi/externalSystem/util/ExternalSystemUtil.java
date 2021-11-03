@@ -112,7 +112,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -369,7 +368,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    if (!isPreviewMode && !isTrusted(project, externalSystemId)) {
+    if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
       LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
       return;
     }
@@ -706,7 +705,7 @@ public final class ExternalSystemUtil {
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
     String systemsPresentation = naturalJoinSystemIds(systemIds);
-    return isTrusted(project, systemIds) ||
+    return TrustedProjects.isTrusted(project) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
              IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
@@ -715,15 +714,6 @@ public final class ExternalSystemUtil {
              IdeBundle.message("untrusted.project.dialog.distrust.button")
            );
   }
-
-  public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
-    return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemId);
-  }
-
-  public static boolean isTrusted(@NotNull Project project, @NotNull Collection<ProjectSystemId> systemIds) {
-    return systemIds.stream().allMatch(id -> isTrusted(project, id));
-  }
-
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
     return new HashSet<>(systemIds).stream()
