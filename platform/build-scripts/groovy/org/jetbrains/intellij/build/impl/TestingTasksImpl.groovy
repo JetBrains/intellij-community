@@ -2,17 +2,16 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
-import org.apache.tools.ant.types.Path
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
@@ -31,8 +30,10 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.jar.Manifest
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -56,10 +57,10 @@ class TestingTasksImpl extends TestingTasks {
 
     checkOptions()
 
-    def compilationTasks = CompilationTasks.create(context)
-    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
-    if (projectArtifacts) {
-      compilationTasks.buildProjectArtifacts(new LinkedHashSet(projectArtifacts))
+    CompilationTasks compilationTasks = CompilationTasks.create(context)
+    Set<String> projectArtifacts = options.beforeRunProjectArtifacts == null ? null : Set.of(options.beforeRunProjectArtifacts.split(";"))
+    if (projectArtifacts != null) {
+      compilationTasks.buildProjectArtifacts(projectArtifacts)
     }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
       def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
@@ -67,7 +68,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts(new LinkedHashSet(runConfigurations.collectMany {it.requiredArtifacts}))
+      compilationTasks.buildProjectArtifacts((Set<String>)runConfigurations.collectMany(new LinkedHashSet<String>()) {it.requiredArtifacts})
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])
@@ -78,12 +79,12 @@ class TestingTasksImpl extends TestingTasks {
 
     setupTestingDependencies()
 
-    def remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
+    String remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
       debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition)
     }
     else {
-      Map<String, String> additionalSystemProperties = [:]
+      Map<String, String> additionalSystemProperties = new LinkedHashMap<>()
       loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
 
       if (runConfigurations != null) {
@@ -98,7 +99,7 @@ class TestingTasksImpl extends TestingTasks {
 
   private void checkOptions() {
     if (options.testConfigurations != null) {
-      def testConfigurationsOptionName = "intellij.build.test.configurations"
+      String testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
         warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
       }
@@ -122,13 +123,17 @@ class TestingTasksImpl extends TestingTasks {
     context.messages.warning("'$specifiedOption' option is specified so '$ignoredOption' will be ignored.")
   }
 
-  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions,
-                                             List<JUnitRunConfigurationProperties> runConfigurations,
-                                             Map<String, String> additionalSystemProperties) {
+  private static void runTestsFromRunConfigurations(List<String> additionalJvmOptions,
+                                                    List<JUnitRunConfigurationProperties> runConfigurations,
+                                                    Map<String, String> additionalSystemProperties) {
     runConfigurations.each { configuration ->
-      context.messages.block("Run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties)
-      }
+      context.messages.block("Run '${configuration.name}' run configuration", new Supplier<Void>() {
+        @Override
+        Void get() {
+          runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties)
+          return null
+        }
+      })
     }
   }
 
@@ -142,35 +147,38 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
-    def ignoredPrefixes = [
+    List<String> ignoredPrefixes = [
       "-ea", "-XX:+HeapDumpOnOutOfMemoryError",
       "-Xbootclasspath",
       "-Xmx", "-Xms",
       "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path="
     ]
-    vmOptions.findAll { option -> ignoredPrefixes.every { !option.startsWith(it) } }
+    return vmOptions.findAll { option -> ignoredPrefixes.every { !option.startsWith(it) } }
   }
 
   private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions,
                                              String defaultMainModule,
                                              Predicate<File> rootExcludeCondition,
                                              Map<String, String> additionalSystemProperties) {
-    def mainModule = options.mainModule ?: defaultMainModule
+    String mainModule = options.mainModule ?: defaultMainModule
     if (rootExcludeCondition != null) {
       List<JpsModule> excludedModules = context.project.modules.findAll {
         List<String> contentRoots = it.contentRootsList.urls
         !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
       }
-      List<String> excludedRoots = excludedModules.collectMany {
-        [context.getModuleOutputDir(it).toString(), context.getModuleTestsOutputPath(it)]
+      List<String> excludedRoots = new ArrayList<>()
+      for (JpsModule excludedModule : excludedModules) {
+        excludedRoots.add(context.getModuleOutputDir(excludedModule).toString())
+        excludedRoots.add(context.getModuleTestsOutputPath(excludedModule))
       }
-      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
-      FileUtilRt.createParentDirs(excludedRootsFile)
-      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
-      additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
+      Path excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
+      Files.createDirectories(excludedRootsFile.parent)
+      Files.writeString(excludedRootsFile, String.join("\n", excludedRoots.findAll { Files.exists(Path.of(it)) }))
+      additionalSystemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
     }
 
-    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
+    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties,
+                    Collections.<String, String>emptyMap(), false)
   }
 
   private loadTestDiscovery(List<String> additionalJvmOptions, LinkedHashMap<String, String> additionalSystemProperties) {
@@ -270,38 +278,48 @@ class TestingTasksImpl extends TestingTasks {
     if (options.testConfigurations != null) {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
-    def mainModule = options.mainModule ?: defaultMainModule
-    def filteredOptions = removeStandardJvmOptions(StringUtil.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char))
-    runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], [:], true)
+    String mainModule = options.mainModule ?: defaultMainModule
+    List<String> filteredOptions = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char))
+    runTestsProcess(mainModule,
+                    null,
+                    junitClass,
+                    filteredOptions + additionalJvmOptions,
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    true)
   }
 
-  private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
-                               List<String> jvmArgs, Map<String, String> systemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
+  private void runTestsProcess(String mainModule,
+                               String testGroups,
+                               String testPatterns,
+                               List<String> jvmArgs,
+                               Map<String, String> systemProperties,
+                               Map<String, String> envVariables,
+                               boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
 
-    def classpathFile = new File("$context.paths.temp/junit.classpath")
-    FileUtilRt.createParentDirs(classpathFile)
-    classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
+    Path classpathFile = context.paths.tempDir.resolve("junit.classpath")
+    Files.createDirectories(classpathFile.parent)
+    Files.writeString(classpathFile, String.join("\n", testsClasspath.findAll({ Files.exists(Path.of(it)) })))
 
-    def allSystemProperties = new HashMap<String, String>(systemProperties)
-    [
-      "classpath.file"                            : classpathFile.absolutePath,
-      "intellij.build.test.patterns"              : testPatterns,
-      "intellij.build.test.groups"                : testGroups,
-      "intellij.build.test.sorter"                : System.getProperty("intellij.build.test.sorter"),
-      "bootstrap.testcases"                       : "com.intellij.AllTests",
-      (TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG)  : options.performanceTestsOnly.toString(),
-    ].each { k, v -> allSystemProperties.putIfAbsent(k, v) }
+    Map<String, String> allSystemProperties = new HashMap<String, String>(systemProperties)
+    allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
+    allSystemProperties.putIfAbsent("intellij.build.test.patterns", testPatterns)
+    allSystemProperties.putIfAbsent("intellij.build.test.groups", testGroups)
+    allSystemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
+    allSystemProperties.putIfAbsent("bootstrap.testcases", "com.intellij.AllTests")
+    allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.performanceTestsOnly.toString())
 
-    def allJvmArgs = new ArrayList<String>(jvmArgs)
+    List<String> allJvmArgs = new ArrayList<String>(jvmArgs)
 
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath, remoteDebugging)
 
     if (isRunningInBatchMode()) {
       context.messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
-    } else {
-      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"} from classpath of module '$mainModule'")
+    }
+    else {
+      context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
@@ -315,7 +333,8 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (options.preferAntRunner) {
-      runJUnitTask(mainModule, allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
+      runJUnitTask(mainModule, allJvmArgs, allSystemProperties, envVariables,
+                   isBootstrapSuiteDefault() && !isRunningInBatchMode() ? bootstrapClasspath : testsClasspath)
     }
     else {
       runJUnit5Engine(mainModule, allSystemProperties, allJvmArgs, envVariables, bootstrapClasspath, testsClasspath)
@@ -324,16 +343,16 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private void notifySnapshotBuilt(List<String> jvmArgs) {
-    def option = "-XX:HeapDumpPath="
-    def filePath = jvmArgs.find { it.startsWith(option) }.substring(option.length())
-    if (new File(filePath).exists()) {
-      context.notifyArtifactBuilt(filePath)
+    String option = "-XX:HeapDumpPath="
+    Path file = Path.of(jvmArgs.find { it.startsWith(option) }.substring(option.length()))
+    if (Files.exists(file)) {
+      context.notifyArtifactWasBuilt(file)
     }
   }
 
   @Override
-  java.nio.file.Path createSnapshotsDirectory() {
-    java.nio.file.Path snapshotsDir = context.paths.projectHomeDir.resolve("out/snapshots")
+  Path createSnapshotsDirectory() {
+    Path snapshotsDir = context.paths.projectHomeDir.resolve("out/snapshots")
     NioFiles.deleteRecursively(snapshotsDir)
     Files.createDirectories(snapshotsDir)
     return snapshotsDir
@@ -348,7 +367,7 @@ class TestingTasksImpl extends TestingTasks {
       classPath.addAll(utilClasspath - classPath)
     }
 
-    java.nio.file.Path snapshotsDir = createSnapshotsDirectory()
+    Path snapshotsDir = createSnapshotsDirectory()
     String hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     List<String> defaultJvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
       '-XX:+HeapDumpOnOutOfMemoryError',
@@ -696,7 +715,7 @@ class TestingTasksImpl extends TestingTasks {
     if (taskDefined) return
     taskDefined = true
     def junitTaskLoaderRef = "JUNIT_TASK_CLASS_LOADER"
-    Path pathJUnit = new Path(ant.project)
+    org.apache.tools.ant.types.Path pathJUnit = new org.apache.tools.ant.types.Path(ant.project)
     pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit.jar"))
     pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
     ant.project.addReference(junitTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
@@ -717,7 +736,7 @@ class TestingTasksImpl extends TestingTasks {
   private List<String> buildCausalProfilingAgentJvmArg(CausalProfilingOptions options) {
     List<String> causalProfilingJvmArgs = []
 
-    String causalProfilerAgentName = SystemInfo.isLinux || SystemInfo.isMac ? "liblagent.so" : null
+    String causalProfilerAgentName = SystemInfoRt.isLinux || SystemInfoRt.isMac ? "liblagent.so" : null
     if (causalProfilerAgentName != null) {
       def agentArgs = options.buildAgentArgsString()
       if (agentArgs != null) {
