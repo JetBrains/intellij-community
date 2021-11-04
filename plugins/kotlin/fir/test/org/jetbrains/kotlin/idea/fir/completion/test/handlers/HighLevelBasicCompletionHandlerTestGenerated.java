@@ -28,6 +28,16 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
         runTest("../completion/tests/testData/handlers/basic/AddLabelToReturn.kt");
     }
 
+    @TestMetadata("AmbiguousSuperMethod.kt")
+    public void testAmbiguousSuperMethod() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethod.kt");
+    }
+
+    @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
+    public void testAmbiguousSuperMethodWithArgument() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
+    }
+
     @TestMetadata("ClassKeywordBeforeName.kt")
     public void testClassKeywordBeforeName() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/ClassKeywordBeforeName.kt");
