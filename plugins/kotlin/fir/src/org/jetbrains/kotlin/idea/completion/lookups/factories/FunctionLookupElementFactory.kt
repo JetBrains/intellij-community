@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
@@ -40,38 +40,46 @@ internal class FunctionLookupElementFactory {
             insertEmptyLambda = insertLambdaBraces(symbol),
         )
 
-        var argString: String? = null
-        val insertionHandler = when (val insertionStrategy = options.insertionStrategy) {
-            CallableInsertionStrategy.AsCall -> FunctionInsertionHandler
-            CallableInsertionStrategy.AsIdentifier -> QuotedNamesAwareInsertionHandler()
-            is CallableInsertionStrategy.AsIdentifierCustom -> object : QuotedNamesAwareInsertionHandler() {
+        val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
+            .withTypeText(substitutor.substituteOrSelf(symbol.annotatedType.type).render(TYPE_RENDERING_OPTIONS))
+            .withTailText(getTailText(symbol, substitutor))
+            .let { withSymbolInfo(symbol, it) }
+
+        return updateLookupElementBuilder(options, builder)
+    }
+
+    private fun updateLookupElementBuilder(
+        options: CallableInsertionOptions,
+        builder: LookupElementBuilder,
+        insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
+    ): LookupElementBuilder {
+        return when (insertionStrategy) {
+            CallableInsertionStrategy.AsCall -> builder.withInsertHandler(FunctionInsertionHandler)
+            CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(QuotedNamesAwareInsertionHandler())
+            is CallableInsertionStrategy.AsIdentifierCustom -> builder.withInsertHandler(object : QuotedNamesAwareInsertionHandler() {
                 override fun handleInsert(context: InsertionContext, item: LookupElement) {
                     super.handleInsert(context, item)
                     insertionStrategy.insertionHandlerAction(context)
                 }
-            }
+            })
             is CallableInsertionStrategy.WithCallArgs -> {
-                argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
-                object : QuotedNamesAwareInsertionHandler() {
-                    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                        super.handleInsert(context, item)
-                        context.insertSymbol(argString)
+                val argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
+                builder.withInsertHandler(
+                    object : QuotedNamesAwareInsertionHandler() {
+                        override fun handleInsert(context: InsertionContext, item: LookupElement) {
+                            super.handleInsert(context, item)
+                            context.insertSymbol(argString)
+                        }
                     }
-                }
+                ).withTailText(argString, false)
+            }
+            is CallableInsertionStrategy.WithSuperDisambiguation -> {
+                val resultBuilder = updateLookupElementBuilder(options, builder, insertionStrategy.subStrategy)
+                updateLookupElementBuilderToInsertTypeQualifierOnSuper(resultBuilder, insertionStrategy)
             }
         }
-
-        return LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTypeText(substitutor.substituteOrSelf(symbol.annotatedType.type).render(TYPE_RENDERING_OPTIONS))
-            .withInsertHandler(insertionHandler)
-            .let { withSymbolInfo(symbol, it) }
-            .let {
-                if (argString != null) it.withTailText(argString, false)
-                else it.withTailText(getTailText(symbol, substitutor), true)
-            }
     }
 }
-
 
 internal data class FunctionCallLookupObject(
     override val shortName: Name,
