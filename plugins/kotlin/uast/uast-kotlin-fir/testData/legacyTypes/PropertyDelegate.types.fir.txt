@@ -1,6 +1,6 @@
 UFile (package = ) [public final class PropertyDelegateKt {...]
     UClass (name = PropertyDelegateKt) [public final class PropertyDelegateKt {...}]
-        UField (name = sdCardPath$delegate) [@org.jetbrains.annotations.NotNull private static final var sdCardPath$delegate: kotlin.Lazy<? extends java.lang.String>]
+        UField (name = sdCardPath$delegate) [@org.jetbrains.annotations.NotNull private static final var sdCardPath$delegate: kotlin.Lazy<java.lang.String>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends String>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
@@ -9,7 +9,7 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
                     UBlockExpression [{...}] : PsiType:String
                         UReturnExpression [return "/sdcard"]
                             ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
-        UField (name = annotatedDelegate$delegate) [@org.jetbrains.annotations.NotNull @kotlin.Suppress private static final var annotatedDelegate$delegate: kotlin.Lazy<? extends java.lang.Integer>]
+        UField (name = annotatedDelegate$delegate) [@org.jetbrains.annotations.NotNull @kotlin.Suppress private static final var annotatedDelegate$delegate: kotlin.Lazy<java.lang.Integer>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends Integer>

@@ -17,7 +17,7 @@ UFile (package = ) [public final class MyColor {...]
             UParameter (name = z) [@org.jetbrains.annotations.NotNull var z: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
     UClass (name = Some) [public final class Some {...}]
-        UField (name = delegate$delegate) [@org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<? extends MyColor>]
+        UField (name = delegate$delegate) [@org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<MyColor>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends MyColor>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
@@ -31,7 +31,7 @@ UFile (package = ) [public final class MyColor {...]
                                 ULiteralExpression (value = 18) [18] : PsiType:int
                                 ULiteralExpression (value = 2) [2] : PsiType:int
                                 ULiteralExpression (value = 3) [3] : PsiType:int
-        UField (name = lambda) [@org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<? extends MyColor> = lazy({ ...})]
+        UField (name = lambda) [@org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<MyColor> = lazy({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends MyColor>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
@@ -54,6 +54,6 @@ UFile (package = ) [public final class MyColor {...]
                 ULiteralExpression (value = 2) [2] : PsiType:int
                 ULiteralExpression (value = 3) [3] : PsiType:int
         UMethod (name = getDelegate) [public final fun getDelegate() : MyColor = UastEmptyExpression]
-        UMethod (name = getLambda) [public final fun getLambda() : kotlin.Lazy<? extends MyColor> = UastEmptyExpression]
+        UMethod (name = getLambda) [public final fun getLambda() : kotlin.Lazy<MyColor> = UastEmptyExpression]
         UMethod (name = getNonLazy) [public final fun getNonLazy() : MyColor = UastEmptyExpression]
         UMethod (name = Some) [public fun Some() = UastEmptyExpression]
