@@ -35,6 +35,31 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             runTest("testData/basic/common/AfterIntSeparatedWithComments.kt");
         }
 
+        @TestMetadata("ambiguousSuperMethod.kt")
+        public void testAmbiguousSuperMethod() throws Exception {
+            runTest("testData/basic/common/ambiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodDiamond.kt")
+        public void testAmbiguousSuperMethodDiamond() throws Exception {
+            runTest("testData/basic/common/ambiguousSuperMethodDiamond.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
+        public void testAmbiguousSuperMethodDiamondAny() throws Exception {
+            runTest("testData/basic/common/ambiguousSuperMethodDiamondAny.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodHigherUp.kt")
+        public void testAmbiguousSuperMethodHigherUp() throws Exception {
+            runTest("testData/basic/common/ambiguousSuperMethodHigherUp.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
+        public void testAmbiguousSuperMethodSingleImpl() throws Exception {
+            runTest("testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
+        }
+
         @TestMetadata("BasicAny.kt")
         public void testBasicAny() throws Exception {
             runTest("testData/basic/common/BasicAny.kt");
