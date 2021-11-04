@@ -22,16 +22,17 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @CompileStatic
 final class JaegerJsonSpanExporter implements SpanExporter {
-  private static volatile JsonGenerator writer
+  private static final AtomicReference<JsonGenerator> writer = new AtomicReference<>()
   private static volatile Path file
   private static final AtomicBoolean shutdownHookAdded = new AtomicBoolean()
 
   static void setOutput(@NotNull Path file) {
-    JsonGenerator w = writer
+    JsonGenerator w = writer.getAndSet(null)
     if (w != null) {
       finishWriter(w)
     }
@@ -50,7 +51,7 @@ final class JaegerJsonSpanExporter implements SpanExporter {
     }
 
     w = new JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
-    writer = w
+    writer.set(w)
     JaegerJsonSpanExporter.file = file
     w.writeStartObject()
     w.writeArrayFieldStart("data")
@@ -81,7 +82,7 @@ final class JaegerJsonSpanExporter implements SpanExporter {
 
   @Override
   CompletableResultCode export(Collection<SpanData> spans) {
-    JsonGenerator w = writer
+    JsonGenerator w = writer.get()
     if (w == null) {
       return CompletableResultCode.ofSuccess()
     }
@@ -189,22 +190,22 @@ final class JaegerJsonSpanExporter implements SpanExporter {
 
   @Override
   CompletableResultCode flush() {
-    writer?.flush()
+    writer.get()?.flush()
     return CompletableResultCode.ofSuccess()
   }
 
   @Override
   CompletableResultCode shutdown() {
-    JsonGenerator w = writer
+    JsonGenerator w = writer.getAndSet(null)
     if (w != null) {
       finishWriter(w)
     }
     return CompletableResultCode.ofSuccess()
   }
 
-  protected static @Nullable
-  Path finish(@Nullable SdkTracerProvider tracerProvider) {
-    JsonGenerator w = writer
+  @Nullable
+  protected static Path finish(@Nullable SdkTracerProvider tracerProvider) {
+    JsonGenerator w = writer.getAndSet(null)
     if (w == null) {
       return null
     }
@@ -212,12 +213,11 @@ final class JaegerJsonSpanExporter implements SpanExporter {
     Path f = file
     tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
     finishWriter(w)
-    writer = null
     file = null
     return f
   }
 
-  private static void finishWriter(@NotNull JsonGenerator w) {
+  private static synchronized void finishWriter(@NotNull JsonGenerator w) {
     // close spans
     w.writeEndArray()
 
