@@ -16,11 +16,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.textMatching.PrefixMatchingUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
-import java.io.File
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
@@ -166,7 +167,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     // Remove the directory and the extension if they are present
-    val filename = searchQuery.substringAfterLast(File.separatorChar).substringBeforeLast('.')
+    val filename = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
 
     val features = mutableMapOf<String, Any>()
     PrefixMatchingUtil.calculateFeatures(item.virtualFile.nameWithoutExtension, filename, features)
