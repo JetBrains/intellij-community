@@ -4,7 +4,7 @@ import foo.A
 
 class B : A() {
     @RecentlyNonNull
-    override fun foo(@RecentlyNonNull s1: String, @RecentlyNullable s2: String?): String {
-        <selection><caret>return super.foo(s1, s2)</selection>
+    override fun foo(@RecentlyNonNull s1: String?, @RecentlyNullable s2: String?): String? {
+        return super.foo(s1, s2)
     }
 }
