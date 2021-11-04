@@ -90,6 +90,39 @@ fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
     }
 }
 
+/**
+ * `( *\\( *)` and `( *\\) *)` – to find parenthesis
+ * `( *, *(?![^\\[]*]))` – to find commas outside square brackets
+ */
+private val parenthesisRegex = Regex("( *\\( *)|( *\\) *)|( *, *(?![^\\[]*]))")
+
+private inline fun CharSequence.ifNotEmpty(action: (CharSequence) -> Unit) {
+    takeIf(CharSequence::isNotBlank)?.let(action)
+}
+
+fun SearchScope.toHumanReadableString(): String = buildString {
+    val scopeText = this@toHumanReadableString.toString()
+    var currentIndent = 0
+    var lastIndex = 0
+    for (parenthesis in parenthesisRegex.findAll(scopeText)) {
+        val subSequence = scopeText.subSequence(lastIndex, parenthesis.range.first)
+        subSequence.ifNotEmpty {
+            append(" ".repeat(currentIndent))
+            appendLine(it)
+        }
+
+        val value = parenthesis.value
+        when {
+            "(" in value -> currentIndent += 2
+            ")" in value -> currentIndent -= 2
+        }
+
+        lastIndex = parenthesis.range.last + 1
+    }
+
+    if (isEmpty()) append(scopeText)
+}
+
 // Copied from SearchParameters.getEffectiveSearchScope()
 fun ReferencesSearch.SearchParameters.effectiveSearchScope(element: PsiElement): SearchScope {
     if (element == elementToSearch) return effectiveSearchScope
