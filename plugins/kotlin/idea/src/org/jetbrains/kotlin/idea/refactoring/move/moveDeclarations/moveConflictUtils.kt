@@ -409,10 +409,11 @@ class MoveConflictChecker(
             val targetContainer = moveTarget.getContainerDescriptor() ?: continue
 
             val referencingDescriptor = when (container) {
-                is KtDeclaration -> container.unsafeResolveToDescriptor()
+                is KtDeclaration -> container.resolveToDescriptorIfAny()
                 is PsiMember -> container.getJavaMemberDescriptor()
                 else -> null
             } ?: continue
+
             val actualVisibility = if (referencingDescriptor.isJavaDescriptor) referencedDescriptor.visibilityAsViewedFromJava() else null
             val originalDescriptorToCheck = referencedDescriptor.wrap(newVisibility = actualVisibility) ?: referencedDescriptor
             val newDescriptorToCheck = referencedDescriptor.asPredicted(targetContainer, actualVisibility) ?: continue
@@ -484,7 +485,7 @@ class MoveConflictChecker(
                     if (isToBeMoved(target)) return@forEach
 
                     val targetDescriptor = when {
-                        target is KtDeclaration -> target.unsafeResolveToDescriptor()
+                        target is KtDeclaration -> target.resolveToDescriptorIfAny()
                         target is PsiMember && target.hasJavaResolutionFacade() -> target.getJavaMemberDescriptor()
                         else -> null
                     } as? DeclarationDescriptorWithVisibility ?: return@forEach
