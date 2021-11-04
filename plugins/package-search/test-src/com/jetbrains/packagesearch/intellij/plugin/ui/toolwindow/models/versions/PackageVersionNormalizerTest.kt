@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.CsvFileSource
 
 internal class PackageVersionNormalizerTest {
 
-    private val normalizer = PackageVersionNormalizer.getInstance()
+    private val normalizer = PackageVersionNormalizer()
 
     @Nested
     inner class Semantic {
@@ -21,7 +21,7 @@ internal class PackageVersionNormalizerTest {
         @Test
         internal fun `should return a Semantic version when the input is a simple semantic version`() {
             val aVersion = aNamedPackageVersion(versionName = "1.0.0")
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
                         original = aVersion,
@@ -35,7 +35,7 @@ internal class PackageVersionNormalizerTest {
         @Test
         internal fun `should return a Semantic version when the input is a semantic version with stability marker`() {
             val aVersion = aNamedPackageVersion(versionName = "1.0.0-RC02")
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
                         original = aVersion,
@@ -49,7 +49,7 @@ internal class PackageVersionNormalizerTest {
         @Test
         internal fun `should return a Semantic version when the input is a semantic version with non semantic suffix`() {
             val aVersion = aNamedPackageVersion(versionName = "1.0.0-banana2")
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
                         original = aVersion,
@@ -63,7 +63,7 @@ internal class PackageVersionNormalizerTest {
         @Test
         internal fun `should return a Semantic version when the input is a semantic version with stability marker and non semantic suffix`() {
             val aVersion = aNamedPackageVersion(versionName = "1.0.0-b03-banana2")
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(
                     NormalizedPackageVersion.Semantic(
                         original = aVersion,
@@ -83,39 +83,39 @@ internal class PackageVersionNormalizerTest {
             nonSemanticSuffix: String?
         ) {
             val aVersion = aNamedPackageVersion(versionName = versionName)
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.Semantic::class)
                 .isEqualTo(NormalizedPackageVersion.Semantic(aVersion, semanticPart, stabilityMarker.asNullable(), nonSemanticSuffix.asNullable()))
         }
 
         @Test
         internal fun `should not return a Semantic version when the input has too many parts`() {
             val aVersion = aNamedPackageVersion(versionName = "1.0.0.0.0")
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
 
         @Test
         internal fun `should not return a Semantic version when the input only has one big number`() {
             val aVersion = aNamedPackageVersion(versionName = "100000")
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
 
         @Test
         internal fun `should not return a Semantic version when the input looks like a date`() {
             val aVersion = aNamedPackageVersion(versionName = "20201005")
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
 
         @Test
         internal fun `should not return a Semantic version when the input looks like a datetime`() {
             val aVersion = aNamedPackageVersion(versionName = "20201005120015")
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
 
         @ParameterizedTest(name = "[{index}] {0}")
         @CsvFileSource(resources = ["/invalid-semantic-data.csv"])
         internal fun `should not return a Semantic version when the input is not a sensible semver`(versionName: String) {
             val aVersion = aNamedPackageVersion(versionName)
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
     }
 
@@ -131,7 +131,7 @@ internal class PackageVersionNormalizerTest {
             nonSemanticSuffix: String?
         ) {
             val aVersion = aNamedPackageVersion(versionName = versionName)
-            assertThat(normalizer.parse(aVersion)).isInstanceOf(NormalizedPackageVersion.TimestampLike::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.TimestampLike::class)
                 .isEqualTo(NormalizedPackageVersion.TimestampLike(
                     aVersion,
                     timestampPrefix,
@@ -144,7 +144,7 @@ internal class PackageVersionNormalizerTest {
         @CsvFileSource(resources = ["/invalid-timestamp-data.csv"])
         internal fun `should not return a TimestampLike version when the input is not a valid TimestampLike version`(versionName: String) {
             val aVersion = aNamedPackageVersion(versionName)
-            assertThat(normalizer.parse(aVersion)).isNotInstanceOf(NormalizedPackageVersion.TimestampLike::class)
+            assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.TimestampLike::class)
         }
     }
 }

@@ -22,6 +22,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
@@ -73,7 +74,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
-    private val cacheDirectory = project.getProjectDataPath("pkgs")
+    private val cacheDirectory = project.getProjectDataPath("pkgs/installedDependencies")
         .also { if (!it.exists()) Files.createDirectories(it) }
 
     val isLoadingFlow = combineTransform(
@@ -225,8 +226,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
     val packageUpgradesStateFlow = installedPackagesStateFlow
         .mapLatestTimedWithLoading("packageUpgradesStateFlow", packageUpgradesLoadingFlow) {
             coroutineScope {
-                val stableUpdates = async { computePackageUpgrades(it, true) }
-                val allUpdates = async { computePackageUpgrades(it, false) }
+                val stableUpdates = async { computePackageUpgrades(it, true, project.packageVersionNormalizer) }
+                val allUpdates = async { computePackageUpgrades(it, false, project.packageVersionNormalizer) }
                 PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
             }
         }

@@ -3,7 +3,9 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.version
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
+import kotlinx.serialization.Serializable
 
+@Serializable
 internal sealed class NormalizedPackageVersion<T : PackageVersion>(
     val originalVersion: T
 ) : Comparable<NormalizedPackageVersion<*>> {
@@ -20,6 +22,7 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
     val releasedAt: Long?
         get() = originalVersion.releasedAt
 
+    @Serializable
     data class Semantic(
         private val original: PackageVersion.Named,
         val semanticPart: String,
@@ -76,6 +79,7 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
+    @Serializable
     data class TimestampLike(
         private val original: PackageVersion.Named,
         val timestampPrefix: String,
@@ -107,6 +111,7 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
+    @Serializable
     data class Garbage(
         private val original: PackageVersion.Named
     ) : NormalizedPackageVersion<PackageVersion.Named>(original) {
@@ -128,6 +133,7 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
+    @Serializable
     object Missing : NormalizedPackageVersion<PackageVersion.Missing>(PackageVersion.Missing) {
 
         override fun compareTo(other: NormalizedPackageVersion<*>): Int =
@@ -163,13 +169,13 @@ internal sealed class NormalizedPackageVersion<T : PackageVersion>(
 
     companion object {
 
-        fun parseFrom(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> =
-            PackageVersionNormalizer.getInstance().parse(version)
+        suspend fun parseFrom(version: PackageVersion.Named, normalizer: PackageVersionNormalizer): NormalizedPackageVersion<PackageVersion.Named> =
+            normalizer.parse(version)
 
-        fun <T: PackageVersion> parseFrom(version: T): NormalizedPackageVersion<*> =
+        suspend fun <T : PackageVersion> parseFrom(version: T, normalizer: PackageVersionNormalizer): NormalizedPackageVersion<*> =
             when (version) {
                 is PackageVersion.Missing -> Missing
-                is PackageVersion.Named -> parseFrom(version)
+                is PackageVersion.Named -> parseFrom(version, normalizer)
                 else -> error("Unknown version type: ${version.javaClass.simpleName}")
             }
     }
