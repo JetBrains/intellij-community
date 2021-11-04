@@ -126,7 +126,7 @@ fun signMacZip(
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
       .startSpan().use {
-        sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "entitlements.xml")
+        sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
         for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
