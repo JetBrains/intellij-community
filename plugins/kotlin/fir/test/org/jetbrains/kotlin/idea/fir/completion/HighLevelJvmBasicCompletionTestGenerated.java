@@ -35,6 +35,31 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             runTest("../completion/tests/testData/basic/common/AfterIntSeparatedWithComments.kt");
         }
 
+        @TestMetadata("ambiguousSuperMethod.kt")
+        public void testAmbiguousSuperMethod() throws Exception {
+            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodDiamond.kt")
+        public void testAmbiguousSuperMethodDiamond() throws Exception {
+            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamond.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodDiamondAny.kt")
+        public void testAmbiguousSuperMethodDiamondAny() throws Exception {
+            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodDiamondAny.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodHigherUp.kt")
+        public void testAmbiguousSuperMethodHigherUp() throws Exception {
+            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodHigherUp.kt");
+        }
+
+        @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
+        public void testAmbiguousSuperMethodSingleImpl() throws Exception {
+            runTest("../completion/tests/testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
+        }
+
         @TestMetadata("BasicAny.kt")
         public void testBasicAny() throws Exception {
             runTest("../completion/tests/testData/basic/common/BasicAny.kt");

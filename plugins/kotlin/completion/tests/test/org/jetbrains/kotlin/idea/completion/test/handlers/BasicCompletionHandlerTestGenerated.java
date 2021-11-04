@@ -28,6 +28,16 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         runTest("testData/handlers/basic/AddLabelToReturn.kt");
     }
 
+    @TestMetadata("AmbiguousSuperMethod.kt")
+    public void testAmbiguousSuperMethod() throws Exception {
+        runTest("testData/handlers/basic/AmbiguousSuperMethod.kt");
+    }
+
+    @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
+    public void testAmbiguousSuperMethodWithArgument() throws Exception {
+        runTest("testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
+    }
+
     @TestMetadata("ClassKeywordBeforeName.kt")
     public void testClassKeywordBeforeName() throws Exception {
         runTest("testData/handlers/basic/ClassKeywordBeforeName.kt");

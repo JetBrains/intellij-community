@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 
 internal object Completions {
     fun KtAnalysisSession.complete(
@@ -16,9 +16,12 @@ internal object Completions {
             is FirExpressionNameReferencePositionContext -> {
                 complete(factory.keywordContributor(0), positionContext)
                 complete(factory.callableContributor(0), positionContext)
-                complete(factory.superMemberContributor(0), positionContext)
                 complete(factory.classifierContributor(0), positionContext)
                 complete(factory.packageCompletionContributor(1), positionContext)
+            }
+
+            is FirSuperReceiverNameReferencePositionContext -> {
+                complete(factory.superMemberContributor(0), positionContext)
             }
 
             is FirTypeNameReferencePositionContext -> {
