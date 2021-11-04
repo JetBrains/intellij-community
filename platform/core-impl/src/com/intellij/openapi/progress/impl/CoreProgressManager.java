@@ -414,7 +414,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @NotNull
-  public ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
     return new EmptyProgressIndicator();
   }
 

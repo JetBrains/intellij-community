@@ -120,7 +120,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  public @NotNull ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+  @NotNull
+  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return shouldKeepTasksAsynchronousInHeadlessMode()
              ? new ProgressIndicatorBase()
