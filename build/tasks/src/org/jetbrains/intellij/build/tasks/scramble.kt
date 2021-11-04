@@ -25,7 +25,7 @@ fun runScrambler(scramblerJar: Path,
                  pluginDir: Path?,
                  workingDir: Path,
                  artifactDir: Path,
-                 filesToScramble: List<Path>,
+                 files: List<Path>,
                  args: Iterable<String>,
                  jvmArgs: Iterable<String>,
                  artifactBuilt: Consumer<Path>) {
@@ -45,10 +45,10 @@ fun runScrambler(scramblerJar: Path,
 
     if (pluginDir == null) {
       // yes, checked only for a main JAR
-      checkClassFilesValidity(filesToScramble.first())
+      checkClassFilesValidity(files.first())
 
       // update package index
-      ForkJoinTask.invokeAll(filesToScramble.map { file ->
+      ForkJoinTask.invokeAll(files.map { file ->
         task(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("file", file.toString())) {
           updatePackageIndexUsingTempFile(file)
@@ -62,7 +62,7 @@ fun runScrambler(scramblerJar: Path,
           .forEach { Files.delete(it) }
       }
 
-      ForkJoinTask.invokeAll(filesToScramble.map { file ->
+      ForkJoinTask.invokeAll(files.map { file ->
         task(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("plugin", pluginDir.toString())
                .setAttribute("file", pluginDir.relativize(file).toString())) {
