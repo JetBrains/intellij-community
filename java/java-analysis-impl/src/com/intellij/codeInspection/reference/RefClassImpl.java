@@ -54,9 +54,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   protected void initialize() {
-    synchronized (this) {
-      myDefaultConstructor = null;
-    }
+    setDefaultConstructor(null);
 
     UClass uClass = getUastElement();
     LOG.assertTrue(uClass != null);
@@ -157,8 +155,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       utilityClass = ClassUtils.isSingleton(uClass.getJavaPsi());
     }
 
-    if (varargConstructor != null && getDefaultConstructor() == null) {
-      setDefaultConstructor((RefMethodImpl)varargConstructor);
+    synchronized (this) {
+      if (varargConstructor != null && myDefaultConstructor == null) {
+        setDefaultConstructor((RefMethodImpl)varargConstructor);
+      }
     }
 
     if (getConstructors().isEmpty() && !isInterface() && !isAnonymous()) {
@@ -231,21 +231,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return false;
   }
 
-  private void setDefaultConstructor(RefMethodImpl defaultConstructor) {
-    if (defaultConstructor != null) {
-      for (RefClass superClass : getBaseClasses()) {
-        WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
-
-        if (superDefaultConstructor != null) {
-          superDefaultConstructor.addInReference(defaultConstructor);
-          defaultConstructor.addOutReference(superDefaultConstructor);
-        }
-      }
-    }
-
-    synchronized (this) {
-      myDefaultConstructor = defaultConstructor;
-    }
+  private synchronized void setDefaultConstructor(RefMethodImpl defaultConstructor) {
+    myDefaultConstructor = defaultConstructor;
   }
 
   @Override
@@ -291,6 +278,20 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         final UExpression initializer = uField.getUastInitializer();
         if (initializer != null) {
           RefJavaUtil.getInstance().addReferencesTo(uClass, this, initializer);
+        }
+      }
+
+      waitForInitialized();
+      final RefMethodImpl defaultConstructor = (RefMethodImpl)getDefaultConstructor();
+      if (defaultConstructor != null) {
+        for (RefClass superClass : getBaseClasses()) {
+          superClass.waitForInitialized();
+          WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
+
+          if (superDefaultConstructor != null) {
+            superDefaultConstructor.addInReference(defaultConstructor);
+            defaultConstructor.addOutReference(superDefaultConstructor);
+          }
         }
       }
 
@@ -388,6 +389,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized RefMethod getDefaultConstructor() {
+    LOG.assertTrue(isInitialized());
     return myDefaultConstructor;
   }
 
