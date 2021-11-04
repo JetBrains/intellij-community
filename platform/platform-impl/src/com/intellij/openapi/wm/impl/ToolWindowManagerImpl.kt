@@ -1755,6 +1755,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
     updateStateAndRemoveDecorator(info, entry, dirtyMode)
     info.type = type
+    if (type != ToolWindowType.FLOATING && type != ToolWindowType.WINDOWED) {
+      info.internalType = type
+    }
 
     val newInfo = info.copy()
     entry.applyWindowInfo(newInfo)
