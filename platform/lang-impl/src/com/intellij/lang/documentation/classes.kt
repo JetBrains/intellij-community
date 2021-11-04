@@ -14,6 +14,7 @@ class DocumentationData(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,
+  val imageResolver: DocumentationImageResolver?
 ) : DocumentationResult
 
 internal class AsyncDocumentation(
