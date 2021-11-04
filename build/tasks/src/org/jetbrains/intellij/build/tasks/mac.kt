@@ -30,11 +30,11 @@ fun buildMacZip(targetFile: Path,
       zipOutStream.write(productJson)
       zipOutStream.closeArchiveEntry()
 
-      val fileFilter: (Path) -> Boolean = { relativeFile ->
+      val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
         val path = relativeFile.toString()
         if (path.endsWith(".txt") && !path.contains('/')) {
           zipOutStream.putArchiveEntry(ZipArchiveEntry("$zipRoot/Resources/$relativeFile"))
-          Files.copy(relativeFile, zipOutStream)
+          Files.copy(sourceFile, zipOutStream)
           zipOutStream.closeArchiveEntry()
           false
         }

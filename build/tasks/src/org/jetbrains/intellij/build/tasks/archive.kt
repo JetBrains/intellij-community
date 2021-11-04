@@ -115,7 +115,7 @@ private val fsUnixMode: EntryCustomizer = { entry, file, _ ->
 
 internal fun ZipArchiveOutputStream.dir(startDir: Path,
                                         prefix: String,
-                                        fileFilter: ((relativeFile: Path) -> Boolean)? = null,
+                                        fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
                                         entryCustomizer: EntryCustomizer = fsUnixMode) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
@@ -151,8 +151,7 @@ internal fun ZipArchiveOutputStream.dir(startDir: Path,
         assert(attributes.isRegularFile)
 
         val relativeFile = startDir.relativize(file)
-
-        if (fileFilter != null && !fileFilter(relativeFile)) {
+        if (fileFilter != null && !fileFilter(file, relativeFile)) {
           continue
         }
 
