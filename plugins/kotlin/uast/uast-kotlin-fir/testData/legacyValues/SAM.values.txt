@@ -4,7 +4,7 @@ UFile (package = ) [import java.lang.Thread...]
     UImportStatement (isOnDemand = false) [import java.util.concurrent.Callable]
     UImportStatement (isOnDemand = false) [import java.util.function.Supplier]
     UClass (name = SAMKt) [public final class SAMKt {...}]
-        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
+        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<kotlin.Unit> = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULambdaExpression [{ ...}] = Undetermined
                 UBlockExpression [{...}] = Undetermined
@@ -29,7 +29,7 @@ UFile (package = ) [import java.lang.Thread...]
 })(Undetermined)
                     ULambdaExpression [{ ...}] = Undetermined
                         UBlockExpression [{...}] = Undetermined
-        UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<? extends kotlin.Unit> = UastEmptyExpression]
+        UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression]
         UMethod (name = getFoo) [public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = setFoo) [public static final fun setFoo(@org.jetbrains.annotations.NotNull value: java.lang.Runnable) : void = UastEmptyExpression]
             UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.Runnable]
