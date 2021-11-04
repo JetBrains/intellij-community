@@ -16,7 +16,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -34,7 +33,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max
-import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Path
