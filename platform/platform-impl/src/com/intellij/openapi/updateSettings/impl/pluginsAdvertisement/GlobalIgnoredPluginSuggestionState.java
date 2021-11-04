@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,11 +42,11 @@ final class GlobalIgnoredPluginSuggestionState implements PersistentStateCompone
     return ApplicationManager.getApplication().getService(GlobalIgnoredPluginSuggestionState.class);
   }
 
-  public boolean isIgnored(@NotNull String pluginId) {
-    return myState.pluginIds.contains(pluginId);
+  public boolean isIgnored(@NotNull PluginId pluginId) {
+    return myState.pluginIds.contains(pluginId.getIdString());
   }
 
-  public void ignoreFeature(@NotNull String pluginId) {
-    myState.pluginIds.add(pluginId);
+  public void ignoreFeature(@NotNull PluginId pluginId) {
+    myState.pluginIds.add(pluginId.getIdString());
   }
 }
