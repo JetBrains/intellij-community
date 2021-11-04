@@ -86,7 +86,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                       final Consumer<@NlsContexts.DialogMessage String> errorMessageUpdater,
                       final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
+    mySourceRoots = getSourceRoots(project, initialTargetDirectory);
     myProject = project;
     myUpdateErrorMessage = errorMessageUpdater;
     String leaveInSameSourceRoot = JavaBundle.message("leave.in.same.source.root.item");
@@ -166,6 +166,11 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         updateTooltipText(initialSourceRoot);
       }
     });
+  }
+
+  @NotNull
+  protected List<VirtualFile> getSourceRoots(Project project, PsiDirectory initialTargetDirectory) {
+    return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
   }
 
   private void updateTooltipText(VirtualFile initialSourceRoot) {

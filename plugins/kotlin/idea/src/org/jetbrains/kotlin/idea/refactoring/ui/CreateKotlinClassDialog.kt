@@ -82,6 +82,10 @@ open class CreateKotlinClassDialog(
         override fun reportBaseInSourceSelectionInTest(): Boolean {
             return this@CreateKotlinClassDialog.reportBaseInSourceSelectionInTest()
         }
+
+        override fun sourceRootsInTargetDirOnly(): Boolean {
+            return isSealed
+        }
     }
 
     protected open fun reportBaseInTestSelectionInSource(): Boolean {
@@ -245,6 +249,6 @@ open class CreateKotlinClassDialog(
                 val text = s
                 setErrorText(text, myDestinationCB)
             }
-        }, myPackageComponent.childComponent, isSealed)
+        }, myPackageComponent.childComponent)
     }
 }
