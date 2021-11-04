@@ -196,26 +196,28 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         } else {
             goldenResultFile
         }
+        Assert.assertTrue(resultFile.exists())
+        val errorLines = myFixture.dumpErrorLines()
+        val file = myFixture.file as KtFile
+        val fileLines = file.text.lines()
+        val newTextContent = if (firIdenticalIsPresent) {
+            // Ensure the directive is the first line
+            val fileLinesWithoutFirIdentical = fileLines.filter { it != IgnoreTests.DIRECTIVES.FIR_IDENTICAL }
+            (listOf(IgnoreTests.DIRECTIVES.FIR_IDENTICAL) + errorLines + fileLinesWithoutFirIdentical).joinToString("\n")
+        } else {
+            (errorLines + fileLines).joinToString("\n")
+        }
+        myFixture.project.executeWriteCommand("") {
+            val document = myFixture.getDocument(file)
+            document.replaceString(0, document.textLength, newTextContent)
+        }
+
         try {
-            Assert.assertTrue(resultFile.exists())
-            val errorLines = myFixture.dumpErrorLines()
-            val file = myFixture.file as KtFile
-            val fileLines = file.text.lines()
-            val newTextContent = if (firIdenticalIsPresent) {
-                // Ensure the directive is the first line
-                val fileLinesWithoutFirIdentical = fileLines.filter { it != IgnoreTests.DIRECTIVES.FIR_IDENTICAL }
-                (listOf(IgnoreTests.DIRECTIVES.FIR_IDENTICAL) + errorLines + fileLinesWithoutFirIdentical).joinToString("\n")
-            } else {
-                (errorLines + fileLines).joinToString("\n")
-            }
-            myFixture.project.executeWriteCommand("") {
-                val document = myFixture.getDocument(file)
-                document.replaceString(0, document.textLength, newTextContent)
-            }
             myFixture.checkResultByFile(resultFile.relativeTo(File(myFixture.testDataPath)).path)
         } catch (error: AssertionError) {
-            KotlinTestUtils.assertEqualsToFile(resultFile, TagsTestDataUtil.generateTextWithCaretAndSelection(myFixture.editor))
+            KotlinTestUtils.assertEqualsToFile(resultFile, myFixture.editor.document.text)
         }
+
         if (resultFile != goldenResultFile) {
             IgnoreTests.cleanUpIdenticalFirTestFile(
                 goldenResultFile,
