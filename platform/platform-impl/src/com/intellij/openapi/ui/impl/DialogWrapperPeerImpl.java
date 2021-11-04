@@ -413,9 +413,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     boolean perProjectModality = Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (perProjectModality) {
+      if (perProjectModality && project != null) {
         LaterInvocator.enterModal(project, myDialog.getWindow());
-      } else {
+      }
+      else {
         LaterInvocator.enterModal(myDialog);
       }
     }

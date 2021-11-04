@@ -18,7 +18,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
@@ -31,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public final class LaterInvocator {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
 
@@ -83,11 +83,6 @@ public final class LaterInvocator {
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    return invokeLater(modalityState, Conditions.alwaysFalse(), runnable);
-  }
-
-  @NotNull
   static ActionCallback invokeLater(@NotNull ModalityState modalityState, @NotNull Condition<?> expired, @NotNull Runnable runnable) {
     ActionCallback callback = new ActionCallback();
     invokeLaterWithCallback(modalityState, expired, callback, runnable);
@@ -109,7 +104,7 @@ public final class LaterInvocator {
     requestFlush();
   }
 
-  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -182,16 +177,11 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void enterModal(Project project, @NotNull Dialog dialog) {
+  public static void enterModal(@NotNull Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + dialog.getName() + " ; for project: " + project.getName());
-    }
-
-    if (project == null) {
-      enterModal(dialog);
-      return;
     }
 
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
@@ -283,15 +273,13 @@ public final class LaterInvocator {
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
-    if (!EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().assertIsWriteThread();
-    }
+    ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
     }
@@ -385,13 +373,17 @@ public final class LaterInvocator {
     requestFlush();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllEventsInIdeEventQueue()} instead
+   */
+  @Deprecated
   @TestOnly
   public static void dispatchPendingFlushes() {
     if (!SwingUtilities.isEventDispatchThread()) throw new IllegalStateException("Must call from EDT");
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    invokeLater(semaphore::up, ModalityState.any());
+    invokeLater(ModalityState.any(), Conditions.alwaysFalse(), semaphore::up);
     while (!semaphore.isUp()) {
       EdtInvocationManager.dispatchAllInvocationEvents();
     }
