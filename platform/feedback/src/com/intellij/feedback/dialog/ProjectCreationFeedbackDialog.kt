@@ -4,6 +4,7 @@ package com.intellij.feedback.dialog
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.dialog.ProjectCreationFeedbackSystemInfoData.Companion.createProjectCreationFeedbackSystemInfoData
 import com.intellij.feedback.notification.ThanksForFeedbackNotification
+import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.ide.feedback.ZenDeskRequests
@@ -20,10 +21,13 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.layout.*
+import com.intellij.util.BooleanFunction
 import com.intellij.util.readXmlAsModel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -34,6 +38,8 @@ import kotlinx.serialization.json.*
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.awt.event.ActionEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -103,10 +109,17 @@ class ProjectCreationFeedbackDialog(
     init()
     title = FeedbackBundle.message("dialog.creation.project.top.title")
     isResizable = false
+    ProjectCreationFeedbackCountCollector.logDialogShowed()
+  }
+
+  override fun doCancelAction() {
+    ProjectCreationFeedbackCountCollector.logDialogCanceled()
+    super.doCancelAction()
   }
 
   override fun doOKAction() {
     super.doOKAction()
+    ProjectCreationFeedbackCountCollector.logFeedbackAttemptToSend()
     ApplicationManager.getApplication().executeOnPooledThread {
       val stream = ProjectCreationFeedbackDialog::class.java.classLoader.getResourceAsStream(PATH_TO_FEEDBACK_FORM_XML)
                    ?: throw RuntimeException("Resource not found: $PATH_TO_FEEDBACK_FORM_XML")
@@ -118,8 +131,8 @@ class ProjectCreationFeedbackDialog(
         TICKET_TITLE_ZENDESK,
         createRequestDescription(),
         mapOf("collected_data" to createCollectedDataJsonString()),
-        {},
-        {}
+        { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
+        { ProjectCreationFeedbackCountCollector.logFeedbackSentError() }
       )
     }
     ApplicationManager.getApplication().invokeLater {
@@ -270,6 +283,8 @@ class ProjectCreationFeedbackDialog(
             checkBoxOther?.addChangeListener { _ ->
               isEnabled = checkBoxOtherProperty.get()
             }
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
+                              BooleanFunction<JBTextField> { textField -> textField.text.isEmpty() })
           }
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -282,6 +297,19 @@ class ProjectCreationFeedbackDialog(
           .applyToComponent {
             wrapStyleWord = true
             lineWrap = true
+            addKeyListener(object : KeyAdapter() {
+              override fun keyPressed(e: KeyEvent) {
+                if (e.keyCode == KeyEvent.VK_TAB) {
+                  if ((e.modifiersEx and KeyEvent.SHIFT_DOWN_MASK) != 0) {
+                    transferFocusBackward()
+                  }
+                  else {
+                    transferFocus()
+                  }
+                  e.consume()
+                }
+              }
+            })
           }
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
 
@@ -300,6 +328,8 @@ class ProjectCreationFeedbackDialog(
             checkBoxEmail?.addActionListener { _ ->
               isEnabled = checkBoxEmailProperty.get()
             }
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
+                              BooleanFunction<JBTextField> { textField -> textField.text.isEmpty() })
           }.errorOnApply(FeedbackBundle.message("dialog.created.project.textfield.email.required")) {
             checkBoxEmailProperty.get() && it.text.isBlank()
           }.errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) {

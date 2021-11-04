@@ -10,14 +10,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class NewProjectInfoEntry(
-  val projectTypeName: String,
+  val projectBuilderId: String,
   val creationDateTime: LocalDateTime,
   val isProcessed: Boolean = false,
   val isFeedbackShowed: Boolean = false
 ) {
   companion object {
-    fun createNewProjectInfoEntry(projectTypeName: String): NewProjectInfoEntry {
-      return NewProjectInfoEntry(projectTypeName, Clock.System.now().toLocalDateTime(TimeZone.UTC))
+    @JvmStatic
+    fun createNewProjectInfoEntry(projectBuilderId: String): NewProjectInfoEntry {
+      return NewProjectInfoEntry(projectBuilderId, Clock.System.now().toLocalDateTime(TimeZone.UTC))
     }
   }
 }
