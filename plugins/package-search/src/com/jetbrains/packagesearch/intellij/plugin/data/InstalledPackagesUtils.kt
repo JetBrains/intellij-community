@@ -15,6 +15,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -79,7 +80,8 @@ internal suspend fun installedPackages(
         PackageModel.fromInstalledDependency(
             unifiedDependency = dependency,
             usageInfo = usageInfo,
-            remoteInfo = remoteInfo
+            remoteInfo = remoteInfo,
+            normalizer = project.packageVersionNormalizer
         )
     }.filterNotNull().sortedBy { it.sortKey }
 }

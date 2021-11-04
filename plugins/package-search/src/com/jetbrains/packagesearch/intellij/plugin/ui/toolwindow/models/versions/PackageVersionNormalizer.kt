@@ -1,20 +1,52 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.util.io.exists
+import com.intellij.util.io.readText
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Garbage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Semantic
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.TimestampLike
+import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import org.apache.commons.collections.map.LRUMap
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import java.nio.file.Files
+import kotlin.io.path.writeText
 
-internal class PackageVersionNormalizer private constructor() {
+internal class PackageVersionNormalizerService(project: Project) : Disposable {
 
-    private val versionsCache = LRUMap(2_000)
+    private val persistentCacheFile = project.getProjectDataPath("pkgs/normalizedVersions.json")
 
-    private val lock = ReentrantReadWriteLock()
+    private val json = Json {
+        prettyPrint = true
+        allowStructuredMapKeys = true
+    }
+
+    private val cacheMap = persistentCacheFile.takeIf { it.exists() }
+        ?.runCatching {
+            json.decodeFromString(
+                CoroutineLRUCache.serializer<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>>(),
+                readText()
+            )
+        }
+        ?.getOrNull()
+        ?: CoroutineLRUCache(2_000)
+
+    val normalizer = PackageVersionNormalizer(cacheMap)
+
+    override fun dispose() {
+        persistentCacheFile
+            .apply { if (!parent.exists()) Files.createDirectories(parent) }
+            .writeText(json.encodeToString(CoroutineLRUCache.serializer(), cacheMap))
+    }
+}
+
+internal class PackageVersionNormalizer(
+    private val versionsCache: CoroutineLRUCache<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>> = CoroutineLRUCache(2_000)
+) {
 
     private val HEX_STRING_LETTER_CHARS = 'a'..'f'
 
@@ -64,10 +96,9 @@ internal class PackageVersionNormalizer private constructor() {
             "(?:[._\\-]?\\d{1,5})?){1,2})(?:\\b|_)")
             .toRegex(option = RegexOption.IGNORE_CASE)
 
-    fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
+    suspend fun parse(version: PackageVersion.Named): NormalizedPackageVersion<PackageVersion.Named> {
         @Suppress("UNCHECKED_CAST") // Unfortunately, MRUMap doesn't have type parameters
-        val cachedValue =
-            lock.read { versionsCache[version] as NormalizedPackageVersion<PackageVersion.Named>? }
+        val cachedValue = versionsCache.getOrNull(version)
 
         if (cachedValue != null) return cachedValue
 
@@ -78,32 +109,34 @@ internal class PackageVersionNormalizer private constructor() {
         // (that is, it realistically can't be sorted if not by timestamp, and by hoping for the best).
         val garbage = Garbage(version)
         if (version.looksLikeGitCommitOrOtherHash()) {
-            lock.write { versionsCache[version] = garbage }
+            versionsCache.put(version, garbage)
             return garbage
         }
 
         val timestampPrefix = VeryLenientDateTimeExtractor.extractTimestampLookingPrefixOrNull(version.versionName)
         if (timestampPrefix != null) {
             val normalized = parseTimestampVersion(version, timestampPrefix)
-            lock.write { versionsCache[version] = normalized }
+            versionsCache.put(version, normalized)
             return normalized
         }
 
         if (version.isOneBigHexadecimalBlob()) {
-            lock.write { versionsCache[version] = garbage }
+            versionsCache.put(version, garbage)
             return garbage
         }
 
         val semanticVersionPrefix = version.semanticVersionPrefixOrNull()
         if (semanticVersionPrefix != null) {
             val normalized = parseSemanticVersion(version, semanticVersionPrefix)
-            lock.write { versionsCache[version] = normalized }
+            versionsCache.put(version, normalized)
             return normalized
         }
 
-        lock.write { versionsCache[version] = garbage }
+        versionsCache.put(version, garbage)
         return garbage
     }
+
+    fun parseBlocking(version: PackageVersion.Named) = runBlocking { parse(version) }
 
     private fun PackageVersion.Named.looksLikeGitCommitOrOtherHash(): Boolean {
         val hexLookingPrefix = versionName.takeWhile { it.isDigit() || HEX_STRING_LETTER_CHARS.contains(it) }
@@ -157,15 +190,5 @@ internal class PackageVersionNormalizer private constructor() {
         val semanticPart = stabilitySuffixComponentOrNull(ignoredPrefix ?: return null)
             ?: ignoredPrefix
         return versionName.substringAfter(semanticPart).nullIfBlank()
-    }
-
-    companion object {
-
-        private var INSTANCE: PackageVersionNormalizer? = null
-
-        fun getInstance(): PackageVersionNormalizer {
-            if (INSTANCE == null) INSTANCE = PackageVersionNormalizer()
-            return INSTANCE!!
-        }
     }
 }
