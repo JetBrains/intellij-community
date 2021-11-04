@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache"/>
+  </extensions>
+</idea-plugin>
