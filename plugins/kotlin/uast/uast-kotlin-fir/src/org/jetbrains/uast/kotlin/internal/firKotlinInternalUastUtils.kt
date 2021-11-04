@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
-import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -108,7 +108,11 @@ internal fun KtAnalysisSession.toPsiType(
         if (psiType != null) return psiType
     }
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context
-    return ktType.asPsiType(psiTypeParent, TypeMappingMode.DEFAULT_UAST) ?: UastErrorType
+    return ktType.asPsiType(
+        psiTypeParent,
+        KtTypeMappingMode.DEFAULT_UAST,
+        isAnnotationMethod = false
+    ) ?: UastErrorType
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {

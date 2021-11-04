@@ -125,10 +125,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         // TODO receiver parameter, dispatch parameter like in org.jetbrains.uast.kotlin.KotlinUastResolveProviderService.getImplicitParameters
         analyseForUast(ktLambdaExpression) {
             return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
+                val psiType = p.annotatedType.type.asPsiType(
+                    ktLambdaExpression,
+                    KtTypeMappingMode.DEFAULT_UAST,
+                    isAnnotationMethod = false
+                ) ?: UastErrorType
                 KotlinUParameter(
                     UastKotlinPsiParameterBase(
                         name = p.name.asString(),
-                        type = p.annotatedType.type.asPsiType(ktLambdaExpression) ?: UastErrorType,
+                        type = psiType,
                         parent = ktLambdaExpression,
                         ktOrigin = ktLambdaExpression,
                         language = ktLambdaExpression.language,
