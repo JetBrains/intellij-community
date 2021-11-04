@@ -187,6 +187,18 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).assertTiming();
   }
 
+  public void testBuildingPerformance_longTextFragment() {
+    String line = "here's some relative long text that helps make this text fragment a bit longer than it could have been otherwise";
+    String text = ("\n\n\n" + line).repeat(10_000);
+    String expected = (line + "\n\n\n").repeat(10_000).trim();
+    PsiFile file = myFixture.configureByText("a.java", "class C { String s = \"\"\"\n" + text + "\"\"\"; }");
+    var literal = PsiTreeUtil.findElementOfClassAtOffset(file, 100, PsiLiteralExpression.class, false);
+    var extractor = new JavaTextExtractor();
+    PlatformTestUtil.startPerformanceTest("TextContent building from a long text fragment", 200, () -> {
+      assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
+    }).assertTiming();
+  }
+
   private TextContent extractText(String fileName, String fileText, int offset) {
     return extractText(fileName, fileText, offset, getProject());
   }

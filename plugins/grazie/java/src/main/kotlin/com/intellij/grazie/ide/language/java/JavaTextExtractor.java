@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.language.java;
 
 import com.intellij.grazie.text.TextContent;
+import com.intellij.grazie.text.TextContent.Exclusion;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
@@ -59,8 +60,11 @@ public class JavaTextExtractor extends TextExtractor {
       TextContent content = TextContentBuilder.FromPsi.build(root, LITERALS);
       int indent = PsiLiteralUtil.getTextBlockIndent((PsiLiteralExpression)root);
       if (indent >= 0 && indent < 1000 && content != null) {
-        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s".repeat(indent)), content), TextContent.Exclusion::exclude));
-        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), TextContent.Exclusion::exclude));
+        if (indent > 0) {
+          content = content.excludeRanges(
+            ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s{" + indent + "}"), content), Exclusion::exclude));
+        }
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), Exclusion::exclude));
         return content.trimWhitespace();
       }
 
