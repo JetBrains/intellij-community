@@ -407,11 +407,14 @@ public class ExternalJavacManager extends ProcessAdapter {
             }
           }
         }
+        final String msg = prefix + ": " + text;
         if (consumers != null) {
-          final String msg = prefix + ": " + text;
           for (DiagnosticOutputConsumer consumer : consumers) {
             consumer.outputLineAvailable(msg);
           }
+        }
+        else {
+          LOG.info(msg.trim());
         }
       }
     }

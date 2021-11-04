@@ -55,7 +55,16 @@ final class ForkedGroovyc implements GroovycFlavor {
     JpsGroovySettings settings = JpsGroovycRunner.getGroovyCompilerSettings(context);
 
     List<String> vmParams = new ArrayList<>();
-    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", String.valueOf(Utils.suggestForkedCompilerHeapSize())) + "m");
+    String heapSize = System.getProperty("groovyc.heap.size");
+    if (heapSize == null) {
+      int suggested = Utils.suggestForkedCompilerHeapSize();
+      if (suggested > 0) {
+        heapSize = String.valueOf(suggested);
+      }
+    }
+    if (heapSize != null) {
+      vmParams.add("-Xmx" + heapSize + "m");
+    }
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
