@@ -7,43 +7,31 @@ import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.LineBookmark
-import com.intellij.ide.bookmark.providers.LineBookmarkProvider
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorAction
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 
-internal class NextBookmarkAction : EditorAction(NextBookmarkInEditorActionHandler(true)) {
-  init {
-    templatePresentation.setText(messagePointer("bookmark.go.to.next.action.text"))
-  }
-}
+internal class NextBookmarkAction : IterateBookmarksAction(true, messagePointer("bookmark.go.to.next.action.text"))
+internal class PreviousBookmarkAction : IterateBookmarksAction(false, messagePointer("bookmark.go.to.previous.action.text"))
+internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
+  private val AnActionEvent.nextBookmark
+    get() = project?.service<NextBookmarkService>()?.next(forward, contextBookmark as? LineBookmark)
 
-internal class PreviousBookmarkAction : EditorAction(NextBookmarkInEditorActionHandler(false)) {
-  init {
-    templatePresentation.setText(messagePointer("bookmark.go.to.previous.action.text"))
-  }
-}
-
-internal class NextBookmarkInEditorActionHandler(val forward: Boolean) : EditorActionHandler() {
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, context: DataContext) = getNextBookmark(editor, context) != null
-  override fun doExecute(editor: Editor, caret: Caret?, context: DataContext) {
-    getNextBookmark(editor, context)?.let {
-      if (it.canNavigate()) {
-        it.navigate(true)
-      }
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = when (val view = event.bookmarksToolWindow?.bookmarksView) {
+      null -> event.nextBookmark != null
+      else -> if (forward) view.hasNextOccurence() else view.hasPreviousOccurence()
     }
   }
 
-  private fun getNextBookmark(editor: Editor, context: DataContext): LineBookmark? {
-    val project = editor.project ?: CommonDataKeys.PROJECT.getData(context) ?: return null
-    val provider = LineBookmarkProvider.find(project) ?: return null
-    return project.service<NextBookmarkService>().next(forward, provider.createBookmark(editor) as? LineBookmark)
+  override fun actionPerformed(event: AnActionEvent) {
+    when (val view = event.bookmarksToolWindow?.bookmarksView) {
+      null -> event.nextBookmark?.run { if (canNavigate()) navigate(true) }
+      else -> if (forward) view.goNextOccurence() else view.goPreviousOccurence()
+    }
   }
 }
 
@@ -77,12 +65,8 @@ internal class NextBookmarkService(private val project: Project) : BookmarksList
 
   fun next(forward: Boolean, bookmark: LineBookmark?): LineBookmark? {
     val bookmarks = getCachedBookmarks().ifEmpty { return null }
-    val index = bookmark?.let { next(forward, bookmarks.binarySearch(it, this)) } ?: if (forward) 0 else bookmarks.lastIndex
-    return when {
-      index < 0 -> bookmarks.last()
-      index < bookmarks.size -> bookmarks[index]
-      else -> bookmarks.first()
-    }
+    bookmark ?: return if (forward) bookmarks.first() else bookmarks.last()
+    return bookmarks.getOrNull(next(forward, bookmarks.binarySearch(bookmark, this)))
   }
 
   init {
