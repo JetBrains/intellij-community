@@ -3,9 +3,9 @@ package com.siyeh.igtest.bugs.null_argument_to_variable_arg_method;
 public class NullArgumentToVariableArgMethod {
     public void foo(String[] ss)
     {
-        String.format("%s", <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>);
+        String.format("%s", (Object) null);
         String.format("%d", 1);
-        String.format("%s", <warning descr="Confusing argument 'ss', unclear if a varargs or non-varargs call is desired">ss</warning>);
+        String.format("%s", (Object) ss);
 
         CompletableFuture[] futures = {};
         CompletableFuture.allOf(futures);
@@ -30,11 +30,11 @@ class AB {
     AB(String msg, Object... args) {}
 
     void m(String e) {
-        new AB("reactor", <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>);
+        new AB("reactor", (Object) null);
     }
 }
 enum Inequitity {
-    A(<warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>), B;
+    A((String) null), B;
 
     Inequitity(String... ss) {}
 }
@@ -42,6 +42,6 @@ class Demo<E> {
   public void call(E... e) {}
 
   public static void main(String[] args) {
-    new Demo<String>().call( <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired"><caret>null</warning>);
+    new Demo<String>().call((String) null);
   }
 }
