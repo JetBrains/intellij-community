@@ -20,6 +20,7 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 @CompileStatic
 final class MacDmgBuilder {
@@ -96,22 +97,26 @@ final class MacDmgBuilder {
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if (signMacArtifacts || !isMac()) {
-      context.messages.block(TracerManager.spanBuilder("sign").setAttribute("file", sitFile.toString())) {
-        buildHelper.signMacZip.invokeWithArguments(
-          macHostProperties.host, macHostProperties.userName, macHostProperties.password,
-          macHostProperties.codesignString, context.fullBuildNumber,
-          notarize, customizer.bundleIdentifier,
-          sitFile, jreArchive,
-          context.paths.communityHomeDir,
-          Path.of(context.paths.artifacts),
-          new Consumer<Path>() {
-            @Override
-            void accept(Path file) {
-              context.notifyArtifactWasBuilt(file)
+      context.messages.block(TracerManager.spanBuilder("sign").setAttribute("file", sitFile.toString()), new Supplier<Void>() {
+        @Override
+        Void get() {
+          buildHelper.signMacZip.invokeWithArguments(
+            macHostProperties.host, macHostProperties.userName, macHostProperties.password,
+            macHostProperties.codesignString, context.fullBuildNumber,
+            notarize, customizer.bundleIdentifier,
+            sitFile, jreArchive,
+            context.paths.communityHomeDir,
+            Path.of(context.paths.artifacts),
+            new Consumer<Path>() {
+              @Override
+              void accept(Path file) {
+                context.notifyArtifactWasBuilt(file)
+              }
             }
-          }
-        )
-      }
+          )
+          return null
+        }
+      })
       if (customizer.publishArchive) {
         context.notifyArtifactBuilt(sitFile)
       }
