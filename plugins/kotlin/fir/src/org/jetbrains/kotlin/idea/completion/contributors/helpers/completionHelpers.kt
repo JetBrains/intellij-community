@@ -22,11 +22,11 @@ private fun scheduleCompletion(context: InsertionContext) {
     }
 }
 
-internal fun InsertionContext.insertSymbol(symbol: String) {
+internal fun InsertionContext.insertSymbol(symbol: String, position: Int = tailOffset, moveCaretToEnd: Boolean = true) {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-    document.insertString(tailOffset, symbol)
+    document.insertString(position, symbol)
     commitDocument()
-    editor.caretModel.moveToOffset(tailOffset)
+    if (moveCaretToEnd) editor.caretModel.moveToOffset(tailOffset)
 }
 
 internal fun InsertionContext.addTypeArguments(typeArgumentsCount: Int) {
