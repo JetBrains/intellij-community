@@ -72,6 +72,16 @@ internal class FirAnnotationTypeNameReferencePositionContext(
     val annotationEntry: KtAnnotationEntry,
 ) : FirNameReferencePositionContext()
 
+/**
+ * Example
+ * ```
+ * class A {
+ *   fun test() {
+ *     super<<caret>>
+ *   }
+ * }
+ * ```
+ */
 internal class FirSuperTypeCallNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
@@ -80,6 +90,23 @@ internal class FirSuperTypeCallNameReferencePositionContext(
     val superExpression: KtSuperExpression,
 ) : FirNameReferencePositionContext()
 
+/**
+ * Example
+ * ```
+ * class A {
+ *   fun test() {
+ *     super.<caret>
+ *   }
+ * }
+ * ```
+ */
+internal class FirSuperReceiverNameReferencePositionContext(
+    override val position: PsiElement,
+    override val reference: KtSimpleNameReference,
+    override val nameExpression: KtSimpleNameExpression,
+    override val explicitReceiver: KtExpression?,
+    val superExpression: KtSuperExpression,
+) : FirNameReferencePositionContext()
 
 internal class FirExpressionNameReferencePositionContext(
     override val position: PsiElement,
@@ -187,6 +214,13 @@ internal object FirPositionCompletionContextDetector {
                     position, reference, nameExpression, explicitReceiver
                 )
             }
+            explicitReceiver is KtSuperExpression -> FirSuperReceiverNameReferencePositionContext(
+                position,
+                reference,
+                nameExpression,
+                explicitReceiver,
+                explicitReceiver
+            )
             else -> {
                 FirExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
             }
