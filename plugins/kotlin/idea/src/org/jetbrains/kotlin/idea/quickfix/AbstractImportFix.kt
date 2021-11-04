@@ -345,6 +345,16 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
 
         val actualReceivers = getReceiversForExpression(element, callTypeAndReceiver, bindingContext)
 
+        if (isSelectorInQualified(element) && actualReceivers.explicitReceivers.isEmpty()) {
+            // If the element is qualified, and at the same time we haven't found any explicit
+            // receiver, it means that the qualifier is not a value (for example, it might be a type name).
+            // In this case we do not want to propose any importing fix, since it is impossible
+            // to import a function which can be syntactically called on a non-value qualifier -
+            // such function (for example, a static function) should be successfully resolved
+            // without any import
+            return emptyList()
+        }
+
         val checkDispatchReceiver = when (callTypeAndReceiver) {
             is CallTypeAndReceiver.OPERATOR, is CallTypeAndReceiver.INFIX -> true
             else -> false

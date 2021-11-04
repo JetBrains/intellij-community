@@ -1,15 +1,14 @@
 // "Import" "false"
 
-// ACTION: Add full qualifier
 // ACTION: Convert to run
 // ACTION: Convert to with
-// ACTION: Introduce import alias
+// ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 
 package import_intention
 
 fun main() {
-    <caret>A.foo()
+    A.<caret>foo()
 }
 
 class A {

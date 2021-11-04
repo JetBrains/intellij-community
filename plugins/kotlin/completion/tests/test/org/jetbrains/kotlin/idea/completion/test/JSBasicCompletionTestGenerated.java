@@ -465,6 +465,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             runTest("testData/basic/common/KT33903_2.kt");
         }
 
+        @TestMetadata("KTIJ20039.kt")
+        public void testKTIJ20039() throws Exception {
+            runTest("testData/basic/common/KTIJ20039.kt");
+        }
+
         @TestMetadata("LocalMultideclarationValues.kt")
         public void testLocalMultideclarationValues() throws Exception {
             runTest("testData/basic/common/LocalMultideclarationValues.kt");

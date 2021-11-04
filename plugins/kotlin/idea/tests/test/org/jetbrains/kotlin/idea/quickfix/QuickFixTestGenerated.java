@@ -1808,6 +1808,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/autoImports/importAliasLetAlreadyExists.kt");
         }
 
+        @TestMetadata("importEnumValueMissingReceiver.kt")
+        public void testImportEnumValueMissingReceiver() throws Exception {
+            runTest("testData/quickfix/autoImports/importEnumValueMissingReceiver.kt");
+        }
+
         @TestMetadata("importFunctionMissingReceiver.kt")
         public void testImportFunctionMissingReceiver() throws Exception {
             runTest("testData/quickfix/autoImports/importFunctionMissingReceiver.kt");
