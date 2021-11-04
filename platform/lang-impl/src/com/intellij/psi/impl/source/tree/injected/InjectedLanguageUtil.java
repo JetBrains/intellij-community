@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -287,7 +287,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   @Nullable
   public static PsiFile getCachedInjectedFileWithLanguage(@NotNull PsiElement element, @NotNull Language language) {
     if (!element.isValid()) return null;
-    PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(element.getContainingFile());
     if (containingFile == null || !containingFile.isValid()) return null;
     return InjectedLanguageManager.getInstance(containingFile.getProject())
       .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())
