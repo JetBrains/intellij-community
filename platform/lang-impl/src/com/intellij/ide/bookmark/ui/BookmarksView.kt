@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.project.LightEditActionFactory
@@ -84,7 +85,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun goNextOccurence() = nextOccurrence?.let { go(it) }
   override fun goPreviousOccurence() = previousOccurrence?.let { go(it) }
   private fun go(occurrence: BookmarkOccurrence): OccurenceNavigator.OccurenceInfo? {
-    select(occurrence.group, occurrence.bookmark).onSuccess { OpenSourceUtil.navigateToSource(true, false, selectedNode) }
+    select(occurrence.group, occurrence.bookmark).onSuccess { navigateToSource(true) }
     return null
   }
 
@@ -161,9 +162,15 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else {
       preview.close()
       if (autoScroll && (autoScrollToSource.isSelected || openInPreviewTab.isSelected)) {
-        OpenSourceUtil.navigateToSource(false, false, selectedNode)
+        navigateToSource(false)
       }
     }
+  }
+
+  private fun navigateToSource(requestFocus: Boolean) {
+    val node = selectedNode ?: return
+    val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
+    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { !isShowing }
   }
 
   /**

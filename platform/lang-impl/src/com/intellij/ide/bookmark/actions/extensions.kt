@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import javax.swing.JTree
@@ -24,6 +25,9 @@ internal val AnActionEvent.bookmarksManager
 internal val AnActionEvent.bookmarksViewState
   get() = project?.let { BookmarksViewState.getInstance(it) }
 
+internal val AnActionEvent.bookmarksToolWindow
+  get() = project?.let { ToolWindowManager.getInstance(it).getToolWindow(ToolWindowId.BOOKMARKS) }
+
 internal val AnActionEvent.bookmarksViewFromToolWindow
   get() = dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.bookmarksView
 
@@ -33,7 +37,7 @@ internal val AnActionEvent.bookmarksViewFromComponent
 internal val AnActionEvent.bookmarksView
   get() = bookmarksViewFromComponent ?: bookmarksViewFromToolWindow
 
-private val ToolWindow.bookmarksView
+internal val ToolWindow.bookmarksView
   get() = contentManagerIfCreated?.selectedContent?.component as? BookmarksView
 
 private val Component.bookmarksView: BookmarksView?
