@@ -55,9 +55,7 @@ class Main {
 
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, double.class)</warning>, C.class);
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, List.of(double.class))</warning>, C.class);
-    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, List.of(new Class<?>[]{double.class}))</warning>, C.class);
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, Arrays.asList(double.class))</warning>, C.class);
-    l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, Arrays.asList(new Class<?>[]{double.class}))</warning>, C.class);
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, new Class<?>[]{double.class})</warning>, C.class);
     l.findSpecial(B.class, "baz", <warning descr="Cannot resolve method 'String baz(double)'">MethodType.methodType(String.class, MethodType.methodType(void.class, new Class<?>[]{double.class}))</warning>, C.class);
   }

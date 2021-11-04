@@ -33,9 +33,7 @@ class Main {
 
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class)</warning>);
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, List.of())</warning>);
-    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, List.of(new Class<?>[0]))</warning>);
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, Arrays.asList())</warning>);
-    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, Arrays.asList(new Class<?>[0]))</warning>);
   }
 }
 

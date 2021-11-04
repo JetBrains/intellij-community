@@ -24,9 +24,7 @@ class Main {
 
     l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, String.class)</warning>);
     l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, List.of(String.class))</warning>);
-    l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, List.of(new Class<?>[]{String.class}))</warning>);
     l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, Arrays.asList(String.class))</warning>);
-    l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, Arrays.asList(new Class<?>[]{String.class}))</warning>);
     l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, new Class<?>[]{String.class})</warning>);
     l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, MethodType.methodType(void.class, List.of(String.class)))</warning>);
   }
