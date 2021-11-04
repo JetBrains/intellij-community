@@ -7,11 +7,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -19,6 +14,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.completion.lookups.*
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
+import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -30,8 +30,25 @@ internal class VariableLookupElementFactory {
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
     ): LookupElementBuilder {
         val rendered = renderVariable(symbol, substitutor)
+        var builder = createLookupElementBuilder(options, symbol, rendered, substitutor)
+
+        if (symbol is KtPropertySymbol) {
+            builder = builder.withLookupString(symbol.javaGetterName.asString())
+            symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
+        }
+
+        return withSymbolInfo(symbol, builder)
+    }
+
+    private fun KtAnalysisSession.createLookupElementBuilder(
+        options: CallableInsertionOptions,
+        symbol: KtVariableLikeSymbol,
+        rendered: String,
+        substitutor: KtSubstitutor,
+        insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
+    ): LookupElementBuilder {
         val symbolType = substitutor.substituteOrSelf(symbol.annotatedType.type)
-        var builder = when (options.insertionStrategy) {
+        return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = symbolType as KtFunctionalType
                 val lookupObject = FunctionCallLookupObject(
@@ -46,14 +63,17 @@ internal class VariableLookupElementFactory {
                     substitutor.substituteOrSelf(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
                 }
 
-                val typeText = substitutor
-                    .substituteOrSelf(functionalType.returnType)
-                    .render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                val typeText =
+                    substitutor.substituteOrSelf(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
 
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
                     .withTypeText(typeText)
                     .withInsertHandler(FunctionInsertionHandler)
+            }
+            is CallableInsertionStrategy.WithSuperDisambiguation -> {
+                val builder = createLookupElementBuilder(options, symbol, rendered, substitutor, insertionStrategy.subStrategy)
+                updateLookupElementBuilderToInsertTypeQualifierOnSuper(builder, insertionStrategy)
             }
             else -> {
                 val lookupObject = VariableLookupObject(symbol.name, options, rendered)
@@ -65,13 +85,6 @@ internal class VariableLookupElementFactory {
                     .withInsertHandler(VariableInsertionHandler)
             }
         }
-
-        if (symbol is KtPropertySymbol) {
-            builder = builder.withLookupString(symbol.javaGetterName.asString())
-            symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
-        }
-
-        return withSymbolInfo(symbol, builder)
     }
 
     private fun KtAnalysisSession.markIfSyntheticJavaProperty(
