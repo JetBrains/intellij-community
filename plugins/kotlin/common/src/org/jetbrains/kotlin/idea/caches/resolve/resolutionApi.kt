@@ -124,6 +124,11 @@ fun KtElement.analyze(
     bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
 ): BindingContext = analyze(getResolutionFacade(), bodyResolveMode)
 
+@JvmOverloads
+fun KtElement.safeAnalyze(
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext = safeAnalyze(getResolutionFacade(), bodyResolveMode)
+
 /**
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
  */
