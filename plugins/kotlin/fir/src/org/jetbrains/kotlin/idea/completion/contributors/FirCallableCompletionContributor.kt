@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
-import org.jetbrains.kotlin.analysis.api.scopes.KtCompositeScope
+import org.jetbrains.kotlin.analysis.api.impl.base.scopes.KtCompositeScope
+import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -115,7 +116,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
-        implicitScopes: KtCompositeScope,
+        implicitScopes: KtScope,
         explicitReceiver: KtExpression,
         expectedType: KtType?,
         extensionChecker: ExtensionApplicabilityChecker,
@@ -158,7 +159,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     protected fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
-        implicitScopes: KtCompositeScope,
+        implicitScopes: KtScope,
         explicitReceiver: KtExpression,
         expectedType: KtType?,
         extensionChecker: ExtensionApplicabilityChecker,
@@ -210,7 +211,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
-        scope: KtCompositeScope,
+        scope: KtScope,
         hasSuitableExtensionReceiver: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult>> =
@@ -247,7 +248,7 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     override fun KtAnalysisSession.collectDotCompletion(
-        implicitScopes: KtCompositeScope,
+        implicitScopes: KtScope,
         explicitReceiver: KtExpression,
         expectedType: KtType?,
         extensionChecker: ExtensionApplicabilityChecker,
