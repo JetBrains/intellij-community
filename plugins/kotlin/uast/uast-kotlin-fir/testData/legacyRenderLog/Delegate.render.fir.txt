@@ -9,13 +9,13 @@ public final class MyColor {
 }
 
 public final class Some {
-    @org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<? extends MyColor>
-    @org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<? extends MyColor> = lazy({
+    @org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<MyColor>
+    @org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<MyColor> = lazy({
         return <init>(1, 2, 3)
     })
     @org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = <init>(1, 2, 3)
     public final fun getDelegate() : MyColor = UastEmptyExpression
-    public final fun getLambda() : kotlin.Lazy<? extends MyColor> = UastEmptyExpression
+    public final fun getLambda() : kotlin.Lazy<MyColor> = UastEmptyExpression
     public final fun getNonLazy() : MyColor = UastEmptyExpression
     public fun Some() = UastEmptyExpression
 }
