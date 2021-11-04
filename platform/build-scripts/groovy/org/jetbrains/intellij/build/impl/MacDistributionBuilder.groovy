@@ -25,6 +25,7 @@ import java.util.function.Supplier
 final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final Path ideaProperties
+  @SuppressWarnings('SpellCheckingInspection')
   private final String targetIcnsFileName
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, Path ideaProperties) {
@@ -79,7 +80,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void copyFilesForOsDistribution(@NotNull Path macDistDir, JvmArchitecture arch = null) {
-    List<String> platformProperties = List.of(
+    //noinspection SpellCheckingInspection
+    List<String> platformProperties = new ArrayList<String>(Arrays.asList(
       "\n#---------------------------------------------------------------------",
       "# macOS-specific system properties",
       "#---------------------------------------------------------------------",
@@ -89,7 +91,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       "apple.awt.fileDialogForDirectories=true",
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"
-    )
+    ))
     customizer.getCustomIdeaProperties(buildContext.applicationInfo).forEach(new BiConsumer<String, String>() {
       @Override
       void accept(String k, String v) {
@@ -186,6 +188,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           void run() {
             String remoteDirPrefix = "intellij-builds/" + context.fullBuildNumber
             MacHostProperties hostProperties = context.proprietaryBuildTools.macHostProperties
+            //noinspection SpellCheckingInspection
             BuildHelper.getInstance(context).signMac.invokeWithArguments(
               hostProperties.host,
               hostProperties.userName,
@@ -250,6 +253,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String executable = buildContext.productProperties.baseFileName
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
 
+    //noinspection SpellCheckingInspection
     Path icnsPath = Path.of((buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath)
     Path resourcesDistDir = macDistDir.resolve("Resources")
     BuildHelper.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
@@ -318,6 +322,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     </array>'''
     }
     String todayYear = LocalDate.now().year.toString()
+    //noinspection SpellCheckingInspection
     BuildUtils.replaceAll(macDistDir.resolve("Info.plist"), "@@",
       "build", buildContext.fullBuildNumber,
       "doc_types", docTypes ?: "",
