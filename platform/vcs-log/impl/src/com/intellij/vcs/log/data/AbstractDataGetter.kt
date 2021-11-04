@@ -10,20 +10,17 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.EmptyConsumer
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsShortCommitDetails
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
 import java.awt.EventQueue
@@ -201,20 +198,16 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails>(protected val stora
 
   @Throws(VcsException::class)
   protected open fun preLoadCommitData(commits: IntSet, consumer: Consumer<in T>) {
-    val rootsAndHashes = MultiMap.create<VirtualFile, String>()
-    commits.forEach(IntConsumer { commit: Int ->
-      val commitId = storage.getCommitId(commit)
-      if (commitId != null) {
-        rootsAndHashes.putValue(commitId.root, commitId.hash.asString())
-      }
-    })
-    for ((key, value) in rootsAndHashes.entrySet()) {
+    val hashesGroupedByRoot = commits.mapNotNull { storage.getCommitId(it) }
+      .groupBy<CommitId, VirtualFile, @NlsSafe String>({ it.root }) { it.hash.asString() }
+
+    for ((key, value) in hashesGroupedByRoot) {
       val logProvider = logProviders[key]
       if (logProvider == null) {
         LOG.error("No log provider for root " + key.path + ". All known log providers " + logProviders)
         continue
       }
-      readDetails(logProvider, key, ArrayList(value)) { details: T ->
+      readDetails(logProvider, key, value) { details: T ->
         saveInCache(storage.getCommitIndex(details.id, details.root), details)
         consumer.consume(details)
       }
