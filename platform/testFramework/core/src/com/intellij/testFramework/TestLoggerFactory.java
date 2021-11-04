@@ -67,7 +67,10 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static boolean reconfigure() {
     try {
-      Path logXmlFile = Paths.get(PathManager.getHomePath(), "test-log.xml");
+      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+      Path logXmlFile = customConfigPath != null
+                        ? Paths.get(customConfigPath)
+                        : Paths.get(PathManager.getHomePath(), "test-log.xml");
       if (!Files.exists(logXmlFile)) {
         return false;
       }
