@@ -8,12 +8,11 @@ import com.intellij.openapi.progress.ProgressManager
 
 internal class CheckSuggestedPluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
-    if (project != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
-        PluginsAdvertiserStartupActivity().checkSuggestedPlugins(project, true)
-      }, IdeBundle.message("plugins.advertiser.check.progress"), true, project)
-    }
+    val project = e.project ?: return
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
+      PluginsAdvertiserStartupActivity().checkSuggestedPlugins(project, true)
+    }, IdeBundle.message("plugins.advertiser.check.progress"), true, project)
   }
 
   override fun update(e: AnActionEvent) {
