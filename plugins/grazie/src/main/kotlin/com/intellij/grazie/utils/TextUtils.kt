@@ -74,7 +74,7 @@ object Text {
       if (!matcher.find(start)) break
 
       result.add(TextRange(matcher.start(), matcher.end()))
-      start = matcher.end()
+      start = matcher.end().coerceAtLeast(start + 1)
     }
     return result
   }
