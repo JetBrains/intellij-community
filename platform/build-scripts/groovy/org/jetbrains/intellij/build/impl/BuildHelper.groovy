@@ -62,7 +62,7 @@ final class BuildHelper {
   final MethodHandle buildKeymapPlugins
 
   final MethodHandle signMac
-  final MethodHandle signMacZip
+  final MethodHandle signMacApp
   final MethodHandle prepareMacZip
   final MethodHandle buildMacZip
 
@@ -159,14 +159,14 @@ final class BuildHelper {
                                                       string,
                                                       string, path, list,
                                                       path, Consumer.class))
-    signMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
-                                   "signMacZip",
+    signMacApp = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.SignKt"),
+                                   "signMacApp",
                                    MethodType.methodType(aVoid,
                                                          string, string, string,
                                                          string, string,
                                                          bool, string,
                                                          path, path,
-                                                         path, path, Consumer.class))
+                                                         path, path, path, Consumer.class))
 
     buildMacZip = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MacKt"),
                                     "buildMacZip",

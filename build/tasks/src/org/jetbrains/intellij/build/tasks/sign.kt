@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
@@ -85,7 +84,7 @@ private const val regularFileMode = 420
 private const val executableFileMode = 511
 
 @Suppress("unused")
-fun signMacZip(
+fun signMacApp(
   host: String,
   user: String,
   password: String,
@@ -93,21 +92,22 @@ fun signMacZip(
   fullBuildNumber: String,
   notarize: Boolean,
   bundleIdentifier: String,
-  file: Path,
+  sitFile: Path,
   jreArchiveFile: Path?,
   communityHome: Path,
   artifactDir: Path,
+  dmgImage: Path?,
   artifactBuilt: Consumer<Path>
 ) {
   initLog
 
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     tracer.spanBuilder("upload file")
-      .setAttribute("file", file.toString())
+      .setAttribute("file", sitFile.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
       .startSpan().use {
-        sftp.put(NioFileSource(file, filePermission = regularFileMode), "$remoteDir/${file.fileName}")
+        sftp.put(NioFileSource(sitFile, filePermission = regularFileMode), "$remoteDir/${sitFile.fileName}")
       }
 
     if (jreArchiveFile != null) {
@@ -128,13 +128,17 @@ fun signMacZip(
       .startSpan().use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
-        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh")) {
+        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.pl")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
+        }
+
+        if (dmgImage != null) {
+          sftp.put(NioFileSource(dmgImage, filePermission = regularFileMode), "$remoteDir/$fullBuildNumber.png")
         }
       }
 
     val args = listOf(
-      file.fileName.toString(),
+      sitFile.fileName.toString(),
       fullBuildNumber,
       user,
       password,
@@ -146,15 +150,35 @@ fun signMacZip(
 
     val env = System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let { "ARTIFACTORY_URL=$it " } ?: ""
     @Suppress("SpellCheckingInspection")
-    signFile(remoteDir = remoteDir,
-             commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
-             file = file,
-             ssh = ssh,
-             ftpClient = sftp,
-             artifactDir = artifactDir,
-             artifactBuilt = artifactBuilt,
-             failedToSign = null)
+    tracer.spanBuilder("sign mac app").setAttribute("file", sitFile.toString()).startSpan().useWithScope {
+      signFile(remoteDir = remoteDir,
+               commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
+               file = sitFile,
+               ssh = ssh,
+               ftpClient = sftp,
+               artifactDir = artifactDir,
+               artifactBuilt = artifactBuilt,
+               failedToProcess = null)
+    }
 
+    if (dmgImage != null) {
+      val fileNameWithoutExt = sitFile.fileName.toString().removeSuffix(".sit")
+      val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
+      tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).startSpan().useWithScope {
+        @Suppress("SpellCheckingInspection")
+        processFile(remoteDir = remoteDir,
+                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
+                    localTargetFile = dmgFile,
+                    ssh = ssh,
+                    ftpClient = sftp,
+                    artifactDir = artifactDir,
+                    artifactBuilt = artifactBuilt,
+                    failedToProcess = null,
+                    taskLogClassifier = "dmg")
+
+        artifactBuilt.accept(dmgFile)
+      }
+    }
   }
 }
 
@@ -185,7 +209,7 @@ fun signMac(
                  ftpClient = sftp,
                  artifactDir = artifactDir,
                  artifactBuilt = artifactBuilt,
-                 failedToSign = failedToSign)
+                 failedToProcess = failedToSign)
       }
     }
   }
@@ -196,28 +220,42 @@ fun signMac(
 }
 
 private fun signFile(remoteDir: String,
-                     file: Path,
-                     ssh: SSHClient,
-                     ftpClient: SFTPClient,
-                     commandString: String,
-                     artifactDir: Path,
-                     artifactBuilt: Consumer<Path>,
-                     failedToSign: MutableList<Path>?) {
-  val fileName = file.fileName.toString()
-  val remoteFile = "$remoteDir/$fileName"
-  ftpClient.put(NioFileSource(file), remoteFile)
+                        file: Path,
+                        ssh: SSHClient,
+                        ftpClient: SFTPClient,
+                        commandString: String,
+                        artifactDir: Path,
+                        artifactBuilt: Consumer<Path>,
+                        failedToProcess: MutableList<Path>?) {
+  ftpClient.put(NioFileSource(file), "$remoteDir/${file.fileName}")
+  processFile(remoteDir = remoteDir,
+              localTargetFile = file,
+              ssh = ssh,
+              ftpClient = ftpClient,
+              commandString = commandString,
+              artifactDir = artifactDir,
+              artifactBuilt = artifactBuilt,
+              failedToProcess = failedToProcess,
+              taskLogClassifier = "sign")
+}
 
-  val span = Span.current()
+private fun processFile(remoteDir: String,
+                        localTargetFile: Path,
+                        ssh: SSHClient,
+                        ftpClient: SFTPClient,
+                        commandString: String,
+                        artifactDir: Path,
+                        artifactBuilt: Consumer<Path>,
+                        failedToProcess: MutableList<Path>?,
+                        taskLogClassifier: String) {
+  val fileName = localTargetFile.fileName.toString()
 
-  val logFileName = "sign-$fileName.log"
-  var commandFailed: String? = null
-  val logFile = artifactDir.resolve("macos-sign-logs").resolve(logFileName)
+  val logFile = artifactDir.resolve("macos-logs").resolve("$taskLogClassifier-$fileName.log")
   Files.createDirectories(logFile.parent)
-  try {
-    ssh.startSession().use { session ->
-      // not a relative path to file is expected, but only a file name
-      val command = session.exec(commandString)
-      val inputStreamReadThread = thread(name = "error-stream-reader-of-sign-$fileName") {
+  ssh.startSession().use { session ->
+    val command = session.exec(commandString)
+    try {
+      val inputStreamReadThread = thread(name = "error-stream-reader-of-$taskLogClassifier-$fileName") {
         command.inputStream.transferTo(System.out)
       }
       command.errorStream.use {
@@ -226,34 +264,39 @@ private fun signFile(remoteDir: String,
       inputStreamReadThread.join(TimeUnit.HOURS.toMillis(3))
 
       command.join(1, TimeUnit.MINUTES)
-
-      command.close()
-      if (command.exitStatus != 0) {
-        commandFailed = "cannot sign, details are available in ${artifactDir.relativize(logFile)}" +
-                        " (exitStatus=${command.exitStatus}, exitErrorMessage=${command.exitErrorMessage})"
+    }
+    catch (e: Exception) {
+      val logFileLocation = if (Files.exists(logFile)) artifactDir.relativize(logFile) else "<internal error - log file is not created>"
+      throw RuntimeException("SSH command failed, details are available in $logFileLocation: ${e.message}", e)
+    }
+    finally {
+      if (Files.exists(logFile)) {
+        artifactBuilt.accept(logFile)
       }
+      command.close()
     }
-  }
-  catch (e: Exception) {
-    val logFileLocation = if (Files.exists(logFile)) artifactDir.relativize(logFile) else "<internal error - log file is not created>"
-    throw RuntimeException("SSH command failed, details are available in $logFileLocation: ${e.message}", e)
-  }
-  finally {
-    if (Files.exists(logFile)) {
-      artifactBuilt.accept(logFile)
+
+    if (command.exitStatus != 0) {
+      throw RuntimeException("SSH command failed, details are available in ${artifactDir.relativize(logFile)}" +
+                             " (exitStatus=${command.exitStatus}, exitErrorMessage=${command.exitErrorMessage})")
     }
   }
 
-  if (commandFailed != null) {
-    throw RuntimeException(commandFailed)
-  }
+  downloadResult(remoteFile = "$remoteDir/$fileName", localFile = localTargetFile, ftpClient = ftpClient, failedToSign = failedToProcess)
+}
 
-  tracer.spanBuilder("download signed file")
+private fun downloadResult(remoteFile: String,
+                           localFile: Path,
+                           ftpClient: SFTPClient,
+                           failedToSign: MutableList<Path>?) {
+  tracer.spanBuilder("download file")
     .setAttribute("remoteFile", remoteFile)
-    .setAttribute("localFile", file.toString())
+    .setAttribute("localFile", localFile.toString())
     .startSpan()
-    .use {
-      val tempFile = file.parent.resolve("$fileName.download")
+    .use { span ->
+      val localFileParent = localFile.parent
+      val tempFile = localFileParent.resolve("${localFile.fileName}.download")
+      Files.createDirectories(localFileParent)
       var attempt = 1
       do {
         try {
@@ -269,10 +312,10 @@ private fun signFile(remoteDir: String,
           if (attempt > 3) {
             Files.deleteIfExists(tempFile)
             if (failedToSign == null) {
-              throw RuntimeException("Failed to sign file: $file")
+              throw RuntimeException("Failed to sign file: $localFile")
             }
             else {
-              failedToSign.add(file)
+              failedToSign.add(localFile)
             }
             return
           }
@@ -286,11 +329,11 @@ private fun signFile(remoteDir: String,
       while (true)
 
       if (attempt != 1) {
-        span.addEvent("signed file was downloaded", Attributes.of(
+        span.addEvent("file was downloaded", Attributes.of(
           AttributeKey.longKey("attemptNumber"), attempt.toLong(),
         ))
       }
-      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+      Files.move(tempFile, localFile, StandardCopyOption.REPLACE_EXISTING)
     }
 }
 
