@@ -8,10 +8,10 @@ UFile (package = ) [public final class TypeAliasExpansionWithOtherAliasInArgumen
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return null] = Nothing
                     ULiteralExpression (value = null) [null] = null
-        UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull $this$bar: java.util.Map<java.lang.String,? extends java.lang.Integer>, @org.jetbrains.annotations.NotNull x: java.util.Map<java.lang.String,? extends java.lang.Integer>) : java.util.Map<java.lang.String,? extends java.lang.Integer> {...}]
+        UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull $this$bar: java.util.Map<java.lang.String,? extends java.lang.Integer>, @org.jetbrains.annotations.NotNull x: java.util.Map<java.lang.String,java.lang.Integer>) : java.util.Map<java.lang.String,? extends java.lang.Integer> {...}]
             UParameter (name = $this$bar) [@org.jetbrains.annotations.NotNull var $this$bar: java.util.Map<java.lang.String,? extends java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UParameter (name = x) [@org.jetbrains.annotations.NotNull var x: java.util.Map<java.lang.String,? extends java.lang.Integer>]
+            UParameter (name = x) [@org.jetbrains.annotations.NotNull var x: java.util.Map<java.lang.String,java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return null] = Nothing

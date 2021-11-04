@@ -14,7 +14,7 @@ public final class A {
     public final fun invoke() : void {
         invoke()
     }
-    public final fun invoke(@org.jetbrains.annotations.NotNull f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {
+    public final fun invoke(@org.jetbrains.annotations.NotNull f: kotlin.jvm.functions.Function0<kotlin.Unit>) : void {
     }
     public fun A() = UastEmptyExpression
 }
