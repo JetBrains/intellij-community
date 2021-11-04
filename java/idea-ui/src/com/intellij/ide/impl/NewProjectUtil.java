@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
+import com.intellij.feedback.state.createdProject.NewProjectInfoEntry;
+import com.intellij.feedback.state.createdProject.NewProjectInfoState;
+import com.intellij.feedback.state.createdProject.NewProjectStatisticService;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
+import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -67,6 +72,7 @@ public final class NewProjectUtil {
   public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
     try {
       Project newProject = doCreate(wizard, projectToClose);
+      recordProjectCreatedFromWizard(wizard);
       FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created");
       return newProject;
     }
@@ -74,6 +80,20 @@ public final class NewProjectUtil {
       UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(),
                                                                 JavaUiBundle.message("dialog.title.project.initialization.failed")));
       return null;
+    }
+  }
+
+  private static void recordProjectCreatedFromWizard(@NotNull AbstractProjectWizard wizard) {
+    if (Registry.is("platform.feedback", false)) {
+      final NewProjectStatisticService newProjectStatisticService = NewProjectStatisticService.getInstance();
+      final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
+      if (projectBuilder instanceof AbstractModuleBuilder) {
+        final String builderId = ((AbstractModuleBuilder)projectBuilder).getBuilderId();
+        if (builderId != null) {
+          final NewProjectInfoState newProjectInfoState = newProjectStatisticService.getState();
+          newProjectInfoState.getCreatedProjectInfo().add(NewProjectInfoEntry.createNewProjectInfoEntry(builderId));
+        }
+      }
     }
   }
 

@@ -34,5 +34,6 @@
     <orderEntry type="library" name="kotlinx-datetime" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

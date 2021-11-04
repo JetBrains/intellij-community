@@ -108,5 +108,6 @@
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-forms" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" scope="RUNTIME" />
   </component>
 </module>

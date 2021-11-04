@@ -11,6 +11,7 @@
 
     <registryKey defaultValue="false" description="Enable to collect user feedback" key="platform.feedback"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector"/>
   </extensions>
 
   <actions>
