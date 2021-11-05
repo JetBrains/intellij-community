@@ -35,6 +35,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 @ApiStatus.Internal
@@ -43,9 +45,9 @@ public final class SVGLoader {
   private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
   private static SvgElementColorPatcherProvider ourColorPatcher;
-  private static SvgElementColorPatcherProvider ourColorPatcherForSelection;
+  private static SvgElementColorPatcherProvider ourContextColorPatcher;
 
-  private static volatile boolean ourIsSelectionContext = false;
+  private static volatile boolean ourIsColorRedefinitionContext = false;
 
   private static final class SvgCache {
     private static final SvgCacheManager persistentCache;
@@ -122,7 +124,7 @@ public final class SVGLoader {
     byte[] theme ;
     InputStream stream = null;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (USE_CACHE && !isColorRedefinitionContext()) {
       @SuppressWarnings("DuplicatedCode")
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
@@ -198,7 +200,7 @@ public final class SVGLoader {
     byte[] svgBytes = null;
     Image image;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (USE_CACHE && !isColorRedefinitionContext()) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       theme = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
@@ -337,7 +339,7 @@ public final class SVGLoader {
         patcher.patchColors(document.getDocumentElement());
       }
     }
-    if (isSelectionContext()) {
+    if (isColorRedefinitionContext()) {
       SvgElementColorPatcherProvider selectionPatcherProvider = getSelectionPatcherProvider();
       if (selectionPatcherProvider != null) {
         SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forPath(url);
@@ -348,8 +350,8 @@ public final class SVGLoader {
     }
   }
 
-  public static void setColorPatcherForSelection(@Nullable SvgElementColorPatcherProvider provider) {
-    ourColorPatcherForSelection = provider;
+  public static void setContextColorPatcher(@Nullable SvgElementColorPatcherProvider provider) {
+    ourContextColorPatcher = provider;
   }
 
   private static SvgElementColorPatcherProvider getSelectionPatcherProvider() {
@@ -360,7 +362,7 @@ public final class SVGLoader {
     //alpha.put("#e2987c", 255);
     //
     //return newPatcher(null, map, alpha);
-    return ourColorPatcherForSelection;
+    return ourContextColorPatcher;
   }
 
   @Nullable
@@ -433,25 +435,75 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
-  public static void setIsSelectionContext(boolean isSelectionContext) {
-    ourIsSelectionContext = isSelectionContext;
+  public static void setColorRedefinitionContext(boolean isColorRedefinitionContext) {
+    ourIsColorRedefinitionContext = isColorRedefinitionContext;
   }
 
-  public static boolean isSelectionContext() {
-    return ourColorPatcherForSelection != null
+  public static boolean isColorRedefinitionContext() {
+    return ourContextColorPatcher != null
            && EventQueue.isDispatchThread()
-           && ourIsSelectionContext
+           && ourIsColorRedefinitionContext
            && Registry.is("ide.patch.icons.on.selection", false);
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
     try {
-      setIsSelectionContext(true);
+      setContextColorPatcher(getDefaultSelectionPatcher());
+      setColorRedefinitionContext(true);
       icon.paintIcon(c, g, x, y);
     }
     finally {
-      setIsSelectionContext(false);
+      setContextColorPatcher(null);
+      setColorRedefinitionContext(false);
     }
+  }
+
+  private static SvgElementColorPatcherProvider getDefaultSelectionPatcher() {
+    String name = UIManager.getLookAndFeel().getName();
+    Map<String, String> map = new HashMap<>();
+    if ("Darcula".equals(name)) {
+      map.put("#5e5e5e", "#5778ad");
+      map.put("#c75450", "#a95768");
+      map.put("#6e6e6e", "#afb1b3");
+      //map.put("#f26522", "#b76554"); //red
+      map.put("#f26522b3", "#bc6b43"); //red 70%
+      map.put("#f2652299", "#bc6b43"); //red 60% (same as 70%)
+      map.put("#62b54399", "#579b41"); //green 60%
+      map.put("#f98b9e99", "#ba7481"); //pink 60%
+      map.put("#f4af3d99", "#aa823f"); //yellow 60%
+      map.put("#b99bf899", "#977fca"); //purple 60%
+      map.put("#9aa7b0cc", "#97acc6"); //noun gray 80%
+      map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
+    }
+    if (Arrays.asList("IntelliJ", "macOS Light", "Windows 10 Light").contains(name)) {
+      map.put("#6e6e6e", "#afb1b3");
+      map.put("#db5860", "#b75e73");
+      //map.put("#f26522", "#b56a51"); //red
+      map.put("#f26522b3", "#d38369"); //red 70%
+      map.put("#f2652299", "#d38369"); //red 60% (same as 70%)
+      map.put("#40b6e099", "#5eb6d4"); //blue 60%
+      map.put("#62b54399", "#7ebe65"); //green 60%
+      map.put("#f98b9e99", "#f1a4b2"); //pink 60%
+      map.put("#f4af3d99", "#ecc27d"); //yellow 60%
+      map.put("#b99bf899", "#b49ee2"); //purple 60%
+      map.put("#9aa7b0cc", "#aebdc6"); //noun gray 80%
+      map.put("#9aa7b099", "#aebdc6"); //noun gray 60% (same as 80%)
+      map.put("#40b6e0b3", "#5eb6d4"); //blue 70%
+      map.put("#62b543b3", "#7ebe65"); //green 70%
+      map.put("#f98b9eb3", "#f1a4b2"); //pink 70%
+      map.put("#f4af3db3", "#ecc27d"); //yellow 70%
+      map.put("#b99bf8b3", "#b49ee2"); //purple 70%
+    }
+
+    Map<String, Integer> alpha = new HashMap<>(map.size());
+    map.forEach((key, value) -> alpha.put(value, 255));
+
+    return map.isEmpty() ? null : new SvgElementColorPatcherProvider() {
+      @Override
+      public @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
+        return newPatcher(null, map, alpha);
+      }
+    };
   }
 
   public interface SvgElementColorPatcher {

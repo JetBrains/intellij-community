@@ -727,7 +727,7 @@ public final class IconLoader {
     public final void paintIcon(Component c, Graphics g, int x, int y) {
       Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
       ScaleContext scaleContext = ScaleContext.create(g2d);
-      if (SVGLoader.isSelectionContext()) {
+      if (SVGLoader.isColorRedefinitionContext()) {
         ImageIcon result = null;
         synchronized (lock) {
           ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
@@ -822,7 +822,7 @@ public final class IconLoader {
 
         ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
         if (icon != null) {
-          if (!SVGLoader.isSelectionContext()) {
+          if (!SVGLoader.isColorRedefinitionContext()) {
             this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
           }
           else {
@@ -997,7 +997,7 @@ public final class IconLoader {
 
       long cacheKey = key(scaleContext);
       ImageIcon icon = SoftReference.dereference(cache.get(cacheKey));
-      if (icon != null && !SVGLoader.isSelectionContext()) {
+      if (icon != null && !SVGLoader.isColorRedefinitionContext()) {
         return icon;
       }
 

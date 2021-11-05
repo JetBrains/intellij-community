@@ -204,7 +204,7 @@ public final class ImageLoader {
                                                   @NotNull ImageCache imageCache,
                                                   @Nullable String ioMissCacheKey) throws IOException {
     CacheKey cacheKey = null;
-    if ((flags & USE_CACHE) == USE_CACHE && !SVGLoader.isSelectionContext()) {
+    if ((flags & USE_CACHE) == USE_CACHE && !SVGLoader.isColorRedefinitionContext()) {
       cacheKey = new CacheKey(descriptor.path, descriptor.isSvg ? descriptor.scale : 0);
       Pair<Image, Dimension2DDouble> pair = imageCache.imageCache.get(cacheKey);
       if (pair != null) {

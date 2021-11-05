@@ -654,7 +654,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.clear();
     defaults.putAll(ourDefaults);
     if (!myFirstSetup) {
-      SVGLoader.setColorPatcherForSelection(null);
+      SVGLoader.setContextColorPatcher(null);
     }
 
     // set L&F
@@ -663,9 +663,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       try {
         UIManager.setLookAndFeel(laf);
         AppUIUtil.updateForDarcula(true);
-        if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
-          updateIconsUnderSelection(true);
-        }
+        //if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
+        //  updateIconsUnderSelection(true);
+        //}
       }
       catch (Exception e) {
         LOG.error(e);
@@ -694,9 +694,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
             }
-            if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
-              updateIconsUnderSelection(false);
-            }
+            //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
+            //  updateIconsUnderSelection(false);
+            //}
           }
         }
 
@@ -782,7 +782,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     Map<String, Integer> alpha = new HashMap<>(map.size());
     map.forEach((key, value) -> alpha.put(value, 255));
 
-     SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
+     SVGLoader.setContextColorPatcher(new SVGLoader.SvgElementColorPatcherProvider() {
        @Override
        public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
          return SVGLoader.newPatcher(null, map, alpha);
