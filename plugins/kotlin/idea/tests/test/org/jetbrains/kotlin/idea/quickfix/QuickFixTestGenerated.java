@@ -5155,11 +5155,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 public void testInvokeWithExplicitParamNamesOnUserType() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/invoke/invokeWithExplicitParamNamesOnUserType.kt");
                 }
-
-                @TestMetadata("lambdaArgument.kt")
-                public void testLambdaArgument() throws Exception {
-                    runTest("testData/quickfix/createFromUsage/createFunction/invoke/lambdaArgument.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -10156,11 +10151,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("kotlinBrowserStarImport.kt")
         public void testKotlinBrowserStarImport() throws Exception {
             runTest("testData/quickfix/obsoleteKotlinJsPackages/kotlinBrowserStarImport.kt");
-        }
-
-        @TestMetadata("kotlinDomAndBrowserImport.kt")
-        public void testKotlinDomAndBrowserImport() throws Exception {
-            runTest("testData/quickfix/obsoleteKotlinJsPackages/kotlinDomAndBrowserImport.kt");
         }
 
         @TestMetadata("kotlinDomPropertyImport.kt")
