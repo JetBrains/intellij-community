@@ -236,7 +236,6 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
 
             declaration.setType(StandardNames.FqNames.any.asString())
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
             val newTypeRef = declaration.typeReference ?: return

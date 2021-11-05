@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -36,6 +37,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -47,6 +49,8 @@ import java.util.List;
  * <code>getDisposable()</code> is <code>DialogWrapper</code>'s method.
  */
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ScopeChooserCombo.class);
+
 
   public static final int OPT_LIBRARIES = 0x1;
   public static final int OPT_SEARCH_RESULTS = 0x2;
@@ -81,6 +85,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                    final boolean prevSearchWholeFiles,
                    final Object selection,
                    @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
+    initialize(project, suggestSearchInLibs, prevSearchWholeFiles, selection, scopeFilter);
+  }
+
+  public Promise<?> initialize(final Project project,
+                               final boolean suggestSearchInLibs,
+                               final boolean prevSearchWholeFiles,
+                               final String preselect) {
+    return initialize(project, suggestSearchInLibs, prevSearchWholeFiles, preselect, null);
+  }
+
+  public Promise<?> initialize(final Project project,
+                               final boolean suggestSearchInLibs,
+                               final boolean prevSearchWholeFiles,
+                               final Object selection,
+                               @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
     if (myProject != null) {
       throw new IllegalStateException("scope chooser combo already initialized");
     }
@@ -102,7 +121,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
 
-    rebuildModelAndSelectScopeOnSuccess(selection);
+    return rebuildModelAndSelectScopeOnSuccess(selection);
   }
 
   @NotNull
@@ -130,10 +149,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   public void selectItem(@Nullable Object selection) {
     if (selection == null) return;
-    JComboBox combo = getComboBox();
-    DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
+    JComboBox<ScopeDescriptor> combo = getComboBox();
+    DefaultComboBoxModel<ScopeDescriptor> model = (DefaultComboBoxModel<ScopeDescriptor>)combo.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
+      ScopeDescriptor descriptor = model.getElementAt(i);
       if (selection instanceof String && selection.equals(descriptor.getDisplayName()) ||
           selection instanceof SearchScope && descriptor.scopeEquals((SearchScope)selection)) {
         combo.setSelectedIndex(i);
@@ -153,17 +172,45 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
 
+  /**
+   * @deprecated use processScopesAsync instead, this method may block UI
+   */
+  @Deprecated
   public static boolean processScopes(@NotNull Project project,
                                       @NotNull DataContext dataContext,
                                       @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
                                       @NotNull Processor<? super ScopeDescriptor> processor) {
-    List<SearchScope> predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+    List<SearchScope> scopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
       project, dataContext,
       BitUtil.isSet(options, OPT_LIBRARIES),
       BitUtil.isSet(options, OPT_SEARCH_RESULTS),
       BitUtil.isSet(options, OPT_FROM_SELECTION),
       BitUtil.isSet(options, OPT_USAGE_VIEW),
-      BitUtil.isSet(options, OPT_EMPTY_SCOPES));
+      BitUtil.isSet(options, OPT_EMPTY_SCOPES)
+    );
+    return doProcessScopes(project, dataContext, processor, scopes);
+  }
+
+  public static Promise<Boolean> processScopesAsync(@NotNull Project project,
+                                      @NotNull DataContext dataContext,
+                                      @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
+                                      @NotNull Processor<? super ScopeDescriptor> processor) {
+    return PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
+      project, dataContext,
+      BitUtil.isSet(options, OPT_LIBRARIES),
+      BitUtil.isSet(options, OPT_SEARCH_RESULTS),
+      BitUtil.isSet(options, OPT_FROM_SELECTION),
+      BitUtil.isSet(options, OPT_USAGE_VIEW),
+      BitUtil.isSet(options, OPT_EMPTY_SCOPES)
+    ).then(predefinedScopes -> doProcessScopes(project, dataContext, processor, predefinedScopes));
+  }
+
+  // called in EDT
+  @NotNull
+  private static Boolean doProcessScopes(@NotNull Project project,
+                                         @NotNull DataContext dataContext,
+                                         @NotNull Processor<? super ScopeDescriptor> processor,
+                                         List<SearchScope> predefinedScopes) {
     for (SearchScope searchScope : predefinedScopes) {
       if (!processor.process(new ScopeDescriptor(searchScope))) return false;
     }
@@ -190,23 +237,33 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return true;
   }
 
-  private void rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
+  private @NotNull Promise<?> rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-    Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
-    promise.onSuccess(c -> {
-      processScopes(model, c);
-      getComboBox().setModel(model);
-      selectItem(selection);
-    });
+    return DataManager.getInstance()
+      .getDataContextFromFocusAsync()
+      .thenAsync(c -> processScopes(model, c)
+      .onSuccess(__ -> {
+        getComboBox().setModel(model);
+        selectItem(selection);
+      })
+    );
   }
 
-  protected void processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
-    processScopes(myProject, c, myOptions, descriptor -> {
+  private @NotNull Promise<?> processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
+    List<ScopeDescriptor> descriptors = new ArrayList<>();
+    return processScopesAsync(myProject, c, myOptions, descriptor -> {
       if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
-        model.addElement(descriptor);
+        descriptors.add(descriptor);
       }
       return true;
-    });
+    }).onSuccess(__ -> updateModel(model, descriptors));
+  }
+
+  // called in EDT
+  protected void updateModel(DefaultComboBoxModel<ScopeDescriptor> model, List<ScopeDescriptor> descriptors) {
+    for (ScopeDescriptor descriptor : descriptors) {
+      model.addElement(descriptor);
+    }
   }
 
   @Override

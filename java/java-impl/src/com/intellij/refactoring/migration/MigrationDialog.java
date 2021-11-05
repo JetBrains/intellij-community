@@ -42,6 +42,7 @@ public class MigrationDialog extends DialogWrapper {
     myMigrationMapSet = migrationMapSet;
     setTitle(JavaRefactoringBundle.message("migration.dialog.title"));
     setOKButtonText(JavaRefactoringBundle.message("migration.dialog.ok.button.text"));
+    setResizable(false);
     init();
   }
 

@@ -8,6 +8,9 @@ import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.DigestUtil
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -15,9 +18,11 @@ import org.jetbrains.mvstore.MVMap
 import org.jetbrains.mvstore.MVStore
 import org.jetbrains.mvstore.type.LongDataType
 import java.awt.image.BufferedImage
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
@@ -25,16 +30,16 @@ private class FileInfo(val file: Path) {
   companion object {
     fun digest(file: Path) = digest(loadAndNormalizeSvgFile(file).toByteArray())
 
-    fun digest(fileNormalizedData: ByteArray): ByteArray = DigestUtil.sha256().digest(fileNormalizedData)
+    fun digest(fileNormalizedData: ByteArray): ByteArray = DigestUtil.sha512().digest(fileNormalizedData)
   }
 
-  val checksum: ByteArray by lazy { digest(file) }
+  val checksum: ByteArray by lazy(LazyThreadSafetyMode.PUBLICATION) { digest(file) }
 }
 
 /**
  * Works together with [SvgCacheManager] to generate pre-cached icons
  */
-internal class ImageSvgPreCompiler {
+internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = null) {
   /// the expected scales of images that we have
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
@@ -53,8 +58,6 @@ internal class ImageSvgPreCompiler {
   private val totalFiles = AtomicLong(0)
 
   private val collisionGuard = ConcurrentHashMap<Long, FileInfo>()
-  // System.out is blocking and can lead to deadlock
-  private val errorMessages = ConcurrentLinkedQueue<String>()
 
   companion object {
     @JvmStatic
@@ -71,6 +74,12 @@ internal class ImageSvgPreCompiler {
       exitProcess(0)
     }
 
+    @JvmStatic
+    fun optimize(dbFile: Path, compilationOutputRoot: Path, dirs: List<Path>) {
+      val compiler = ImageSvgPreCompiler(compilationOutputRoot)
+      compiler.compileIcons(dbFile, dirs)
+    }
+
     private fun mainImpl(args: Array<String>) {
       println("Pre-building SVG images...")
       if (args.isEmpty()) {
@@ -85,7 +94,7 @@ internal class ImageSvgPreCompiler {
 
       val dbFile = args.getOrNull(0) ?: error("only one parameter is supported")
       val argsFile = args.getOrNull(1) ?: error("only one parameter is supported")
-      val dirs = Files.readAllLines(Path.of(argsFile)).map { Paths.get(it) }
+      val dirs = Files.readAllLines(Path.of(argsFile)).map { Path.of(it) }
 
       val productIcons = args.drop(2).toSortedSet()
       println("Expecting product icons: $productIcons")
@@ -93,7 +102,7 @@ internal class ImageSvgPreCompiler {
       val compiler = ImageSvgPreCompiler()
       // todo
       //productIcons.forEach(compiler::addProductIconPrefix)
-      compiler.compileIcons(Paths.get(dbFile), dirs)
+      compiler.compileIcons(Path.of(dbFile), dirs)
     }
   }
 
@@ -106,15 +115,15 @@ internal class ImageSvgPreCompiler {
     val storeBuilder = MVStore.Builder()
       .autoCommitBufferSize(128_1024)
       .backgroundExceptionHandler { e, _ -> throw e }
+      // fast lz4 - 14 MB, high compression - 9 MB, so, we use high even if it consumes a lot of CPU (anyway, performed in parallel)
       .compressionLevel(2)
     val store = storeBuilder.truncateAndOpen(dbFile)
     try {
-      val scaleToMap = ConcurrentHashMap<Float, MVMap<Long, ImageValue>>(scales.size * 2, 0.75f, 2)
-
       val mapBuilder = MVMap.Builder<Long, ImageValue>()
       mapBuilder.keyType(LongDataType.INSTANCE)
       mapBuilder.valueType(ImageValue.ImageValueSerializer())
 
+      val scaleToMap = ConcurrentHashMap<Float, MVMap<Long, ImageValue>>(scales.size * 2, 0.75f, 2)
       val getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue> = { k, isDark ->
         SvgCacheManager.getMap(k, isDark, scaleToMap, store, mapBuilder)
       }
@@ -123,13 +132,20 @@ internal class ImageSvgPreCompiler {
       dirs.parallelStream().forEach { dir ->
         processDir(dir, dir, 1, rootRobotData, getMapByScale)
       }
-
-      System.err.println(errorMessages.joinToString(separator = "\n"))
     }
     finally {
-      println("Saving rasterized SVG database (${totalFiles.get()} icons)...")
-      store.close()
-      println("Saved rasterized SVG database (size=${Formats.formatFileSize(Files.size(dbFile))}, path=$dbFile)")
+      val span = GlobalOpenTelemetry.getTracer("build-script")
+        .spanBuilder("save rasterized SVG database")
+        .setAttribute("path", dbFile.toString())
+        .setAttribute(AttributeKey.longKey("iconCount"), totalFiles.get())
+        .startSpan()
+      try {
+        store.close()
+        span.setAttribute(AttributeKey.stringKey("fileSize"), Formats.formatFileSize(Files.size(dbFile)))
+      }
+      finally {
+        span.end()
+      }
     }
   }
 
@@ -206,7 +222,7 @@ internal class ImageSvgPreCompiler {
 
     val light1xData = loadAndNormalizeSvgFile(light1x)
     if (light1xData.contains("data:image")) {
-      println("WARN: image $light1x uses data urls and will be skipped")
+      Span.current().addEvent("image $light1x uses data urls and will be skipped")
       return
     }
 
@@ -242,12 +258,21 @@ internal class ImageSvgPreCompiler {
     }
 
     if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
-      errorMessages.add("${duplicate.file} duplicates $file")
+      Span.current().addEvent("${getRelativeToCompilationOutPath(duplicate.file)} duplicates ${getRelativeToCompilationOutPath(file)}")
       // skip - do not add
       return true
     }
 
     throw IllegalStateException("Hash collision:\n  file1=${duplicate.file},\n  file2=${file},\n  imageKey=$imageKey")
+  }
+
+  private fun getRelativeToCompilationOutPath(file: Path): Path {
+    if (compilationOutputRoot != null && file.startsWith(compilationOutputRoot)) {
+      return compilationOutputRoot.relativize(file)
+    }
+    else {
+      return file
+    }
   }
 }
 

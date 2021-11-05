@@ -69,6 +69,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -176,7 +177,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   @Nullable private AccessibleGutterLine myAccessibleGutterLine;
-  boolean myMouseInside = false;
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
+    if (isShowing()) repaint();
+  });
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -190,7 +193,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (project != null) {
       project.getMessageBus().connect(myEditor.getDisposable()).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
-        public void exitDumbMode() {
+        public void exitDumbMode(){
           updateSize();
         }
       });
@@ -234,6 +237,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             if (draggableObject != null) {
               final int line = convertPointToLineNumber(e.getPoint());
               if (line != -1) {
+
+
+
+
+
                 draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
               }
             }
@@ -722,7 +730,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               if (breakpoint.isPresent()) {
                 iconOnTheLine = breakpoint.get().getIcon();
               }
-                if (myMouseInside && Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
+                if (myAlphaContext.isVisible() && Objects.equals(getClientProperty("active.line.number"), visualPosition.line)) {
                   Object activeIcon = getClientProperty("line.number.hover.icon");
                   if (activeIcon instanceof Icon) {
                     hoverIcon = (Icon)activeIcon;
@@ -1372,7 +1380,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
       boolean active = myActiveFoldRegions.contains(anchor.foldRegion);
       if (ExperimentalUI.isNewEditorTabs()) {
-        active = myMouseInside;
+        active = myAlphaContext.isVisible();
       }
       drawFoldingAnchor(width, clip, g, anchor.visualLine, anchor.type, active);
     }
@@ -1491,10 +1499,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     if (ExperimentalUI.isNewEditorTabs()) {
       if (height > 0) {
-        if (active) {
+        myAlphaContext.paintWithComposite(g, () -> {
           Icon icon = scaleIcon(UIUtil.getTreeExpandedIcon());
           icon.paintIcon(this, g, (int)dxPoints[0], getFoldingIconY(visualLine, icon));
-        }
+        });
       }
       return;
     }
@@ -1710,6 +1718,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getIconAreaOffset() {
+    if (ExperimentalUI.isNewUI()) {
+      return getLineMarkerFreePaintersAreaOffset() + getLeftFreePaintersAreaWidth() + getGapBetweenAreas();
+    }
     return getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth();
   }
 
@@ -1720,7 +1731,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
     if (ExperimentalUI.isNewUI()) {
-      return getLineNumberAreaOffset() + getLineMarkerAreaWidth() + getGapBetweenAreas();
+      return getAnnotationsAreaOffset() + getAnnotationsAreaWidth() + getGapBetweenAreas();
     }
     return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
   }
@@ -2560,12 +2571,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl) {
+      if (component instanceof EditorGutterComponentImpl && ExperimentalUI.isNewEditorTabs()) {
         EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
-        gutter.myMouseInside = hovered;
-        if (ExperimentalUI.isNewEditorTabs()) {
-          gutter.repaint();
-        }
+        gutter.myAlphaContext.setVisible(hovered);
       }
     }
   };

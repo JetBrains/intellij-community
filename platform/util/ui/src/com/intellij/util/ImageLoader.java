@@ -33,8 +33,10 @@ import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -297,13 +299,13 @@ public final class ImageLoader {
       return resourceClass.getResourceAsStream(path);
     }
 
-    if (path.startsWith("file://")) {
-      File file = new File(path.substring("file://".length()));
-      if (file.exists()) {
+    if (path.startsWith("file:/")) {
+      Path nioPath = Paths.get(URI.create(path));
+      if (Files.exists(nioPath)) {
         try {
-          return new FileInputStream(file);
+          return Files.newInputStream(nioPath);
         }
-        catch (FileNotFoundException e) {
+        catch (IOException e) {
           getLogger().warn(e);
         }
       }

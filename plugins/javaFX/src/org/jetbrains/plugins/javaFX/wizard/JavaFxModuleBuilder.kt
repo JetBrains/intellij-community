@@ -19,8 +19,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX
   override fun getDescription(): String = JavaFXBundle.message("javafx.module.builder.description")
-
-  override fun getWeight(): Int = super.getWeight() + 10
+  override fun getWeight(): Int = super.getWeight() + 1
 
   override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -10,7 +9,8 @@ import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Path
-import java.util.function.Consumer
+import java.util.function.BiConsumer
+
 /**
  * Base class for all editions of IntelliJ IDEA
  */
@@ -129,7 +129,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
-    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
+    productLayout.platformLayoutCustomizer = { PlatformLayout layout, _ ->
       layout.customize {
         for (String name : JAVA_IDE_API_MODULES) {
           if (!productLayout.productApiModules.contains(name)) {
@@ -161,7 +161,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         withoutProjectLibrary("layoutlib")
       }
-    } as Consumer<PlatformLayout>
+    } as BiConsumer<PlatformLayout, BuildContext>
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
@@ -173,22 +173,15 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
-      fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
-    }
-
+    BuildHelper buildHelper = BuildHelper.getInstance(context)
     if (isAntRequired) {
-      context.ant.copy(todir: "$targetDirectory/lib/ant") {
-        fileset(dir: "$context.paths.communityHome/lib/ant") {
-          exclude(name: "**/src/**")
-        }
+      buildHelper.copyDir(Path.of("$context.paths.communityHome/lib/ant"), Path.of("$targetDirectory/lib/ant")) {
+        !it.endsWith("src")
       }
     }
 
-    Path targetDir = Path.of(targetDirectory).toAbsolutePath().normalize()
-
+    Path targetDir = Path.of(targetDirectory)
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
     // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar

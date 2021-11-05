@@ -11,7 +11,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -43,12 +43,10 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     if (extensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
         ProgressManager.checkCanceled()
-        invokeLater(ModalityState.NON_MODAL) {
-          if (!project.isDisposed) {
-            notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
-              .notify(project)
-          }
-        }
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+            .notify(project)
+        }, ModalityState.NON_MODAL, project.disposed)
       }
       return
     }
@@ -82,10 +80,13 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       )
     }
     catch (e: Exception) {
-      LOG.info(e)
+      if (e !is ControlFlowException) {
+        LOG.info(e)
+      }
     }
   }
 
+  @RequiresBackgroundThread
   override fun runActivity(project: Project) {
     checkSuggestedPlugins(project, false)
   }

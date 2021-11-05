@@ -29,6 +29,18 @@ public final class Utils {
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
   public static final boolean IS_PROFILING_MODE = Boolean.parseBoolean(System.getProperty("profiling.mode", "false"));
+  private static final int FORKED_JAVAC_HEAP_SIZE_MB;
+
+  static {
+    int size = -1;
+    try {
+      size = Integer.parseInt(System.getProperty("forked.javac.heap.size.mb"));
+    }
+    catch (Throwable ignored) {
+    }
+    FORKED_JAVAC_HEAP_SIZE_MB = size;
+  }
+
 
   private Utils() {
   }
@@ -100,9 +112,12 @@ public final class Utils {
     //final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     //final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
     //return options.MAXIMUM_HEAP_SIZE;
+    if (FORKED_JAVAC_HEAP_SIZE_MB > 0) {
+      return FORKED_JAVAC_HEAP_SIZE_MB;
+    }
     final int maxMbytes = (int)(Runtime.getRuntime().maxMemory() / 1048576L);
-    if (maxMbytes < 0) {
-      return -1; // in case of int overflow, return -1 to let VM choose the heap size
+    if (maxMbytes < 0 || maxMbytes > 1500) {
+      return -1; // in the size is too big for older VMs or int overflow, return -1 to let VM choose the heap size
     }
     return Math.max(maxMbytes, 256); // per-forked process: minimum 256 Mb
   }

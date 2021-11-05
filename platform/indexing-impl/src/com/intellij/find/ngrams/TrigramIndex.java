@@ -12,6 +12,7 @@ import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -25,13 +26,18 @@ import java.util.*;
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
 public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> isIndexable(file.getFileType());
+  @ApiStatus.Internal
+  public static boolean isEnabled() {
+    return TrigramTextSearchService.useIndexingSearchExtensions();
+  }
 
+  @ApiStatus.Internal
   public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary() && (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
+    return !fileType.isBinary() &&
+           isEnabled() &&
+           (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
   }
 
   @NotNull
@@ -63,7 +69,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return file -> isIndexable(file.getFileType());
   }
 
   @Override

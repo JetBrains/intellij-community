@@ -10,6 +10,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.runAll
+import org.jetbrains.kotlin.search.assertWithExpectedScope
 import kotlin.properties.Delegates
 
 @SkipSlowTestLocally
@@ -184,27 +185,5 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
         )
     }
 
-    private fun SearchScope.assertWithExpected(expected: String): Unit = with(KotlinCompilerReferenceIndexVerifierAction) {
-        val actualText = this@assertWithExpected.toHumanReadableString()
-        val expectedLines = expected.lines()
-        val actualLines = actualText.lines()
-        try {
-            assertEquals(expectedLines.size, actualLines.size)
-            for ((index, expectedLine) in expectedLines.withIndex()) {
-                val actualLine = actualLines[index]
-                val firstExpectedWord = stablePartOfLineRegex.find(expectedLine)
-                    ?: error("stable part is not found in expected '$expectedLine'")
-
-                val firstActualWord = stablePartOfLineRegex.find(actualLine) ?: error("stable part is not found in actual '$actualLine'")
-                assertEquals(firstExpectedWord.value, firstActualWord.value)
-            }
-        } catch (e: AssertionError) {
-            System.err.println(e.message)
-            assertEquals(expected, actualText)
-        }
-    }
-
-    companion object {
-        private val stablePartOfLineRegex = Regex("[^\\[]*")
-    }
+    private fun SearchScope.assertWithExpected(expected: String): Unit = assertWithExpectedScope(this, expected)
 }

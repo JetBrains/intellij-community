@@ -13,12 +13,14 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
@@ -26,7 +28,10 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.containers.toArray
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
+import java.awt.Dimension
+import javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION
 
 internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.type.bookmarks.action.text")) {
   private val popupState = PopupState.forPopup()
@@ -48,6 +53,7 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       isRootVisible = false
       showsRootHandles = false
       visibleRowCount = bookmarks.size
+      selectionModel.selectionMode = SINGLE_TREE_SELECTION
     }
     bookmarks.forEach { (type, bookmark) ->
       LightEditActionFactory
@@ -59,9 +65,8 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
     EditSourceOnDoubleClickHandler.install(tree)
     TreeUtil.promiseSelectFirstLeaf(tree).onSuccess {
       // show popup when tree is loaded
-      val pane = ScrollPaneFactory.createScrollPane(tree, true)
       val popup = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(pane, tree)
+        .createComponentPopupBuilder(MyScrollPane(tree), tree)
         .setTitle(BookmarkBundle.message("popup.title.type.bookmarks"))
         .setFocusable(true)
         .setRequestFocus(true)
@@ -71,6 +76,23 @@ internal class ShowTypeBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
       Disposer.register(popup, root)
       popupState.prepareToShow(popup)
       popup.showCenteredInCurrentWindow(event.project!!)
+    }
+  }
+
+
+  private class MyScrollPane(val tree: Tree) : DataProvider, JBScrollPane(tree) {
+    init {
+      border = JBUI.Borders.empty()
+      viewportBorder = JBUI.Borders.empty()
+    }
+
+    override fun getPreferredSize(): Dimension? = super.getPreferredSize()?.also {
+      if (!isPreferredSizeSet) it.width = it.width.coerceAtMost(JBUI.scale(800))
+    }
+
+    override fun getData(dataId: String): Any? = when {
+      NAVIGATABLE.`is`(dataId) -> TreeUtil.getAbstractTreeNode(tree.selectionPath)
+      else -> null
     }
   }
 

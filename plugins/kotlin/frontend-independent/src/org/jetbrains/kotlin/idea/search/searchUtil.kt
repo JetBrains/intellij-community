@@ -90,6 +90,39 @@ fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
     }
 }
 
+/**
+ * `( *\\( *)` and `( *\\) *)` – to find parenthesis
+ * `( *, *(?![^\\[]*]))` – to find commas outside square brackets
+ */
+private val parenthesisRegex = Regex("( *\\( *)|( *\\) *)|( *, *(?![^\\[]*]))")
+
+private inline fun CharSequence.ifNotEmpty(action: (CharSequence) -> Unit) {
+    takeIf(CharSequence::isNotBlank)?.let(action)
+}
+
+fun SearchScope.toHumanReadableString(): String = buildString {
+    val scopeText = this@toHumanReadableString.toString()
+    var currentIndent = 0
+    var lastIndex = 0
+    for (parenthesis in parenthesisRegex.findAll(scopeText)) {
+        val subSequence = scopeText.subSequence(lastIndex, parenthesis.range.first)
+        subSequence.ifNotEmpty {
+            append(" ".repeat(currentIndent))
+            appendLine(it)
+        }
+
+        val value = parenthesis.value
+        when {
+            "(" in value -> currentIndent += 2
+            ")" in value -> currentIndent -= 2
+        }
+
+        lastIndex = parenthesis.range.last + 1
+    }
+
+    if (isEmpty()) append(scopeText)
+}
+
 // Copied from SearchParameters.getEffectiveSearchScope()
 fun ReferencesSearch.SearchParameters.effectiveSearchScope(element: PsiElement): SearchScope {
     if (element == elementToSearch) return effectiveSearchScope
@@ -175,8 +208,12 @@ private val PsiMethod.canBeGetter: Boolean
 private val PsiMethod.canBeSetter: Boolean
     get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
 
+private val PsiMethod.probablyCanHaveSyntheticAccessors: Boolean
+    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
+
 private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
 private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
+
 private val PsiMethod.isFinalProperty: Boolean
     get() {
         val property = unwrapped as? KtProperty ?: return false
@@ -185,9 +222,9 @@ private val PsiMethod.isFinalProperty: Boolean
         return containingClassOrObject is KtObjectDeclaration
     }
 
-val PsiMethod.syntheticAssessors: Collection<Name>
+val PsiMethod.syntheticAccessors: Collection<Name>
     get() {
-        if (!canHaveSyntheticAssessors) return emptyList()
+        if (!probablyCanHaveSyntheticAccessors) return emptyList()
 
         return when {
             canBeGetter -> listOfNotNull(getterName)
@@ -196,9 +233,12 @@ val PsiMethod.syntheticAssessors: Collection<Name>
         }
     }
 
-val PsiMethod.canHaveSyntheticAssessors: Boolean
-    get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !hasTypeParameters() && !isFinalProperty
+val PsiMethod.canHaveSyntheticAccessors: Boolean get() = probablyCanHaveSyntheticAccessors && (canBeGetter || canBeSetter)
 
-val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticAssessors && canBeGetter) getterName else null
+val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeGetter
 
-val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticAssessors && canBeSetter) setterNames else null
+val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeSetter
+
+val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
+
+val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticSetter) setterNames else null

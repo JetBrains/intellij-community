@@ -44,7 +44,7 @@ import java.util.*;
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
 
-  private static final int EXACT_MATCH_DEGREE = 5000;
+  public static final int EXACT_MATCH_DEGREE = 5000;
   private static final int DIRECTORY_MATCH_DEGREE = 0;
 
   private final Project myProject;

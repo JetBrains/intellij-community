@@ -15,7 +15,7 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-949/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-949.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-955/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-955.jar" />
             </array>
           </option>
           <option name="errors">
@@ -50,5 +50,12 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="blockmap" level="project" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="SSHJ" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
+    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
   </component>
 </module>

@@ -1,7 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.api.http
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.HttpRequests
@@ -57,17 +55,6 @@ internal suspend fun requestString(
         }
     } catch (t: Throwable) {
         cont.resumeWithException(t)
-    }
-}
-
-private fun String.asJSONObject(): JsonObject = JsonParser.parseString(this).asJsonObject
-
-private fun Throwable.log() = apply {
-    @Suppress("TooGenericExceptionCaught") // Guarding against random runtime failures
-    try {
-        Logger.getInstance(this.javaClass).warn("Error occurred while performing a request", this)
-    } catch (t: Throwable) {
-        // IntelliJ logger rethrows logged exception
     }
 }
 

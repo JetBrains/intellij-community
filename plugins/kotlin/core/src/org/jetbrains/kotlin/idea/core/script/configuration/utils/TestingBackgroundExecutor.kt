@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration.utils
 
-import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.HashSetQueue
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 
 class TestingBackgroundExecutor internal constructor(
@@ -47,8 +48,8 @@ class TestingBackgroundExecutor internal constructor(
             }
         }
 
-        LaterInvocator.ensureFlushRequested()
-        LaterInvocator.dispatchPendingFlushes()
+        ApplicationManager.getApplication().invokeLater {}
+        UIUtil.dispatchAllInvocationEvents()
 
         return copy.isNotEmpty()
     }

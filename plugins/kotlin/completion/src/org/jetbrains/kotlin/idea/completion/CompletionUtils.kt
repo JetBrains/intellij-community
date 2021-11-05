@@ -394,7 +394,7 @@ fun shortenReferences(
     endOffset: Int,
     shortenReferences: ShortenReferences = ShortenReferences.DEFAULT
 ) {
-    PsiDocumentManager.getInstance(context.project).commitAllDocuments()
+    PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
     val file = context.file as KtFile
     val element = file.findElementAt(startOffset)?.parentsWithSelf?.find {
         it.startOffset == startOffset && it.endOffset == endOffset
@@ -461,7 +461,7 @@ fun LookupElement.decorateAsStaticMember(
             val addMemberImport = descriptorIsCallableExtension || importFromSameParentIsPresent()
 
             if (addMemberImport) {
-                psiDocumentManager.commitAllDocuments()
+                psiDocumentManager.commitDocument(context.document)
                 ImportInsertHelper.getInstance(context.project).importDescriptor(file, memberDescriptor)
                 psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
             }

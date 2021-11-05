@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
@@ -141,11 +141,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
                                   @NotNull VariableDescriptor descriptor,
                                   @NotNull Computable<DFAType> computation) {
     if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      state.removeBinding(descriptor);
+      state.removeBinding(descriptor, myFlowInfo.getVarIndexes());
       return;
     }
     else {
-      state.restoreBinding(descriptor);
+      state.restoreBinding(descriptor,myFlowInfo.getVarIndexes());
     }
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
@@ -184,13 +184,13 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::removeBinding);
+      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor -> state.removeBinding(descriptor, myFlowInfo.getVarIndexes()));
       return;
     }
     if (instruction.num() > lastInterestingInstructionIndex) {
       return;
     }
-    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(state::restoreBinding);
+    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor1 -> state.restoreBinding(descriptor1, myFlowInfo.getVarIndexes()));
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
     switch (kind) {

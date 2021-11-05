@@ -73,7 +73,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     else -> FileBookmarkImpl(this, file)
   }
 
-  fun createBookmark(editor: Editor, line: Int? = null): Bookmark? {
+  fun createBookmark(editor: Editor, line: Int? = null): FileBookmark? {
     if (editor.isOneLineMode) return null
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)

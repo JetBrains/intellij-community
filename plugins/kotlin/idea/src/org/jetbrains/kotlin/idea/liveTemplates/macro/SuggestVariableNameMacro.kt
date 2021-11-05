@@ -40,9 +40,10 @@ class SuggestVariableNameMacro : KotlinMacro() {
     private fun suggestNames(context: ExpressionContext): Collection<String> {
         val project = context.project
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        psiDocumentManager.commitAllDocuments()
 
-        val psiFile = psiDocumentManager.getPsiFile(context.editor!!.document) as? KtFile ?: return emptyList()
+        val document = context.editor!!.document
+        psiDocumentManager.commitDocument(document)
+        val psiFile = psiDocumentManager.getPsiFile(document) as? KtFile ?: return emptyList()
         val token = psiFile.findElementAt(context.startOffset) ?: return emptyList()
         val declaration = token.parent as? KtCallableDeclaration ?: return emptyList()
         if (token != declaration.nameIdentifier) return emptyList()

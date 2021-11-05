@@ -185,7 +185,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         TestCase.assertTrue(LaterInvocator.isInModalContext());
         TestCase.assertEquals(1, LaterInvocator.getCurrentModalEntities().length);
 
-        LaterInvocator.invokeLater(new Runnable() {
+        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), new Runnable() {
           @Override
           public void run() {
             assertFalse(LaterInvocator.isInModalContext());
@@ -194,10 +194,10 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
           public String toString() {
             return "ass2";
           }
-        }, ModalityState.NON_MODAL);
-        LaterInvocator.invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
+        });
+        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), ENTER_MODAL);
 
-        LaterInvocator.invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+        LaterInvocator.invokeLater(ModalityState.NON_MODAL, Conditions.alwaysFalse(), new MyRunnable("1"));
 
         //some weird things like MyFireIdleRequest may still sneak in
         //java.util.List<Object> dump = LaterInvocator.dumpQueue();
@@ -445,7 +445,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myWindow2);
       ModalityState window2State = ModalityState.current();
       LaterInvocator.leaveModal(myWindow2);
-      LaterInvocator.invokeLater(new MyRunnable("1"), window2State);
+      LaterInvocator.invokeLater(window2State, Conditions.alwaysFalse(), new MyRunnable("1"));
 
       LaterInvocator.enterModal(myWindow1);
       flushSwingQueue();
@@ -455,7 +455,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       flushSwingQueue();
       checkOrder(1);
 
-      LaterInvocator.invokeLater(new MyRunnable("2"), window2State);
+      LaterInvocator.invokeLater(window2State, Conditions.alwaysFalse(), new MyRunnable("2"));
       flushSwingQueue();
       checkOrder(2);
     });
@@ -634,7 +634,6 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.getAndSet(0));
     }).assertTiming();
-
   }
 
   private final JDialog myModalDialog = new JDialog((Dialog)null, true);

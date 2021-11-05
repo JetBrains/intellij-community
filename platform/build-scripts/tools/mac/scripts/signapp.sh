@@ -10,6 +10,9 @@ INPUT_FILE=$1
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
+
+set -x
+
 CODESIGN_STRING=$5
 JDK_ARCHIVE="$6"
 NOTARIZE=$7
@@ -94,7 +97,9 @@ fi
 if [ "$CODESIGN_STRING" != "" ]; then
   log "Unlocking keychain..."
   # Make sure *.p12 is imported into local KeyChain
+  set +x
   security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+  set -x
 
   log "Signing ..."
   retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"

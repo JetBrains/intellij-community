@@ -9,6 +9,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.JBLabel
@@ -17,7 +20,9 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import java.awt.Dimension
 import java.awt.Point
@@ -36,19 +41,28 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
+    val project = event.project ?: return
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
     val hintComponent = TableGridComponent { rows, columns ->
       val text = TableModificationUtils.buildEmptyTable(rows, columns)
       runWriteAction {
-        executeCommand(event.project) {
+        executeCommand(project) {
           val caret = editor.caretModel.currentCaret
           val document = editor.document
+          val caretOffset = caret.offset
           val currentLine = document.getLineNumber(caret.offset)
           val content = when {
             currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
             else -> text
           }
           EditorModificationUtil.insertStringAtCaret(editor, content)
+          PsiDocumentManager.getInstance(project).commitDocument(document)
+          val table = TableUtils.findTable(file, caretOffset)
+          val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCellImpl::class.java) }?.startOffset
+          if (offsetToMove != null) {
+            caret.moveToOffset(offsetToMove)
+          }
         }
       }
     }
@@ -69,9 +83,10 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
   }
 
   override fun update(event: AnActionEvent) {
+    val project = event.project
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    event.presentation.isEnabledAndVisible = editor != null && file?.fileType == MarkdownFileType.INSTANCE
+    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.fileType == MarkdownFileType.INSTANCE
   }
 
   private class TableGridComponent(

@@ -71,7 +71,9 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     var commitHashToHighlight: Hash? = null
+    lateinit var clickCommitTaskId: TaskContext.TaskId
     task {
+      clickCommitTaskId = taskId
       before {
         LearningUiHighlightingManager.clearHighlights()
         val vcsData = VcsProjectLog.getInstance(project).dataManager
@@ -108,7 +110,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
                                     strong(interactiveRebaseMenuItemText)))
       trigger(it)
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreByUi(clickCommitTaskId, delayMillis = defaultRestoreDelay)
       test {
         ideFrame {
           jMenuItem { item: ActionMenuItem -> item.text == interactiveRebaseMenuItemText }.click()

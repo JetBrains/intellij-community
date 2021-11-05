@@ -2,10 +2,9 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,53 +29,50 @@ public final class Attachment {
   private final String myDisplayText;
   private final byte @Nullable [] myBytes;
   private final @Nullable Path myTemporaryFile;
-  // opt-out for traces, opt-in otherwise
-  private boolean myIncluded;
+  private boolean myIncluded;   // opt-out for traces, opt-in otherwise
 
-  public Attachment(@NotNull @NonNls String name, @NotNull Throwable throwable) {
+  public Attachment(@NotNull String name, @NotNull Throwable throwable) {
     this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
     myIncluded = true;
   }
 
-  public Attachment(@NotNull @NonNls String path, @NotNull @NonNls String content) {
+  public Attachment(@NotNull String path, @NotNull String content) {
     this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
   }
 
-  public Attachment(@NotNull @NonNls String path, byte @NotNull [] bytes, @NotNull @NonNls String displayText) {
+  public Attachment(@NotNull String path, byte @NotNull [] bytes, @NotNull String displayText) {
     this(path, displayText, bytes, null);
   }
 
-  public Attachment(@NotNull @NonNls String path, @NotNull File temporaryFile, @NotNull @NonNls String displayText) {
+  public Attachment(@NotNull String path, @NotNull Path temporaryFile, @NotNull String displayText) {
     this(path, displayText, null, temporaryFile);
   }
 
-  private Attachment(String path, String displayText, byte @Nullable [] bytes, @Nullable File temporaryFile) {
+  public Attachment(@NotNull String path, @NotNull File temporaryFile, @NotNull String displayText) {
+    this(path, displayText, null, temporaryFile.toPath());
+  }
+
+  private Attachment(String path, String displayText, byte @Nullable [] bytes, @Nullable Path temporaryFile) {
     assert bytes != null || temporaryFile != null;
     myPath = path;
     myDisplayText = displayText;
     myBytes = bytes;
-    myTemporaryFile = temporaryFile == null ? null : temporaryFile.toPath();
+    myTemporaryFile = temporaryFile;
   }
 
-  @NotNull
-  public String getDisplayText() {
+  public @NotNull String getDisplayText() {
     return myDisplayText;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPath() {
+  public @NotNull @NlsSafe String getPath() {
     return myPath;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return PathUtilRt.getFileName(myPath);
   }
 
-  @NotNull
-  public String getEncodedBytes() {
+  public @NotNull String getEncodedBytes() {
     return Base64.getEncoder().encodeToString(getBytes());
   }
 
@@ -94,11 +90,10 @@ public final class Attachment {
       }
     }
 
-    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
-  @NotNull
-  public InputStream openContentStream() {
+  public @NotNull InputStream openContentStream() {
     if (myBytes != null) {
       return new ByteArrayInputStream(myBytes);
     }
@@ -112,7 +107,7 @@ public final class Attachment {
       }
     }
 
-    return new ByteArrayInputStream(ArrayUtilRt.EMPTY_BYTE_ARRAY);
+    return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
   }
 
   public boolean isIncluded() {

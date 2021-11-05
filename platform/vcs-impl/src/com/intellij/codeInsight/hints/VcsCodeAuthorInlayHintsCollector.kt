@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
+import com.intellij.openapi.vcs.actions.ShortNameType
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.psi.PsiComment
@@ -107,11 +108,14 @@ private class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: 
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 
-private fun VcsCodeAuthorInfo.getText(): String =
-  when {
-    mainAuthor == null -> message("label.new.code")
-    isMultiAuthor && isModified -> message("label.multi.author.modified.code", mainAuthor, otherAuthorsCount)
-    isMultiAuthor && !isModified -> message("label.multi.author.not.modified.code", mainAuthor, otherAuthorsCount)
-    !isMultiAuthor && isModified -> message("label.single.author.modified.code", mainAuthor)
-    else -> mainAuthor
+private fun VcsCodeAuthorInfo.getText(): String {
+  val mainAuthorText = ShortNameType.shorten(mainAuthor, ShortNameType.NONE)
+
+  return when {
+    mainAuthorText == null -> message("label.new.code")
+    isMultiAuthor && isModified -> message("label.multi.author.modified.code", mainAuthorText, otherAuthorsCount)
+    isMultiAuthor && !isModified -> message("label.multi.author.not.modified.code", mainAuthorText, otherAuthorsCount)
+    !isMultiAuthor && isModified -> message("label.single.author.modified.code", mainAuthorText)
+    else -> mainAuthorText
   }
+}

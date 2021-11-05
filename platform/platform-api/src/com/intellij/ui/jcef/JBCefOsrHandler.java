@@ -126,7 +126,6 @@ class JBCefOsrHandler implements CefRenderHandler {
       if (result != VolatileImage.IMAGE_OK) {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
-      // should not happen as the image is originally made out of {myComponent}
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
         volatileImage = myComponent.createVolatileImage(width, height);
       }

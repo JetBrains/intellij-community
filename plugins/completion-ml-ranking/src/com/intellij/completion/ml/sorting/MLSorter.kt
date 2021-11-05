@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.util.queryLength
 import com.intellij.completion.ml.util.RelevanceUtil
-import com.intellij.completion.ml.common.PrefixMatchingUtil
+import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
@@ -129,7 +129,7 @@ class MLSorter : CompletionFinalSorter() {
       SessionFactorsUtils.saveElementFactorsTo(additional, lookupStorage, element)
       calculateAdditionalFeaturesTo(additional, element, queryLength, prefix.length, position, items.size, parameters)
       lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
-        PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
+        PrefixMatchingUtil.calculateFeatures(element.lookupString, prefix, additional)
       }
       meaningfulRelevanceExtractor.processFeatures(relevance)
       calculatedElementFeatures.add(ElementFeatures(relevance, additional))

@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.not
-import org.jetbrains.kotlin.idea.search.syntheticAssessors
+import org.jetbrains.kotlin.idea.search.syntheticAccessors
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -452,7 +452,7 @@ private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
 
     val fqName = psiMethod.getKotlinFqName() ?: return null
     val listOfFqName = listOf(fqName)
-    val propertyAssessors = psiMethod.syntheticAssessors.ifEmpty { return listOfFqName }
+    val propertyAssessors = psiMethod.syntheticAccessors.ifEmpty { return listOfFqName }
 
     val parentFqName = fqName.parent()
     return listOfFqName + propertyAssessors.map { parentFqName.child(it) }

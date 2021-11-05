@@ -41,7 +41,7 @@ class BaseLayoutSpec {
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
   void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.STANDALONE_SEPARATE))
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, ProjectLibraryData.PackMode.STANDALONE_MERGED))
   }
 
   void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {

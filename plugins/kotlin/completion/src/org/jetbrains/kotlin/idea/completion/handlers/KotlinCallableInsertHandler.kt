@@ -24,7 +24,7 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
 
         fun addImport(context: InsertionContext, item: LookupElement, callType: CallType<*>) {
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-            psiDocumentManager.commitAllDocuments()
+            psiDocumentManager.commitDocument(context.document)
 
             val file = context.file
             val o = item.`object`
@@ -43,7 +43,7 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
                         fqName.withRootPrefixIfNeeded().render() + " "
                     ) // insert space after for correct parsing
 
-                    psiDocumentManager.commitAllDocuments()
+                    psiDocumentManager.commitDocument(context.document)
 
                     shortenReferences(context, context.startOffset, context.tailOffset - 1, SHORTEN_REFERENCES)
 

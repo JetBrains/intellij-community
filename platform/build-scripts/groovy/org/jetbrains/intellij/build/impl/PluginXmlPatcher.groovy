@@ -2,40 +2,114 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import de.pdark.decentxml.Document
-import de.pdark.decentxml.Element
-import de.pdark.decentxml.Node
-import de.pdark.decentxml.Text
-import de.pdark.decentxml.XMLParser
+import de.pdark.decentxml.*
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompatibleBuildRange
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @CompileStatic
 final class PluginXmlPatcher {
-  private final BuildMessages myBuildMessages
+  static final DateTimeFormatter pluginDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
+
   private final String myReleaseDate
   private final String myReleaseVersion
-  private final String myProductName
-  private final boolean myIsEap
 
-  PluginXmlPatcher(BuildMessages buildMessages, String releaseDate, String releaseVersion, String productName, boolean isEap) {
-    myBuildMessages = buildMessages
+  PluginXmlPatcher(String releaseDate, String releaseVersion) {
     myReleaseDate = releaseDate
     myReleaseVersion = releaseVersion
-    myIsEap = isEap
-    myProductName = productName
   }
 
-  void patchPluginXml(@NotNull Path pluginXmlFile,
-                      String pluginModuleName,
-                      String pluginVersion,
-                      Pair<String, String> compatibleSinceUntil,
-                      boolean toPublish,
-                      boolean retainProductDescriptorForBundledPlugin) {
+  static Pair<String, String> getCompatiblePlatformVersionRange(CompatibleBuildRange compatibleBuildRange, String buildNumber) {
+    String sinceBuild
+    String untilBuild
+    if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
+      if (compatibleBuildRange == CompatibleBuildRange.ANY_WITH_SAME_BASELINE) {
+        sinceBuild = buildNumber.substring(0, buildNumber.indexOf('.'))
+        untilBuild = buildNumber.substring(0, buildNumber.indexOf('.')) + ".*"
+      }
+      else {
+        if (buildNumber.matches(/\d+\.\d+/)) {
+          sinceBuild = buildNumber
+        }
+        else {
+          sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        }
+        int end = compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
+        untilBuild = buildNumber.substring(0, end) + ".*"
+      }
+    }
+    else {
+      sinceBuild = buildNumber
+      untilBuild = buildNumber
+    }
+    return new Pair<>(sinceBuild, untilBuild)
+  }
+
+  static void patchPluginXml(ModuleOutputPatcher moduleOutputPatcher,
+                               PluginLayout plugin,
+                               Set<PluginLayout> pluginsToPublish,
+                               PluginXmlPatcher pluginXmlPatcher,
+                               BuildContext context) {
+    boolean bundled = !pluginsToPublish.contains(plugin)
+    Path moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
+    Path pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
+    if (Files.notExists(pluginXmlPath)) {
+      context.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+    }
+
+    def productLayout = context.productProperties.productLayout
+    def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+                                           context.proprietaryBuildTools.artifactsServer != null
+    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
+                                                //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
+                                                includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+      //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+                                                context.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+                                                                                   : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+
+    String defaultPluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
+      ? context.buildNumber + ".${pluginDateFormat.format(ZonedDateTime.now())}"
+      : context.buildNumber
+
+    String pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context)
+
+    Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
+    String content
+    try {
+      content = pluginXmlPatcher.patchPluginXml(
+        pluginXmlPath,
+        plugin.mainModule,
+        pluginVersion,
+        sinceUntil,
+        pluginsToPublish.contains(plugin),
+        plugin.retainProductDescriptorForBundledPlugin,
+        context.applicationInfo.isEAP,
+        context.applicationInfo.productName
+        )
+      content = plugin.pluginXmlPatcher.apply(content)
+    }
+    catch (Throwable e) {
+      throw new RuntimeException("Could not patch $pluginXmlPath", e)
+    }
+
+    moduleOutputPatcher.patchModuleOutput(plugin.mainModule, "META-INF/plugin.xml", content)
+  }
+
+  String patchPluginXml(@NotNull Path pluginXmlFile,
+                        String pluginModuleName,
+                        String pluginVersion,
+                        Pair<String, String> compatibleSinceUntil,
+                        boolean toPublish,
+                        boolean retainProductDescriptorForBundledPlugin,
+                        boolean isEap,
+                        String productName) {
     Document doc = XMLParser.parse(Files.readString(pluginXmlFile))
 
     def ideaVersionElement = getOrCreateTopElement(doc, "idea-version", ["id", "name"])
@@ -47,9 +121,9 @@ final class PluginXmlPatcher {
 
     def productDescriptor = doc.rootElement.getChild("product-descriptor")
     if (productDescriptor != null) {
-      myBuildMessages.info("      ${toPublish ? "Patching" : "Skipping"} $pluginModuleName <product-descriptor/>")
+      Span.current().addEvent("${toPublish ? "patch" : "skip"} $pluginModuleName <product-descriptor/>")
 
-      setProductDescriptorEapAttribute(productDescriptor, myIsEap)
+      setProductDescriptorEapAttribute(productDescriptor, isEap)
 
       productDescriptor.setAttribute("release-date", myReleaseDate)
       productDescriptor.setAttribute("release-version", myReleaseVersion)
@@ -61,8 +135,8 @@ final class PluginXmlPatcher {
     }
 
     // Patch Database plugin for WebStorm, see WEB-48278
-    if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB" && myProductName == "WebStorm") {
-      myBuildMessages.info("        Patching $pluginModuleName for WebStorm")
+    if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB" && productName == "WebStorm") {
+      Span.current().addEvent("patch $pluginModuleName for WebStorm")
 
       def pluginName = doc.rootElement.getChild("name")
       if (pluginName.getText() != "Database Tools and SQL") {
@@ -77,7 +151,7 @@ final class PluginXmlPatcher {
       }
     }
 
-    Files.writeString(pluginXmlFile, doc.toXML())
+    return doc.toXML()
   }
 
   private static void removeTextBeforeElement(Element element) {

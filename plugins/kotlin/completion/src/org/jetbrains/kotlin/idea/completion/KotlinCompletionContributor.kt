@@ -331,7 +331,7 @@ class KotlinCompletionContributor : CompletionContributor() {
             val startOffset = context.startOffset
 
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-            psiDocumentManager.commitAllDocuments()
+            psiDocumentManager.commitDocument(document)
 
             val token = getToken(context.file, document.charsSequence, startOffset)
             val nameRef = token.parent as KtNameReferenceExpression

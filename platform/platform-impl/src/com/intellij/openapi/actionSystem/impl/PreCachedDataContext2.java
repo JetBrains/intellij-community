@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -191,12 +190,6 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       }
     }
     return null;
-  }
-
-  static {
-    for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
-      DataKey.create(instance.getKey()); // initialize data keys with rules
-    }
   }
 
   static void clearAllCaches() {

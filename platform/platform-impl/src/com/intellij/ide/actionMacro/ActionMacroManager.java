@@ -479,7 +479,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
         customActionsSchema.addIconCustomization(newId, path);
       }
     }
-    CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+    if (!renamingMap.isEmpty()) CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
   }
 
   public boolean checkCanCreateMacro(String name) {

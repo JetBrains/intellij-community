@@ -38,6 +38,10 @@ public final class ImmutableZipEntry {
     this.method = method;
   }
 
+  public boolean isCompressed() {
+    return method != ZipEntry.STORED;
+  }
+
   void setDataOffset(int dataOffset) {
     this.dataOffset = dataOffset;
   }

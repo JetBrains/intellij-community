@@ -42,7 +42,7 @@ class B implements AnnotationBuilder {
   private GutterIconRenderer gutterIconRenderer;
   private ProblemGroup problemGroup;
   private TextAttributes enforcedAttributes;
-  private TextAttributesKey textAttributes;
+  private TextAttributesKey textAttributesKey;
   private ProblemHighlightType highlightType;
   private Boolean needsUpdateOnTyping;
   private @NlsContexts.Tooltip String tooltip;
@@ -220,8 +220,8 @@ class B implements AnnotationBuilder {
 
   @Override
   public @NotNull AnnotationBuilder textAttributes(@NotNull TextAttributesKey textAttributes) {
-    assertNotSet(this.textAttributes, "textAttributes");
-    this.textAttributes = textAttributes;
+    assertNotSet(this.textAttributesKey, "textAttributes");
+    this.textAttributesKey = textAttributes;
     return this;
   }
 
@@ -271,8 +271,8 @@ class B implements AnnotationBuilder {
     if (highlightType != null) {
       annotation.setHighlightType(highlightType);
     }
-    if (textAttributes != null) {
-      annotation.setTextAttributes(textAttributes);
+    if (textAttributesKey != null) {
+      annotation.setTextAttributes(textAttributesKey);
     }
     if (enforcedAttributes != null) {
       annotation.setEnforcedTextAttributes(enforcedAttributes);
@@ -332,7 +332,7 @@ class B implements AnnotationBuilder {
   public String toString() {
     return "Builder{" +
            "message='" + message + '\'' +
-           ", myCurrentElement=" + myCurrentElement +
+           ", myCurrentElement=" + myCurrentElement + " (" + myCurrentElement.getClass() + ")" +
            ", myCurrentAnnotator=" + myCurrentAnnotator +
            ", severity=" + severity +
            ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
@@ -341,7 +341,7 @@ class B implements AnnotationBuilder {
            omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
            omitIfEmpty(problemGroup, "problemGroup") +
            omitIfEmpty(enforcedAttributes, "enforcedAttributes") +
-           omitIfEmpty(textAttributes, "textAttributes") +
+           omitIfEmpty(textAttributesKey, "textAttributesKey") +
            omitIfEmpty(highlightType, "highlightType") +
            omitIfEmpty(needsUpdateOnTyping, "needsUpdateOnTyping") +
            omitIfEmpty(tooltip, "tooltip") +
@@ -367,8 +367,8 @@ class B implements AnnotationBuilder {
     if (highlightType != null) {
       annotation.setHighlightType(highlightType);
     }
-    if (textAttributes != null) {
-      annotation.setTextAttributes(textAttributes);
+    if (textAttributesKey != null) {
+      annotation.setTextAttributes(textAttributesKey);
     }
     if (enforcedAttributes != null) {
       annotation.setEnforcedTextAttributes(enforcedAttributes);

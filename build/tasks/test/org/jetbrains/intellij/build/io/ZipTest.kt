@@ -70,7 +70,7 @@ class ZipTest {
     }
 
     val archiveFile = tempDir.newPath("/archive.zip")
-    zip(archiveFile, mapOf(dir to ""))
+    zip(archiveFile, mapOf(dir to ""), compress = false)
     return Pair(list, archiveFile)
   }
 
@@ -88,10 +88,9 @@ class ZipTest {
     }
 
     val archiveFile = tempDir.newPath("/archive.zip")
-    zip(archiveFile, mapOf(dir to "test"))
+    zip(archiveFile, mapOf(dir to "test"), compress = false)
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    zipFile.use {
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
       for (name in list) {
         assertThat(zipFile.getEntry("test/$name")).isNotNull()
       }
@@ -124,10 +123,9 @@ class ZipTest {
       fs.getPathMatcher("glob:**/entry-item*"),
       fs.getPathMatcher("glob:test-relative-ignore"),
       fs.getPathMatcher("glob:**/icon-robots.txt"),
-    ))), logger = null)
+    ))))
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    zipFile.use {
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
       for (name in list) {
         assertThat(zipFile.getEntry("test/$name")).isNull()
       }
@@ -146,20 +144,101 @@ class ZipTest {
     Files.writeString(file, "\n")
 
     val archiveFile = tempDir.newPath("/archive.zip")
-    zip(archiveFile, mapOf(dir to ""))
+    zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    zipFile.use {
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
       for (name in zipFile.entries) {
         val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
         assertThat(entry).isNotNull()
-        assertThat(String(entry!!.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+        assertThat(entry!!.isCompressed()).isFalse()
+        assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+      }
+    }
+  }
+
+  @Test
+  fun compression() {
+    val dir = tempDir.newPath("/dir")
+    Files.createDirectories(dir)
+    val data = Random(42).nextBytes(4 * 1024)
+    Files.write(dir.resolve("file"), data + data + data)
+
+    val archiveFile = tempDir.newPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""), compress = true)
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      for (name in zipFile.entries) {
+        val entry = zipFile.getEntry("file")
+        assertThat(entry).isNotNull()
+        assertThat(entry!!.isCompressed()).isTrue()
+      }
+    }
+  }
+
+  @Test
+  fun `large file`() {
+    val dir = tempDir.newPath("/dir")
+    Files.createDirectories(dir)
+    val random = Random(42)
+    Files.write(dir.resolve("largeFile1"), random.nextBytes(10 * 1024 * 1024))
+    Files.write(dir.resolve("largeFile2"), random.nextBytes(1 * 1024 * 1024))
+    Files.write(dir.resolve("largeFile3"), random.nextBytes(2 * 1024 * 1024))
+
+    val archiveFile = tempDir.newPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""), compress = false)
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      for (name in zipFile.entries) {
+        val entry = zipFile.getEntry("largeFile1")
+        assertThat(entry).isNotNull()
+      }
+    }
+  }
+
+  @Test
+  fun `large incompressible file compressed`() {
+    val dir = tempDir.newPath("/dir")
+    Files.createDirectories(dir)
+    val random = Random(42)
+    val data = random.nextBytes(10 * 1024 * 1024)
+
+    Files.write(dir.resolve("largeFile1"), data)
+    Files.write(dir.resolve("largeFile2"), random.nextBytes(1 * 1024 * 1024))
+    Files.write(dir.resolve("largeFile3"), random.nextBytes(2 * 1024 * 1024))
+
+    val archiveFile = tempDir.newPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""), compress = true)
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      for (name in zipFile.entries) {
+        val entry = zipFile.getEntry("largeFile1")
+        assertThat(entry).isNotNull()
+      }
+    }
+  }
+
+  @Test
+  fun `large compressible file compressed`() {
+    val dir = tempDir.newPath("/dir")
+    Files.createDirectories(dir)
+    val random = Random(42)
+    val data = random.nextBytes(2 * 1024 * 1024)
+
+    Files.write(dir.resolve("largeFile1"), data + data + data + data + data + data + data + data + data + data)
+    Files.write(dir.resolve("largeFile2"), data + data + data + data)
+    Files.write(dir.resolve("largeFile3"), data + data)
+
+    val archiveFile = tempDir.newPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""), compress = true)
+
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      for (name in zipFile.entries) {
+        val entry = zipFile.getEntry("largeFile1")
+        assertThat(entry).isNotNull()
       }
     }
   }
 }
-
-private class Entry(val path: String, val isCompressed: Boolean)
 
 private fun runInThread(block: () -> Unit): Thread {
   val thread = Thread(block, "test interrupt")

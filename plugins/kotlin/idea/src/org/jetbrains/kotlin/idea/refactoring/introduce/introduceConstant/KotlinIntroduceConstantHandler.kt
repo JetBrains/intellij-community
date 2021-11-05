@@ -159,7 +159,7 @@ class KotlinIntroduceConstantHandler(
             is KtStringTemplateExpression -> return this.hasInterpolation()
             else -> {
                 val constInfo = ConstantExpressionEvaluator.getConstant(this, analyze(BodyResolveMode.PARTIAL))
-                return constInfo == null || constInfo.usesNonConstValAsConstant || constInfo.usesVariableAsConstant
+                return constInfo == null || constInfo.usesNonConstValAsConstant
             }
         }
     }

@@ -59,7 +59,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   // we are under indicator => the Job must be canceled when indicator is canceled
   return runBlocking(progressSinkElement(ProgressIndicatorSink(indicator)) + CoroutineName("indicator run blocking")) {
-    val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
+    val indicatorWatchJob = launch(Dispatchers.IO + CoroutineName("indicator watcher")) {
       while (true) {
         if (indicator.isCanceled) {
           // will throw PCE which will cancel the runBlocking Job and thrown further in the caller of runSuspendingAction

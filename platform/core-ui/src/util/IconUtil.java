@@ -30,6 +30,7 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
@@ -670,6 +671,21 @@ public class IconUtil {
       scale /= usrScale;
     }
     return scale(icon, ancestor, scale);
+  }
+
+  public static Icon scaleByIconWidth(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
+    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconWidth);
+  }
+
+  public static Icon scaleByIconHeight(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
+    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconHeight);
+  }
+
+  private static Icon scaleByIcon(@Nullable Icon icon, Component ancestor, @NotNull Icon defaultIcon, @NotNull ToIntFunction<Icon> size) {
+    if (icon == null || icon == defaultIcon) return defaultIcon;
+    int actual = size.applyAsInt(icon);
+    int expected = size.applyAsInt(defaultIcon);
+    return expected == actual ? icon : scale(icon, ancestor, (float)expected / actual);
   }
 
   /**

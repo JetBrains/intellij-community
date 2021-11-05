@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 @CompileStatic
 class IdeaCommunityProperties extends BaseIdeaProperties {
@@ -32,13 +32,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     ]
 
     def commonCustomizer = productLayout.platformLayoutCustomizer
-    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
-      commonCustomizer.accept(layout)
+    productLayout.platformLayoutCustomizer = { PlatformLayout layout, BuildContext context ->
+      commonCustomizer.accept(layout, context)
       layout.customize {
         withModule("intellij.platform.duplicates.analysis")
         withModule("intellij.platform.structuralSearch")
       }
-    } as Consumer<PlatformLayout>
+    } as BiConsumer<PlatformLayout, BuildContext>
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = [

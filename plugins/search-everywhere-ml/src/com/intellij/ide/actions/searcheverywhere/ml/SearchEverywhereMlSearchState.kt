@@ -10,7 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankin
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
-  val keysTyped: Int, val backspacesTyped: Int, private val queryLength: Int,
+  val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
@@ -31,7 +31,7 @@ internal class SearchEverywhereMlSearchState(
       SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
         if (provider.isElementSupported(element)) {
           val cache = providersCaches[provider::class.java]
-          features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, priority, cache))
+          features.putAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, cache))
         }
       }
 

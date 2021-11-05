@@ -82,6 +82,7 @@ public class Notification {
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
+  private String myRemindLaterHandlerId;
 
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
@@ -134,7 +135,7 @@ public class Notification {
   }
 
   public @NotNull Notification setDisplayId(@NotNull String displayId) {
-    this.myDisplayId = displayId;
+    myDisplayId = displayId;
     return this;
   }
 
@@ -182,6 +183,14 @@ public class Notification {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+  }
+
+  public @Nullable String getRemindLaterHandlerId() {
+    return myRemindLaterHandlerId;
+  }
+
+  public void setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
+    myRemindLaterHandlerId = remindLaterHandlerId;
   }
 
   public boolean hasTitle() {
@@ -263,7 +272,7 @@ public class Notification {
   }
 
   /**
-   * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
+   * @param dropDownText when actions don't fit into the balloon width, they are collapsed and this text is displayed instead
    */
   public @NotNull Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;

@@ -113,7 +113,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         ): TextRange? {
             if (referenceData.isEmpty() && explicitImports.isEmpty()) return bounds
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            PsiDocumentManager.getInstance(project).commitDocument(document)
 
             val rangeMarker = document.createRangeMarker(bounds)
             rangeMarker.isGreedyToLeft = true
@@ -167,7 +167,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
             val newBounds = insertImports(boundsAfterReplace, referenceData, explicitImports)
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            PsiDocumentManager.getInstance(project).commitDocument(document)
             runPostProcessing(project, targetFile, newBounds, conversionResult?.converterContext, useNewJ2k)
 
             conversionPerformed = true

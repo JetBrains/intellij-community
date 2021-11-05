@@ -75,7 +75,26 @@ final class BuildUtils {
     return text
   }
 
-  static void copyAndPatchFile(@NotNull Path sourcePath, @NotNull Path targetPath, Map<String, String> replacements, String marker = "__", String lineSeparator = "") {
+  static void replaceAll(Path file, String marker, String ...replacements) {
+    String text = Files.readString(file)
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    Files.writeString(file, text)
+  }
+
+  static String replaceAll(String text, String marker, String ...replacements) {
+    for (int i = 0; i < replacements.length; i += 2) {
+      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
+    }
+    return text
+  }
+
+  static void copyAndPatchFile(@NotNull Path sourcePath,
+                               @NotNull Path targetPath,
+                               Map<String, String> replacements,
+                               String marker = "__",
+                               String lineSeparator = "") {
     Files.createDirectories(targetPath.parent)
     String content = replaceAll(Files.readString(sourcePath), replacements, marker)
     if (!lineSeparator.isEmpty()) {
@@ -191,6 +210,7 @@ final class BuildUtils {
       }
     }
     catch (NoSuchFileException ignore) {
+      return null
     }
   }
 }

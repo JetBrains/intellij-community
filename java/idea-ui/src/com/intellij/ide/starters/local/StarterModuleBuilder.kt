@@ -9,7 +9,10 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.util.projectWizard.*
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -21,7 +24,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
@@ -156,8 +158,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   private val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
   override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
-  override fun getParentGroup(): String = JavaModuleType.BUILD_TOOLS_GROUP
-  override fun getWeight(): Int = JavaModuleBuilder.BUILD_SYSTEM_WEIGHT + 10
+  override fun getWeight(): Int = JVM_WEIGHT
   open fun getHelpId(): String? = null
 
   abstract override fun getBuilderId(): String
