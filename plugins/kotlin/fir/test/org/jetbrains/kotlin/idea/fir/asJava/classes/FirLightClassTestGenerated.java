@@ -50,6 +50,26 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
         runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationClass.kt"));
     }
 
+    @TestMetadata("AnnotationJvmRepeatable.kt")
+    public void testAnnotationJvmRepeatable() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationJvmRepeatable.kt"));
+    }
+
+    @TestMetadata("AnnotationKotlinAndJavaRepeatable.kt")
+    public void testAnnotationKotlinAndJavaRepeatable() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationKotlinAndJavaRepeatable.kt"));
+    }
+
+    @TestMetadata("AnnotationKotlinAndJvmRepeatable.kt")
+    public void testAnnotationKotlinAndJvmRepeatable() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationKotlinAndJvmRepeatable.kt"));
+    }
+
+    @TestMetadata("AnnotationRepeatable.kt")
+    public void testAnnotationRepeatable() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationRepeatable.kt"));
+    }
+
     @TestMetadata("Constructors.kt")
     public void testConstructors() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/lightClasses/Constructors.kt"));
