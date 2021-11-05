@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.test.util.ignored
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -35,7 +36,19 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         PlatformVersion.getCurrent() ?: throw AssertionError("Version should not be null")
     }
 
+
+    /**
+     *  This test is disabled in kt-212-[master|1.6.0] because it is stable fails here, because
+     *  KotlinPluginUtil.getPluginVersion() == "212-1.6.20-dev-4868-IJSNAPSHOT" and SNAPSHOT idea version is not supported in version parser.
+     *  That is happening because on teamcity, when tests are running there is no `kotlin.plugin.version` parameter and
+     *  KotlinPluginUtil.getPluginVersion() fallbacks to reading version from plugin.xml.
+     *  But this version is set by another logic: org.jetbrains.intellij.build.kotlin.KotlinPluginKind#version and it is reading
+     *  IDEA version from the file community/build.txt (212-SNAPSHOT is stored there)
+     *  In 211 and 213 branches test are ok because logic there is different somehow
+     */
     fun testCurrentPluginVersionParsing() {
+        if (ignored("see above")) return
+
         val pluginVersion = KotlinPluginUtil.getPluginVersion()
         if (pluginVersion == "@snapshot@") return
 
